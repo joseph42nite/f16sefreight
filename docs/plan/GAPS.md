@@ -62,12 +62,42 @@ connects to what. It mostly does not.
 
 | # | Finding | Detail |
 |---|---|---|
-| 39 | 🔴 **The AWB document is NEVER linked to its job.** `air_way_bills.job_id` is not written by any code path — `AirwayBillController` never sets it, and no other code does either. Meanwhile `JobController::cancel` *clears* it (`job_id → NULL`), so the detach releases a link nothing ever established | The operational half (enquiry → job → cost sheet → invoice → analytics) hangs off `jobs.id`. The document half (MAWB, HAWB, consolidation, PDF, XML, addresses) hangs off `air_way_bills.id`. **They are joined by nothing.** A job "has" an AWB only as loose text in `jobs.awb_number` |
-| 40 | 🔴 **And the two halves do not even agree on the number's FORMAT.** `jobs.awb_number` is `176-10000008` — `IcegateValidator` enforces `/^\d{3}-\d{8}$/`, hyphen required. `air_way_bills.id` is the code and number concatenated with **no** separator: `17610000008`. Joining them requires `REPLACE(awb_number,'-','')`, and nothing in the codebase does | So even the string link is not usable as-is. Whichever direction this is fixed, one side changes |
-| 41 | 🔴 **`create-focusair` writes everything, then 500s, if `status` is omitted.** `$status = $request->status` is NULL, `null != 'generate_pdf'` is true, so it updates `status => null` against a NOT NULL column — **after** every section has already been saved | The caller gets a 500 and cannot tell that the AWB was in fact created and populated. Measured: three AWBs exist, fully populated, from three requests that all returned 500 |
+| 39 | 🟢 **RESOLVED 2026-09-01.** **The AWB document was NEVER linked to its job.** `air_way_bills.job_id` is not written by any code path — `AirwayBillController` never sets it, and no other code does either. Meanwhile `JobController::cancel` *clears* it (`job_id → NULL`), so the detach releases a link nothing ever established | The operational half (enquiry → job → cost sheet → invoice → analytics) hangs off `jobs.id`. The document half (MAWB, HAWB, consolidation, PDF, XML, addresses) hangs off `air_way_bills.id`. **They are joined by nothing.** A job "has" an AWB only as loose text in `jobs.awb_number` |
+| 40 | 🟢 **RESOLVED 2026-09-01.** **The two halves did not agree on the number's FORMAT.** `jobs.awb_number` is `176-10000008` — `IcegateValidator` enforces `/^\d{3}-\d{8}$/`, hyphen required. `air_way_bills.id` is the code and number concatenated with **no** separator: `17610000008`. Joining them requires `REPLACE(awb_number,'-','')`, and nothing in the codebase does | So even the string link is not usable as-is. Whichever direction this is fixed, one side changes |
+| 41 | 🟢 **FIXED 2026-09-01.** **`create-focusair` wrote everything, then 500'd, if `status` was omitted.** `$status = $request->status` is NULL, `null != 'generate_pdf'` is true, so it updates `status => null` against a NOT NULL column — **after** every section has already been saved | The caller gets a 500 and cannot tell that the AWB was in fact created and populated. Measured: three AWBs exist, fully populated, from three requests that all returned 500 |
 | 42 | 🔴 **`AirwayBillController::store()` is not transactional at all** (zero `DB::transaction` in the file). Each section — first box, shipper, consignee, routing, consignment, charges, payment, totals — saves independently | Any failure part-way leaves a **half-written airway bill** plus an error response. For a document that goes to an airline and to customs, "saved up to routing, then failed" is a worse state than "not saved" |
-| 43 | ⚠️ **A direct flight 500s through the API.** `routingInformation()` reads `to_2`, `by_2`, `flight_2`, `date_2`, `to_3`, `by_3`, `flight_3`, `date_3` unconditionally, though the validator declares all eight `nullable`. Hidden in production only because the Vue form always sends them as empty strings | Any API client, integration or OCR-driven create with a single-leg routing crashes. The validator's contract and the code disagree |
-| 44 | 🔴 **The shipper/consignee address regex rejects ordinary real addresses.** `ship_address` is validated `/^[a-zA-Z0-9\s.,-]+$/` — no `/`, no `&`, no parentheses, no accents. Measured, all rejected: `Plot 42/A, MIDC Andheri East` · `Müller & Co., Hafenstrasse 12` · `Unit 5 (Rear), Dock Road` | Indian industrial addresses routinely carry `/`; European party names carry `&` and umlauts. This is the same instinct as the silent-truncation defect already fixed in both air forms — an allow-list built from what someone imagined an address looks like |
+| 43 | 🟢 **FIXED 2026-09-01.** **A direct flight 500'd through the API.** `routingInformation()` reads `to_2`, `by_2`, `flight_2`, `date_2`, `to_3`, `by_3`, `flight_3`, `date_3` unconditionally, though the validator declares all eight `nullable`. Hidden in production only because the Vue form always sends them as empty strings | Any API client, integration or OCR-driven create with a single-leg routing crashes. The validator's contract and the code disagree |
+| 44 | 🟢 **FIXED 2026-09-01.** **The address regex rejected ordinary real addresses.** `ship_address` is validated `/^[a-zA-Z0-9\s.,-]+$/` — no `/`, no `&`, no parentheses, no accents. Measured, all rejected: `Plot 42/A, MIDC Andheri East` · `Müller & Co., Hafenstrasse 12` · `Unit 5 (Rear), Dock Road` | Indian industrial addresses routinely carry `/`; European party names carry `&` and umlauts. This is the same instinct as the silent-truncation defect already fixed in both air forms — an allow-list built from what someone imagined an address looks like |
+
+### How #39 and #40 were resolved (owner's decision, 2026-09-01)
+
+**#39 — link the AWB to the job when connected.** `App\Services\AwbJobLinker` writes
+`air_way_bills.job_id`, in BOTH directions, because either half can come first: a document
+raised before conversion, or a job numbered before its paperwork exists. The document side
+is called from `AirwayBillController::store()`; the job side is hooked on `JobObserver`
+rather than on a controller, so every writer of `awb_number` is covered — imports and
+console commands included. `backfill()` reconciles rows created while nothing wrote the
+column; it linked all three existing AWBs on first run.
+
+🔴 **The match is scoped by `agent_id`, and that is load-bearing.** An airline prefix plus
+serial is unique per AIRLINE, not per forwarder, so nothing stops two branches recording the
+same number — an unscoped match would attach one tenant's document to another tenant's job.
+⚠️ An unmatched waybill is normal and stays NULL: documents are routinely raised before the
+job exists, or for shipments that never become one.
+
+**#40 — the hyphen after the first three digits.** `App\Support\AwbNumber` is now the one
+place that knows the format. Canonical is **`176-10000008`**, matching what IATA prints, what
+customs expects, and what `jobs.awb_number` already held.
+
+⚠️ **The primary key stays numeric, and that is a constraint rather than a preference.**
+`air_way_bills.id` is `BIGINT UNSIGNED AUTO_INCREMENT` and is the foreign-key target of
+`way_bill_addresses`, `consignment_data` and `other_custom_information`, all keyed on
+`awb_id`. A hyphen cannot go into it without migrating every one of those tables. So the KEY
+is the eleven digits and the NUMBER is canonical; `AwbNumber::key()` and `::canonical()`
+convert between them and nothing derives either by hand.
+
+⚠️ **A wrong-length number is refused, never reshaped.** A truncated OCR read must not be
+silently padded into something that looks like a valid AWB.
 
 ⚠️ **`air_way_bills.shipper_id` / `consignee_id` are dead columns.** Addresses actually live
 in `way_bill_addresses`, keyed by `awb_id`; both id columns stayed NULL through a successful

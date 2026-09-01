@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\EnquiryStatus;
 use App\Job;
 use App\MilestonePerformanceLog;
+use App\Services\AwbJobLinker;
 
 /**
  * Guide §2.3.
@@ -25,6 +26,7 @@ class JobObserver
         }
 
         $this->logMilestone($job);
+        $this->linkWaybill($job);
     }
 
     /**
@@ -39,6 +41,30 @@ class JobObserver
         if ($job->wasChanged('status')) {
             $this->logMilestone($job);
         }
+
+        // 🔗 GAPS #39, the job side of the link. Either half can come first — a document
+        // raised before conversion, or a job numbered before its paperwork is filled in —
+        // so both directions have to try. Hooked on the OBSERVER rather than on each
+        // controller so every writer of `awb_number` is covered, including imports and
+        // console commands that no controller ever sees.
+        if ($job->wasChanged('awb_number')) {
+            $this->linkWaybill($job);
+        }
+    }
+
+    /**
+     * Attach the air waybill document that carries this job's number, if one exists.
+     *
+     * ⚠️ Silent when nothing matches, which is the common case: most jobs have no document
+     * yet, and an AWB number can be recorded long before the waybill is raised.
+     */
+    private function linkWaybill(Job $job): void
+    {
+        if ($job->transport_mode !== 'air' || blank($job->awb_number)) {
+            return;
+        }
+
+        app(AwbJobLinker::class)->linkFromJob($job->id);
     }
 
     private function logMilestone(Job $job): void

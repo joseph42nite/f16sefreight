@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Logistics;
 use App\Agent;
 use App\Airline;
 use App\AirwayBills;
+use App\Services\AwbJobLinker;
+use App\Support\AwbNumber;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\WaybillTrait;
 use App\PaymentInfo;
@@ -24,6 +26,32 @@ use phpseclib3\Net\SFTP;
 
 class AirwayBillController extends Controller
 {
+    /**
+     * What a postal address is allowed to contain.
+     *
+     * 🔴 **The old rule rejected ordinary real addresses** (GAPS #44). `ship_address` and
+     * `cons_address` allowed only `[a-zA-Z0-9\s.,-]`, and `also_address` allowed only
+     * letters, digits and spaces — not even a comma. Measured rejections:
+     *
+     *   Plot 42/A, MIDC Andheri East      the slash. Indian industrial addresses are full
+     *                                     of them
+     *   Müller & Co., Hafenstrasse 12     the ampersand AND the umlaut
+     *   Unit 5 (Rear), Dock Road          the parentheses
+     *
+     * This is the same instinct as the silent-truncation defect already fixed in both air
+     * forms: an allow-list built from what someone imagined an address looks like, meeting
+     * the addresses that actually exist. A forwarder cannot file a shipment for a client
+     * whose address the form refuses to hold.
+     *
+     * Unicode letters and marks are allowed so accented and non-Latin names survive, along
+     * with the punctuation addresses genuinely use. Control characters are still refused.
+     *
+     * ⚠️ Cargo-IMP has its own narrower character set for TRANSMISSION. That is a
+     * rendering concern at the point of filing — not a reason to refuse to store what the
+     * client's address actually is.
+     */
+    private const ADDRESS_PATTERN = "/^[\p{L}\p{M}\p{N}\s.,\-\/&()#'\":;+]+$/u";
+
     use WaybillTrait;
 
     protected $conversionController;
@@ -48,7 +76,7 @@ class AirwayBillController extends Controller
             'ship_name' => 'required|string|max:70',
             'ship_name_2' => 'nullable|string|max:70',
             'ship_account' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:14',
-            'ship_address' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:255',
+            'ship_address' => ['required', 'max:255', 'regex:' . self::ADDRESS_PATTERN],
             'ship_address_line_2' => 'nullable|regex:/^[a-zA-Z0-9\s.,-]+$/|max:30',
             'ship_city' => 'required|string|max:70',
             'ship_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
@@ -121,7 +149,7 @@ class AirwayBillController extends Controller
             'cons_name' => 'required|string|max:70',
             'cons_name_2' => 'nullable|string|max:70',
             'cons_account' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:14',
-            'cons_address' => 'required|max:255|regex:/^[a-zA-Z0-9\s.,-]+$/',
+            'cons_address' => ['required', 'max:255', 'regex:' . self::ADDRESS_PATTERN],
             'cons_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s.,-]+$/',
             'cons_city' => 'required|string|max:70',
             'cons_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
@@ -190,7 +218,7 @@ class AirwayBillController extends Controller
         $validator = Validator::make($also_notify_address, [
             'also_name' => 'required|string|max:70',
             'also_name_2' => 'nullable|string|max:70',
-            'also_address' => 'required|max:255|regex:/^[a-zA-Z0-9\s]+$/',
+            'also_address' => ['required', 'max:255', 'regex:' . self::ADDRESS_PATTERN],
             'also_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s]+$/',
             'also_city' => 'required|string|max:70',
             'also_airport_code' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:3',
@@ -352,14 +380,19 @@ class AirwayBillController extends Controller
         $AirwayBills->by = $routing_information['by'];
         $AirwayBills->flight = $routing_information['flight'];
         $AirwayBills->date = $routing_information['date'];
-        $AirwayBills->to_2 = $routing_information['to_2'];
-        $AirwayBills->by_2 = $routing_information['by_2'];
-        $AirwayBills->flight_2 = $routing_information['flight_2'];
-        $AirwayBills->date_2 = $routing_information['date_2'];
-        $AirwayBills->to_3 = $routing_information['to_3'];
-        $AirwayBills->by_3 = $routing_information['by_3'];
-        $AirwayBills->flight_3 = $routing_information['flight_3'];
-        $AirwayBills->date_3 = $routing_information['date_3'];
+        // 🔴 The second and third legs are `nullable` in the validator above, so they may
+        // legitimately be ABSENT — a direct flight has one leg. Reading them unconditionally
+        // threw "Undefined array key to_2" and returned a 500 (GAPS #43). It never showed in
+        // production only because the Vue form always sends all eight as empty strings; any
+        // API client, integration or OCR-driven create with a direct routing crashed.
+        $AirwayBills->to_2 = $routing_information['to_2'] ?? null;
+        $AirwayBills->by_2 = $routing_information['by_2'] ?? null;
+        $AirwayBills->flight_2 = $routing_information['flight_2'] ?? null;
+        $AirwayBills->date_2 = $routing_information['date_2'] ?? null;
+        $AirwayBills->to_3 = $routing_information['to_3'] ?? null;
+        $AirwayBills->by_3 = $routing_information['by_3'] ?? null;
+        $AirwayBills->flight_3 = $routing_information['flight_3'] ?? null;
+        $AirwayBills->date_3 = $routing_information['date_3'] ?? null;
         $AirwayBills->agent_id = $agent->id ?? null;
         $AirwayBills->save();
         return "Routing Information saved successfull";
@@ -717,14 +750,39 @@ class AirwayBillController extends Controller
         }
 
         //for status update
+        // 🔴 A MISSING `status` USED TO 500 — after every section had already saved.
+        // `$request->status` is NULL when omitted and this wrote it into a NOT NULL column,
+        // so the caller got a 500 with no way to know the waybill had in fact been created
+        // and fully populated (GAPS #41). Measured: three AWBs existed, complete, from three
+        // requests that all returned 500.
+        //
+        // ⚠️ There are TWO of these blocks — this one in store() and another in update().
+        // Fixing only update() left the create path still throwing, which is how this was
+        // found the second time.
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
         $status = $request->status;
         $update_arr = [
-            'status' => $status,
             'as_agreed' => $request->as_agreed ?? 0,
             'awb_email' => $request->awb_email,
         ];
+
+        // Absent means "leave it as it is", which is what the caller meant by not sending it.
+        if (filled($status)) {
+            $update_arr['status'] = $status;
+        }
+
         AirwayBills::where(['id' => $awb_id])->update($update_arr);
+        // 🔗 GAPS #39 — join the document to its job. `air_way_bills.job_id` was written by
+        // NOTHING: the column and its foreign key existed, and JobController::cancel even
+        // cleared it, releasing a link nothing had ever made. Until this line, the
+        // operational half of FocusAir and the document half were two systems sharing a
+        // number as loose text.
+        //
+        // ⚠️ Deliberately AFTER the sections and outside their success checks: an AWB that
+        // matches a job should link even if some later section was skipped, and an AWB that
+        // matches nothing is normal — documents are routinely raised before the job exists.
+        app(AwbJobLinker::class)->link((int) $awb_id);
+
         $send_response = [];
         if ($status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
@@ -814,9 +872,16 @@ class AirwayBillController extends Controller
         }
 
         //for status update
+        // 🔴 A MISSING `status` USED TO 500 — after every section had already saved.
+        // `$request->status` is NULL when omitted, `null != 'generate_pdf'` is true, and the
+        // update then wrote NULL into a NOT NULL column. The caller got a 500 and no way to
+        // know the waybill had in fact been created and populated (GAPS #41). Absent now
+        // means "leave it as it is", which is what the caller meant by not sending it.
         $status = $request->status;
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
-        if ($status != 'generate_pdf')
+        if (blank($status))
+            AirwayBills::where(['id' => $awb_id])->update(['awb_email' => $request->awb_email, 'as_agreed' => $request->as_agreed ?? 0]);
+        elseif ($status != 'generate_pdf')
             AirwayBills::where(['id' => $awb_id])->update(['status' => $status, 'awb_email' => $request->awb_email, 'as_agreed' => $request->as_agreed ?? 0]);
         else
             AirwayBills::where(['id' => $awb_id])->update(['awb_email' => $request->awb_email, 'as_agreed' => $request->as_agreed ?? 0]);

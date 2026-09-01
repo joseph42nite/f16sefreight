@@ -98,7 +98,22 @@
                                                         <div class="awb-flex-row">
                                                             <b-form-input id="masterno-input" class="awb-code-input" style="width: 62px" v-model="form.first_box.awb_code" :class="{ 'is-invalid': form.errors.has('awb_code') }" v-on:keypress="validateNumericInput($event, 'awb_code', 3)" @input="onAWBInput"></b-form-input>
                                                             <span style="color: #355594; font-weight: bold;">-</span>
-                                                            <b-form-input id="masterno-awb-input" class="awb-no-input" style="width: 100px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)" @input="onAWBInput"></b-form-input>
+                                                            <b-form-input id="masterno-awb-input" class="awb-no-input" style="width: 100px" v-model="form.first_box.awb_no" :class="{ 'is-invalid': form.errors.has('awb_no') }" v-on:keypress="validateNumericInput($event, 'awb_no', 8)" @input="onAWBInput" list="mawb-options"></b-form-input>
+
+                                                            <!--
+                                                              🔴 TYPE IT OR PICK IT, from ONE control. The master number is
+                                                              usually one this branch already raised, and retyping eleven
+                                                              digits from another screen is where a house bill gets attached
+                                                              to the wrong master — an error that survives every later check
+                                                              because both numbers are individually valid.
+
+                                                              ⚠️ A datalist rather than a select: a house bill may legitimately
+                                                              reference a master this system has never held (another forwarder's,
+                                                              or one not yet keyed), so the field must stay free text.
+                                                            -->
+                                                            <datalist id="mawb-options">
+                                                                <option v-for="m in masterOptions" :key="m.value" :value="m.value">{{ m.label }}</option>
+                                                            </datalist>
                                                         </div>
                                                     </b-form-group>
                                                     <div style="margin-left: 88px;">
@@ -2372,6 +2387,10 @@ export default {
     data() {
         return {
             mode: 'add',
+            /* Master AWBs this branch has already raised, for the number datalist.
+               Empty is fine and normal — a house bill may reference a master this
+               system has never held. */
+            masters: [],
             form: new Form({
                 awb_email: '',
                 first_box:{
@@ -3369,6 +3388,21 @@ export default {
                 };
             }
         },
+        /**
+         * Master AWBs on this branch, for the number datalist.
+         *
+         * ⚠️ Failure is SILENT and harmless: the field stays free text, so a picker that
+         * could not load costs the operator a lookup, not the ability to work. Blocking
+         * the form on a convenience list would be the worse trade.
+         */
+        loadMasterOptions() {
+            ApiService.get('/user/get-airway-bills/all')
+                .then(({ data }) => {
+                    const rows = (data && (data.data || data)) || [];
+                    this.masters = Array.isArray(rows) ? rows : [];
+                })
+                .catch(() => { this.masters = []; });
+        },
         getOCIData(){
             ApiService.get('/user/get-oci-data').then(({ data }) => {
             if (data && data.oci_custom_info_identifier) {
@@ -3513,6 +3547,7 @@ export default {
         }
     },
     created() {
+        this.loadMasterOptions();
         const id = this.$route.params.id;
         if (id) {
             this.isEdit = true;
@@ -3526,6 +3561,15 @@ export default {
     },
     computed: {
         ...mapGetters({ current_user: "currentUser"}),
+
+        /* The serial is what the field holds, but the operator recognises the pair —
+           so the label carries the full number and the value only what gets typed. */
+        masterOptions() {
+            return this.masters.map((m) => ({
+                value: String(m.awb_no || ''),
+                label: (m.awb_code || '') + '-' + (m.awb_no || ''),
+            }));
+        },
 
         submitButtonText() {
             return this.mode === 'add' ? 'Add Draft' : 'Update Draft';

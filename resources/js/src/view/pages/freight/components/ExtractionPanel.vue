@@ -103,10 +103,16 @@
                 ⚠️ A group is taken from exactly ONE place. Letting two documents both
                 claim the shipper would need a tie-break the operator cannot see, and the
                 whole point of this panel is that they can.
+
+                🔴 Selectable while the document is still STAGED. Saying what you want from
+                a file before reading it is the natural order — you know an invoice carries
+                the parties without opening it — and gating the picker on a finished
+                extraction meant dropping a file and finding the only control greyed out.
+                Only disabled mid-read, when the answer is genuinely in flight.
               -->
               <select
                 class="fx-input"
-                :disabled="doc.state !== 'ready'"
+                :disabled="doc.state === 'reading'"
                 :value="groupsFrom(doc.uid)"
                 @change="assign($event.target.value, doc.uid)"
               >

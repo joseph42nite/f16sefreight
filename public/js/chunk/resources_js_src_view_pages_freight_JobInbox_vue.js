@@ -1857,7 +1857,7 @@ var render = function render() {
     }, [_vm._v("Remove")])]), _vm._v(" "), _c("td", [_c("select", {
       staticClass: "fx-input",
       attrs: {
-        disabled: doc.state !== "ready"
+        disabled: doc.state === "reading"
       },
       domProps: {
         value: _vm.groupsFrom(doc.uid)

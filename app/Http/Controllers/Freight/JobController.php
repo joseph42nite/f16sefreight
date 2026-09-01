@@ -210,7 +210,22 @@ class JobController extends Controller
 
         $data = $request->validate(['ops_id' => ['required', 'integer', 'exists:users,id']]);
 
-        $job->update(['ops_id' => $data['ops_id'], 'pending_ops_id' => null, 'pending_ops_requested_by' => null]);
+        $job->update([
+            'ops_id'                   => $data['ops_id'],
+            'pending_ops_id'           => null,
+            'pending_ops_requested_by' => null,
+            // 🔴 The timestamp goes too. Clearing two of the three staging columns leaves
+            // a "requested at" for a request that no longer exists, and every
+            // how-long-has-this-been-waiting query counts it forever.
+            'pending_ops_requested_at' => null,
+        ]);
+
+        // 🔴 A direct assignment SUPERSEDES any staged request, so its bell card must go
+        // with it. Left behind, the owner is still offered [Accept] / [Reject] for a
+        // handover that is gone — and answering returns 422 `nothing_pending`, which
+        // reads as the product being broken rather than as a request already resolved.
+        app(BellNotificationService::class)->dissolveReassignment($job->id);
+
         $this->audit->record($job->agent_id, 'job.reassigned', 'job', $job->id, auth()->id());
 
         return response()->json($job->fresh());
@@ -229,29 +244,43 @@ class JobController extends Controller
 
         $data = $request->validate(['ops_id' => ['required', 'integer', 'exists:users,id']]);
 
+        // 🔴 A REQUEST NEEDS SOMEBODY TO ASK. Staging on an unowned job raised no
+        // notification at all, so the request waited for a decision nobody would ever be
+        // asked to make — while the operator who asked saw a 202 and reasonably assumed
+        // it was on its way. Refuse rather than accept something undeliverable.
+        if ($job->pricing_id === null) {
+            return response()->json([
+                'error'  => 'This job has no pricing owner to approve a handover.',
+                'reason' => 'no_owner',
+            ], 422);
+        }
+
         $job->update([
             'pending_ops_id'           => $data['ops_id'],
             'pending_ops_requested_by' => auth()->id(),
             'pending_ops_requested_at' => now(),
         ]);
 
+        // ⚠️ Supersede rather than stack. A second request replaces the first on the job
+        // row, so leaving the first card would have the owner answering a request that is
+        // no longer current — and a pinned card is precisely the one they cannot ignore.
+        app(BellNotificationService::class)->dissolveReassignment($job->id);
+
         // 🔔 PINNED, because an approval is a request for a DECISION, not an FYI. It
         // sorts above every routine alert until somebody answers it.
-        if ($job->pricing_id !== null) {
-            app(BellNotificationService::class)->notify(
-                $job->agent_id,
-                $job->pricing_id,
-                BellNotificationService::REASSIGNMENT,
-                [
-                    'job_id'       => $job->id,
-                    'job_no'       => $job->execution_job_no,
-                    'from_ops_id'  => $job->ops_id,
-                    'to_ops_id'    => $data['ops_id'],
-                    'requested_by' => auth()->id(),
-                ],
-                BellNotificationService::PRIORITY_APPROVAL
-            );
-        }
+        app(BellNotificationService::class)->notify(
+            $job->agent_id,
+            $job->pricing_id,
+            BellNotificationService::REASSIGNMENT,
+            [
+                'job_id'       => $job->id,
+                'job_no'       => $job->execution_job_no,
+                'from_ops_id'  => $job->ops_id,
+                'to_ops_id'    => $data['ops_id'],
+                'requested_by' => auth()->id(),
+            ],
+            BellNotificationService::PRIORITY_APPROVAL
+        );
 
         return response()->json($job->fresh(), 202);
     }

@@ -34,26 +34,31 @@ const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_r
 
 /* §740's tab set. The two carrying real data today come first; the rest name the
    Step 6 item that fills them, so an unfinished tab cannot be mistaken for a bug. */
+/**
+ * The workspace holds WORK SURFACES, nothing else.
+ *
+ * 🔴 **Four tabs were removed on 2026-09-01, and two of them were lying.**
+ *   Enquiry · Timing  two read-only fields and four timestamps. Both are always true of
+ *                     the thread and never change while the drawer is open, so a tab made
+ *                     the reader click to learn something that should simply be stated.
+ *                     They live in the header now.
+ *   Upload            duplicated [Analyze PDF], which already uploads from the
+ *                     conversation header — beside the attachment that needs reading. Its
+ *                     placeholder promised "Step 6 item 2", which IS the upload modal, and
+ *                     was already built.
+ *   E-Docket          its placeholder cited "Step 6 item 4", which is JobCostSheet — built,
+ *                     and already the Cost sheet tab in this same drawer. The pointer was
+ *                     simply wrong.
+ *
+ * ⚠️ A placeholder that names a step already delivered is worse than no placeholder: it
+ * tells an operator to wait for something they could be using now.
+ */
 const WORKSPACE_TABS = [{
-  key: "enquiry",
-  label: "Enquiry"
-}, {
-  key: "timing",
-  label: "Timing"
-}, {
   key: "extraction",
   label: "Extraction"
 }, {
-  key: "upload",
-  label: "Upload",
-  step: 2
-}, {
   key: "cost",
   label: "Cost sheet"
-}, {
-  key: "docket",
-  label: "E-Docket",
-  step: 4
 }];
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "JobInbox",
@@ -97,7 +102,7 @@ const WORKSPACE_TABS = [{
     query: "",
     timer: null,
     workspace: false,
-    tab: "enquiry",
+    tab: "extraction",
     ocrOpen: false,
     extracted: null,
     jobId: null,
@@ -109,13 +114,42 @@ const WORKSPACE_TABS = [{
     canTriage() {
       return this.designation === "pricing";
     },
-    tabLabel() {
-      const t = WORKSPACE_TABS.find(x => x.key === this.tab);
-      return t ? t.label : this.tab;
+    /**
+     * 🔴 TIMING AS A STATE, NOT FOUR TIMESTAMPS. The value in `first_triage_at` and
+     * `first_response_at` is the CONTRAST between them — a time against triaged with a
+     * dash against replied means somebody looked and the client is still waiting, which is
+     * what makes `lost_reason = 'delay_in_response'` provable rather than asserted.
+     *
+     * Four raw datetimes in a header read as noise and leave the reader to do the
+     * subtraction. The exact values stay available on hover.
+     */
+    timing() {
+      const a = this.active;
+      if (!a) return null;
+      if (!a.first_triage_at) {
+        return {
+          label: "Not triaged yet",
+          tone: "neutral"
+        };
+      }
+      const triaged = new Date(a.first_triage_at);
+      if (a.first_response_at) {
+        return {
+          label: "Answered " + this.elapsed(triaged, new Date(a.first_response_at)) + " after triage",
+          tone: "success"
+        };
+      }
+
+      /* Unanswered is the one worth noticing, so it is the one that gets a colour. */
+      return {
+        label: "Unanswered — " + this.elapsed(triaged, new Date()) + " since triage",
+        tone: "warn"
+      };
     },
-    tabStep() {
-      const t = WORKSPACE_TABS.find(x => x.key === this.tab);
-      return t ? t.step : null;
+    timingDetail() {
+      const a = this.active;
+      if (!a) return "";
+      return ["Last inbound: " + this.stamp(a.latest_message_received_at), "First triaged: " + this.stamp(a.first_triage_at), "First replied: " + this.stamp(a.first_response_at), "Messages: " + (a.message_count == null ? "—" : a.message_count)].join("\n");
     }
   }),
   created() {
@@ -177,6 +211,27 @@ const WORKSPACE_TABS = [{
       this.extracted = payload;
       this.setSplit(true);
       this.tab = "extraction";
+    },
+    /* ⚠️ A raw ISO string is not a date to a reader. The API sends
+       2026-08-30T10:28:47.000000Z; a person needs 30 Aug 2026, 10:28. */
+    stamp(value) {
+      if (!value) return "—";
+      const d = new Date(value);
+      if (isNaN(d)) return String(value);
+      return d.toLocaleString(undefined, {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    },
+    /** Coarse on purpose: "3d" is the decision, "3d 4h 12m" is trivia. */
+    elapsed(from, to) {
+      const mins = Math.max(0, Math.round((to - from) / 60000));
+      if (mins < 60) return mins + "m";
+      if (mins < 1440) return Math.round(mins / 60) + "h";
+      return Math.round(mins / 1440) + "d";
     },
     openWorkspace() {
       this.setSplit(true);
@@ -881,7 +936,29 @@ var render = function render() {
       },
       close: _vm.closeWorkspace
     },
-    scopedSlots: _vm._u([{
+    scopedSlots: _vm._u([_vm.active ? {
+      key: "meta",
+      fn: function () {
+        return [_c("div", {
+          staticClass: "fx-drawer__facts"
+        }, [_vm.active.enquiry ? [_c("span", {
+          staticClass: "identifier"
+        }, [_vm._v(_vm._s(_vm.active.enquiry.enquiry_no))]), _vm._v(" "), _c("StatusChip", {
+          attrs: {
+            value: _vm.active.enquiry.status
+          }
+        })] : _c("span", {
+          staticClass: "fx-muted"
+        }, [_vm._v("Not promoted to an enquiry")]), _vm._v(" "), _vm.timing ? _c("span", {
+          staticClass: "fx-drawer__timing",
+          class: "is-" + _vm.timing.tone,
+          attrs: {
+            title: _vm.timingDetail
+          }
+        }, [_vm._v(_vm._s(_vm.timing.label))]) : _vm._e()], 2)];
+      },
+      proxy: true
+    } : null, {
       key: "footer",
       fn: function () {
         return [_c("button", {
@@ -892,35 +969,8 @@ var render = function render() {
         }, [_vm._v("← Back to timeline")])];
       },
       proxy: true
-    }])
-  }, [_vm.active ? [_vm.tab === "enquiry" ? _c("section", [!_vm.active.enquiry ? _c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v("\n          Not promoted to an enquiry yet. Classifying this as a customer enquiry mints\n          a number — that is what turns a conversation into work.\n        ")]) : _c("dl", {
-    staticClass: "fx-defs"
-  }, [_c("dt", [_vm._v("Enquiry")]), _vm._v(" "), _c("dd", {
-    staticClass: "identifier"
-  }, [_vm._v(_vm._s(_vm.active.enquiry.enquiry_no))]), _vm._v(" "), _c("dt", [_vm._v("Status")]), _vm._v(" "), _c("dd", [_c("StatusChip", {
-    attrs: {
-      value: _vm.active.enquiry.status
-    }
-  })], 1)])]) : _vm.tab === "timing" ? _c("section", [_c("dl", {
-    staticClass: "fx-defs"
-  }, [_c("dt", [_vm._v("Last inbound")]), _vm._v(" "), _c("dd", [_c("Figure", {
-    attrs: {
-      value: _vm.active.latest_message_received_at,
-      kind: "dateTime"
-    }
-  })], 1), _vm._v(" "), _c("dt", [_vm._v("First triaged")]), _vm._v(" "), _c("dd", [_c("Figure", {
-    attrs: {
-      value: _vm.active.first_triage_at,
-      kind: "dateTime"
-    }
-  })], 1), _vm._v(" "), _c("dt", [_vm._v("First replied")]), _vm._v(" "), _c("dd", [_c("Figure", {
-    attrs: {
-      value: _vm.active.first_response_at,
-      kind: "dateTime"
-    }
-  })], 1), _vm._v(" "), _c("dt", [_vm._v("Messages")]), _vm._v(" "), _c("dd", [_vm._v(_vm._s(_vm.active.message_count))])])]) : _vm.tab === "cost" ? _c("section", [!_vm.active.enquiry ? _c("p", {
+    }], null, true)
+  }, [_vm._v(" "), _vm.active ? [_vm.tab === "cost" ? _c("section", [!_vm.active.enquiry ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n          No enquiry on this conversation yet, so there is no job to cost.\n        ")]) : _vm.jobId ? _c("CostSheet", {
     attrs: {
@@ -952,9 +1002,7 @@ var render = function render() {
         value: node.confidence
       }
     }) : _vm._e()], 1) : _vm._e()];
-  })], 2)]], 2) : _c("section", {
-    staticClass: "fx-muted"
-  }, [_c("p", [_vm._v(_vm._s(_vm.tabLabel) + " is not built yet — it lands with Step 6 item " + _vm._s(_vm.tabStep) + ".")])])] : _vm._e()], 2)], 1);
+  })], 2)]], 2) : _vm._e()] : _vm._e()], 2)], 1);
 };
 var staticRenderFns = [];
 render._withStripped = true;

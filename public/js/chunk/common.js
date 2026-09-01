@@ -1498,7 +1498,9 @@ var render = function render() {
     on: {
       click: _vm.close
     }
-  }, [_vm._v("✕")])]), _vm._v(" "), _vm.tabs.length > 1 ? _c("nav", {
+  }, [_vm._v("✕")])]), _vm._v(" "), _vm.$slots.meta ? _c("div", {
+    staticClass: "fx-drawer__meta"
+  }, [_vm._t("meta")], 2) : _vm._e(), _vm._v(" "), _vm.tabs.length > 1 ? _c("nav", {
     staticClass: "fx-drawer__tabs",
     attrs: {
       role: "tablist",

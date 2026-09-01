@@ -5562,6 +5562,19 @@ body {
 .fx-drawer__title { font-size: 1rem; font-weight: 600; margin: 0; color: var(--text-primary); }
 .fx-drawer__sub { font-size: .8125rem; color: var(--text-secondary); margin: var(--space-1) 0 0; }
 
+/* The record's own facts, stated in the header rather than hidden behind a tab.
+   Wraps rather than truncates: an enquiry number that is cut off is worse than a
+   second line, because the operator has to open something else to read it. */
+.fx-drawer__meta { padding: 0 var(--space-4) var(--space-3); }
+.fx-drawer__facts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+  font-size: .8125rem; }
+
+/* 🔴 Only the UNANSWERED state carries colour. If every timing state were tinted, the
+   one that needs a person to act would not stand out from the two that do not. */
+.fx-drawer__timing { color: var(--text-secondary); }
+.fx-drawer__timing.is-warn { color: var(--status-warning); font-weight: 600; }
+.fx-drawer__timing.is-success { color: var(--text-secondary); }
+
 .fx-drawer__tabs { display: flex; gap: var(--space-1); padding: 0 var(--space-4);
                    border-bottom: 1px solid var(--border); overflow-x: auto; }
 .fx-drawer__tab { border: 0; background: none; cursor: pointer;

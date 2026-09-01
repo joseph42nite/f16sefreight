@@ -143,41 +143,33 @@
       @tab="tab = $event"
       @close="closeWorkspace"
     >
+      <!--
+        The facts that identify this conversation, stated rather than tabbed. Enquiry and
+        Timing each used to be a tab; both were always true and never changed while the
+        drawer was open, so the click bought nothing.
+      -->
+      <template v-if="active" #meta>
+        <div class="fx-drawer__facts">
+          <template v-if="active.enquiry">
+            <span class="identifier">{{ active.enquiry.enquiry_no }}</span>
+            <StatusChip :value="active.enquiry.status" />
+          </template>
+          <!-- ⚠️ Not promoted is a real state, not a blank. Classifying a conversation as
+               a customer enquiry is what mints the number and turns it into work. -->
+          <span v-else class="fx-muted">Not promoted to an enquiry</span>
+
+          <span
+            v-if="timing"
+            class="fx-drawer__timing"
+            :class="'is-' + timing.tone"
+            :title="timingDetail"
+          >{{ timing.label }}</span>
+        </div>
+      </template>
+
       <template v-if="active">
-        <section v-if="tab === 'enquiry'">
-          <p v-if="!active.enquiry" class="fx-muted">
-            Not promoted to an enquiry yet. Classifying this as a customer enquiry mints
-            a number — that is what turns a conversation into work.
-          </p>
-          <dl v-else class="fx-defs">
-            <dt>Enquiry</dt>
-            <dd class="identifier">{{ active.enquiry.enquiry_no }}</dd>
-            <dt>Status</dt>
-            <dd><StatusChip :value="active.enquiry.status" /></dd>
-          </dl>
-        </section>
-
-        <section v-else-if="tab === 'timing'">
-          <!--
-            §4.2 the pair that must never be conflated. A time against "first triaged"
-            with a dash against "first replied" means somebody looked and the client is
-            still waiting — which is exactly what lost_reason = 'delay_in_response'
-            later has to be provable from.
-          -->
-          <dl class="fx-defs">
-            <dt>Last inbound</dt>
-            <dd><Figure :value="active.latest_message_received_at" kind="dateTime" /></dd>
-            <dt>First triaged</dt>
-            <dd><Figure :value="active.first_triage_at" kind="dateTime" /></dd>
-            <dt>First replied</dt>
-            <dd><Figure :value="active.first_response_at" kind="dateTime" /></dd>
-            <dt>Messages</dt>
-            <dd>{{ active.message_count }}</dd>
-          </dl>
-        </section>
-
         <!-- §6.7 — the cost sheet, decoupled from the manifest. -->
-        <section v-else-if="tab === 'cost'">
+        <section v-if="tab === 'cost'">
           <p v-if="!active.enquiry" class="fx-muted">
             No enquiry on this conversation yet, so there is no job to cost.
           </p>
@@ -208,14 +200,6 @@
           </template>
         </section>
 
-        <!--
-          Upload, the document forms, the cost sheet and the e-docket are Step 6 items
-          2, 4, 5 and 6. Named rather than hidden: an empty panel reads as broken,
-          where a named one reads as unfinished.
-        -->
-        <section v-else class="fx-muted">
-          <p>{{ tabLabel }} is not built yet — it lands with Step 6 item {{ tabStep }}.</p>
-        </section>
       </template>
 
       <template #footer>
@@ -238,13 +222,28 @@ const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_r
 
 /* §740's tab set. The two carrying real data today come first; the rest name the
    Step 6 item that fills them, so an unfinished tab cannot be mistaken for a bug. */
+/**
+ * The workspace holds WORK SURFACES, nothing else.
+ *
+ * 🔴 **Four tabs were removed on 2026-09-01, and two of them were lying.**
+ *   Enquiry · Timing  two read-only fields and four timestamps. Both are always true of
+ *                     the thread and never change while the drawer is open, so a tab made
+ *                     the reader click to learn something that should simply be stated.
+ *                     They live in the header now.
+ *   Upload            duplicated [Analyze PDF], which already uploads from the
+ *                     conversation header — beside the attachment that needs reading. Its
+ *                     placeholder promised "Step 6 item 2", which IS the upload modal, and
+ *                     was already built.
+ *   E-Docket          its placeholder cited "Step 6 item 4", which is JobCostSheet — built,
+ *                     and already the Cost sheet tab in this same drawer. The pointer was
+ *                     simply wrong.
+ *
+ * ⚠️ A placeholder that names a step already delivered is worse than no placeholder: it
+ * tells an operator to wait for something they could be using now.
+ */
 const WORKSPACE_TABS = [
-  { key: "enquiry", label: "Enquiry" },
-  { key: "timing", label: "Timing" },
   { key: "extraction", label: "Extraction" },
-  { key: "upload", label: "Upload", step: 2 },
   { key: "cost", label: "Cost sheet" },
-  { key: "docket", label: "E-Docket", step: 4 },
 ];
 
 export default {
@@ -264,7 +263,7 @@ export default {
     active: null, pending: null,
     loading: true, busy: false, error: null, actionError: null,
     query: "", timer: null,
-    workspace: false, tab: "enquiry", ocrOpen: false, extracted: null, jobId: null,
+    workspace: false, tab: "extraction", ocrOpen: false, extracted: null, jobId: null,
     CLASSIFICATIONS, WORKSPACE_TABS,
   }),
   computed: {
@@ -273,13 +272,48 @@ export default {
     canTriage() {
       return this.designation === "pricing";
     },
-    tabLabel() {
-      const t = WORKSPACE_TABS.find((x) => x.key === this.tab);
-      return t ? t.label : this.tab;
+    /**
+     * 🔴 TIMING AS A STATE, NOT FOUR TIMESTAMPS. The value in `first_triage_at` and
+     * `first_response_at` is the CONTRAST between them — a time against triaged with a
+     * dash against replied means somebody looked and the client is still waiting, which is
+     * what makes `lost_reason = 'delay_in_response'` provable rather than asserted.
+     *
+     * Four raw datetimes in a header read as noise and leave the reader to do the
+     * subtraction. The exact values stay available on hover.
+     */
+    timing() {
+      const a = this.active;
+      if (!a) return null;
+
+      if (!a.first_triage_at) {
+        return { label: "Not triaged yet", tone: "neutral" };
+      }
+
+      const triaged = new Date(a.first_triage_at);
+
+      if (a.first_response_at) {
+        return {
+          label: "Answered " + this.elapsed(triaged, new Date(a.first_response_at)) + " after triage",
+          tone: "success",
+        };
+      }
+
+      /* Unanswered is the one worth noticing, so it is the one that gets a colour. */
+      return {
+        label: "Unanswered — " + this.elapsed(triaged, new Date()) + " since triage",
+        tone: "warn",
+      };
     },
-    tabStep() {
-      const t = WORKSPACE_TABS.find((x) => x.key === this.tab);
-      return t ? t.step : null;
+    timingDetail() {
+      const a = this.active;
+      if (!a) return "";
+
+      return [
+        "Last inbound: " + this.stamp(a.latest_message_received_at),
+        "First triaged: " + this.stamp(a.first_triage_at),
+        "First replied: " + this.stamp(a.first_response_at),
+        "Messages: " + (a.message_count == null ? "—" : a.message_count),
+      ].join("\n");
     },
   },
   created() {
@@ -343,6 +377,26 @@ export default {
       this.extracted = payload;
       this.setSplit(true);
       this.tab = "extraction";
+    },
+    /* ⚠️ A raw ISO string is not a date to a reader. The API sends
+       2026-08-30T10:28:47.000000Z; a person needs 30 Aug 2026, 10:28. */
+    stamp(value) {
+      if (!value) return "—";
+
+      const d = new Date(value);
+      if (isNaN(d)) return String(value);
+
+      return d.toLocaleString(undefined, {
+        day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      });
+    },
+    /** Coarse on purpose: "3d" is the decision, "3d 4h 12m" is trivia. */
+    elapsed(from, to) {
+      const mins = Math.max(0, Math.round((to - from) / 60000));
+      if (mins < 60) return mins + "m";
+      if (mins < 1440) return Math.round(mins / 60) + "h";
+      return Math.round(mins / 1440) + "d";
     },
     openWorkspace() {
       this.setSplit(true);

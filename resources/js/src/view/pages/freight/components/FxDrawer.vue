@@ -31,6 +31,16 @@
       </header>
 
       <!--
+        Facts that are ALWAYS true of the record, shown rather than tabbed. A tab that
+        holds two read-only fields costs a click to reveal something that never changes
+        while the drawer is open — and the reader has to remember to look. The header is
+        where a record identifies itself.
+      -->
+      <div v-if="$slots.meta" class="fx-drawer__meta">
+        <slot name="meta" />
+      </div>
+
+      <!--
         §5.4 the tab bar lives in the HEADER, not in the body, so it stays put while
         the body scrolls. A tab strip that scrolls away leaves no way back.
       -->

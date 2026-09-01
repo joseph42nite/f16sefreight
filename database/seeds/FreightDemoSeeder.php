@@ -11,6 +11,8 @@ use App\Partner;
 use App\Services\SystemActor;
 use App\User;
 use Illuminate\Database\Seeder;
+use App\Services\AwbJobLinker;
+use App\Support\AwbNumber;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -207,6 +209,12 @@ class FreightDemoSeeder extends Seeder
         DB::table('accounting_periods')->whereIn('agent_id', $branchIds)->delete();
         DB::table('chart_of_accounts')->whereIn('agent_id', $branchIds)->delete();
 
+        // The air document layer. `way_bill_addresses` and the rest hang off `awb_id`,
+        // which is the waybill's own numeric key, so they go first.
+        $awbIds = DB::table('air_way_bills')->whereIn('agent_id', $branchIds)->pluck('id');
+        DB::table('way_bill_addresses')->whereIn('awb_id', $awbIds)->delete();
+        DB::table('air_way_bills')->whereIn('agent_id', $branchIds)->delete();
+
         DB::table('mailbox_connections')->whereIn('agent_id', $branchIds)->delete();
         $threadKeys = DB::table('email_threads')->whereIn('agent_id', $branchIds)->pluck('thread_key');
         DB::table('email_attachments')->whereIn('email_message_id',
@@ -272,6 +280,7 @@ class FreightDemoSeeder extends Seeder
             $this->seedLifecycle($branch, $customers, $users, $tenant['scale']);
             $this->seedTrailingHistory($branch, $customers[3], $users, $tenant['scale']);
             $this->seedInbox($branch, $customers, $users);
+            $this->seedWaybills($branch);
         }
 
         // Only the Command tenant gets financials — below Command there is no ledger.
@@ -453,7 +462,15 @@ class FreightDemoSeeder extends Seeder
                     // "later" and the whole urgency dimension is invisible.
                     'planned_clearance_date' => now()->addDays([0, 1, 5][$i % 3])->toDateString(),
                     'cargo_type' => $mode === 'sea' ? 'fcl' : 'general',
-                    'awb_number' => $mode === 'air' ? '176-' . str_pad((string) (10000000 + $i), 8, '0', STR_PAD_LEFT) : null,
+                    // 🔴 UNIQUE PER BRANCH. An AWB number is issued by the AIRLINE, so
+                    // `air_way_bills.id` is a global primary key — but this line used to
+                    // mint the same `176-1000000{$i}` for every branch of every tenant, and
+                    // seeding the document layer then collided on the second branch with a
+                    // duplicate-key error. Offsetting by branch is also the truthful shape:
+                    // two forwarders never hold the same airway bill.
+                    'awb_number' => $mode === 'air'
+                        ? '176-' . str_pad((string) (10000000 + ($branch->id * 100) + $i), 8, '0', STR_PAD_LEFT)
+                        : null,
                     'created_at' => now()->subDays(max($daysAgo, 1)),
                     'updated_at' => now()->subDays(max($daysAgo, 1)),
                 ]);
@@ -631,18 +648,61 @@ class FreightDemoSeeder extends Seeder
             'created_at' => now(), 'updated_at' => now(),
         ]);
 
+        // ── The workspace's Enquiry and Timing tabs are read from THESE rows ────────
+        // 🔴 **Every thread used to carry `enquiry_id = NULL`**, so the Enquiry tab was
+        // permanently stuck on "Not promoted to an enquiry yet" and there was no way to
+        // see it working. And only ONE thread had a `first_response_at`, so Timing was
+        // mostly em dashes.
+        //
+        // The last column promotes a thread to an enquiry of a given status, so the two
+        // tabs can be checked against every state that matters:
+        //
+        //   promote  triaged  replied   what it demonstrates
+        //   ───────  ───────  ───────   ────────────────────────────────────────────────
+        //   null     no       no        the un-promoted empty state
+        //   converted yes     yes       the happy path: looked, answered, became a job
+        //   quoted   yes      no        🔴 somebody looked and the CLIENT IS STILL WAITING
+        //   lost     yes      no        the same, with the outcome it leads to
+        //
+        // ⚠️ Those middle two are the whole reason `first_triage_at` and
+        // `first_response_at` are separate columns. A time against triaged with a dash
+        // against replied is what makes `lost_reason = 'delay_in_response'` provable
+        // instead of asserted — and it cannot be seen at all unless the data contains it.
         $threads = [
-            ['Quote request — 6 pallets INBOM to DEFRA', 'ops@contoso.test', 'customer_enquiry', 'unread', 0, false, 2],
-            ['RE: Rates for Chennai–Dubai, 12 cartons', 'shipping@globex.test', 'customer_enquiry', 'triaged', 1, true, 4],
-            ['Urgent: pharma shipment next Tuesday', 'exports@northwind.test', 'customer_enquiry', 'unread', 0, false, 1],
-            ['Flight EK511 rescheduled to 04-Sep', 'cargo@emirates.test', 'airline', 'unread', 0, false, 1],
-            ['MAWB 176-10000004 — space confirmed', 'bookings@lufthansa.test', 'airline', 'read', 1, false, 3],
-            ['Bill of entry filed — INBOM/2026/0442', 'filings@sharmacha.test', 'clearance', 'unread', 0, false, 2],
-            ['Pickup scheduled 02-Sep, 0900 hrs', 'dispatch@bluedart.test', 'trucking_road', 'read', 1, false, 1],
-            ['Enquiry: FCL Nhava Sheva to Hamburg', 'logistics@globex.test', 'customer_enquiry', 'unread', 0, false, 2],
+            ['Quote request — 6 pallets INBOM to DEFRA', 'ops@contoso.test', 'customer_enquiry', 'unread', 0, false, 2, null],
+            ['RE: Rates for Chennai–Dubai, 12 cartons', 'shipping@globex.test', 'customer_enquiry', 'triaged', 1, true, 4, 'converted'],
+            ['Urgent: pharma shipment next Tuesday', 'exports@northwind.test', 'customer_enquiry', 'triaged', 0, false, 1, 'quoted'],
+            ['Flight EK511 rescheduled to 04-Sep', 'cargo@emirates.test', 'airline', 'unread', 0, false, 1, null],
+            ['MAWB 176-10000004 — space confirmed', 'bookings@lufthansa.test', 'airline', 'read', 1, false, 3, null],
+            ['Bill of entry filed — INBOM/2026/0442', 'filings@sharmacha.test', 'clearance', 'unread', 0, false, 2, null],
+            ['Pickup scheduled 02-Sep, 0900 hrs', 'dispatch@bluedart.test', 'trucking_road', 'read', 1, false, 1, null],
+            ['Still awaiting your rate — 3 pallets INBOM to SGSIN', 'logistics@globex.test', 'customer_enquiry', 'triaged', 1, false, 2, 'lost'],
         ];
 
-        foreach ($threads as $i => [$subject, $from, $classification, $status, $assigned, $replied, $messages]) {
+        // One enquiry is used once. Handing two threads the same enquiry would make the
+        // Enquiry tab show the same number twice and hide the state it is meant to show.
+        $claimed = [];
+
+        $promoteTo = function (?string $status) use ($branch, &$claimed): ?int {
+            if ($status === null) {
+                return null;
+            }
+
+            $id = DB::table('enquiries')
+                ->where('agent_id', $branch->id)
+                ->where('transport_mode', 'air')
+                ->where('status', $status)
+                ->whereNotIn('id', $claimed ?: [0])
+                ->value('id');
+
+            if ($id !== null) {
+                $claimed[] = $id;
+            }
+
+            return $id;
+        };
+
+        foreach ($threads as $i => [$subject, $from, $classification, $status, $assigned, $replied, $messages, $promote]) {
             $opened = now()->subDays(9 - $i)->subHours(3);
             $key = 'thr_' . $branch->id . '_' . $i . '_' . substr(md5($subject . $branch->id), 0, 8);
 
@@ -654,6 +714,10 @@ class FreightDemoSeeder extends Seeder
                 'provider_thread_id' => 'gmail_' . substr(md5($key), 0, 16),
                 'status' => $status,
                 'classification' => $classification,
+                // The workspace's Enquiry tab reads this. NULL is a real state — most
+                // conversations never become an enquiry — so one thread deliberately
+                // stays unpromoted.
+                'enquiry_id' => $promoteTo($promote),
                 'latest_message_received_at' => $opened->copy()->addHours($messages),
                 // 🔴 first_response_at is the first OUTBOUND message, and it is what
                 // makes lost_reason = 'delay_in_response' provable. first_triage_at is
@@ -702,6 +766,71 @@ class FreightDemoSeeder extends Seeder
      * same domain, still finalizes. The per-branch rule stops being a paragraph in a
      * docblock and becomes something you can see.
      */
+    /**
+     * One master air waybill per converted air job — the DOCUMENT half of FocusAir.
+     *
+     * 🔴 **`air_way_bills` and `house_way_bills` held ZERO rows** until this existed, so the
+     * MAWB form, the HAWB form and consolidation all opened onto nothing, and there was no
+     * way to see whether the document layer connected to anything. It did not: GAPS #39.
+     *
+     * ⚠️ **`job_id` is NOT set here.** It is left to `AwbJobLinker`, which the observer
+     * fires when the job takes its `awb_number`. Writing it directly would seed a link that
+     * looks correct while proving nothing about whether the linking actually works — and
+     * that link failing silently is the exact defect this data exists to expose.
+     *
+     * ⚠️ The primary key is the eleven digits with no separator (`17610000008`); the NUMBER
+     * is canonical with the hyphen (`176-10000008`). See `App\Support\AwbNumber`.
+     */
+    private function seedWaybills(Agent $branch): void
+    {
+        $jobs = DB::table('jobs')
+            ->where('agent_id', $branch->id)
+            ->where('transport_mode', 'air')
+            ->whereNotNull('awb_number')
+            ->get(['id', 'awb_number']);
+
+        foreach ($jobs as $job) {
+            $key = AwbNumber::key($job->awb_number);
+
+            if ($key === null) {
+                continue;
+            }
+
+            $canonical = AwbNumber::normalise($job->awb_number);
+            [$code, $serial] = explode('-', $canonical);
+
+            DB::table('air_way_bills')->insert([
+                'id' => $key, 'awb_code' => $code, 'awb_no' => $serial,
+                'agent_id' => $branch->id, 'status' => 'generate_pdf',
+                'consolidated_mawb' => 'false', 'awb' => 'true',
+                'departure_airport' => 'BOM', 'destination_airport' => 'DXB',
+                'from' => 'BOM', 'to' => 'DXB', 'by' => 'EK', 'flight' => '0511',
+                'date' => now()->addDays(3),
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+
+            // Addresses that exercise the widened validation (GAPS #44): a slash, an
+            // ampersand, parentheses and an umlaut — all of which the old rule refused.
+            DB::table('way_bill_addresses')->insert([
+                'awb_id' => (string) $key,
+                'ship_name' => 'Müller & Co. Exports',
+                'ship_address' => 'Plot 42/A, MIDC Andheri East (Gate 3)',
+                'ship_city' => 'Mumbai', 'ship_state' => 'Maharashtra',
+                'ship_country' => 'IN', 'ship_post_code' => '400093',
+                'ship_airport_code' => 'BOM',
+                'cons_name' => 'Emirates Trading LLC',
+                'cons_address' => 'Warehouse 7, Jebel Ali Free Zone',
+                'cons_city' => 'Dubai', 'cons_state' => 'Dubai',
+                'cons_country' => 'AE', 'cons_post_code' => '17000',
+                'cons_airport_code' => 'DXB',
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+
+            // 🔗 The link is MADE, not seeded — through the same path production uses.
+            app(AwbJobLinker::class)->link($key);
+        }
+    }
+
     private function seedFinancials(Agent $branch, $customers, array $users): void
     {
         $agentCode = Company::find($branch->company_id)->code . $branch->branch_code;

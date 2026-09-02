@@ -189,7 +189,9 @@
         </section>
 
         <section v-else-if="tab === 'extraction'">
-          <ExtractionPanel @apply="onExtracted" />
+          <!-- The waybill this conversation is already about, so the operator is not
+               asked to retype a number the job already holds. -->
+          <ExtractionPanel :prefill-awb="jobAwb" @apply="onExtracted" />
         </section>
       </template>
 
@@ -254,7 +256,7 @@ export default {
     active: null, pending: null,
     loading: true, busy: false, error: null, actionError: null,
     query: "", timer: null,
-    workspace: false, tab: "extraction", extracted: null, jobId: null,
+    workspace: false, tab: "extraction", extracted: null, jobId: null, jobAwb: null,
     CLASSIFICATIONS, WORKSPACE_TABS,
   }),
   computed: {
@@ -442,13 +444,18 @@ export default {
     },
     open(thread) {
       this.actionError = null;
-      this.tab = "enquiry";
+      // 🔴 "enquiry" was a TAB until it moved to the header, and this line kept resetting
+      // to it — a key no section matches, so the workspace rendered nothing at all and
+      // whatever the operator had typed appeared to vanish. Removing a tab means removing
+      // every place that selects it.
+      this.tab = "extraction";
       ApiService.get("/inbox/threads/" + thread.id)
         .then(({ data }) => {
           this.active = data.thread;
           this.pending = data.thread.classification;
           this.messages = data.messages || [];
           this.jobId = null;
+          this.jobAwb = null;
 
           /* The cost sheet hangs off the JOB, not the thread. A converted enquiry has
              one; an unconverted one does not, and saying so beats an empty table. */
@@ -457,8 +464,13 @@ export default {
               .then(({ data: jobs }) => {
                 const rows = jobs.data || [];
                 this.jobId = rows.length ? rows[0].id : null;
+
+                /* 🔗 The AWB the shipment already carries. Extraction should offer the
+                   number the enquiry is about, not an empty box — that is what ties the
+                   enquiry, the job and the waybill into one thread of work. */
+                this.jobAwb = rows.length ? rows[0].awb_number || null : null;
               })
-              .catch(() => { this.jobId = null; });
+              .catch(() => { this.jobId = null; this.jobAwb = null; });
           }
         })
         .catch((e) => { this.actionError = this.messageFor(e); });

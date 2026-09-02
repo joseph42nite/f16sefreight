@@ -688,12 +688,34 @@ class FreightDemoSeeder extends Seeder
                 return null;
             }
 
-            $id = DB::table('enquiries')
+            $query = DB::table('enquiries')
                 ->where('agent_id', $branch->id)
                 ->where('transport_mode', 'air')
                 ->where('status', $status)
-                ->whereNotIn('id', $claimed ?: [0])
-                ->value('id');
+                ->whereNotIn('id', $claimed ?: [0]);
+
+            // 🔗 For a CONVERTED enquiry, prefer one whose job already carries an AWB.
+            // The whole point of the thread is that enquiry → job → waybill is one chain,
+            // and a converted thread whose job has no waybill demonstrates two thirds of
+            // it — the extraction panel then opens with an empty number, which reads as
+            // the prefill being broken rather than as there being nothing to prefill.
+            if ($status === 'converted') {
+                $withAwb = (clone $query)
+                    ->whereExists(function ($q) {
+                        $q->select(DB::raw(1))->from('jobs')
+                            ->whereColumn('jobs.enquiry_id', 'enquiries.id')
+                            ->whereNotNull('jobs.awb_number');
+                    })
+                    ->value('id');
+
+                if ($withAwb !== null) {
+                    $claimed[] = $withAwb;
+
+                    return $withAwb;
+                }
+            }
+
+            $id = $query->value('id');
 
             if ($id !== null) {
                 $claimed[] = $id;

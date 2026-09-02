@@ -354,6 +354,16 @@ const PARTY_REQUIRED = {
 export default {
   name: "ExtractionPanel",
   components: { StatusChip },
+  props: {
+    /**
+     * The AWB this conversation is already about, as `176-10000008`.
+     *
+     * 🔗 The enquiry, the job and the waybill are one thread of work, so the number the
+     * job already holds is the number to extract into. Asking the operator to retype it is
+     * how a draft ends up under a different waybill from the shipment it belongs to.
+     */
+    prefillAwb: { type: String, default: null },
+  },
   data: () => ({
     GROUPS,
     TARGETS,
@@ -542,7 +552,28 @@ export default {
       return { fields, overrides: this.pastedFields, resolved: this.resolved };
     },
   },
+  watch: {
+    /* Immediate, because the job lookup usually resolves before the panel is opened —
+       and only when the field is EMPTY, so it never overwrites a number being typed. */
+    prefillAwb: { immediate: true, handler: "applyPrefill" },
+  },
   methods: {
+    /**
+     * Fill the number from the job, without ever clobbering the operator.
+     *
+     * ⚠️ Split on the FIRST hyphen only. `jobs.awb_number` is `176-10000008`, and a
+     * naive split on every hyphen would silently drop anything after a second one.
+     */
+    applyPrefill() {
+      const value = String(this.prefillAwb || "").trim();
+      if (!value || this.awbCode || this.awbNo) return;
+
+      const at = value.indexOf("-");
+      if (at === -1) return;
+
+      this.awbCode = value.slice(0, at);
+      this.awbNo = value.slice(at + 1);
+    },
     /**
      * One field, from the paste or from the document assigned to `groupKey`.
      *
@@ -760,6 +791,9 @@ export default {
           this.$emit("apply", { fields: this.flatFields, identity: this.draftIdentity });
         })
         .catch((e) => { this.saveError = this.messageFor(e); })
+        // ⚠️ The number is deliberately NOT cleared. The operator is usually still working
+        // on the same waybill — generating its PDF, sharing it — and a field that empties
+        // itself on save reads as the draft having been lost.
         .finally(() => { this.saving = false; });
     },
     messageFor(e) {

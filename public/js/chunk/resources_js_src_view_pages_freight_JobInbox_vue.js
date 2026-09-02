@@ -105,6 +105,7 @@ const WORKSPACE_TABS = [{
     tab: "extraction",
     extracted: null,
     jobId: null,
+    jobAwb: null,
     CLASSIFICATIONS,
     WORKSPACE_TABS
   }),
@@ -289,7 +290,11 @@ const WORKSPACE_TABS = [{
     },
     open(thread) {
       this.actionError = null;
-      this.tab = "enquiry";
+      // 🔴 "enquiry" was a TAB until it moved to the header, and this line kept resetting
+      // to it — a key no section matches, so the workspace rendered nothing at all and
+      // whatever the operator had typed appeared to vanish. Removing a tab means removing
+      // every place that selects it.
+      this.tab = "extraction";
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/inbox/threads/" + thread.id).then(({
         data
       }) => {
@@ -297,6 +302,7 @@ const WORKSPACE_TABS = [{
         this.pending = data.thread.classification;
         this.messages = data.messages || [];
         this.jobId = null;
+        this.jobAwb = null;
 
         /* The cost sheet hangs off the JOB, not the thread. A converted enquiry has
            one; an unconverted one does not, and saying so beats an empty table. */
@@ -306,8 +312,14 @@ const WORKSPACE_TABS = [{
           }) => {
             const rows = jobs.data || [];
             this.jobId = rows.length ? rows[0].id : null;
+
+            /* 🔗 The AWB the shipment already carries. Extraction should offer the
+               number the enquiry is about, not an empty box — that is what ties the
+               enquiry, the job and the waybill into one thread of work. */
+            this.jobAwb = rows.length ? rows[0].awb_number || null : null;
           }).catch(() => {
             this.jobId = null;
+            this.jobAwb = null;
           });
         }
       }).catch(e => {
@@ -588,6 +600,19 @@ const PARTY_REQUIRED = {
   components: {
     StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
   },
+  props: {
+    /**
+     * The AWB this conversation is already about, as `176-10000008`.
+     *
+     * 🔗 The enquiry, the job and the waybill are one thread of work, so the number the
+     * job already holds is the number to extract into. Asking the operator to retype it is
+     * how a draft ends up under a different waybill from the shipment it belongs to.
+     */
+    prefillAwb: {
+      type: String,
+      default: null
+    }
+  },
   data: () => ({
     GROUPS,
     TARGETS: _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.TARGETS,
@@ -775,7 +800,29 @@ const PARTY_REQUIRED = {
       };
     }
   },
+  watch: {
+    /* Immediate, because the job lookup usually resolves before the panel is opened —
+       and only when the field is EMPTY, so it never overwrites a number being typed. */
+    prefillAwb: {
+      immediate: true,
+      handler: "applyPrefill"
+    }
+  },
   methods: {
+    /**
+     * Fill the number from the job, without ever clobbering the operator.
+     *
+     * ⚠️ Split on the FIRST hyphen only. `jobs.awb_number` is `176-10000008`, and a
+     * naive split on every hyphen would silently drop anything after a second one.
+     */
+    applyPrefill() {
+      const value = String(this.prefillAwb || "").trim();
+      if (!value || this.awbCode || this.awbNo) return;
+      const at = value.indexOf("-");
+      if (at === -1) return;
+      this.awbCode = value.slice(0, at);
+      this.awbNo = value.slice(at + 1);
+    },
     /**
      * One field, from the paste or from the document assigned to `groupKey`.
      *
@@ -988,7 +1035,11 @@ const PARTY_REQUIRED = {
         });
       }).catch(e => {
         this.saveError = this.messageFor(e);
-      }).finally(() => {
+      })
+      // ⚠️ The number is deliberately NOT cleared. The operator is usually still working
+      // on the same waybill — generating its PDF, sharing it — and a field that empties
+      // itself on save reads as the draft having been lost.
+      .finally(() => {
         this.saving = false;
       });
     },
@@ -1286,6 +1337,9 @@ var render = function render() {
   }) : _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("This enquiry has not been converted to a job yet.")])], 1) : _vm.tab === "extraction" ? _c("section", [_c("ExtractionPanel", {
+    attrs: {
+      "prefill-awb": _vm.jobAwb
+    },
     on: {
       apply: _vm.onExtracted
     }

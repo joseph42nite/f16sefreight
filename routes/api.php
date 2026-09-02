@@ -118,6 +118,11 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::post('/mailboxes/connect', [\App\Http\Controllers\Freight\MailboxController::class, 'connect']);
     Route::post('/mailboxes/{mailbox}/disconnect', [\App\Http\Controllers\Freight\MailboxController::class, 'disconnect']);
     Route::post('/mailboxes/{mailbox}/sync', [\App\Http\Controllers\Freight\MailboxController::class, 'syncNow']);
+
+    // ── Document share links ─────────────────────────────────────────────────
+    Route::get('/documents/{document}/links', [\App\Http\Controllers\Freight\DocumentShareController::class, 'index']);
+    Route::post('/documents/{document}/share', [\App\Http\Controllers\Freight\DocumentShareController::class, 'create']);
+    Route::post('/share-links/{link}/revoke', [\App\Http\Controllers\Freight\DocumentShareController::class, 'revoke']);
     Route::post('/get-airport-by-airport-code', [AirwayBillController::class, 'get_airport_by_airport_code']);
     Route::get('/company-templates', [UserController::class, 'getCompanyTemplates']);
 
@@ -216,6 +221,16 @@ Route::post('/openclaw/webhook', [\App\Http\Controllers\OpenClawController::clas
 // Authorization header, so the acting user is carried in `state` — a random key into a
 // short-lived cache entry, consumed on use. See MailboxController::callback.
 Route::get('/user/mailboxes/callback', [\App\Http\Controllers\Freight\MailboxController::class, 'callback']);
+
+// ── Public document links (guide §5.4) ───────────────────────────────────────
+// 🔴 UNAUTHENTICATED BY DESIGN — the client is not a system user, and the 48-character
+// token IS the boundary. Rate-limited because an unauthenticated route that reads a token
+// is the one place a stranger can guess at. Every refusal is the same 404: distinguishing
+// expired from revoked from never-existed tells a prober which tokens were once real.
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/d/{token}', [\App\Http\Controllers\Freight\DocumentShareController::class, 'download']);
+    Route::post('/d/{token}/respond', [\App\Http\Controllers\Freight\DocumentShareController::class, 'respond']);
+});
 Route::post('/openclaw/telegram-callback', [\App\Http\Controllers\OpenClawController::class, 'telegramCallback']);
 Route::get('/openclaw/pending', [\App\Http\Controllers\OpenClawController::class, 'getPendingActions']);
 /*

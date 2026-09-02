@@ -259,7 +259,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
-import { buildPayload, createEndpoint, formRoute, TARGETS } from "@/core/config/awbMapping";
+import { buildPayload, createEndpoint, formRoute, masterKey, TARGETS } from "@/core/config/awbMapping";
 
 /**
  * The parts a shipment is assembled from.
@@ -752,7 +752,11 @@ export default {
 
       ApiService.post(createEndpoint(this.target), payload)
         .then(() => {
-          this.draftUrl = formRoute(this.target);
+          // Straight to the draft that was just written, not to a blank form.
+          this.draftUrl = formRoute(
+            this.target,
+            this.target === "mawb" ? masterKey(this.awbCode, this.awbNo) : this.hawbNo
+          );
           this.$emit("apply", { fields: this.flatFields, identity: this.draftIdentity });
         })
         .catch((e) => { this.saveError = this.messageFor(e); })

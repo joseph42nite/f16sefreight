@@ -980,7 +980,8 @@ const PARTY_REQUIRED = {
         hawbNo: this.hawbNo
       });
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.createEndpoint)(this.target), payload).then(() => {
-        this.draftUrl = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.formRoute)(this.target);
+        // Straight to the draft that was just written, not to a blank form.
+        this.draftUrl = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.formRoute)(this.target, this.target === "mawb" ? (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.masterKey)(this.awbCode, this.awbNo) : this.hawbNo);
         this.$emit("apply", {
           fields: this.flatFields,
           identity: this.draftIdentity
@@ -2120,7 +2121,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "TARGETS": () => (/* binding */ TARGETS),
 /* harmony export */   "buildPayload": () => (/* binding */ buildPayload),
 /* harmony export */   "createEndpoint": () => (/* binding */ createEndpoint),
-/* harmony export */   "formRoute": () => (/* binding */ formRoute)
+/* harmony export */   "formRoute": () => (/* binding */ formRoute),
+/* harmony export */   "masterKey": () => (/* binding */ masterKey)
 /* harmony export */ });
 /**
  * How an extracted or pasted field becomes an airway bill payload.
@@ -2281,9 +2283,22 @@ function buildPayload(target, fields, identity) {
   return payload;
 }
 
-/** Where a saved draft lives, so the operator can be sent straight to it. */
-function formRoute(target) {
-  return target === "mawb" ? "/master-airway-bill" : "/house-way-bill";
+/**
+ * Where a saved draft lives, so the operator lands ON IT rather than on a blank form.
+ *
+ * 🔴 The EDIT route with the document's key, not the create route. Sending the operator to
+ * `/master-airway-bill` after saving a draft opens an empty form — they then have to find
+ * the draft they just made, and the obvious move is to key it again, which is how a second
+ * waybill gets raised for one shipment.
+ */
+function formRoute(target, key) {
+  const base = target === "mawb" ? "/edit-airway-bill" : "/edit-houseway-bill";
+  return key ? base + "/" + key : base;
+}
+
+/** The eleven-digit key a master is stored under — `176` + `10000008`. */
+function masterKey(awbCode, awbNo) {
+  return String(awbCode || "") + String(awbNo || "");
 }
 
 /** Which endpoint creates it. */

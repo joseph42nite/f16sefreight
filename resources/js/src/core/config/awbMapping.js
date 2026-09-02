@@ -140,9 +140,23 @@ export function buildPayload(target, fields, identity) {
   return payload;
 }
 
-/** Where a saved draft lives, so the operator can be sent straight to it. */
-export function formRoute(target) {
-  return target === "mawb" ? "/master-airway-bill" : "/house-way-bill";
+/**
+ * Where a saved draft lives, so the operator lands ON IT rather than on a blank form.
+ *
+ * 🔴 The EDIT route with the document's key, not the create route. Sending the operator to
+ * `/master-airway-bill` after saving a draft opens an empty form — they then have to find
+ * the draft they just made, and the obvious move is to key it again, which is how a second
+ * waybill gets raised for one shipment.
+ */
+export function formRoute(target, key) {
+  const base = target === "mawb" ? "/edit-airway-bill" : "/edit-houseway-bill";
+
+  return key ? base + "/" + key : base;
+}
+
+/** The eleven-digit key a master is stored under — `176` + `10000008`. */
+export function masterKey(awbCode, awbNo) {
+  return String(awbCode || "") + String(awbNo || "");
 }
 
 /** Which endpoint creates it. */

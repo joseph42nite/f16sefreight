@@ -539,6 +539,57 @@ const GROUPS = [{
   paths: ["also_notify", "notify"]
 }];
 
+/**
+ * Step 3 lists FIELDS, not groups.
+ *
+ * 🔴 Assignment is by group — a document supplies "the parties" or "the cargo" — but
+ * REVIEW is per field, because that is the grain an operator checks at. "Cargo: 14 pcs ·
+ * 120x80x90 · Machine parts" on one line hides which of the three was actually found, and
+ * a missing description reads the same as a present one.
+ */
+const RESULT_FIELDS = [{
+  key: "shipper",
+  label: "Shipper",
+  group: "parties"
+}, {
+  key: "consignee",
+  label: "Consignee",
+  group: "parties"
+}, {
+  key: "pieces",
+  label: "Pieces",
+  group: "cargo"
+}, {
+  key: "dimensions",
+  label: "Dimensions",
+  group: "cargo"
+}, {
+  key: "goods",
+  label: "Description",
+  group: "cargo"
+}, {
+  key: "gross_weight",
+  label: "Gross weight",
+  group: "weights",
+  unit: "kg"
+}, {
+  key: "volumetric_weight",
+  label: "Volumetric weight",
+  group: "weights",
+  unit: "kg",
+  derived: true
+}, {
+  key: "chargeable_weight",
+  label: "Chargeable weight",
+  group: "weights",
+  unit: "kg",
+  editable: true
+}, {
+  key: "notify",
+  label: "Notify party",
+  group: "notify"
+}];
+
 /** Shown in the paste box, so the accepted labels are visible rather than documented. */
 const PASTE_EXAMPLE = ["Shipper: Globex Exports Pvt Ltd", "Shipper address: Plot 42/A, MIDC Andheri East", "Shipper city: Mumbai", "Consignee: Emirates Trading LLC", "Pieces: 14", "Gross weight: 698.5", "Chargeable weight: 720", "Dimensions: 120x80x90", "Goods: Machine parts"].join("\n");
 
@@ -617,6 +668,8 @@ const PARTY_REQUIRED = {
     GROUPS,
     TARGETS: _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.TARGETS,
     PASTE_EXAMPLE,
+    RESULT_FIELDS,
+    chargeableEdit: "",
     target: "mawb",
     awbCode: "",
     awbNo: "",
@@ -724,6 +777,11 @@ const PARTY_REQUIRED = {
      * re-measured figure is a fact the operator has and the formula does not.
      */
     chargeable() {
+      // 🔴 The operator's own figure outranks both the paste and the formula — it is the
+      // most recent statement of fact about this shipment.
+      if (this.chargeableEdit !== "" && !isNaN(parseFloat(this.chargeableEdit))) {
+        return parseFloat(this.chargeableEdit);
+      }
       const typed = raw(this.sourceField("chargeable_weight", "weights"));
       if (typed) return typed;
       const gross = parseFloat(raw(this.sourceField("gross_weight", "weights")));
@@ -732,6 +790,63 @@ const PARTY_REQUIRED = {
       if (isNaN(gross)) return vol;
       if (vol === null) return gross;
       return Math.max(gross, vol);
+    },
+    /**
+     * One row per field, with where its value came from.
+     *
+     * ⚠️ Volumetric and chargeable are DERIVED, so their source reads "calculated" rather
+     * than naming a document that never contained them.
+     */
+    fieldRows() {
+      return RESULT_FIELDS.map(f => {
+        if (f.key === "volumetric_weight") {
+          return _objectSpread(_objectSpread({}, f), {}, {
+            source: this.volumetric === null ? null : "calculated",
+            value: this.volumetric
+          });
+        }
+        if (f.key === "chargeable_weight") {
+          const typed = raw(this.sourceField("chargeable_weight", "weights"));
+          return _objectSpread(_objectSpread({}, f), {}, {
+            // ⚠️ "entered" and "pasted text" are different provenances and must not
+            // share a label: one is a figure the operator typed against this shipment,
+            // the other came from a block of text they pasted in.
+            source: this.chargeableEdit !== "" ? "entered" : typed ? "text" : this.chargeable === null ? null : "calculated",
+            value: this.chargeable
+          });
+        }
+        const node = this.sourceField(f.key, f.group);
+        const value = raw(node);
+        if (value === null || value === undefined || value === "") {
+          return _objectSpread(_objectSpread({}, f), {}, {
+            source: null,
+            value: null
+          });
+        }
+
+        // Named source: the paste, or the document assigned to this field's group.
+        if (this.pastedFields[f.key] !== undefined) {
+          return _objectSpread(_objectSpread({}, f), {}, {
+            source: "text",
+            value
+          });
+        }
+        const doc = this.documents.find(d => d.uid === this.assignment[f.group]);
+        return _objectSpread(_objectSpread({}, f), {}, {
+          source: doc ? doc.name : null,
+          value
+        });
+      });
+    },
+    /**
+     * Where the generated PDF lives.
+     *
+     * ⚠️ A WEB route, not an api one — `/download-awb-pdf/{id}` is registered in
+     * routes/web.php and carries no `/api` prefix. Building it with one 404s.
+     */
+    pdfUrl() {
+      const key = this.target === "mawb" ? (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.masterKey)(this.awbCode, this.awbNo) : this.hawbNo;
+      return (this.target === "mawb" ? "/download-awb-pdf/" : "/download-hawb-pdf/") + key;
     },
     targetLabel() {
       const t = _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.TARGETS.find(x => x.key === this.target);
@@ -2058,16 +2173,45 @@ var render = function render() {
     staticClass: "fx-extract__h"
   }, [_vm._v("3 · What will be used")]), _vm._v(" "), _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.GROUPS, function (g) {
+  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.fieldRows, function (row) {
     return _c("tr", {
-      key: g.key
-    }, [_c("td", [_vm._v(_vm._s(g.label))]), _vm._v(" "), _c("td", [_vm.resolved[g.key].source === "text" ? _c("span", {
+      key: row.key
+    }, [_c("td", [_vm._v(_vm._s(row.label))]), _vm._v(" "), _c("td", [row.source === "text" ? _c("span", {
       staticClass: "fx-extract__override"
-    }, [_vm._v("\n              pasted text\n            ")]) : _vm.resolved[g.key].source ? _c("span", [_vm._v(_vm._s(_vm.resolved[g.key].source))]) : _c("span", {
+    }, [_vm._v("pasted text")]) : row.source === "calculated" ? _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("not set")])]), _vm._v(" "), _c("td", [_vm.resolved[g.key].summary ? _c("span", [_vm._v(_vm._s(_vm.resolved[g.key].summary))]) : _c("span", {
+    }, [_vm._v("calculated")]) : row.source === "entered" ? _c("span", {
+      staticClass: "fx-extract__override"
+    }, [_vm._v("entered")]) : row.source ? _c("span", [_vm._v(_vm._s(row.source))]) : _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("—")])])]);
+    }, [_vm._v("not set")])]), _vm._v(" "), _c("td", [row.editable ? [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.chargeableEdit,
+        expression: "chargeableEdit"
+      }],
+      staticClass: "fx-input fx-extract__weight",
+      attrs: {
+        placeholder: row.value === null ? "" : String(row.value),
+        inputmode: "decimal"
+      },
+      domProps: {
+        value: _vm.chargeableEdit
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.chargeableEdit = $event.target.value;
+        }
+      }
+    }), _vm._v(" "), _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("kg")])] : [row.value !== null && row.value !== "" ? _c("span", [_vm._v("\n                " + _vm._s(row.value)), row.unit ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" " + _vm._s(row.unit))]) : _vm._e()]) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])]], 2)]);
   }), 0)]), _vm._v(" "), _vm.lowConfidence.length ? _c("p", {
     staticClass: "fx-warn",
     attrs: {
@@ -2101,14 +2245,22 @@ var render = function render() {
     attrs: {
       href: _vm.draftUrl
     }
-  }, [_vm._v("Open in " + _vm._s(_vm.targetLabel) + " →")]), _vm._v(" "), _c("button", {
+  }, [_vm._v("Open in " + _vm._s(_vm.targetLabel) + " →")]), _vm._v(" "), _c("a", {
     staticClass: "fx-btn",
-    on: {
-      click: function ($event) {
-        return _vm.$emit("generate-pdf", _vm.draftIdentity);
-      }
+    attrs: {
+      href: _vm.pdfUrl,
+      target: "_blank",
+      rel: "noopener"
     }
-  }, [_vm._v("\n          Generate PDF\n        ")])] : _vm._e()], 2), _vm._v(" "), _vm.draftUrl ? _c("p", {
+  }, [_vm._v("Generate PDF")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.saving
+    },
+    on: {
+      click: _vm.saveDraft
+    }
+  }, [_vm._v("\n          " + _vm._s(_vm.saving ? "Saving…" : "Save changes") + "\n        ")])] : _vm._e()], 2), _vm._v(" "), _vm.draftUrl ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n      Saved as a draft. Open it to add rates and charges — extraction never supplies\n      those.\n    ")]) : _vm._e(), _vm._v(" "), !_vm.canSave ? _c("p", {
     staticClass: "fx-muted"
@@ -2149,7 +2301,7 @@ var staticRenderFns = [function () {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Part")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Field")]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }

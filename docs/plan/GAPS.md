@@ -118,6 +118,14 @@ single blocker on "extract, save as draft, open the form".
 
 ---
 
+## 🔵 Asked for, not yet buildable
+
+| # | Item | Why it waits |
+|---|---|---|
+| 47 | **"Start a new mail" for a second AWB on the same conversation, keeping the same people in CC.** The owner's shape: one conversation is one shipment is one waybill, so needing a different AWB means starting a new thread — pre-addressed to the same participants, so the enquiry, job and waybill of the NEW shipment are connected from the first message | Composes and SENDS outbound mail, which needs two things that do not exist yet: **a connected mailbox** (Graph is built but no real mailbox is connected, so there is nothing to send through) and **the consent gate** — nothing leaves to a client without explicit operator consent, and `ClientNotificationService` already exists for exactly that. ⚠️ The half that IS buildable now is the state change underneath: an action that mints a fresh enquiry carrying the same participants, so the new thread is correctly attributed before mail can be sent. The compose-and-send step slots on top once a mailbox is live |
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

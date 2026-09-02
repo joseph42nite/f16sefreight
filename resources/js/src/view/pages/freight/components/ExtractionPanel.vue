@@ -172,25 +172,44 @@
       <table class="fx-table">
         <thead>
           <tr>
-            <th scope="col">Part</th>
+            <th scope="col">Field</th>
             <th scope="col">Source</th>
             <th scope="col">Value</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="g in GROUPS" :key="g.key">
-            <td>{{ g.label }}</td>
+          <tr v-for="row in fieldRows" :key="row.key">
+            <td>{{ row.label }}</td>
             <td>
-              <span v-if="resolved[g.key].source === 'text'" class="fx-extract__override">
-                pasted text
-              </span>
-              <span v-else-if="resolved[g.key].source">{{ resolved[g.key].source }}</span>
+              <span v-if="row.source === 'text'" class="fx-extract__override">pasted text</span>
+              <span v-else-if="row.source === 'calculated'" class="fx-muted">calculated</span>
+              <span v-else-if="row.source === 'entered'" class="fx-extract__override">entered</span>
+              <span v-else-if="row.source">{{ row.source }}</span>
               <!-- §4.1 "not set" is an answer, and a different one from "empty". -->
               <span v-else class="fx-muted">not set</span>
             </td>
             <td>
-              <span v-if="resolved[g.key].summary">{{ resolved[g.key].summary }}</span>
-              <span v-else class="fx-muted">—</span>
+              <!--
+                🔴 CHARGEABLE IS EDITABLE. It defaults to the greater of gross and
+                volumetric — the IATA rule — but a re-measured or negotiated figure is a
+                fact the operator has and the formula does not, so the derived value is a
+                starting point rather than a verdict.
+              -->
+              <template v-if="row.editable">
+                <input
+                  v-model="chargeableEdit"
+                  class="fx-input fx-extract__weight"
+                  :placeholder="row.value === null ? '' : String(row.value)"
+                  inputmode="decimal"
+                />
+                <span class="fx-muted">kg</span>
+              </template>
+              <template v-else>
+                <span v-if="row.value !== null && row.value !== ''">
+                  {{ row.value }}<span v-if="row.unit" class="fx-muted"> {{ row.unit }}</span>
+                </span>
+                <span v-else class="fx-muted">—</span>
+              </template>
             </td>
           </tr>
         </tbody>
@@ -235,9 +254,19 @@
           <!--
             ⚠️ The PDF is generated FROM THE SAVED DRAFT, not from what is on screen. A PDF
             built from unsaved values is a document nobody can reproduce afterwards.
+
+            🔴 A LINK, not an emit. It was `$emit('generate-pdf')` into a parent that
+            listens for no such event, so the button did nothing at all — and did it
+            silently, which is worse than being absent.
           -->
-          <button class="fx-btn" @click="$emit('generate-pdf', draftIdentity)">
-            Generate PDF
+          <a class="fx-btn" :href="pdfUrl" target="_blank" rel="noopener">Generate PDF</a>
+
+          <!--
+            Saving again after an edit. The draft already exists, so this is an update to
+            the same waybill rather than a second one — the number has not changed.
+          -->
+          <button class="fx-btn" :disabled="saving" @click="saveDraft">
+            {{ saving ? "Saving…" : "Save changes" }}
           </button>
         </template>
       </div>
@@ -276,6 +305,26 @@ const GROUPS = [
      pieces and description they usually sit beside. */
   { key: "weights", label: "Weights — gross, volumetric, chargeable", paths: ["gross_weight", "volumetric_weight", "chargeable_weight", "volume"] },
   { key: "notify", label: "Notify party", paths: ["also_notify", "notify"] },
+];
+
+/**
+ * Step 3 lists FIELDS, not groups.
+ *
+ * 🔴 Assignment is by group — a document supplies "the parties" or "the cargo" — but
+ * REVIEW is per field, because that is the grain an operator checks at. "Cargo: 14 pcs ·
+ * 120x80x90 · Machine parts" on one line hides which of the three was actually found, and
+ * a missing description reads the same as a present one.
+ */
+const RESULT_FIELDS = [
+  { key: "shipper", label: "Shipper", group: "parties" },
+  { key: "consignee", label: "Consignee", group: "parties" },
+  { key: "pieces", label: "Pieces", group: "cargo" },
+  { key: "dimensions", label: "Dimensions", group: "cargo" },
+  { key: "goods", label: "Description", group: "cargo" },
+  { key: "gross_weight", label: "Gross weight", group: "weights", unit: "kg" },
+  { key: "volumetric_weight", label: "Volumetric weight", group: "weights", unit: "kg", derived: true },
+  { key: "chargeable_weight", label: "Chargeable weight", group: "weights", unit: "kg", editable: true },
+  { key: "notify", label: "Notify party", group: "notify" },
 ];
 
 /** Shown in the paste box, so the accepted labels are visible rather than documented. */
@@ -368,6 +417,8 @@ export default {
     GROUPS,
     TARGETS,
     PASTE_EXAMPLE,
+    RESULT_FIELDS,
+    chargeableEdit: "",
     target: "mawb",
     awbCode: "", awbNo: "", hawbNo: "",
     saving: false, saveError: null, draftUrl: null,
@@ -475,6 +526,12 @@ export default {
      * re-measured figure is a fact the operator has and the formula does not.
      */
     chargeable() {
+      // 🔴 The operator's own figure outranks both the paste and the formula — it is the
+      // most recent statement of fact about this shipment.
+      if (this.chargeableEdit !== "" && !isNaN(parseFloat(this.chargeableEdit))) {
+        return parseFloat(this.chargeableEdit);
+      }
+
       const typed = raw(this.sourceField("chargeable_weight", "weights"));
       if (typed) return typed;
 
@@ -486,6 +543,63 @@ export default {
       if (vol === null) return gross;
 
       return Math.max(gross, vol);
+    },
+    /**
+     * One row per field, with where its value came from.
+     *
+     * ⚠️ Volumetric and chargeable are DERIVED, so their source reads "calculated" rather
+     * than naming a document that never contained them.
+     */
+    fieldRows() {
+      return RESULT_FIELDS.map((f) => {
+        if (f.key === "volumetric_weight") {
+          return { ...f, source: this.volumetric === null ? null : "calculated", value: this.volumetric };
+        }
+
+        if (f.key === "chargeable_weight") {
+          const typed = raw(this.sourceField("chargeable_weight", "weights"));
+
+          return {
+            ...f,
+            // ⚠️ "entered" and "pasted text" are different provenances and must not
+            // share a label: one is a figure the operator typed against this shipment,
+            // the other came from a block of text they pasted in.
+            source: this.chargeableEdit !== "" ? "entered"
+                  : typed ? "text"
+                  : this.chargeable === null ? null : "calculated",
+            value: this.chargeable,
+          };
+        }
+
+        const node = this.sourceField(f.key, f.group);
+        const value = raw(node);
+
+        if (value === null || value === undefined || value === "") {
+          return { ...f, source: null, value: null };
+        }
+
+        // Named source: the paste, or the document assigned to this field's group.
+        if (this.pastedFields[f.key] !== undefined) {
+          return { ...f, source: "text", value };
+        }
+
+        const doc = this.documents.find((d) => d.uid === this.assignment[f.group]);
+
+        return { ...f, source: doc ? doc.name : null, value };
+      });
+    },
+    /**
+     * Where the generated PDF lives.
+     *
+     * ⚠️ A WEB route, not an api one — `/download-awb-pdf/{id}` is registered in
+     * routes/web.php and carries no `/api` prefix. Building it with one 404s.
+     */
+    pdfUrl() {
+      const key = this.target === "mawb"
+        ? masterKey(this.awbCode, this.awbNo)
+        : this.hawbNo;
+
+      return (this.target === "mawb" ? "/download-awb-pdf/" : "/download-hawb-pdf/") + key;
     },
     targetLabel() {
       const t = TARGETS.find((x) => x.key === this.target);

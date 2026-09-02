@@ -6049,6 +6049,7 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 .fx-field--inline { display: inline-flex; flex-direction: column; gap: 2px; }
 .fx-field--inline .fx-field__label { font-size: .6875rem; letter-spacing: .04em;
   text-transform: uppercase; color: var(--text-secondary); }
+.fx-extract__weight { width: 9ch; text-align: right; }
 
 @charset "UTF-8";
 html {

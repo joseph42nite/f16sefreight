@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Job;
 use App\Services\AuditLogger;
 use App\Services\EnquirySequenceService;
+use App\Services\RegexClassificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +37,7 @@ class EmailInboxController extends Controller
     public function __construct(
         private readonly EnquirySequenceService $sequences,
         private readonly AuditLogger $audit,
+        private readonly RegexClassificationService $classifier,
     ) {}
 
     /**
@@ -120,6 +122,31 @@ class EmailInboxController extends Controller
             ], 422);
         }
 
+        // 🔴 THE LEARNING LOOP, and it was never wired. `RegexClassificationService::
+        // recordOverride()` existed, wrote the row and incremented `override_count` — and
+        // nothing called it. The dropdown is the only place a human tells the system a
+        // rule was wrong, so without this the rules could never be measured, only guessed
+        // at. AdminHealthController already READS this table, so the reporting end was
+        // reporting on data nothing wrote.
+        //
+        // Captured OUTSIDE the transaction's rollback concern deliberately: a correction
+        // is evidence about the classifier, and it stays true even if the promotion that
+        // followed it fails.
+        $this->classifier->recordOverride([
+            'agent_id'                => $thread->agent_id,
+            'email_thread_id'         => $thread->id,
+            // ⚠️ NULL until the classifier records which rule fired. Today nothing sets a
+            // matched rule on the thread, so an override is attributable to the CHANGE but
+            // not yet to the rule that caused it — see GAPS.
+            'matched_rule_id'         => null,
+            'original_classification' => $from,
+            'corrected_classification' => $to,
+            'email_subject'           => $this->latestSubject($thread),
+            'sender_domain'           => $this->senderDomain($thread),
+            'sender_email'            => $this->senderEmail($thread),
+            'corrected_by'            => auth()->id(),
+        ]);
+
         DB::transaction(function () use ($thread, $to, $promoting, $demoting) {
             if ($promoting && $thread->enquiry_id === null) {
                 $enquiry = Enquiry::create([
@@ -194,6 +221,35 @@ class EmailInboxController extends Controller
      * inbound message. Storing a computed latency lets it drift from the timestamps it
      * was computed from.
      */
+    /** The subject as the operator saw it when they corrected the classification. */
+    private function latestSubject(EmailThread $thread): ?string
+    {
+        return EmailMessage::where('thread_key', $thread->thread_key)
+            ->orderByDesc('received_at')->value('subject');
+    }
+
+    /** The first INBOUND sender — the correspondent, never our own reply address. */
+    private function senderEmail(EmailThread $thread): ?string
+    {
+        return EmailMessage::where('thread_key', $thread->thread_key)
+            ->where('direction', 'inbound')->orderBy('received_at')->value('from');
+    }
+
+    /**
+     * The domain a future `domain_blocklist` rule would be written against.
+     *
+     * ⚠️ Stored alongside the full address rather than derived at read time: a rule is
+     * written from the DOMAIN, and having it precomputed is what makes "which domains do
+     * we keep getting wrong?" a query rather than a script.
+     */
+    private function senderDomain(EmailThread $thread): ?string
+    {
+        $email = $this->senderEmail($thread);
+        $at = $email === null ? false : strrpos($email, '@');
+
+        return $at === false ? null : strtolower(substr($email, $at + 1));
+    }
+
     private function shape(EmailThread $thread): array
     {
         $latest = EmailMessage::where('thread_key', $thread->thread_key)

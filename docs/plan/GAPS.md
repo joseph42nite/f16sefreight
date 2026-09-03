@@ -126,6 +126,15 @@ single blocker on "extract, save as draft, open the form".
 
 ---
 
+## 🔴 Email classification — found 2026-09-03
+
+| # | Finding | Detail |
+|---|---|---|
+| 48 | 🔴 **`email_classification_rules` is EMPTY — zero rows.** `RegexClassificationService` is built and correct (domain_blocklist → sender_pattern → subject_keyword → body_keyword, priority ascending within each), but it has nothing to match against, so every inbound message falls through to the default `customer_enquiry` | ⚠️ **The seeded inbox hides this**: `FreightDemoSeeder` writes `classification` onto each thread directly, so the folders look populated and correct while the classifier has never run. Real rules are a CONTENT decision needing domain knowledge — which airline, CHA and trucker domains this client actually deals with — so they are the owner's to supply, not mine to invent |
+| 49 | 🟢 **RESOLVED 2026-09-03 — the learning loop was never wired.** `RegexClassificationService::recordOverride()` existed, wrote the override row and incremented `override_count`, and **nothing called it** — while `AdminHealthController` already READ the table. The reporting end was reporting on data nothing wrote, so rule accuracy could never be measured, only guessed at | `EmailInboxController::classify()` now records every correction: original and corrected classification, who corrected it, the subject they saw, and the **sender domain** — which is what a future `domain_blocklist` rule gets written against, precomputed so "which domains do we keep getting wrong?" is a query rather than a script. ⚠️ `matched_rule_id` stays NULL: nothing records which rule fired on a thread, so an override is attributable to the CHANGE but not yet to the RULE that caused it. Closing that needs the classifier to stamp its matched rule at ingestion |
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

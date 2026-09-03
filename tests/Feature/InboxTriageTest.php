@@ -97,6 +97,66 @@ class InboxTriageTest extends TestCase
         return $id;
     }
 
+    // ─── The learning loop ───────────────────────────────────────────────────
+
+    /**
+     * 🔴 EVERY CORRECTION IS RECORDED, because the dropdown is the ONLY place a human
+     * tells the system a rule was wrong.
+     *
+     * `recordOverride()` existed, wrote the row and incremented `override_count` — and
+     * nothing called it, while `AdminHealthController` already read the table. The
+     * reporting end was reporting on data nothing wrote, so the rules could never be
+     * measured, only guessed at.
+     */
+    public function test_a_reclassification_is_recorded_as_an_override(): void
+    {
+        $id = $this->thread(['classification' => 'airline']);
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'clearance'])
+            ->assertOk();
+
+        $row = DB::table('email_classification_overrides')->where('email_thread_id', $id)->first();
+
+        $this->assertNotNull($row, 'The correction was not recorded.');
+        $this->assertSame('airline', $row->original_classification);
+        $this->assertSame('clearance', $row->corrected_classification);
+        $this->assertSame($this->pricing->id, (int) $row->corrected_by);
+    }
+
+    /**
+     * ⚠️ The SENDER DOMAIN is captured, because that is what a future `domain_blocklist`
+     * rule is written against. Precomputing it makes "which domains do we keep getting
+     * wrong?" a query rather than a script.
+     */
+    public function test_the_override_captures_the_domain_a_rule_would_be_written_against(): void
+    {
+        $id = $this->thread(['classification' => 'airline']);
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'trucking_road'])
+            ->assertOk();
+
+        $row = DB::table('email_classification_overrides')->where('email_thread_id', $id)->first();
+
+        $this->assertSame('client.test', $row->sender_domain);
+        $this->assertSame('ops@client.test', $row->sender_email);
+        $this->assertSame('Quote request', $row->email_subject);
+    }
+
+    /** ⚠️ Choosing the classification it already has is not a correction. */
+    public function test_selecting_the_same_classification_records_nothing(): void
+    {
+        $id = $this->thread(['classification' => 'airline']);
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'airline'])
+            ->assertOk();
+
+        $this->assertSame(0, DB::table('email_classification_overrides')
+            ->where('email_thread_id', $id)->count());
+    }
+
     // ─── Promotion and demotion ──────────────────────────────────────────────
 
     /** 🔴 Promotion MINTS a numbered enquiry, not a flag. */

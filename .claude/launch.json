@@ -6,6 +6,7 @@
       "runtimeExecutable": "/bin/sh",
       "runtimeArgs": ["-c", "PHP_CLI_SERVER_WORKERS=8 /usr/local/opt/php@8.2/bin/php artisan serve --host=0.0.0.0 --port=8099"],
       "port": 8099,
+      "autoPort": false,
       "url": "http://focusair.localhost:8099"
     }
   ]

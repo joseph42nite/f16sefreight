@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Schema;
  * evidence that it was bad.
  *
  * ── priority drives evaluation order ───────────────────────────────────────
- * Rules are evaluated in priority order, so a specific domain_blocklist entry can beat a
+ * Rules are evaluated in priority order, so a specific sender_domain_match entry can beat a
  * broad body_keyword. `is_active` retires a rule without deleting it, keeping its
  * historical hit/override counts intact.
  *
@@ -41,7 +41,11 @@ return new class extends Migration
                 $table->unsignedBigInteger('agent_id');
 
                 $table->string('rule_name', 100);
-                // domain_blocklist | subject_keyword | body_keyword | sender_pattern
+                // sender_domain_match | subject_keyword | body_keyword | sender_pattern
+                // ⚠️ Renamed from `domain_blocklist` on 2026-09-03: it never blocked anything.
+                // It matches a sender's domain and applies that rule's classification —
+                // the old name described a firewall, not a classifier, and read as a
+                // feature the product does not have.
                 $table->string('rule_type', 30);
                 $table->string('pattern', 500);
                 $table->string('target_classification', 30);

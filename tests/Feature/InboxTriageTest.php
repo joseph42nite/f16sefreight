@@ -97,6 +97,52 @@ class InboxTriageTest extends TestCase
         return $id;
     }
 
+    // ─── Who the enquiry is from ─────────────────────────────────────────────
+
+    /**
+     * 🔗 Promotion resolves the CLIENT from the sender's domain.
+     *
+     * `customers.email_domain` existed precisely for this and nothing used it: every
+     * promoted enquiry was created with no `customer_id` at all, so sales attribution,
+     * credit exposure and the client group had nothing to hang on.
+     */
+    public function test_promotion_resolves_the_client_from_the_sender_domain(): void
+    {
+        $customer = \App\Customer::create([
+            'company_id' => $this->company->id, 'name' => 'Client Test Ltd',
+            'email_domain' => 'client.test',
+        ]);
+
+        $id = $this->thread(['classification' => 'airline']);
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
+            ->assertOk();
+
+        $enquiryId = DB::table('email_threads')->where('id', $id)->value('enquiry_id');
+
+        $this->assertSame((int) $customer->id,
+            (int) DB::table('enquiries')->where('id', $enquiryId)->value('customer_id'));
+    }
+
+    /**
+     * ⚠️ An UNKNOWN domain leaves `customer_id` NULL, which is a real state — a brand-new
+     * prospect has no customer row yet. Inventing one at triage would create a client
+     * nobody onboarded, with no GST number and no credit terms.
+     */
+    public function test_an_unknown_domain_leaves_the_client_unset(): void
+    {
+        $id = $this->thread(['classification' => 'airline']);
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
+            ->assertOk();
+
+        $enquiryId = DB::table('email_threads')->where('id', $id)->value('enquiry_id');
+
+        $this->assertNull(DB::table('enquiries')->where('id', $enquiryId)->value('customer_id'));
+    }
+
     // ─── The learning loop ───────────────────────────────────────────────────
 
     /**

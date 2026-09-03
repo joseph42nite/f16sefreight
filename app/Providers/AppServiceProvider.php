@@ -58,6 +58,8 @@ class AppServiceProvider extends ServiceProvider
         Enquiry::observe(EnquiryObserver::class);
         EmailThread::observe(EmailThreadObserver::class);
         SeaShipmentDetail::observe(SeaShipmentDetailObserver::class);
+        // Adding a partner teaches the platform what that domain is — see PartnerObserver.
+        \App\Partner::observe(\App\Observers\PartnerObserver::class);
     }
 
     /**

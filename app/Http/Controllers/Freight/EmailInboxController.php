@@ -155,6 +155,17 @@ class EmailInboxController extends Controller
                     'enquiry_no'       => $this->sequences->next($thread->agent_id, $this->prefixForBranch($thread->agent_id)),
                     'status'           => 'new',
                     'cargo_data_source' => 'manual',
+                    // 🔗 WHO the enquiry is from, resolved from the sender's domain.
+                    // `customers.email_domain` exists precisely for this and nothing was
+                    // using it: every promoted enquiry was created with no client at all,
+                    // so sales attribution, credit exposure and the client group all had
+                    // nothing to hang on.
+                    //
+                    // ⚠️ NULL when the domain is unknown, and that is a real state — a
+                    // brand-new prospect has no customer row yet. The domain is still
+                    // recoverable from the thread's first inbound message, which is what
+                    // the enquiry list shows when there is no customer to name.
+                    'customer_id'      => $this->customerForDomain($thread),
                 ]);
 
                 $thread->enquiry_id = $enquiry->id;
@@ -221,6 +232,29 @@ class EmailInboxController extends Controller
      * inbound message. Storing a computed latency lets it drift from the timestamps it
      * was computed from.
      */
+    /**
+     * The client this conversation is with, matched on the sender's domain.
+     *
+     * ⚠️ Scoped to the acting COMPANY, not the branch. `customers` is tenant-wide and a
+     * client group is every row sharing `(company_id, email_domain)` — matching per branch
+     * would fail to recognise a client the Chennai office onboarded.
+     */
+    private function customerForDomain(EmailThread $thread): ?int
+    {
+        $domain = $this->senderDomain($thread);
+
+        if ($domain === null) {
+            return null;
+        }
+
+        $companyId = DB::table('agents_info')->where('id', $thread->agent_id)->value('company_id');
+
+        return DB::table('customers')
+            ->where('company_id', $companyId)
+            ->whereRaw('LOWER(email_domain) = ?', [$domain])
+            ->value('id');
+    }
+
     /** The subject as the operator saw it when they corrected the classification. */
     private function latestSubject(EmailThread $thread): ?string
     {
@@ -236,7 +270,7 @@ class EmailInboxController extends Controller
     }
 
     /**
-     * The domain a future `domain_blocklist` rule would be written against.
+     * The domain a future `sender_domain_match` rule would be written against.
      *
      * ⚠️ Stored alongside the full address rather than derived at read time: a rule is
      * written from the DOMAIN, and having it precomputed is what makes "which domains do

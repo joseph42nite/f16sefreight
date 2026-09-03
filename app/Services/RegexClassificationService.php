@@ -86,7 +86,7 @@ class RegexClassificationService
 
     /**
      * Match order: domain → sender pattern → subject → body. Within each type, by
-     * `priority` ascending, so a specific domain_blocklist entry beats a broad
+     * `priority` ascending, so a specific sender_domain_match entry beats a broad
      * body_keyword.
      */
     private function firstMatchingRule(EmailMessage $message, string $transportMode, string $haystack): ?object
@@ -101,10 +101,10 @@ class RegexClassificationService
             ? strtolower(substr(strrchr((string) $message->from, '@'), 1))
             : '';
 
-        foreach (['domain_blocklist', 'sender_pattern', 'subject_keyword', 'body_keyword'] as $type) {
+        foreach (['sender_domain_match', 'sender_pattern', 'subject_keyword', 'body_keyword'] as $type) {
             foreach ($rules->where('rule_type', $type) as $rule) {
                 $subject = match ($type) {
-                    'domain_blocklist' => $senderDomain,
+                    'sender_domain_match' => $senderDomain,
                     'sender_pattern'   => (string) $message->from,
                     'subject_keyword'  => (string) $message->subject,
                     default            => $haystack,
@@ -119,13 +119,30 @@ class RegexClassificationService
         return null;
     }
 
+    /**
+     * What the PLATFORM knows about this sender's domain, when no tenant rule matched.
+     *
+     * 🔴 Consulted only AFTER the tenant's own rules. An industry default must never
+     * outrank a local exception — a forwarder using an airline's domain for something
+     * unusual has to be able to say so without arguing with the platform.
+     *
+     * 🔐 Only a domain goes in and only a classification comes back. Nothing about this
+     * message, this client or this tenant reaches the shared directory.
+     */
+    public function globalClassificationFor(?string $from): ?string
+    {
+        $directory = app(GlobalDomainDirectory::class);
+
+        return $directory->classify($directory->domainOf($from));
+    }
+
     private function matches(string $pattern, string $subject, string $type): bool
     {
         if ($subject === '') {
             return false;
         }
 
-        if ($type === 'domain_blocklist') {
+        if ($type === 'sender_domain_match') {
             return strcasecmp($pattern, $subject) === 0;
         }
 

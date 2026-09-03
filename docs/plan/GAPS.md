@@ -139,9 +139,32 @@ single blocker on "extract, save as draft, open the form".
 
 | # | Item | Detail |
 |---|---|---|
-| 50 | **The classification vocabulary has no SEA CARRIER class.** `customer_enquiry \| airline \| clearance \| trucking_road` is air-shaped, but `partners.partner_type` carries `shipping_line` — so a shipping line's domain cannot be learned at all. `GlobalDomainDirectory` deliberately refuses to map it rather than filing Maersk under `airline`, which would put sea carriers in the air folder and hide the mistake | Needs a decision: add `shipping_line` (or `carrier`) to the inbox vocabulary, or accept that sea carrier mail classifies as a customer enquiry. The second is not obviously wrong for an air-first product, but it should be chosen rather than inherited |
+| 50 | 🟢 **RESOLVED 2026-09-03 — `shipping_line` added to the vocabulary.** It is now `customer_enquiry | airline | shipping_line | clearance | trucking_road`. Until then the list was air-shaped and `GlobalDomainDirectory` refused to learn a sea carrier at all rather than file Maersk under `airline`, which would have put sea carriers in the air folder and hidden it. The mapping is a real one now instead of a convenient lie |
 | 51 | **`matched_rule_id` is still NULL on every override.** Nothing stamps which rule fired on a thread, so a correction is attributable to the CHANGE but not to the RULE that caused it. `recordOverride()` increments `override_count` only when a rule id is supplied, so rule-level accuracy — "200 hits, 180 overrides, this rule is harmful" — is still unmeasurable | Needs the classifier to record its matched rule on the thread at ingestion. Only matters once #48 (no rules exist) is resolved |
-| 52 | **Tier presentation of the client on an enquiry is unbuilt.** Promotion now resolves `customer_id` from the sender domain, and the domain itself is recoverable from the thread's first inbound message. The owner's shape: **Command** links it to the accounts customer record; **Tactical**, which has no accounts, shows the DOMAIN instead; plus a filter to search across them | The data is in place; the enquiries list does not yet branch on tier or expose either field |
+| 52 | 🟢 **RESOLVED 2026-09-03.** `EnquiryController::index` now returns `client_label` and `client_domain`. **Command** carries `customer_id` so the row reaches invoicing, credit and the client group; **Tactical** gets the name only and the id is REMOVED, not merely unused — a tier that cannot open a customer record has no business holding a key to one. Where no customer was onboarded, both tiers show the sending DOMAIN rather than a blank. `?client=` searches customer name, email domain and the address the conversation arrived from, so an operator need not know whether a client was ever onboarded to find them. ⚠️ The domain is DERIVED from the thread's first inbound message, never copied onto `enquiries` — a copy would be a second place for the same fact to drift, and a hand-created enquiry correctly has none |
+
+---
+
+## 🔐 The domain directory is review-gated
+
+**Decided by the owner, 2026-09-03: nothing the platform learns may classify anybody's mail
+until F16s has looked at it.** The directory is platform-wide, so one wrong entry misfiles
+mail for every tenant at once — and the tenant it hurts cannot see why, because the rule is
+not theirs. A bad per-tenant rule is one company's problem; a bad global one is everybody's.
+
+  observed → **proposed** → reviewed → **approved** → classifying
+
+`classify()` returns approved rows only, and `status` defaults to `proposed`, so any future
+learning path is inert by default rather than live by accident. Review lives at
+`/api/superadmin/domain-directory` (list · approve · reject · run the promotion sweep).
+
+⚠️ A reviewer may **correct the classification while approving**. A proposal is a guess from
+a partner row or a pile of corrections; the reviewer is the first person who actually knows,
+and forcing reject-and-retype would mean the right answer never gets recorded.
+
+⚠️ **Rejections are kept, never deleted.** Otherwise the next partner added for that domain
+re-proposes it and the reviewer answers the same question forever with no record of having
+answered it.
 
 ---
 

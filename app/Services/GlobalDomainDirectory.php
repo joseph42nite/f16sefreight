@@ -35,14 +35,14 @@ class GlobalDomainDirectory
     /**
      * `partners.partner_type` → the inbox vocabulary.
      *
-     * 🔴 `shipping_line` is deliberately ABSENT. The classifications are
-     * customer_enquiry | airline | clearance | trucking_road — an air-shaped list with no
-     * slot for a sea carrier. Mapping Maersk to `airline` to fill the gap would put sea
-     * carriers in the air folder and make the mistake invisible. The vocabulary needs a
-     * sea class before this line can exist (GAPS).
+     * ⚠️ `shipping_line` was ABSENT until 2026-09-03, because the vocabulary was
+     * air-shaped and had no slot for a sea carrier — mapping Maersk to `airline` would
+     * have filed sea carriers in the air folder and hidden it. The class now exists, so
+     * the mapping is a real one rather than a convenient lie.
      */
     private const PARTNER_TYPE_MAP = [
         'airline'        => 'airline',
+        'shipping_line'  => 'shipping_line',
         'customs_broker' => 'clearance',
         'transporter'    => 'trucking_road',
     ];
@@ -54,8 +54,12 @@ class GlobalDomainDirectory
             return null;
         }
 
+        // 🔴 APPROVED ONLY. A proposal has been observed, not accepted — and this
+        // directory is platform-wide, so one wrong entry misfiles mail for every tenant at
+        // once while the tenant it hurts has no way to see why.
         return DB::table('global_domain_classifications')
             ->where('domain', strtolower($domain))
+            ->where('status', 'approved')
             ->value('classification');
     }
 
@@ -81,9 +85,10 @@ class GlobalDomainDirectory
         $existing = DB::table('global_domain_classifications')->where('domain', $domain)->first();
 
         if ($existing === null) {
+            // Proposed, not applied. Nothing classifies until F16s has reviewed it.
             DB::table('global_domain_classifications')->insert([
                 'domain' => $domain, 'classification' => $classification,
-                'source' => 'partner', 'confirmations' => 1,
+                'source' => 'partner', 'status' => 'proposed', 'confirmations' => 1,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
 
@@ -93,7 +98,10 @@ class GlobalDomainDirectory
         // ⚠️ An existing entry is NOT overwritten by a later, differing opinion. Two
         // tenants disagreeing about a domain is a thing to look at, not a race in which
         // the last writer is right.
-        if ($existing->classification === $classification) {
+        // ⚠️ Agreement raises confidence but never revives a REJECTED domain. A rejection
+        // is a decision somebody made; re-proposing it on the next partner add would put
+        // the same argument back in the queue forever.
+        if ($existing->classification === $classification && $existing->status !== 'rejected') {
             DB::table('global_domain_classifications')->where('id', $existing->id)
                 ->update(['confirmations' => $existing->confirmations + 1, 'updated_at' => now()]);
         }
@@ -141,6 +149,7 @@ class GlobalDomainDirectory
                 'domain' => $domain,
                 'classification' => $row->corrected_classification,
                 'source' => 'promoted',
+                'status' => 'proposed',
                 'confirmations' => (int) $row->tenants,
                 'created_at' => now(), 'updated_at' => now(),
             ]);

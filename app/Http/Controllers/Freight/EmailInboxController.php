@@ -32,7 +32,12 @@ use Illuminate\Support\Facades\DB;
 class EmailInboxController extends Controller
 {
     /** database_relations_tree.md #21 — the whole vocabulary. */
-    public const CLASSIFICATIONS = ['customer_enquiry', 'airline', 'clearance', 'trucking_road'];
+    /**
+     * ⚠️ `shipping_line` added 2026-09-03. The list was air-shaped and a sea carrier had
+     * nowhere to go, so `GlobalDomainDirectory` refused to learn one rather than file
+     * Maersk under `airline` and hide it. The sea segment bills through the same inbox.
+     */
+    public const CLASSIFICATIONS = ['customer_enquiry', 'airline', 'shipping_line', 'clearance', 'trucking_road'];
 
     public function __construct(
         private readonly EnquirySequenceService $sequences,

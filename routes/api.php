@@ -148,6 +148,15 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'admin'], funct
 //superAdmin login and register
 Route::post('superadmin/register', [SuperAdminController::class, 'register']);
 Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], function () {
+
+    // ── The platform's shared domain directory (guide §5.6) ──────────────────
+    // 🔴 Nothing the platform LEARNS applies itself. One wrong entry misfiles mail for
+    // every tenant at once, and the tenant it hurts cannot see why — so approval is a
+    // decision a person makes with the evidence in front of them.
+    Route::get('/domain-directory', [\App\Http\Controllers\Platform\DomainDirectoryController::class, 'index']);
+    Route::post('/domain-directory/{id}/approve', [\App\Http\Controllers\Platform\DomainDirectoryController::class, 'approve']);
+    Route::post('/domain-directory/{id}/reject', [\App\Http\Controllers\Platform\DomainDirectoryController::class, 'reject']);
+    Route::post('/domain-directory/promote', [\App\Http\Controllers\Platform\DomainDirectoryController::class, 'promote']);
     Route::post('logout', [SuperAdminController::class, 'logout']);
     Route::post('verify', [SuperAdminController::class, 'me']);
     Route::put('upadte-detail', [SuperAdminController::class, 'update']);

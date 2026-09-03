@@ -11,6 +11,7 @@ use App\Services\AuditLogger;
 use App\Services\EnquirySequenceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Support\UserContext;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -33,12 +34,84 @@ class EnquiryController extends Controller
     {
         $this->authorize('triage');
 
+        $context = UserContext::for(auth()->user());
+
         $enquiries = Enquiry::forActivePortal()
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            // 🔍 One search box over BOTH identities. An operator looking for "globex"
+            // should not have to know whether that client was ever onboarded as a customer
+            // — they type the name they know and the row appears either way.
+            ->when($request->filled('client'), function ($q) use ($request) {
+                $term = '%' . $request->string('client') . '%';
+
+                $q->where(function ($w) use ($term) {
+                    $w->whereIn('customer_id', function ($sub) use ($term) {
+                        $sub->select('id')->from('customers')
+                            ->where('name', 'like', $term)
+                            ->orWhere('email_domain', 'like', $term);
+                    })
+                    // The unonboarded case: no customer row, so match the domain the
+                    // conversation arrived from.
+                    ->orWhereIn('id', function ($sub) use ($term) {
+                        $sub->select('t.enquiry_id')->from('email_threads as t')
+                            ->join('email_messages as m', 'm.thread_key', '=', 't.thread_key')
+                            ->where('m.direction', 'inbound')
+                            ->where('m.from', 'like', $term)
+                            ->whereNotNull('t.enquiry_id');
+                    });
+                });
+            })
+            ->with('customer:id,name,email_domain')
             ->latest()
             ->paginate(50);
 
+        // 🔴 WHO the enquiry is from, at the grain each tier can act on.
+        //
+        //   Command  — the customer RECORD, so the row reaches invoicing, credit and the
+        //              client group. `customer_id` travels with it.
+        //   Tactical — the NAME only. There is no accounts module to reach, so an id is a
+        //              handle to nothing; and where no customer was ever onboarded the
+        //              sending DOMAIN is the honest label rather than a blank.
+        $isCommand = $context->tierAtLeast('command');
+
+        $enquiries->getCollection()->transform(function ($enquiry) use ($isCommand) {
+            $domain = $this->senderDomainFor($enquiry);
+
+            $enquiry->client_label = $enquiry->customer->name ?? $domain;
+            $enquiry->client_domain = $enquiry->customer->email_domain ?? $domain;
+
+            // ⚠️ Below Command the id is REMOVED, not merely unused. A tier that cannot
+            // open a customer record has no business carrying a key to one.
+            if (! $isCommand) {
+                $enquiry->makeHidden('customer');
+                $enquiry->customer_id = null;
+            }
+
+            return $enquiry;
+        });
+
         return response()->json($enquiries);
+    }
+
+    /**
+     * The domain this enquiry arrived from, via its conversation.
+     *
+     * ⚠️ Derived rather than stored. `email_messages.from` already holds it, and a copy on
+     * `enquiries` would be a second place for the same fact to drift — an enquiry created
+     * by hand has no thread and therefore, correctly, no domain.
+     */
+    private function senderDomainFor(Enquiry $enquiry): ?string
+    {
+        $from = DB::table('email_threads as t')
+            ->join('email_messages as m', 'm.thread_key', '=', 't.thread_key')
+            ->where('t.enquiry_id', $enquiry->id)
+            ->where('m.direction', 'inbound')
+            ->orderBy('m.received_at')
+            ->value('m.from');
+
+        $at = $from === null ? false : strrpos($from, '@');
+
+        return $at === false ? null : strtolower(substr($from, $at + 1));
     }
 
     /**

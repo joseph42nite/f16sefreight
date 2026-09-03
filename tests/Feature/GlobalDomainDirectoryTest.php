@@ -43,25 +43,68 @@ class GlobalDomainDirectoryTest extends TestCase
      * 🔴 Adding a partner teaches the platform, as a side effect of ordinary work. This is
      * the cheapest signal there is and it costs the operator nothing extra.
      */
-    public function test_adding_an_airline_partner_teaches_the_platform_its_domain(): void
+    /**
+     * 🔴 A partner PROPOSES; it does not classify. The directory is platform-wide, so one
+     * wrong entry misfiles mail for every tenant at once while the tenant it hurts cannot
+     * see why. The learning is automatic; the applying is a decision.
+     */
+    public function test_adding_an_airline_partner_proposes_but_does_not_classify(): void
     {
         $this->partner('airline', 'ops@lhcargo.test');
 
-        $this->assertSame('airline', $this->directory()->classify('lhcargo.test'));
+        $this->assertNull($this->directory()->classify('lhcargo.test'),
+            'A proposal classified mail before anybody reviewed it.');
+
+        $row = DB::table('global_domain_classifications')->where('domain', 'lhcargo.test')->first();
+
+        $this->assertSame('proposed', $row->status);
+        $this->assertSame('airline', $row->classification);
+    }
+
+    /** Only once approved does it classify — for every tenant. */
+    public function test_an_approved_domain_classifies_platform_wide(): void
+    {
+        $this->partner('airline', 'ops@approved-air.test');
+
+        DB::table('global_domain_classifications')->where('domain', 'approved-air.test')
+            ->update(['status' => 'approved']);
+
+        $this->assertSame('airline', $this->directory()->classify('approved-air.test'));
+    }
+
+    /**
+     * ⚠️ A REJECTED domain stays rejected. Deleting the row would mean the next partner
+     * added for it proposes it again, and the reviewer answers the same question forever
+     * with no record of having answered it.
+     */
+    public function test_a_rejected_domain_is_not_revived_by_another_partner(): void
+    {
+        $this->partner('airline', 'ops@refused.test', 'GD1');
+
+        DB::table('global_domain_classifications')->where('domain', 'refused.test')
+            ->update(['status' => 'rejected']);
+
+        $this->partner('airline', 'cargo@refused.test', 'GD2');
+
+        $this->assertSame('rejected', DB::table('global_domain_classifications')
+            ->where('domain', 'refused.test')->value('status'));
+        $this->assertNull($this->directory()->classify('refused.test'));
     }
 
     public function test_a_customs_broker_maps_to_clearance(): void
     {
         $this->partner('customs_broker', 'desk@acmechb.test');
 
-        $this->assertSame('clearance', $this->directory()->classify('acmechb.test'));
+        $this->assertSame('clearance', DB::table('global_domain_classifications')
+            ->where('domain', 'acmechb.test')->value('classification'));
     }
 
     public function test_a_transporter_maps_to_trucking(): void
     {
         $this->partner('transporter', 'dispatch@bluedartsurface.test');
 
-        $this->assertSame('trucking_road', $this->directory()->classify('bluedartsurface.test'));
+        $this->assertSame('trucking_road', DB::table('global_domain_classifications')
+            ->where('domain', 'bluedartsurface.test')->value('classification'));
     }
 
     /**
@@ -82,11 +125,17 @@ class GlobalDomainDirectoryTest extends TestCase
      * a sea carrier. Mapping Maersk to `airline` would put sea carriers in the air folder
      * and hide the mistake, so it is deliberately not learned at all.
      */
-    public function test_a_shipping_line_is_not_forced_into_the_air_vocabulary(): void
+    /**
+     * ⚠️ `shipping_line` was refused entirely until the vocabulary gained a sea class on
+     * 2026-09-03 — mapping Maersk to `airline` would have filed sea carriers in the air
+     * folder and hidden it. Now it maps to itself.
+     */
+    public function test_a_shipping_line_maps_to_its_own_class(): void
     {
         $this->partner('shipping_line', 'book@maerskline.test');
 
-        $this->assertNull($this->directory()->classify('maerskline.test'));
+        $this->assertSame('shipping_line', DB::table('global_domain_classifications')
+            ->where('domain', 'maerskline.test')->value('classification'));
     }
 
     /**
@@ -98,7 +147,8 @@ class GlobalDomainDirectoryTest extends TestCase
         $this->partner('airline', 'ops@disputed.test', 'GD1');
         $this->partner('transporter', 'ops@disputed.test', 'GD2');
 
-        $this->assertSame('airline', $this->directory()->classify('disputed.test'));
+        $this->assertSame('airline', DB::table('global_domain_classifications')
+            ->where('domain', 'disputed.test')->value('classification'));
     }
 
     /** Agreement raises confidence rather than duplicating the row. */
@@ -124,6 +174,9 @@ class GlobalDomainDirectoryTest extends TestCase
     public function test_what_one_tenant_teaches_another_tenant_receives(): void
     {
         $this->partner('airline', 'ops@sharedfact.test', 'GD1');
+
+        DB::table('global_domain_classifications')->where('domain', 'sharedfact.test')
+            ->update(['status' => 'approved']);
 
         // A completely unrelated tenant asking the same question.
         $this->assertSame('airline', $this->directory()->classify('sharedfact.test'));

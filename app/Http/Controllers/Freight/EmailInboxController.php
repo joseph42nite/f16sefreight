@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\EmailMessage;
+use App\Http\Middleware\BindPortalScope;
 use App\EmailThread;
 use App\Enquiry;
 use App\Http\Controllers\Controller;
@@ -33,21 +34,53 @@ class EmailInboxController extends Controller
 {
     /** database_relations_tree.md #21 — the whole vocabulary. */
     /**
-     * The AIR inbox vocabulary.
+     * Every classification the system stores, across all modes.
      *
-     * 🔴 **`shipping_line` does NOT belong here.** A sea carrier is FocusSea's counterparty,
-     * and the classification set is per mode — the guide is explicit that rules are scoped
-     * by `transport_mode` because air and sea use different units, routing tokens and
-     * reference formats. Adding a sea class to the air list would put Maersk in an air
-     * operator's folder list, which is noise on every screen that never handles sea.
-     * Recorded as GAPS #50; the sea vocabulary lands with FocusSea.
+     * ⚠️ This is the STORAGE vocabulary, not the one an operator is offered. A sea thread
+     * classified `shipping_line` stays valid when read from the accounts portal, which has
+     * no mode at all — validating against the active portal's shorter list would make a
+     * legitimate stored value unreadable from a cross-mode screen.
      *
      * ⚠️ `other` exists so an operator can file mail that is none of these WITHOUT forcing
      * it into a wrong bucket. Without it the honest answer for a bank statement or a
      * newsletter is `customer_enquiry`, which mints nothing but does inflate the pool the
      * conversion rate is measured against.
      */
-    public const CLASSIFICATIONS = ['customer_enquiry', 'airline', 'clearance', 'trucking_road', 'other'];
+    public const CLASSIFICATIONS = [
+        'customer_enquiry', 'airline', 'shipping_line', 'clearance', 'trucking_road', 'other',
+    ];
+
+    /**
+     * What an operator on THIS portal may choose.
+     *
+     * 🔴 **Per mode, because a counterparty belongs to a mode.** An air operator has no use
+     * for `shipping_line` and a sea operator has none for `airline` — offering both puts a
+     * permanently empty folder on every inbox and a wrong option one slip away. The guide
+     * already scopes classification RULES by `transport_mode` for the same reason; the
+     * vocabulary has to follow.
+     *
+     * ⚠️ A cross-mode portal (accounts, admin) gets the union: it is reading, not filing,
+     * and it must be able to render a sea thread's classification.
+     */
+    public static function classificationsForMode(?string $mode): array
+    {
+        $common = ['customer_enquiry', 'clearance', 'trucking_road', 'other'];
+
+        return match ($mode) {
+            'air'  => ['customer_enquiry', 'airline', 'clearance', 'trucking_road', 'other'],
+            'sea'  => ['customer_enquiry', 'shipping_line', 'clearance', 'trucking_road', 'other'],
+            'road' => $common,
+            default => self::CLASSIFICATIONS,
+        };
+    }
+
+    /** The active portal's transport mode, or NULL on a cross-mode portal. */
+    private function activeMode(): ?string
+    {
+        return app()->bound(BindPortalScope::CONTAINER_KEY)
+            ? app(BindPortalScope::CONTAINER_KEY)
+            : null;
+    }
 
     public function __construct(
         private readonly EnquirySequenceService $sequences,
@@ -83,7 +116,12 @@ class EmailInboxController extends Controller
 
         $threads->getCollection()->transform(fn ($t) => $this->shape($t));
 
-        return response()->json($threads);
+        // ⚠️ Merged onto the paginator rather than nesting it, so the existing
+        // `data`/`total` shape the list already reads is untouched.
+        return response()->json($threads->toArray() + [
+            // The folders this portal may show — see classificationsForMode().
+            'classifications' => self::classificationsForMode($this->activeMode()),
+        ]);
     }
 
     /** One conversation — column three. */
@@ -115,8 +153,12 @@ class EmailInboxController extends Controller
     {
         $this->authorize('triage');
 
+        // 🔴 Validated against THIS PORTAL's set. The union would let an air operator file
+        // a thread as `shipping_line` — a value their own folder list cannot show, so the
+        // thread would vanish from every folder they have.
         $data = $request->validate([
-            'classification' => 'required|string|in:' . implode(',', self::CLASSIFICATIONS),
+            'classification' => 'required|string|in:'
+                . implode(',', self::classificationsForMode($this->activeMode())),
         ]);
 
         $to = $data['classification'];

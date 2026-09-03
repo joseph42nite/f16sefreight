@@ -21,6 +21,26 @@
     </router-link>
 
     <router-link
+      to="/superadmin/domain-directory"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+     >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <i class="menu-icon fas fa-globe"></i>
+          <span class="menu-text">Domain directory</span>
+        </a>
+      </li>
+    </router-link>
+
+    <router-link
       to="/superadmin/support-desk"
       v-slot="{ href, navigate, isActive, isExactActive }"
      >

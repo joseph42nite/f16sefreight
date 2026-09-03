@@ -126,18 +126,33 @@ class GlobalDomainDirectoryTest extends TestCase
      * and hide the mistake, so it is deliberately not learned at all.
      */
     /**
-     * 🔴 A SEA CARRIER IS NOT LEARNED BY THE AIR INBOX. `shipping_line` is FocusSea's
-     * counterparty and the classification set is per MODE — filing Maersk under `airline`
-     * to avoid an empty case would put sea carriers in an air operator's folder and hide
-     * the mistake. Refused deliberately until the sea vocabulary exists (GAPS #50).
+     * 🔴 A SEA CARRIER IS LEARNED — the directory is platform-wide and FocusSea needs it.
+     * What must not happen is the AIR inbox offering `shipping_line` as a folder; learning
+     * globally and showing per mode are different questions, and conflating them is what
+     * put a sea carrier in an air operator's folder list on the first attempt.
      */
-    public function test_a_shipping_line_is_not_learned_by_the_air_vocabulary(): void
+    public function test_a_shipping_line_is_learned_for_the_sea_segment(): void
     {
         $this->partner('shipping_line', 'book@maerskline.test');
 
-        $this->assertNull(DB::table('global_domain_classifications')
-            ->where('domain', 'maerskline.test')->value('classification'),
-            'A sea carrier was learned into the air inbox.');
+        $this->assertSame('shipping_line', DB::table('global_domain_classifications')
+            ->where('domain', 'maerskline.test')->value('classification'));
+    }
+
+    /**
+     * ⚠️ …and the AIR portal never offers it. An air operator has no use for a sea
+     * carrier folder, and a wrong option one slip away is worse than an absent one.
+     */
+    public function test_the_air_vocabulary_does_not_offer_shipping_line(): void
+    {
+        $air = \App\Http\Controllers\Freight\EmailInboxController::classificationsForMode('air');
+        $sea = \App\Http\Controllers\Freight\EmailInboxController::classificationsForMode('sea');
+
+        $this->assertNotContains('shipping_line', $air);
+        $this->assertContains('airline', $air);
+
+        $this->assertContains('shipping_line', $sea);
+        $this->assertNotContains('airline', $sea, 'A sea operator has no use for an airline folder.');
     }
 
     /**

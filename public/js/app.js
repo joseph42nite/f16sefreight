@@ -10263,6 +10263,16 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
         userType: 'superadmin'
       }
     }, {
+      // §5.6 — review of what the platform has learned. Approving applies a domain
+      // to EVERY tenant, so it is deliberately a superadmin screen and deliberately
+      // a decision rather than an automation.
+      path: "domain-directory",
+      name: "superadmin-domain-directory",
+      component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_admin_DomainDirectory_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/DomainDirectory.vue */ "./resources/js/src/view/pages/admin/DomainDirectory.vue")),
+      meta: {
+        userType: 'superadmin'
+      }
+    }, {
       path: "all-users",
       name: "superadmin-allusers",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_admin_AllUsers_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/AllUsers.vue */ "./resources/js/src/view/pages/admin/AllUsers.vue")),

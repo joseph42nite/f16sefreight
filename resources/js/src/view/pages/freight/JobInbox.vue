@@ -234,6 +234,16 @@ const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_r
  * ⚠️ A placeholder that names a step already delivered is worse than no placeholder: it
  * tells an operator to wait for something they could be using now.
  */
+/** What each classification is called in the folder rail. */
+const FOLDER_LABELS = {
+  customer_enquiry: "Enquiries",
+  airline: "Airline",
+  shipping_line: "Shipping line",
+  clearance: "Clearance",
+  trucking_road: "Trucking",
+  other: "Other",
+};
+
 const WORKSPACE_TABS = [
   { key: "extraction", label: "Extraction" },
   { key: "cost", label: "Cost sheet" },
@@ -243,13 +253,13 @@ export default {
   name: "JobInbox",
   components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet },
   data: () => ({
+    /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
+       has no use for a shipping-line folder and a sea operator none for an airline one;
+       hardcoding air here is what put the wrong counterparty in front of both. Seeded with
+       the mode-independent entries so the rail is never empty while the list loads. */
     folders: [
       { key: "all", label: "All" },
       { key: "unassigned", label: "Unassigned pool" },
-      { key: "customer_enquiry", label: "Enquiries" },
-      { key: "airline", label: "Airline" },
-      { key: "clearance", label: "Clearance" },
-      { key: "trucking_road", label: "Trucking" },
     ],
     folder: "all",
     threads: [], counts: {}, messages: [],
@@ -426,6 +436,15 @@ export default {
       ApiService.get("/inbox/threads" + this.params())
         .then(({ data }) => {
           this.threads = data.data || [];
+
+          /* The portal's own vocabulary — see EmailInboxController::classificationsForMode. */
+          if (data.classifications) {
+            this.folders = [
+              { key: "all", label: "All" },
+              { key: "unassigned", label: "Unassigned pool" },
+              ...data.classifications.map((c) => ({ key: c, label: FOLDER_LABELS[c] || c })),
+            ];
+          }
           this.error = null;
           this.tally();
         })

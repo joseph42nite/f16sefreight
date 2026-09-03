@@ -35,14 +35,16 @@ class GlobalDomainDirectory
     /**
      * `partners.partner_type` → the inbox vocabulary.
      *
-     * 🔴 `shipping_line` is deliberately ABSENT, and stays absent. A sea carrier is
-     * FocusSea's counterparty; the air inbox has no folder for one, and the classification
-     * set is per MODE by design. Mapping Maersk to `airline` to fill the gap would file
-     * sea carriers in an air operator's folder and hide the mistake. The sea vocabulary
-     * arrives with FocusSea — GAPS #50.
+     * 🔴 `shipping_line` IS learned — the directory is platform-wide and FocusSea needs
+     * it. What must not happen is the air inbox OFFERING it: a counterparty belongs to a
+     * mode, so `EmailInboxController::classificationsForMode()` gives air operators
+     * `airline` and sea operators `shipping_line`. Learning it globally and showing it
+     * per mode are different questions, and conflating them is what put a sea carrier in
+     * an air folder list on the first attempt.
      */
     private const PARTNER_TYPE_MAP = [
         'airline'        => 'airline',
+        'shipping_line'  => 'shipping_line',
         'customs_broker' => 'clearance',
         'transporter'    => 'trucking_road',
     ];

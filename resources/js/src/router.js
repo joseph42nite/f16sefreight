@@ -195,6 +195,15 @@ const router = new Router({
           meta: { userType: 'superadmin' }
         },
         {
+          // §5.6 — review of what the platform has learned. Approving applies a domain
+          // to EVERY tenant, so it is deliberately a superadmin screen and deliberately
+          // a decision rather than an automation.
+          path: "domain-directory",
+          name: "superadmin-domain-directory",
+          component: () => import("@/view/pages/admin/DomainDirectory.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "all-users",
           name: "superadmin-allusers",
           component: () => import("@/view/pages/admin/AllUsers.vue"),

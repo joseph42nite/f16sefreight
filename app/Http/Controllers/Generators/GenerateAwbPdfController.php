@@ -61,6 +61,84 @@ class GenerateAwbPdfController extends Controller
         return implode('', $renderedPages);
     }
 
+    /**
+     * Render the waybill, STORE it, and record it as a job document.
+     *
+     * 🔴 **A streamed PDF cannot be shared.** `downloadPdf()` builds the document and sends
+     * it straight to the browser, so nothing persists — which is why `job_documents` was
+     * empty and the share links had nothing to point at. A client link must resolve to a
+     * file that still exists next week, not to a render that happened once.
+     *
+     * ⚠️ **Only on request, never on every download.** Persisting each preview would fill
+     * storage with near-identical copies of a document somebody merely glanced at. This
+     * runs when an operator asks to share.
+     *
+     * ⚠️ Re-publishing REPLACES the stored file and reuses the row, so an existing share
+     * link keeps working and serves the corrected document. A second row would leave the
+     * client holding a link to the version that was wrong.
+     */
+    public function publish($id, \App\Services\AuditLogger $audit): \Illuminate\Http\JsonResponse
+    {
+        $waybill = \App\AirwayBills::find($id);
+
+        if ($waybill === null) {
+            return response()->json(['error' => 'Waybill not found.'], 404);
+        }
+
+        $context = \App\Support\UserContext::for(auth()->user());
+
+        // 🔒 The waybill must belong to the acting branch. Without this, a waybill id is
+        // enough to publish another tenant's document and mint a public link to it.
+        if ((int) $waybill->agent_id !== (int) $context->agentId) {
+            return response()->json(['error' => 'Waybill not found.'], 404);
+        }
+
+        // 🔗 The document hangs off the JOB, and the link between them is only there
+        // because AwbJobLinker made it (GAPS #39). An unlinked waybill cannot be filed
+        // against a shipment, and saying so beats writing an orphan row.
+        if ($waybill->job_id === null) {
+            return response()->json([
+                'error'  => 'This waybill is not linked to a job yet, so there is nothing to file the document against.',
+                'reason' => 'no_job',
+            ], 422);
+        }
+
+        ['airWayBill' => $airWayBill, 'specialHandlingInfo' => $specialHandlingInfo,
+         'hsCode' => $hsCode, 'airlineAddress' => $airlineAddress] = $this->loadAwbPdfData($id);
+
+        $showBothPage = true;
+
+        $pdf = Pdf::loadView('documents.generate-awb-pdf',
+            compact('airWayBill', 'specialHandlingInfo', 'hsCode', 'showBothPage', 'airlineAddress'))
+            ->setPaper('a4', 'portrait')
+            ->set_option('isHtml5ParserEnabled', true);
+
+        $fileName = 'AWB-' . \App\Support\AwbNumber::normalise((string) $waybill->awb_code . $waybill->awb_no) . '.pdf';
+        $path = 'documents/awb/' . $id . '.pdf';
+
+        \Illuminate\Support\Facades\Storage::put($path, $pdf->output());
+
+        $document = \App\JobDocument::updateOrCreate(
+            ['job_id' => $waybill->job_id, 'document_type' => 'awb'],
+            [
+                'agent_id'    => $waybill->agent_id,
+                'file_name'   => $fileName,
+                'file_path'   => $path,
+                'mime_type'   => 'application/pdf',
+                'file_size'   => \Illuminate\Support\Facades\Storage::size($path),
+                'uploaded_by' => auth()->id(),
+            ]
+        );
+
+        $audit->record((int) $waybill->agent_id, 'document.published', 'job_document',
+            $document->id, auth()->id());
+
+        return response()->json([
+            'document_id' => $document->id,
+            'file_name'   => $document->file_name,
+        ], 201);
+    }
+
     // This Function will work when user click on generate PDF file
     public function downloadPdf($id) {
         ['airWayBill' => $airWayBill, 'specialHandlingInfo' => $specialHandlingInfo, 'hsCode' => $hsCode, 'airlineAddress' => $airlineAddress] = $this->loadAwbPdfData($id);

@@ -177,6 +177,14 @@ answered it.
 
 ---
 
+## 🔴 Found 2026-09-03 — the document layer
+
+| # | Finding | Detail |
+|---|---|---|
+| 55 | ⚠️ **The AWB PDF template crashes on a waybill with no address row.** `documents/generate-awb-pdf` reads `$airWayBill->wayBillAddress->ship_phone` unguarded, so a waybill whose `way_bill_addresses` row does not exist throws *"Attempt to read property on null"* — a 500 rather than a partly-blank document | **Reachable in production:** `firstBox()` creates the waybill BEFORE any address is saved, so any draft printed before its parties are entered hits this. Found because a test fixture created a waybill without one. Not fixed — guarding a 200-line legacy template is its own pass, and half-guarding it would produce a document that prints blank where it should refuse |
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

@@ -120,6 +120,9 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::post('/mailboxes/{mailbox}/sync', [\App\Http\Controllers\Freight\MailboxController::class, 'syncNow']);
 
     // ── Document share links ─────────────────────────────────────────────────
+    // Render the waybill, store it, and file it as a job document — the step that makes
+    // a share link possible at all. A streamed PDF persists nothing.
+    Route::post('/documents/awb/{id}/publish', [\App\Http\Controllers\Generators\GenerateAwbPdfController::class, 'publish']);
     Route::get('/documents/{document}/links', [\App\Http\Controllers\Freight\DocumentShareController::class, 'index']);
     Route::post('/documents/{document}/share', [\App\Http\Controllers\Freight\DocumentShareController::class, 'create']);
     Route::post('/share-links/{link}/revoke', [\App\Http\Controllers\Freight\DocumentShareController::class, 'revoke']);

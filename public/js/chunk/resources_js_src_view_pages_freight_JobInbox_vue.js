@@ -124,6 +124,18 @@ const WORKSPACE_TABS = [{
      * Four raw datetimes in a header read as noise and leave the reader to do the
      * subtraction. The exact values stay available on hover.
      */
+    /**
+     * 🔴 Extraction and the cost sheet belong to a CUSTOMER ENQUIRY and nothing else.
+     *
+     * An airline confirming space, a broker filing a bill of entry, a trucker giving a
+     * pickup slot — none of those get extracted into a waybill or costed. Offering the
+     * tabs anyway invites an operator to start work the conversation cannot carry, and
+     * then to wonder why the cost sheet says there is no job.
+     */
+    workspaceTabs() {
+      const isEnquiry = this.active && this.active.classification === "customer_enquiry";
+      return isEnquiry ? WORKSPACE_TABS : [];
+    },
     timing() {
       const a = this.active;
       if (!a) return null;
@@ -1468,12 +1480,12 @@ var render = function render() {
         value: c
       }
     }, [_vm._v(_vm._s(c.replace(/_/g, " ")))]);
-  }), 0) : _vm._e(), _vm._v(" "), _c("button", {
+  }), 0) : _vm._e(), _vm._v(" "), _vm.workspaceTabs.length ? _c("button", {
     staticClass: "fx-btn",
     on: {
       click: _vm.openExtraction
     }
-  }, [_vm._v("Analyze PDF")]), _vm._v(" "), _c("button", {
+  }, [_vm._v("Analyze PDF")]) : _vm._e(), _vm._v(" "), _c("button", {
     staticClass: "fx-btn fx-btn--primary",
     on: {
       click: _vm.openWorkspace
@@ -1521,7 +1533,7 @@ var render = function render() {
       open: _vm.workspace && !!_vm.active,
       title: _vm.active ? _vm.active.subject || "Workspace" : "",
       subtitle: _vm.active ? _vm.active.from : null,
-      tabs: _vm.WORKSPACE_TABS,
+      tabs: _vm.workspaceTabs,
       "active-tab": _vm.tab
     },
     on: {
@@ -1564,7 +1576,13 @@ var render = function render() {
       },
       proxy: true
     }])
-  }, [_vm._v(" "), _vm.active ? [_vm.tab === "cost" ? _c("section", [!_vm.active.enquiry ? _c("p", {
+  }, [_vm._v(" "), _vm.active ? [!_vm.workspaceTabs.length ? _c("section", {
+    staticClass: "fx-muted"
+  }, [_c("p", [_vm._v("\n          Extraction and the cost sheet are for "), _c("strong", [_vm._v("customer enquiries")]), _vm._v(". This\n          conversation is filed as\n          "), _c("StatusChip", {
+    attrs: {
+      value: _vm.active.classification
+    }
+  }), _vm._v(".\n        ")], 1), _vm._v(" "), _c("p", [_vm._v("\n          If a client's request arrived on it, re-classify it as a customer enquiry — that\n          is what mints the number and turns it into work.\n        ")])]) : _vm.tab === "cost" ? _c("section", [!_vm.active.enquiry ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n          No enquiry on this conversation yet, so there is no job to cost.\n        ")]) : _vm.jobId ? _c("CostSheet", {
     attrs: {

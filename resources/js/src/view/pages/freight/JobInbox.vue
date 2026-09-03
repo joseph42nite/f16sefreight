@@ -100,7 +100,10 @@
                  §5.5's own test for a drawer over a modal. A modal would also cover the
                  conversation, making the operator memorise a consignee instead of
                  checking it, and a mis-keyed consignee is a rejected filing. -->
-            <button class="fx-btn" @click="openExtraction">Analyze PDF</button>
+            <!-- ⚠️ Hidden, not disabled, on a non-enquiry thread. A greyed button invites
+                 a click and then explains nothing; the workspace already says which
+                 classification unlocks the work, for anyone who opens it. -->
+            <button v-if="workspaceTabs.length" class="fx-btn" @click="openExtraction">Analyze PDF</button>
 
             <button class="fx-btn fx-btn--primary" @click="openWorkspace">Open workspace</button>
           </div>
@@ -142,7 +145,7 @@
       :open="workspace && !!active"
       :title="active ? (active.subject || 'Workspace') : ''"
       :subtitle="active ? active.from : null"
-      :tabs="WORKSPACE_TABS"
+      :tabs="workspaceTabs"
       :active-tab="tab"
       @tab="tab = $event"
       @close="closeWorkspace"
@@ -179,8 +182,25 @@
       </template>
 
       <template v-if="active">
+        <!--
+          ⚠️ Named, not blank. A drawer with nothing in it reads as broken; saying which
+          classification unlocks the work turns it into an instruction the operator can act
+          on — reclassify, or this is not that kind of conversation.
+        -->
+        <section v-if="!workspaceTabs.length" class="fx-muted">
+          <p>
+            Extraction and the cost sheet are for <strong>customer enquiries</strong>. This
+            conversation is filed as
+            <StatusChip :value="active.classification" />.
+          </p>
+          <p>
+            If a client's request arrived on it, re-classify it as a customer enquiry — that
+            is what mints the number and turns it into work.
+          </p>
+        </section>
+
         <!-- §6.7 — the cost sheet, decoupled from the manifest. -->
-        <section v-if="tab === 'cost'">
+        <section v-else-if="tab === 'cost'">
           <p v-if="!active.enquiry" class="fx-muted">
             No enquiry on this conversation yet, so there is no job to cost.
           </p>
@@ -284,6 +304,19 @@ export default {
      * Four raw datetimes in a header read as noise and leave the reader to do the
      * subtraction. The exact values stay available on hover.
      */
+    /**
+     * 🔴 Extraction and the cost sheet belong to a CUSTOMER ENQUIRY and nothing else.
+     *
+     * An airline confirming space, a broker filing a bill of entry, a trucker giving a
+     * pickup slot — none of those get extracted into a waybill or costed. Offering the
+     * tabs anyway invites an operator to start work the conversation cannot carry, and
+     * then to wonder why the cost sheet says there is no job.
+     */
+    workspaceTabs() {
+      const isEnquiry = this.active && this.active.classification === "customer_enquiry";
+
+      return isEnquiry ? WORKSPACE_TABS : [];
+    },
     timing() {
       const a = this.active;
       if (!a) return null;

@@ -223,6 +223,14 @@ class FreightDemoSeeder extends Seeder
         DB::table('email_attachments')->whereIn('email_message_id',
             DB::table('email_messages')->whereIn('thread_key', $threadKeys)->pluck('id'))->delete();
         DB::table('email_messages')->whereIn('thread_key', $threadKeys)->delete();
+
+        // ⚠️ Classification overrides FK to email_threads, so they go FIRST. Added with
+        // the learning loop on 2026-09-03, and the purge did not know about them — the
+        // next reseed failed with a foreign key violation as soon as anybody had
+        // corrected a classification. A new table needs a line here as surely as it needs
+        // a migration.
+        DB::table('email_classification_overrides')->whereIn('agent_id', $branchIds)->delete();
+
         DB::table('email_threads')->whereIn('agent_id', $branchIds)->delete();
 
         DB::table('sea_shipment_details')->whereIn('job_id', $jobIds)->delete();
@@ -459,6 +467,10 @@ class FreightDemoSeeder extends Seeder
                 ['converted', null], ['converted', null], ['converted', null],
             ];
 
+            // Two per mode, so the pool has cards to claim and the Staff matrix still has
+            // plenty of assigned work beside it.
+            $unassignedYet = 2;
+
             foreach ($plan as $i => [$status, $lostReason]) {
                 [$origin, $dest] = $lanes[$i % count($lanes)];
                 $customer = $customers[$i % $customers->count()];
@@ -505,10 +517,20 @@ class FreightDemoSeeder extends Seeder
                     // never ours to invent.
                     'execution_job_no' => sprintf('%s-%s-%s-%04d', $jPrefix, $agentCode, now()->format('y'), $seq[$mode]),
                     'customer_id' => $customer->id,
-                    'ops_id' => $users['operations']->id,
+                    // 🔴 THE FIRST CONVERTED JOB OF EACH MODE STAYS UNASSIGNED. Every job
+                    // had an operator, so the Kanban's Unassigned Pool was permanently
+                    // empty and the claim endpoint had nothing to claim — the pool looked
+                    // like a feature that did not work rather than one with no work in it.
+                    //
+                    // ⚠️ It is also the truthful shape: a job is converted the moment the
+                    // client confirms, and sits in the pool until somebody picks it up.
+                    'ops_id' => $unassignedYet-- > 0 ? null : $users['operations']->id,
                     'pricing_id' => $users['pricing']->id,
                     // A spread across the board so the Kanban has cards in every column.
-                    'status' => ['Verification', 'PDF Generated', 'Airline Confirmed'][$i % 3],
+                    // ⚠️ An unassigned job is at INTAKE: it cannot be in Verification when
+                    // nobody has picked it up to verify anything.
+                    'status' => $unassignedYet >= 0 ? 'Intake'
+                        : ['Verification', 'PDF Generated', 'Airline Confirmed'][$i % 3],
                     // A spread of clearance dates so the Staff matrix has rows and the
                     // board's SLA bars actually fire: one clearing today (urgency ×3),
                     // one tomorrow (×2), one later (×1). Without dates every card is

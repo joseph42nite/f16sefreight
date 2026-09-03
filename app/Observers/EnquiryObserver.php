@@ -36,7 +36,13 @@ class EnquiryObserver
 
         // Revived in place by trailing client mail — the original enquiry_no is KEPT,
         // because a number that was quoted to a client must not change under them.
-        if ($enquiry->getOriginal('status') === EnquiryStatus::Lost->value && $new !== EnquiryStatus::Lost) {
+        //
+        // 🔴 getRawOriginal, NOT getOriginal. `getOriginal()` APPLIES CASTS, so it hands
+        // back an EnquiryStatus and `=== 'lost'` was false for every enquiry that ever
+        // existed — this entire branch was dead. Nothing was ever stamped `reopened_at`,
+        // and a revived enquiry kept its `lost_at` and `lost_reason`, so it sat in the
+        // open funnel while still counting as a loss.
+        if ($enquiry->getRawOriginal('status') === EnquiryStatus::Lost->value && $new !== EnquiryStatus::Lost) {
             $enquiry->reopened_at = now();
             $enquiry->lost_at = null;
             $enquiry->lost_reason = null;

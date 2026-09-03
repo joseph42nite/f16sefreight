@@ -230,9 +230,77 @@
         </section>
 
         <section v-else-if="tab === 'extraction'">
+          <!--
+            🔴 THE OUTCOME GATE. A waybill is a document for a shipment that is HAPPENING.
+            Drafting one against an enquiry nobody has confirmed produces paperwork for a
+            shipment that may never fly — and, worse, leaves the enquiry sitting in the
+            funnel as neither won nor lost while the operator moves on. So the decision is
+            asked FIRST, and it is the same decision the Enquiries board reports on.
+          -->
+          <div v-if="active.enquiry && !active.job" class="fx-outcome">
+            <template v-if="enquiryLost">
+              <p class="fx-muted">
+                This enquiry is marked <StatusChip value="lost" />
+                <template v-if="lostReasonLabel"> — {{ lostReasonLabel }}</template>.
+                Nothing is drafted against a lost enquiry.
+              </p>
+              <!-- Reopening keeps the ORIGINAL number: it was already quoted to a client. -->
+              <button class="fx-btn" :disabled="outcomeBusy" @click="reopenEnquiry">
+                Client came back — reopen
+              </button>
+            </template>
+
+            <template v-else-if="losing">
+              <p><strong>Why was it lost?</strong> The reason is the whole point of
+                recording it — a rate problem and a slow reply need different fixes.</p>
+              <select v-model="lostReason" class="fx-input">
+                <option v-for="r in LOST_REASONS" :key="r.value" :value="r.value">
+                  {{ r.label }}
+                </option>
+              </select>
+              <input
+                v-if="lostReason === 'other'"
+                v-model="lostCustom"
+                class="fx-input"
+                maxlength="255"
+                placeholder="In your own words"
+              />
+              <div class="fx-outcome__actions">
+                <button class="fx-btn" :disabled="outcomeBusy" @click="markLost">
+                  Mark lost
+                </button>
+                <button class="fx-btn" :disabled="outcomeBusy" @click="losing = false">
+                  Cancel
+                </button>
+              </div>
+            </template>
+
+            <template v-else>
+              <p><strong>Did this shipment confirm?</strong></p>
+              <p class="fx-muted">
+                Confirming converts the enquiry to a job and opens AWB drafting. Until then
+                there is nothing to raise a waybill against.
+              </p>
+              <div class="fx-outcome__actions">
+                <button class="fx-btn fx-btn--primary" :disabled="outcomeBusy" @click="confirmShipment">
+                  Shipment confirmed
+                </button>
+                <button class="fx-btn" :disabled="outcomeBusy" @click="losing = true">
+                  Shipment lost
+                </button>
+              </div>
+            </template>
+
+            <p v-if="outcomeError" class="fx-error">{{ outcomeError }}</p>
+          </div>
+
+          <p v-else-if="!active.enquiry" class="fx-muted">
+            No enquiry on this conversation yet, so there is no shipment to confirm.
+          </p>
+
           <!-- The waybill this conversation is already about, so the operator is not
                asked to retype a number the job already holds. -->
-          <ExtractionPanel :prefill-awb="jobAwb" @apply="onExtracted" />
+          <ExtractionPanel v-else :prefill-awb="jobAwb" @apply="onExtracted" />
         </section>
       </template>
 
@@ -285,6 +353,16 @@ const FOLDER_LABELS = {
   other: "Other",
 };
 
+/* Mirrors EnquiryController@markLost's validator exactly — the API rejects anything
+   else, so a mismatch here would be a 422 the operator cannot read their way out of. */
+const LOST_REASONS = [
+  { value: "rates_high", label: "Rates too high" },
+  { value: "delay_in_response", label: "We replied too slowly" },
+  { value: "client_cancelled", label: "Client cancelled the shipment" },
+  { value: "capacity_issue", label: "No capacity" },
+  { value: "other", label: "Other" },
+];
+
 const WORKSPACE_TABS = [
   { key: "extraction", label: "Extraction" },
   { key: "cost", label: "Cost sheet" },
@@ -308,6 +386,11 @@ export default {
     loading: true, busy: false, error: null, actionError: null,
     query: "", timer: null,
     workspace: false, tab: "extraction", extracted: null, jobId: null, jobAwb: null,
+    /* The outcome gate. `losing` is the two-step: the reason is REQUIRED by the API,
+       so asking for it is not optional politeness. */
+    losing: false, lostReason: "rates_high", lostCustom: "",
+    outcomeBusy: false, outcomeError: null,
+    LOST_REASONS,
     CLASSIFICATIONS, WORKSPACE_TABS,
   }),
   computed: {
@@ -333,6 +416,14 @@ export default {
      * tabs anyway invites an operator to start work the conversation cannot carry, and
      * then to wonder why the cost sheet says there is no job.
      */
+    enquiryLost() {
+      return !!this.active && !!this.active.enquiry && this.active.enquiry.status === "lost";
+    },
+    lostReasonLabel() {
+      const r = this.active && this.active.enquiry && this.active.enquiry.lost_reason;
+      const hit = LOST_REASONS.find((x) => x.value === r);
+      return hit ? hit.label : null;
+    },
     workspaceTabs() {
       const isEnquiry = this.active && this.active.classification === "customer_enquiry";
 
@@ -444,6 +535,41 @@ export default {
       this.tab = "extraction";
       this.setSplit(true);
     },
+    /**
+     * 🔴 Confirmed == converted. "A confirmed shipment" is not a flag on the enquiry;
+     * it is the existence of a job row, which is why this posts to /convert rather than
+     * setting a status. The AWB is deliberately NOT sent: the number is usually not known
+     * at confirmation, and extraction is where it gets attached.
+     */
+    confirmShipment() {
+      this.outcomeBusy = true;
+      this.outcomeError = null;
+      ApiService.post("/enquiries/" + this.active.enquiry.id + "/convert", {})
+        /* Reload rather than patch: conversion changes the enquiry's status, mints the
+           job number and moves the thread's identifier — the server owns all of it. */
+        .then(() => this.open(this.active))
+        .catch((e) => { this.outcomeError = this.messageFor(e); })
+        .finally(() => { this.outcomeBusy = false; });
+    },
+    markLost() {
+      this.outcomeBusy = true;
+      this.outcomeError = null;
+      ApiService.post("/enquiries/" + this.active.enquiry.id + "/lost", {
+        lost_reason: this.lostReason,
+        lost_reason_custom: this.lostReason === "other" ? this.lostCustom : null,
+      })
+        .then(() => { this.losing = false; return this.open(this.active); })
+        .catch((e) => { this.outcomeError = this.messageFor(e); })
+        .finally(() => { this.outcomeBusy = false; });
+    },
+    reopenEnquiry() {
+      this.outcomeBusy = true;
+      this.outcomeError = null;
+      ApiService.post("/enquiries/" + this.active.enquiry.id + "/reopen", {})
+        .then(() => this.open(this.active))
+        .catch((e) => { this.outcomeError = this.messageFor(e); })
+        .finally(() => { this.outcomeBusy = false; });
+    },
     /* ⚠️ A raw ISO string is not a date to a reader. The API sends
        2026-08-30T10:28:47.000000Z; a person needs 30 Aug 2026, 10:28. */
     stamp(value) {
@@ -517,12 +643,19 @@ export default {
     },
     open(thread) {
       this.actionError = null;
+      /* The outcome gate is per-conversation: a half-typed loss reason must not follow
+         the operator to the next thread. */
+      this.losing = false;
+      this.outcomeError = null;
+      this.lostReason = "rates_high";
+      this.lostCustom = "";
       // 🔴 "enquiry" was a TAB until it moved to the header, and this line kept resetting
       // to it — a key no section matches, so the workspace rendered nothing at all and
       // whatever the operator had typed appeared to vanish. Removing a tab means removing
       // every place that selects it.
       this.tab = "extraction";
-      ApiService.get("/inbox/threads/" + thread.id)
+      // Returned so an outcome action can re-open the thread and know when it has landed.
+      return ApiService.get("/inbox/threads/" + thread.id)
         .then(({ data }) => {
           this.active = data.thread;
           this.pending = data.thread.classification;

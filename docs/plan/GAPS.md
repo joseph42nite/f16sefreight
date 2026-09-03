@@ -197,6 +197,35 @@ client stays recoverable; it just stops competing for the eye once a job exists.
 
 ---
 
+## 🔴 Found 2026-09-03 — the outcome gate, and a dead branch behind it
+
+| # | Finding | Detail |
+|---|---|---|
+| 57 | ⚠️ **The workspace let an operator draft a waybill against an enquiry nobody had confirmed.** Extraction opened the moment a thread was classified, so paperwork could be raised for a shipment that might never fly — and the enquiry stayed in the funnel as neither won nor lost while the operator moved on | Fixed. The extraction tab now asks **"Did this shipment confirm?"** first. *Shipment confirmed* posts `/enquiries/{id}/convert` — confirmed **is** converted, since a job row is the definition, not a status flag — and only then does `ExtractionPanel` render. *Shipment lost* is a two-step, because `lost_reason` is required by the API and is the entire point of recording a loss. A lost enquiry offers **reopen**, which keeps the original number |
+| 58 | 🔴 **`EnquiryObserver`'s reopen branch had never executed — not once, for any enquiry.** It compared `getOriginal('status')` against `EnquiryStatus::Lost->value`, but **`getOriginal()` applies casts**: it returns an `EnquiryStatus` enum, and `enum === 'lost'` is always false. `getRawOriginal()` is the uncast accessor | Consequence, which is worse than the bug: `reopened_at` was **never stamped for any enquiry in the system** (`SELECT COUNT(*) WHERE reopened_at IS NOT NULL` → 0), and a revived enquiry **kept its `lost_at` and `lost_reason`** — so it sat in the open funnel and counted as a loss simultaneously. Fixed by using `getRawOriginal()`; the regression test asserts the loss is *unwound*, not merely overwritten. ⚠️ **Worth grepping for elsewhere** — `getOriginal()` on any cast column has this shape |
+
+### How loss is tracked (the owner asked, 2026-09-03)
+
+Loss is a **deliberate declaration**, never inferred:
+
+- `status = 'lost'` (DB CHECK, case-sensitive, `COLLATE utf8mb4_bin`)
+- `lost_reason` — **required**, one of `rates_high`, `delay_in_response`, `client_cancelled`, `capacity_issue`, `other`
+- `lost_reason_custom` — free text, for `other`
+- `lost_at` — stamped by `EnquiryObserver`, not the controller
+- an `enquiry.lost` audit row
+- 🔴 **refused outright if a job exists** — a confirmed shipment that later stops is a CANCELLED JOB, not a lost enquiry. Allowing both would count one request as a win and a loss at the same time and corrupt conversion rate and loss analysis together
+
+⚠️ **The hole is silence, not the schema.** `enquiries:nudge-stale` reminds the operator that a
+client has gone quiet; **nothing ever marks an enquiry lost automatically**, and that is
+deliberate — a system-invented loss reason is worse than no loss reason. But it means the
+funnel is only as honest as operator discipline. In the demo data **40 enquiries have sat in
+`new`/`quoted`/`awaiting_client` for over 14 days**, counted as neither won nor lost. Whether
+those should auto-expire to `lost` with reason `delay_in_response` after the tenant's window,
+or simply be surfaced as an *"awaiting your decision"* queue, is **the owner's call** — see
+the design-decisions table.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

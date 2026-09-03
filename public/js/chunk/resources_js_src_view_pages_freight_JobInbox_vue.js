@@ -62,6 +62,25 @@ const FOLDER_LABELS = {
   trucking_road: "Trucking",
   other: "Other"
 };
+
+/* Mirrors EnquiryController@markLost's validator exactly — the API rejects anything
+   else, so a mismatch here would be a 422 the operator cannot read their way out of. */
+const LOST_REASONS = [{
+  value: "rates_high",
+  label: "Rates too high"
+}, {
+  value: "delay_in_response",
+  label: "We replied too slowly"
+}, {
+  value: "client_cancelled",
+  label: "Client cancelled the shipment"
+}, {
+  value: "capacity_issue",
+  label: "No capacity"
+}, {
+  value: "other",
+  label: "Other"
+}];
 const WORKSPACE_TABS = [{
   key: "extraction",
   label: "Extraction"
@@ -107,6 +126,14 @@ const WORKSPACE_TABS = [{
     extracted: null,
     jobId: null,
     jobAwb: null,
+    /* The outcome gate. `losing` is the two-step: the reason is REQUIRED by the API,
+       so asking for it is not optional politeness. */
+    losing: false,
+    lostReason: "rates_high",
+    lostCustom: "",
+    outcomeBusy: false,
+    outcomeError: null,
+    LOST_REASONS,
     CLASSIFICATIONS,
     WORKSPACE_TABS
   }),
@@ -132,6 +159,14 @@ const WORKSPACE_TABS = [{
      * tabs anyway invites an operator to start work the conversation cannot carry, and
      * then to wonder why the cost sheet says there is no job.
      */
+    enquiryLost() {
+      return !!this.active && !!this.active.enquiry && this.active.enquiry.status === "lost";
+    },
+    lostReasonLabel() {
+      const r = this.active && this.active.enquiry && this.active.enquiry.lost_reason;
+      const hit = LOST_REASONS.find(x => x.value === r);
+      return hit ? hit.label : null;
+    },
     workspaceTabs() {
       const isEnquiry = this.active && this.active.classification === "customer_enquiry";
       return isEnquiry ? WORKSPACE_TABS : [];
@@ -234,6 +269,47 @@ const WORKSPACE_TABS = [{
       this.tab = "extraction";
       this.setSplit(true);
     },
+    /**
+     * 🔴 Confirmed == converted. "A confirmed shipment" is not a flag on the enquiry;
+     * it is the existence of a job row, which is why this posts to /convert rather than
+     * setting a status. The AWB is deliberately NOT sent: the number is usually not known
+     * at confirmation, and extraction is where it gets attached.
+     */
+    confirmShipment() {
+      this.outcomeBusy = true;
+      this.outcomeError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/enquiries/" + this.active.enquiry.id + "/convert", {})
+      /* Reload rather than patch: conversion changes the enquiry's status, mints the
+         job number and moves the thread's identifier — the server owns all of it. */.then(() => this.open(this.active)).catch(e => {
+        this.outcomeError = this.messageFor(e);
+      }).finally(() => {
+        this.outcomeBusy = false;
+      });
+    },
+    markLost() {
+      this.outcomeBusy = true;
+      this.outcomeError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/enquiries/" + this.active.enquiry.id + "/lost", {
+        lost_reason: this.lostReason,
+        lost_reason_custom: this.lostReason === "other" ? this.lostCustom : null
+      }).then(() => {
+        this.losing = false;
+        return this.open(this.active);
+      }).catch(e => {
+        this.outcomeError = this.messageFor(e);
+      }).finally(() => {
+        this.outcomeBusy = false;
+      });
+    },
+    reopenEnquiry() {
+      this.outcomeBusy = true;
+      this.outcomeError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/enquiries/" + this.active.enquiry.id + "/reopen", {}).then(() => this.open(this.active)).catch(e => {
+        this.outcomeError = this.messageFor(e);
+      }).finally(() => {
+        this.outcomeBusy = false;
+      });
+    },
     /* ⚠️ A raw ISO string is not a date to a reader. The API sends
        2026-08-30T10:28:47.000000Z; a person needs 30 Aug 2026, 10:28. */
     stamp(value) {
@@ -317,12 +393,19 @@ const WORKSPACE_TABS = [{
     },
     open(thread) {
       this.actionError = null;
+      /* The outcome gate is per-conversation: a half-typed loss reason must not follow
+         the operator to the next thread. */
+      this.losing = false;
+      this.outcomeError = null;
+      this.lostReason = "rates_high";
+      this.lostCustom = "";
       // 🔴 "enquiry" was a TAB until it moved to the header, and this line kept resetting
       // to it — a key no section matches, so the workspace rendered nothing at all and
       // whatever the operator had typed appeared to vanish. Removing a tab means removing
       // every place that selects it.
       this.tab = "extraction";
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/inbox/threads/" + thread.id).then(({
+      // Returned so an outcome action can re-open the thread and know when it has landed.
+      return _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/inbox/threads/" + thread.id).then(({
         data
       }) => {
         this.active = data.thread;
@@ -1592,7 +1675,116 @@ var render = function render() {
     }
   }) : _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("This enquiry has not been converted to a job yet.")])], 1) : _vm.tab === "extraction" ? _c("section", [_c("ExtractionPanel", {
+  }, [_vm._v("This enquiry has not been converted to a job yet.")])], 1) : _vm.tab === "extraction" ? _c("section", [_vm.active.enquiry && !_vm.active.job ? _c("div", {
+    staticClass: "fx-outcome"
+  }, [_vm.enquiryLost ? [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n              This enquiry is marked "), _c("StatusChip", {
+    attrs: {
+      value: "lost"
+    }
+  }), _vm._v(" "), _vm.lostReasonLabel ? [_vm._v(" — " + _vm._s(_vm.lostReasonLabel))] : _vm._e(), _vm._v(".\n              Nothing is drafted against a lost enquiry.\n            ")], 2), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.outcomeBusy
+    },
+    on: {
+      click: _vm.reopenEnquiry
+    }
+  }, [_vm._v("\n              Client came back — reopen\n            ")])] : _vm.losing ? [_c("p", [_c("strong", [_vm._v("Why was it lost?")]), _vm._v(" The reason is the whole point of\n              recording it — a rate problem and a slow reply need different fixes.")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.lostReason,
+      expression: "lostReason"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.lostReason = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }
+    }
+  }, _vm._l(_vm.LOST_REASONS, function (r) {
+    return _c("option", {
+      key: r.value,
+      domProps: {
+        value: r.value
+      }
+    }, [_vm._v("\n                " + _vm._s(r.label) + "\n              ")]);
+  }), 0), _vm._v(" "), _vm.lostReason === "other" ? _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.lostCustom,
+      expression: "lostCustom"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      maxlength: "255",
+      placeholder: "In your own words"
+    },
+    domProps: {
+      value: _vm.lostCustom
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.lostCustom = $event.target.value;
+      }
+    }
+  }) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-outcome__actions"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.outcomeBusy
+    },
+    on: {
+      click: _vm.markLost
+    }
+  }, [_vm._v("\n                Mark lost\n              ")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.outcomeBusy
+    },
+    on: {
+      click: function ($event) {
+        _vm.losing = false;
+      }
+    }
+  }, [_vm._v("\n                Cancel\n              ")])])] : [_c("p", [_c("strong", [_vm._v("Did this shipment confirm?")])]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n              Confirming converts the enquiry to a job and opens AWB drafting. Until then\n              there is nothing to raise a waybill against.\n            ")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-outcome__actions"
+  }, [_c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.outcomeBusy
+    },
+    on: {
+      click: _vm.confirmShipment
+    }
+  }, [_vm._v("\n                Shipment confirmed\n              ")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.outcomeBusy
+    },
+    on: {
+      click: function ($event) {
+        _vm.losing = true;
+      }
+    }
+  }, [_vm._v("\n                Shipment lost\n              ")])])], _vm._v(" "), _vm.outcomeError ? _c("p", {
+    staticClass: "fx-error"
+  }, [_vm._v(_vm._s(_vm.outcomeError))]) : _vm._e()], 2) : !_vm.active.enquiry ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          No enquiry on this conversation yet, so there is no shipment to confirm.\n        ")]) : _c("ExtractionPanel", {
     attrs: {
       "prefill-awb": _vm.jobAwb
     },

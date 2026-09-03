@@ -351,6 +351,84 @@ class InboxTriageTest extends TestCase
             ->assertJsonPath('thread.job_count', 2);
     }
 
+    /**
+     * 🔴 THE OUTCOME GATE. A waybill is a document for a shipment that is HAPPENING, so
+     * the drawer refuses to draft one until somebody says the enquiry confirmed. The UI
+     * decides that from `thread.job`, so what is asserted here is that the field only
+     * appears once the outcome has actually been recorded.
+     */
+    public function test_confirming_a_shipment_is_what_opens_awb_drafting(): void
+    {
+        $id = $this->thread();
+
+        $enquiryId = $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
+            ->json('enquiry.id');
+
+        // No job -> the drawer shows the gate, not the extraction panel.
+        $this->api($this->pricing)
+            ->getJson($this->url("/api/inbox/threads/{$id}"))
+            ->assertJsonPath('thread.job', null);
+
+        // "Confirmed" is not a status flag — it is the existence of a job.
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/enquiries/{$enquiryId}/convert"), [])
+            ->assertStatus(201);
+
+        $this->api($this->pricing)
+            ->getJson($this->url("/api/inbox/threads/{$id}"))
+            ->assertJsonPath('thread.job.execution_job_no', fn ($no) => filled($no))
+            ->assertJsonPath('thread.enquiry.status', 'converted');
+    }
+
+    /**
+     * The other half of the gate. A loss is a DECLARATION with a reason — the reason is
+     * the whole point of recording it, so the API requires one and the drawer asks.
+     */
+    public function test_a_lost_enquiry_carries_its_reason_onto_the_thread(): void
+    {
+        $id = $this->thread();
+
+        $enquiryId = $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
+            ->json('enquiry.id');
+
+        // No reason, no loss: the funnel would record a loss it cannot explain.
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/enquiries/{$enquiryId}/lost"), [])
+            ->assertStatus(422);
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/enquiries/{$enquiryId}/lost"), ['lost_reason' => 'rates_high'])
+            ->assertStatus(200);
+
+        // The drawer says WHY it is lost, not merely that it is — so lost_reason must ride along.
+        $this->api($this->pricing)
+            ->getJson($this->url("/api/inbox/threads/{$id}"))
+            ->assertJsonPath('thread.enquiry.status', 'lost')
+            ->assertJsonPath('thread.enquiry.lost_reason', 'rates_high')
+            ->assertJsonPath('thread.job', null);
+
+        // Stamped by EnquiryObserver, not the controller — the controller never sets it.
+        $this->assertNotNull(Enquiry::find($enquiryId)->lost_at);
+
+        // Reopening keeps the ORIGINAL number: it was already quoted to a client.
+        $before = Enquiry::find($enquiryId)->enquiry_no;
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/enquiries/{$enquiryId}/reopen"), [])
+            ->assertStatus(200);
+
+        $after = Enquiry::find($enquiryId)->fresh();
+        $this->assertSame($before, $after->enquiry_no);
+        // 🔴 The loss must be UNWOUND, not merely overwritten by the new status. A revived
+        // enquiry that keeps lost_at sits in the open funnel and counts as a loss at the
+        // same time. This is what caught EnquiryObserver comparing a CAST original
+        // against a raw string, which had made the whole reopen branch dead code.
+        $this->assertNull($after->lost_at);
+        $this->assertNull($after->lost_reason);
+        $this->assertNotNull($after->reopened_at);
+    }
+
     public function test_an_unknown_classification_is_rejected(): void
     {
         $id = $this->thread();

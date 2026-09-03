@@ -138,6 +138,54 @@ For production and staging deployments, an independent backup helper container r
 ```
 
 ### 1b. `partners` (PK: `id`)
+
+> 🔴 **`agent_id` added 2026-09-03 — a partner belongs to a BRANCH, not a company.**
+> GST registration is per state, so the same customs broker carries a different GSTIN in
+> Maharashtra and in Tamil Nadu: separate registrations, separate returns. One row per
+> company could hold only one of them, whichever branch saved last would overwrite the
+> other, and the purchase voucher raised against it would claim input credit under the
+> wrong registration. `company_id` is kept so a company-wide view needs no join, but the
+> tenant filter is `agent_id` (`Partner::$tenantColumn`).
+>
+> ⚠️ **Carriers do NOT belong here.** An airline's prefix, name and domain are the same for
+> every forwarder on earth, so they are platform reference data in `airlines`, curated by
+> F16s at `/superadmin/airlines`. A tenant adding an airline as a partner used to be the
+> only way to teach the domain directory; it is not any more.
+>
+> ⚠️ **`GET /api/user/partners/siblings`** lets a branch copy a partner another branch of
+> the same company already has — name, type, address and phone only. **Never `gst_no`,
+> `pan_no` or bank details**: those are the other branch's registration, and the copying
+> branch must enter its own.
+
+### 1c. `airlines` (PK: `id`) — platform reference data
+
+```text
+  Column          | Type         | Key | Connection Links
+  ----------------|--------------|-----|----------------------------------------
+  id              | BIGINT       | PK  |
+  name            | VARCHAR(100) |     | (Emirates SkyCargo)
+  code            | VARCHAR(5)   |     | (IATA designator — EK. NOT unique: designators
+                  |              |     |  are reassigned after an airline folds)
+  prefix          | VARCHAR(5)   | UK  | (IATA numeric prefix — 176. UNIQUE: two carriers
+                  |              |     |  sharing one would make an AWB number ambiguous
+                  |              |     |  about who is carrying the freight)
+  country         | VARCHAR(100) |     |
+  domain          | VARCHAR(255) |     | 🔴 Added 2026-09-03. The carrier's email domain,
+                  |              |     |  read by GlobalDomainDirectory. NOT unique — a
+                  |              |     |  group operating several prefixes from one office
+                  |              |     |  is ordinary. NULL is fine: the prefix and name
+                  |              |     |  are useful long before anyone knows the domain,
+                  |              |     |  and a carrier without one classifies nothing
+  is_active       | BOOLEAN      |     | (also how a carrier is retired)
+  airline_address | TEXT         |     | (printed on the waybill)
+```
+
+> 🔴 **NOT tenant-scoped, and curated only by F16s.** `176` is Emirates whoever is looking.
+> A curated airline classifies mail **without** the approval step that a learned proposal
+> needs — somebody decided when they typed it — and it **outranks** any learned entry for
+> the same domain, so one tenant's data entry cannot silently redefine a carrier for
+> everybody.
+
 *Note: This table stores carriers, airlines, vendors, agents, brokers, and transporters onboarded by platform tenants.*
 
 ```text

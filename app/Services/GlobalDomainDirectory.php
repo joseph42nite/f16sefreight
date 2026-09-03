@@ -56,11 +56,25 @@ class GlobalDomainDirectory
             return null;
         }
 
-        // 🔴 APPROVED ONLY. A proposal has been observed, not accepted — and this
+        $domain = strtolower($domain);
+
+        // 🔴 THE CURATED AIRLINE LIST WINS. It is maintained by F16s as reference data, so
+        // it needs no approval step — somebody decided when they typed it. A learned
+        // proposal about the same domain must not be able to contradict it.
+        $airline = DB::table('airlines')
+            ->where('is_active', true)
+            ->whereRaw('LOWER(domain) = ?', [$domain])
+            ->exists();
+
+        if ($airline) {
+            return 'airline';
+        }
+
+        // 🔴 Otherwise APPROVED ONLY. A proposal has been observed, not accepted — and this
         // directory is platform-wide, so one wrong entry misfiles mail for every tenant at
         // once while the tenant it hurts has no way to see why.
         return DB::table('global_domain_classifications')
-            ->where('domain', strtolower($domain))
+            ->where('domain', $domain)
             ->where('status', 'approved')
             ->value('classification');
     }

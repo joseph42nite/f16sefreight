@@ -157,6 +157,14 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::post('/domain-directory/{id}/approve', [\App\Http\Controllers\Platform\DomainDirectoryController::class, 'approve']);
     Route::post('/domain-directory/{id}/reject', [\App\Http\Controllers\Platform\DomainDirectoryController::class, 'reject']);
     Route::post('/domain-directory/promote', [\App\Http\Controllers\Platform\DomainDirectoryController::class, 'promote']);
+
+    // ── The platform airline list (prefix · name · domain) ───────────────────
+    // Reference data curated by F16s: `176` is Emirates whoever is looking, so no tenant
+    // should be re-keying it — and a mistyped prefix is a waybill filed under the wrong
+    // airline.
+    Route::get('/airlines', [\App\Http\Controllers\Platform\AirlineDirectoryController::class, 'index']);
+    Route::post('/airlines', [\App\Http\Controllers\Platform\AirlineDirectoryController::class, 'store']);
+    Route::put('/airlines/{airline}', [\App\Http\Controllers\Platform\AirlineDirectoryController::class, 'update']);
     Route::post('logout', [SuperAdminController::class, 'logout']);
     Route::post('verify', [SuperAdminController::class, 'me']);
     Route::put('upadte-detail', [SuperAdminController::class, 'update']);
@@ -298,6 +306,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
 
     Route::get('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'index']);
     Route::post('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'store']);
+    // Partners a sibling branch already has — name and address only, never their GSTIN.
+    Route::get('/partners/siblings', [\App\Http\Controllers\Freight\PartnerController::class, 'siblings']);
     Route::get('/partner-types', [\App\Http\Controllers\Freight\PartnerController::class, 'types']);
 
     // ── Financial (guide §5.3) ──────────────────────────────────────────────

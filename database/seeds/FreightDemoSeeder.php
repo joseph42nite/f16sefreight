@@ -72,6 +72,9 @@ class FreightDemoSeeder extends Seeder
 
     public function run(): void
     {
+                // Platform reference data, seeded once before any tenant.
+        $this->seedAirlines();
+
         foreach (self::TENANTS as $tenant) {
             $this->purge($tenant['code']);
             $this->seedTenant($tenant);
@@ -272,13 +275,14 @@ class FreightDemoSeeder extends Seeder
 
         $users = $this->seedUsers($company, $branches->first(), $tenant['code']);
         $customers = $this->seedCustomers($company, $branches->first(), $users['sales']);
-        $this->seedPartners($company);
+
 
         $this->seedPeriod($branches->first());
 
         foreach ($branches as $branch) {
             $this->seedLifecycle($branch, $customers, $users, $tenant['scale']);
             $this->seedTrailingHistory($branch, $customers[3], $users, $tenant['scale']);
+            $this->seedPartners($company, $branch);
             $this->seedInbox($branch, $customers, $users);
             $this->seedWaybills($branch);
         }
@@ -356,21 +360,70 @@ class FreightDemoSeeder extends Seeder
         ]));
     }
 
-    private function seedPartners(Company $company): void
+    /**
+     * Partners belong to a BRANCH, because a GSTIN is a state registration.
+     *
+     * 🔴 The same broker in Mumbai and Chennai is two rows with two GSTINs — one row per
+     * company could only hold one of them, and the purchase voucher raised against it
+     * would claim input credit under the wrong registration. The seeder gives each branch
+     * its own set with its own state number so that shape is visible in demo data rather
+     * than only in the migration comment.
+     */
+    /**
+     * The platform's carrier list — prefix, name, domain. Seeded ONCE, not per tenant.
+     *
+     * 🔴 `176` is Emirates whoever is looking. Curating it centrally is what lets an
+     * operator pick a carrier instead of typing a prefix from memory, and what makes an
+     * airline's mail classify the same way for every tenant.
+     *
+     * ⚠️ Real IATA prefixes, so the demo AWB numbers are ones a freight person recognises.
+     */
+    private function seedAirlines(): void
     {
         foreach ([
-            ['name' => 'Emirates SkyCargo', 'partner_type' => 'airline'],
-            ['name' => 'Lufthansa Cargo',   'partner_type' => 'airline'],
-            ['name' => 'Maersk Line',       'partner_type' => 'shipping_line'],
+            ['prefix' => '176', 'code' => 'EK', 'name' => 'Emirates SkyCargo',  'domain' => 'ekcargo.test',  'country' => 'AE'],
+            ['prefix' => '020', 'code' => 'LH', 'name' => 'Lufthansa Cargo',    'domain' => 'lhcargo.test',  'country' => 'DE'],
+            ['prefix' => '098', 'code' => 'AI', 'name' => 'Air India Cargo',    'domain' => 'aicargo.test',  'country' => 'IN'],
+            ['prefix' => '618', 'code' => 'SQ', 'name' => 'Singapore Airlines Cargo', 'domain' => 'sqcargo.test', 'country' => 'SG'],
+            ['prefix' => '157', 'code' => 'QR', 'name' => 'Qatar Airways Cargo', 'domain' => 'qrcargo.test', 'country' => 'QA'],
+        ] as $a) {
+            DB::table('airlines')->updateOrInsert(
+                ['prefix' => $a['prefix']],
+                $a + ['is_active' => 1]
+            );
+        }
+    }
+
+    private function seedPartners(Company $company, Agent $branch): void
+    {
+        // GSTIN state codes: 27 Maharashtra, 33 Tamil Nadu, 07 Delhi. The prefix is what
+        // makes the same vendor two registrations.
+        $stateCode = match ($branch->branch_code) {
+            'MAA'   => '33',
+            'DEL'   => '07',
+            default => '27',
+        };
+
+        foreach ([
             ['name' => 'Sharma CHA & Co',   'partner_type' => 'customs_broker'],
             ['name' => 'BlueDart Trucking', 'partner_type' => 'transporter'],
+            ['name' => 'Konkan Clearing',   'partner_type' => 'customs_broker'],
         ] as $i => $p) {
+            $slug = strtolower(explode(' ', $p['name'])[0]);
+
             Partner::create($p + [
                 'company_id' => $company->id,
-                'email' => 'bookings@' . strtolower(explode(' ', $p['name'])[0]) . '.test',
+                'agent_id'   => $branch->id,
+                'email' => 'bookings@' . $slug . '.test',
                 'phone' => '+91 22 5000 ' . (2000 + $i),
+                // The whole reason partners are per branch.
+                'gst_no' => $stateCode . 'AAACG' . (1000 + $i) . 'A1Z5',
             ]);
         }
+
+        // ⚠️ NO airlines or shipping lines here any more. A carrier is the same everywhere,
+        // so it is platform reference data (`airlines`, curated by F16s) rather than a row
+        // each branch of each tenant re-keys — see seedAirlines().
     }
 
     /** Posting needs an open period covering today, or every [Post Ledger] returns 422. */

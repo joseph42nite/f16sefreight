@@ -10273,6 +10273,15 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
         userType: 'superadmin'
       }
     }, {
+      // Platform reference data: prefix, name and domain, curated once for every
+      // tenant rather than re-keyed by each branch.
+      path: "airlines",
+      name: "superadmin-airlines",
+      component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_admin_AirlineDirectory_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/AirlineDirectory.vue */ "./resources/js/src/view/pages/admin/AirlineDirectory.vue")),
+      meta: {
+        userType: 'superadmin'
+      }
+    }, {
       path: "all-users",
       name: "superadmin-allusers",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_admin_AllUsers_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/AllUsers.vue */ "./resources/js/src/view/pages/admin/AllUsers.vue")),

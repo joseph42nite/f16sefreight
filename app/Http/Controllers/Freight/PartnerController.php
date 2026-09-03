@@ -33,6 +33,35 @@ class PartnerController extends Controller
         return response()->json($partners);
     }
 
+    /**
+     * Partners the SIBLING branches of this company already have, for the add form.
+     *
+     * 🔴 A convenience, never a shortcut past the state registration. A branch adding a
+     * broker its Chennai office already uses should not retype the name and address — but
+     * it must supply its OWN GSTIN, because that is a Tamil Nadu registration and this is
+     * Maharashtra. So the name, type and address come across and the tax numbers do not.
+     *
+     * ⚠️ Deliberately `withoutGlobalScopes()` on the branch filter and re-scoped to the
+     * COMPANY by hand: a sibling's row is invisible under the ordinary tenant scope, which
+     * is exactly right for reading and exactly wrong for a picker.
+     */
+    public function siblings(Request $request): JsonResponse
+    {
+        $context = \App\Support\UserContext::for(auth()->user());
+
+        $rows = Partner::withoutGlobalScopes()
+            ->where('company_id', $context->companyId)
+            ->where('agent_id', '!=', $context->agentId)
+            ->when($request->filled('type'), fn ($q) => $q->where('partner_type', $request->string('type')))
+            ->orderBy('name')
+            ->limit(200)
+            // 🔐 No `gst_no`, no `pan_no`, no bank columns. Those are the branch's own
+            // registration details and the copying branch must enter its own.
+            ->get(['id', 'name', 'partner_type', 'email', 'phone', 'address', 'agent_id']);
+
+        return response()->json(['partners' => $rows]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $this->authorize('triage');
@@ -49,8 +78,14 @@ class PartnerController extends Controller
             'pan_no'       => ['nullable', 'string', 'max:20'],
         ]);
 
+        $context = \App\Support\UserContext::for(auth()->user());
+
+        // 🔴 The BRANCH owns the row, because the GSTIN on it is a state registration.
+        // `company_id` is kept so a company-wide view stays possible without a join, but
+        // the tenant filter is on `agent_id` — see Partner::$tenantColumn.
         $partner = Partner::create($data + [
-            'company_id' => (int) \App\Support\UserContext::for(auth()->user())->companyId,
+            'company_id' => (int) $context->companyId,
+            'agent_id'   => (int) $context->agentId,
         ]);
 
         $this->audit->record((int) auth()->user()->branch_name, 'partner.created', 'partner', $partner->id, auth()->id());

@@ -22,7 +22,19 @@ class Partner extends Model
     use BelongsToTenant;
 
     /** Tenant-WIDE: shared across all of this tenant's branches. */
-    protected string $tenantColumn = 'company_id';
+    /**
+     * 🔴 BRANCH, not company — GST registration is per state.
+     *
+     * The same customs broker carries a different GSTIN in Maharashtra and in Tamil Nadu:
+     * separate registrations, separate returns. A company-wide row cannot hold both, so
+     * whichever branch saved last would overwrite the other's number and the purchase
+     * voucher raised against it would claim input credit under the wrong registration.
+     *
+     * ⚠️ Carriers are the exception and do not live here at all — an airline's details are
+     * the same everywhere, so they are platform reference data (`airlines`) curated by
+     * F16s rather than re-keyed by every branch.
+     */
+    protected string $tenantColumn = 'agent_id';
 
     /**
      * One row can act in several roles across different shipments — the same firm is
@@ -36,7 +48,7 @@ class Partner extends Model
     ];
 
     protected $fillable = [
-        'company_id', 'name', 'partner_type', 'email', 'phone', 'address',
+        'company_id', 'agent_id', 'name', 'partner_type', 'email', 'phone', 'address',
         'gst_no', 'pan_no', 'bank_name', 'bank_account_no', 'bank_ifsc_code',
     ];
 

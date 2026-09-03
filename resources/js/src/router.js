@@ -204,6 +204,14 @@ const router = new Router({
           meta: { userType: 'superadmin' }
         },
         {
+          // Platform reference data: prefix, name and domain, curated once for every
+          // tenant rather than re-keyed by each branch.
+          path: "airlines",
+          name: "superadmin-airlines",
+          component: () => import("@/view/pages/admin/AirlineDirectory.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "all-users",
           name: "superadmin-allusers",
           component: () => import("@/view/pages/admin/AllUsers.vue"),

@@ -612,6 +612,40 @@ var render = function render() {
     }])
   }), _vm._v(" "), _c("router-link", {
     attrs: {
+      to: "/superadmin/airlines"
+    },
+    scopedSlots: _vm._u([{
+      key: "default",
+      fn: function ({
+        href,
+        navigate,
+        isActive,
+        isExactActive
+      }) {
+        return [_c("li", {
+          staticClass: "menu-item",
+          class: [isActive && "menu-item-active", isExactActive && "menu-item-active"],
+          attrs: {
+            "aria-haspopup": "true",
+            "data-menu-toggle": "hover"
+          }
+        }, [_c("a", {
+          staticClass: "menu-link",
+          attrs: {
+            href: href
+          },
+          on: {
+            click: navigate
+          }
+        }, [_c("i", {
+          staticClass: "menu-icon fas fa-plane"
+        }), _vm._v(" "), _c("span", {
+          staticClass: "menu-text"
+        }, [_vm._v("Airlines")])])])];
+      }
+    }])
+  }), _vm._v(" "), _c("router-link", {
+    attrs: {
       to: "/superadmin/domain-directory"
     },
     scopedSlots: _vm._u([{

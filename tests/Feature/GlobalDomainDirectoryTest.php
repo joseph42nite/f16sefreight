@@ -181,6 +181,55 @@ class GlobalDomainDirectoryTest extends TestCase
             ->where('domain', 'agreed.test')->count());
     }
 
+    // ─── The curated airline list ────────────────────────────────────────────
+
+    /**
+     * 🔴 A CURATED AIRLINE NEEDS NO APPROVAL. `airlines` is reference data maintained by
+     * F16s — somebody decided when they typed it — so it classifies immediately, unlike a
+     * learned proposal which has been observed rather than accepted.
+     */
+    public function test_a_curated_airline_classifies_without_review(): void
+    {
+        DB::table('airlines')->insert([
+            'name' => 'Emirates SkyCargo', 'prefix' => '176', 'code' => 'EK',
+            'domain' => 'ekcargo.test', 'is_active' => 1,
+        ]);
+
+        $this->assertSame('airline', $this->directory()->classify('ekcargo.test'));
+    }
+
+    /** ⚠️ An inactive carrier classifies nothing — the list is also how one is retired. */
+    public function test_an_inactive_airline_classifies_nothing(): void
+    {
+        DB::table('airlines')->insert([
+            'name' => 'Defunct Air', 'prefix' => '999', 'domain' => 'defunct.test',
+            'is_active' => 0,
+        ]);
+
+        $this->assertNull($this->directory()->classify('defunct.test'));
+    }
+
+    /**
+     * 🔴 The curated list OUTRANKS a learned proposal. A tenant adding a partner cannot
+     * contradict what F16s has stated about a carrier — otherwise one customer's data
+     * entry silently redefines an airline for everybody.
+     */
+    public function test_the_curated_list_outranks_a_learned_entry(): void
+    {
+        DB::table('airlines')->insert([
+            'name' => 'Contested Air', 'prefix' => '998',
+            'domain' => 'contested.test', 'is_active' => 1,
+        ]);
+
+        DB::table('global_domain_classifications')->insert([
+            'domain' => 'contested.test', 'classification' => 'trucking_road',
+            'source' => 'partner', 'status' => 'approved', 'confirmations' => 5,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->assertSame('airline', $this->directory()->classify('contested.test'));
+    }
+
     // ─── The directory is deliberately NOT tenant-scoped ─────────────────────
 
     /**

@@ -33,11 +33,21 @@ class EmailInboxController extends Controller
 {
     /** database_relations_tree.md #21 — the whole vocabulary. */
     /**
-     * ⚠️ `shipping_line` added 2026-09-03. The list was air-shaped and a sea carrier had
-     * nowhere to go, so `GlobalDomainDirectory` refused to learn one rather than file
-     * Maersk under `airline` and hide it. The sea segment bills through the same inbox.
+     * The AIR inbox vocabulary.
+     *
+     * 🔴 **`shipping_line` does NOT belong here.** A sea carrier is FocusSea's counterparty,
+     * and the classification set is per mode — the guide is explicit that rules are scoped
+     * by `transport_mode` because air and sea use different units, routing tokens and
+     * reference formats. Adding a sea class to the air list would put Maersk in an air
+     * operator's folder list, which is noise on every screen that never handles sea.
+     * Recorded as GAPS #50; the sea vocabulary lands with FocusSea.
+     *
+     * ⚠️ `other` exists so an operator can file mail that is none of these WITHOUT forcing
+     * it into a wrong bucket. Without it the honest answer for a bank statement or a
+     * newsletter is `customer_enquiry`, which mints nothing but does inflate the pool the
+     * conversion rate is measured against.
      */
-    public const CLASSIFICATIONS = ['customer_enquiry', 'airline', 'shipping_line', 'clearance', 'trucking_road'];
+    public const CLASSIFICATIONS = ['customer_enquiry', 'airline', 'clearance', 'trucking_road', 'other'];
 
     public function __construct(
         private readonly EnquirySequenceService $sequences,

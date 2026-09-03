@@ -35,14 +35,14 @@ class GlobalDomainDirectory
     /**
      * `partners.partner_type` → the inbox vocabulary.
      *
-     * ⚠️ `shipping_line` was ABSENT until 2026-09-03, because the vocabulary was
-     * air-shaped and had no slot for a sea carrier — mapping Maersk to `airline` would
-     * have filed sea carriers in the air folder and hidden it. The class now exists, so
-     * the mapping is a real one rather than a convenient lie.
+     * 🔴 `shipping_line` is deliberately ABSENT, and stays absent. A sea carrier is
+     * FocusSea's counterparty; the air inbox has no folder for one, and the classification
+     * set is per MODE by design. Mapping Maersk to `airline` to fill the gap would file
+     * sea carriers in an air operator's folder and hide the mistake. The sea vocabulary
+     * arrives with FocusSea — GAPS #50.
      */
     private const PARTNER_TYPE_MAP = [
         'airline'        => 'airline',
-        'shipping_line'  => 'shipping_line',
         'customs_broker' => 'clearance',
         'transporter'    => 'trucking_road',
     ];

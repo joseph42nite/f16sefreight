@@ -126,16 +126,18 @@ class GlobalDomainDirectoryTest extends TestCase
      * and hide the mistake, so it is deliberately not learned at all.
      */
     /**
-     * ⚠️ `shipping_line` was refused entirely until the vocabulary gained a sea class on
-     * 2026-09-03 — mapping Maersk to `airline` would have filed sea carriers in the air
-     * folder and hidden it. Now it maps to itself.
+     * 🔴 A SEA CARRIER IS NOT LEARNED BY THE AIR INBOX. `shipping_line` is FocusSea's
+     * counterparty and the classification set is per MODE — filing Maersk under `airline`
+     * to avoid an empty case would put sea carriers in an air operator's folder and hide
+     * the mistake. Refused deliberately until the sea vocabulary exists (GAPS #50).
      */
-    public function test_a_shipping_line_maps_to_its_own_class(): void
+    public function test_a_shipping_line_is_not_learned_by_the_air_vocabulary(): void
     {
         $this->partner('shipping_line', 'book@maerskline.test');
 
-        $this->assertSame('shipping_line', DB::table('global_domain_classifications')
-            ->where('domain', 'maerskline.test')->value('classification'));
+        $this->assertNull(DB::table('global_domain_classifications')
+            ->where('domain', 'maerskline.test')->value('classification'),
+            'A sea carrier was learned into the air inbox.');
     }
 
     /**

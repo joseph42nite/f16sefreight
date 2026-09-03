@@ -175,6 +175,7 @@
             <th scope="col">Field</th>
             <th scope="col">Source</th>
             <th scope="col">Value</th>
+            <th scope="col"><span class="fx-sr-only">Fit to the form</span></th>
           </tr>
         </thead>
         <tbody>
@@ -189,6 +190,23 @@
               <span v-else class="fx-muted">not set</span>
             </td>
             <td>
+              <!--
+                📇 The branch's own address book. A consignee typed a hundred times is a
+                consignee that has been typed wrong at least once — picking beats retyping,
+                and a saved party already fits the fields.
+              -->
+              <select
+                v-if="row.party"
+                class="fx-input fx-extract__book"
+                :value="''"
+                @change="useSaved(row.party, $event.target.value)"
+              >
+                <option value="">Saved {{ row.label.toLowerCase() }}…</option>
+                <option v-for="a in savedFor(row.party)" :key="a.id" :value="a.id">
+                  {{ a.name }}<template v-if="a.city"> · {{ a.city }}</template>
+                </option>
+              </select>
+
               <!--
                 🔴 CHARGEABLE IS EDITABLE. It defaults to the greater of gross and
                 volumetric — the IATA rule — but a re-measured or negotiated figure is a
@@ -211,9 +229,35 @@
                 <span v-else class="fx-muted">—</span>
               </template>
             </td>
+            <td class="fx-num">
+              <!--
+                🔴 NOT an AI call. A character limit and a charset have an exact right
+                answer, so a model here would be slower, cost a credit, differ next
+                Tuesday, and produce a plausible shortening nobody could check.
+              -->
+              <button
+                v-if="row.party && row.value"
+                class="fx-btn fx-btn--ghost"
+                @click="fit(row.party)"
+              >Fit to {{ targetLabel }}</button>
+            </td>
           </tr>
         </tbody>
       </table>
+
+      <!--
+        ⚠️ Every change is SHOWN and the operator accepts. Silent truncation is the defect
+        this codebase already shipped once, turning "Müller & Co." into "Mller Co" with
+        nothing on screen to say so.
+      -->
+      <div v-if="fitReport" class="fx-warn" role="status">
+        <strong>{{ fitReport.party }}</strong> — {{ fitReport.changes.join("; ") }}.
+        <template v-if="fitReport.overLimit">
+          Shorten it yourself: which part matters is a judgement, and cutting it here would
+          be a guess.
+        </template>
+        <button class="fx-btn fx-btn--ghost" @click="fitReport = null">Dismiss</button>
+      </div>
 
       <p v-if="lowConfidence.length" class="fx-warn" role="status">
         {{ lowConfidence.length }} field(s) the extractor was unsure of:
@@ -289,6 +333,7 @@
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import { buildPayload, createEndpoint, formRoute, masterKey, TARGETS } from "@/core/config/awbMapping";
+import { cleanParty } from "@/core/config/awbFieldRules";
 
 /**
  * The parts a shipment is assembled from.
@@ -316,16 +361,23 @@ const GROUPS = [
  * a missing description reads the same as a present one.
  */
 const RESULT_FIELDS = [
-  { key: "shipper", label: "Shipper", group: "parties" },
-  { key: "consignee", label: "Consignee", group: "parties" },
+  { key: "shipper", label: "Shipper", group: "parties", party: "shipper" },
+  { key: "consignee", label: "Consignee", group: "parties", party: "consignee" },
   { key: "pieces", label: "Pieces", group: "cargo" },
   { key: "dimensions", label: "Dimensions", group: "cargo" },
   { key: "goods", label: "Description", group: "cargo" },
   { key: "gross_weight", label: "Gross weight", group: "weights", unit: "kg" },
   { key: "volumetric_weight", label: "Volumetric weight", group: "weights", unit: "kg", derived: true },
   { key: "chargeable_weight", label: "Chargeable weight", group: "weights", unit: "kg", editable: true },
-  { key: "notify", label: "Notify party", group: "notify" },
+  { key: "notify", label: "Notify party", group: "notify", party: "notify" },
 ];
+
+/** `saved_addresses.address_type` for each party. */
+const ADDRESS_TYPES = {
+  shipper: "shipper_address",
+  consignee: "consignee_address",
+  notify: "also_notify_address",
+};
 
 /** Shown in the paste box, so the accepted labels are visible rather than documented. */
 const PASTE_EXAMPLE = [
@@ -419,6 +471,9 @@ export default {
     PASTE_EXAMPLE,
     RESULT_FIELDS,
     chargeableEdit: "",
+    savedAddresses: {},
+    manual: {},
+    fitReport: null,
     target: "mawb",
     awbCode: "", awbNo: "", hawbNo: "",
     saving: false, saveError: null, draftUrl: null,
@@ -671,7 +726,84 @@ export default {
        and only when the field is EMPTY, so it never overwrites a number being typed. */
     prefillAwb: { immediate: true, handler: "applyPrefill" },
   },
+  created() {
+    this.loadAddressBook();
+  },
   methods: {
+    /**
+     * The branch's saved parties, for the pickers.
+     *
+     * ⚠️ Failure is silent: a picker that could not load costs a lookup, not the ability
+     * to work, and the fields stay typeable either way.
+     */
+    loadAddressBook() {
+      Object.keys(ADDRESS_TYPES).forEach((party) => {
+        ApiService.get("/user/saved-addresses?address_type=" + ADDRESS_TYPES[party])
+          .then(({ data }) => {
+            const rows = (data && (data.data || data.addresses || data)) || [];
+            this.$set(this.savedAddresses, party, Array.isArray(rows) ? rows : []);
+          })
+          .catch(() => { this.$set(this.savedAddresses, party, []); });
+      });
+    },
+    savedFor(party) {
+      return this.savedAddresses[party] || [];
+    },
+    /**
+     * Take a saved party wholesale.
+     *
+     * 🔴 It overwrites the extraction, and should: a saved address is a party this branch
+     * has already checked and used, which outranks anything read off a scan.
+     */
+    useSaved(party, id) {
+      if (!id) return;
+
+      const type = ADDRESS_TYPES[party];
+      const prefix = party === "notify" ? "also" : party === "shipper" ? "ship" : "cons";
+      const route = party === "notify" ? "alsonotify" : party;
+
+      ApiService.get("/user/get-" + route + "-address?id=" + id + "&address_type=" + type)
+        .then(({ data }) => {
+          const map = {
+            "": prefix + "_name", _address: prefix + "_address", _city: prefix + "_city",
+            _state: prefix + "_state", _post_code: prefix + "_post_code",
+            _country: prefix + "_country",
+          };
+
+          Object.keys(map).forEach((suffix) => {
+            const value = data[map[suffix]];
+            if (value) this.$set(this.manual, party + suffix, { value, confidence: "high" });
+          });
+        })
+        .catch((e) => { this.saveError = this.messageFor(e); });
+    },
+    /**
+     * Make a party's fields fit THIS document's rules, and say what changed.
+     *
+     * ⚠️ Applies the safe changes (spacing, charset, country case) and REPORTS an
+     * over-length rather than cutting it: which part of an address matters is a judgement,
+     * and the machine does not have it.
+     */
+    fit(party) {
+      const source = {};
+
+      ["", "_address", "_city", "_state", "_post_code", "_country"].forEach((suffix) => {
+        const key = party + suffix;
+        const node = this.sourceField(key, "parties");
+
+        if (node !== undefined) source[key] = node;
+      });
+
+      const result = cleanParty(this.target, party, source);
+
+      Object.keys(result.values).forEach((key) => {
+        this.$set(this.manual, key, { value: result.values[key], confidence: "high" });
+      });
+
+      this.fitReport = result.changes.length
+        ? { party, changes: result.changes, overLimit: result.overLimit }
+        : { party, changes: ["already fits — nothing to change"], overLimit: false };
+    },
     /**
      * Fill the number from the job, without ever clobbering the operator.
      *
@@ -697,6 +829,10 @@ export default {
      * "Maximum call stack size exceeded" and a blank panel. Measured, on this component.
      */
     sourceField(key, groupKey) {
+      // 🔴 A value the operator chose or fitted outranks everything: it is the most recent
+      // statement of fact about this shipment, and it is the one they can see.
+      if (this.manual[key] !== undefined) return this.manual[key];
+
       if (this.pastedFields[key] !== undefined) return this.pastedFields[key];
 
       const uid = this.assignment[groupKey];

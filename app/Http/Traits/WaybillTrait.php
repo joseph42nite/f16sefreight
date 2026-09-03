@@ -37,13 +37,14 @@ trait WaybillTrait
     }
     private function getAddressByType(Request $request, string $addressType, string $prefix)
     {
+        // 🔴 Both branches go through the tenant-scoped model. Fetching by raw id with no
+        // filter let any authenticated user read any tenant's saved party by guessing a
+        // number — see SavedAddress, which had no scope at all until 2026-09-03.
         $addressId = $request->input('id') ?? $request->query('id');
-        $address = null;
-        if ($addressId) {
-            $address = SavedAddress::where('id', $addressId)->first();
-        } else {
-            $address = SavedAddress::where('address_type', $addressType)->first();
-        }
+
+        $address = $addressId
+            ? SavedAddress::where('id', $addressId)->first()
+            : SavedAddress::where('address_type', $addressType)->first();
 
         if ($address) {
             return response()->json([
@@ -63,5 +64,22 @@ trait WaybillTrait
             ], 200);
         }
         return response()->json(['error' => 'Address not found'], 404);
+    }
+
+    /**
+     * The branch's saved parties of one type, for a picker.
+     *
+     * ⚠️ A summary only — enough to recognise a party in a dropdown. The full address
+     * comes from `getAddressByType` once one is chosen, so a list of two hundred does not
+     * ship two hundred full addresses to draw a menu.
+     */
+    private function listAddressesByType(string $addressType)
+    {
+        return response()->json([
+            'addresses' => SavedAddress::where('address_type', $addressType)
+                ->orderBy('name')
+                ->limit(200)
+                ->get(['id', 'name', 'city', 'country', 'post_code']),
+        ]);
     }
 }

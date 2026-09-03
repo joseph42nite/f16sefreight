@@ -516,11 +516,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
 /* harmony import */ var _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/config/awbMapping */ "./resources/js/src/core/config/awbMapping.js");
+/* harmony import */ var _core_config_awbFieldRules__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/core/config/awbFieldRules */ "./resources/js/src/core/config/awbFieldRules.js");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -565,11 +567,13 @@ const GROUPS = [{
 const RESULT_FIELDS = [{
   key: "shipper",
   label: "Shipper",
-  group: "parties"
+  group: "parties",
+  party: "shipper"
 }, {
   key: "consignee",
   label: "Consignee",
-  group: "parties"
+  group: "parties",
+  party: "consignee"
 }, {
   key: "pieces",
   label: "Pieces",
@@ -602,8 +606,16 @@ const RESULT_FIELDS = [{
 }, {
   key: "notify",
   label: "Notify party",
-  group: "notify"
+  group: "notify",
+  party: "notify"
 }];
+
+/** `saved_addresses.address_type` for each party. */
+const ADDRESS_TYPES = {
+  shipper: "shipper_address",
+  consignee: "consignee_address",
+  notify: "also_notify_address"
+};
 
 /** Shown in the paste box, so the accepted labels are visible rather than documented. */
 const PASTE_EXAMPLE = ["Shipper: Globex Exports Pvt Ltd", "Shipper address: Plot 42/A, MIDC Andheri East", "Shipper city: Mumbai", "Consignee: Emirates Trading LLC", "Pieces: 14", "Gross weight: 698.5", "Chargeable weight: 720", "Dimensions: 120x80x90", "Goods: Machine parts"].join("\n");
@@ -685,6 +697,9 @@ const PARTY_REQUIRED = {
     PASTE_EXAMPLE,
     RESULT_FIELDS,
     chargeableEdit: "",
+    savedAddresses: {},
+    manual: {},
+    fitReport: null,
     target: "mawb",
     awbCode: "",
     awbNo: "",
@@ -938,7 +953,95 @@ const PARTY_REQUIRED = {
       handler: "applyPrefill"
     }
   },
+  created() {
+    this.loadAddressBook();
+  },
   methods: {
+    /**
+     * The branch's saved parties, for the pickers.
+     *
+     * ⚠️ Failure is silent: a picker that could not load costs a lookup, not the ability
+     * to work, and the fields stay typeable either way.
+     */
+    loadAddressBook() {
+      Object.keys(ADDRESS_TYPES).forEach(party => {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/saved-addresses?address_type=" + ADDRESS_TYPES[party]).then(({
+          data
+        }) => {
+          const rows = data && (data.data || data.addresses || data) || [];
+          this.$set(this.savedAddresses, party, Array.isArray(rows) ? rows : []);
+        }).catch(() => {
+          this.$set(this.savedAddresses, party, []);
+        });
+      });
+    },
+    savedFor(party) {
+      return this.savedAddresses[party] || [];
+    },
+    /**
+     * Take a saved party wholesale.
+     *
+     * 🔴 It overwrites the extraction, and should: a saved address is a party this branch
+     * has already checked and used, which outranks anything read off a scan.
+     */
+    useSaved(party, id) {
+      if (!id) return;
+      const type = ADDRESS_TYPES[party];
+      const prefix = party === "notify" ? "also" : party === "shipper" ? "ship" : "cons";
+      const route = party === "notify" ? "alsonotify" : party;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/get-" + route + "-address?id=" + id + "&address_type=" + type).then(({
+        data
+      }) => {
+        const map = {
+          "": prefix + "_name",
+          _address: prefix + "_address",
+          _city: prefix + "_city",
+          _state: prefix + "_state",
+          _post_code: prefix + "_post_code",
+          _country: prefix + "_country"
+        };
+        Object.keys(map).forEach(suffix => {
+          const value = data[map[suffix]];
+          if (value) this.$set(this.manual, party + suffix, {
+            value,
+            confidence: "high"
+          });
+        });
+      }).catch(e => {
+        this.saveError = this.messageFor(e);
+      });
+    },
+    /**
+     * Make a party's fields fit THIS document's rules, and say what changed.
+     *
+     * ⚠️ Applies the safe changes (spacing, charset, country case) and REPORTS an
+     * over-length rather than cutting it: which part of an address matters is a judgement,
+     * and the machine does not have it.
+     */
+    fit(party) {
+      const source = {};
+      ["", "_address", "_city", "_state", "_post_code", "_country"].forEach(suffix => {
+        const key = party + suffix;
+        const node = this.sourceField(key, "parties");
+        if (node !== undefined) source[key] = node;
+      });
+      const result = (0,_core_config_awbFieldRules__WEBPACK_IMPORTED_MODULE_3__.cleanParty)(this.target, party, source);
+      Object.keys(result.values).forEach(key => {
+        this.$set(this.manual, key, {
+          value: result.values[key],
+          confidence: "high"
+        });
+      });
+      this.fitReport = result.changes.length ? {
+        party,
+        changes: result.changes,
+        overLimit: result.overLimit
+      } : {
+        party,
+        changes: ["already fits — nothing to change"],
+        overLimit: false
+      };
+    },
     /**
      * Fill the number from the job, without ever clobbering the operator.
      *
@@ -962,6 +1065,9 @@ const PARTY_REQUIRED = {
      * "Maximum call stack size exceeded" and a blank panel. Measured, on this component.
      */
     sourceField(key, groupKey) {
+      // 🔴 A value the operator chose or fitted outranks everything: it is the most recent
+      // statement of fact about this shipment, and it is the one they can see.
+      if (this.manual[key] !== undefined) return this.manual[key];
       if (this.pastedFields[key] !== undefined) return this.pastedFields[key];
       const uid = this.assignment[groupKey];
       const doc = this.documents.find(d => d.uid === uid);
@@ -2199,7 +2305,28 @@ var render = function render() {
       staticClass: "fx-extract__override"
     }, [_vm._v("entered")]) : row.source ? _c("span", [_vm._v(_vm._s(row.source))]) : _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("not set")])]), _vm._v(" "), _c("td", [row.editable ? [_c("input", {
+    }, [_vm._v("not set")])]), _vm._v(" "), _c("td", [row.party ? _c("select", {
+      staticClass: "fx-input fx-extract__book",
+      domProps: {
+        value: ""
+      },
+      on: {
+        change: function ($event) {
+          return _vm.useSaved(row.party, $event.target.value);
+        }
+      }
+    }, [_c("option", {
+      attrs: {
+        value: ""
+      }
+    }, [_vm._v("Saved " + _vm._s(row.label.toLowerCase()) + "…")]), _vm._v(" "), _vm._l(_vm.savedFor(row.party), function (a) {
+      return _c("option", {
+        key: a.id,
+        domProps: {
+          value: a.id
+        }
+      }, [_vm._v("\n                " + _vm._s(a.name)), a.city ? [_vm._v(" · " + _vm._s(a.city))] : _vm._e()], 2);
+    })], 2) : _vm._e(), _vm._v(" "), row.editable ? [_c("input", {
       directives: [{
         name: "model",
         rawName: "v-model",
@@ -2226,8 +2353,29 @@ var render = function render() {
       staticClass: "fx-muted"
     }, [_vm._v(" " + _vm._s(row.unit))]) : _vm._e()]) : _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("—")])]], 2)]);
-  }), 0)]), _vm._v(" "), _vm.lowConfidence.length ? _c("p", {
+    }, [_vm._v("—")])]], 2), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [row.party && row.value ? _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.fit(row.party);
+        }
+      }
+    }, [_vm._v("Fit to " + _vm._s(_vm.targetLabel))]) : _vm._e()])]);
+  }), 0)]), _vm._v(" "), _vm.fitReport ? _c("div", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_c("strong", [_vm._v(_vm._s(_vm.fitReport.party))]), _vm._v(" — " + _vm._s(_vm.fitReport.changes.join("; ")) + ".\n      "), _vm.fitReport.overLimit ? [_vm._v("\n        Shorten it yourself: which part matters is a judgement, and cutting it here would\n        be a guess.\n      ")] : _vm._e(), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    on: {
+      click: function ($event) {
+        _vm.fitReport = null;
+      }
+    }
+  }, [_vm._v("Dismiss")])], 2) : _vm._e(), _vm._v(" "), _vm.lowConfidence.length ? _c("p", {
     staticClass: "fx-warn",
     attrs: {
       role: "status"
@@ -2324,10 +2472,165 @@ var staticRenderFns = [function () {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Value")])])]);
+  }, [_vm._v("Value")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_c("span", {
+    staticClass: "fx-sr-only"
+  }, [_vm._v("Fit to the form")])])])]);
 }];
 render._withStripped = true;
 
+
+/***/ }),
+
+/***/ "./resources/js/src/core/config/awbFieldRules.js":
+/*!*******************************************************!*\
+  !*** ./resources/js/src/core/config/awbFieldRules.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "clean": () => (/* binding */ clean),
+/* harmony export */   "cleanParty": () => (/* binding */ cleanParty),
+/* harmony export */   "limitFor": () => (/* binding */ limitFor)
+/* harmony export */ });
+/**
+ * What a waybill field will actually accept, and how to make a value fit it.
+ *
+ * 🔴 **The master and the house are NOT the same form.** A house bill allows 40 characters
+ * of address where the master allows 255, and 9 of state against 35 — so an address that
+ * saves perfectly on the MAWB has to be shortened for its own HAWB. Cleaning without
+ * knowing which document is being written is therefore not cleaning, it is guessing.
+ *
+ * 🔴 **NOTHING IS TRUNCATED SILENTLY.** `clean()` reports every change it wants to make and
+ * the caller shows them; the operator accepts. This codebase has already shipped the other
+ * behaviour once — `inputLimit()` in both air forms stripped characters and cut values on
+ * the way into the model, turning "Müller & Co." into "Mller Co" with nothing on screen to
+ * say so. A consignee that is wrong in a way nobody saw is the error that reaches customs.
+ *
+ * ⚠️ This is deliberately NOT an AI call. Character limits and a charset have exact right
+ * answers; a model would be slower, cost a credit, give a different answer next Tuesday,
+ * and — worst — produce a plausible shortening that nobody could check. The judgement work
+ * (messy free text into structured fields) is a different problem and belongs to the
+ * unstructured parser.
+ */
+
+/** Per-target limits, taken from the controllers' own validators. */
+const LIMITS = {
+  mawb: {
+    name: 70,
+    address: 255,
+    address_line_2: 255,
+    city: 70,
+    state: 35,
+    post_code: 15,
+    country: 2,
+    airport_code: 3,
+    phone: 20
+  },
+  hawb: {
+    name: 70,
+    address: 40,
+    address_line_2: 30,
+    city: 70,
+    state: 9,
+    post_code: 15,
+    country: 2,
+    airport_code: 3,
+    phone: 20
+  }
+};
+
+/**
+ * Characters the address fields accept — the widened set (GAPS #44), matching
+ * `ADDRESS_PATTERN` on both controllers.
+ *
+ * ⚠️ Kept in step with the server BY HAND. If they drift, the server is right and this is
+ * wrong: a value cleaned to something the validator then rejects is worse than uncleaned.
+ */
+const ADDRESS_ALLOWED = /[^\p{L}\p{M}\p{N}\s.,\-/&()#'":;+]/gu;
+
+/** Names and cities are looser in the validators — letters, digits, ordinary punctuation. */
+const TEXT_ALLOWED = /[^\p{L}\p{M}\p{N}\s.,\-'&()/]/gu;
+function limitFor(target, field) {
+  const set = LIMITS[target] || LIMITS.mawb;
+  return set[field] ?? null;
+}
+
+/**
+ * Make one value fit one field, reporting every change.
+ *
+ * @returns {{value: string, changes: string[], overLimit: boolean}}
+ */
+function clean(target, field, raw) {
+  const changes = [];
+  let value = String(raw ?? "");
+  const collapsed = value.replace(/\s+/g, " ").trim();
+  if (collapsed !== value) {
+    changes.push("collapsed extra spaces");
+    value = collapsed;
+  }
+
+  // Country is an ISO alpha-2 and is printed uppercase; leaving "in" produces a waybill
+  // that reads wrong and a filing that may not match.
+  if (field === "country") {
+    const up = value.toUpperCase();
+    if (up !== value) {
+      changes.push("upper-cased the country code");
+      value = up;
+    }
+  }
+  const pattern = field === "address" || field === "address_line_2" ? ADDRESS_ALLOWED : TEXT_ALLOWED;
+  const stripped = value.replace(pattern, "");
+  if (stripped !== value) {
+    // ⚠️ Named, not counted. "removed 3 characters" leaves the operator hunting; showing
+    // WHICH ones lets them decide whether the loss matters.
+    const removed = [...new Set(value.match(pattern) || [])].join(" ");
+    changes.push(`removed ${removed}`);
+    // ⚠️ Collapse AGAIN: removing a character from the middle of a word leaves the spaces
+    // that surrounded it, so "Co. ★ Exports" became "Co.  Exports" — a double space that
+    // then prints on the waybill.
+    value = stripped.replace(/\s+/g, " ").trim();
+  }
+  const limit = limitFor(target, field);
+  const overLimit = limit !== null && value.length > limit;
+  if (overLimit) {
+    // 🔴 Reported, NOT applied. Shortening an address is a judgement about which part
+    // matters — "Unit 4" or "Industrial Estate" — and the machine does not know. It says
+    // so and the operator decides.
+    changes.push(`too long for a ${target.toUpperCase()}: ${value.length} of ${limit} characters`);
+  }
+  return {
+    value,
+    changes,
+    overLimit
+  };
+}
+
+/** Clean a whole party block, returning the fields that changed and why. */
+function cleanParty(target, party, fields) {
+  const out = {
+    values: {},
+    changes: [],
+    overLimit: false
+  };
+  ["", "_address", "_city", "_state", "_post_code", "_country"].forEach(suffix => {
+    const key = party + suffix;
+    const raw = fields[key];
+    if (raw === undefined || raw === null || raw === "") {
+      return;
+    }
+    const field = suffix === "" ? "name" : suffix.slice(1);
+    const result = clean(target, field, typeof raw === "object" ? raw.value : raw);
+    out.values[key] = result.value;
+    out.overLimit = out.overLimit || result.overLimit;
+    result.changes.forEach(c => out.changes.push(`${field.replace(/_/g, " ")}: ${c}`));
+  });
+  return out;
+}
 
 /***/ }),
 

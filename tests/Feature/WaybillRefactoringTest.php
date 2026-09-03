@@ -65,6 +65,12 @@ class WaybillRefactoringTest extends TestCase
             'fax' => '0987654321',
             'telex' => 'TLX123',
             'address_type' => 'shipper_address',
+            // 🔴 `agent_id` is REQUIRED for the address to be readable at all. SavedAddress
+            // gained a branch scope on 2026-09-03 — it had none, and the lookup fetched by
+            // raw id, so any authenticated user could read any tenant's saved party by
+            // guessing a number. An address belonging to no branch now belongs to nobody,
+            // which is why this fixture had to name one.
+            'agent_id' => $agent->id,
         ]);
 
         // 3. Test getShipperAddress (should return keys prefixed with "ship_")

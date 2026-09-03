@@ -168,6 +168,15 @@ answered it.
 
 ---
 
+## 🔴 Found 2026-09-03 — the address book was not scoped
+
+| # | Finding | Detail |
+|---|---|---|
+| 53 | 🟢 **RESOLVED — `SavedAddress` had NO tenant scope at all.** The model carried no `BelongsToTenant`, and `WaybillTrait::getAddressByType()` fetched by **raw id with no filter** — so any authenticated user could read any branch's, and any TENANT's, saved shipper or consignee by guessing a number. Both AWB forms call that endpoint | The table happened to be EMPTY, so nothing leaked — but the endpoint is live and would have leaked the first party anybody saved. Now branch-scoped (`agent_id`), with `SavedAddressScopeTest` asserting a foreign tenant, a sibling branch, and an unattributed row are all refused. ⚠️ **Production may hold rows with NULL `agent_id`**, which are now readable by nobody. That is the correct answer for an unattributed address, but if such rows exist they need a backfill like `partners` got — check before deploying |
+| 54 | ⚠️ **The address book silently forgot notify parties.** `AddressBookController::index` hardcoded `whereIn('address_type', ['shipper_address', 'consignee_address'])`, so an `also_notify_address` could be SAVED and never offered back. Fixed, and the endpoint now takes an `address_type` filter for the extraction panel's pickers | Found while wiring the saved-address dropdown — the third type simply had no way home |
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

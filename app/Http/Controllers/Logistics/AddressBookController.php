@@ -18,8 +18,15 @@ class AddressBookController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
+        // ⚠️ `also_notify_address` is now selectable too. The list was hardcoded to two
+        // types, so a notify party could be SAVED and never offered back — the address
+        // book quietly forgot a third of what it held.
+        $types = $request->filled('address_type')
+            ? [$request->string('address_type')->toString()]
+            : ['shipper_address', 'consignee_address', 'also_notify_address'];
+
         $query = SavedAddress::with('user:id,name,email')
-            ->whereIn('address_type', ['shipper_address', 'consignee_address']);
+            ->whereIn('address_type', $types);
 
         // Scope by branch / agent_id if set
         $agentId = $user->branch_name;

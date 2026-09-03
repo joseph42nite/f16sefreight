@@ -9,6 +9,27 @@
       </p>
     </header>
 
+    <!--
+      🔍 ONE box over BOTH identities. An operator looking for "globex" should not have to
+      know whether that client was ever onboarded as a customer — the server matches the
+      customer name, its email domain, and the address the conversation arrived from, so
+      the row appears either way.
+    -->
+    <div class="fx-toolbar">
+      <label class="fx-field">
+        <span class="fx-field__label">Client</span>
+        <input
+          v-model="client"
+          class="fx-input"
+          type="search"
+          placeholder="Name or domain…"
+          @keyup.enter="load"
+        />
+      </label>
+      <button class="fx-btn" @click="load">Search</button>
+      <button v-if="client" class="fx-btn fx-btn--ghost" @click="client = ''; load()">Clear</button>
+    </div>
+
     <p v-if="loading" class="fx-muted">Loading…</p>
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
     <p v-else-if="!rows.length" class="fx-muted">
@@ -19,6 +40,7 @@
       <thead>
         <tr>
           <th scope="col">Number</th>
+          <th scope="col">Client</th>
           <th scope="col">Status</th>
           <th scope="col">Lane</th>
           <th scope="col" class="fx-num">Pieces</th>
@@ -30,6 +52,23 @@
       <tbody>
         <tr v-for="row in rows" :key="row.id">
           <td class="identifier">{{ row.enquiry_no }}</td>
+          <td>
+            <!--
+              🔴 The name where the client is known, the sending DOMAIN where it is not.
+              A brand-new prospect has no customer row yet, and a blank there reads as
+              "nobody" when the truth is "not onboarded". The domain is what the operator
+              actually recognises in the meantime.
+            -->
+            <span v-if="row.client_label">{{ row.client_label }}</span>
+            <span v-else class="is-empty" aria-label="No client recorded"></span>
+
+            <!-- ⚠️ Below Command the server omits customer_id entirely, so there is
+                 nothing to link to and no link is offered. -->
+            <span
+              v-if="row.client_domain && row.client_domain !== row.client_label"
+              class="fx-muted fx-enq__domain"
+            >{{ row.client_domain }}</span>
+          </td>
           <td><StatusChip :value="row.status" /></td>
           <td>
             <!-- §4.1 NULL is not zero — an unknown lane renders as an em dash, never
@@ -67,7 +106,8 @@ import Figure from "@/view/pages/freight/components/Figure.vue";
 export default {
   name: "EnquiryBoard",
   components: { StatusChip, Figure },
-  data: () => ({ rows: [], loading: true, error: null, busyId: null }),
+  data: () => ({
+    client: "", rows: [], loading: true, error: null, busyId: null }),
   computed: {
     ...mapGetters(["portalLabel", "can"]),
     canConvert() {
@@ -81,7 +121,9 @@ export default {
   methods: {
     load() {
       this.loading = true;
-      ApiService.get("/enquiries")
+      // The client filter is a server-side search across the customer record AND the
+      // sending domain — see EnquiryController::index.
+      ApiService.get("/enquiries" + (this.client ? "?client=" + encodeURIComponent(this.client) : ""))
         .then(({ data }) => {
           this.rows = data.data || [];
         })

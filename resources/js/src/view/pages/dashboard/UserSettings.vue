@@ -25,6 +25,29 @@
                         </p>
                     </div>
 
+                    <!--
+                      📬 Mailbox connections live here rather than in the rail: connecting a
+                      mailbox is a once-per-person act of configuration, and a permanent
+                      rail slot for it competes with the surfaces an operator uses hourly.
+                      A link rather than an embedded panel — the mailbox page owns its own
+                      OAuth round trip, and nesting that inside a profile form would put a
+                      redirect in the middle of an unrelated screen.
+                    -->
+                    <b-card class="profile-card border-0 mb-6 shadow-sm">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap">
+                            <div>
+                                <h5 class="mb-1 font-weight-700" style="color: #355594;">Mailboxes</h5>
+                                <p class="mb-0 text-muted">
+                                    Connect the mailbox your clients write to. Messages appear in the
+                                    Inbox; nothing is sent without you asking.
+                                </p>
+                            </div>
+                            <router-link to="/mailboxes" class="btn btn-primary">
+                                Manage mailboxes
+                            </router-link>
+                        </div>
+                    </b-card>
+
                     <!-- User Profile Details Card -->
                     <b-card class="profile-card border-0 mb-6 shadow-sm">
                         <div class="d-flex align-items-center mb-4">

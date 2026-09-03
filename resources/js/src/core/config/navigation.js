@@ -35,6 +35,15 @@ export const NAV_ITEMS = [
   // "FocusAir" made the product look like a single form.
   { path: "/master-airway-bill", label: "Master Airway Bill", icon: "file-earmark-text", designations: null, portals: ["focusair"] },
   { path: "/house-way-bill", label: "House Waybill", icon: "files", designations: null, portals: ["focusair"] },
+  // The despatch record for what has been generated and sent — it reads air waybills and
+  // house waybills, so it belongs to FocusAir and nowhere else. Present in the legacy
+  // layout's own menu since before the rail existed, and missing here until 2026-09-03:
+  // a page reachable only by typing its URL is a page nobody uses.
+  // ⚠️ Air consolidation was missing while SEA consolidation was listed — the same
+  // component exists for both modes and only one had a way in. An asymmetry like that
+  // reads as "air cannot consolidate", which is not true.
+  { path: "/consolidation", label: "Consolidation", icon: "boxes", designations: null, portals: ["focusair"] },
+  { path: "/message-log", label: "Message Log", icon: "clock-history", designations: null, portals: ["focusair"] },
   // Sea's master/house/consol forms are not built yet. PRD.md §468 makes FocusSea a
   // nav GROUP (Master / House / Consol) rather than one item, so this resolves into
   // three entries when those land — the same correction, applied to sea.
@@ -42,8 +51,11 @@ export const NAV_ITEMS = [
   { path: "/focus-sea/consol", label: "Consolidation", icon: "boxes", designations: null, portals: ["focussea"] },
 
   // ── Directories ──────────────────────────────────────────────────────────
-  { path: "/customers", label: "Customers", icon: "people", designations: ["pricing", "sales", "accounts", "boss"], minTier: "tactical" },
-  { path: "/partners", label: "Partners", icon: "truck", designations: ["pricing", "operations", "accounts", "boss"], minTier: "tactical" },
+  // 🔴 ONE ITEM, not two. Clients are who you invoice and partners are who you pay — two
+  // sides of one ledger, and as separate rail entries a directory looked like two
+  // unrelated features. The union of both audiences sees it: whichever side a role needs,
+  // the page opens on Clients and the tab is one click.
+  { path: "/clients-partners", label: "Clients & Partners", icon: "people", designations: ["pricing", "operations", "sales", "accounts", "boss"], minTier: "tactical" },
 
   // ── Command-tier surfaces. VISIBLE AND LOCKED below Command — §8.1. ──────
   { path: "/sales", label: "Sales", icon: "graph-up", designations: ["sales", "boss"], minTier: "tactical" },
@@ -51,7 +63,9 @@ export const NAV_ITEMS = [
   { path: "/boss", label: "Overview", icon: "speedometer", designations: ["boss"], minTier: "tactical" },
 
   // ── Always last ──────────────────────────────────────────────────────────
-  { path: "/mailboxes", label: "Mailboxes", icon: "envelope-gear", designations: ["pricing", "operations"], minTier: "tactical" },
+  // ⚠️ Mailboxes is reached from inside Settings, not from the rail. Connecting a mailbox
+  // is a once-per-person act of configuration, and a permanent rail slot for it competes
+  // with the surfaces an operator uses every hour. The route still exists for deep links.
   { path: "/settings", label: "Settings", icon: "gear", designations: null },
 ];
 

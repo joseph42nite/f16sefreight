@@ -772,3 +772,17 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
   text-transform: uppercase; color: var(--text-secondary); }
 .fx-extract__weight { width: 9ch; text-align: right; }
 .fx-extract__book { max-width: 14rem; margin-bottom: var(--space-1); }
+/* The domain under a client name — context, not a second identity. */
+.fx-enq__domain { display: block; font-size: .75rem; }
+.fx-dir__add { margin-bottom: var(--space-3); }
+.fx-dir__form { border: 1px solid var(--border-subtle, #E2E6EC); border-radius: var(--radius-2, 6px);
+  padding: var(--space-4); margin-bottom: var(--space-4); }
+.fx-dir__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-3); margin: var(--space-3) 0; }
+/* Directory tabs — Clients / Partners on one page. */
+.fx-tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--border-subtle, #E2E6EC);
+  margin-bottom: var(--space-4); }
+.fx-tabs__tab { background: none; border: none; border-bottom: 2px solid transparent;
+  padding: var(--space-2) var(--space-3); cursor: pointer; color: var(--text-secondary); }
+.fx-tabs__tab.is-active { border-bottom-color: var(--accent, #355594); color: var(--text-primary);
+  font-weight: 600; }

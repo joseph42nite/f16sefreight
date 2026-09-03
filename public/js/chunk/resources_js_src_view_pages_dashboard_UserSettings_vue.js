@@ -240,6 +240,22 @@ var render = function render() {
   }, [_vm._v("\n                        View your profile details and manage saved branch address records for accurate OCR matching.\n                    ")])]), _vm._v(" "), _c("b-card", {
     staticClass: "profile-card border-0 mb-6 shadow-sm"
   }, [_c("div", {
+    staticClass: "d-flex align-items-center justify-content-between flex-wrap"
+  }, [_c("div", [_c("h5", {
+    staticClass: "mb-1 font-weight-700",
+    staticStyle: {
+      color: "#355594"
+    }
+  }, [_vm._v("Mailboxes")]), _vm._v(" "), _c("p", {
+    staticClass: "mb-0 text-muted"
+  }, [_vm._v("\n                                Connect the mailbox your clients write to. Messages appear in the\n                                Inbox; nothing is sent without you asking.\n                            ")])]), _vm._v(" "), _c("router-link", {
+    staticClass: "btn btn-primary",
+    attrs: {
+      to: "/mailboxes"
+    }
+  }, [_vm._v("\n                            Manage mailboxes\n                        ")])], 1)]), _vm._v(" "), _c("b-card", {
+    staticClass: "profile-card border-0 mb-6 shadow-sm"
+  }, [_c("div", {
     staticClass: "d-flex align-items-center mb-4"
   }, [_c("div", {
     staticClass: "profile-avatar-wrap mr-4"

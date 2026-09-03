@@ -8719,6 +8719,26 @@ const NAV_ITEMS = [
   designations: null,
   portals: ["focusair"]
 },
+// The despatch record for what has been generated and sent — it reads air waybills and
+// house waybills, so it belongs to FocusAir and nowhere else. Present in the legacy
+// layout's own menu since before the rail existed, and missing here until 2026-09-03:
+// a page reachable only by typing its URL is a page nobody uses.
+// ⚠️ Air consolidation was missing while SEA consolidation was listed — the same
+// component exists for both modes and only one had a way in. An asymmetry like that
+// reads as "air cannot consolidate", which is not true.
+{
+  path: "/consolidation",
+  label: "Consolidation",
+  icon: "boxes",
+  designations: null,
+  portals: ["focusair"]
+}, {
+  path: "/message-log",
+  label: "Message Log",
+  icon: "clock-history",
+  designations: null,
+  portals: ["focusair"]
+},
 // Sea's master/house/consol forms are not built yet. PRD.md §468 makes FocusSea a
 // nav GROUP (Master / House / Consol) rather than one item, so this resolves into
 // three entries when those land — the same correction, applied to sea.
@@ -8736,17 +8756,15 @@ const NAV_ITEMS = [
   portals: ["focussea"]
 },
 // ── Directories ──────────────────────────────────────────────────────────
+// 🔴 ONE ITEM, not two. Clients are who you invoice and partners are who you pay — two
+// sides of one ledger, and as separate rail entries a directory looked like two
+// unrelated features. The union of both audiences sees it: whichever side a role needs,
+// the page opens on Clients and the tab is one click.
 {
-  path: "/customers",
-  label: "Customers",
+  path: "/clients-partners",
+  label: "Clients & Partners",
   icon: "people",
-  designations: ["pricing", "sales", "accounts", "boss"],
-  minTier: "tactical"
-}, {
-  path: "/partners",
-  label: "Partners",
-  icon: "truck",
-  designations: ["pricing", "operations", "accounts", "boss"],
+  designations: ["pricing", "operations", "sales", "accounts", "boss"],
   minTier: "tactical"
 },
 // ── Command-tier surfaces. VISIBLE AND LOCKED below Command — §8.1. ──────
@@ -8770,13 +8788,10 @@ const NAV_ITEMS = [
   minTier: "tactical"
 },
 // ── Always last ──────────────────────────────────────────────────────────
+// ⚠️ Mailboxes is reached from inside Settings, not from the rail. Connecting a mailbox
+// is a once-per-person act of configuration, and a permanent rail slot for it competes
+// with the surfaces an operator uses every hour. The route still exists for deep links.
 {
-  path: "/mailboxes",
-  label: "Mailboxes",
-  icon: "envelope-gear",
-  designations: ["pricing", "operations"],
-  minTier: "tactical"
-}, {
   path: "/settings",
   label: "Settings",
   icon: "gear",
@@ -10448,9 +10463,19 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
         minTier: 'tactical'
       }
     }, {
+      // Clients and partners are two sides of one ledger — who you invoice and who you
+      // pay — so they share a page. The individual routes stay for deep links.
+      path: "clients-partners",
+      name: "ClientsAndPartners",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_ClientsAndPartners_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/ClientsAndPartners */ "./resources/js/src/view/pages/freight/ClientsAndPartners.vue")),
+      meta: {
+        userType: 'user',
+        minTier: 'tactical'
+      }
+    }, {
       path: "customers",
       name: "Customers",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_DirectoryTable_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/DirectoryTable */ "./resources/js/src/view/pages/freight/DirectoryTable.vue")),
+      component: () => __webpack_require__.e(/*! import() */ "common").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/DirectoryTable */ "./resources/js/src/view/pages/freight/DirectoryTable.vue")),
       props: {
         endpoint: "/customers"
       },
@@ -10462,7 +10487,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
     }, {
       path: "partners",
       name: "Partners",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_DirectoryTable_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/DirectoryTable */ "./resources/js/src/view/pages/freight/DirectoryTable.vue")),
+      component: () => __webpack_require__.e(/*! import() */ "common").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/DirectoryTable */ "./resources/js/src/view/pages/freight/DirectoryTable.vue")),
       props: {
         endpoint: "/partners"
       },

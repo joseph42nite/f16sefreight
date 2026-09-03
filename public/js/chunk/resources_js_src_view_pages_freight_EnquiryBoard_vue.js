@@ -31,6 +31,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
   },
   data: () => ({
+    client: "",
     rows: [],
     loading: true,
     error: null,
@@ -48,7 +49,9 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
   methods: {
     load() {
       this.loading = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/enquiries").then(({
+      // The client filter is a server-side search across the customer record AND the
+      // sending domain — see EnquiryController::index.
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/enquiries" + (this.client ? "?client=" + encodeURIComponent(this.client) : "")).then(({
         data
       }) => {
         this.rows = data.data || [];
@@ -97,7 +100,51 @@ var render = function render() {
     staticClass: "fx-page-title"
   }, [_vm._v("Enquiries")]), _vm._v(" "), _c("p", {
     staticClass: "fx-page-sub"
-  }, [_vm._v("\n      The pre-conversion pool for\n      "), _c("strong", [_vm._v(_vm._s(_vm.portalLabel || "all modes"))]), _vm._v(".\n      Unconverted rows are the funnel — they are never deleted.\n    ")])]), _vm._v(" "), _vm.loading ? _c("p", {
+  }, [_vm._v("\n      The pre-conversion pool for\n      "), _c("strong", [_vm._v(_vm._s(_vm.portalLabel || "all modes"))]), _vm._v(".\n      Unconverted rows are the funnel — they are never deleted.\n    ")])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Client")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.client,
+      expression: "client"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "search",
+      placeholder: "Name or domain…"
+    },
+    domProps: {
+      value: _vm.client
+    },
+    on: {
+      keyup: function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        return _vm.load.apply(null, arguments);
+      },
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.client = $event.target.value;
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    on: {
+      click: _vm.load
+    }
+  }, [_vm._v("Search")]), _vm._v(" "), _vm.client ? _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    on: {
+      click: function ($event) {
+        _vm.client = "";
+        _vm.load();
+      }
+    }
+  }, [_vm._v("Clear")]) : _vm._e()]), _vm._v(" "), _vm.loading ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
     staticClass: "fx-error",
@@ -113,7 +160,14 @@ var render = function render() {
       key: row.id
     }, [_c("td", {
       staticClass: "identifier"
-    }, [_vm._v(_vm._s(row.enquiry_no))]), _vm._v(" "), _c("td", [_c("StatusChip", {
+    }, [_vm._v(_vm._s(row.enquiry_no))]), _vm._v(" "), _c("td", [row.client_label ? _c("span", [_vm._v(_vm._s(row.client_label))]) : _c("span", {
+      staticClass: "is-empty",
+      attrs: {
+        "aria-label": "No client recorded"
+      }
+    }), _vm._v(" "), row.client_domain && row.client_domain !== row.client_label ? _c("span", {
+      staticClass: "fx-muted fx-enq__domain"
+    }, [_vm._v(_vm._s(row.client_domain))]) : _vm._e()]), _vm._v(" "), _c("td", [_c("StatusChip", {
       attrs: {
         value: row.status
       }
@@ -169,6 +223,10 @@ var staticRenderFns = [function () {
       scope: "col"
     }
   }, [_vm._v("Number")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Client")]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }

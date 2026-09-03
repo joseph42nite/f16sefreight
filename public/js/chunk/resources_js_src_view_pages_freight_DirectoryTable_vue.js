@@ -85,7 +85,21 @@ const SHAPES = {
     error: null,
     query: "",
     type: "",
-    timer: null
+    timer: null,
+    adding: false,
+    saving: false,
+    saveError: null,
+    copied: false,
+    siblings: [],
+    form: {
+      name: "",
+      partner_type: "customs_broker",
+      email: "",
+      phone: "",
+      address: "",
+      gst_no: "",
+      pan_no: ""
+    }
   }),
   computed: {
     shape() {
@@ -112,9 +126,67 @@ const SHAPES = {
       }) => {
         this.types = data.types || [];
       }).catch(() => {/* the filter is optional; its absence must not break the list */});
+
+      /* What sibling branches already have, for the copy picker. Optional in the same
+         way — a picker that cannot load costs a retype, not the ability to add. */
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/partners/siblings").then(({
+        data
+      }) => {
+        this.siblings = data.partners || [];
+      }).catch(() => {
+        this.siblings = [];
+      });
     }
   },
   methods: {
+    /**
+     * Copy a sibling branch's partner — everything EXCEPT the tax numbers.
+     *
+     * 🔴 `gst_no` and `pan_no` are deliberately left blank. The other branch's GSTIN is
+     * another state's registration; carrying it across is exactly the error that made
+     * partners branch-scoped in the first place, and it would be invisible until a
+     * purchase voucher claimed input credit under the wrong number.
+     */
+    copySibling(id) {
+      const source = this.siblings.find(p => String(p.id) === String(id));
+      if (!source) {
+        this.copied = false;
+        return;
+      }
+      this.form = {
+        name: source.name,
+        partner_type: source.partner_type,
+        email: source.email || "",
+        phone: source.phone || "",
+        address: source.address || "",
+        gst_no: "",
+        pan_no: ""
+      };
+      this.copied = true;
+    },
+    save() {
+      this.saving = true;
+      this.saveError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/partners", this.form).then(() => {
+        this.adding = false;
+        this.copied = false;
+        this.form = {
+          name: "",
+          partner_type: "customs_broker",
+          email: "",
+          phone: "",
+          address: "",
+          gst_no: "",
+          pan_no: ""
+        };
+        this.load();
+      }).catch(e => {
+        const d = e.response && e.response.data || {};
+        this.saveError = d.errors ? Object.values(d.errors).flat().join(" ") : d.error || d.message || "Could not save.";
+      }).finally(() => {
+        this.saving = false;
+      });
+    },
     /* Debounced so a search does not fire a request per keystroke. */
     debouncedLoad() {
       clearTimeout(this.timer);
@@ -223,7 +295,217 @@ var render = function render() {
         value: t
       }
     }, [_vm._v(_vm._s(t.replace(/_/g, " ")))]);
-  })], 2)]) : _vm._e()]), _vm._v(" "), _vm.loading ? _c("p", {
+  })], 2)]) : _vm._e()]), _vm._v(" "), _vm.endpoint === "/partners" ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary fx-dir__add",
+    on: {
+      click: function ($event) {
+        _vm.adding = !_vm.adding;
+      }
+    }
+  }, [_vm._v(_vm._s(_vm.adding ? "Cancel" : "Add partner"))]) : _vm._e(), _vm._v(" "), _vm.adding && _vm.endpoint === "/partners" ? _c("section", {
+    staticClass: "fx-section fx-dir__form"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Already used by another branch")]), _vm._v(" "), _c("select", {
+    staticClass: "fx-input",
+    domProps: {
+      value: ""
+    },
+    on: {
+      change: function ($event) {
+        return _vm.copySibling($event.target.value);
+      }
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("Start from blank…")]), _vm._v(" "), _vm._l(_vm.siblings, function (p) {
+    return _c("option", {
+      key: p.id,
+      domProps: {
+        value: p.id
+      }
+    }, [_vm._v("\n          " + _vm._s(p.name) + " · " + _vm._s(p.partner_type.replace(/_/g, " ")) + "\n        ")]);
+  })], 2)]), _vm._v(" "), _c("div", {
+    staticClass: "fx-dir__grid"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Name")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.name,
+      expression: "form.name"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.form.name
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "name", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Type")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.partner_type,
+      expression: "form.partner_type"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.form, "partner_type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, _vm._l(_vm.types, function (t) {
+    return _c("option", {
+      key: t,
+      domProps: {
+        value: t
+      }
+    }, [_vm._v(_vm._s(t.replace(/_/g, " ")))]);
+  }), 0)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Email")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.email,
+      expression: "form.email"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "email"
+    },
+    domProps: {
+      value: _vm.form.email
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "email", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Phone")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.phone,
+      expression: "form.phone"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.form.phone
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "phone", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("GSTIN (this state)")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.gst_no,
+      expression: "form.gst_no"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.form.gst_no
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "gst_no", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("PAN")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.pan_no,
+      expression: "form.pan_no"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.form.pan_no
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "pan_no", $event.target.value);
+      }
+    }
+  })])]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Address")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.address,
+      expression: "form.address"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.form.address
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "address", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _vm.copied ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n      Copied from another branch — "), _c("strong", [_vm._v("enter this branch's own GSTIN")]), _vm._v("; the\n      other branch's is a different state registration.\n    ")]) : _vm._e(), _vm._v(" "), _vm.saveError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.saveError))]) : _vm._e(), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.saving || !_vm.form.name
+    },
+    on: {
+      click: _vm.save
+    }
+  }, [_vm._v("\n      " + _vm._s(_vm.saving ? "Saving…" : "Save partner") + "\n    ")])]) : _vm._e(), _vm._v(" "), _vm.loading ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
     staticClass: "fx-error",

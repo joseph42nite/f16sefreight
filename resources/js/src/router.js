@@ -351,6 +351,14 @@ const router = new Router({
           meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
         },
         {
+          // Clients and partners are two sides of one ledger — who you invoice and who you
+          // pay — so they share a page. The individual routes stay for deep links.
+          path: "clients-partners",
+          name: "ClientsAndPartners",
+          component: () => import("@/view/pages/freight/ClientsAndPartners"),
+          meta: { userType: 'user', minTier: 'tactical' }
+        },
+        {
           path: "customers",
           name: "Customers",
           component: () => import("@/view/pages/freight/DirectoryTable"),

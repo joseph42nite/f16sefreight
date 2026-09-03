@@ -19,6 +19,17 @@ use Illuminate\Validation\Rule;
 
 class HousewayBillController extends Controller
 {
+    /**
+     * Characters a real address contains — GAPS #44, fixed on the MAWB 2026-09-01 and
+     * MISSED here until 2026-09-03.
+     *
+     * 🔴 The old rule allowed only `[a-zA-Z0-9\s.,-]`, so `Plot 42/A, MIDC` saved on a
+     * master and was REJECTED on the house bill for the same shipment. Fixing one side of
+     * a pair is worse than fixing neither: it looks like the house form is broken rather
+     * than like the rule is wrong.
+     */
+    private const ADDRESS_PATTERN = "/^[\p{L}\p{M}\p{N}\s.,\-\/&()#'\":;+]+$/u";
+
     use WaybillTrait;
 
     protected $conversionController;
@@ -62,8 +73,8 @@ class HousewayBillController extends Controller
             'ship_name' => 'required|string|max:70',
             'ship_name_2' => 'nullable|string|max:70',
             'ship_account' => 'nullable|string|max:14',
-            'ship_address' => 'required|regex:/^[a-zA-Z0-9\s.,-]+$/|max:40',
-            'ship_address_line_2' => 'nullable|regex:/^[a-zA-Z0-9\s.,-]+$/|max:30',
+            'ship_address' => ['required', 'max:40', 'regex:' . self::ADDRESS_PATTERN],
+            'ship_address_line_2' => ['nullable', 'max:30', 'regex:' . self::ADDRESS_PATTERN],
             'ship_city' => 'required|string|max:70',
             'ship_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
             'ship_post_code' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:15',
@@ -179,8 +190,8 @@ class HousewayBillController extends Controller
             'cons_name' => 'required|string|max:70',
             'cons_name_2' => 'nullable|string|max:70',
             'cons_account' => 'nullable|string|max:14',
-            'cons_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s.,-]+$/',
-            'cons_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s.,-]+$/',
+            'cons_address' => ['required', 'max:40', 'regex:' . self::ADDRESS_PATTERN],
+            'cons_address_line_2' => ['nullable', 'max:30', 'regex:' . self::ADDRESS_PATTERN],
             'cons_city' => 'required|string|max:70',
             'cons_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
             'cons_post_code' => 'required|regex:/^[a-zA-Z0-9\s]+$/|max:15',
@@ -246,8 +257,8 @@ class HousewayBillController extends Controller
 
         $validator = Validator::make($also_notify_address, [
             'also_name' => 'required|string|max:70',
-            'also_address' => 'required|max:40|regex:/^[a-zA-Z0-9\s.,-]+$/',
-            'also_address_line_2' => 'nullable|max:30|regex:/^[a-zA-Z0-9\s.,-]+$/',
+            'also_address' => ['required', 'max:40', 'regex:' . self::ADDRESS_PATTERN],
+            'also_address_line_2' => ['nullable', 'max:30', 'regex:' . self::ADDRESS_PATTERN],
             'also_city' => 'required|string|max:70',
             'also_airport_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:3',
             'also_post_code' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:15',

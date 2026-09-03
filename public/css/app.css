@@ -5569,6 +5569,12 @@ body {
 .fx-drawer__facts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
   font-size: .8125rem; }
 
+/* The AWB sits beside the job number in the same chain, so it is set in the same
+   mono face but recessed — the job number is what people say out loud, the waybill
+   is what they look up. */
+.fx-drawer__awb { color: var(--fg-muted); }
+.fx-drawer__awb::before { content: "AWB "; letter-spacing: .04em; }
+
 /* 🔴 Only the UNANSWERED state carries colour. If every timing state were tinted, the
    one that needs a person to act would not stand out from the two that do not. */
 .fx-drawer__timing { color: var(--text-secondary); }

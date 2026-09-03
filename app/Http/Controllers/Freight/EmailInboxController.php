@@ -110,7 +110,13 @@ class EmailInboxController extends Controller
                         ->where('subject', 'like', $term)->orWhere('from', 'like', $term);
                 });
             })
-            ->with(['assignedOps:id,name', 'enquiry:id,enquiry_no,status'])
+            ->with([
+                'assignedOps:id,name',
+                'enquiry:id,enquiry_no,status',
+                // The job is what the operator quotes once conversion has happened —
+                // eager-loaded so a 50-row list does not become 50 extra queries.
+                'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status',
+            ])
             ->orderByDesc('latest_message_received_at')
             ->paginate(50);
 
@@ -134,7 +140,11 @@ class EmailInboxController extends Controller
             ->get(['id', 'direction', 'from', 'to', 'subject', 'body_snippet', 'received_at', 'send_state']);
 
         return response()->json([
-            'thread'   => $this->shape($thread->load(['assignedOps:id,name', 'enquiry:id,enquiry_no,status'])),
+            'thread'   => $this->shape($thread->load([
+                'assignedOps:id,name',
+                'enquiry:id,enquiry_no,status',
+                'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status',
+            ])),
             'messages' => $messages,
         ]);
     }
@@ -356,6 +366,10 @@ class EmailInboxController extends Controller
             ->orderBy('received_at')
             ->value('from');
 
+        // ONE enquiry may split into several jobs (a consol with house shipments).
+        $jobs = $thread->enquiry ? $thread->enquiry->jobs->sortByDesc('id')->values() : collect();
+        $job  = $jobs->first();
+
         return [
             'id'             => $thread->id,
             'thread_key'     => $thread->thread_key,
@@ -369,6 +383,11 @@ class EmailInboxController extends Controller
             'first_triage_at'   => $thread->first_triage_at,
             'assigned_ops'   => $thread->assignedOps ? $thread->assignedOps->only(['id', 'name']) : null,
             'enquiry'        => $thread->enquiry ? $thread->enquiry->only(['id', 'enquiry_no', 'status']) : null,
+            // 🔗 enquiry -> job -> waybill, resolved once here rather than by a second
+            // round trip from the drawer. Newest first, matching JobController@index's
+            // `latest()`, so both surfaces name the same job out of a consol split.
+            'job'            => $job ? $job->only(['id', 'execution_job_no', 'awb_number', 'status']) : null,
+            'job_count'      => $jobs->count(),
             'message_count'  => EmailMessage::where('thread_key', $thread->thread_key)->count(),
         ];
     }

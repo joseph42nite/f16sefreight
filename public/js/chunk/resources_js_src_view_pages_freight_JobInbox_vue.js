@@ -328,27 +328,14 @@ const WORKSPACE_TABS = [{
         this.active = data.thread;
         this.pending = data.thread.classification;
         this.messages = data.messages || [];
-        this.jobId = null;
-        this.jobAwb = null;
-
-        /* The cost sheet hangs off the JOB, not the thread. A converted enquiry has
-           one; an unconverted one does not, and saying so beats an empty table. */
-        if (data.thread.enquiry && data.thread.enquiry.status === "converted") {
-          _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/jobs?enquiry_id=" + data.thread.enquiry.id).then(({
-            data: jobs
-          }) => {
-            const rows = jobs.data || [];
-            this.jobId = rows.length ? rows[0].id : null;
-
-            /* 🔗 The AWB the shipment already carries. Extraction should offer the
-               number the enquiry is about, not an empty box — that is what ties the
-               enquiry, the job and the waybill into one thread of work. */
-            this.jobAwb = rows.length ? rows[0].awb_number || null : null;
-          }).catch(() => {
-            this.jobId = null;
-            this.jobAwb = null;
-          });
-        }
+        /* The cost sheet hangs off the JOB, not the thread, and extraction wants the
+           AWB the shipment already carries rather than an empty box — that is what
+           ties enquiry, job and waybill into one thread of work.
+            ⚠️ This used to be a second GET /jobs?enquiry_id= fired after the thread
+           loaded, which meant the list could never show a job number at all and the
+           drawer showed one a beat late. The shape now carries it. */
+        this.jobId = data.thread.job ? data.thread.job.id : null;
+        this.jobAwb = data.thread.job && data.thread.job.awb_number || null;
       }).catch(e => {
         this.actionError = this.messageFor(e);
       });
@@ -1439,7 +1426,9 @@ var render = function render() {
     staticClass: "fx-convo__subject"
   }, [_vm._v(_vm._s(_vm.active.subject))]), _vm._v(" "), _c("p", {
     staticClass: "fx-convo__meta"
-  }, [_vm._v("\n            " + _vm._s(_vm.active.from) + " · " + _vm._s(_vm.active.message_count) + " message" + _vm._s(_vm.active.message_count === 1 ? "" : "s") + "\n            "), _vm.active.enquiry ? [_vm._v("\n              · "), _c("span", {
+  }, [_vm._v("\n            " + _vm._s(_vm.active.from) + " · " + _vm._s(_vm.active.message_count) + " message" + _vm._s(_vm.active.message_count === 1 ? "" : "s") + "\n            "), _vm._v(" "), _vm.active.job ? [_vm._v("\n              · "), _c("span", {
+    staticClass: "identifier"
+  }, [_vm._v(_vm._s(_vm.active.job.execution_job_no))])] : _vm.active.enquiry ? [_vm._v("\n              · "), _c("span", {
     staticClass: "identifier"
   }, [_vm._v(_vm._s(_vm.active.enquiry.enquiry_no))])] : _vm._e()], 2)]), _vm._v(" "), _c("div", {
     staticClass: "fx-convo__actions"
@@ -1547,7 +1536,20 @@ var render = function render() {
       fn: function () {
         return [_vm.active ? _c("div", {
           staticClass: "fx-drawer__facts"
-        }, [_vm.active.enquiry ? [_c("span", {
+        }, [_vm.active.job ? [_c("span", {
+          staticClass: "identifier",
+          attrs: {
+            title: "Enquiry " + (_vm.active.enquiry ? _vm.active.enquiry.enquiry_no : "—")
+          }
+        }, [_vm._v("\n            " + _vm._s(_vm.active.job.execution_job_no) + "\n          ")]), _vm._v(" "), _c("StatusChip", {
+          attrs: {
+            value: _vm.active.job.status
+          }
+        }), _vm._v(" "), _vm.active.job.awb_number ? _c("span", {
+          staticClass: "identifier fx-drawer__awb"
+        }, [_vm._v("\n            " + _vm._s(_vm.active.job.awb_number) + "\n          ")]) : _vm._e(), _vm._v(" "), _vm.active.job_count > 1 ? _c("span", {
+          staticClass: "fx-muted"
+        }, [_vm._v("\n            +" + _vm._s(_vm.active.job_count - 1) + " more on this enquiry\n          ")]) : _vm._e()] : _vm.active.enquiry ? [_c("span", {
           staticClass: "identifier"
         }, [_vm._v(_vm._s(_vm.active.enquiry.enquiry_no))]), _vm._v(" "), _c("StatusChip", {
           attrs: {

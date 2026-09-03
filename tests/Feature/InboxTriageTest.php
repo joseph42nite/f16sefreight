@@ -290,6 +290,67 @@ class InboxTriageTest extends TestCase
         $this->assertDatabaseHas('enquiries', ['id' => $enquiryId, 'status' => 'converted']);
     }
 
+    /**
+     * 🔗 enquiry -> job -> waybill on the thread itself.
+     *
+     * The drawer used to fire a second GET /jobs?enquiry_id= for this, which meant the
+     * LIST could never show a job number. Asserting the shape, not the drawer, is what
+     * keeps both surfaces honest.
+     */
+    public function test_a_thread_carries_the_job_its_enquiry_converted_into(): void
+    {
+        $id = $this->thread();
+
+        $enquiryId = $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
+            ->json('enquiry.id');
+
+        // Before conversion there is a number to quote, but no job behind it.
+        $this->api($this->pricing)
+            ->getJson($this->url("/api/inbox/threads/{$id}"))
+            ->assertJsonPath('thread.job', null)
+            ->assertJsonPath('thread.job_count', 0);
+
+        $job = Job::create([
+            'agent_id' => $this->branch->id, 'enquiry_id' => $enquiryId, 'transport_mode' => 'air',
+            'execution_job_no' => 'JOBA-IBX-26-0001', 'awb_number' => '176-10000008',
+        ]);
+
+        $this->api($this->pricing)
+            ->getJson($this->url("/api/inbox/threads/{$id}"))
+            ->assertJsonPath('thread.job.id', $job->id)
+            ->assertJsonPath('thread.job.execution_job_no', 'JOBA-IBX-26-0001')
+            ->assertJsonPath('thread.job.awb_number', '176-10000008')
+            // The enquiry number is still carried — it is history, not deleted.
+            ->assertJsonPath('thread.enquiry.enquiry_no', fn ($no) => filled($no));
+    }
+
+    /**
+     * ONE enquiry, SEVERAL jobs — a consol splitting into house shipments. The thread
+     * names the newest, matching JobController@index's `latest()`, and says how many
+     * others there are rather than silently picking one.
+     */
+    public function test_a_split_enquiry_names_the_newest_job_and_counts_the_rest(): void
+    {
+        $id = $this->thread();
+
+        $enquiryId = $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
+            ->json('enquiry.id');
+
+        foreach (['JOBA-IBX-26-0007', 'JOBA-IBX-26-0008'] as $no) {
+            Job::create([
+                'agent_id' => $this->branch->id, 'enquiry_id' => $enquiryId,
+                'transport_mode' => 'air', 'execution_job_no' => $no,
+            ]);
+        }
+
+        $this->api($this->pricing)
+            ->getJson($this->url("/api/inbox/threads/{$id}"))
+            ->assertJsonPath('thread.job.execution_job_no', 'JOBA-IBX-26-0008')
+            ->assertJsonPath('thread.job_count', 2);
+    }
+
     public function test_an_unknown_classification_is_rejected(): void
     {
         $id = $this->thread();

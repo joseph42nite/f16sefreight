@@ -185,6 +185,18 @@ answered it.
 
 ---
 
+## 🔴 Found 2026-09-03 — the identifier chain was built but never shown
+
+| # | Finding | Detail |
+|---|---|---|
+| 56 | ⚠️ **The inbox showed the enquiry number for the life of the thread, including long after it had converted into a job.** Every link of the chain already existed — `EnquiryController@convert` is the only path that writes a `jobs` row and mints `execution_job_no`, `jobs.awb_number` is what `AwbJobLinker` matches on, and `Enquiry::jobs()` connects them — but `EmailInboxController::shape()` only ever loaded `enquiry:id,enquiry_no,status`. So the API never told the UI a job existed, and both the list and the conversation header kept quoting a number that had stopped being the live handle | Fixed. `shape()` now eager-loads `enquiry.jobs` and returns `job` (id, `execution_job_no`, `awb_number`, status) plus `job_count`; the UI shows the **job** number once one exists and falls back to the enquiry number before that. ⚠️ **The drawer was fetching this separately** — a second `GET /jobs?enquiry_id=` fired after the thread loaded, which is why the *list* could never show a job number at all and the drawer showed one a beat late. That round trip is gone. Newest job wins out of a consol split, matching `JobController@index`'s `latest()`, and `job_count` says how many others there are rather than silently picking one |
+
+⚠️ **The enquiry number is not deleted, it is demoted** — it stays in the API response, on
+the drawer identifier's `title`, and on the Enquiries board. A number already quoted to a
+client stays recoverable; it just stops competing for the eye once a job exists.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

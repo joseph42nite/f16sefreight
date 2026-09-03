@@ -63,7 +63,12 @@
             <h2 class="fx-convo__subject">{{ active.subject }}</h2>
             <p class="fx-convo__meta">
               {{ active.from }} · {{ active.message_count }} message{{ active.message_count === 1 ? "" : "s" }}
-              <template v-if="active.enquiry">
+              <!-- 🔗 Once the enquiry converts, the JOB number is the one people quote to
+                   each other; the enquiry number stops being the live handle. -->
+              <template v-if="active.job">
+                · <span class="identifier">{{ active.job.execution_job_no }}</span>
+              </template>
+              <template v-else-if="active.enquiry">
                 · <span class="identifier">{{ active.enquiry.enquiry_no }}</span>
               </template>
             </p>
@@ -164,7 +169,23 @@
       -->
       <template #meta>
         <div v-if="active" class="fx-drawer__facts">
-          <template v-if="active.enquiry">
+          <!-- Converted: the job number and ITS status. The enquiry number is kept on
+               the title so the lineage is recoverable without competing for the eye —
+               it is history once a job exists, and the Enquiries board still lists it. -->
+          <template v-if="active.job">
+            <span class="identifier" :title="'Enquiry ' + (active.enquiry ? active.enquiry.enquiry_no : '—')">
+              {{ active.job.execution_job_no }}
+            </span>
+            <StatusChip :value="active.job.status" />
+            <!-- The third link in the chain, when the shipment already carries one. -->
+            <span v-if="active.job.awb_number" class="identifier fx-drawer__awb">
+              {{ active.job.awb_number }}
+            </span>
+            <span v-if="active.job_count > 1" class="fx-muted">
+              +{{ active.job_count - 1 }} more on this enquiry
+            </span>
+          </template>
+          <template v-else-if="active.enquiry">
             <span class="identifier">{{ active.enquiry.enquiry_no }}</span>
             <StatusChip :value="active.enquiry.status" />
           </template>
@@ -506,24 +527,15 @@ export default {
           this.active = data.thread;
           this.pending = data.thread.classification;
           this.messages = data.messages || [];
-          this.jobId = null;
-          this.jobAwb = null;
+          /* The cost sheet hangs off the JOB, not the thread, and extraction wants the
+             AWB the shipment already carries rather than an empty box — that is what
+             ties enquiry, job and waybill into one thread of work.
 
-          /* The cost sheet hangs off the JOB, not the thread. A converted enquiry has
-             one; an unconverted one does not, and saying so beats an empty table. */
-          if (data.thread.enquiry && data.thread.enquiry.status === "converted") {
-            ApiService.get("/jobs?enquiry_id=" + data.thread.enquiry.id)
-              .then(({ data: jobs }) => {
-                const rows = jobs.data || [];
-                this.jobId = rows.length ? rows[0].id : null;
-
-                /* 🔗 The AWB the shipment already carries. Extraction should offer the
-                   number the enquiry is about, not an empty box — that is what ties the
-                   enquiry, the job and the waybill into one thread of work. */
-                this.jobAwb = rows.length ? rows[0].awb_number || null : null;
-              })
-              .catch(() => { this.jobId = null; this.jobAwb = null; });
-          }
+             ⚠️ This used to be a second GET /jobs?enquiry_id= fired after the thread
+             loaded, which meant the list could never show a job number at all and the
+             drawer showed one a beat late. The shape now carries it. */
+          this.jobId = data.thread.job ? data.thread.job.id : null;
+          this.jobAwb = (data.thread.job && data.thread.job.awb_number) || null;
         })
         .catch((e) => { this.actionError = this.messageFor(e); });
     },

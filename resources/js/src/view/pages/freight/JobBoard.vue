@@ -111,7 +111,20 @@
                 <StatusChip :value="job.status" />
               </div>
 
-              <div v-if="job.awb_number" class="identifier fx-card__meta">{{ job.awb_number }}</div>
+              <!--
+                THE IDENTIFIER LADDER, in the order a shipment earns the rungs: the
+                enquiry number when the client first wrote in, the job number when the
+                shipment was confirmed, the AWB once the waybill is raised. Showing all
+                three is what makes them one shipment rather than three systems — and the
+                enquiry number is the one an operator quotes back to a client who has not
+                heard a job number yet.
+              -->
+              <div class="fx-card__ladder">
+                <span v-if="job.enquiry && job.enquiry.enquiry_no" class="identifier fx-card__meta">
+                  {{ job.enquiry.enquiry_no }}
+                </span>
+                <span v-if="job.awb_number" class="identifier fx-card__meta">{{ job.awb_number }}</span>
+              </div>
 
               <!-- Cargo tags, from the enquiry's regex-extracted figures. -->
               <div v-if="job.enquiry" class="fx-card__tags">

@@ -276,6 +276,21 @@ a wrong message to the customer, and that is not a mistake the desk can take bac
 |---|---|---|
 | 69 | 🔴 **Confirming a shipment discarded the person who claimed it.** Work is claimed on the THREAD in the inbox (`email_threads.assigned_ops_id`, atomic, 409 on the loser), but `EnquiryController::convert()` set only `pricing_id` — never `ops_id`. So the operator who claimed the conversation and then confirmed the shipment was dropped from **their own job**, which landed in the unassigned pool for anyone to re-take | Proven in live data before the fix: thread claimed by user 53, resulting job `ops_id = NULL`. **This is why job numbers appear in the unassigned pool** — every confirmed shipment went there. PRD §1039 says *"the system assigns the first staff member who replies to the thread"* and nothing says that expires at conversion. Fixed; an explicit `ops_id` in the request still wins over the inherited claim |
 
+### 🟢 The identifier ladder (owner's description, 2026-09-04)
+
+    claimed in the inbox        →  ENQA-…   enquiry_no
+    confirmed in the workspace  →  JOBA-…   execution_job_no
+    waybill raised              →  176-…    awb_number, and air_way_bills.job_id back
+
+Each rung had its own test; nothing asserted they were ONE chain, which is the property
+an operator actually relies on and the one that breaks silently because every individual
+step still passes. `InboxTriageTest::test_the_identifiers_form_one_chain_from_enquiry_to_waybill`
+now walks all four links, ending on the document half pointing back at the operational half.
+
+The Kanban card shows all three rungs it has earned. ⚠️ The enquiry number matters on the
+card specifically because it is the one an operator can quote to a client who has never
+been told a job number.
+
 ### ⚠️ THE PRD CONTRADICTS ITSELF ON WHAT THE POOL HOLDS — owner's call
 
 Two statements, three paragraphs apart, in the **State 1 (pre-conversion)** section:

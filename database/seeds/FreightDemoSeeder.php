@@ -469,6 +469,12 @@ class FreightDemoSeeder extends Seeder
 
             // Two per mode, so the pool has cards to claim and the Staff matrix still has
             // plenty of assigned work beside it.
+            //
+            // ⚠️ These stand for a shipment confirmed from a thread NOBODY had claimed —
+            // the one way a job legitimately reaches the pool now that the inbox claim
+            // survives conversion. Before that fix every confirmed shipment landed here,
+            // which is what made the pool look like the normal path rather than the
+            // exception it is.
             $unassignedYet = 2;
 
             foreach ($plan as $i => [$status, $lostReason]) {

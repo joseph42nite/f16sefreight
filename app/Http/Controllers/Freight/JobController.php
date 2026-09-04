@@ -87,7 +87,11 @@ class JobController extends Controller
                 'opsUser:id,name',
                 'pricingOwner:id,name',
                 'customer:id,name',
-                'enquiry:id,extracted_pieces,extracted_weight,origin_code,dest_code',
+                // `enquiry_no` rides along so a card can show where the shipment CAME FROM.
+                // The three identifiers are one ladder — enquiry number, then job number
+                // on confirmation, then AWB when the waybill is raised — and a card that
+                // shows only the middle rung makes the other two feel like other systems.
+                'enquiry:id,enquiry_no,extracted_pieces,extracted_weight,origin_code,dest_code',
             ])
             ->latest()
             ->paginate(50);

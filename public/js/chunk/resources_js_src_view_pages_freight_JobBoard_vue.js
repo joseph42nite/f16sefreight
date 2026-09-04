@@ -565,9 +565,13 @@ var render = function render() {
         attrs: {
           value: job.status
         }
-      })], 1), _vm._v(" "), job.awb_number ? _c("div", {
+      })], 1), _vm._v(" "), _c("div", {
+        staticClass: "fx-card__ladder"
+      }, [job.enquiry && job.enquiry.enquiry_no ? _c("span", {
         staticClass: "identifier fx-card__meta"
-      }, [_vm._v(_vm._s(job.awb_number))]) : _vm._e(), _vm._v(" "), job.enquiry ? _c("div", {
+      }, [_vm._v("\n                " + _vm._s(job.enquiry.enquiry_no) + "\n              ")]) : _vm._e(), _vm._v(" "), job.awb_number ? _c("span", {
+        staticClass: "identifier fx-card__meta"
+      }, [_vm._v(_vm._s(job.awb_number))]) : _vm._e()]), _vm._v(" "), job.enquiry ? _c("div", {
         staticClass: "fx-card__tags"
       }, [job.enquiry.extracted_pieces ? _c("span", [_vm._v("📦 " + _vm._s(job.enquiry.extracted_pieces) + " pcs")]) : _vm._e(), _vm._v(" "), job.enquiry.extracted_weight ? _c("span", [_vm._v("\n                ⚖ "), _c("Figure", {
         attrs: {

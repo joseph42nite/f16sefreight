@@ -455,6 +455,55 @@ class InboxTriageTest extends TestCase
         $this->assertSame($this->pricing->id, $job['ops_id'], 'the claim was dropped at conversion');
     }
 
+    /**
+     * 🔴 THE WHOLE LADDER, in the order a shipment earns the rungs:
+     *
+     *     claimed in the inbox  →  enquiry_no
+     *     confirmed in the workspace  →  execution_job_no
+     *     waybill raised  →  awb_number, and air_way_bills.job_id pointing back
+     *
+     * Each rung is covered on its own elsewhere. This asserts they are ONE chain — the
+     * property that actually matters to an operator, and the one that breaks silently
+     * because every individual step still passes.
+     */
+    public function test_the_identifiers_form_one_chain_from_enquiry_to_waybill(): void
+    {
+        $id = $this->thread();
+
+        $enquiry = $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
+            ->json('enquiry');
+
+        $this->assertStringStartsWith('ENQA-', $enquiry['enquiry_no']);
+
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$id}/claim"), [])->assertOk();
+
+        $job = $this->api($this->pricing)
+            ->postJson($this->url("/api/enquiries/{$enquiry['id']}/convert"), [])
+            ->assertStatus(201)->json('job');
+
+        $this->assertStringStartsWith('JOBA-', $job['execution_job_no']);
+        $this->assertSame($enquiry['id'], $job['enquiry_id'], 'the job lost its enquiry');
+        $this->assertSame($this->pricing->id, $job['ops_id'], 'the claim was dropped');
+
+        // The waybill, raised against the number the shipment now carries.
+        $canonical = '176-10000008';
+        \App\Job::withoutGlobalScopes()->where('id', $job['id'])->update(['awb_number' => $canonical]);
+
+        $awbKey = (int) str_replace('-', '', $canonical);
+        \Illuminate\Support\Facades\DB::table('air_way_bills')->insert([
+            'id' => $awbKey, 'agent_id' => $this->branch->id,
+            'awb_code' => '176', 'awb_no' => '10000008',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $linkedTo = app(\App\Services\AwbJobLinker::class)->link($awbKey);
+
+        // 🔴 The last rung closes the loop: the DOCUMENT half points back at the
+        // OPERATIONAL half. Without this the two are a shared string, not a link.
+        $this->assertSame($job['id'], $linkedTo);
+    }
+
     public function test_an_unknown_classification_is_rejected(): void
     {
         $id = $this->thread();

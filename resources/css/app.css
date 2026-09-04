@@ -295,6 +295,9 @@ body {
    is what they look up. */
 /* The outcome gate — the decision that stands between an enquiry and a waybill.
    Boxed so it reads as a question being ASKED, not as a row of optional actions. */
+/* The rungs a shipment has earned so far — enquiry, then AWB, under the job number. */
+.fx-card__ladder { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
 /* The way back to the finished shipments the Completed column stopped drawing. */
 .fx-board__more {
   width: 100%; margin-top: var(--space-2); padding: var(--space-2);

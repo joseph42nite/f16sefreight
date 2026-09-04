@@ -122,8 +122,16 @@ class JobTriageTest extends TestCase
             ->assertOk()->assertJsonPath('total', 0);
     }
 
-    /** The pool is the deliberate exception: unclaimed work belongs to whoever takes it. */
-    public function test_the_unassigned_pool_is_visible_to_everyone(): void
+    /**
+     * 🔒 The ownership scope has NO exception. `?unassigned=1` used to return every
+     * unowned job to any caller; the Kanban's pool holds ENQUIRIES now, so that filter
+     * had no legitimate caller and was an escape hatch from a boundary.
+     *
+     * ⚠️ Asserted with the parameter STILL PRESENT, because "we deleted the feature" and
+     * "the parameter is now ignored" are different guarantees — and only the second one
+     * protects against a caller who kept the old URL.
+     */
+    public function test_an_unassigned_filter_cannot_reveal_another_persons_jobs(): void
     {
         $enquiry = $this->createEnquiry('air');
         $this->api()->postJson(
@@ -138,10 +146,13 @@ class JobTriageTest extends TestCase
 
         $url = "http://{$this->host('air')}/api/jobs";
 
-        // Owns none of it...
+        // Owns none of it, and asking the old way does not change that.
         $this->as($stranger)->getJson($url)->assertOk()->assertJsonPath('total', 0);
-        // ...but can still see what nobody has claimed.
-        $this->as($stranger)->getJson($url . '?unassigned=1')->assertOk()->assertJsonPath('total', 1);
+        $this->as($stranger)->getJson($url . '?unassigned=1')->assertOk()->assertJsonPath('total', 0);
+
+        // The pricing owner still sees their own unowned job — it is not lost, it is
+        // simply theirs to assign.
+        $this->api()->getJson($url)->assertOk()->assertJsonPath('total', 1);
     }
 
     /** Authenticate as someone other than the default pricing user. */

@@ -398,6 +398,10 @@ context-less session produces, so the failure mode itself stays described.
 The owner asked whether mail is kept for **one year**, and whether clients wanting older
 mail are **sent to Outlook**. PRD §9.3 says neither, and the code does neither yet.
 
+🟢 **90 days CONFIRMED by the owner, 2026-09-04** — the PRD's figure stands; it was the
+"one year" assumption that was wrong, not the policy. Still unimplemented; the table below
+is the gap between the settled policy and the code.
+
 | | PRD §9.3 says | Code does today |
 |---|---|---|
 | Message **snippets** | inline **forever** | kept (nothing deletes them) |

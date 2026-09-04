@@ -64,19 +64,17 @@ class JobController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $jobs = Job::forActivePortal()
+        // 🔒 OWNERSHIP SCOPE, applied before anything else — every caller sees their OWN
+        // shipments and no one else's. It sits here rather than in the board's filter
+        // because a filter is a convenience and this is a boundary: `?ops_id=` on the old
+        // endpoint handed any authenticated user a colleague's whole book.
+        //
+        // ⚠️ There is no `unassigned` escape hatch any more. The Kanban's pool holds
+        // ENQUIRIES — unclaimed mail, before confirmation — so `?unassigned=1` had no
+        // caller left. A job whose `ops_id` is unset is still visible to its `pricing_id`
+        // owner, who is the person who would assign it.
+        $jobs = $this->scopeToOwner(Job::forActivePortal())
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            // 🔒 OWNERSHIP SCOPE — every caller sees their OWN shipments and no one
-            // else's. Enforced here rather than in the board's filter, because a filter
-            // is a convenience and this is a boundary: `?ops_id=` on the old endpoint
-            // would otherwise hand any authenticated user a colleague's whole book.
-            //
-            // The pool is the deliberate exception below: unclaimed work belongs to
-            // whoever picks it up, so it is visible to everyone until somebody does.
-            ->when(! $request->boolean('unassigned'), fn ($q) => $this->scopeToOwner($q))
-            // The Unassigned Pool: PRD §5.5's scroller, and the only place a job with
-            // no operator is actionable.
-            ->when($request->boolean('unassigned'), fn ($q) => $q->whereNull('ops_id'))
             // The inbox drawer resolves a thread's enquiry to its job for the cost sheet.
             ->when($request->filled('enquiry_id'), fn ($q) => $q->where('enquiry_id', $request->integer('enquiry_id')))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('planned_clearance_date', '>=', $request->date('from')))

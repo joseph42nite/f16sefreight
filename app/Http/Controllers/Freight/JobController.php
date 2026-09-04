@@ -27,24 +27,56 @@ class JobController extends Controller
         private readonly AuditLogger $audit,
     ) {}
 
+    /**
+     * Restrict a job query to what the caller owns.
+     *
+     * 🔴 A job carries TWO owners and the right column depends on who is asking:
+     * `pricing_id` quoted it, `ops_id` is executing it. Keying both roles off `ops_id`
+     * is what previously returned an empty board to pricing staff who owned every job
+     * on it.
+     *
+     * 🔴 ONLY THE ROLES THAT OWN JOBS ARE SCOPED. `accounts` invoices every shipment on
+     * the branch and is never assigned one, and `boss` answers for work they must be able
+     * to see — narrowing either to "jobs they own" narrows them to NOTHING, because
+     * neither ever appears in an ownership column.
+     *
+     * ⚠️ A designation missing from this map is therefore NOT scoped. That is the
+     * deliberate choice between two bad defaults: failing closed blinds a working role
+     * silently, which is what an earlier version of this method did to `accounts`, and
+     * an invisible empty page is far harder to diagnose than a visible extra row. The
+     * blast radius is bounded — `BindPortalScope` and the designation gate have already
+     * limited the caller to their own branch and mode before this runs.
+     *
+     * 🔴 If a new role is added that OWNS jobs, it must be added here. Nothing else will
+     * catch it.
+     */
+    private const OWNERSHIP_COLUMN = [
+        'pricing'    => 'pricing_id',
+        'operations' => 'ops_id',
+    ];
+
+    private function scopeToOwner($query)
+    {
+        $column = self::OWNERSHIP_COLUMN[auth()->user()->designation] ?? null;
+
+        return $column === null ? $query : $query->where($column, auth()->id());
+    }
+
     public function index(Request $request): JsonResponse
     {
         $jobs = Job::forActivePortal()
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            // 🔴 "Mine" means MY role's ownership, not always `ops_id`. A job carries two
-            // owners — `pricing_id` quoted it, `ops_id` is executing it — and filtering
-            // both roles on `ops_id` made the toggle return NOTHING for pricing staff,
-            // who own every job on the board as `pricing_id` and none as `ops_id`. An
-            // empty board reads as "you have no work", which for the person who priced
-            // all of it is the opposite of true.
-            ->when($request->boolean('mine'), fn ($q) => $q->where(
-                auth()->user()->designation === 'pricing' ? 'pricing_id' : 'ops_id',
-                auth()->id()
-            ))
+            // 🔒 OWNERSHIP SCOPE — every caller sees their OWN shipments and no one
+            // else's. Enforced here rather than in the board's filter, because a filter
+            // is a convenience and this is a boundary: `?ops_id=` on the old endpoint
+            // would otherwise hand any authenticated user a colleague's whole book.
+            //
+            // The pool is the deliberate exception below: unclaimed work belongs to
+            // whoever picks it up, so it is visible to everyone until somebody does.
+            ->when(! $request->boolean('unassigned'), fn ($q) => $this->scopeToOwner($q))
             // The Unassigned Pool: PRD §5.5's scroller, and the only place a job with
             // no operator is actionable.
             ->when($request->boolean('unassigned'), fn ($q) => $q->whereNull('ops_id'))
-            ->when($request->filled('ops_id'), fn ($q) => $q->where('ops_id', $request->integer('ops_id')))
             // The inbox drawer resolves a thread's enquiry to its job for the cost sheet.
             ->when($request->filled('enquiry_id'), fn ($q) => $q->where('enquiry_id', $request->integer('enquiry_id')))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('planned_clearance_date', '>=', $request->date('from')))

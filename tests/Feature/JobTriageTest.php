@@ -68,13 +68,15 @@ class JobTriageTest extends TestCase
     }
 
     /**
-     * 🔴 "Mine" means MY role's ownership. A job carries two owners — `pricing_id` quoted
-     * it, `ops_id` is executing it — and the filter used `ops_id` for both roles, so the
-     * toggle returned an EMPTY BOARD for pricing staff who own every job on it. An empty
-     * board reads as "you have no work", which for the person who priced all of it is the
-     * opposite of true.
+     * 🔒 THE OWNERSHIP BOUNDARY. Everyone sees their OWN shipments and nobody else's, and
+     * the right column depends on who is asking: `pricing_id` quoted it, `ops_id` is
+     * executing it.
+     *
+     * ⚠️ This is a boundary, not a filter, so it is asserted on what the endpoint RETURNS
+     * with no parameters at all — and against a caller who explicitly asks for someone
+     * else's rows, which is the case a UI-only scope would have missed entirely.
      */
-    public function test_mine_filters_by_the_callers_own_role(): void
+    public function test_each_person_sees_only_their_own_jobs(): void
     {
         $ops = User::create([
             'name' => 'Ops', 'email' => 'ops-trg@test.local', 'password' => Hash::make('x'),
@@ -95,14 +97,62 @@ class JobTriageTest extends TestCase
             'ops_id'     => $ops->id,
         ]);
 
-        $url = "http://{$this->host('air')}/api/jobs?mine=1";
+        // A second pricing user with nothing of their own — the isolation this test exists
+        // for. Without them the assertions pass on a branch where one person owns
+        // everything, which proves nothing.
+        $other = User::create([
+            'name' => 'Other Pricing', 'email' => 'pricing2-trg@test.local', 'password' => Hash::make('x'),
+            'company_name' => $this->company->id, 'branch_name' => $this->branch->id,
+            'designation' => 'pricing', 'is_active' => 1,
+        ]);
 
+        $url = "http://{$this->host('air')}/api/jobs";
+
+        // No parameters: the scope is the default, not something the client opts into.
         $this->api()->getJson($url)->assertOk()->assertJsonPath('total', 1);
 
+        $this->as($ops)->getJson($url)->assertOk()->assertJsonPath('total', 1);
+
+        $this->as($other)->getJson($url)->assertOk()->assertJsonPath('total', 0);
+
+        // 🔒 And asking for a colleague's rows by id does not produce them. `?ops_id=`
+        // used to be honoured, which handed any authenticated user another person's
+        // entire book — the reason this had to move out of the board's filter.
+        $this->as($other)->getJson($url . '?ops_id=' . $ops->id)
+            ->assertOk()->assertJsonPath('total', 0);
+    }
+
+    /** The pool is the deliberate exception: unclaimed work belongs to whoever takes it. */
+    public function test_the_unassigned_pool_is_visible_to_everyone(): void
+    {
+        $enquiry = $this->createEnquiry('air');
+        $this->api()->postJson(
+            "http://{$this->host('air')}/api/enquiries/{$enquiry['id']}/convert", []
+        )->assertStatus(201);
+
+        $stranger = User::create([
+            'name' => 'Stranger', 'email' => 'ops2-trg@test.local', 'password' => Hash::make('x'),
+            'company_name' => $this->company->id, 'branch_name' => $this->branch->id,
+            'designation' => 'operations', 'is_active' => 1,
+        ]);
+
+        $url = "http://{$this->host('air')}/api/jobs";
+
+        // Owns none of it...
+        $this->as($stranger)->getJson($url)->assertOk()->assertJsonPath('total', 0);
+        // ...but can still see what nobody has claimed.
+        $this->as($stranger)->getJson($url . '?unassigned=1')->assertOk()->assertJsonPath('total', 1);
+    }
+
+    /** Authenticate as someone other than the default pricing user. */
+    private function as(User $user): self
+    {
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($ops),
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($user),
             'Accept' => 'application/json',
-        ])->getJson($url)->assertOk()->assertJsonPath('total', 1);
+        ]);
+
+        return $this;
     }
 
     // ─── 1. Sequence assignment, per mode ────────────────────────────────────

@@ -101,7 +101,6 @@ const FILTER_KEY = "f16s_kanban_filters";
        something up, not changing how the board works for everyone. */
     showAllDone: false,
     filters: {
-      opsId: "",
       stage: "",
       from: "",
       to: ""
@@ -154,13 +153,6 @@ const FILTER_KEY = "f16s_kanban_filters";
     },
     activeChips() {
       const chips = [];
-      if (this.filters.opsId) {
-        const name = this.filters.opsId === "__mine" ? "Mine" : (this.operators.find(o => String(o.id) === this.filters.opsId) || {}).name;
-        chips.push({
-          key: "opsId",
-          label: "Operator: " + (name || this.filters.opsId)
-        });
-      }
       if (this.filters.stage) chips.push({
         key: "stage",
         label: "Stage: " + this.filters.stage
@@ -220,7 +212,6 @@ const FILTER_KEY = "f16s_kanban_filters";
     },
     clearAll() {
       this.filters = {
-        opsId: "",
         stage: "",
         from: "",
         to: ""
@@ -229,7 +220,8 @@ const FILTER_KEY = "f16s_kanban_filters";
     },
     query() {
       const p = [];
-      if (this.filters.opsId === "__mine") p.push("mine=1");else if (this.filters.opsId) p.push("ops_id=" + this.filters.opsId);
+      // No owner parameter: ownership is the server's decision now, not a filter the
+      // client asks for. Sending one would only suggest it could be overridden.
       if (this.filters.stage) p.push("status=" + encodeURIComponent(this.filters.stage));
       if (this.filters.from) p.push("from=" + this.filters.from);
       if (this.filters.to) p.push("to=" + this.filters.to);
@@ -382,44 +374,6 @@ var render = function render() {
       click: _vm.switchToStaff
     }
   }, [_vm._v("Staff")]) : _vm._e()]), _vm._v(" "), _c("label", {
-    staticClass: "fx-field"
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("Operator")]), _vm._v(" "), _c("select", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.filters.opsId,
-      expression: "filters.opsId"
-    }],
-    staticClass: "fx-input",
-    on: {
-      change: [function ($event) {
-        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
-          return o.selected;
-        }).map(function (o) {
-          var val = "_value" in o ? o._value : o.value;
-          return val;
-        });
-        _vm.$set(_vm.filters, "opsId", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
-      }, _vm.load]
-    }
-  }, [_c("option", {
-    attrs: {
-      value: ""
-    }
-  }, [_vm._v("Everyone")]), _vm._v(" "), _c("option", {
-    attrs: {
-      value: "__mine"
-    }
-  }, [_vm._v("Mine")]), _vm._v(" "), _vm._l(_vm.operators, function (o) {
-    return _c("option", {
-      key: o.id,
-      domProps: {
-        value: String(o.id)
-      }
-    }, [_vm._v(_vm._s(o.name))]);
-  })], 2)]), _vm._v(" "), _c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"

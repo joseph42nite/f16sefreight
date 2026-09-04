@@ -21,15 +21,11 @@
         >Staff</button>
       </div>
 
-      <label class="fx-field">
-        <span class="fx-field__label">Operator</span>
-        <select v-model="filters.opsId" class="fx-input" @change="load">
-          <option value="">Everyone</option>
-          <option value="__mine">Mine</option>
-          <option v-for="o in operators" :key="o.id" :value="String(o.id)">{{ o.name }}</option>
-        </select>
-      </label>
-
+      <!-- 🔒 The operator selector is GONE, not hidden. The board now shows the signed-in
+           person's own shipments and the server enforces it, so a picker offering
+           "Everyone" or a colleague's name would list choices that return the same rows —
+           a control that appears to do something and does not is worse than none. The
+           unassigned pool below stays shared: unclaimed work belongs to whoever takes it. -->
       <label class="fx-field">
         <span class="fx-field__label">Stage</span>
         <select v-model="filters.stage" class="fx-input" @change="load">
@@ -158,6 +154,13 @@
       </div>
 
       <!-- ── Perspective B — the cross-staff clearance matrix ─────────────── -->
+      <!--
+        ⚠️ Two different scopes on purpose, since the board became owner-scoped. The OLI
+        badges come from /jobs/staff-load and are the operator's TRUE branch-wide load —
+        that is what makes them safe to balance against. The cells below are the caller's
+        OWN jobs, so the columns will not add up to the badges. That asymmetry is the
+        useful one: "how loaded is this person really, and how much of it is mine".
+      -->
       <div v-else class="fx-matrix-wrap">
         <table class="fx-table fx-matrix">
           <thead>
@@ -258,7 +261,7 @@ export default {
     /* Per-viewer, per-session: an operator who expands the finished pile is looking
        something up, not changing how the board works for everyone. */
     showAllDone: false,
-    filters: { opsId: "", stage: "", from: "", to: "" },
+    filters: { stage: "", from: "", to: "" },
     STATUSES, PROCESS,
   }),
   computed: {
@@ -303,12 +306,6 @@ export default {
     },
     activeChips() {
       const chips = [];
-      if (this.filters.opsId) {
-        const name = this.filters.opsId === "__mine"
-          ? "Mine"
-          : (this.operators.find((o) => String(o.id) === this.filters.opsId) || {}).name;
-        chips.push({ key: "opsId", label: "Operator: " + (name || this.filters.opsId) });
-      }
       if (this.filters.stage) chips.push({ key: "stage", label: "Stage: " + this.filters.stage });
       if (this.filters.from) chips.push({ key: "from", label: "From " + this.filters.from });
       if (this.filters.to) chips.push({ key: "to", label: "To " + this.filters.to });
@@ -356,13 +353,13 @@ export default {
       this.load();
     },
     clearAll() {
-      this.filters = { opsId: "", stage: "", from: "", to: "" };
+      this.filters = { stage: "", from: "", to: "" };
       this.load();
     },
     query() {
       const p = [];
-      if (this.filters.opsId === "__mine") p.push("mine=1");
-      else if (this.filters.opsId) p.push("ops_id=" + this.filters.opsId);
+      // No owner parameter: ownership is the server's decision now, not a filter the
+      // client asks for. Sending one would only suggest it could be overridden.
       if (this.filters.stage) p.push("status=" + encodeURIComponent(this.filters.stage));
       if (this.filters.from) p.push("from=" + this.filters.from);
       if (this.filters.to) p.push("to=" + this.filters.to);

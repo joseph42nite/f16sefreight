@@ -65,7 +65,13 @@ class MultiPortalScopingTest extends TestCase
         ]);
     }
 
-    private function job(Agent $branch, string $mode): int
+    /**
+     * ⚠️ `$owner` is not decoration. `/api/jobs` scopes to the caller's own shipments, so
+     * a job with no `ops_id` is an UNASSIGNED-POOL job and correctly absent from the
+     * assigned board. Leaving it null here made these portal-scoping tests assert against
+     * an empty list, which would have passed for the wrong reason.
+     */
+    private function job(Agent $branch, string $mode, ?User $owner = null): int
     {
         $enquiryId = DB::table('enquiries')->insertGetId([
             'agent_id' => $branch->id, 'transport_mode' => $mode,
@@ -76,6 +82,7 @@ class MultiPortalScopingTest extends TestCase
         return DB::table('jobs')->insertGetId([
             'agent_id' => $branch->id, 'enquiry_id' => $enquiryId,
             'transport_mode' => $mode, 'status' => 'Intake',
+            'ops_id' => ($owner ?? $this->operator)->id,
             'created_at' => now(), 'updated_at' => now(),
         ]);
     }

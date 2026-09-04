@@ -237,7 +237,20 @@ class EnquiryController extends Controller
             ], 422);
         }
 
-        $job = DB::transaction(function () use ($enquiry, $data, $mode) {
+        // 🔴 THE CLAIM SURVIVES CONFIRMATION. Work is claimed on the THREAD in the inbox
+        // (`email_threads.assigned_ops_id`), and conversion used to set only `pricing_id`
+        // — so the person who had claimed the conversation and then confirmed the
+        // shipment was dropped, and their own job landed in the unassigned pool for
+        // anyone to take. PRD §1039: "the system assigns the first staff member who
+        // replies to the thread"; nothing said that assignment expires at conversion.
+        //
+        // ⚠️ Explicit caller wins. `$data['ops_id']` is someone naming an owner outright,
+        // which must not be silently overridden by whoever happened to open the mail.
+        $claimedBy = $data['ops_id'] ?? DB::table('email_threads')
+            ->where('enquiry_id', $enquiry->id)
+            ->value('assigned_ops_id');
+
+        $job = DB::transaction(function () use ($enquiry, $data, $mode, $claimedBy) {
             $job = Job::create($data + [
                 'agent_id'       => $enquiry->agent_id,
                 'enquiry_id'     => $enquiry->id,
@@ -246,6 +259,7 @@ class EnquiryController extends Controller
                 'customer_id'    => $data['customer_id'] ?? $enquiry->customer_id,
                 'cargo_type'     => $enquiry->cargo_type,
                 'pricing_id'     => auth()->id(),
+                'ops_id'         => $claimedBy,
                 'execution_job_no' => $this->sequences->next($enquiry->agent_id, $mode->jobPrefix()),
             ]);
 

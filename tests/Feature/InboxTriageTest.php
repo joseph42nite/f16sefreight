@@ -429,6 +429,32 @@ class InboxTriageTest extends TestCase
         $this->assertNotNull($after->reopened_at);
     }
 
+    /**
+     * 🔴 Work is claimed on the THREAD, in the inbox, and the claim must survive
+     * confirmation. Conversion set only `pricing_id`, so the person who claimed the
+     * conversation and then confirmed the shipment was dropped from their own job — which
+     * landed in the unassigned pool with a job number on it, for anyone to take.
+     */
+    public function test_confirming_keeps_the_person_who_claimed_the_thread(): void
+    {
+        $id = $this->thread();
+
+        $enquiryId = $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
+            ->json('enquiry.id');
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/claim"), [])
+            ->assertOk();
+
+        $job = $this->api($this->pricing)
+            ->postJson($this->url("/api/enquiries/{$enquiryId}/convert"), [])
+            ->assertStatus(201)
+            ->json('job');
+
+        $this->assertSame($this->pricing->id, $job['ops_id'], 'the claim was dropped at conversion');
+    }
+
     public function test_an_unknown_classification_is_rejected(): void
     {
         $id = $this->thread();

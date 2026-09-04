@@ -270,6 +270,31 @@ a wrong message to the customer, and that is not a mistake the desk can take bac
 
 ---
 
+## 🔴 Found 2026-09-04 — the claim was dropped at confirmation
+
+| # | Finding | Detail |
+|---|---|---|
+| 69 | 🔴 **Confirming a shipment discarded the person who claimed it.** Work is claimed on the THREAD in the inbox (`email_threads.assigned_ops_id`, atomic, 409 on the loser), but `EnquiryController::convert()` set only `pricing_id` — never `ops_id`. So the operator who claimed the conversation and then confirmed the shipment was dropped from **their own job**, which landed in the unassigned pool for anyone to re-take | Proven in live data before the fix: thread claimed by user 53, resulting job `ops_id = NULL`. **This is why job numbers appear in the unassigned pool** — every confirmed shipment went there. PRD §1039 says *"the system assigns the first staff member who replies to the thread"* and nothing says that expires at conversion. Fixed; an explicit `ops_id` in the request still wins over the inherited claim |
+
+### ⚠️ THE PRD CONTRADICTS ITSELF ON WHAT THE POOL HOLDS — owner's call
+
+Two statements, three paragraphs apart, in the **State 1 (pre-conversion)** section:
+
+- **§943 / §1033** — promotion to `customer_enquiry` *"mints the mode-scoped `enquiry_no` … and **drops a card into the unassigned pool**"*. At that moment **no job exists**, so the pool card can only be an **enquiry**.
+- **§1041** — *"Atomic claim: `UPDATE **jobs** SET ops_id = ? WHERE id = ? AND ops_id IS NULL`"*. A `jobs` row does not exist until State 2.
+
+Both cannot be true. The schema supports either: **`enquiries.ops_id` EXISTS, is indexed, is fillable, and has an `opsUser()` relation — and nothing in the codebase ever writes it.** An unused indexed column is usually a design that was specified and then half-built.
+
+Three readings, and this decides what a pool card shows:
+
+1. **Pool = unclaimed enquiries** (matches §943, and the owner's stated model: *claim → open workspace → confirm*). Cards show `enquiry_no`. Makes `enquiries.ops_id` live, and makes the Kanban pool a **duplicate of the inbox's own unassigned filter**, which already claims threads atomically.
+2. **Pool = confirmed shipments nobody owns** (matches §1041, and the code today). Cards show `execution_job_no`. With #69 fixed this is now a rare state — a confirmation made from a thread nobody had claimed — rather than every shipment.
+3. **Both, as two tabs.** Honest to the workflow, most work.
+
+⚠️ Reading 1 makes `email_threads.assigned_ops_id` and `enquiries.ops_id` **two names for one fact**, which will drift unless one is derived from the other.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

@@ -139,13 +139,25 @@ const WORKSPACE_TABS = [{
     opsId: "",
     clearanceDate: "",
     operators: [],
+    /* The composer. `draft` holds comma-separated strings because that is what the
+       operator edits; splitting happens once, at send. */
+    composing: false,
+    sending: false,
+    sendError: null,
+    sentOk: false,
+    draft: {
+      to: "",
+      cc: "",
+      subject: "",
+      body: ""
+    },
     outcomeBusy: false,
     outcomeError: null,
     LOST_REASONS,
     CLASSIFICATIONS,
     WORKSPACE_TABS
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_6__.mapGetters)(["designation"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_6__.mapGetters)(["designation", "currentUser"])), {}, {
     /* Only pricing owns triage — re-classification mints or strands an enquiry. */
     canTriage() {
       return this.designation === "pricing";
@@ -281,6 +293,69 @@ const WORKSPACE_TABS = [{
      */
     onExtracted(payload) {
       this.extracted = payload;
+    },
+    /**
+     * Open the composer with the recipients each action starts from.
+     *
+     * 🔴 Built from the LAST INBOUND message, not the last message. Seeding a reply from
+     * our own outbound mail addresses it to ourselves — and the operator only notices
+     * after sending.
+     *
+     * ⚠️ Our own mailbox is dropped from reply-all. Every message on the thread has us on
+     * it, so leaving it in copies the desk on its own reply, every time.
+     */
+    compose(mode) {
+      const last = [...this.messages].reverse().find(m => m.direction === "inbound") || this.messages[this.messages.length - 1];
+      if (!last) return;
+
+      // 🔴 TWO addresses come out, not one. The shared mailbox is on every message by
+      // definition, and the signed-in person may be too — reply-all in any mail client
+      // excludes you. Leaving either in copies the desk on its own reply, forever.
+      const mine = [this.active && this.active.mailbox_address, this.currentUser && this.currentUser.email].filter(Boolean).map(a => a.toLowerCase());
+      const strip = list => (list || "").split(",").map(a => a.trim()).filter(a => a && mine.indexOf(a.toLowerCase()) === -1);
+      const subject = last.subject || "";
+      const prefixed = p => subject.toLowerCase().startsWith(p.toLowerCase()) ? subject : p + subject;
+      if (mode === "forward") {
+        // Forward deliberately starts EMPTY: it goes to someone not yet on the thread,
+        // and pre-filling it with the current recipients is how a confidential rate
+        // reaches the wrong party.
+        this.draft = {
+          to: "",
+          cc: "",
+          subject: prefixed("Fwd: "),
+          body: ""
+        };
+      } else {
+        this.draft = {
+          to: strip(last.from).join(", "),
+          cc: mode === "replyAll" ? strip(last.cc).concat(strip(last.to)).join(", ") : "",
+          subject: prefixed("Re: "),
+          body: ""
+        };
+      }
+      this.sendError = null;
+      this.sentOk = false;
+      this.composing = true;
+    },
+    send() {
+      const split = v => v.split(",").map(a => a.trim()).filter(Boolean);
+      this.sending = true;
+      this.sendError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/inbox/threads/" + this.active.id + "/reply", {
+        to: split(this.draft.to),
+        cc: split(this.draft.cc),
+        subject: this.draft.subject,
+        body: this.draft.body
+      }).then(() => {
+        this.composing = false;
+        this.sentOk = true;
+        /* No optimistic row. The sent mail returns on the next mailbox sync as an echo,
+           and inventing one here would show a message that might never have left. */
+      }).catch(e => {
+        this.sendError = this.messageFor(e);
+      }).finally(() => {
+        this.sending = false;
+      });
     },
     openExtraction() {
       this.tab = "extraction";
@@ -451,6 +526,9 @@ const WORKSPACE_TABS = [{
       this.lostCustom = "";
       this.opsId = "";
       this.clearanceDate = "";
+      this.composing = false;
+      this.sendError = null;
+      this.sentOk = false;
       // 🔴 "enquiry" was a TAB until it moved to the header, and this line kept resetting
       // to it — a key no section matches, so the workspace rendered nothing at all and
       // whatever the operator had typed appeared to vanish. Removing a tab means removing
@@ -1649,10 +1727,150 @@ var render = function render() {
         value: m.received_at,
         kind: "dateTime"
       }
-    })], 1)]), _vm._v(" "), _c("p", {
+    })], 1)]), _vm._v(" "), _c("div", {
+      staticClass: "fx-message__to"
+    }, [_vm._v("\n            to " + _vm._s(m.to || "—")), m.cc ? [_vm._v(" · cc " + _vm._s(m.cc))] : _vm._e()], 2), _vm._v(" "), _c("p", {
       staticClass: "fx-message__body"
     }, [_vm._v(_vm._s(m.body_snippet))])]);
-  }), 0)]], 2), _vm._v(" "), _c("FxDrawer", {
+  }), 0), _vm._v(" "), _vm.messages.length ? _c("section", {
+    staticClass: "fx-compose"
+  }, [!_vm.composing ? _c("div", {
+    staticClass: "fx-compose__actions"
+  }, [_c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    on: {
+      click: function ($event) {
+        return _vm.compose("reply");
+      }
+    }
+  }, [_vm._v("Reply")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    on: {
+      click: function ($event) {
+        return _vm.compose("replyAll");
+      }
+    }
+  }, [_vm._v("Reply all")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    on: {
+      click: function ($event) {
+        return _vm.compose("forward");
+      }
+    }
+  }, [_vm._v("Forward")])]) : [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.draft.to,
+      expression: "draft.to"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "comma separated"
+    },
+    domProps: {
+      value: _vm.draft.to
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.draft, "to", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Cc")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.draft.cc,
+      expression: "draft.cc"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "comma separated"
+    },
+    domProps: {
+      value: _vm.draft.cc
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.draft, "cc", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Subject")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.draft.subject,
+      expression: "draft.subject"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.draft.subject
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.draft, "subject", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.draft.body,
+      expression: "draft.body"
+    }],
+    staticClass: "fx-input fx-compose__body",
+    attrs: {
+      rows: "6"
+    },
+    domProps: {
+      value: _vm.draft.body
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.draft, "body", $event.target.value);
+      }
+    }
+  }), _vm._v(" "), _c("div", {
+    staticClass: "fx-compose__actions"
+  }, [_c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.sending || !_vm.draft.to.trim()
+    },
+    on: {
+      click: _vm.send
+    }
+  }, [_vm._v("\n              " + _vm._s(_vm.sending ? "Sending…" : "Send") + "\n            ")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.sending
+    },
+    on: {
+      click: function ($event) {
+        _vm.composing = false;
+      }
+    }
+  }, [_vm._v("Cancel")])]), _vm._v(" "), _vm.sendError ? _c("p", {
+    staticClass: "fx-error"
+  }, [_vm._v(_vm._s(_vm.sendError))]) : _vm._e(), _vm._v(" "), _vm.sentOk ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n            Sent. It will appear above once the mailbox syncs it back.\n          ")]) : _vm._e()]], 2) : _vm._e()]], 2), _vm._v(" "), _c("FxDrawer", {
     attrs: {
       open: _vm.workspace && !!_vm.active,
       title: _vm.active ? _vm.active.subject || "Workspace" : "",

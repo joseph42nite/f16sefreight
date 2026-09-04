@@ -139,9 +139,55 @@
               <span class="fx-message__from">{{ m.from }}</span>
               <span class="fx-message__when"><Figure :value="m.received_at" kind="dateTime" /></span>
             </div>
+            <!-- Who else was on it. Without this an operator cannot tell a private reply
+                 from one the airline and the broker are both reading. -->
+            <div class="fx-message__to">
+              to {{ m.to || "—" }}<template v-if="m.cc"> · cc {{ m.cc }}</template>
+            </div>
             <p class="fx-message__body">{{ m.body_snippet }}</p>
           </li>
         </ol>
+
+        <!--
+          The composer. Reply / Reply all / Forward are the SAME send with different
+          starting recipients, and every field stays editable afterwards — in a real mail
+          client those buttons are a starting point, never a command. An operator drops
+          the airline from a commercial reply routinely.
+        -->
+        <section v-if="messages.length" class="fx-compose">
+          <div v-if="!composing" class="fx-compose__actions">
+            <button class="fx-btn fx-btn--primary" @click="compose('reply')">Reply</button>
+            <button class="fx-btn" @click="compose('replyAll')">Reply all</button>
+            <button class="fx-btn" @click="compose('forward')">Forward</button>
+          </div>
+
+          <template v-else>
+            <label class="fx-field">
+              <span class="fx-field__label">To</span>
+              <input v-model="draft.to" class="fx-input" placeholder="comma separated" />
+            </label>
+            <label class="fx-field">
+              <span class="fx-field__label">Cc</span>
+              <input v-model="draft.cc" class="fx-input" placeholder="comma separated" />
+            </label>
+            <label class="fx-field">
+              <span class="fx-field__label">Subject</span>
+              <input v-model="draft.subject" class="fx-input" />
+            </label>
+            <textarea v-model="draft.body" class="fx-input fx-compose__body" rows="6"></textarea>
+
+            <div class="fx-compose__actions">
+              <button class="fx-btn fx-btn--primary" :disabled="sending || !draft.to.trim()" @click="send">
+                {{ sending ? "Sending…" : "Send" }}
+              </button>
+              <button class="fx-btn" :disabled="sending" @click="composing = false">Cancel</button>
+            </div>
+            <p v-if="sendError" class="fx-error">{{ sendError }}</p>
+            <p v-if="sentOk" class="fx-muted">
+              Sent. It will appear above once the mailbox syncs it back.
+            </p>
+          </template>
+        </section>
       </template>
     </section>
 
@@ -429,12 +475,16 @@ export default {
     /* The confirmation form. Both optional: pricing may run the shipment themselves,
        and a clearance date is often not known on the day the client confirms. */
     opsId: "", clearanceDate: "", operators: [],
+    /* The composer. `draft` holds comma-separated strings because that is what the
+       operator edits; splitting happens once, at send. */
+    composing: false, sending: false, sendError: null, sentOk: false,
+    draft: { to: "", cc: "", subject: "", body: "" },
     outcomeBusy: false, outcomeError: null,
     LOST_REASONS,
     CLASSIFICATIONS, WORKSPACE_TABS,
   }),
   computed: {
-    ...mapGetters(["designation"]),
+    ...mapGetters(["designation", "currentUser"]),
     /* Only pricing owns triage — re-classification mints or strands an enquiry. */
     canTriage() {
       return this.designation === "pricing";
@@ -581,6 +631,77 @@ export default {
      */
     onExtracted(payload) {
       this.extracted = payload;
+    },
+    /**
+     * Open the composer with the recipients each action starts from.
+     *
+     * 🔴 Built from the LAST INBOUND message, not the last message. Seeding a reply from
+     * our own outbound mail addresses it to ourselves — and the operator only notices
+     * after sending.
+     *
+     * ⚠️ Our own mailbox is dropped from reply-all. Every message on the thread has us on
+     * it, so leaving it in copies the desk on its own reply, every time.
+     */
+    compose(mode) {
+      const last = [...this.messages].reverse().find((m) => m.direction === "inbound")
+        || this.messages[this.messages.length - 1];
+
+      if (!last) return;
+
+      // 🔴 TWO addresses come out, not one. The shared mailbox is on every message by
+      // definition, and the signed-in person may be too — reply-all in any mail client
+      // excludes you. Leaving either in copies the desk on its own reply, forever.
+      const mine = [
+        this.active && this.active.mailbox_address,
+        this.currentUser && this.currentUser.email,
+      ].filter(Boolean).map((a) => a.toLowerCase());
+
+      const strip = (list) => (list || "")
+        .split(",")
+        .map((a) => a.trim())
+        .filter((a) => a && mine.indexOf(a.toLowerCase()) === -1);
+
+      const subject = last.subject || "";
+      const prefixed = (p) => (subject.toLowerCase().startsWith(p.toLowerCase()) ? subject : p + subject);
+
+      if (mode === "forward") {
+        // Forward deliberately starts EMPTY: it goes to someone not yet on the thread,
+        // and pre-filling it with the current recipients is how a confidential rate
+        // reaches the wrong party.
+        this.draft = { to: "", cc: "", subject: prefixed("Fwd: "), body: "" };
+      } else {
+        this.draft = {
+          to: strip(last.from).join(", "),
+          cc: mode === "replyAll" ? strip(last.cc).concat(strip(last.to)).join(", ") : "",
+          subject: prefixed("Re: "),
+          body: "",
+        };
+      }
+
+      this.sendError = null;
+      this.sentOk = false;
+      this.composing = true;
+    },
+    send() {
+      const split = (v) => v.split(",").map((a) => a.trim()).filter(Boolean);
+
+      this.sending = true;
+      this.sendError = null;
+
+      ApiService.post("/inbox/threads/" + this.active.id + "/reply", {
+        to: split(this.draft.to),
+        cc: split(this.draft.cc),
+        subject: this.draft.subject,
+        body: this.draft.body,
+      })
+        .then(() => {
+          this.composing = false;
+          this.sentOk = true;
+          /* No optimistic row. The sent mail returns on the next mailbox sync as an echo,
+             and inventing one here would show a message that might never have left. */
+        })
+        .catch((e) => { this.sendError = this.messageFor(e); })
+        .finally(() => { this.sending = false; });
     },
     openExtraction() {
       this.tab = "extraction";
@@ -730,6 +851,9 @@ export default {
       this.lostCustom = "";
       this.opsId = "";
       this.clearanceDate = "";
+      this.composing = false;
+      this.sendError = null;
+      this.sentOk = false;
       // 🔴 "enquiry" was a TAB until it moved to the header, and this line kept resetting
       // to it — a key no section matches, so the workspace rendered nothing at all and
       // whatever the operator had typed appeared to vanish. Removing a tab means removing

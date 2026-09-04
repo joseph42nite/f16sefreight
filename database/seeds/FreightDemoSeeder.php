@@ -716,15 +716,23 @@ class FreightDemoSeeder extends Seeder
         // later. The connection is seeded as `auth_state = 'connected'` but holds no
         // real tokens: nothing here can actually talk to Gmail, and pretending
         // otherwise would let a sync job try.
+        // Named once and reused: the mailbox address is what inbound mail is addressed to,
+        // so the connection row and every seeded message have to agree on it.
+        $mailboxAddress = 'inbox-' . strtolower($branch->branch_code) . '-'
+            . strtolower(Company::find($branch->company_id)->code) . '@demo.test';
+
         $connectionId = DB::table('mailbox_connections')->insertGetId([
             'agent_id' => $branch->id,
             'user_id' => $users['pricing']->id,
             // ⚠️ UNIQUE across the platform — one mailbox belongs to one connection.
             // A shared per-branch address is also the realistic shape: an operations
             // desk works a branch inbox, not five personal ones.
-            'email_address' => 'inbox-' . strtolower($branch->branch_code) . '-'
-                               . strtolower(Company::find($branch->company_id)->code) . '@demo.test',
-            'provider' => 'gmail',
+            'email_address' => $mailboxAddress,
+            // ⚠️ `outlook`, not `gmail`. Gmail ingestion is deferred behind the Google CASA
+            // assessment (GAPS #15) and MailProviderRegistry refuses it — demo data on an
+            // unbuilt provider looks fine until something actually calls the provider,
+            // which replying does.
+            'provider' => 'outlook',
             'is_active' => 1,
             'auth_state' => 'connected',
             'created_at' => now(), 'updated_at' => now(),
@@ -863,8 +871,15 @@ class FreightDemoSeeder extends Seeder
                     'provider_thread_id' => 'gmail_' . substr(md5($key), 0, 16),
                     'direction' => $inbound ? 'inbound' : 'outbound',
                     'message_id' => '<' . substr(md5($key . $m), 0, 20) . '@mail.test>',
-                    'from' => $inbound ? $from : $users['pricing']->email,
-                    'to' => $inbound ? $users['pricing']->email : $from,
+                    // 🔴 Addressed to the MAILBOX, not to a person. A branch desk works a
+                    // shared inbox, so that is the address a client writes to — and
+                    // reply-all has to strip it or the desk copies itself on every reply.
+                    // Seeding it as the user's own address hid exactly that behaviour.
+                    'from' => $inbound ? $from : $mailboxAddress,
+                    'to' => $inbound ? $mailboxAddress : $from,
+                    // A real freight thread carries more than two parties. This is what
+                    // makes Reply All meaningfully different from Reply on the demo data.
+                    'cc' => $inbound ? 'broker@' . explode('@', $from)[1] : null,
                     'subject' => $m === 0 ? $subject : 'RE: ' . $subject,
                     'body_snippet' => $inbound
                         ? 'Please quote for the shipment described below. Dimensions and packing list attached.'

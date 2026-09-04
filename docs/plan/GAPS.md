@@ -424,6 +424,29 @@ when the bytes are gone. A 404 is not acceptable.
 
 ---
 
+## 🟢 Built 2026-09-04 — the inbox reads and sends like a mail client
+
+Owner: *"capture and behave"*. Both halves.
+
+| # | Finding | Detail |
+|---|---|---|
+| 82 | 🔴 **`provider_message_id` was captured and thrown away.** `GraphMailProvider` has always read `$raw['id']` into `NormalisedMessage::providerId`; the ingestor dropped it because no column existed | `message_id` (RFC 5322) *identifies* a message but is not *addressable* — Graph cannot be asked to reply to it. Without the provider's own id every reply had to be a NEW message, which lands in the client's Outlook as a separate conversation and reads to them as though we lost the thread. Column added, value persisted, and `/me/messages/{id}/reply` now threads properly (Graph sets `In-Reply-To` and `References` itself, so we never hand-build them) |
+| 83 | 🔴 **Sending writes NO local `email_messages` row**, and that is deliberate | The sent mail returns on the next delta as an echo and upserts on its unique `message_id`. A row written at send time becomes a duplicate the moment that echo lands — and worse, shows the operator a message that may never have left. Pinned by a test that counts rows before and after |
+| 84 | 🔴 **Reply-all must strip TWO of our addresses, not one.** The shared mailbox is on every message by definition, and the signed-in person may be on it too | Leaving either in copies the desk on its own reply, on every thread, forever. `mailbox_address` is now returned on the thread for exactly this. ⚠️ **Forward deliberately starts with EMPTY recipients** — it goes to someone not yet on the conversation, and pre-filling it with the current list is how a confidential rate reaches the wrong party |
+| 85 | 🔴 **The demo seeder addressed inbound mail to a USER, not to the mailbox** — and so hid #84 completely | Reply-all looked correct while silently copying `demo-pricing@demo.test`, because the strip had nothing to match. A branch desk works a **shared inbox**; that is the address a client writes to. Fixed, and the seeder now puts a broker in CC so Reply All is meaningfully different from Reply on the demo data. **Second time this session that seed data contradicting reality hid a real defect** (see #70) |
+| 86 | ⚠️ **The seeder's mailbox provider was `gmail`, which `MailProviderRegistry` refuses outright** (GAPS #15, deferred behind Google CASA) | Harmless while nothing called the provider; an instant failure the moment replying did. Both the seeder and `InboxTriageTest` now use `outlook`. A fixture on an unbuilt provider is a test that passes for the wrong reason |
+
+⚠️ **Reply / Reply all / Forward are ONE endpoint.** They differ only in the recipient list
+the caller sends, and that list is the operator's decision — validated server-side, never
+recomputed from a "mode" flag. In every real mail client those buttons are an editable
+starting point, not a command: an operator routinely drops the airline from a commercial
+reply, and a server that recomputed the list would silently put them back.
+
+⚠️ **Still not built:** attachments in the composer, drafts, read/unread as a user action,
+and BCC in the UI (the column exists and is populated only on outbound).
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

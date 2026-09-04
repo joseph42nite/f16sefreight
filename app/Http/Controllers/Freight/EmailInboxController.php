@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Freight;
 use App\EmailMessage;
 use App\Http\Middleware\BindPortalScope;
 use App\EmailThread;
+use App\MailboxConnection;
+use App\Services\Mail\MailProviderRegistry;
 use App\Enquiry;
 use App\Http\Controllers\Controller;
 use App\Job;
@@ -294,6 +296,84 @@ class EmailInboxController extends Controller
         return response()->json($this->shape($thread->fresh(['assignedOps', 'enquiry'])));
     }
 
+    /**
+     * Reply, reply-all or forward — one endpoint, because they differ only in who the
+     * caller puts in `to` and `cc`.
+     *
+     * 🔴 The recipient list is decided by the CLIENT and validated here, not inferred
+     * server-side from a "mode" flag. Reply-all in every mail client is an editable
+     * starting point, not a command: the operator routinely drops the airline from a
+     * commercial reply, and a server that recomputed the list would silently put them
+     * back.
+     *
+     * 🔴 NO LOCAL ROW IS WRITTEN. The sent message returns on the next delta as an echo
+     * and upserts on its unique `message_id`. Writing one here would duplicate it.
+     *
+     * ⚠️ Sends from the mailbox the THREAD arrived on, not from the operator's own. A
+     * client who replies must land back on this conversation, and a reply sent from a
+     * different address starts a new one on their side.
+     */
+    public function reply(Request $request, EmailThread $thread): JsonResponse
+    {
+        $this->authorize('viewInbox');
+
+        $data = $request->validate([
+            'to'      => ['required', 'array', 'min:1'],
+            'to.*'    => ['email'],
+            'cc'      => ['nullable', 'array'],
+            'cc.*'    => ['email'],
+            'subject' => ['required', 'string', 'max:255'],
+            'body'    => ['required', 'string'],
+            // The message being answered. Absent = a new mail on this thread.
+            'in_reply_to' => ['nullable', 'integer'],
+        ]);
+
+        $last = DB::table('email_messages')
+            ->where('thread_key', $thread->thread_key)
+            ->when(isset($data['in_reply_to']), fn ($q) => $q->where('id', $data['in_reply_to']))
+            ->orderByDesc('received_at')
+            ->first(['mailbox_connection_id', 'provider_message_id']);
+
+        if ($last === null || $last->mailbox_connection_id === null) {
+            return response()->json([
+                'error'  => 'This conversation has no connected mailbox to send from.',
+                'reason' => 'no_mailbox',
+            ], 422);
+        }
+
+        $connection = MailboxConnection::find($last->mailbox_connection_id);
+
+        if ($connection === null || ! $connection->is_active) {
+            return response()->json([
+                'error'  => 'The mailbox this conversation arrived on is no longer connected.',
+                'reason' => 'mailbox_disconnected',
+            ], 422);
+        }
+
+        $result = app(MailProviderRegistry::class)->for($connection->provider)->send(
+            $connection,
+            $data['to'],
+            $data['cc'] ?? [],
+            $data['subject'],
+            $data['body'],
+            // ⚠️ NULL for a historical message that predates provider_message_id. The
+            // send still goes out; it simply starts a new thread on the client's side
+            // rather than silently failing.
+            $last->provider_message_id
+        );
+
+        if (! $result['ok']) {
+            return response()->json([
+                'error'  => $result['error'] ?? 'The mail provider refused the message.',
+                'reason' => 'send_failed',
+            ], 502);
+        }
+
+        $this->audit->record($thread->agent_id, 'thread.replied', 'email_thread', $thread->id, auth()->id());
+
+        return response()->json(['ok' => true, 'threaded' => $last->provider_message_id !== null]);
+    }
+
     // ─── Internals ───────────────────────────────────────────────────────────
 
     /**
@@ -368,6 +448,15 @@ class EmailInboxController extends Controller
             ->orderBy('received_at')
             ->value('from');
 
+        // 🔴 The mailbox this conversation arrived on. Reply-all needs it to REMOVE us
+        // from the copy list: every message on the thread has our own address on it, so
+        // without this the desk copies itself on every reply it sends.
+        $mailboxAddress = MailboxConnection::whereKey(
+            EmailMessage::where('thread_key', $thread->thread_key)
+                ->orderByDesc('received_at')
+                ->value('mailbox_connection_id')
+        )->value('email_address');
+
         // ONE enquiry may split into several jobs (a consol with house shipments).
         $jobs = $thread->enquiry ? $thread->enquiry->jobs->sortByDesc('id')->values() : collect();
         $job  = $jobs->first();
@@ -377,6 +466,7 @@ class EmailInboxController extends Controller
             'thread_key'     => $thread->thread_key,
             'status'         => $thread->status,
             'classification' => $thread->classification,
+            'mailbox_address' => $mailboxAddress,
             'subject'        => $latest->subject ?? null,
             'from'           => $correspondent ?? ($latest->from ?? null),
             'snippet'        => $latest->body_snippet ?? null,

@@ -334,6 +334,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/inbox/threads/{thread}', [\App\Http\Controllers\Freight\EmailInboxController::class, 'show']);
     Route::post('/inbox/threads/{thread}/classify', [\App\Http\Controllers\Freight\EmailInboxController::class, 'classify']);
     Route::post('/inbox/threads/{thread}/claim', [\App\Http\Controllers\Freight\EmailInboxController::class, 'claim']);
+    // Reply, reply-all and forward are one endpoint — they differ only in the recipient
+    // list the caller sends, which is the operator's decision and not the server's.
+    Route::post('/inbox/threads/{thread}/reply', [\App\Http\Controllers\Freight\EmailInboxController::class, 'reply']);
 
     // ── Analytics (§5.5). 🔴 Every endpoint reads the funnel views and the engine
     // tables. NOTHING here aggregates `jobs` or `enquiries` live — PRD.md §2242.

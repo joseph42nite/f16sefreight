@@ -82,6 +82,10 @@ class MessageIngestor
                     // Stored as sent: everyone who was on the conversation, in order.
                     // This is what reply-all reads, and what GAPS #47 needs to keep the
                     // same people in copy when a new thread is started.
+                    // The handle for acting on this message later — replying to it,
+                    // fetching its attachments. Captured by the provider since day one
+                    // and dropped here until there was a column to put it in.
+                    'provider_message_id'   => $message->providerId,
                     'cc'                    => implode(', ', $message->cc) ?: null,
                     'bcc'                   => implode(', ', $message->bcc) ?: null,
                     'subject'               => $message->subject,

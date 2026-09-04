@@ -39,7 +39,11 @@ class InboxTriageTest extends TestCase
         $this->connectionId = DB::table('mailbox_connections')->insertGetId([
             'agent_id' => $this->branch->id, 'user_id' => $this->pricing->id,
             'email_address' => 'inbox-ibx-' . uniqid('', true) . '@test.local',
-            'provider' => 'gmail', 'is_active' => 1, 'auth_state' => 'connected',
+            // ⚠️ `outlook`, not `gmail`. Gmail ingestion is deferred behind the Google
+            // CASA assessment (GAPS #15) and the registry refuses it outright — a fixture
+            // on an unbuilt provider passes only while nothing calls the provider, which
+            // stopped being true the moment replies could be sent.
+            'provider' => 'outlook', 'is_active' => 1, 'auth_state' => 'connected',
             'created_at' => now(), 'updated_at' => now(),
         ]);
     }
@@ -88,7 +92,10 @@ class InboxTriageTest extends TestCase
             'thread_key' => DB::table('email_threads')->where('id', $id)->value('thread_key'),
             'direction' => 'inbound',
             'message_id' => '<' . uniqid('', true) . '@mail.test>',
+            // The provider's handle — what `/me/messages/{id}/reply` addresses.
+            'provider_message_id' => 'graph-' . uniqid('', false),
             'from' => 'ops@client.test', 'to' => $this->pricing->email,
+            'cc' => 'broker@client.test, desk@airline.test',
             'subject' => 'Quote request', 'body_snippet' => 'Please quote.',
             'received_at' => now()->subHours(3),
             'created_at' => now()->subHours(3), 'updated_at' => now()->subHours(3),
@@ -547,6 +554,92 @@ class InboxTriageTest extends TestCase
         // 🔴 The last rung closes the loop: the DOCUMENT half points back at the
         // OPERATIONAL half. Without this the two are a shared string, not a link.
         $this->assertSame($job['id'], $linkedTo);
+    }
+
+    /**
+     * 🔴 A reply THREADS. Graph's `/reply` sets In-Reply-To and References itself, so the
+     * answer lands inside the customer's existing conversation. A reply that arrives as a
+     * separate thread reads to the client as if we lost track of theirs.
+     */
+    public function test_a_reply_is_threaded_through_the_provider(): void
+    {
+        \Illuminate\Support\Facades\Http::fake([
+            '*/reply' => \Illuminate\Support\Facades\Http::response('', 202),
+        ]);
+
+        $id = $this->thread();
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/reply"), [
+                'to'      => ['ops@client.test'],
+                'cc'      => ['broker@client.test'],
+                'subject' => 'Re: Quote request',
+                'body'    => 'Rate attached.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('threaded', true);
+
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+            return str_contains($request->url(), '/reply')
+                && $request['comment'] === 'Rate attached.'
+                // The operator's list is sent as given — not recomputed server-side.
+                && $request['message']['ccRecipients'][0]['emailAddress']['address'] === 'broker@client.test';
+        });
+    }
+
+    /**
+     * 🔴 NOTHING IS WRITTEN LOCALLY on send. The message comes back on the next delta as
+     * an echo and upserts on its unique `message_id`; a row written here would be a second
+     * copy of the same mail the moment that echo lands.
+     */
+    public function test_sending_writes_no_local_message_row(): void
+    {
+        \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response('', 202)]);
+
+        $id = $this->thread();
+        $key = DB::table('email_threads')->where('id', $id)->value('thread_key');
+        $before = DB::table('email_messages')->where('thread_key', $key)->count();
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/reply"), [
+                'to' => ['ops@client.test'], 'subject' => 'Re: Quote request', 'body' => 'Noted.',
+            ])->assertOk();
+
+        $this->assertSame($before, DB::table('email_messages')->where('thread_key', $key)->count());
+    }
+
+    /**
+     * ⚠️ The provider's OWN message reaches the operator. "Send failed" tells them
+     * nothing; "mailbox is over quota" tells them whether to retry or fix the address.
+     */
+    public function test_a_refused_send_reports_the_providers_reason(): void
+    {
+        \Illuminate\Support\Facades\Http::fake([
+            '*' => \Illuminate\Support\Facades\Http::response(
+                ['error' => ['message' => 'The mailbox is over its size quota.']], 507
+            ),
+        ]);
+
+        $id = $this->thread();
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/reply"), [
+                'to' => ['ops@client.test'], 'subject' => 'Re: Quote', 'body' => 'x',
+            ])
+            ->assertStatus(502)
+            ->assertJsonPath('error', 'The mailbox is over its size quota.');
+    }
+
+    /** A recipient list is required — an empty send is a mistake, not a blank draft. */
+    public function test_a_reply_needs_at_least_one_recipient(): void
+    {
+        $id = $this->thread();
+
+        $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/reply"), [
+                'to' => [], 'subject' => 'Re: Quote', 'body' => 'x',
+            ])
+            ->assertStatus(422);
     }
 
     public function test_an_unknown_classification_is_rejected(): void

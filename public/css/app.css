@@ -5574,6 +5574,15 @@ body {
    is what they look up. */
 /* The outcome gate — the decision that stands between an enquiry and a waybill.
    Boxed so it reads as a question being ASKED, not as a row of optional actions. */
+/* Who else was on the message, under the sender. */
+.fx-message__to { color: var(--fg-muted); font-size: .75rem; margin-bottom: var(--space-1); }
+
+/* The composer — reply, reply all and forward share it. */
+.fx-compose { border-top: 1px solid var(--border); margin-top: var(--space-3);
+  padding-top: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
+.fx-compose__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.fx-compose__body { font-family: inherit; resize: vertical; }
+
 /* The rungs a shipment has earned so far — enquiry, then AWB, under the job number. */
 .fx-card__ladder { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 

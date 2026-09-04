@@ -53,4 +53,29 @@ interface MailProviderContract
      * @return array{messages: array<int,NormalisedMessage>, next_cursor: ?string, delta_cursor: ?string}
      */
     public function delta(MailboxConnection $connection, ?string $cursor): array;
+
+    /**
+     * Send a message from the connected mailbox.
+     *
+     * 🔴 The provider sends it, and the SAME message comes back on the next delta as an
+     * echo — `message_id` is unique, so ingestion upserts rather than duplicating. That
+     * is why nothing here writes an `email_messages` row: the mailbox is the source of
+     * truth for what was actually sent, and inventing a local row would produce a second
+     * copy the moment the echo arrives.
+     *
+     * @param  string[]  $to
+     * @param  string[]  $cc
+     * @param  ?string   $replyToProviderId  the provider's id for the message being
+     *                                       answered. Set it and the provider threads the
+     *                                       reply; omit it and this starts a new thread.
+     * @return array{ok: bool, error: ?string}
+     */
+    public function send(
+        MailboxConnection $connection,
+        array $to,
+        array $cc,
+        string $subject,
+        string $body,
+        ?string $replyToProviderId = null
+    ): array;
 }

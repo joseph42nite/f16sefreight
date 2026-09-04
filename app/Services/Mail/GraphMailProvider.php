@@ -218,6 +218,74 @@ class GraphMailProvider implements MailProviderContract
         return rtrim($this->config('authority'), '/') . '/' . $this->config('tenant');
     }
 
+    /**
+     * Send through Graph — a reply when `$replyToProviderId` is given, otherwise a new
+     * message.
+     *
+     * 🔴 `/reply` rather than `/sendMail` for an answer, because Graph then sets
+     * `In-Reply-To` and `References` itself. Threading built by hand from those headers
+     * is threading that breaks the first time a client's mail server rewrites them — and
+     * a reply that starts a new thread in the customer's Outlook looks, to them, like we
+     * lost the conversation.
+     *
+     * ⚠️ NOTHING IS WRITTEN LOCALLY. The sent message returns on the next delta as an
+     * echo and is upserted on its unique `message_id`. Writing a row here would create a
+     * second copy of the same mail the moment that echo lands.
+     */
+    public function send(
+        MailboxConnection $connection,
+        array $to,
+        array $cc,
+        string $subject,
+        string $body,
+        ?string $replyToProviderId = null
+    ): array {
+        $recipients = fn (array $list) => array_values(array_map(
+            fn ($address) => ['emailAddress' => ['address' => $address]],
+            $list
+        ));
+
+        if ($replyToProviderId !== null) {
+            $url = $this->api() . '/me/messages/' . rawurlencode($replyToProviderId) . '/reply';
+            // Graph carries the original recipients on a reply, so `message` here is the
+            // delta: our text, plus anyone the operator ADDED.
+            $payload = [
+                'message' => [
+                    'toRecipients' => $recipients($to),
+                    'ccRecipients' => $recipients($cc),
+                ],
+                'comment' => $body,
+            ];
+        } else {
+            $url = $this->api() . '/me/sendMail';
+            $payload = [
+                'message' => [
+                    'subject'      => $subject,
+                    'body'         => ['contentType' => 'Text', 'content' => $body],
+                    'toRecipients' => $recipients($to),
+                    'ccRecipients' => $recipients($cc),
+                ],
+                'saveToSentItems' => true,
+            ];
+        }
+
+        $response = Http::withToken($connection->access_token)
+            ->asJson()
+            ->post($url, $payload);
+
+        if ($response->failed()) {
+            // ⚠️ Graph's own message, not a generic one. "Send failed" tells an operator
+            // nothing they can act on; "mailbox is over quota" or "recipient rejected"
+            // tells them whether to retry or to fix the address.
+            return [
+                'ok'    => false,
+                'error' => $response->json('error.message') ?? ('HTTP ' . $response->status()),
+            ];
+        }
+
+        return ['ok' => true, 'error' => null];
+    }
+
     private function api(): string
     {
         return rtrim($this->config('api'), '/');

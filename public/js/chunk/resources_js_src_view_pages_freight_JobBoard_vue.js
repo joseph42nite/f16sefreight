@@ -233,8 +233,8 @@ const FILTER_KEY = "f16s_kanban_filters";
       Promise.all([_core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/jobs" + this.query()),
       /* The pool is a SEPARATE query on purpose: it must not disappear because a
          stage filter excluded it. An operator filters to find work, and the pool is
-         where unclaimed work lives. */
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/jobs?unassigned=1")]).then(([board, pool]) => {
+         where unclaimed work lives — as ENQUIRIES, before any job exists. */
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/enquiries?unclaimed=1")]).then(([board, pool]) => {
         this.rows = board.data.data || [];
         this.pool = pool.data.data || [];
         this.error = null;
@@ -275,9 +275,16 @@ const FILTER_KEY = "f16s_kanban_filters";
       if (days === 1) return "tomorrow";
       return "later";
     },
-    claim(job) {
+    /**
+     * Take an unclaimed enquiry.
+     *
+     * 🔴 Claims the THREAD, which is the single place the claim is recorded — the inbox
+     * writes the same column from its own button. Two endpoints writing two columns for
+     * "who owns this" is how they end up disagreeing.
+     */
+    claim(enq) {
       this.busy = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post(`/jobs/${job.id}/claim`, {}).then(() => this.load())
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post(`/inbox/threads/${enq.thread_id}/claim`, {}).then(() => this.load())
       /* 409 is a real outcome, not a failure: someone got there first. */.catch(e => {
         this.error = this.readable(e);
         this.load();
@@ -506,27 +513,29 @@ var render = function render() {
     staticClass: "fx-pool__scroller"
   }, [!_vm.pool.length ? _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("Nothing waiting. Every job has an operator.")]) : _vm._e(), _vm._v(" "), _vm._l(_vm.pool, function (job) {
+  }, [_vm._v("Nothing waiting. Every enquiry has an owner.")]) : _vm._e(), _vm._v(" "), _vm._l(_vm.pool, function (enq) {
     return _c("article", {
-      key: job.id,
+      key: enq.id,
       staticClass: "fx-card fx-card--pool"
     }, [_c("div", {
       staticClass: "identifier fx-card__no"
-    }, [_vm._v(_vm._s(job.execution_job_no || "—"))]), _vm._v(" "), _c("StatusChip", {
+    }, [_vm._v(_vm._s(enq.enquiry_no || "—"))]), _vm._v(" "), _c("StatusChip", {
       attrs: {
-        value: job.status
+        value: enq.status
       }
-    }), _vm._v(" "), _c("button", {
+    }), _vm._v(" "), enq.client_label ? _c("div", {
+      staticClass: "fx-card__meta"
+    }, [_vm._v(_vm._s(enq.client_label))]) : _vm._e(), _vm._v(" "), _c("button", {
       staticClass: "fx-btn",
       attrs: {
-        disabled: _vm.busy
+        disabled: _vm.busy || !enq.thread_id
       },
       on: {
         click: function ($event) {
-          return _vm.claim(job);
+          return _vm.claim(enq);
         }
       }
-    }, [_vm._v("Assign to myself")])], 1);
+    }, [_vm._v("\n            Take this enquiry\n          ")])], 1);
   })], 2) : _vm._e()]), _vm._v(" "), _vm.view === "process" ? _c("div", {
     staticClass: "fx-board"
   }, _vm._l(_vm.PROCESS, function (col) {

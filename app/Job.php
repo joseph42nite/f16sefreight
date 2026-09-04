@@ -47,7 +47,13 @@ class Job extends Model
 
     protected $casts = [
         'status'                   => JobStatus::class,
-        'planned_clearance_date'   => 'date',
+        // 🔴 `date:Y-m-d`, NOT `date`. The bare cast produces a Carbon at midnight in the
+        // APP timezone and serialises it as UTC, so a clearance date of 5 Sep left the
+        // API as "2026-09-04T18:30:00Z" — and any reader west of Asia/Kolkata renders it
+        // as the 4th. A clearance date that is silently a day early is a missed flight,
+        // and `slice(0, 10)` in the board would have bucketed it under the wrong day too.
+        // A calendar date has no time and no timezone; this transmits it as one.
+        'planned_clearance_date'   => 'date:Y-m-d',
         'pending_ops_requested_at' => 'datetime',
         'cancelled_at'             => 'datetime',
         'completed_at'             => 'datetime',

@@ -69,12 +69,22 @@
           <span class="fx-board__count">{{ pool.length }}</span>
         </header>
 
+        <!--
+          🔴 THE POOL HOLDS ENQUIRIES, NOT JOBS. New mail the regex filed as a client
+          enquiry that nobody has taken over. It is still in the enquiry phase — there is
+          no job and no job number yet, because confirming the shipment is what mints one.
+          Claiming here is the same act as claiming in the inbox, and writes the same
+          column, so the two views cannot disagree.
+        -->
         <div v-if="!poolCollapsed" class="fx-pool__scroller">
-          <p v-if="!pool.length" class="fx-muted">Nothing waiting. Every job has an operator.</p>
-          <article v-for="job in pool" :key="job.id" class="fx-card fx-card--pool">
-            <div class="identifier fx-card__no">{{ job.execution_job_no || "—" }}</div>
-            <StatusChip :value="job.status" />
-            <button class="fx-btn" :disabled="busy" @click="claim(job)">Assign to myself</button>
+          <p v-if="!pool.length" class="fx-muted">Nothing waiting. Every enquiry has an owner.</p>
+          <article v-for="enq in pool" :key="enq.id" class="fx-card fx-card--pool">
+            <div class="identifier fx-card__no">{{ enq.enquiry_no || "—" }}</div>
+            <StatusChip :value="enq.status" />
+            <div v-if="enq.client_label" class="fx-card__meta">{{ enq.client_label }}</div>
+            <button class="fx-btn" :disabled="busy || !enq.thread_id" @click="claim(enq)">
+              Take this enquiry
+            </button>
           </article>
         </div>
       </section>
@@ -386,8 +396,8 @@ export default {
         ApiService.get("/jobs" + this.query()),
         /* The pool is a SEPARATE query on purpose: it must not disappear because a
            stage filter excluded it. An operator filters to find work, and the pool is
-           where unclaimed work lives. */
-        ApiService.get("/jobs?unassigned=1"),
+           where unclaimed work lives — as ENQUIRIES, before any job exists. */
+        ApiService.get("/enquiries?unclaimed=1"),
       ])
         .then(([board, pool]) => {
           this.rows = board.data.data || [];
@@ -426,9 +436,16 @@ export default {
       if (days === 1) return "tomorrow";
       return "later";
     },
-    claim(job) {
+    /**
+     * Take an unclaimed enquiry.
+     *
+     * 🔴 Claims the THREAD, which is the single place the claim is recorded — the inbox
+     * writes the same column from its own button. Two endpoints writing two columns for
+     * "who owns this" is how they end up disagreeing.
+     */
+    claim(enq) {
       this.busy = true;
-      ApiService.post(`/jobs/${job.id}/claim`, {})
+      ApiService.post(`/inbox/threads/${enq.thread_id}/claim`, {})
         .then(() => this.load())
         /* 409 is a real outcome, not a failure: someone got there first. */
         .catch((e) => { this.error = this.readable(e); this.load(); })

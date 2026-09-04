@@ -290,6 +290,31 @@
                 Confirming converts the enquiry to a job and opens AWB drafting. Until then
                 there is nothing to raise a waybill against.
               </p>
+
+              <label class="fx-field">
+                <span class="fx-field__label">Clearance date</span>
+                <input v-model="clearanceDate" type="date" class="fx-input" @change="loadOperators" />
+              </label>
+
+              <label class="fx-field">
+                <span class="fx-field__label">Hand to an operator</span>
+                <!--
+                  ⚠️ OPTIONAL, and the empty option says so in words. Pricing may well run
+                  the shipment themselves, and a blank first entry reads as "not chosen
+                  yet" rather than as a deliberate decision.
+                -->
+                <select v-model="opsId" class="fx-input">
+                  <option value="">Nobody yet — I'll handle it</option>
+                  <option v-for="o in operators" :key="o.id" :value="o.id">
+                    {{ operatorLabel(o) }}
+                  </option>
+                </select>
+              </label>
+              <p class="fx-muted">
+                OLI is the operator's whole open book; the count beside it is how many
+                shipments they already have clearing that day.
+              </p>
+
               <div class="fx-outcome__actions">
                 <button class="fx-btn fx-btn--primary" :disabled="outcomeBusy" @click="confirmShipment">
                   Shipment confirmed
@@ -398,6 +423,9 @@ export default {
     /* The outcome gate. `losing` is the two-step: the reason is REQUIRED by the API,
        so asking for it is not optional politeness. */
     losing: false, lostReason: "rates_high", lostCustom: "",
+    /* The confirmation form. Both optional: pricing may run the shipment themselves,
+       and a clearance date is often not known on the day the client confirms. */
+    opsId: "", clearanceDate: "", operators: [],
     outcomeBusy: false, outcomeError: null,
     LOST_REASONS,
     CLASSIFICATIONS, WORKSPACE_TABS,
@@ -550,10 +578,31 @@ export default {
      * setting a status. The AWB is deliberately NOT sent: the number is usually not known
      * at confirmation, and extraction is where it gets attached.
      */
+    /**
+     * Who could take this on, and how loaded they already are.
+     *
+     * ⚠️ Re-fetched when the clearance date changes, because `on_date` is the count for
+     * THAT day — a stale one would recommend the wrong person with a confident number.
+     */
+    loadOperators() {
+      const q = this.clearanceDate ? "?date=" + this.clearanceDate : "";
+      ApiService.get("/jobs/staff-load" + q)
+        .then(({ data }) => { this.operators = data.operators || []; })
+        // Not fatal: confirming without an operator is a supported outcome, so a failed
+        // lookup must not block the decision itself.
+        .catch(() => { this.operators = []; });
+    },
+    operatorLabel(o) {
+      const load = "OLI " + Number(o.oli).toFixed(1) + (o.overloaded ? " ● OVERLOADED" : "");
+      return o.name + " — " + load + " · " + o.on_date + " that day";
+    },
     confirmShipment() {
       this.outcomeBusy = true;
       this.outcomeError = null;
-      ApiService.post("/enquiries/" + this.active.enquiry.id + "/convert", {})
+      ApiService.post("/enquiries/" + this.active.enquiry.id + "/convert", {
+        ops_id: this.opsId || null,
+        planned_clearance_date: this.clearanceDate || null,
+      })
         /* Reload rather than patch: conversion changes the enquiry's status, mints the
            job number and moves the thread's identifier — the server owns all of it. */
         .then(() => this.open(this.active))
@@ -601,6 +650,13 @@ export default {
     },
     openWorkspace() {
       this.setSplit(true);
+
+      // Only when the outcome gate is what the operator is about to see. Fetching the
+      // branch's load for a thread that already has a job would be a request whose
+      // answer nothing displays.
+      if (this.active && this.active.enquiry && !this.active.job) {
+        this.loadOperators();
+      }
     },
     closeWorkspace() {
       this.setSplit(false);
@@ -658,6 +714,8 @@ export default {
       this.outcomeError = null;
       this.lostReason = "rates_high";
       this.lostCustom = "";
+      this.opsId = "";
+      this.clearanceDate = "";
       // 🔴 "enquiry" was a TAB until it moved to the header, and this line kept resetting
       // to it — a key no section matches, so the workspace rendered nothing at all and
       // whatever the operator had typed appeared to vanish. Removing a tab means removing

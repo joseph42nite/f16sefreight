@@ -131,6 +131,11 @@ const WORKSPACE_TABS = [{
     losing: false,
     lostReason: "rates_high",
     lostCustom: "",
+    /* The confirmation form. Both optional: pricing may run the shipment themselves,
+       and a clearance date is often not known on the day the client confirms. */
+    opsId: "",
+    clearanceDate: "",
+    operators: [],
     outcomeBusy: false,
     outcomeError: null,
     LOST_REASONS,
@@ -275,10 +280,36 @@ const WORKSPACE_TABS = [{
      * setting a status. The AWB is deliberately NOT sent: the number is usually not known
      * at confirmation, and extraction is where it gets attached.
      */
+    /**
+     * Who could take this on, and how loaded they already are.
+     *
+     * ⚠️ Re-fetched when the clearance date changes, because `on_date` is the count for
+     * THAT day — a stale one would recommend the wrong person with a confident number.
+     */
+    loadOperators() {
+      const q = this.clearanceDate ? "?date=" + this.clearanceDate : "";
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/jobs/staff-load" + q).then(({
+        data
+      }) => {
+        this.operators = data.operators || [];
+      })
+      // Not fatal: confirming without an operator is a supported outcome, so a failed
+      // lookup must not block the decision itself.
+      .catch(() => {
+        this.operators = [];
+      });
+    },
+    operatorLabel(o) {
+      const load = "OLI " + Number(o.oli).toFixed(1) + (o.overloaded ? " ● OVERLOADED" : "");
+      return o.name + " — " + load + " · " + o.on_date + " that day";
+    },
     confirmShipment() {
       this.outcomeBusy = true;
       this.outcomeError = null;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/enquiries/" + this.active.enquiry.id + "/convert", {})
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/enquiries/" + this.active.enquiry.id + "/convert", {
+        ops_id: this.opsId || null,
+        planned_clearance_date: this.clearanceDate || null
+      })
       /* Reload rather than patch: conversion changes the enquiry's status, mints the
          job number and moves the thread's identifier — the server owns all of it. */.then(() => this.open(this.active)).catch(e => {
         this.outcomeError = this.messageFor(e);
@@ -333,6 +364,13 @@ const WORKSPACE_TABS = [{
     },
     openWorkspace() {
       this.setSplit(true);
+
+      // Only when the outcome gate is what the operator is about to see. Fetching the
+      // branch's load for a thread that already has a job would be a request whose
+      // answer nothing displays.
+      if (this.active && this.active.enquiry && !this.active.job) {
+        this.loadOperators();
+      }
     },
     closeWorkspace() {
       this.setSplit(false);
@@ -399,6 +437,8 @@ const WORKSPACE_TABS = [{
       this.outcomeError = null;
       this.lostReason = "rates_high";
       this.lostCustom = "";
+      this.opsId = "";
+      this.clearanceDate = "";
       // 🔴 "enquiry" was a TAB until it moved to the header, and this line kept resetting
       // to it — a key no section matches, so the workspace rendered nothing at all and
       // whatever the operator had typed appeared to vanish. Removing a tab means removing
@@ -1766,7 +1806,68 @@ var render = function render() {
     }
   }, [_vm._v("\n                Cancel\n              ")])])] : [_c("p", [_c("strong", [_vm._v("Did this shipment confirm?")])]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("\n              Confirming converts the enquiry to a job and opens AWB drafting. Until then\n              there is nothing to raise a waybill against.\n            ")]), _vm._v(" "), _c("div", {
+  }, [_vm._v("\n              Confirming converts the enquiry to a job and opens AWB drafting. Until then\n              there is nothing to raise a waybill against.\n            ")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Clearance date")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.clearanceDate,
+      expression: "clearanceDate"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.clearanceDate
+    },
+    on: {
+      change: _vm.loadOperators,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.clearanceDate = $event.target.value;
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Hand to an operator")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.opsId,
+      expression: "opsId"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.opsId = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("Nobody yet — I'll handle it")]), _vm._v(" "), _vm._l(_vm.operators, function (o) {
+    return _c("option", {
+      key: o.id,
+      domProps: {
+        value: o.id
+      }
+    }, [_vm._v("\n                  " + _vm._s(_vm.operatorLabel(o)) + "\n                ")]);
+  })], 2)]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n              OLI is the operator's whole open book; the count beside it is how many\n              shipments they already have clearing that day.\n            ")]), _vm._v(" "), _c("div", {
     staticClass: "fx-outcome__actions"
   }, [_c("button", {
     staticClass: "fx-btn fx-btn--primary",

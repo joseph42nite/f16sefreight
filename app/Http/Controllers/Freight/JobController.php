@@ -428,7 +428,7 @@ class JobController extends Controller
      * ⚠️ Operators with NO open jobs are included at OLI 0.0. They are the whole point
      * of the view — an idle operator missing from the matrix is capacity nobody can see.
      */
-    public function staffLoad(OperatorLoadService $load): JsonResponse
+    public function staffLoad(Request $request, OperatorLoadService $load): JsonResponse
     {
         $this->authorize('assignOperator');
 
@@ -437,6 +437,23 @@ class JobController extends Controller
 
         $totals = $load->forBranch($agentId);
         $policy = $load->policy($agentId);
+
+        // ⚠️ OLI is a WHOLE-BOOK number: it weights every open job by complexity and
+        // urgency. It answers "is this person busy", not "is this person busy THAT DAY" —
+        // and an operator can sit well under their cap while already having four
+        // shipments clearing on the one date you are about to add a fifth to.
+        // `on_date` is that second question, asked plainly.
+        $onDate = $request->filled('date')
+            ? DB::table('jobs')
+                ->where('agent_id', $agentId)
+                ->whereNull('deleted_at')
+                ->whereNotNull('ops_id')
+                ->whereNotIn('status', ['Completed', 'Cancelled'])
+                ->whereDate('planned_clearance_date', $request->date('date'))
+                ->selectRaw('ops_id, COUNT(*) AS n')
+                ->groupBy('ops_id')
+                ->pluck('n', 'ops_id')
+            : collect();
 
         $operators = \App\User::where('branch_name', $agentId)
             ->whereIn('designation', ['operations', 'pricing'])
@@ -451,6 +468,7 @@ class JobController extends Controller
                 'designation' => $u->designation,
                 'oli'         => $totals[$u->id]['oli'] ?? 0.0,
                 'jobs'        => $totals[$u->id]['jobs'] ?? 0,
+                'on_date'     => (int) ($onDate[$u->id] ?? 0),
                 // The badge the UI colours. Warns; never blocks.
                 'overloaded'  => ($totals[$u->id]['oli'] ?? 0.0) >= $policy['capacity_cap'],
             ])->sortBy('oli')->values(),

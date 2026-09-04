@@ -61,6 +61,19 @@ class EnquiryController extends Controller
                     });
                 });
             })
+            // 🔴 THE UNASSIGNED POOL. New mail the regex filed as a client enquiry that
+            // nobody has taken over yet — still in the enquiry phase, with no job behind
+            // it. The claim lives on the THREAD (`email_threads.assigned_ops_id`), which
+            // is the one place the inbox already writes it, so the board reads the same
+            // fact rather than keeping a second copy that can drift.
+            ->when($request->boolean('unclaimed'), fn ($q) => $q
+                ->whereIn('status', Enquiry::OPEN_STATUSES)
+                ->doesntHave('jobs')
+                ->whereIn('id', function ($sub) {
+                    $sub->select('enquiry_id')->from('email_threads')
+                        ->whereNotNull('enquiry_id')
+                        ->whereNull('assigned_ops_id');
+                }))
             ->with('customer:id,name,email_domain')
             ->latest()
             ->paginate(50);
@@ -79,6 +92,13 @@ class EnquiryController extends Controller
 
             $enquiry->client_label = $enquiry->customer->name ?? $domain;
             $enquiry->client_domain = $enquiry->customer->email_domain ?? $domain;
+
+            // ⚠️ The THREAD is what gets claimed, so the pool needs its id to offer the
+            // button. Claiming from the board and claiming from the inbox are the same
+            // act writing the same column — not two mechanisms that must be kept in step.
+            $enquiry->thread_id = DB::table('email_threads')
+                ->where('enquiry_id', $enquiry->id)
+                ->value('id');
 
             // ⚠️ Below Command the id is REMOVED, not merely unused. A tier that cannot
             // open a customer record has no business carrying a key to one.
@@ -237,16 +257,15 @@ class EnquiryController extends Controller
             ], 422);
         }
 
-        // 🔴 THE CLAIM SURVIVES CONFIRMATION. Work is claimed on the THREAD in the inbox
-        // (`email_threads.assigned_ops_id`), and conversion used to set only `pricing_id`
-        // — so the person who had claimed the conversation and then confirmed the
-        // shipment was dropped, and their own job landed in the unassigned pool for
-        // anyone to take. PRD §1039: "the system assigns the first staff member who
-        // replies to the thread"; nothing said that assignment expires at conversion.
+        // 🔴 CLAIMING AN ENQUIRY IS A PRICING ACT, NOT AN OPERATIONS ONE. The claim
+        // button in the inbox means "I have taken this enquiry over" — the shipment is
+        // still in the enquiry phase and there is nothing for an operator to execute yet.
+        // So the claimer becomes the job's `pricing_id`.
         //
-        // ⚠️ Explicit caller wins. `$data['ops_id']` is someone naming an owner outright,
-        // which must not be silently overridden by whoever happened to open the mail.
-        $claimedBy = $data['ops_id'] ?? DB::table('email_threads')
+        // ⚠️ `ops_id` is a SEPARATE decision made here, at confirmation, from the operator
+        // dropdown — and it stays NULL when nobody is picked, which is a real state: the
+        // pricing owner may intend to run the shipment themselves.
+        $claimedBy = DB::table('email_threads')
             ->where('enquiry_id', $enquiry->id)
             ->value('assigned_ops_id');
 
@@ -258,8 +277,9 @@ class EnquiryController extends Controller
                 'direction'      => $enquiry->direction,
                 'customer_id'    => $data['customer_id'] ?? $enquiry->customer_id,
                 'cargo_type'     => $enquiry->cargo_type,
-                'pricing_id'     => auth()->id(),
-                'ops_id'         => $claimedBy,
+                // Whoever claimed the enquiry owns it; falling back to whoever confirmed
+                // covers a shipment confirmed straight off an unclaimed thread.
+                'pricing_id'     => $claimedBy ?? auth()->id(),
                 'execution_job_no' => $this->sequences->next($enquiry->agent_id, $mode->jobPrefix()),
             ]);
 

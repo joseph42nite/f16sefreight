@@ -312,7 +312,28 @@ was fixed and pushed. The thread's claim is now read back off the job, so the tw
 cannot disagree. Verified: **0 contradictions** across the whole database, and the two
 remaining pool cards are both legitimately unclaimed.
 
-### ⚠️ THE PRD CONTRADICTS ITSELF ON WHAT THE POOL HOLDS — owner's call
+### 🟢 DECIDED 2026-09-04 — the pool holds ENQUIRIES (reading 1)
+
+The owner's model, which §943 already described:
+
+    new mail → regex classifies → customer enquiry, unclaimed  ← THE POOL
+    claim in the inbox      = PRICING has taken the enquiry over. Still enquiry phase.
+    confirm in the workspace = job number, and the moment an operator + clearance
+                               date are chosen from a dropdown showing each
+                               operator's OLI and their load on that date
+    AWB entered in workspace = the third rung
+
+Built: `/api/enquiries?unclaimed=1` (open, no job, thread unclaimed) feeds the board's
+pool, which now shows `enquiry_no` and a **Take this enquiry** button. 🔴 That button posts
+to the **inbox's own** `/inbox/threads/{id}/claim` — one claim, one column, written from
+two screens, rather than a second mechanism to keep in step. `enquiries.ops_id` stays
+unused; the thread is the single home for "who has this".
+
+🔴 **This corrected #69, which I had got backwards.** That fix routed the inbox claim into
+`jobs.ops_id`. The claimer is PRICING, so it belongs in `pricing_id` — `ops_id` is a
+separate decision taken at confirmation, and NULL is a real answer there.
+
+### ⚠️ superseded — the PRD contradiction that led to the above
 
 Two statements, three paragraphs apart, in the **State 1 (pre-conversion)** section:
 
@@ -349,6 +370,15 @@ alone would have been easier to recognise.
 ⚠️ **This class of bug is invisible to the backend.** The tests for it are therefore in
 `tests/js/navigationRail.spec.js` — including one that asserts the *collapsed* rail a
 context-less session produces, so the failure mode itself stays described.
+
+---
+
+## 🔴 Found 2026-09-04 — a clearance date arriving a day early
+
+| # | Finding | Detail |
+|---|---|---|
+| 73 | 🔴 **`planned_clearance_date` was cast `'date'`, which serialises in UTC.** The cast builds a Carbon at midnight in the APP timezone (Asia/Kolkata), so a clearance date of **5 Sep left the API as `2026-09-04T18:30:00Z`** | Any reader west of IST renders that as **the 4th**, and the board's own `slice(0, 10)` bucketed it under the wrong day in the staff matrix. **A clearance date silently a day early is a missed flight.** Now `'date:Y-m-d'` — a calendar date has no time and no timezone, and is transmitted as one. Caught by a test asserting the value the API returns rather than the value the database holds |
+| 74 | 🟢 **Confirmation now assigns the operator.** `/jobs/staff-load?date=` adds `on_date` per operator | ⚠️ **OLI alone could not answer the question being asked.** It is a whole-book number weighting every open job by complexity and urgency — an operator can sit well under their cap while already having four shipments clearing on the exact day you are adding a fifth to. `on_date` is that second question asked plainly, and the dropdown shows both |
 
 ---
 

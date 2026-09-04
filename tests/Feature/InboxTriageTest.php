@@ -430,10 +430,12 @@ class InboxTriageTest extends TestCase
     }
 
     /**
-     * 🔴 Work is claimed on the THREAD, in the inbox, and the claim must survive
-     * confirmation. Conversion set only `pricing_id`, so the person who claimed the
-     * conversation and then confirmed the shipment was dropped from their own job — which
-     * landed in the unassigned pool with a job number on it, for anyone to take.
+     * 🔴 CLAIMING AN ENQUIRY IS A PRICING ACT. The inbox claim means "I have taken this
+     * enquiry over" while the shipment is still in the enquiry phase — there is nothing
+     * for an operator to execute yet — so the claimer becomes the job's `pricing_id`.
+     *
+     * ⚠️ `ops_id` is a SEPARATE decision, made at confirmation from the operator
+     * dropdown, and NULL is a real answer: pricing may run the shipment themselves.
      */
     public function test_confirming_keeps_the_person_who_claimed_the_thread(): void
     {
@@ -452,7 +454,50 @@ class InboxTriageTest extends TestCase
             ->assertStatus(201)
             ->json('job');
 
-        $this->assertSame($this->pricing->id, $job['ops_id'], 'the claim was dropped at conversion');
+        $this->assertSame($this->pricing->id, $job['pricing_id'], 'the claim was dropped at conversion');
+
+        // ⚠️ Read back from the DATABASE, not the create response: an attribute that was
+        // never set is simply absent from the fresh model, so asserting on the payload
+        // would be asserting that the key is missing rather than that nobody owns it.
+        $this->assertNull(
+            \App\Job::withoutGlobalScopes()->find($job['id'])->ops_id,
+            'nobody was picked, so no operator owns it yet'
+        );
+    }
+
+    /**
+     * Confirmation is also where the shipment is handed to an operator, with a clearance
+     * date — the two facts the OLI dropdown exists to inform.
+     */
+    public function test_confirming_can_assign_an_operator_and_a_clearance_date(): void
+    {
+        $id = $this->thread();
+
+        $enquiryId = $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
+            ->json('enquiry.id');
+
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$id}/claim"), [])->assertOk();
+
+        $ops = \App\User::create([
+            'name' => 'Ops', 'email' => 'ops-' . substr(uniqid('', false), -8) . '@test.local',
+            'password' => \Illuminate\Support\Facades\Hash::make('x'),
+            'company_name' => $this->company->id, 'branch_name' => $this->branch->id,
+            'designation' => 'operations', 'is_active' => 1,
+        ]);
+
+        $job = $this->api($this->pricing)
+            ->postJson($this->url("/api/enquiries/{$enquiryId}/convert"), [
+                'ops_id' => $ops->id,
+                'planned_clearance_date' => '2026-09-05',
+            ])
+            ->assertStatus(201)->json('job');
+
+        // Two different people, which is the point: pricing owns the enquiry, operations
+        // executes the shipment.
+        $this->assertSame($this->pricing->id, $job['pricing_id']);
+        $this->assertSame($ops->id, $job['ops_id']);
+        $this->assertStringStartsWith('2026-09-05', $job['planned_clearance_date']);
     }
 
     /**
@@ -484,7 +529,7 @@ class InboxTriageTest extends TestCase
 
         $this->assertStringStartsWith('JOBA-', $job['execution_job_no']);
         $this->assertSame($enquiry['id'], $job['enquiry_id'], 'the job lost its enquiry');
-        $this->assertSame($this->pricing->id, $job['ops_id'], 'the claim was dropped');
+        $this->assertSame($this->pricing->id, $job['pricing_id'], 'the claim was dropped');
 
         // The waybill, raised against the number the shipment now carries.
         $canonical = '176-10000008';

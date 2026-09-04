@@ -382,6 +382,17 @@ context-less session produces, so the failure mode itself stays described.
 
 ---
 
+## 🔴 Found 2026-09-04 — a tab that only ever refused, and CC being captured nowhere
+
+| # | Finding | Detail |
+|---|---|---|
+| 75 | 🔴 **Operations was shown a Cost sheet tab that always answered 403.** `viewCostSheet` is `['pricing','accounts','boss']` — *"operations never touches money"* (PRD §2.3.4) — but `workspaceTabs` gated only on classification | Contradicted this codebase's own doctrine, stated at the top of `navigation.js`: *"role forbids → HIDDEN. A disabled control just invites 'why can't I?' tickets."* Now mirrors the server list, written as an **allowlist** so an unknown designation loses the tab rather than gaining it. Extraction stays — working the waybill is why operations can open the workspace at all |
+| 76 | 🟢 **Shared inbox CONFIRMED by the owner (2026-09-04).** `viewInbox` is `['pricing','operations']` and the thread list is deliberately **not** owner-scoped, unlike the Kanban | So a colleague's thread stays reachable for cover. ⚠️ Note the asymmetry this creates: operations can *read* any thread but the Kanban shows them only their own jobs. That is intentional, not a bug |
+| 77 | 🔴 **CC is captured NOWHERE — three layers deep.** `GraphMailProvider`'s `$select` asks for `toRecipients` and **not `ccRecipients`**; `NormalisedMessage` has no `cc` field; `email_messages` has no `cc` column | ⚠️ **The owner's stated rule — "anyone in CC should see the mail" — is already satisfied**, because a shared branch inbox shows everyone every thread. Nothing needs building for it *today*. But CC is a hard prerequisite for **#47** (*"start a new mail with the same people in CC"*), which cannot be built until all three layers carry it |
+| 78 | ⚠️ **`email_messages.to` is `varchar(255)` holding a comma-joined list.** A freight thread routinely carries the client, two of their staff, the airline and two internal addresses | Six addresses at ~30 characters each is already at the limit, and the column silently truncates or errors depending on the connection's strict mode. Whoever adds `cc` should move both to `text` (or a JSON column) in the same migration rather than repeat the constraint |
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

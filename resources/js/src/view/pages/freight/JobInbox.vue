@@ -397,6 +397,9 @@ const LOST_REASONS = [
   { value: "other", label: "Other" },
 ];
 
+/** Mirrors `viewCostSheet` in AuthServiceProvider. The server is still the authority. */
+const COST_SHEET_ROLES = ["pricing", "accounts", "boss"];
+
 const WORKSPACE_TABS = [
   { key: "extraction", label: "Extraction" },
   { key: "cost", label: "Cost sheet" },
@@ -464,7 +467,18 @@ export default {
     workspaceTabs() {
       const isEnquiry = this.active && this.active.classification === "customer_enquiry";
 
-      return isEnquiry ? WORKSPACE_TABS : [];
+      if (!isEnquiry) return [];
+
+      // 🔴 Mirrors the server's `viewCostSheet` — "operations never touches money"
+      // (PRD §2.3.4). The tab was shown to them anyway and answered 403 on click: a
+      // control that exists only to refuse is the "why can't I?" ticket this codebase
+      // hides role-forbidden things to avoid. Extraction stays: operations works the
+      // waybill, which is the whole reason they can open the workspace at all.
+      //
+      // ⚠️ An ALLOWLIST, so an unknown designation loses the tab rather than gaining it.
+      return WORKSPACE_TABS.filter(
+        (t) => t.key !== "cost" || COST_SHEET_ROLES.indexOf(this.designation) !== -1
+      );
     },
     timing() {
       const a = this.active;

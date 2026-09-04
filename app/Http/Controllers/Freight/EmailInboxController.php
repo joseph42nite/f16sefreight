@@ -137,7 +137,9 @@ class EmailInboxController extends Controller
 
         $messages = EmailMessage::where('thread_key', $thread->thread_key)
             ->orderBy('received_at')
-            ->get(['id', 'direction', 'from', 'to', 'subject', 'body_snippet', 'received_at', 'send_state']);
+            // `cc` rides along so the reading pane can show who else is on the
+            // conversation — and so Reply All has the list without a second round trip.
+            ->get(['id', 'direction', 'from', 'to', 'cc', 'subject', 'body_snippet', 'received_at', 'send_state']);
 
         return response()->json([
             'thread'   => $this->shape($thread->load([

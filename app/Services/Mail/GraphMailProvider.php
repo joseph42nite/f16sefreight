@@ -93,7 +93,11 @@ class GraphMailProvider implements MailProviderContract
     public function delta(MailboxConnection $connection, ?string $cursor): array
     {
         $url = $cursor ?: $this->api() . '/me/messages/delta?' . http_build_query([
+            // 🔴 ccRecipients is REQUESTED, not inferred. Graph returns only the fields
+            // named here, so a missing one is silently an empty list rather than an
+            // error — which is exactly how CC came to be absent everywhere downstream.
             '$select' => 'id,internetMessageId,conversationId,subject,from,toRecipients,'
+                . 'ccRecipients,bccRecipients,'
                 . 'receivedDateTime,bodyPreview,hasAttachments,internetMessageHeaders',
             '$top' => 50,
         ]);
@@ -138,16 +142,23 @@ class GraphMailProvider implements MailProviderContract
     {
         $from = strtolower($raw['from']['emailAddress']['address'] ?? '');
 
-        $to = array_values(array_filter(array_map(
+        // One shape for all three lists — they differ only in which key they came from.
+        $addresses = fn (string $key) => array_values(array_filter(array_map(
             fn ($r) => strtolower($r['emailAddress']['address'] ?? ''),
-            $raw['toRecipients'] ?? []
+            $raw[$key] ?? []
         )));
+
+        $to = $addresses('toRecipients');
 
         return new NormalisedMessage(
             messageId: $raw['internetMessageId'],
             threadId: $raw['conversationId'] ?? null,
             from: $from,
             to: $to,
+            cc: $addresses('ccRecipients'),
+            // ⚠️ Empty on inbound and that is correct: a blind copy is not disclosed to
+            // recipients, so Graph returns it only on the sender's own copy.
+            bcc: $addresses('bccRecipients'),
             subject: $raw['subject'] ?? null,
             snippet: $raw['bodyPreview'] ?? null,
             receivedAt: Carbon::parse($raw['receivedDateTime'] ?? now()),

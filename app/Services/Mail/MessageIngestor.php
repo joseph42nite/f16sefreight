@@ -79,6 +79,11 @@ class MessageIngestor
                     'message_id'            => $message->messageId,
                     'from'                  => $message->from,
                     'to'                    => implode(', ', $message->to),
+                    // Stored as sent: everyone who was on the conversation, in order.
+                    // This is what reply-all reads, and what GAPS #47 needs to keep the
+                    // same people in copy when a new thread is started.
+                    'cc'                    => implode(', ', $message->cc) ?: null,
+                    'bcc'                   => implode(', ', $message->bcc) ?: null,
                     'subject'               => $message->subject,
                     'body_snippet'          => $message->snippet === null
                         ? null : mb_substr($message->snippet, 0, 500),

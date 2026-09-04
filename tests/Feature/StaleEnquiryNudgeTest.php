@@ -207,6 +207,8 @@ class StaleEnquiryNudgeTest extends TestCase
             threadId: null,
             from: 'client@acme.test',
             to: [$connection->email_address],
+            cc: [],
+            bcc: [],
             subject: 'Re: Quote please',
             snippet: 'Sorry for the delay — still interested.',
             receivedAt: now(),

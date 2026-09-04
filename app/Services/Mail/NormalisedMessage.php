@@ -20,6 +20,8 @@ class NormalisedMessage
      *                                   echo of our own send an idempotent upsert
      * @param  ?string      $threadId    the provider's own grouping — thread-match tier 1
      * @param  string[]     $references  In-Reply-To + References chain — tier 2
+     * @param  string[]     $cc          everyone else on the conversation — what makes
+     *                                   reply-all possible at all
      * @param  string       $direction   inbound | outbound
      * @param  ?string      $providerId  the provider's message id, for fetching attachments
      */
@@ -28,6 +30,10 @@ class NormalisedMessage
         public readonly ?string $threadId,
         public readonly string $from,
         public readonly array $to,
+        /** ⚠️ `bcc` is normally EMPTY on inbound mail — a blind copy is not disclosed to
+            recipients, so a provider only returns it on the sender's own copy. */
+        public readonly array $cc,
+        public readonly array $bcc,
         public readonly ?string $subject,
         public readonly ?string $snippet,
         public readonly Carbon $receivedAt,

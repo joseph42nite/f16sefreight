@@ -144,6 +144,60 @@ class MailboxSyncTest extends TestCase
     }
 
     /**
+     * 🔴 CC SURVIVES THE WHOLE PIPELINE. It has to be asked for in the Graph `$select`,
+     * carried on `NormalisedMessage`, and written to a column that exists — and it was
+     * missing at all three layers, which is why reply-all could not be built.
+     *
+     * ⚠️ Asserted end to end rather than per layer: each one silently degrades to an
+     * empty list, so a unit test on any single layer passes while the chain drops it.
+     */
+    public function test_cc_survives_from_the_provider_to_the_database(): void
+    {
+        $this->fakeDelta([$this->graphMessage([
+            'ccRecipients' => [
+                ['emailAddress' => ['address' => 'Broker@Client.test']],
+                ['emailAddress' => ['address' => 'desk@airline.test']],
+            ],
+        ])]);
+
+        $this->sync();
+
+        $row = DB::table('email_messages')->where('agent_id', $this->branch->id)->first();
+
+        // Lower-cased and comma-joined, in the order they were sent.
+        $this->assertSame('broker@client.test, desk@airline.test', $row->cc);
+
+        // ⚠️ A message with no CC stores NULL, not an empty string — "nobody was copied"
+        // and "we did not capture it" must not look identical to whatever reads this next.
+        $this->fakeDelta([$this->graphMessage(['id' => 'm-2', 'internetMessageId' => '<m-2@test>'])]);
+        $this->sync();
+
+        $plain = DB::table('email_messages')->where('message_id', '<m-2@test>')->first();
+        $this->assertNull($plain->cc);
+    }
+
+    /**
+     * `to` was varchar(255) holding a comma-joined list. Six addresses at ~30 characters
+     * each already reached the ceiling, and past it MySQL truncates or errors depending
+     * on strict mode — losing who was on the conversation.
+     */
+    public function test_a_long_recipient_list_is_not_truncated(): void
+    {
+        $many = array_map(
+            fn ($i) => ['emailAddress' => ['address' => "recipient-{$i}@averylongclientdomain.test"]],
+            range(1, 12)
+        );
+
+        $this->fakeDelta([$this->graphMessage(['toRecipients' => $many])]);
+        $this->sync();
+
+        $row = DB::table('email_messages')->where('agent_id', $this->branch->id)->first();
+
+        $this->assertCount(12, explode(', ', $row->to));
+        $this->assertGreaterThan(255, strlen($row->to), 'the fixture must exceed the old limit to prove anything');
+    }
+
+    /**
      * 🔴 Ingestion never classifies and never mints an enquiry. PRD §5.2.3: regex stages,
      * the OPERATOR mints — auto-minting here inflates the conversion denominator with
      * conversations nobody ever treated as an enquiry.

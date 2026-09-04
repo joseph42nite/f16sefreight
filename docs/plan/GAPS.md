@@ -215,6 +215,10 @@ Loss is a **deliberate declaration**, never inferred:
 - an `enquiry.lost` audit row
 - 🔴 **refused outright if a job exists** — a confirmed shipment that later stops is a CANCELLED JOB, not a lost enquiry. Allowing both would count one request as a win and a loss at the same time and corrupt conversion rate and loss analysis together
 
+⚠️ **RESOLVED 2026-09-04 — see #59 below.** The hole described here is now closed: the
+sweep escalates and then closes. The paragraph is kept because it states the problem the
+escalation exists to solve.
+
 ⚠️ **The hole is silence, not the schema.** `enquiries:nudge-stale` reminds the operator that a
 client has gone quiet; **nothing ever marks an enquiry lost automatically**, and that is
 deliberate — a system-invented loss reason is worse than no loss reason. But it means the
@@ -223,6 +227,28 @@ funnel is only as honest as operator discipline. In the demo data **40 enquiries
 those should auto-expire to `lost` with reason `delay_in_response` after the tenant's window,
 or simply be surfaced as an *"awaiting your decision"* queue, is **the owner's call** — see
 the design-decisions table.
+
+---
+
+## 🔴 Found 2026-09-04 — the nudge sweep, and two more branches that never ran
+
+| # | Finding | Detail |
+|---|---|---|
+| 59 | 🟢 **Nudging now escalates to a decision (owner's call, 2026-09-04).** `stale_nudged_at` could only express *"nudged, once"* — the scope filtered `whereNull`, so a permanently silent client was reminded about exactly one time and the enquiry then sat in the funnel forever as neither won nor lost | `stale_nudge_count` counts attempts and `stale_nudge_attempts` (default **2**) bounds them. Every step needs the window to elapse **again**, so at the default 7-day window: **day 7** nudge 1, **day 14** nudge 2, **day 21** closed automatically with `delay_in_response`. The client gets the full window to answer the *last* reminder. `stale_nudge_attempts = 0` disables auto-closing and keeps nudging forever. Both resolve **branch → company → config** like every other policy |
+| 60 | 🔴 **`lost_automatically` exists so a machine's guess never passes as a human's diagnosis.** "We replied too slowly" is a commercial finding; "nobody ever came back" is an administrative one. A loss-reason report that cannot separate them tells the business to fix the wrong thing | The drawer words an auto-close as a **claim, not a verdict** — *"Closed automatically — the client never answered our reminders. If that is wrong, reopen it."* Reopening clears the flag, the reason, the timestamp **and the nudge count**, so a revived enquiry gets the whole sequence over rather than being closed again after one more reminder |
+| 61 | 🔴 **`EnquiryObserver::saving()` had never executed either.** It cleared the nudge debounce when `isDirty('updated_at') && isDirty('status')` — but Laravel stamps timestamps in `performUpdate()`, **after** the `saving` event fires, so `updated_at` is never dirty at that point. The documented behaviour *"cleared on any new client reply"* was false for every enquiry that ever existed | Moved into `updating()` and keyed on the status alone, excluding terminal statuses so closing an enquiry does not erase the record of how many reminders it took. **This is the second dead branch in the same 40-line observer** (#58 was the first) — both were dead for the same category of reason: a condition that was never true, in a class with no tests |
+| 62 | 🔴 **A client REPLY did not reset the stale clock — and could not.** `MessageIngestor` only ever wrote to `email_threads`; an enquiry's own row never moved when the client wrote back. Harmless while the sweep merely nudged. **Catastrophic the moment it started closing enquiries** — the clock ran against conversations that were actively being answered, so the auto-close would have declared a live client dead | `touchThread()` now restarts the clock on the enquiry for **inbound** messages only, and only while the enquiry is still open (a reply on a converted enquiry is ordinary shipment traffic; one on a lost enquiry is the desk's call to reopen). Written raw rather than through the model so no observer reads an inbound mail as a lifecycle event |
+
+⚠️ **`enquiries:nudge-stale` had NO tests at all**, which is exactly why #61 survived in it.
+A scheduler's failure mode is silence: nothing ever reported that a branch was dead.
+`StaleEnquiryNudgeTest` now walks the ladder **day by day** (6, 7, 8, 14, 20, 21) rather
+than asserting one end state — the day-8 assertion is what proves attempts are a window
+apart rather than consecutive runs.
+
+⚠️ **Existing stale enquiries are not closed on deploy day.** Every current row has
+`stale_nudge_count = 0`, so the 40 long-silent enquiries in the data start at nudge 1 and
+reach auto-close three windows later. That is deliberate: a migration that mass-closed real
+enquiries would be indistinguishable from data loss to the desk that owns them.
 
 ---
 

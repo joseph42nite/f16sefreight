@@ -112,7 +112,7 @@ class EmailInboxController extends Controller
             })
             ->with([
                 'assignedOps:id,name',
-                'enquiry:id,enquiry_no,status,lost_reason',
+                'enquiry:id,enquiry_no,status,lost_reason,lost_automatically',
                 // The job is what the operator quotes once conversion has happened —
                 // eager-loaded so a 50-row list does not become 50 extra queries.
                 'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status',
@@ -142,7 +142,7 @@ class EmailInboxController extends Controller
         return response()->json([
             'thread'   => $this->shape($thread->load([
                 'assignedOps:id,name',
-                'enquiry:id,enquiry_no,status,lost_reason',
+                'enquiry:id,enquiry_no,status,lost_reason,lost_automatically',
                 'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status',
             ])),
             'messages' => $messages,
@@ -382,7 +382,7 @@ class EmailInboxController extends Controller
             'first_response_at' => $thread->first_response_at,
             'first_triage_at'   => $thread->first_triage_at,
             'assigned_ops'   => $thread->assignedOps ? $thread->assignedOps->only(['id', 'name']) : null,
-            'enquiry'        => $thread->enquiry ? $thread->enquiry->only(['id', 'enquiry_no', 'status', 'lost_reason']) : null,
+            'enquiry'        => $thread->enquiry ? $thread->enquiry->only(['id', 'enquiry_no', 'status', 'lost_reason', 'lost_automatically']) : null,
             // 🔗 enquiry -> job -> waybill, resolved once here rather than by a second
             // round trip from the drawer. Newest first, matching JobController@index's
             // `latest()`, so both surfaces name the same job out of a consol split.

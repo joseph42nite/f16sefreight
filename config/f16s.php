@@ -109,6 +109,18 @@ return [
         // business before launch — too short nags the desk, too long defeats the point.
         'stale_enquiry_days' => 7,
 
+        // How many reminders a silent client gets before the sweep closes the enquiry
+        // itself, with reason `delay_in_response` and `lost_automatically` set.
+        //
+        // 🔴 The auto-close is NOT at day 7. Each attempt needs the window to elapse
+        // again, so at the default of 7 days x 2 attempts the shape is:
+        //   day  7  nudge 1
+        //   day 14  nudge 2
+        //   day 21  closed automatically
+        // The client gets the full window to answer the LAST reminder before anything is
+        // decided for them. Set to 0 to disable auto-closing entirely and keep nudging.
+        'stale_nudge_attempts' => 2,
+
         // CASS reconciliation tolerances — PRD §6.5, default ±1.0% on both.
         // The only genuinely branch-level settings, which is why tenant_policies
         // carries agent_id at all.

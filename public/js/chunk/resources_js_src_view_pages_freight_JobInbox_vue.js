@@ -1677,7 +1677,11 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("This enquiry has not been converted to a job yet.")])], 1) : _vm.tab === "extraction" ? _c("section", [_vm.active.enquiry && !_vm.active.job ? _c("div", {
     staticClass: "fx-outcome"
-  }, [_vm.enquiryLost ? [_c("p", {
+  }, [_vm.enquiryLost ? [_vm.active.enquiry.lost_automatically ? _c("p", [_c("strong", [_vm._v("Closed automatically")]), _vm._v(" — the client never answered our\n              reminders, so this was marked "), _c("StatusChip", {
+    attrs: {
+      value: "lost"
+    }
+  }), _vm._v(". If that is\n              wrong, reopen it.\n            ")], 1) : _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n              This enquiry is marked "), _c("StatusChip", {
     attrs: {
@@ -1691,7 +1695,9 @@ var render = function render() {
     on: {
       click: _vm.reopenEnquiry
     }
-  }, [_vm._v("\n              Client came back — reopen\n            ")])] : _vm.losing ? [_c("p", [_c("strong", [_vm._v("Why was it lost?")]), _vm._v(" The reason is the whole point of\n              recording it — a rate problem and a slow reply need different fixes.")]), _vm._v(" "), _c("select", {
+  }, [_vm._v("\n              Client came back — reopen\n            ")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Reopening keeps the same enquiry number.")])] : _vm.losing ? [_c("p", [_c("strong", [_vm._v("Why was it lost?")]), _vm._v(" The reason is the whole point of\n              recording it — a rate problem and a slow reply need different fixes.")]), _vm._v(" "), _c("select", {
     directives: [{
       name: "model",
       rawName: "v-model",

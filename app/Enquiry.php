@@ -26,7 +26,8 @@ class Enquiry extends Model
         'extracted_pieces', 'extracted_weight', 'extracted_volume',
         'cargo_description', 'cargo_type', 'cargo_data_source', 'cargo_data_promoted_at',
         'origin_code', 'dest_code', 'quoted_amount', 'quoted_currency',
-        'lost_reason', 'lost_reason_custom', 'lost_at', 'reopened_at', 'stale_nudged_at',
+        'lost_reason', 'lost_reason_custom', 'lost_at', 'lost_automatically',
+        'reopened_at', 'stale_nudged_at', 'stale_nudge_count',
         'reinitiated_from_job_id',
     ];
 
@@ -45,6 +46,7 @@ class Enquiry extends Model
         'lost_at'                => 'datetime',
         'reopened_at'            => 'datetime',
         'stale_nudged_at'        => 'datetime',
+        'lost_automatically'     => 'boolean',
         'cargo_data_promoted_at' => 'datetime',
     ];
 
@@ -113,15 +115,45 @@ class Enquiry extends Model
         return $query->has('jobs');
     }
 
+    /** The three statuses where a client is still expected to come back. */
+    public const OPEN_STATUSES = [
+        EnquiryStatus::New->value,
+        EnquiryStatus::Quoted->value,
+        EnquiryStatus::AwaitingClient->value,
+    ];
+
     /**
      * Enquiries awaiting a client who has gone quiet. The window resolves
      * branch -> company -> config, so it is passed in rather than assumed here.
+     *
+     * 🔴 The debounce is `stale_nudged_at` **plus another whole window**, not
+     * `whereNull`. Filtering on NULL meant a silent client was reminded about exactly
+     * ONCE, ever — after which the enquiry sat in the funnel forever as neither won nor
+     * lost, which is the leak this scope exists to prevent. Each attempt now needs the
+     * window to elapse again, so attempt two lands a window after attempt one.
      */
     public function scopeStale($query, int $days)
     {
-        return $query->whereIn('status', [EnquiryStatus::New->value, EnquiryStatus::Quoted->value, EnquiryStatus::AwaitingClient->value])
+        return $query->whereIn('status', self::OPEN_STATUSES)
             ->where('updated_at', '<=', now()->subDays($days))
-            ->whereNull('stale_nudged_at');
+            ->where(fn ($q) => $q
+                ->whereNull('stale_nudged_at')
+                ->orWhere('stale_nudged_at', '<=', now()->subDays($days)));
+    }
+
+    /**
+     * Silent through every nudge it was going to get — the sweep gives up here.
+     *
+     * ⚠️ Deliberately NOT the same shape as `stale()`: this needs the window to have
+     * elapsed since the LAST nudge, so the client had the full window to answer the
+     * final reminder before anything is closed on their behalf.
+     */
+    public function scopeExhaustedNudges($query, int $days, int $attempts)
+    {
+        return $query->whereIn('status', self::OPEN_STATUSES)
+            ->where('stale_nudge_count', '>=', $attempts)
+            ->whereNotNull('stale_nudged_at')
+            ->where('stale_nudged_at', '<=', now()->subDays($days));
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Services\Mail;
 
 use App\MailboxConnection;
+use App\Enquiry;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -117,7 +118,7 @@ class MessageIngestor
     private function touchThread(string $threadKey, NormalisedMessage $message): void
     {
         $thread = DB::table('email_threads')->where('thread_key', $threadKey)
-            ->first(['latest_message_received_at', 'first_response_at']);
+            ->first(['latest_message_received_at', 'first_response_at', 'enquiry_id']);
 
         if ($thread === null) {
             return;
@@ -143,5 +144,38 @@ class MessageIngestor
         }
 
         DB::table('email_threads')->where('thread_key', $threadKey)->update($update);
+
+        if ($message->direction === 'inbound' && $thread->enquiry_id !== null) {
+            $this->restartStaleClock((int) $thread->enquiry_id);
+        }
+    }
+
+    /**
+     * 🔴 A client who REPLIES is not a client who went quiet.
+     *
+     * The nudge sweep escalates on `enquiries.updated_at` and closes the enquiry once its
+     * reminders go unanswered — but ingestion only ever wrote to `email_threads`, so an
+     * enquiry's own row never moved when the client wrote back. The clock therefore ran
+     * against enquiries that were actively being answered, and the auto-close would have
+     * declared a live conversation dead. That is the worst thing this feature could do,
+     * so the reply has to reach the enquiry.
+     *
+     * Written raw rather than through the model: no observer should interpret an inbound
+     * message as a lifecycle event, and `saveQuietly()` would still not stop the global
+     * scopes from hiding a row the ingestor legitimately reaches across tenants.
+     */
+    private function restartStaleClock(int $enquiryId): void
+    {
+        DB::table('enquiries')
+            ->where('id', $enquiryId)
+            // Only while the client is still expected to come back. A reply arriving on a
+            // CONVERTED enquiry is ordinary shipment traffic, and one on a lost enquiry is
+            // the desk's call to reopen — neither is the sweep's business.
+            ->whereIn('status', Enquiry::OPEN_STATUSES)
+            ->update([
+                'stale_nudged_at'   => null,
+                'stale_nudge_count' => 0,
+                'updated_at'        => now(),
+            ]);
     }
 }

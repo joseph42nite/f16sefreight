@@ -239,7 +239,15 @@
           -->
           <div v-if="active.enquiry && !active.job" class="fx-outcome">
             <template v-if="enquiryLost">
-              <p class="fx-muted">
+              <!-- 🔴 A loss the SWEEP declared is worded as a claim, not a verdict. The
+                   desk never decided this; it stopped hearing back, and the operator is
+                   the one who knows whether that is the same thing. -->
+              <p v-if="active.enquiry.lost_automatically">
+                <strong>Closed automatically</strong> — the client never answered our
+                reminders, so this was marked <StatusChip value="lost" />. If that is
+                wrong, reopen it.
+              </p>
+              <p v-else class="fx-muted">
                 This enquiry is marked <StatusChip value="lost" />
                 <template v-if="lostReasonLabel"> — {{ lostReasonLabel }}</template>.
                 Nothing is drafted against a lost enquiry.
@@ -248,6 +256,7 @@
               <button class="fx-btn" :disabled="outcomeBusy" @click="reopenEnquiry">
                 Client came back — reopen
               </button>
+              <p class="fx-muted">Reopening keeps the same enquiry number.</p>
             </template>
 
             <template v-else-if="losing">

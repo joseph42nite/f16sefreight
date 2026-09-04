@@ -67,6 +67,44 @@ class JobTriageTest extends TestCase
         ])->assertStatus(201)->json();
     }
 
+    /**
+     * 🔴 "Mine" means MY role's ownership. A job carries two owners — `pricing_id` quoted
+     * it, `ops_id` is executing it — and the filter used `ops_id` for both roles, so the
+     * toggle returned an EMPTY BOARD for pricing staff who own every job on it. An empty
+     * board reads as "you have no work", which for the person who priced all of it is the
+     * opposite of true.
+     */
+    public function test_mine_filters_by_the_callers_own_role(): void
+    {
+        $ops = User::create([
+            'name' => 'Ops', 'email' => 'ops-trg@test.local', 'password' => Hash::make('x'),
+            'company_name' => $this->company->id, 'branch_name' => $this->branch->id,
+            'designation' => 'operations', 'is_active' => 1,
+        ]);
+
+        // Priced by one person, executed by another — the ordinary case, and the one the
+        // old filter got wrong. Converted over HTTP so the job hangs off a real enquiry.
+        $enquiry = $this->createEnquiry('air');
+        $jobId = $this->api()
+            ->postJson("http://{$this->host('air')}/api/enquiries/{$enquiry['id']}/convert", [])
+            ->assertStatus(201)
+            ->json('job.id');
+
+        \App\Job::withoutGlobalScopes()->where('id', $jobId)->update([
+            'pricing_id' => $this->pricing->id,
+            'ops_id'     => $ops->id,
+        ]);
+
+        $url = "http://{$this->host('air')}/api/jobs?mine=1";
+
+        $this->api()->getJson($url)->assertOk()->assertJsonPath('total', 1);
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($ops),
+            'Accept' => 'application/json',
+        ])->getJson($url)->assertOk()->assertJsonPath('total', 1);
+    }
+
     // ─── 1. Sequence assignment, per mode ────────────────────────────────────
 
     /**

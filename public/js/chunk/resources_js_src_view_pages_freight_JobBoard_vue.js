@@ -67,6 +67,17 @@ const PROCESS = [{
   terminal: true,
   statuses: ["Completed", "Cancelled"]
 }];
+
+/**
+ * How many finished shipments the Completed column keeps on screen.
+ *
+ * 🔴 A DISPLAY cap, never a delete. Terminal cards accumulate forever — every shipment a
+ * branch has ever run ends up in one column — and a board that grows without bound stops
+ * being a board. But a completed job is still the record of a shipment that happened, so
+ * the older ones are hidden behind a disclosure, not dropped: the count in the header
+ * always states the true total, and one click brings the rest back.
+ */
+const DONE_VISIBLE = 12;
 const POOL_KEY = "f16s_kanban_pool_collapsed";
 const FILTER_KEY = "f16s_kanban_filters";
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -86,6 +97,9 @@ const FILTER_KEY = "f16s_kanban_filters";
     busy: false,
     error: null,
     poolCollapsed: false,
+    /* Per-viewer, per-session: an operator who expands the finished pile is looking
+       something up, not changing how the board works for everyone. */
+    showAllDone: false,
     filters: {
       opsId: "",
       stage: "",
@@ -112,7 +126,31 @@ const FILTER_KEY = "f16s_kanban_filters";
         const col = PROCESS.find(c => c.statuses.indexOf(job.status) !== -1);
         if (col) out[col.key].push(job);
       });
+      // Most recently finished first, so the cap trims the OLDEST off the bottom rather
+      // than whatever order the API happened to return.
+      out.done.sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
       return out;
+    },
+    /**
+     * What each column actually renders. Only the terminal column is capped — the working
+     * columns are a to-do list and hiding part of one would hide work.
+     *
+     * ⚠️ `grouped` stays uncapped and is what `draggable` binds to, so a drag still
+     * reorders the real list. Capping in the bound array would make a drop land at the
+     * wrong index the moment anything was hidden.
+     */
+    visible() {
+      const out = {};
+      PROCESS.forEach(c => {
+        out[c.key] = this.grouped[c.key] || [];
+      });
+      if (!this.showAllDone && out.done.length > DONE_VISIBLE) {
+        out.done = out.done.slice(0, DONE_VISIBLE);
+      }
+      return out;
+    },
+    doneHidden() {
+      return Math.max(0, (this.grouped.done || []).length - DONE_VISIBLE);
     },
     activeChips() {
       const chips = [];
@@ -548,7 +586,7 @@ var render = function render() {
     }, [_vm._v(_vm._s((_vm.grouped[col.key] || []).length))])]), _vm._v(" "), _c("draggable", {
       staticClass: "fx-board__drop",
       attrs: {
-        list: _vm.grouped[col.key] || [],
+        list: _vm.visible[col.key] || [],
         group: {
           name: "jobs",
           pull: !col.terminal,
@@ -560,7 +598,7 @@ var render = function render() {
       on: {
         change: e => _vm.onMove(e, col)
       }
-    }, _vm._l(_vm.grouped[col.key] || [], function (job) {
+    }, _vm._l(_vm.visible[col.key] || [], function (job) {
       return _c("article", {
         key: job.id,
         staticClass: "fx-card",
@@ -599,7 +637,14 @@ var render = function render() {
       })]), _vm._v(" "), _c("div", {
         staticClass: "fx-card__owners"
       }, [_c("span", [_vm._v("ops " + _vm._s(job.ops_user ? job.ops_user.name : "—"))]), _vm._v(" "), _c("span", [_vm._v("pricing " + _vm._s(job.pricing_owner ? job.pricing_owner.name : "—"))])])]);
-    }), 0), _vm._v(" "), col.terminal ? _c("p", {
+    }), 0), _vm._v(" "), col.terminal && _vm.doneHidden ? _c("button", {
+      staticClass: "fx-board__more",
+      on: {
+        click: function ($event) {
+          _vm.showAllDone = !_vm.showAllDone;
+        }
+      }
+    }, [_vm._v("\n          " + _vm._s(_vm.showAllDone ? "Show fewer" : _vm.doneHidden + " older completed — show all") + "\n        ")]) : _vm._e(), _vm._v(" "), col.terminal ? _c("p", {
       staticClass: "fx-board__note"
     }, [_vm._v("Set from the job, not by dragging")]) : _vm._e()], 1);
   }), 0) : _c("div", {

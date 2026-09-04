@@ -91,8 +91,12 @@
             <span class="fx-board__count">{{ (grouped[col.key] || []).length }}</span>
           </h2>
 
+          <!-- ⚠️ Bound to `visible`, the SAME array the v-for renders. Binding the full
+               list while rendering a subset would put a drop at the wrong index the
+               moment anything was hidden. For every uncapped column the two are the same
+               array reference, so nothing about dragging changes. -->
           <draggable
-            :list="grouped[col.key] || []"
+            :list="visible[col.key] || []"
             :group="{ name: 'jobs', pull: !col.terminal, put: !col.terminal }"
             class="fx-board__drop"
             ghost-class="fx-card--ghost"
@@ -100,7 +104,7 @@
             @change="(e) => onMove(e, col)"
           >
             <article
-              v-for="job in grouped[col.key] || []"
+              v-for="job in visible[col.key] || []"
               :key="job.id"
               class="fx-card"
               :class="'fx-card--' + urgency(job)"
@@ -138,6 +142,16 @@
               </div>
             </article>
           </draggable>
+
+          <!-- The finished pile is capped, not pruned: the header count above is the true
+               total, and this is the way back to the rest of it. -->
+          <button
+            v-if="col.terminal && doneHidden"
+            class="fx-board__more"
+            @click="showAllDone = !showAllDone"
+          >
+            {{ showAllDone ? "Show fewer" : doneHidden + " older completed — show all" }}
+          </button>
 
           <p v-if="col.terminal" class="fx-board__note">Set from the job, not by dragging</p>
         </section>
@@ -220,6 +234,17 @@ const PROCESS = [
     statuses: ["Completed", "Cancelled"] },
 ];
 
+/**
+ * How many finished shipments the Completed column keeps on screen.
+ *
+ * 🔴 A DISPLAY cap, never a delete. Terminal cards accumulate forever — every shipment a
+ * branch has ever run ends up in one column — and a board that grows without bound stops
+ * being a board. But a completed job is still the record of a shipment that happened, so
+ * the older ones are hidden behind a disclosure, not dropped: the count in the header
+ * always states the true total, and one click brings the rest back.
+ */
+const DONE_VISIBLE = 12;
+
 const POOL_KEY = "f16s_kanban_pool_collapsed";
 const FILTER_KEY = "f16s_kanban_filters";
 
@@ -230,6 +255,9 @@ export default {
     rows: [], pool: [], staff: [], operators: [],
     view: "process", loading: true, busy: false, error: null,
     poolCollapsed: false,
+    /* Per-viewer, per-session: an operator who expands the finished pile is looking
+       something up, not changing how the board works for everyone. */
+    showAllDone: false,
     filters: { opsId: "", stage: "", from: "", to: "" },
     STATUSES, PROCESS,
   }),
@@ -249,7 +277,29 @@ export default {
         const col = PROCESS.find((c) => c.statuses.indexOf(job.status) !== -1);
         if (col) out[col.key].push(job);
       });
+      // Most recently finished first, so the cap trims the OLDEST off the bottom rather
+      // than whatever order the API happened to return.
+      out.done.sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
       return out;
+    },
+    /**
+     * What each column actually renders. Only the terminal column is capped — the working
+     * columns are a to-do list and hiding part of one would hide work.
+     *
+     * ⚠️ `grouped` stays uncapped and is what `draggable` binds to, so a drag still
+     * reorders the real list. Capping in the bound array would make a drop land at the
+     * wrong index the moment anything was hidden.
+     */
+    visible() {
+      const out = {};
+      PROCESS.forEach((c) => { out[c.key] = this.grouped[c.key] || []; });
+      if (!this.showAllDone && out.done.length > DONE_VISIBLE) {
+        out.done = out.done.slice(0, DONE_VISIBLE);
+      }
+      return out;
+    },
+    doneHidden() {
+      return Math.max(0, (this.grouped.done || []).length - DONE_VISIBLE);
     },
     activeChips() {
       const chips = [];

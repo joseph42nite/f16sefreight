@@ -252,6 +252,21 @@ enquiries would be indistinguishable from data loss to the desk that owns them.
 
 ---
 
+## 🔴 Found 2026-09-04 — the Kanban's owner filter, and what "arrived" would mean
+
+| # | Finding | Detail |
+|---|---|---|
+| 63 | 🔴 **"Mine" returned an EMPTY BOARD for pricing staff.** A job carries two owners — `pricing_id` quoted it, `ops_id` is executing it — and `mine=1` filtered both roles on `ops_id`. Pricing owns every job on the board as `pricing_id` and typically **none** as `ops_id` | Measured on the demo branch before the fix: `GET /api/jobs?mine=1` as `demo-pricing` returned **0 of 35**. An empty board reads as *"you have no work"*, which for the person who priced all of it is the opposite of true. Now keyed on the caller's own designation. ⚠️ **The board is NOT per-staff by default** — it shows the whole branch, and "Mine" is an opt-in filter. That is deliberate (PRD §5.5 wants shared context) but is the opposite of what an operator may assume |
+| 64 | ⚠️ **The Completed column grows without bound.** Every shipment a branch ever runs ends in it — 31 of 35 on the demo branch already | Capped at **12 visible**, newest first, with the true total still in the header and a *"N older completed — show all"* disclosure. 🔴 **A display cap, never a delete**: a completed job is the record of a shipment that happened. The cap is applied to the array `draggable` binds, not just the one rendered, or a drop would land at the wrong index once anything was hidden |
+| 65 | 🔴 **There is no "arrived" in the system.** `JobStatus` ends at `Completed`; there is no arrival status, no arrival timestamp, and no flight-tracking integration. `planned_clearance_date` is customs planning, not arrival | So *"notify when the shipment has arrived"* cannot be built as asked without first deciding **where the arrival fact comes from**: (a) an operator marking it, (b) treating the `Completed` transition as arrival, or (c) an airline/flight status feed, which is an integration nobody has scoped. **Owner's decision — see the design table.** The mail half is additionally blocked on the same connected-mailbox + consent path as #47 |
+
+⚠️ **Automated client mail must stay human-confirmed.** Whatever supplies the arrival
+signal, the notification should offer a *prefilled draft the operator sends*, not an
+autonomous send. An arrival signal that is wrong — a mis-set status, a bad feed — becomes
+a wrong message to the customer, and that is not a mistake the desk can take back.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

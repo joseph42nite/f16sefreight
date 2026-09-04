@@ -31,7 +31,16 @@ class JobController extends Controller
     {
         $jobs = Job::forActivePortal()
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            ->when($request->boolean('mine'), fn ($q) => $q->where('ops_id', auth()->id()))
+            // 🔴 "Mine" means MY role's ownership, not always `ops_id`. A job carries two
+            // owners — `pricing_id` quoted it, `ops_id` is executing it — and filtering
+            // both roles on `ops_id` made the toggle return NOTHING for pricing staff,
+            // who own every job on the board as `pricing_id` and none as `ops_id`. An
+            // empty board reads as "you have no work", which for the person who priced
+            // all of it is the opposite of true.
+            ->when($request->boolean('mine'), fn ($q) => $q->where(
+                auth()->user()->designation === 'pricing' ? 'pricing_id' : 'ops_id',
+                auth()->id()
+            ))
             // The Unassigned Pool: PRD §5.5's scroller, and the only place a job with
             // no operator is actionable.
             ->when($request->boolean('unassigned'), fn ($q) => $q->whereNull('ops_id'))

@@ -291,6 +291,27 @@ The Kanban card shows all three rungs it has earned. ⚠️ The enquiry number m
 card specifically because it is the one an operator can quote to a client who has never
 been told a job number.
 
+### 🔴 #70 — the seeder was reproducing the bug #69 had just fixed
+
+Asked why the pool still showed job numbers, the demo data gave three different answers:
+
+| Job | Thread | Claimed in inbox | Job owner | Verdict |
+|---|---|---|---|---|
+| `…-0544` | 587 | — | — | ✅ reachable: confirmed from a thread nobody claimed |
+| `…-0010` | none | — | — | ✅ fine: a job with no conversation behind it |
+| `…-0009` | 555 | **user 53** | **NULL** | 🔴 **impossible after #69** |
+
+The third is the state `EnquiryController::convert()` can no longer produce, sitting in the
+demo data as though it were normal. Cause: threads are seeded **after** jobs and pick their
+enquiry independently, so an `$assigned` flag written up in the fixture table could land a
+CLAIMED thread on an UNASSIGNED job. The two were never correlated.
+
+⚠️ **Seed data that contradicts the code teaches the wrong thing about the product and
+hides the fix** — this is why the owner could still see job numbers in the pool after #69
+was fixed and pushed. The thread's claim is now read back off the job, so the two halves
+cannot disagree. Verified: **0 contradictions** across the whole database, and the two
+remaining pool cards are both legitimately unclaimed.
+
 ### ⚠️ THE PRD CONTRADICTS ITSELF ON WHAT THE POOL HOLDS — owner's call
 
 Two statements, three paragraphs apart, in the **State 1 (pre-conversion)** section:

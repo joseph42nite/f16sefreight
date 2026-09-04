@@ -474,7 +474,8 @@ class FreightDemoSeeder extends Seeder
             // the one way a job legitimately reaches the pool now that the inbox claim
             // survives conversion. Before that fix every confirmed shipment landed here,
             // which is what made the pool look like the normal path rather than the
-            // exception it is.
+            // exception it is. The thread seeding below reads its claim back OFF the job,
+            // so the two halves cannot disagree the way they used to.
             $unassignedYet = 2;
 
             foreach ($plan as $i => [$status, $lostReason]) {
@@ -809,10 +810,31 @@ class FreightDemoSeeder extends Seeder
             $opened = now()->subDays(9 - $i)->subHours(3);
             $key = 'thr_' . $branch->id . '_' . $i . '_' . substr(md5($subject . $branch->id), 0, 8);
 
+            $enquiryId = $promoteTo($promote);
+
+            // 🔴 THE THREAD'S CLAIM AND ITS JOB'S OWNER ARE ONE FACT, so they are read
+            // from one place. Threads are seeded AFTER jobs and pick their enquiry
+            // independently, so an `$assigned` flag decided up in the fixture table would
+            // land a CLAIMED thread on an UNASSIGNED job — the exact state that
+            // `EnquiryController::convert()` now makes unreachable, sitting in the demo
+            // data as if it were normal. Seeded data that contradicts the code teaches
+            // the wrong thing about the product and hides the fix.
+            //
+            // A job with no owner therefore means what it says: nobody claimed the
+            // conversation, and the shipment was confirmed anyway.
+            $jobOwner = $enquiryId === null ? null : DB::table('jobs')
+                ->where('enquiry_id', $enquiryId)
+                ->whereNull('deleted_at')
+                ->value('ops_id');
+
             DB::table('email_threads')->insert([
                 'agent_id' => $branch->id,
-                // Unassigned rows are the pool — the claim endpoint needs something to claim.
-                'assigned_ops_id' => $assigned ? $users['operations']->id : null,
+                // Unassigned rows are the pool — the claim endpoint needs something to
+                // claim. For a converted thread the job is the authority; for one that
+                // never became a job, the fixture's own flag decides.
+                'assigned_ops_id' => $enquiryId !== null
+                    ? $jobOwner
+                    : ($assigned ? $users['operations']->id : null),
                 'thread_key' => $key,
                 'provider_thread_id' => 'gmail_' . substr(md5($key), 0, 16),
                 'status' => $status,
@@ -820,7 +842,7 @@ class FreightDemoSeeder extends Seeder
                 // The workspace's Enquiry tab reads this. NULL is a real state — most
                 // conversations never become an enquiry — so one thread deliberately
                 // stays unpromoted.
-                'enquiry_id' => $promoteTo($promote),
+                'enquiry_id' => $enquiryId,
                 'latest_message_received_at' => $opened->copy()->addHours($messages),
                 // 🔴 first_response_at is the first OUTBOUND message, and it is what
                 // makes lost_reason = 'delay_in_response' provable. first_triage_at is

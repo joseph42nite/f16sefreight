@@ -11,10 +11,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_config_navigation__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/config/navigation */ "./resources/js/src/core/config/navigation.js");
-/* harmony import */ var _view_pages_freight_components_BellPanel_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/BellPanel.vue */ "./resources/js/src/view/pages/freight/components/BellPanel.vue");
-/* harmony import */ var _view_pages_freight_components_VisualReporter_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/VisualReporter.vue */ "./resources/js/src/view/pages/freight/components/VisualReporter.vue");
+/* harmony import */ var _core_services_store_context_module__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/store/context.module */ "./resources/js/src/core/services/store/context.module.js");
+/* harmony import */ var _view_pages_freight_components_BellPanel_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/BellPanel.vue */ "./resources/js/src/view/pages/freight/components/BellPanel.vue");
+/* harmony import */ var _view_pages_freight_components_VisualReporter_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/VisualReporter.vue */ "./resources/js/src/view/pages/freight/components/VisualReporter.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -24,16 +25,23 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 
 
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "AppShell",
   components: {
-    BellPanel: _view_pages_freight_components_BellPanel_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
-    VisualReporter: _view_pages_freight_components_VisualReporter_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+    BellPanel: _view_pages_freight_components_BellPanel_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    VisualReporter: _view_pages_freight_components_VisualReporter_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
   },
   data: () => ({
     collapsed: false
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)(["designation", "tier", "portal", "tierAtLeast"])), {}, {
+  /* The shell is the first thing that needs to know who is looking at it, so a session
+     that arrived without a stored context recovers here rather than drawing a rail with
+     the role items missing. Does nothing on the normal path. */
+  created() {
+    this.$store.dispatch(_core_services_store_context_module__WEBPACK_IMPORTED_MODULE_1__.LOAD_CONTEXT);
+  },
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_4__.mapGetters)(["designation", "tier", "portal", "tierAtLeast"])), {}, {
     nav() {
       return (0,_core_config_navigation__WEBPACK_IMPORTED_MODULE_0__.visibleNavFor)({
         designation: this.designation,

@@ -11,6 +11,8 @@
  * sidebar looks like and nothing else. Never gate a mutation on these values alone.
  */
 
+import ApiService from "@/core/services/api.service";
+
 const STORAGE_KEY = "f16s_context";
 
 export const SET_CONTEXT = "setContext";
@@ -105,4 +107,29 @@ const mutations = {
   },
 };
 
-export default { state, getters, mutations };
+export const LOAD_CONTEXT = "loadContext";
+
+const actions = {
+  /**
+   * Fetch the context for a session that has a token but no stored context.
+   *
+   * 🔴 Without this the rail silently degrades: `designation` is null, so every
+   * role-scoped item is filtered out and the user stares at a near-empty sidebar while
+   * being perfectly authenticated. Nothing prompts them, because nothing is broken from
+   * the server's point of view — their token is fine.
+   *
+   * ⚠️ Only when it is MISSING. This is not a refresh on every page load; the login
+   * response is still the normal path and localStorage still carries it across refreshes.
+   */
+  [LOAD_CONTEXT](context) {
+    if (context.state.designation) return Promise.resolve();
+
+    return ApiService.get("/me")
+      .then(({ data }) => context.commit(SET_CONTEXT, { context: data.context, portal: data.portal }))
+      // A failure here leaves the shell exactly as it was. The route guards and the
+      // server still decide everything that matters.
+      .catch(() => {});
+  },
+};
+
+export default { state, getters, actions, mutations };

@@ -331,6 +331,27 @@ Three readings, and this decides what a pool card shows:
 
 ---
 
+## 🔴 Found 2026-09-04 — the rail showed the wrong portal's pages and hid the right ones
+
+Reported as *"I'm seeing Master Bill of Lading in FocusAir, and the enquiries, inbox and
+clients pages have been removed."* **Nothing had been removed** — `NAV_ITEMS` still lists
+all three. Two separate faults combined to produce that exact screen.
+
+| # | Finding | Detail |
+|---|---|---|
+| 71 | 🔴 **The portal filter failed OPEN.** `if (item.portals && portalKey && …)` — when `portalKey` was falsy the check was **skipped entirely**, so every portal's items rendered at once and FocusSea's *Master Bill of Lading* and *Consolidation* appeared on FocusAir | Now `if (item.portals && item.portals.indexOf(portalKey) === -1)`. An item that names the portals it belongs to must never appear on a portal we cannot identify. One removed condition; the same fail-closed rule `Portal::isTenantBound()` already applies server-side |
+| 72 | 🔴 **`designation`, `tier` and `portal` reached the browser ONLY on the login response.** Lose the `f16s_context` localStorage entry — cleared storage, a different browser, a token restored without it — and `designation` is null, so **every role-scoped item is filtered out**: Inbox, Kanban, Enquiries, Clients & Partners all vanish | And nothing tells the user, because from the server's side nothing is wrong: the token is valid and every endpoint still enforces its own gates. `context.module.js` had promised *"before /me returns"* since it was written; **`/me` had never been built.** Now it is, and `AppShell` dispatches `LOAD_CONTEXT` on create — only when the context is missing, so the normal path is untouched |
+
+⚠️ **The two faults together are why the report looked like deleted pages.** #72 emptied
+the rail of everything role-scoped; #71 filled the gap with another portal's forms. Either
+alone would have been easier to recognise.
+
+⚠️ **This class of bug is invisible to the backend.** The tests for it are therefore in
+`tests/js/navigationRail.spec.js` — including one that asserts the *collapsed* rail a
+context-less session produces, so the failure mode itself stays described.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

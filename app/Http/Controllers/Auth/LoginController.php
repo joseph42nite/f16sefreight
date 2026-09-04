@@ -100,6 +100,33 @@ class LoginController extends Controller
     }
 
     /**
+     * The same `context` and `portal` the login response carries, for a browser that has
+     * a valid token but has lost the copy it stored at login.
+     *
+     * ⚠️ Built from the REQUEST, exactly as login is: the portal comes from the host and
+     * the context from the authenticated user, so this cannot report a portal the caller
+     * is not actually on.
+     *
+     * 🔴 CONVENIENCE, NEVER SECURITY — same as the login payload. Every gate is re-checked
+     * server-side on every request; this only decides what the sidebar draws.
+     */
+    public function me(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        $portal = Portal::fromHost($request->getHost());
+
+        return response()->json([
+            'user'    => $user,
+            'context' => UserContext::for($user)->toArray(),
+            'portal'  => $portal->exists() ? [
+                'key'   => $portal->key,
+                'label' => $portal->label(),
+                'scope' => $portal->scope(),
+            ] : null,
+        ]);
+    }
+
+    /**
      * Decide whether this user may enter this portal. Returns a response to send, or NULL
      * to continue.
      *

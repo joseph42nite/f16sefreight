@@ -83,7 +83,12 @@ export const NAV_ITEMS = [
 export function visibleNavFor({ designation, tier, portalKey, tierAtLeast }) {
   return NAV_ITEMS.filter((item) => {
     // Portal-specific items (FocusAir on air, FocusSea on sea).
-    if (item.portals && portalKey && item.portals.indexOf(portalKey) === -1) return false;
+    //
+    // 🔴 FAILS CLOSED. This used to read `item.portals && portalKey && …`, so when the
+    // portal was unknown the check was SKIPPED and every portal's items showed at once —
+    // which is how "Master Bill of Lading" turned up on FocusAir. An item that names the
+    // portals it belongs to must not appear on a portal we cannot identify.
+    if (item.portals && item.portals.indexOf(portalKey) === -1) return false;
 
     // Core renders NO role navigation at all — a single-user tool shows the document
     // forms and settings, and nothing else. There is deliberately no collapsed "locked"

@@ -8806,7 +8806,12 @@ function visibleNavFor({
 }) {
   return NAV_ITEMS.filter(item => {
     // Portal-specific items (FocusAir on air, FocusSea on sea).
-    if (item.portals && portalKey && item.portals.indexOf(portalKey) === -1) return false;
+    //
+    // 🔴 FAILS CLOSED. This used to read `item.portals && portalKey && …`, so when the
+    // portal was unknown the check was SKIPPED and every portal's items showed at once —
+    // which is how "Master Bill of Lading" turned up on FocusAir. An item that names the
+    // portals it belongs to must not appear on a portal we cannot identify.
+    if (item.portals && item.portals.indexOf(portalKey) === -1) return false;
 
     // Core renders NO role navigation at all — a single-user tool shows the document
     // forms and settings, and nothing else. There is deliberately no collapsed "locked"
@@ -9631,10 +9636,12 @@ const OVERRIDE_PAGE_LAYOUT_CONFIG = "overridePageLayoutConfig";
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "LOAD_CONTEXT": () => (/* binding */ LOAD_CONTEXT),
 /* harmony export */   "PURGE_CONTEXT": () => (/* binding */ PURGE_CONTEXT),
 /* harmony export */   "SET_CONTEXT": () => (/* binding */ SET_CONTEXT),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /**
  * Request context — designation, tier and active portal.
  *
@@ -9647,6 +9654,7 @@ __webpack_require__.r(__webpack_exports__);
  * run regardless of what this store says. A user editing localStorage changes what their
  * sidebar looks like and nothing else. Never gate a mutation on these values alone.
  */
+
 
 const STORAGE_KEY = "f16s_context";
 const SET_CONTEXT = "setContext";
@@ -9729,9 +9737,36 @@ const mutations = {
     }
   }
 };
+const LOAD_CONTEXT = "loadContext";
+const actions = {
+  /**
+   * Fetch the context for a session that has a token but no stored context.
+   *
+   * 🔴 Without this the rail silently degrades: `designation` is null, so every
+   * role-scoped item is filtered out and the user stares at a near-empty sidebar while
+   * being perfectly authenticated. Nothing prompts them, because nothing is broken from
+   * the server's point of view — their token is fine.
+   *
+   * ⚠️ Only when it is MISSING. This is not a refresh on every page load; the login
+   * response is still the normal path and localStorage still carries it across refreshes.
+   */
+  [LOAD_CONTEXT](context) {
+    if (context.state.designation) return Promise.resolve();
+    return _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/me").then(({
+      data
+    }) => context.commit(SET_CONTEXT, {
+      context: data.context,
+      portal: data.portal
+    }))
+    // A failure here leaves the shell exactly as it was. The route guards and the
+    // server still decide everything that matters.
+    .catch(() => {});
+  }
+};
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   state,
   getters,
+  actions,
   mutations
 });
 

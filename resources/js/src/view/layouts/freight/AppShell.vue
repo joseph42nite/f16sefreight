@@ -63,6 +63,7 @@
 <script>
 import { mapGetters } from "vuex";
 import { visibleNavFor } from "@/core/config/navigation";
+import { LOAD_CONTEXT } from "@/core/services/store/context.module";
 import BellPanel from "@/view/pages/freight/components/BellPanel.vue";
 import VisualReporter from "@/view/pages/freight/components/VisualReporter.vue";
 
@@ -70,6 +71,12 @@ export default {
   name: "AppShell",
   components: { BellPanel, VisualReporter },
   data: () => ({ collapsed: false }),
+  /* The shell is the first thing that needs to know who is looking at it, so a session
+     that arrived without a stored context recovers here rather than drawing a rail with
+     the role items missing. Does nothing on the normal path. */
+  created() {
+    this.$store.dispatch(LOAD_CONTEXT);
+  },
   computed: {
     ...mapGetters(["designation", "tier", "portal", "tierAtLeast"]),
     nav() {

@@ -270,6 +270,16 @@ Route::get('/openclaw/pending', [\App\Http\Controllers\OpenClawController::class
 */
 Route::middleware(['auth:user-api', 'portal'])->group(function () {
 
+    // 🔴 The shell's context, for a page load that is not a login.
+    //
+    // `designation`, `tier` and `portal` reach the browser ONLY on the login response and
+    // live in localStorage after that. Lose that entry — cleared storage, a new browser,
+    // a token restored without it — and the rail has no idea who is looking at it: every
+    // role-scoped item disappears and the user is left staring at a near-empty sidebar
+    // while still perfectly authenticated. The context module's docblock has always said
+    // "before /me returns"; this is that endpoint, finally built.
+    Route::get('/me', [\App\Http\Controllers\Auth\LoginController::class, 'me']);
+
     // ── Pre-conversion ──────────────────────────────────────────────────────
     Route::get('/enquiries', [\App\Http\Controllers\Freight\EnquiryController::class, 'index']);
     Route::post('/enquiries', [\App\Http\Controllers\Freight\EnquiryController::class, 'store']);

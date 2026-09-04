@@ -71,6 +71,26 @@ class MultiPortalScopingTest extends TestCase
      * assigned board. Leaving it null here made these portal-scoping tests assert against
      * an empty list, which would have passed for the wrong reason.
      */
+    /**
+     * 🔴 `/me` exists so a browser holding a valid token but no stored context can ask
+     * who it is. Without it the rail renders with every role-scoped item missing and
+     * nothing explains why — the token is fine, so the server reports no problem at all.
+     */
+    public function test_me_returns_the_context_and_the_portal_of_the_host(): void
+    {
+        $this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->operator),
+            'Accept' => 'application/json',
+        ])->getJson('http://focusair.localhost/api/me')
+            ->assertOk()
+            ->assertJsonPath('context.designation', 'operations')
+            ->assertJsonPath('context.tier', 'command')
+            // ⚠️ The portal comes from the HOST, not from anything the caller sends, so
+            // this cannot report a portal the user is not actually on.
+            ->assertJsonPath('portal.key', 'focusair')
+            ->assertJsonPath('portal.scope', 'air');
+    }
+
     private function job(Agent $branch, string $mode, ?User $owner = null): int
     {
         $enquiryId = DB::table('enquiries')->insertGetId([

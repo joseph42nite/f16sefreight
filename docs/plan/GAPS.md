@@ -393,6 +393,33 @@ context-less session produces, so the failure mode itself stays described.
 
 ---
 
+## 🔴 Found 2026-09-04 — mail retention is specified, scaffolded, and not implemented
+
+The owner asked whether mail is kept for **one year**, and whether clients wanting older
+mail are **sent to Outlook**. PRD §9.3 says neither, and the code does neither yet.
+
+| | PRD §9.3 says | Code does today |
+|---|---|---|
+| Message **snippets** | inline **forever** | kept (nothing deletes them) |
+| Message **bodies** | cached **90 days**, then re-fetched on demand | 🔴 kept forever — nothing evicts |
+| **Attachments** | cached **90 days from last access** | 🔴 kept forever — nothing evicts |
+| `job_documents` | 12 months hot → Glacier, **5 years** (customs statute) | 🔴 no lifecycle at all |
+| Old mail | 🔴 **"Re-fetch, don't redirect"** | no re-fetch path exists |
+
+| # | Finding | Detail |
+|---|---|---|
+| 79 | 🔴 **The retention schema exists and nothing drives it.** `email_attachments` carries `cache_expires_at`, `provider_attachment_id` and `fetch_state` — the exact columns the policy needs — but **nothing in `app/` ever writes `cache_expires_at`**, no eviction command exists (the scheduler runs four commands, none of them this), and nothing reads `fetch_state` to re-fetch | So storage grows without bound. PRD's own costing puts the difference at a **steady ~220 GB versus ~900 GB/year and climbing** |
+| 80 | 🔴 **The PRD argues explicitly AGAINST redirecting to Outlook**, which is worth surfacing because it is the natural assumption | Its three reasons: a deep link only works if that person is signed into that mailbox in that browser — *"a consignee, broker or colleague never is"*; it sends the user out of the portal, contradicting why the mail workspace exists; and re-fetch is one API call, ~5 quota units, under a second. ⚠️ **Core-tier tenants have no mailbox connection at all**, so for them there is no Outlook to redirect to |
+| 81 | ⚠️ **Generated documents must never be evicted on the same schedule.** An AWB, HBL, Delivery Order or customs manifest **was never in anyone's mailbox** — we produced it | Mailbox-origin files are a cache in front of a durable store we do not own; generated documents are the **only** copy of a record Indian customs statute requires for five years. Any eviction job must split on provenance, or it destroys legal records |
+
+⚠️ **Graceful degradation is mandatory when this is built.** Re-fetch fails when the mailbox
+is disconnected, the staff member has left, or the client deleted the message. The row is
+never deleted, so filename, size, sender and date stay visible with *"Original no longer
+available in the connected mailbox"* — the metadata is evidence the document existed even
+when the bytes are gone. A 404 is not acceptable.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

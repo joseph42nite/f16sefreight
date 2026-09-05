@@ -116,37 +116,24 @@
               :class="'fx-card--' + urgency(job)"
             >
               <div class="fx-card__top">
-                <span class="identifier fx-card__no">{{ job.execution_job_no || "—" }}</span>
+                <!--
+                  🔴 ONE identifier, and it is the AWB. Every card in these four columns
+                  is a confirmed shipment, and the AWB is the number that is actually
+                  used — quoted to the airline, printed on the manifest, given to the
+                  client. Stacking the job and enquiry numbers beside it made the card a
+                  list of references to look past rather than a shipment to read.
+
+                  ⚠️ The job number remains the fallback, not decoration: a shipment can
+                  be confirmed before its waybill is raised, and a card with no
+                  identifier at all is one nobody can act on or talk about.
+                -->
+                <span class="identifier fx-card__no">
+                  {{ job.awb_number || job.execution_job_no || "—" }}
+                </span>
                 <!-- The stage badge: the fine status the four columns group over. -->
                 <StatusChip :value="job.status" />
               </div>
 
-              <!--
-                THE IDENTIFIER LADDER, in the order a shipment earns the rungs: the
-                enquiry number when the client first wrote in, the job number when the
-                shipment was confirmed, the AWB once the waybill is raised. Showing all
-                three is what makes them one shipment rather than three systems — and the
-                enquiry number is the one an operator quotes back to a client who has not
-                heard a job number yet.
-              -->
-              <!--
-                🔴 Every card in these four columns is a CONFIRMED shipment, so the AWB is
-                the number the operator actually quotes — to the airline, to the client,
-                on the manifest. It leads. The enquiry number stays as the quieter second
-                line, because it is what a client who has not been told a job number yet
-                will still recognise.
-
-                ⚠️ "awaiting" is not the same as absent: a confirmed shipment whose waybill
-                has not been raised says so, rather than showing a gap that reads as a
-                rendering fault.
-              -->
-              <div class="fx-card__ladder">
-                <span v-if="job.awb_number" class="identifier fx-card__awb">{{ job.awb_number }}</span>
-                <span v-else class="fx-card__awb is-pending">AWB not raised</span>
-                <span v-if="job.enquiry && job.enquiry.enquiry_no" class="identifier fx-card__meta">
-                  {{ job.enquiry.enquiry_no }}
-                </span>
-              </div>
 
               <!-- Cargo tags, from the enquiry's regex-extracted figures. -->
               <div v-if="job.enquiry" class="fx-card__tags">

@@ -309,13 +309,6 @@ body {
   margin-top: var(--space-2); }
 .fx-bell__to { color: var(--fg-muted); font-size: .75rem; margin: 0; }
 
-/* The AWB leads on a confirmed shipment — it is the number that gets quoted. */
-.fx-card__awb { font-weight: 600; color: var(--text-primary); }
-.fx-card__awb.is-pending { font-weight: 400; color: var(--fg-muted); font-style: italic; }
-
-/* The rungs a shipment has earned so far — enquiry, then AWB, under the job number. */
-.fx-card__ladder { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-
 /* The way back to the finished shipments the Completed column stopped drawing. */
 .fx-board__more {
   width: 100%; margin-top: var(--space-2); padding: var(--space-2);

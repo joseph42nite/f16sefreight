@@ -570,19 +570,11 @@ var render = function render() {
         staticClass: "fx-card__top"
       }, [_c("span", {
         staticClass: "identifier fx-card__no"
-      }, [_vm._v(_vm._s(job.execution_job_no || "—"))]), _vm._v(" "), _c("StatusChip", {
+      }, [_vm._v("\n                " + _vm._s(job.awb_number || job.execution_job_no || "—") + "\n              ")]), _vm._v(" "), _c("StatusChip", {
         attrs: {
           value: job.status
         }
-      })], 1), _vm._v(" "), _c("div", {
-        staticClass: "fx-card__ladder"
-      }, [job.awb_number ? _c("span", {
-        staticClass: "identifier fx-card__awb"
-      }, [_vm._v(_vm._s(job.awb_number))]) : _c("span", {
-        staticClass: "fx-card__awb is-pending"
-      }, [_vm._v("AWB not raised")]), _vm._v(" "), job.enquiry && job.enquiry.enquiry_no ? _c("span", {
-        staticClass: "identifier fx-card__meta"
-      }, [_vm._v("\n                " + _vm._s(job.enquiry.enquiry_no) + "\n              ")]) : _vm._e()]), _vm._v(" "), job.enquiry ? _c("div", {
+      })], 1), _vm._v(" "), job.enquiry ? _c("div", {
         staticClass: "fx-card__tags"
       }, [job.enquiry.extracted_pieces ? _c("span", [_vm._v("📦 " + _vm._s(job.enquiry.extracted_pieces) + " pcs")]) : _vm._e(), _vm._v(" "), job.enquiry.extracted_weight ? _c("span", [_vm._v("\n                ⚖ "), _c("Figure", {
         attrs: {

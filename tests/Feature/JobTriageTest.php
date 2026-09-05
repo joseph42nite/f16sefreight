@@ -166,6 +166,60 @@ class JobTriageTest extends TestCase
         return $this;
     }
 
+    /**
+     * 🔴 A completed shipment raises a notification, NEVER a mail. "Completed" is a
+     * status a person set; a status set by mistake would otherwise become a wrong message
+     * to a customer, which the desk cannot take back. The bell card carries the drafted
+     * text and a person approves it.
+     */
+    public function test_completing_a_shipment_notifies_the_owner(): void
+    {
+        $enquiry = $this->createEnquiry('air');
+        $jobId = $this->api()
+            ->postJson("http://{$this->host('air')}/api/enquiries/{$enquiry['id']}/convert", [])
+            ->assertStatus(201)->json('job.id');
+
+        $job = \App\Job::withoutGlobalScopes()->find($jobId);
+        $job->update(['awb_number' => '176-10000008']);
+        $job->update(['status' => \App\Enums\JobStatus::Completed]);
+
+        $notification = DB::table('notifications')
+            ->where('type', \App\Services\BellNotificationService::SHIPMENT_COMPLETED)
+            ->where('notifiable_id', $this->pricing->id)
+            ->first();
+
+        $this->assertNotNull($notification, 'completing the shipment told nobody');
+
+        $data = json_decode($notification->data, true);
+        $this->assertSame('176-10000008', $data['awb_number']);
+        // Pinned like an approval: a message owed to a customer stops being useful the
+        // longer it sits under routine traffic.
+        $this->assertSame(
+            \App\Services\BellNotificationService::PRIORITY_APPROVAL,
+            (int) $notification->priority
+        );
+    }
+
+    /**
+     * ⚠️ A completed AIR job with no waybill is a data problem, not a shipment that flew.
+     * Announcing it would turn that data problem into a conversation with a client.
+     */
+    public function test_a_completed_shipment_without_a_waybill_announces_nothing(): void
+    {
+        $enquiry = $this->createEnquiry('air');
+        $jobId = $this->api()
+            ->postJson("http://{$this->host('air')}/api/enquiries/{$enquiry['id']}/convert", [])
+            ->assertStatus(201)->json('job.id');
+
+        \App\Job::withoutGlobalScopes()->find($jobId)
+            ->update(['status' => \App\Enums\JobStatus::Completed]);
+
+        $this->assertDatabaseMissing('notifications', [
+            'type' => \App\Services\BellNotificationService::SHIPMENT_COMPLETED,
+            'notifiable_id' => $this->pricing->id,
+        ]);
+    }
+
     // ─── 1. Sequence assignment, per mode ────────────────────────────────────
 
     /**

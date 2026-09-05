@@ -77,7 +77,7 @@ const PROCESS = [{
  * the older ones are hidden behind a disclosure, not dropped: the count in the header
  * always states the true total, and one click brings the rest back.
  */
-const DONE_VISIBLE = 12;
+const DONE_VISIBLE = 10;
 const POOL_KEY = "f16s_kanban_pool_collapsed";
 const FILTER_KEY = "f16s_kanban_filters";
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -576,11 +576,13 @@ var render = function render() {
         }
       })], 1), _vm._v(" "), _c("div", {
         staticClass: "fx-card__ladder"
-      }, [job.enquiry && job.enquiry.enquiry_no ? _c("span", {
+      }, [job.awb_number ? _c("span", {
+        staticClass: "identifier fx-card__awb"
+      }, [_vm._v(_vm._s(job.awb_number))]) : _c("span", {
+        staticClass: "fx-card__awb is-pending"
+      }, [_vm._v("AWB not raised")]), _vm._v(" "), job.enquiry && job.enquiry.enquiry_no ? _c("span", {
         staticClass: "identifier fx-card__meta"
-      }, [_vm._v("\n                " + _vm._s(job.enquiry.enquiry_no) + "\n              ")]) : _vm._e(), _vm._v(" "), job.awb_number ? _c("span", {
-        staticClass: "identifier fx-card__meta"
-      }, [_vm._v(_vm._s(job.awb_number))]) : _vm._e()]), _vm._v(" "), job.enquiry ? _c("div", {
+      }, [_vm._v("\n                " + _vm._s(job.enquiry.enquiry_no) + "\n              ")]) : _vm._e()]), _vm._v(" "), job.enquiry ? _c("div", {
         staticClass: "fx-card__tags"
       }, [job.enquiry.extracted_pieces ? _c("span", [_vm._v("📦 " + _vm._s(job.enquiry.extracted_pieces) + " pcs")]) : _vm._e(), _vm._v(" "), job.enquiry.extracted_weight ? _c("span", [_vm._v("\n                ⚖ "), _c("Figure", {
         attrs: {

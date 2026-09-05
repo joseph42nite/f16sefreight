@@ -447,6 +447,17 @@ and BCC in the UI (the column exists and is populated only on outbound).
 
 ---
 
+## 🔴 Found 2026-09-05 — the seeder had AWBs on exactly the wrong shipments
+
+| # | Finding | Detail |
+|---|---|---|
+| 87 | 🔴 **Every Completed job had NO `awb_number`, and the only three that did were at Intake.** Precisely backwards | The funnel block that seeds historical shipments never set one. A completed air shipment without a waybill is not a state that can exist — **the waybill is what flew** — and the board therefore made the AWB look like an early-stage field. Fixed; all 31 completed shipments now carry one, in a separate number band from the operational jobs. **Third time this session that seed data contradicting reality hid something** (see #70, #85) |
+| 88 | 🟢 **The AWB now leads on every board card.** All four columns hold `jobs`, which exist only after confirmation, so every card there is one converted shipment — the AWB is the number the operator quotes to the airline, the client and the manifest | The enquiry number stays as a quieter second line: it is what a client who has never been told a job number still recognises. ⚠️ A confirmed shipment whose waybill is not yet raised says **"AWB not raised"** rather than showing a gap, which would read as a rendering fault. The pool is untouched — those are enquiries, pre-conversion |
+| 89 | 🟢 **Completion raises a NOTIFICATION, never a mail.** Pinned at approval priority, carrying the AWB, the thread and the client address | 🔴 *"Completed"* is a status a person set. A status set by mistake would otherwise become a wrong message to a customer, and that is not something the desk can take back — so the bell card shows the **drafted text**, editable, and the button approves that specific message rather than an action in the abstract. It sends on the conversation the shipment came from, so the client's reply lands on the same thread. ⚠️ Suppressed entirely for a completed air job with **no AWB**: that is a data problem, and announcing it would turn a data problem into a conversation with a client |
+| 90 | ⚠️ **The bell's pinned section assumed every pinned row was a handover request.** Anything at `PRIORITY_APPROVAL` rendered as *"Handover requested on …"* with Accept/Reject | So a completed shipment announced itself as somebody else's reassignment. Now branched on type. A shared priority is not a shared meaning |
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

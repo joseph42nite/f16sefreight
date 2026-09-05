@@ -129,11 +129,23 @@
                 enquiry number is the one an operator quotes back to a client who has not
                 heard a job number yet.
               -->
+              <!--
+                🔴 Every card in these four columns is a CONFIRMED shipment, so the AWB is
+                the number the operator actually quotes — to the airline, to the client,
+                on the manifest. It leads. The enquiry number stays as the quieter second
+                line, because it is what a client who has not been told a job number yet
+                will still recognise.
+
+                ⚠️ "awaiting" is not the same as absent: a confirmed shipment whose waybill
+                has not been raised says so, rather than showing a gap that reads as a
+                rendering fault.
+              -->
               <div class="fx-card__ladder">
+                <span v-if="job.awb_number" class="identifier fx-card__awb">{{ job.awb_number }}</span>
+                <span v-else class="fx-card__awb is-pending">AWB not raised</span>
                 <span v-if="job.enquiry && job.enquiry.enquiry_no" class="identifier fx-card__meta">
                   {{ job.enquiry.enquiry_no }}
                 </span>
-                <span v-if="job.awb_number" class="identifier fx-card__meta">{{ job.awb_number }}</span>
               </div>
 
               <!-- Cargo tags, from the enquiry's regex-extracted figures. -->
@@ -269,7 +281,7 @@ const PROCESS = [
  * the older ones are hidden behind a disclosure, not dropped: the count in the header
  * always states the true total, and one click brings the rest back.
  */
-const DONE_VISIBLE = 12;
+const DONE_VISIBLE = 10;
 
 const POOL_KEY = "f16s_kanban_pool_collapsed";
 const FILTER_KEY = "f16s_kanban_filters";

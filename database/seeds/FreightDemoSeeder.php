@@ -623,6 +623,19 @@ class FreightDemoSeeder extends Seeder
                     'execution_job_no' => sprintf('JOBA-%s-%s-%04d', $agentCode, $when->format('y'), $seq),
                     'customer_id' => $customer->id, 'ops_id' => $users['operations']->id,
                     'pricing_id' => $users['pricing']->id, 'status' => 'Completed',
+                    // 🔴 A COMPLETED AIR SHIPMENT HAS AN AWB. The waybill is what flew;
+                    // a finished job without one is not a state that can exist. This
+                    // block seeded every historical shipment with `awb_number` NULL, so
+                    // the board's Completed column showed 31 cards with no waybill and
+                    // the Intake column showed the only three that had one — precisely
+                    // backwards, and it made the AWB look like an early-stage field.
+                    //
+                    // ⚠️ A separate number band from the operational jobs above, which
+                    // use 100000xx. Two forwarders never hold the same airway bill, and
+                    // neither do two jobs.
+                    'awb_number' => '176-' . str_pad(
+                        (string) (20000000 + ($branch->id * 1000) + $seq), 8, '0', STR_PAD_LEFT
+                    ),
                     'cargo_type' => 'general', 'completed_at' => $when->copy()->addDays(4),
                     'created_at' => $when, 'updated_at' => $when,
                 ]);

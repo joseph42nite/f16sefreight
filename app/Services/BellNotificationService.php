@@ -31,6 +31,9 @@ class BellNotificationService
 
     public const REASSIGNMENT = 'App\\Notifications\\ReassignmentRequested';
 
+    /** A shipment has completed and the client has not been told yet. */
+    public const SHIPMENT_COMPLETED = 'App\\Notifications\\ShipmentCompleted';
+
     /**
      * @param  array<string, mixed>  $data
      */

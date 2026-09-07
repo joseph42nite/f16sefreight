@@ -4,6 +4,8 @@ namespace App\Services\Mail;
 
 use App\MailboxConnection;
 use App\Enquiry;
+use App\Services\RegexClassificationService;
+use App\EmailMessage;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -98,10 +100,53 @@ class MessageIngestor
                 ]);
 
                 $stats['ingested']++;
+
+                // 🔴 THE CLASSIFIER IS RUN HERE, and until now it was run NOWHERE. The
+                // service, its fallback chain and its cargo patterns all existed and
+                // nothing ever called `classify()` — every thread arrived 'unclassified'
+                // and stayed that way until a human picked from the dropdown. A classifier
+                // nobody invokes is a constant wearing the shape of a decision.
+                $this->stageClassification($message);
             });
         }
 
         return $stats;
+    }
+
+    /**
+     * Stage what the regex thinks this conversation is. It never mints anything.
+     *
+     * ⚠️ PRD §5.2.3: **regex stages, the OPERATOR mints.** Creating an enquiry here would
+     * inflate the conversion denominator with conversations nobody ever treated as an
+     * enquiry — so this writes one column and stops.
+     *
+     * 🔴 Only while the thread is still `unclassified`. A later message must never
+     * overwrite a human's decision: an operator who filed a thread as `airline` has said
+     * something the classifier does not get to argue with, and a client's reply arriving
+     * afterwards would otherwise silently undo it.
+     */
+    private function stageClassification(NormalisedMessage $message): void
+    {
+        $stored = EmailMessage::where('message_id', $message->messageId)->first();
+
+        if ($stored === null) {
+            return;
+        }
+
+        $result = app(RegexClassificationService::class)->classify($stored);
+
+        // NULL means the message must not be classified at all — outbound, or backfilled.
+        if ($result === null) {
+            return;
+        }
+
+        DB::table('email_threads')
+            ->where('thread_key', $stored->thread_key)
+            ->where('classification', 'unclassified')
+            ->update([
+                'classification' => $result['classification'],
+                'updated_at'     => now(),
+            ]);
     }
 
     private function createThread(MailboxConnection $connection, NormalisedMessage $message, string $threadKey): void

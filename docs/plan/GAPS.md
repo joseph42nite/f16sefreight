@@ -478,6 +478,22 @@ product decision (sales seeing all client mail), not an oversight to patch.
 
 ---
 
+## 🔴 2026-09-07 — the classifier had never once run
+
+| # | Finding | Detail |
+|---|---|---|
+| 95 | 🔴 **`RegexClassificationService::classify()` was called by NOTHING.** The service was injected into `EmailInboxController`, which used only `recordOverride()`. The fallback chain, the rule matching and the cargo patterns all existed and none of it ever executed — **every thread arrived `unclassified` and stayed that way** until a human picked from the dropdown | A classifier nobody invokes is a constant wearing the shape of a decision. Now run at ingestion. ⚠️ An existing test **asserted** `unclassified` after sync and so locked the absence in: it read *"does not mint"* as *"does not classify"*. **PRD §528 is literally `Inbound mail → Classify & stage`**, and §5.2.5 says the parser *"pre-selects that classification"* while *"no enquiry_no is consumed … until an operator confirms"*. Minting is what would corrupt the conversion denominator; staging a suggestion costs nothing |
+| 96 | 🔴 **The chain had no fallback that works without configuration.** `email_classification_rules` is **empty on every tenant** (#48) and stays empty until somebody writes rules, so `firstMatchingRule` matched nothing and everything fell to the default | Added, in order of specificity: tenant rules → **a domain already onboarded as a customer** → the platform directory → `customer_enquiry`. The owner's point: a domain we already invoice writing back is, on the balance of evidence, an enquiry. ⚠️ `globalClassificationFor()` was ALSO dead — written, documented, never called — so the platform half of the chain was missing too |
+| 97 | ⚠️ **Free mail is excluded from the known-client rule**, and the guard is only observable against a domain the directory already classifies | Where the directory says nothing the chain ends at `customer_enquiry` anyway, so a test on a bare gmail address would pass whether the guard existed or not. The test uses a curated airline domain, where the two paths disagree — otherwise it would prove nothing |
+| 98 | 🟢 **`$transportMode` was a dead parameter** on `firstMatchingRule` — passed, never read | Classification does not depend on the mode; only the sea-only CBM pattern does. It is now nullable, because at ingestion the mode is genuinely unknown: a branch runs air and sea from one mailbox and neither `mailbox_connections` nor `agents_info` carries a mode. Passing a guessed `'air'` would be inventing a fact to satisfy a signature |
+
+⚠️ **Still not staged: the cargo variables.** PRD §5.2.5 also says the parser *"parks the
+extracted cargo variables on the `email_threads` row"*. `extractCargo` runs and its result
+is discarded, because the mode it needs for CBM is unknown at ingestion and `email_threads`
+has no columns to park it in. Origin/destination are not extracted at all — see below.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

@@ -55,7 +55,14 @@ class RegexClassificationService
      * @return array{classification: string, matched_rule_id: ?int, cargo: array}|null
      *         NULL when the message must not be classified at all.
      */
-    public function classify(EmailMessage $message, string $transportMode): ?array
+    /**
+     * ⚠️ `$transportMode` is NULLABLE because classification does not depend on it — only
+     * the CBM pattern does, and that is sea-only. At ingestion the mode is genuinely
+     * unknown: a branch runs air and sea from one mailbox, and a mail says which it is
+     * long before anyone can tell from the envelope. Passing a guessed 'air' there would
+     * be inventing a fact to satisfy a signature.
+     */
+    public function classify(EmailMessage $message, ?string $transportMode = null): ?array
     {
         // The guard that protects the conversion denominator. Checked first, always.
         if ($message->direction !== 'inbound') {
@@ -71,17 +78,73 @@ class RegexClassificationService
 
         $haystack = trim(($message->subject ?? '') . "\n" . ($message->body_snippet ?? ''));
 
-        $rule = $this->firstMatchingRule($message, $transportMode, $haystack);
+        $rule = $this->firstMatchingRule($message, $haystack);
 
         if ($rule !== null) {
             DB::table('email_classification_rules')->where('id', $rule->id)->increment('hit_count');
         }
 
         return [
-            'classification'  => $rule->target_classification ?? 'customer_enquiry',
+            // 🔴 THE FALLBACK CHAIN, most specific first:
+            //
+            //   1. the tenant's own rules      — a local exception outranks everything
+            //   2. a domain we already invoice — see below
+            //   3. the platform directory      — what the industry knows about a domain
+            //   4. customer_enquiry            — the safe default: an enquiry misfiled as
+            //      an enquiry costs a re-classification; a real one misfiled as airline
+            //      mail is a client waiting on a quote nobody is writing.
+            'classification'  => $rule->target_classification
+                ?? $this->knownClientClassification($message)
+                ?? $this->globalClassificationFor($message->from)
+                ?? 'customer_enquiry',
             'matched_rule_id' => $rule->id ?? null,
             'cargo'           => $this->extractCargo($haystack, $transportMode),
         ];
+    }
+
+    /**
+     * A domain we have already onboarded as a customer is, on the balance of evidence,
+     * writing to us about a shipment.
+     *
+     * 🔴 This needs NO configuration, which is the point. `email_classification_rules` is
+     * empty on a new tenant and stays empty until somebody writes rules, so without this
+     * the chain had nothing to match on and every message fell through to the default —
+     * the classifier was a constant wearing the shape of a decision.
+     *
+     * ⚠️ Scoped to the COMPANY, not the branch. `customers` is tenant-wide and a client
+     * group is every row sharing `(company_id, email_domain)`; matching per branch would
+     * fail to recognise a client the Chennai office onboarded.
+     *
+     * ⚠️ Free mail is excluded. Half a client's staff write from gmail.com, and one
+     * customer onboarded with a free-mail domain would otherwise classify every personal
+     * account on the internet as that client's enquiry.
+     */
+    private function knownClientClassification(EmailMessage $message): ?string
+    {
+        $from = (string) $message->from;
+
+        if (! str_contains($from, '@')) {
+            return null;
+        }
+
+        $domain = strtolower(substr(strrchr($from, '@'), 1));
+
+        if (app(GlobalDomainDirectory::class)->isFreeMail($domain)) {
+            return null;
+        }
+
+        $companyId = DB::table('agents_info')->where('id', $message->agent_id)->value('company_id');
+
+        if ($companyId === null) {
+            return null;
+        }
+
+        $known = DB::table('customers')
+            ->where('company_id', $companyId)
+            ->whereRaw('LOWER(email_domain) = ?', [$domain])
+            ->exists();
+
+        return $known ? 'customer_enquiry' : null;
     }
 
     /**
@@ -89,7 +152,7 @@ class RegexClassificationService
      * `priority` ascending, so a specific sender_domain_match entry beats a broad
      * body_keyword.
      */
-    private function firstMatchingRule(EmailMessage $message, string $transportMode, string $haystack): ?object
+    private function firstMatchingRule(EmailMessage $message, string $haystack): ?object
     {
         $rules = DB::table('email_classification_rules')
             ->where('agent_id', $message->agent_id)
@@ -164,7 +227,7 @@ class RegexClassificationService
      * must stay missing rather than being invented, because these numbers end up on a
      * customs declaration.
      */
-    public function extractCargo(string $text, string $transportMode): array
+    public function extractCargo(string $text, ?string $transportMode = null): array
     {
         $cargo = [];
 

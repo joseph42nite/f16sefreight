@@ -198,19 +198,115 @@ class MailboxSyncTest extends TestCase
     }
 
     /**
-     * 🔴 Ingestion never classifies and never mints an enquiry. PRD §5.2.3: regex stages,
-     * the OPERATOR mints — auto-minting here inflates the conversion denominator with
-     * conversations nobody ever treated as an enquiry.
+     * 🔴 A KNOWN CLIENT'S DOMAIN IS THE FALLBACK THAT NEEDS NO CONFIGURATION.
+     * `email_classification_rules` is empty on a new tenant and stays empty until somebody
+     * writes rules — so without this the chain matched nothing and every message fell
+     * through to the default. The classifier was a constant wearing the shape of a
+     * decision.
      */
-    public function test_ingestion_does_not_classify_or_mint_an_enquiry(): void
+    public function test_a_mail_from_an_onboarded_client_is_staged_as_an_enquiry(): void
+    {
+        DB::table('customers')->insert([
+            'company_id' => $this->branch->company_id,
+            'name' => 'Abc Logistics',
+            'email_domain' => 'abclogistics.in',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->fakeDelta([$this->graphMessage([
+            'from' => ['emailAddress' => ['address' => 'exports@abclogistics.in']],
+        ])]);
+
+        $this->sync();
+
+        $this->assertSame(
+            'customer_enquiry',
+            DB::table('email_threads')->where('agent_id', $this->branch->id)->value('classification'),
+            'a domain we already invoice was not recognised'
+        );
+    }
+
+    /**
+     * ⚠️ Free mail is excluded from the known-client rule. Half a client's staff write
+     * from gmail.com, and one customer onboarded under a free-mail domain would otherwise
+     * make every personal account on the internet that client's enquiry.
+     *
+     * 🔴 The guard is only OBSERVABLE against a domain the platform directory already
+     * classifies. Where the directory says nothing the chain ends at `customer_enquiry`
+     * anyway, so a test on a bare gmail address would pass whether the guard existed or
+     * not. This one uses a curated airline domain, where the two paths disagree.
+     */
+    public function test_free_mail_does_not_let_a_client_row_outrank_the_directory(): void
+    {
+        // ⚠️ `airlines` carries no timestamps — it is reference data, not a record of
+        // events, so there is no created_at to set.
+        DB::table('airlines')->insert([
+            'name' => 'Test Air', 'domain' => 'gmail.com', 'is_active' => 1,
+        ]);
+
+        // The trap: somebody onboarded a client under a free-mail domain.
+        DB::table('customers')->insert([
+            'company_id' => $this->branch->company_id,
+            'name' => 'Someone On Gmail',
+            'email_domain' => 'gmail.com',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->fakeDelta([$this->graphMessage([
+            'from' => ['emailAddress' => ['address' => 'a.stranger@gmail.com']],
+        ])]);
+
+        $this->sync();
+
+        $this->assertSame(
+            'airline',
+            DB::table('email_threads')->where('agent_id', $this->branch->id)->value('classification'),
+            'a free-mail client row overrode the platform directory'
+        );
+    }
+
+    /**
+     * 🔴 A later message must never overwrite a human's decision. An operator who filed a
+     * thread as `airline` has said something the classifier does not get to argue with.
+     */
+    public function test_staging_never_overwrites_an_operators_classification(): void
+    {
+        $this->fakeDelta([$this->graphMessage()]);
+        $this->sync();
+
+        DB::table('email_threads')->where('agent_id', $this->branch->id)
+            ->update(['classification' => 'airline']);
+
+        $this->fakeDelta([$this->graphMessage(['id' => 'm-9', 'internetMessageId' => '<m-9@test>'])]);
+        $this->sync();
+
+        $this->assertSame(
+            'airline',
+            DB::table('email_threads')->where('agent_id', $this->branch->id)->value('classification')
+        );
+    }
+
+    /**
+     * 🔴 Ingestion CLASSIFIES but never mints. PRD §5.2.5: the parser *"pre-selects that
+     * classification"* and *"no `enquiry_no` is consumed and no `enquiries` row is created
+     * until an operator confirms via the triage dropdown"* — and the flow at §528 is
+     * literally `Inbound mail → Classify & stage`.
+     *
+     * ⚠️ This test asserted `unclassified` until 2026-09-07, which conflated the two
+     * halves: it read "does not mint" as "does not classify" and so locked in a classifier
+     * that never ran. Minting is the part that would inflate the conversion denominator;
+     * staging a suggestion costs nothing and is the entire point of having a classifier.
+     */
+    public function test_ingestion_stages_a_classification_but_mints_nothing(): void
     {
         $this->fakeDelta([$this->graphMessage()]);
         $this->sync();
 
         $thread = DB::table('email_threads')->where('agent_id', $this->branch->id)->first();
 
-        $this->assertSame('unclassified', $thread->classification);
-        $this->assertNull($thread->enquiry_id);
+        $this->assertNotSame('unclassified', $thread->classification, 'the classifier did not run');
+        $this->assertNull($thread->enquiry_id, 'ingestion minted an enquiry');
+        $this->assertSame(0, DB::table('enquiries')->count());
     }
 
     // ─── Echo suppression ────────────────────────────────────────────────────

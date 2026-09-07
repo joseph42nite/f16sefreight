@@ -50,6 +50,32 @@ class RegexClassificationService
     private const PIECES_PATTERN = '/(\d+)\s*(?:pcs?|pieces?|packages?|cartons?|pkgs?)\b/i';
 
     /**
+     * A lane, written the way clients write one: "BOM to HAM", "BOM-HAM", "BOM → HAM",
+     * "Mumbai to Hamburg".
+     *
+     * ⚠️ The separator is REQUIRED. Two codes with no relation between them ("AWB 176,
+     * ETA MON") are not a lane, and a pattern that paired any two capitals in a sentence
+     * would invent routes out of ordinary prose.
+     */
+    private const LANE_PATTERN = '/\b([A-Za-z]{3,})\b\s*(?:to|->|-|–|—|→|\/)\s*\b([A-Za-z]{3,})\b/iu';
+
+    /**
+     * 🔴 Words that LOOK like IATA codes and are not. Taken from the same list the PDF
+     * extractor uses (`transform_flight_routing`'s LABEL_WORDS), because it is the same
+     * problem: a bare three-letter matcher reads "TO", "AND" and "THE" as airports and
+     * produces a route from any sentence containing them.
+     *
+     * ⚠️ Deliberately NOT extended with every English three-letter word. Real codes
+     * collide with real words — BAY, RED, ONE, SUN are all airports — so the list stays
+     * the extractor's, where each entry was added because it actually misfired.
+     */
+    private const LANE_STOPWORDS = [
+        'to', 'by', 'first', 'carrier', 'routing', 'and', 'destination', 'airport',
+        'of', 'requested', 'flight', 'date', 'the', 'for', 'via', 'our', 'per',
+        'kgs', 'kg', 'pcs', 'cbm', 'awb', 'eta', 'etd', 'ready', 'from',
+    ];
+
+    /**
      * Classify one message and stage what it contains.
      *
      * @return array{classification: string, matched_rule_id: ?int, cargo: array}|null
@@ -251,7 +277,72 @@ class RegexClassificationService
             $cargo['volume_cbm'] = ['value' => (float) $m[1], 'confidence' => 'high'];
         }
 
-        return $cargo;
+        return $cargo + $this->extractLane($text);
+    }
+
+    /**
+     * The route, resolved to IATA codes through `locations`.
+     *
+     * 🔴 Resolved by SQL, never by calling the Python extractor. The 8,383-entry map lives
+     * in `python/extract_awb_new.py`; `export_locations.py` loads it into `locations` once,
+     * and this reads that. An HTTP round trip per inbound mail would be slow and would put
+     * the OCR service in the mail pipeline's critical path, where it has no business.
+     *
+     * ⚠️ Both ends must resolve or NEITHER is returned. "Mumbai to somewhere we could not
+     * read" is a half-lane, and a half-lane on a card looks like a whole one — the
+     * operator sees an origin, believes the destination was simply blank, and never checks.
+     *
+     * ⚠️ Confidence is `low` throughout. This is one line of prose read by a regex, not a
+     * field off a document, and the workspace should ask before it is trusted.
+     */
+    private function extractLane(string $text): array
+    {
+        if (! preg_match(self::LANE_PATTERN, $text, $m)) {
+            return [];
+        }
+
+        $origin = $this->resolveLocation($m[1]);
+        $dest   = $this->resolveLocation($m[2]);
+
+        if ($origin === null || $dest === null || $origin === $dest) {
+            return [];
+        }
+
+        return [
+            'origin'      => ['value' => $origin, 'confidence' => 'low'],
+            'destination' => ['value' => $dest,   'confidence' => 'low'],
+        ];
+    }
+
+    /** One token — a code as written, or a city name — to an IATA code. */
+    private function resolveLocation(string $token): ?string
+    {
+        $token = strtolower(trim($token));
+
+        if ($token === '' || in_array($token, self::LANE_STOPWORDS, true)) {
+            return null;
+        }
+
+        // A three-letter token is only a code if the table agrees it is one. Checking
+        // against `locations` rather than accepting any three capitals is what stops
+        // "MON" and "EUR" becoming airports.
+        if (strlen($token) === 3) {
+            $code = strtoupper($token);
+
+            $known = DB::table('locations')
+                ->where('is_active', true)
+                ->where('iata_code', $code)
+                ->exists();
+
+            if ($known) {
+                return $code;
+            }
+        }
+
+        return DB::table('locations')
+            ->where('is_active', true)
+            ->whereRaw('LOWER(destination) = ?', [$token])
+            ->value('iata_code');
     }
 
     /**

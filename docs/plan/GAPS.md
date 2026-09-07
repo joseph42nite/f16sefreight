@@ -494,6 +494,20 @@ has no columns to park it in. Origin/destination are not extracted at all — se
 
 ---
 
+## 🟢 2026-09-07 — lanes, read from the mail without an API call
+
+| # | Finding | Detail |
+|---|---|---|
+| 99 | 🟢 **Origin and destination are now extracted from mail text**, resolved to IATA through `locations` | The 8,383-entry `AIRPORT_IATA_MAP` lives in `python/extract_awb_new.py`. `python/export_locations.py` emits it as JSON (parsed with `ast`, **never imported** — importing pulls the whole OCR dependency tree in to read one dict) and `LocationSeeder` loads it. 🔴 **PHP then resolves with SQL and never calls the Python service.** An HTTP round trip per inbound mail would be slow and would put the OCR server in the mail pipeline's critical path — the owner's point, and the right one |
+| 100 | 🔴 **A three-letter token is only a code if `locations` agrees.** A bare `\b[A-Z]{3}\b` matcher reads "TO", "AND" and "THE" as airports and invents routes out of ordinary prose | The stopword list is taken from the extractor's own `LABEL_WORDS`, where each entry was added because it actually misfired. ⚠️ Deliberately **not** extended with every English three-letter word: BAY, RED, ONE and SUN are all real airports, so guessing would cost more than it saved. A separator is required too — two unrelated codes in a sentence are not a lane |
+| 101 | 🔴 **Both ends resolve or neither is staged.** A half-lane on a card looks like a whole one — the operator sees an origin, assumes the destination was simply not given, and never checks | The rest of the extraction still stands; only the lane is withheld |
+| 102 | 🟢 **`email_threads.staged_cargo`** — PRD §5.2.5 says the parser *"parks the extracted cargo variables on the `email_threads` row"*, and there was nowhere to park them: `extractCargo()` ran and its result was discarded on every message | ⚠️ **One JSON column, not five typed ones.** This is a suggestion carrying a confidence per field, written by a regex, read once when the operator opens the thread and superseded when they confirm. Typed columns would invite reports against numbers nobody has checked; the confirmed values already live on `enquiries`. NULL where nothing was found — `{}` would claim we looked and found none, a different statement from having nothing to say |
+
+⚠️ **Confidence is `low` on every extracted lane.** It is one line of prose read by a regex,
+not a field off a document, and the workspace must ask before it is trusted.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

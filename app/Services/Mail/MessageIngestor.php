@@ -145,6 +145,11 @@ class MessageIngestor
             ->where('classification', 'unclassified')
             ->update([
                 'classification' => $result['classification'],
+                // PRD §5.2.5 — the cargo the parser read, parked for the operator to
+                // confirm. NULL where nothing was found: an airline notice has no cargo in
+                // it, and an empty object would claim we looked and found none, which is a
+                // different statement from having nothing to say.
+                'staged_cargo'   => $result['cargo'] === [] ? null : json_encode($result['cargo']),
                 'updated_at'     => now(),
             ]);
     }

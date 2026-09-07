@@ -287,6 +287,86 @@ class MailboxSyncTest extends TestCase
     }
 
     /**
+     * 🔴 The lane, read out of the mail and resolved through `locations`.
+     *
+     * ⚠️ Resolved by SQL, never by calling the Python extractor. The 8,383-entry IATA map
+     * is exported into `locations` once; an HTTP round trip per inbound mail would be slow
+     * and would put the OCR service in the mail pipeline's critical path.
+     */
+    public function test_a_lane_in_the_mail_is_staged_as_iata_codes(): void
+    {
+        DB::table('locations')->insert([
+            ['destination' => 'mumbai', 'iata_code' => 'BOM', 'is_active' => 1],
+            ['destination' => 'hamburg', 'iata_code' => 'HAM', 'is_active' => 1],
+        ]);
+
+        $this->fakeDelta([$this->graphMessage([
+            'bodyPreview' => 'Please quote Mumbai to Hamburg, 12 pcs, 480kg.',
+        ])]);
+
+        $this->sync();
+
+        $cargo = json_decode(
+            DB::table('email_threads')->where('agent_id', $this->branch->id)->value('staged_cargo'),
+            true
+        );
+
+        $this->assertSame('BOM', $cargo['origin']['value']);
+        $this->assertSame('HAM', $cargo['destination']['value']);
+        $this->assertSame(12, $cargo['pieces']['value']);
+
+        // ⚠️ `low` throughout: this is prose read by a regex, not a field off a document,
+        // and the workspace has to ask before any of it is trusted.
+        $this->assertSame('low', $cargo['origin']['confidence']);
+    }
+
+    /**
+     * 🔴 Both ends resolve or NEITHER is staged. A half-lane on a card looks like a whole
+     * one — the operator sees an origin, assumes the destination was simply not given, and
+     * never checks.
+     */
+    public function test_a_half_resolved_lane_stages_nothing(): void
+    {
+        DB::table('locations')->insert([
+            ['destination' => 'mumbai', 'iata_code' => 'BOM', 'is_active' => 1],
+        ]);
+
+        $this->fakeDelta([$this->graphMessage([
+            'bodyPreview' => 'Please quote Mumbai to Nowhereville, 12 pcs.',
+        ])]);
+
+        $this->sync();
+
+        $cargo = json_decode(
+            DB::table('email_threads')->where('agent_id', $this->branch->id)->value('staged_cargo'),
+            true
+        );
+
+        $this->assertArrayNotHasKey('origin', $cargo ?? []);
+        // The rest of the extraction still stands — only the lane is withheld.
+        $this->assertSame(12, $cargo['pieces']['value']);
+    }
+
+    /**
+     * ⚠️ A thread with no cargo in it stages NULL, not an empty object. An airline notice
+     * has nothing to extract, and `{}` would claim we looked and found none — a different
+     * statement from having nothing to say.
+     */
+    public function test_a_mail_with_no_cargo_stages_null(): void
+    {
+        $this->fakeDelta([$this->graphMessage([
+            'subject' => 'Schedule update',
+            'bodyPreview' => 'Our office will be closed on Friday.',
+        ])]);
+
+        $this->sync();
+
+        $this->assertNull(
+            DB::table('email_threads')->where('agent_id', $this->branch->id)->value('staged_cargo')
+        );
+    }
+
+    /**
      * 🔴 Ingestion CLASSIFIES but never mints. PRD §5.2.5: the parser *"pre-selects that
      * classification"* and *"no `enquiry_no` is consumed and no `enquiries` row is created
      * until an operator confirms via the triage dropdown"* — and the flow at §528 is

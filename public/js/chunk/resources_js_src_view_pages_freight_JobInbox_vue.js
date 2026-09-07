@@ -187,6 +187,31 @@ const WORKSPACE_TABS = [{
       const hit = LOST_REASONS.find(x => x.value === r);
       return hit ? hit.label : null;
     },
+    /**
+     * The parsed figures, in the order an operator reads a shipment: what it is, how big,
+     * where it goes.
+     *
+     * ⚠️ Labelled here rather than server-side because these are the classifier's own key
+     * names — `gross_weight`, `volume_cbm` — and a UI label is not something the extraction
+     * payload should be carrying.
+     */
+    stagedCargo() {
+      const cargo = this.active && this.active.staged_cargo || {};
+      const LABELS = {
+        pieces: "Pieces",
+        gross_weight: "Gross weight",
+        chargeable_weight: "Chargeable weight",
+        volume_cbm: "Volume (CBM)",
+        origin: "Origin",
+        destination: "Destination"
+      };
+      return Object.keys(LABELS).filter(k => cargo[k] && cargo[k].value !== null && cargo[k].value !== undefined).map(k => ({
+        key: k,
+        label: LABELS[k],
+        value: cargo[k].value,
+        confidence: cargo[k].confidence
+      }));
+    },
     workspaceTabs() {
       const isEnquiry = this.active && this.active.classification === "customer_enquiry";
       if (!isEnquiry) return [];
@@ -1931,7 +1956,20 @@ var render = function render() {
       },
       proxy: true
     }])
-  }, [_vm._v(" "), _vm.active ? [!_vm.workspaceTabs.length ? _c("section", {
+  }, [_vm._v(" "), _vm.active ? [_vm.stagedCargo.length ? _c("section", {
+    staticClass: "fx-staged"
+  }, [_c("h3", {
+    staticClass: "fx-staged__title"
+  }, [_vm._v("What the mail said")]), _vm._v(" "), _c("dl", {
+    staticClass: "fx-staged__list"
+  }, _vm._l(_vm.stagedCargo, function (f) {
+    return _c("div", {
+      key: f.key,
+      staticClass: "fx-staged__row"
+    }, [_c("dt", [_vm._v(_vm._s(f.label))]), _vm._v(" "), _c("dd", [_vm._v("\n              " + _vm._s(f.value) + "\n              "), _vm._v(" "), f.confidence === "low" ? _c("span", {
+      staticClass: "fx-staged__flag"
+    }, [_vm._v("check")]) : _vm._e()])]);
+  }), 0)]) : _vm._e(), _vm._v(" "), !_vm.workspaceTabs.length ? _c("section", {
     staticClass: "fx-muted"
   }, [_c("p", [_vm._v("\n          Extraction and the cost sheet are for "), _c("strong", [_vm._v("customer enquiries")]), _vm._v(". This\n          conversation is filed as\n          "), _c("StatusChip", {
     attrs: {

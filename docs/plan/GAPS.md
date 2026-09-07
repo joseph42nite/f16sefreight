@@ -508,6 +508,26 @@ not a field off a document, and the workspace must ask before it is trusted.
 
 ---
 
+## 🔴 2026-09-07 — staged cargo on screen, and a lane that cannot be written
+
+| # | Finding | Detail |
+|---|---|---|
+| 103 | 🟢 **The workspace shows what the parser read** — "What the mail said", one row per field, `check` beside anything low-confidence (§1.3: the word carries it, never colour alone) | Without it the classifier's work was done and discarded, and the operator retyped figures the system already had |
+| 104 | 🔴 **Inserting that section between a `v-if` and its `v-else-if` silently rebound the chain.** `<section v-else-if="tab === 'cost'">` attached to the NEW condition, so **Extraction and Cost only rendered when staged cargo was absent** | `vue-template-compiler` reported `tpl: ok` and emitted no tip — the template is valid, it just means something else. Caught only by opening the drawer and finding the tabs gone. ⚠️ Anything inserted into a Vue conditional chain has to go **before or after the whole chain**, never between two of its members |
+| 105 | 🔴 **The extracted lane CANNOT be written to the enquiry.** `extractLane` yields 3-letter IATA (`BOM`); `enquiries.origin_code` is `char(5)` validated `size:5`, and every existing air enquiry holds **UN/LOCODE** (`INBOM`, `DEHAM`) | So the panel is **read-only**, deliberately. Two things are missing before an operator can commit it: (a) there is **no enquiry-update endpoint** at all — only index, store, lost, reopen, convert; (b) the code standard has to be decided. `ports` (LOCODE) exists and is **empty**, and the Python map is IATA-only, so there is no LOCODE source in the project. **Owner's call — see below** |
+
+### ⚠️ IATA or LOCODE on an enquiry — owner's call
+
+- **Air waybills** use IATA 3 (`departure_airport = 'BOM'`), which is what the AWB needs.
+- **Enquiries** use LOCODE 5 (`origin_code = 'INBOM'`) for air *and* sea in all existing data.
+
+Three ways out: relax `origin_code` to 3–5 characters and store IATA for air; source LOCODE
+reference data and resolve to that; or keep the staged lane display-only and let the
+operator pick from a list. 🔴 **Showing a value the operator cannot commit is honest;
+adding a button that silently truncates `INBOM` to fit would not be.**
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

@@ -480,6 +480,12 @@ class EmailInboxController extends Controller
             'status'         => $thread->status,
             'classification' => $thread->classification,
             'mailbox_address' => $mailboxAddress,
+            // What the parser read out of the mail, for the operator to check. A
+            // suggestion with a confidence per field — never a value anything downstream
+            // reads on its own.
+            'staged_cargo'   => $thread->staged_cargo
+                ? json_decode($thread->staged_cargo, true)
+                : null,
             'subject'        => $latest->subject ?? null,
             'from'           => $correspondent ?? ($latest->from ?? null),
             'snippet'        => $latest->body_snippet ?? null,

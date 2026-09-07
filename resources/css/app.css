@@ -304,6 +304,18 @@ body {
 .fx-compose__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .fx-compose__body { font-family: inherit; resize: vertical; }
 
+/* What the classifier read out of the mail, for the operator to check. */
+.fx-staged { border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: var(--space-3); margin-bottom: var(--space-3); }
+.fx-staged__title { font-size: .8125rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--fg-muted); margin: 0 0 var(--space-2); }
+.fx-staged__list { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.fx-staged__row { display: flex; justify-content: space-between; gap: var(--space-2); }
+.fx-staged__row dt { color: var(--fg-muted); font-size: .8125rem; }
+.fx-staged__row dd { margin: 0; font-weight: 600; }
+.fx-staged__flag { font-weight: 400; font-size: .75rem; color: var(--fg-muted);
+  border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 0 .35em; margin-left: .4em; }
+
 /* The completion message, shown in the bell before it can be sent. */
 .fx-bell__draft { display: flex; flex-direction: column; gap: var(--space-2);
   margin-top: var(--space-2); }

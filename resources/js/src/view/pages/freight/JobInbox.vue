@@ -250,6 +250,31 @@
 
       <template v-if="active">
         <!--
+          🔴 WHAT THE MAIL SAID, before anyone types anything. The classifier reads every
+          inbound message and parks what it found; without showing it here that work was
+          done and discarded, and the operator retyped figures the system already had.
+
+          ⚠️ Read-only, deliberately. Confirming these onto the enquiry needs an endpoint
+          that does not exist yet, and the lane needs the IATA/LOCODE question settled
+          first — see GAPS. Showing a value the operator cannot commit is honest; showing
+          a button that silently does nothing is not.
+        -->
+        <section v-if="stagedCargo.length" class="fx-staged">
+          <h3 class="fx-staged__title">What the mail said</h3>
+          <dl class="fx-staged__list">
+            <div v-for="f in stagedCargo" :key="f.key" class="fx-staged__row">
+              <dt>{{ f.label }}</dt>
+              <dd>
+                {{ f.value }}
+                <!-- §1.3 never signal with colour alone — the word carries it. Low
+                     confidence is prose read by a regex, not a field off a document. -->
+                <span v-if="f.confidence === 'low'" class="fx-staged__flag">check</span>
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <!--
           ⚠️ Named, not blank. A drawer with nothing in it reads as broken; saying which
           classification unlocks the work turns it into an instruction the operator can act
           on — reclassify, or this is not that kind of conversation.
@@ -513,6 +538,35 @@ export default {
       const r = this.active && this.active.enquiry && this.active.enquiry.lost_reason;
       const hit = LOST_REASONS.find((x) => x.value === r);
       return hit ? hit.label : null;
+    },
+    /**
+     * The parsed figures, in the order an operator reads a shipment: what it is, how big,
+     * where it goes.
+     *
+     * ⚠️ Labelled here rather than server-side because these are the classifier's own key
+     * names — `gross_weight`, `volume_cbm` — and a UI label is not something the extraction
+     * payload should be carrying.
+     */
+    stagedCargo() {
+      const cargo = (this.active && this.active.staged_cargo) || {};
+
+      const LABELS = {
+        pieces: "Pieces",
+        gross_weight: "Gross weight",
+        chargeable_weight: "Chargeable weight",
+        volume_cbm: "Volume (CBM)",
+        origin: "Origin",
+        destination: "Destination",
+      };
+
+      return Object.keys(LABELS)
+        .filter((k) => cargo[k] && cargo[k].value !== null && cargo[k].value !== undefined)
+        .map((k) => ({
+          key: k,
+          label: LABELS[k],
+          value: cargo[k].value,
+          confidence: cargo[k].confidence,
+        }));
     },
     workspaceTabs() {
       const isEnquiry = this.active && this.active.classification === "customer_enquiry";

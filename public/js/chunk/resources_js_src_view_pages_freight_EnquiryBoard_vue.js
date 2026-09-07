@@ -24,6 +24,30 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 
 
+
+/**
+ * Mirrors `App\Enums\EnquiryStatus` exactly.
+ *
+ * ⚠️ The values are lowercase and the database CHECK is CASE-SENSITIVE (it forces
+ * COLLATE utf8mb4_bin) — 'Lost' is not a variant of 'lost', it is rejected. The labels
+ * are for reading; the values are the contract.
+ */
+const STATUSES = [{
+  value: "new",
+  label: "New"
+}, {
+  value: "quoted",
+  label: "Quoted"
+}, {
+  value: "awaiting_client",
+  label: "Awaiting client"
+}, {
+  value: "converted",
+  label: "Converted"
+}, {
+  value: "lost",
+  label: "Lost"
+}];
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "EnquiryBoard",
   components: {
@@ -32,10 +56,12 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
   },
   data: () => ({
     client: "",
+    status: "",
     rows: [],
     loading: true,
     error: null,
-    busyId: null
+    busyId: null,
+    STATUSES
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)(["portalLabel", "can"])), {}, {
     canConvert() {
@@ -51,7 +77,10 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       this.loading = true;
       // The client filter is a server-side search across the customer record AND the
       // sending domain — see EnquiryController::index.
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/enquiries" + (this.client ? "?client=" + encodeURIComponent(this.client) : "")).then(({
+      const q = [];
+      if (this.client) q.push("client=" + encodeURIComponent(this.client));
+      if (this.status) q.push("status=" + encodeURIComponent(this.status));
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/enquiries" + (q.length ? "?" + q.join("&") : "")).then(({
         data
       }) => {
         this.rows = data.data || [];
@@ -131,16 +160,51 @@ var render = function render() {
         _vm.client = $event.target.value;
       }
     }
-  })]), _vm._v(" "), _c("button", {
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Status")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.status,
+      expression: "status"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.status = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("All")]), _vm._v(" "), _vm._l(_vm.STATUSES, function (s) {
+    return _c("option", {
+      key: s.value,
+      domProps: {
+        value: s.value
+      }
+    }, [_vm._v(_vm._s(s.label))]);
+  })], 2)]), _vm._v(" "), _c("button", {
     staticClass: "fx-btn",
     on: {
       click: _vm.load
     }
-  }, [_vm._v("Search")]), _vm._v(" "), _vm.client ? _c("button", {
+  }, [_vm._v("Search")]), _vm._v(" "), _vm.client || _vm.status ? _c("button", {
     staticClass: "fx-btn fx-btn--ghost",
     on: {
       click: function ($event) {
         _vm.client = "";
+        _vm.status = "";
         _vm.load();
       }
     }
@@ -193,14 +257,6 @@ var render = function render() {
         kind: "weight"
       }
     })], 1), _vm._v(" "), _c("td", {
-      staticClass: "fx-num numeric"
-    }, [_c("Figure", {
-      attrs: {
-        value: row.quoted_amount,
-        kind: "currency",
-        "currency-code": row.quoted_currency
-      }
-    })], 1), _vm._v(" "), _c("td", {
       staticClass: "fx-row-actions"
     }, [_vm.canConvert && row.status !== "converted" && row.status !== "lost" ? _c("button", {
       staticClass: "fx-btn fx-btn--ghost",
@@ -245,11 +301,6 @@ var staticRenderFns = [function () {
       scope: "col"
     }
   }, [_vm._v("Weight")]), _vm._v(" "), _c("th", {
-    staticClass: "fx-num",
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Quoted")]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }

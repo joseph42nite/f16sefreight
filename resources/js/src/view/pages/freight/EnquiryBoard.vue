@@ -26,8 +26,21 @@
           @keyup.enter="load"
         />
       </label>
+      <label class="fx-field">
+        <span class="fx-field__label">Status</span>
+        <!-- Server-side, like the client search: the list is paginated, so filtering the
+             rows already fetched would hide matches sitting on the next page. -->
+        <select v-model="status" class="fx-input" @change="load">
+          <option value="">All</option>
+          <option v-for="s in STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
+        </select>
+      </label>
       <button class="fx-btn" @click="load">Search</button>
-      <button v-if="client" class="fx-btn fx-btn--ghost" @click="client = ''; load()">Clear</button>
+      <button
+        v-if="client || status"
+        class="fx-btn fx-btn--ghost"
+        @click="client = ''; status = ''; load()"
+      >Clear</button>
     </div>
 
     <p v-if="loading" class="fx-muted">Loading…</p>
@@ -45,7 +58,6 @@
           <th scope="col">Lane</th>
           <th scope="col" class="fx-num">Pieces</th>
           <th scope="col" class="fx-num">Weight</th>
-          <th scope="col" class="fx-num">Quoted</th>
           <th scope="col"></th>
         </tr>
       </thead>
@@ -80,7 +92,6 @@
           </td>
           <td class="fx-num numeric"><Figure :value="row.extracted_pieces" kind="count" /></td>
           <td class="fx-num numeric"><Figure :value="row.extracted_weight" kind="weight" /></td>
-          <td class="fx-num numeric"><Figure :value="row.quoted_amount" kind="currency" :currency-code="row.quoted_currency" /></td>
           <td class="fx-row-actions">
             <button
               v-if="canConvert && row.status !== 'converted' && row.status !== 'lost'"
@@ -103,11 +114,26 @@ import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 
+/**
+ * Mirrors `App\Enums\EnquiryStatus` exactly.
+ *
+ * ⚠️ The values are lowercase and the database CHECK is CASE-SENSITIVE (it forces
+ * COLLATE utf8mb4_bin) — 'Lost' is not a variant of 'lost', it is rejected. The labels
+ * are for reading; the values are the contract.
+ */
+const STATUSES = [
+  { value: "new", label: "New" },
+  { value: "quoted", label: "Quoted" },
+  { value: "awaiting_client", label: "Awaiting client" },
+  { value: "converted", label: "Converted" },
+  { value: "lost", label: "Lost" },
+];
+
 export default {
   name: "EnquiryBoard",
   components: { StatusChip, Figure },
   data: () => ({
-    client: "", rows: [], loading: true, error: null, busyId: null }),
+    client: "", status: "", rows: [], loading: true, error: null, busyId: null, STATUSES }),
   computed: {
     ...mapGetters(["portalLabel", "can"]),
     canConvert() {
@@ -123,7 +149,11 @@ export default {
       this.loading = true;
       // The client filter is a server-side search across the customer record AND the
       // sending domain — see EnquiryController::index.
-      ApiService.get("/enquiries" + (this.client ? "?client=" + encodeURIComponent(this.client) : ""))
+      const q = [];
+      if (this.client) q.push("client=" + encodeURIComponent(this.client));
+      if (this.status) q.push("status=" + encodeURIComponent(this.status));
+
+      ApiService.get("/enquiries" + (q.length ? "?" + q.join("&") : ""))
         .then(({ data }) => {
           this.rows = data.data || [];
         })

@@ -147,6 +147,102 @@ class PlatformAdminTest extends TestCase
         $this->assertStringStartsWith('created_at,agent_id,original,corrected', $response->getContent());
     }
 
+    /**
+     * One correction, so the summary and the purge have something real to act on.
+     *
+     * ⚠️ A real branch and a real thread. Both columns carry foreign keys, so hardcoded
+     * ids fail on an empty test database — and a fixture that cannot be inserted proves
+     * nothing about the endpoint it was written for.
+     */
+    private function override(array $overrides = []): void
+    {
+        $threadId = DB::table('email_threads')->insertGetId([
+            'agent_id' => $this->branch->id,
+            'thread_key' => 'thr_' . substr(uniqid('', false), -10),
+            'status' => 'triaged',
+            'classification' => 'airline',
+            'latest_message_received_at' => now(),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        DB::table('email_classification_overrides')->insert($overrides + [
+            'agent_id' => $this->branch->id,
+            'email_thread_id' => $threadId,
+            'original_classification' => 'airline',
+            'corrected_classification' => 'customer_enquiry',
+            'email_subject' => 'RE: MAWB 176-10000004',
+            'email_snippet' => 'Please quote 3 pallets BOM to HAM, 480kg.',
+            'sender_domain' => 'lufthansa.test',
+            'sender_email' => 'ops@lufthansa.test',
+            // ⚠️ An OPERATOR, not platform staff. `corrected_by` references `users`, and
+            // a correction is a tenant person disagreeing with the classifier — F16s staff
+            // never touch the dropdown.
+            'corrected_by' => $this->pricing->id,
+            'created_at' => now(),
+        ]);
+    }
+
+    /**
+     * 🔴 The export answers "what was this one correction", 5,000 rows at a time. This
+     * answers the question that comes first: *how often is the classifier wrong, and
+     * about what* — which a 5,000-row CSV cannot be read as an answer to.
+     */
+    public function test_the_failure_summary_groups_corrections_and_repeat_domains(): void
+    {
+        // Three from the same domain: the shape that means a sender_domain_match rule is
+        // waiting to be written, which is the cheapest rule type there is.
+        $this->override();
+        $this->override();
+        $this->override();
+        // A different mistake, so grouping has something to separate.
+        $this->override([
+            'original_classification' => 'customer_enquiry',
+            'corrected_classification' => 'vendor_invoice',
+            'sender_domain' => 'billing.test',
+        ]);
+
+        $body = $this->asStaff()
+            ->getJson($this->url('/api/admin/classification-failures'))
+            ->assertOk()
+            ->json();
+
+        $this->assertSame(4, $body['total']);
+        $this->assertFalse($body['ready'], 'four corrections is not a reviewable sample');
+        $this->assertCount(2, $body['by_correction']);
+
+        // ⚠️ Only domains seen twice or more. A single mistake is a coincidence; the
+        // threshold is what stops the list being every sender who ever wrote in.
+        $this->assertCount(1, $body['repeat_domains']);
+        $this->assertSame('lufthansa.test', $body['repeat_domains'][0]['sender_domain']);
+
+        // The words the classifier read, so a pattern can be written from evidence.
+        $this->assertStringContainsString('BOM to HAM', $body['samples'][0]['email_snippet']);
+    }
+
+    /**
+     * 🔴 The purge clears the LEARNING RECORD and nothing else. Corrections are a working
+     * set for tuning; once the rules change they measure a classifier that no longer
+     * exists. No mail, thread or enquiry is touched — that distinction is the whole reason
+     * this is safe to run.
+     */
+    public function test_purging_corrections_leaves_the_mail_alone(): void
+    {
+        $this->override();
+        $this->override();
+
+        $messages = DB::table('email_messages')->count();
+        $threads  = DB::table('email_threads')->count();
+
+        $this->asStaff()
+            ->deleteJson($this->url('/api/admin/classification-overrides'))
+            ->assertOk()
+            ->assertJsonPath('cleared', 2);
+
+        $this->assertSame(0, DB::table('email_classification_overrides')->count());
+        $this->assertSame($messages, DB::table('email_messages')->count(), 'the purge deleted mail');
+        $this->assertSame($threads, DB::table('email_threads')->count(), 'the purge deleted threads');
+    }
+
     // ─── The portal boundary ─────────────────────────────────────────────────
 
     /**

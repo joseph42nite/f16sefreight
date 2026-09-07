@@ -45,6 +45,17 @@ class AuthServiceProvider extends ServiceProvider
 
         // ── Enquiry lifecycle — pricing owns triage and conversion ───────────
         $this->define('triage',     ['pricing'], 'tactical');
+
+        // 🔴 SEPARATE from `triage`, deliberately. Re-classifying a thread is the one
+        // place a human tells the system its regex was wrong, and the people who read the
+        // mail are the ones who know — primarily pricing and operations, and sales for
+        // conversations that reach them first.
+        //
+        // ⚠️ NOT done by widening `triage`, which also gates customer onboarding and
+        // partner creation. Those are pricing's alone, and letting three more roles create
+        // customer records as a side effect of fixing a dropdown is the kind of permission
+        // leak nobody notices until it matters.
+        $this->define('classifyThread', ['pricing', 'operations', 'sales'], 'tactical');
         $this->define('convert',    ['pricing'], 'tactical');
         $this->define('markLost',   ['pricing'], 'tactical');
 

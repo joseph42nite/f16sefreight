@@ -141,6 +141,11 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'admin'], funct
     Route::get('/health', [\App\Http\Controllers\Platform\AdminHealthController::class, 'health']);
     Route::get('/logs', [\App\Http\Controllers\Platform\AdminHealthController::class, 'logs']);
     Route::get('/classification-overrides/export', [\App\Http\Controllers\Platform\AdminHealthController::class, 'classificationOverrides']);
+    // How often the classifier was wrong and about what — the question the 5,000-row
+    // export cannot answer.
+    Route::get('/classification-failures', [\App\Http\Controllers\Platform\AdminHealthController::class, 'classificationFailures']);
+    // Clears the LEARNING RECORD once the rules have been changed. No mail is touched.
+    Route::delete('/classification-overrides', [\App\Http\Controllers\Platform\AdminHealthController::class, 'purgeClassificationOverrides']);
 
     Route::get('/tickets', [\App\Http\Controllers\Platform\SupportTicketController::class, 'index']);
     Route::get('/tickets/{ticket}', [\App\Http\Controllers\Platform\SupportTicketController::class, 'show']);

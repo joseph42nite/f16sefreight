@@ -642,6 +642,55 @@ class InboxTriageTest extends TestCase
             ->assertStatus(422);
     }
 
+    /**
+     * 🔴 The people who READ the mail are the ones who know the regex got it wrong, so
+     * re-classification is not pricing's alone — operations correct the dropdown too.
+     *
+     * ⚠️ Granted through `classifyThread`, NOT by widening `triage`. `triage` also gates
+     * customer onboarding and partner creation, and letting operations create customer
+     * records as a side effect of fixing a misfiled thread is a permission leak nobody
+     * would notice until it mattered.
+     */
+    public function test_operations_may_correct_a_classification(): void
+    {
+        $ops = \App\User::create([
+            'name' => 'Ops', 'email' => 'ops-cls-' . substr(uniqid('', false), -6) . '@test.local',
+            'password' => \Illuminate\Support\Facades\Hash::make('x'),
+            'company_name' => $this->company->id, 'branch_name' => $this->branch->id,
+            'designation' => 'operations', 'is_active' => 1,
+        ]);
+
+        $id = $this->thread();
+
+        $this->api($ops)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
+            ->assertOk();
+
+        // The correction is recorded whoever made it — that is the training signal.
+        $this->assertDatabaseHas('email_classification_overrides', [
+            'email_thread_id' => $id,
+            'corrected_by'    => $ops->id,
+        ]);
+    }
+
+    /**
+     * ⚠️ Onboarding a customer stays pricing's. This is the leak the separate ability
+     * exists to prevent, so it is asserted rather than assumed.
+     */
+    public function test_correcting_a_classification_does_not_grant_customer_onboarding(): void
+    {
+        $ops = \App\User::create([
+            'name' => 'Ops', 'email' => 'ops-cust-' . substr(uniqid('', false), -6) . '@test.local',
+            'password' => \Illuminate\Support\Facades\Hash::make('x'),
+            'company_name' => $this->company->id, 'branch_name' => $this->branch->id,
+            'designation' => 'operations', 'is_active' => 1,
+        ]);
+
+        $this->api($ops)
+            ->postJson($this->url('/api/customers'), ['name' => 'Should Not Exist'])
+            ->assertStatus(403);
+    }
+
     public function test_an_unknown_classification_is_rejected(): void
     {
         $id = $this->thread();
@@ -705,8 +754,16 @@ class InboxTriageTest extends TestCase
         $this->assertNull($rows[0]['assigned_ops']);
     }
 
-    /** 🔒 Operations reads and claims; only pricing may re-classify. */
-    public function test_operations_may_read_the_inbox_but_not_reclassify(): void
+    /**
+     * 🔒 Operations reads, claims AND corrects.
+     *
+     * ⚠️ This test asserted the opposite until 2026-09-07: re-classification was
+     * pricing's alone. The owner changed it — the people who read the mail are the ones
+     * who can see the classifier got it wrong, and making them fetch a pricing colleague
+     * to fix a dropdown is how corrections stop being made at all, which costs the
+     * training signal the whole learning loop depends on.
+     */
+    public function test_operations_may_read_claim_and_correct(): void
     {
         $id = $this->thread();
         $ops = $this->user('operations');
@@ -714,7 +771,7 @@ class InboxTriageTest extends TestCase
         $this->api($ops)->getJson($this->url('/api/inbox/threads'))->assertOk();
         $this->api($ops)
             ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
-            ->assertForbidden();
+            ->assertOk();
     }
 
     /** 🔒 The inbox is operational — accounts has no business in it. */

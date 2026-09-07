@@ -165,7 +165,7 @@ class EmailInboxController extends Controller
      */
     public function classify(Request $request, EmailThread $thread): JsonResponse
     {
-        $this->authorize('triage');
+        $this->authorize('classifyThread');
 
         // 🔴 Validated against THIS PORTAL's set. The union would let an air operator file
         // a thread as `shipping_line` — a value their own folder list cannot show, so the
@@ -213,6 +213,10 @@ class EmailInboxController extends Controller
             'original_classification' => $from,
             'corrected_classification' => $to,
             'email_subject'           => $this->latestSubject($thread),
+            // The words the classifier read. Without them a correction says the regex was
+            // wrong but not what it was wrong about, and every tuning session begins by
+            // going back to the mailbox to find out.
+            'email_snippet'           => $this->latestSnippet($thread),
             'sender_domain'           => $this->senderDomain($thread),
             'sender_email'            => $this->senderEmail($thread),
             'corrected_by'            => auth()->id(),
@@ -409,6 +413,15 @@ class EmailInboxController extends Controller
     {
         return EmailMessage::where('thread_key', $thread->thread_key)
             ->orderByDesc('received_at')->value('subject');
+    }
+
+    /** The body text the classifier matched against — snippet only, as it reads. */
+    private function latestSnippet(EmailThread $thread): ?string
+    {
+        return EmailMessage::where('thread_key', $thread->thread_key)
+            ->where('direction', 'inbound')
+            ->orderByDesc('received_at')
+            ->value('body_snippet');
     }
 
     /** The first INBOUND sender — the correspondent, never our own reply address. */

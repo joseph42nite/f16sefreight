@@ -458,6 +458,26 @@ and BCC in the UI (the column exists and is populated only on outbound).
 
 ---
 
+## 🔴 2026-09-07 — the classification learning loop, measured and clearable
+
+Owner's framing: *"see how many times our regex failed based on how many times the client
+saw the first mail and determined it is actually something else and selects from the
+dropdown … then we improve our regex and delete this history."*
+
+| # | Finding | Detail |
+|---|---|---|
+| 91 | 🔴 **An override recorded that the regex was wrong, but not what it was wrong ABOUT.** `email_classification_overrides` stored the subject, the domain and both classifications — no body text | *"Airline mail, corrected to customer enquiry, subject 'Re: booking'"* cannot be turned into a pattern: the words that should have matched are in the body. `email_snippet` added. ⚠️ **Snippet only, never the full body** — the same ~500 characters the classifier itself reads, so the corpus contains nothing the matcher did not already see and does not become a second copy of client correspondence outside the 90-day body policy (owner's choice) |
+| 92 | 🔴 **The only reporting was a 5,000-row CSV export**, which answers *"what was this one correction"* and cannot be read as an answer to *"is the regex getting better"* | `GET /api/admin/classification-failures` groups by the correction made, lists **domains corrected twice or more** (a repeat domain is a `sender_domain_match` rule waiting to be written — the cheapest and most reliable rule type), and returns worked examples with their snippets. ⚠️ Grouped by correction, **not by rule**: `matched_rule_id` is NULL on nearly every row (#51), so grouping by rule would report everything as unattributed |
+| 93 | 🟢 **`DELETE /api/admin/classification-overrides` clears the LEARNING RECORD only** | No mail, thread or enquiry is touched — asserted in the test by counting `email_messages` and `email_threads` either side. Corrections are a working set: once the rules change they measure a classifier that no longer exists, and keeping them makes the next review report failures already fixed. `REVIEW_THRESHOLD = 150` — a starting point inside the owner's "100–200", surfaced as `ready` so nobody has to decide what "enough" means each time |
+| 94 | 🔴 **Re-classification was pricing's alone; it is now pricing, operations and sales.** The people who READ the mail are the ones who can see the classifier got it wrong | ⚠️ Granted through a **new `classifyThread` ability, NOT by widening `triage`** — `triage` also gates customer onboarding and partner creation, and letting three more roles create customer records as a side effect of fixing a dropdown is a permission leak nobody notices until it matters. A test asserts operations still gets **403** on `POST /customers` |
+
+⚠️ **Sales cannot use this yet.** `classifyThread` includes sales, but `viewInbox` is
+`['pricing','operations']`, so sales gets **403 on the thread list** and never reaches a
+dropdown to correct. The grant is inert until sales is added to the inbox — which is a
+product decision (sales seeing all client mail), not an oversight to patch.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

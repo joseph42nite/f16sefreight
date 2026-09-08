@@ -153,8 +153,12 @@ class EnquiryController extends Controller
             'extracted_weight'  => ['nullable', 'numeric', 'min:0'],
             'extracted_volume'  => ['nullable', 'numeric', 'min:0'],
             'cargo_description' => ['nullable', 'string'],
-            'origin_code'       => ['nullable', 'string', 'size:5'],
-            'dest_code'         => ['nullable', 'string', 'size:5'],
+            // 🔴 3 TO 5, not exactly 5. `size:5` demanded UN/LOCODE and so rejected every
+            // IATA code — which is what an air waybill carries, what the extractor's map
+            // resolves to, and what the mail parser reads out of an enquiry. The column is
+            // char(5), so a 3-character code fits and MySQL strips the padding on read.
+            'origin_code'       => ['nullable', 'string', 'min:3', 'max:5'],
+            'dest_code'         => ['nullable', 'string', 'min:3', 'max:5'],
             'quoted_amount'     => ['nullable', 'numeric', 'min:0'],
             'quoted_currency'   => ['nullable', 'string', 'size:3'],
         ]);

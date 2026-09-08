@@ -516,7 +516,23 @@ not a field off a document, and the workspace must ask before it is trusted.
 | 104 | 🔴 **Inserting that section between a `v-if` and its `v-else-if` silently rebound the chain.** `<section v-else-if="tab === 'cost'">` attached to the NEW condition, so **Extraction and Cost only rendered when staged cargo was absent** | `vue-template-compiler` reported `tpl: ok` and emitted no tip — the template is valid, it just means something else. Caught only by opening the drawer and finding the tabs gone. ⚠️ Anything inserted into a Vue conditional chain has to go **before or after the whole chain**, never between two of its members |
 | 105 | 🔴 **The extracted lane CANNOT be written to the enquiry.** `extractLane` yields 3-letter IATA (`BOM`); `enquiries.origin_code` is `char(5)` validated `size:5`, and every existing air enquiry holds **UN/LOCODE** (`INBOM`, `DEHAM`) | So the panel is **read-only**, deliberately. Two things are missing before an operator can commit it: (a) there is **no enquiry-update endpoint** at all — only index, store, lost, reopen, convert; (b) the code standard has to be decided. `ports` (LOCODE) exists and is **empty**, and the Python map is IATA-only, so there is no LOCODE source in the project. **Owner's call — see below** |
 
-### ⚠️ IATA or LOCODE on an enquiry — owner's call
+### 🟢 DECIDED 2026-09-08 — IATA everywhere, demo data included
+
+Option 1 taken: `origin_code`/`dest_code` accept **3–5 characters** and the demo data now
+carries IATA (`BOM`, `FRA`) instead of LOCODE (`INBOM`, `DEFRA`). The parsed lane is
+therefore writable to an enquiry — `size:5` had rejected every IATA code, which is what an
+air waybill carries and what the extractor's map resolves to.
+
+⚠️ **Sea lanes are IATA airport codes too, which is not what a port is.** `BOM`/`HAM` on a
+sea enquiry are placeholders until `ports` carries real LOCODE data. One standard the whole
+system agrees on beats two it silently mixes, but this is a stated compromise, not a
+finished answer — Nhava Sheva and Jebel Ali have no IATA code at all.
+
+⚠️ Four rows on branch 32 (`ENQA-UIXBOM-*`, created 2026-08-28) held LOCODE and **no seeder
+produces them** — leftovers from an early UI session. Converted by hand; a reseed will not
+restore them, and nothing else references them.
+
+### ⚠️ superseded — the original IATA-or-LOCODE question
 
 - **Air waybills** use IATA 3 (`departure_airport = 'BOM'`), which is what the AWB needs.
 - **Enquiries** use LOCODE 5 (`origin_code = 'INBOM'`) for air *and* sea in all existing data.

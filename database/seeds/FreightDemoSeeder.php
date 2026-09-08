@@ -66,9 +66,21 @@ class FreightDemoSeeder extends Seeder
 
     private const DESIGNATIONS = ['pricing', 'operations', 'sales', 'accounts', 'boss'];
 
-    /** Real lanes, so the LOCODEs on screen are ones a freight person recognises. */
-    private const AIR_LANES = [['INBOM', 'DEFRA'], ['INMAA', 'AEDXB'], ['INBOM', 'USJFK'], ['INDEL', 'GBLHR']];
-    private const SEA_LANES = [['INNSA', 'DEHAM'], ['INMAA', 'SGSIN'], ['INMUN', 'NLRTM']];
+    /**
+     * Real lanes, so the codes on screen are ones a freight person recognises.
+     *
+     * 🔴 IATA, NOT UN/LOCODE. These were `INBOM`/`DEFRA` — the sea standard — on air
+     * enquiries, while every air waybill in the same system carries `BOM`/`FRA`. One
+     * shipment therefore had two different codes for the same airport depending on which
+     * screen you were looking at, and the lane the mail parser reads (IATA, from the
+     * extractor's own map) could not be written to an enquiry at all.
+     *
+     * ⚠️ Sea lanes are IATA airport codes here too, which is not what a port is. They are
+     * placeholders until `ports` carries real LOCODE data — the honest position is one
+     * standard the whole system agrees on rather than two it silently mixes.
+     */
+    private const AIR_LANES = [['BOM', 'FRA'], ['MAA', 'DXB'], ['BOM', 'JFK'], ['DEL', 'LHR']];
+    private const SEA_LANES = [['BOM', 'HAM'], ['MAA', 'SIN'], ['BOM', 'RTM']];
 
     public function run(): void
     {
@@ -772,14 +784,14 @@ class FreightDemoSeeder extends Seeder
         // against replied is what makes `lost_reason = 'delay_in_response'` provable
         // instead of asserted — and it cannot be seen at all unless the data contains it.
         $threads = [
-            ['Quote request — 6 pallets INBOM to DEFRA', 'ops@contoso.test', 'customer_enquiry', 'unread', 0, false, 2, null],
+            ['Quote request — 6 pallets BOM to FRA', 'ops@contoso.test', 'customer_enquiry', 'unread', 0, false, 2, null],
             ['RE: Rates for Chennai–Dubai, 12 cartons', 'shipping@globex.test', 'customer_enquiry', 'triaged', 1, true, 4, 'converted'],
             ['Urgent: pharma shipment next Tuesday', 'exports@northwind.test', 'customer_enquiry', 'triaged', 0, false, 1, 'quoted'],
             ['Flight EK511 rescheduled to 04-Sep', 'cargo@emirates.test', 'airline', 'unread', 0, false, 1, null],
             ['MAWB 176-10000004 — space confirmed', 'bookings@lufthansa.test', 'airline', 'read', 1, false, 3, null],
             ['Bill of entry filed — INBOM/2026/0442', 'filings@sharmacha.test', 'clearance', 'unread', 0, false, 2, null],
             ['Pickup scheduled 02-Sep, 0900 hrs', 'dispatch@bluedart.test', 'trucking_road', 'read', 1, false, 1, null],
-            ['Still awaiting your rate — 3 pallets INBOM to SGSIN', 'logistics@globex.test', 'customer_enquiry', 'triaged', 1, false, 2, 'lost'],
+            ['Still awaiting your rate — 3 pallets BOM to SIN', 'logistics@globex.test', 'customer_enquiry', 'triaged', 1, false, 2, 'lost'],
         ];
 
         // One enquiry is used once. Handing two threads the same enquiry would make the

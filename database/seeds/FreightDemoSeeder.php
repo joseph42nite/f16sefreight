@@ -69,18 +69,21 @@ class FreightDemoSeeder extends Seeder
     /**
      * Real lanes, so the codes on screen are ones a freight person recognises.
      *
-     * 🔴 IATA, NOT UN/LOCODE. These were `INBOM`/`DEFRA` — the sea standard — on air
-     * enquiries, while every air waybill in the same system carries `BOM`/`FRA`. One
-     * shipment therefore had two different codes for the same airport depending on which
-     * screen you were looking at, and the lane the mail parser reads (IATA, from the
-     * extractor's own map) could not be written to an enquiry at all.
+     * 🔴 EACH MODE USES ITS OWN STANDARD, and that is the point rather than an
+     * inconsistency: **air is IATA, sea is UN/LOCODE.**
      *
-     * ⚠️ Sea lanes are IATA airport codes here too, which is not what a port is. They are
-     * placeholders until `ports` carries real LOCODE data — the honest position is one
-     * standard the whole system agrees on rather than two it silently mixes.
+     * Air enquiries used to carry `INBOM`/`DEFRA` while every air waybill in the same
+     * system carried `BOM`/`FRA` — two codes for one airport depending on the screen, and
+     * a lane the mail parser reads (IATA, from the extractor's map) that could not be
+     * written to an enquiry at all.
+     *
+     * ⚠️ Sea keeps LOCODE because a PORT HAS NO IATA CODE. Nhava Sheva and Jebel Ali are
+     * not airports; forcing them into a 3-letter airport code would be inventing an
+     * identifier that does not exist. `origin_code` accepts 3–5 characters precisely so
+     * both standards fit the column they share.
      */
     private const AIR_LANES = [['BOM', 'FRA'], ['MAA', 'DXB'], ['BOM', 'JFK'], ['DEL', 'LHR']];
-    private const SEA_LANES = [['BOM', 'HAM'], ['MAA', 'SIN'], ['BOM', 'RTM']];
+    private const SEA_LANES = [['INNSA', 'DEHAM'], ['INMAA', 'SGSIN'], ['INMUN', 'NLRTM']];
 
     public function run(): void
     {

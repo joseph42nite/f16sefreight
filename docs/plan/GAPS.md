@@ -523,10 +523,14 @@ carries IATA (`BOM`, `FRA`) instead of LOCODE (`INBOM`, `DEFRA`). The parsed lan
 therefore writable to an enquiry — `size:5` had rejected every IATA code, which is what an
 air waybill carries and what the extractor's map resolves to.
 
-⚠️ **Sea lanes are IATA airport codes too, which is not what a port is.** `BOM`/`HAM` on a
-sea enquiry are placeholders until `ports` carries real LOCODE data. One standard the whole
-system agrees on beats two it silently mixes, but this is a stated compromise, not a
-finished answer — Nhava Sheva and Jebel Ali have no IATA code at all.
+🔴 **CORRECTED 2026-09-08 — each mode keeps its own standard: air is IATA, sea is LOCODE.**
+My first pass put IATA on sea lanes too, reasoning that one standard beats two. That was
+wrong: **a port has no IATA code.** Nhava Sheva and Jebel Ali are not airports, and forcing
+them into a 3-letter airport code invents an identifier that does not exist. `origin_code`
+accepting 3–5 characters is what lets both standards share the column.
+
+Verified after reseeding: **air 219 rows all 3-character, sea 45 rows all 5-character**, no
+mixing in either direction.
 
 ⚠️ Four rows on branch 32 (`ENQA-UIXBOM-*`, created 2026-08-28) held LOCODE and **no seeder
 produces them** — leftovers from an early UI session. Converted by hand; a reseed will not

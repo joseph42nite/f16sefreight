@@ -141,6 +141,54 @@ class EnquiryController extends Controller
      * or consumes a number automatically — auto-minting burns document numbers on spam and
      * inflates the conversion denominator (PRD.md §5.2.3).
      */
+    /**
+     * Commit the cargo an operator has checked onto the enquiry.
+     *
+     * 🔴 This is the ONLY write path for the figures the mail parser staged. Without it
+     * `email_threads.staged_cargo` was a suggestion nobody could accept — the classifier
+     * read the mail, the workspace showed what it found, and the operator still had to
+     * retype it into a form.
+     *
+     * ⚠️ `cargo_data_source` stays `regex`, and that is the PRD's ladder rather than an
+     * oversight: tier 3 — operator-verified — lives in `air_/sea_shipment_details`, and
+     * the enquiry's copy is indicative by definition. 🔴 The cost is real and recorded in
+     * GAPS: a later OCR promotion will overwrite a value a human checked, because `ocr`
+     * outranks `regex` and nothing here says a person agreed with it.
+     *
+     * ⚠️ Codes are 3–5 characters because AIR IS IATA AND SEA IS LOCODE. `BOM` and `INNSA`
+     * are both correct, for different modes, in the same column.
+     */
+    public function updateCargo(Request $request, Enquiry $enquiry): JsonResponse
+    {
+        $this->authorize('triage');
+
+        $data = $request->validate([
+            'extracted_pieces' => ['nullable', 'integer', 'min:0'],
+            'extracted_weight' => ['nullable', 'numeric', 'min:0'],
+            'extracted_volume' => ['nullable', 'numeric', 'min:0'],
+            'origin_code'      => ['nullable', 'string', 'min:3', 'max:5'],
+            'dest_code'        => ['nullable', 'string', 'min:3', 'max:5'],
+        ]);
+
+        // 🔴 Refused once a job exists. The shipment has been confirmed and its cargo now
+        // belongs to the waybill; quietly rewriting the enquiry behind it would leave the
+        // two disagreeing about the same shipment with nothing to say which is right.
+        if ($enquiry->jobs()->exists()) {
+            return response()->json([
+                'error'  => 'This enquiry has converted to a job. Edit the shipment, not the enquiry.',
+                'reason' => 'has_job',
+            ], 422);
+        }
+
+        // Only what was actually sent: a field omitted is one the operator did not
+        // confirm, and writing NULL over it would erase a figure nobody disputed.
+        $enquiry->update(array_filter($data, fn ($v) => $v !== null));
+
+        $this->audit->record($enquiry->agent_id, 'enquiry.cargo_confirmed', 'enquiry', $enquiry->id, auth()->id());
+
+        return response()->json($enquiry->fresh());
+    }
+
     public function store(Request $request): JsonResponse
     {
         $this->authorize('triage');

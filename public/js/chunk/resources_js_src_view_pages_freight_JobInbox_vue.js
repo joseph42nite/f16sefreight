@@ -145,6 +145,9 @@ const WORKSPACE_TABS = [{
     sending: false,
     sendError: null,
     sentOk: false,
+    cargoBusy: false,
+    cargoError: null,
+    cargoSaved: false,
     draft: {
       to: "",
       cc: "",
@@ -195,6 +198,10 @@ const WORKSPACE_TABS = [{
      * names — `gross_weight`, `volume_cbm` — and a UI label is not something the extraction
      * payload should be carrying.
      */
+    /* Mirrors `triage` on the server: pricing owns the enquiry's figures. */
+    canConfirmCargo() {
+      return this.designation === "pricing" && !!this.active && !!this.active.enquiry && !this.active.job && this.stagedCargo.length > 0;
+    },
     stagedCargo() {
       const cargo = this.active && this.active.staged_cargo || {};
       const LABELS = {
@@ -382,6 +389,42 @@ const WORKSPACE_TABS = [{
         this.sending = false;
       });
     },
+    /**
+     * Commit the staged figures onto the enquiry.
+     *
+     * ⚠️ Sends only what the parser actually found. A key the extraction did not produce
+     * is not a value of NULL — it is a figure nobody has an opinion on, and sending NULL
+     * would erase whatever is already there.
+     */
+    confirmCargo() {
+      const cargo = this.active && this.active.staged_cargo || {};
+      const MAP = {
+        pieces: "extracted_pieces",
+        gross_weight: "extracted_weight",
+        volume_cbm: "extracted_volume",
+        origin: "origin_code",
+        destination: "dest_code"
+      };
+      const payload = {};
+      Object.keys(MAP).forEach(k => {
+        if (cargo[k] && cargo[k].value !== null && cargo[k].value !== undefined) {
+          payload[MAP[k]] = cargo[k].value;
+        }
+      });
+      this.cargoBusy = true;
+      this.cargoError = null;
+
+      // ⚠️ `patch(resource, slug, params)` joins the first two with a slash. Passing the
+      // whole path as `resource` and the payload as `slug` would PATCH
+      // /enquiries/5/cargo/[object Object] — the request goes out and 404s.
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].patch("/enquiries/" + this.active.enquiry.id, "cargo", payload).then(() => {
+        this.cargoSaved = true;
+      }).catch(e => {
+        this.cargoError = this.messageFor(e);
+      }).finally(() => {
+        this.cargoBusy = false;
+      });
+    },
     openExtraction() {
       this.tab = "extraction";
       this.setSplit(true);
@@ -554,6 +597,8 @@ const WORKSPACE_TABS = [{
       this.composing = false;
       this.sendError = null;
       this.sentOk = false;
+      this.cargoError = null;
+      this.cargoSaved = false;
       // 🔴 "enquiry" was a TAB until it moved to the header, and this line kept resetting
       // to it — a key no section matches, so the workspace rendered nothing at all and
       // whatever the operator had typed appeared to vanish. Removing a tab means removing
@@ -1969,7 +2014,21 @@ var render = function render() {
     }, [_c("dt", [_vm._v(_vm._s(f.label))]), _vm._v(" "), _c("dd", [_vm._v("\n              " + _vm._s(f.value) + "\n              "), _vm._v(" "), f.confidence === "low" ? _c("span", {
       staticClass: "fx-staged__flag"
     }, [_vm._v("check")]) : _vm._e()])]);
-  }), 0)]) : _vm._e(), _vm._v(" "), !_vm.workspaceTabs.length ? _c("section", {
+  }), 0), _vm._v(" "), _vm.canConfirmCargo ? _c("div", {
+    staticClass: "fx-staged__actions"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.cargoBusy
+    },
+    on: {
+      click: _vm.confirmCargo
+    }
+  }, [_vm._v("\n            " + _vm._s(_vm.cargoBusy ? "Saving…" : "Use these figures") + "\n          ")]), _vm._v(" "), _vm.cargoSaved ? _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Saved to the enquiry.")]) : _vm._e()]) : _vm._e(), _vm._v(" "), _vm.cargoError ? _c("p", {
+    staticClass: "fx-error"
+  }, [_vm._v(_vm._s(_vm.cargoError))]) : _vm._e()]) : _vm._e(), _vm._v(" "), !_vm.workspaceTabs.length ? _c("section", {
     staticClass: "fx-muted"
   }, [_c("p", [_vm._v("\n          Extraction and the cost sheet are for "), _c("strong", [_vm._v("customer enquiries")]), _vm._v(". This\n          conversation is filed as\n          "), _c("StatusChip", {
     attrs: {

@@ -220,6 +220,81 @@ class JobTriageTest extends TestCase
         ]);
     }
 
+    /**
+     * 🔴 The only write path for the figures the mail parser staged. Without it
+     * `staged_cargo` was a suggestion nobody could accept: the classifier read the mail,
+     * the workspace showed what it found, and the operator retyped it anyway.
+     */
+    public function test_an_operator_can_commit_the_staged_cargo(): void
+    {
+        $enquiry = $this->createEnquiry('air');
+
+        $this->api()->patchJson(
+            "http://{$this->host('air')}/api/enquiries/{$enquiry['id']}/cargo",
+            ['extracted_pieces' => 12, 'extracted_weight' => 480, 'origin_code' => 'BOM', 'dest_code' => 'FRA']
+        )->assertOk();
+
+        $row = \App\Enquiry::withoutGlobalScopes()->find($enquiry['id']);
+
+        $this->assertSame(12, $row->extracted_pieces);
+        $this->assertSame('BOM', $row->origin_code);
+        $this->assertSame('FRA', $row->dest_code);
+    }
+
+    /**
+     * ⚠️ AIR IS IATA AND SEA IS LOCODE — `BOM` and `INNSA` are both correct, for different
+     * modes, in the same column. The validator used to demand exactly 5 characters, which
+     * rejected every air lane the parser could produce.
+     */
+    public function test_both_code_standards_are_accepted(): void
+    {
+        $sea = $this->createEnquiry('sea');
+
+        $this->api()->patchJson(
+            "http://{$this->host('sea')}/api/enquiries/{$sea['id']}/cargo",
+            ['origin_code' => 'INNSA', 'dest_code' => 'DEHAM']
+        )->assertOk();
+
+        $this->assertSame('INNSA', \App\Enquiry::withoutGlobalScopes()->find($sea['id'])->origin_code);
+    }
+
+    /**
+     * 🔴 Refused once a job exists. The cargo now belongs to the waybill, and rewriting
+     * the enquiry behind it leaves the two disagreeing about one shipment with nothing to
+     * say which is right.
+     */
+    public function test_cargo_cannot_be_rewritten_after_conversion(): void
+    {
+        $enquiry = $this->createEnquiry('air');
+
+        $this->api()->postJson(
+            "http://{$this->host('air')}/api/enquiries/{$enquiry['id']}/convert", []
+        )->assertStatus(201);
+
+        $this->api()->patchJson(
+            "http://{$this->host('air')}/api/enquiries/{$enquiry['id']}/cargo",
+            ['extracted_pieces' => 99]
+        )->assertStatus(422)->assertJsonPath('reason', 'has_job');
+    }
+
+    /**
+     * ⚠️ A field the parser did not produce is not a value of NULL — it is a figure nobody
+     * has an opinion on, and writing NULL over it would erase one nobody disputed.
+     */
+    public function test_omitted_fields_are_left_alone(): void
+    {
+        $enquiry = $this->createEnquiry('air');
+        $url = "http://{$this->host('air')}/api/enquiries/{$enquiry['id']}/cargo";
+
+        $this->api()->patchJson($url, ['extracted_pieces' => 12, 'extracted_weight' => 480])->assertOk();
+        $this->api()->patchJson($url, ['extracted_pieces' => 20])->assertOk();
+
+        $row = \App\Enquiry::withoutGlobalScopes()->find($enquiry['id']);
+
+        $this->assertSame(20, $row->extracted_pieces);
+        $this->assertEquals(480, $row->extracted_weight, 'the weight was erased by an unrelated update');
+    }
+
     // ─── 1. Sequence assignment, per mode ────────────────────────────────────
 
     /**

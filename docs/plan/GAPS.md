@@ -548,6 +548,18 @@ adding a button that silently truncates `INBOM` to fit would not be.**
 
 ---
 
+## 🟢 2026-09-08 — the staged cargo can be committed
+
+| # | Finding | Detail |
+|---|---|---|
+| 106 | 🟢 **`PATCH /enquiries/{id}/cargo`** — the only write path for the figures the mail parser staged. Before it, `staged_cargo` was a suggestion nobody could accept: the classifier read the mail, the workspace showed what it found, and the operator retyped it anyway | Accepts 3–5 character codes, because **air is IATA and sea is LOCODE** — `BOM` and `INNSA` are both correct, for different modes, in one column. Refused once a job exists: the cargo then belongs to the waybill, and rewriting the enquiry behind it leaves the two disagreeing about one shipment with nothing to say which is right |
+| 107 | ⚠️ **Only fields actually sent are written.** A key the extraction did not produce is not a value of NULL — it is a figure nobody has an opinion on | Asserted by a test that patches pieces alone and checks a previously-set weight survives |
+| 108 | 🔴 **A confirmed figure has NO distinct provenance, and a later OCR promotion will overwrite it.** `cargo_data_source` stays `regex` after an operator confirms, because the PRD's ladder puts tier 3 (operator-verified) in `air_/sea_shipment_details` and treats the enquiry's copy as indicative | So nothing distinguishes *"regex guessed and nobody looked"* from *"regex guessed and a human agreed"*, and `CargoDataPromotionService` promotes over both since `ocr` outranks `regex`. Following the ladder rather than inventing a fourth value — but **the cost is real** and belongs to whoever owns the ladder |
+| 109 | ⚠️ **The confirm button is hidden for operations**, mirroring the cost-sheet fix (#75). `updateCargo` is gated on `triage`, which is pricing's | An operations user reading the same mail sees what the parser found and no button, rather than one that answers 403. If cargo confirmation should be theirs too, it wants the `classifyThread` treatment — a separate ability, not a widened `triage` |
+| 110 | 🟢 **The Kanban's date filter is gone** (owner's call), with its `Today` shortcut, its two chips and the `from`/`to` query parameters | The server still accepts `from`/`to` on `/api/jobs`; nothing sends them now |
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

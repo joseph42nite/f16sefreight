@@ -101,9 +101,7 @@ const FILTER_KEY = "f16s_kanban_filters";
        something up, not changing how the board works for everyone. */
     showAllDone: false,
     filters: {
-      stage: "",
-      from: "",
-      to: ""
+      stage: ""
     },
     STATUSES,
     PROCESS
@@ -157,14 +155,6 @@ const FILTER_KEY = "f16s_kanban_filters";
         key: "stage",
         label: "Stage: " + this.filters.stage
       });
-      if (this.filters.from) chips.push({
-        key: "from",
-        label: "From " + this.filters.from
-      });
-      if (this.filters.to) chips.push({
-        key: "to",
-        label: "To " + this.filters.to
-      });
       return chips;
     },
     /* Rows of the matrix: every distinct clearance date in the current result set. */
@@ -200,21 +190,13 @@ const FILTER_KEY = "f16s_kanban_filters";
       this.poolCollapsed = !this.poolCollapsed;
       this.persist();
     },
-    today() {
-      const d = new Date().toISOString().slice(0, 10);
-      this.filters.from = d;
-      this.filters.to = d;
-      this.load();
-    },
     clearFilter(key) {
       this.filters[key] = "";
       this.load();
     },
     clearAll() {
       this.filters = {
-        stage: "",
-        from: "",
-        to: ""
+        stage: ""
       };
       this.load();
     },
@@ -223,8 +205,6 @@ const FILTER_KEY = "f16s_kanban_filters";
       // No owner parameter: ownership is the server's decision now, not a filter the
       // client asks for. Sending one would only suggest it could be overridden.
       if (this.filters.stage) p.push("status=" + encodeURIComponent(this.filters.stage));
-      if (this.filters.from) p.push("from=" + this.filters.from);
-      if (this.filters.to) p.push("to=" + this.filters.to);
       return p.length ? "?" + p.join("&") : "";
     },
     load() {
@@ -414,62 +394,7 @@ var render = function render() {
         value: s
       }
     }, [_vm._v(_vm._s(s))]);
-  })], 2)]), _vm._v(" "), _c("label", {
-    staticClass: "fx-field"
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("Clears from")]), _vm._v(" "), _c("input", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.filters.from,
-      expression: "filters.from"
-    }],
-    staticClass: "fx-input",
-    attrs: {
-      type: "date"
-    },
-    domProps: {
-      value: _vm.filters.from
-    },
-    on: {
-      change: _vm.load,
-      input: function ($event) {
-        if ($event.target.composing) return;
-        _vm.$set(_vm.filters, "from", $event.target.value);
-      }
-    }
-  })]), _vm._v(" "), _c("label", {
-    staticClass: "fx-field"
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("to")]), _vm._v(" "), _c("input", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.filters.to,
-      expression: "filters.to"
-    }],
-    staticClass: "fx-input",
-    attrs: {
-      type: "date"
-    },
-    domProps: {
-      value: _vm.filters.to
-    },
-    on: {
-      change: _vm.load,
-      input: function ($event) {
-        if ($event.target.composing) return;
-        _vm.$set(_vm.filters, "to", $event.target.value);
-      }
-    }
-  })]), _vm._v(" "), _c("button", {
-    staticClass: "fx-btn",
-    on: {
-      click: _vm.today
-    }
-  }, [_vm._v("Today")])]), _vm._v(" "), _vm.activeChips.length ? _c("div", {
+  })], 2)])]), _vm._v(" "), _vm.activeChips.length ? _c("div", {
     staticClass: "fx-chips"
   }, [_vm._l(_vm.activeChips, function (c) {
     return _c("button", {

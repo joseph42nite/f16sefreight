@@ -292,6 +292,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/enquiries/{enquiry}/reopen', [\App\Http\Controllers\Freight\EnquiryController::class, 'reopen']);
     // The ONLY path that creates a jobs row.
     Route::post('/enquiries/{enquiry}/convert', [\App\Http\Controllers\Freight\EnquiryController::class, 'convert']);
+    // Commit the cargo the mail parser staged, once an operator has checked it.
+    Route::patch('/enquiries/{enquiry}/cargo', [\App\Http\Controllers\Freight\EnquiryController::class, 'updateCargo']);
 
     // ── Post-conversion ─────────────────────────────────────────────────────
     Route::get('/jobs', [\App\Http\Controllers\Freight\JobController::class, 'index']);

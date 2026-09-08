@@ -34,16 +34,6 @@
         </select>
       </label>
 
-      <label class="fx-field">
-        <span class="fx-field__label">Clears from</span>
-        <input v-model="filters.from" class="fx-input" type="date" @change="load" />
-      </label>
-      <label class="fx-field">
-        <span class="fx-field__label">to</span>
-        <input v-model="filters.to" class="fx-input" type="date" @change="load" />
-      </label>
-
-      <button class="fx-btn" @click="today">Today</button>
     </div>
 
     <!-- Active filters as removable chips — a filter you cannot see is a filter you
@@ -283,7 +273,7 @@ export default {
     /* Per-viewer, per-session: an operator who expands the finished pile is looking
        something up, not changing how the board works for everyone. */
     showAllDone: false,
-    filters: { stage: "", from: "", to: "" },
+    filters: { stage: "" },
     STATUSES, PROCESS,
   }),
   computed: {
@@ -329,8 +319,6 @@ export default {
     activeChips() {
       const chips = [];
       if (this.filters.stage) chips.push({ key: "stage", label: "Stage: " + this.filters.stage });
-      if (this.filters.from) chips.push({ key: "from", label: "From " + this.filters.from });
-      if (this.filters.to) chips.push({ key: "to", label: "To " + this.filters.to });
       return chips;
     },
     /* Rows of the matrix: every distinct clearance date in the current result set. */
@@ -364,18 +352,12 @@ export default {
       this.poolCollapsed = !this.poolCollapsed;
       this.persist();
     },
-    today() {
-      const d = new Date().toISOString().slice(0, 10);
-      this.filters.from = d;
-      this.filters.to = d;
-      this.load();
-    },
     clearFilter(key) {
       this.filters[key] = "";
       this.load();
     },
     clearAll() {
-      this.filters = { stage: "", from: "", to: "" };
+      this.filters = { stage: "" };
       this.load();
     },
     query() {
@@ -383,8 +365,6 @@ export default {
       // No owner parameter: ownership is the server's decision now, not a filter the
       // client asks for. Sending one would only suggest it could be overridden.
       if (this.filters.stage) p.push("status=" + encodeURIComponent(this.filters.stage));
-      if (this.filters.from) p.push("from=" + this.filters.from);
-      if (this.filters.to) p.push("to=" + this.filters.to);
       return p.length ? "?" + p.join("&") : "";
     },
     load() {

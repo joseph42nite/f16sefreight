@@ -560,6 +560,19 @@ adding a button that silently truncates `INBOM` to fit would not be.**
 
 ---
 
+## 🔴 2026-09-08 — the Message Log's status codes had no meanings, and no code either
+
+| # | Finding | Detail |
+|---|---|---|
+| 111 | 🔴 **`config/common-data.php` did not exist**, and `GLNResponseController::store()` has always read it on every Cargo Status message: `config('common-data.cargo_status_description')` returned **NULL**, `?? ''` swallowed it, and every FSU status was stored with `reason = ''` | Nothing failed, nothing logged, no test noticed — for as long as the controller has existed. Created from the carrier's own specification, supplied by the owner: **25 codes**, wording verbatim |
+| 112 | 🔴 **The blank reason hid the STATUS CODE as well, not just its description.** `MessageLog.vue` renders the code inside `v-if="status.reason"` — so with an empty reason the whole line was suppressed | A Cargo Status row therefore showed only the literal words *"Cargo Status"* and a timestamp. **RCS, DEP and ARR were never visible anywhere in the product.** The owner asking "what are the stages in the message log" could not have found out by looking |
+| 113 | ⚠️ **The key is cut out of the message id, not read from a field.** `substr($business_id, -3)` takes the last three characters of `BusinessHeaderDocument/ram:ID`; the remainder is the AWB | So a map entry whose key is not exactly three upper-case characters can never match and is dead the moment it is typed. `CargoStatusCodeTest` asserts the shape of every key rather than spot-checking one lookup, because a missing file and a wrongly-keyed file fail identically — silently, as an empty description |
+
+**The spine:** `FOH → RCS → PRE → MAN → DEP → ARR → RCF → NFD → AWD → CCD → DLV`, with `DIS`
+interrupting at any point.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

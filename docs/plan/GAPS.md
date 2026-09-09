@@ -571,6 +571,52 @@ adding a button that silently truncates `INBOM` to fit would not be.**
 **The spine:** `FOH → RCS → PRE → MAN → DEP → ARR → RCF → NFD → AWD → CCD → DLV`, with `DIS`
 interrupting at any point.
 
+| # | Open | Detail |
+|---|---|---|
+| 114 | ⚠️ **Nothing has exercised this end to end.** `status_response` holds **zero rows** — no Cargo Status message has ever been ingested in this environment | So the map is proven by unit test and by replaying the controller's `substr`, not by a real message from the provider. The first live FSU will be the actual proof. ⚠️ Until then, a mismatch between the provider's id format and `substr($business_id, -3)` would still surface as a blank line, exactly as before |
+| 115 | ⚠️ **`DDL` and `DPU` are door-to-door events, not airport-to-airport ones** — "Delivered to consignee's door" and "Picked up from shipper's door" | They are in the owner's supplied list so they are in the config, but they sit outside the `FOH → … → DLV` spine. Worth confirming the provider actually emits them: an unused entry costs nothing, but a wrongly-worded one that *does* fire is read by an operator as fact |
+
+---
+
+## 🔴 2026-09-09 — Gemma readiness, measured
+
+Asked whether the quantized Gemma run can be tested now. **No — five things are missing,
+all of them Python-side.** Laravel is finished and tested against a contract nothing
+implements.
+
+| Piece | State |
+|---|---|
+| `/extract-unstructured` endpoint | 🔴 **absent** — `python/ocr_server.py` is 93 lines exposing `/health` and `/extract` only |
+| **PyMuPDF** (`fitz`) for the text layer | 🔴 **not installed** — `requirements.txt` has pdfplumber, fastapi, uvicorn, python-multipart, nothing else |
+| `python/schemas.py` (Pydantic validation) | 🔴 **does not exist** |
+| Ollama client + the Gemma model | 🔴 **not in the image.** `Dockerfile.fastapi` says so in its own header: *"Ollama and ChromaDB are NOT in this image"* |
+| `google-generativeai` (Gemini vision fallback) | 🔴 **not installed** |
+
+🔴 **The consequence today:** a Tactical or Command tenant uploading an unstructured
+document calls an endpoint that **404s**, so `ProcessPdfOcrJob` throws and the job fails
+instead of parking for consent. The consent flow cannot be exercised at all, because it
+parks on `extraction_path = 'none'` and **nothing can return that value**.
+
+### ⚠️ The first step does not need Gemma
+
+`/extract-unstructured` returning `extraction_path: 'text' | 'none'` is buildable with
+**pdfplumber, which is already installed**. That alone:
+
+- stops the 404 and lets `ProcessPdfOcrJob` complete its real path
+- makes `awaiting_vision_consent` reachable, so the whole consent + credit flow can finally
+  be tested end to end
+- leaves Gemma as a swap-in for one job: *text → structured JSON*
+
+🔑 **The endpoint must return the SAME key vocabulary as `/extract`** (guide §4.1) —
+`shipper`, `consignee`, `departure`, `destination`, `transit`, `cargo`, `weight_charge`,
+`piece_weight`. A second endpoint emitting different keys means `OcrUploadModal.vue` needs
+two mappers, and they drift the first time either side changes.
+
+⚠️ **The machine is a real constraint, not a detail.** PRD §9.6 says not to run Gemma on a
+laptop — it needs ~6 GB resident, and in production Ollama cohosts with FastAPI on a
+dedicated t4g.large over loopback (§9.5). This Mac has been wedging Docker repeatedly on
+free disk alone.
+
 ---
 
 ## 🟠 Design decisions with no owner yet

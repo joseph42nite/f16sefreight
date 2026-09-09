@@ -619,6 +619,21 @@ free disk alone.
 
 ---
 
+## 🟢 2026-09-09 — /extract-unstructured, the text path
+
+| # | Finding | Detail |
+|---|---|---|
+| 117 | 🟢 **`/extract-unstructured` exists.** `python/unstructured.py` reads the page's text layer with **pdfplumber, already installed** — no PyMuPDF, no model, no new dependency | 🔴 The response's real job is `extraction_path`. Nothing in the system could return **`'none'`** before, so `awaiting_vision_consent` was unreachable and the whole consent + credit flow could not be exercised. It can now |
+| 118 | 🔴 **`transform_piece_weight()` is POSITIONAL and must not be reused on prose.** It splits the AWB's piece/weight box on whitespace and assigns numbers by their order in a fixed layout | Handed labelled invoice text it read *"480.5 kg / 12 cartons"* as **chargeable weight 480.5, rate 12** — numbers individually plausible and entirely wrong, with nothing about the card looking broken. `_read_piece_weight()` reads by meaning instead and emits the identical keys. ⚠️ `rate_class` is left **blank rather than guessed**: an invoice carries no IATA rate class, and a default would put a value in a legal field nobody wrote |
+| 119 | ⚠️ **A scan is not an empty page.** Scanners leave stray characters — a page number, a header stamp — so "any text at all" would classify most scans as text documents and skip the vision path the operator is paying for | `MIN_TEXT_CHARS = 120`, a floor real prose clears and a scan does not. Pinned by a test asserting a bare `"3"` is not a text layer |
+| 120 | 🔴 **THE WORKSPACE UPLOAD NEVER REACHES THIS ENDPOINT.** `ExtractionPanel.vue` line 885 hardcodes `form.append("type", "ksr")` — a coordinate template — so every document uploaded from the open workspace routes to `/extract`, whatever it actually is | `OcrRoutingService::isStructured()` sends anything matching a `SystemTemplate` key to coordinates, and `ksr` is one. **Owner's decision needed:** how does the panel know an upload is an invoice rather than an AWB? A document-type selector, or infer from the operator's per-document "what to extract" choice already in the panel |
+
+⚠️ **Vision is refused, not faked.** `allow_vision=true` with no text layer returns **501**,
+because `google-generativeai` is not installed. Silently returning the empty text result
+would spend the operator's credit and hand back nothing on a run they authorised.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

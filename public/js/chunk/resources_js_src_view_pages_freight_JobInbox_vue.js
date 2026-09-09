@@ -815,6 +815,21 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  * Exactly the three the operator asked to choose between — parties, cargo, notify — not a
  * row per field. A picker with twenty entries is a form, and the operator already has one.
  */
+/**
+ * How a document has to be READ — not the same question as which waybill it fills.
+ *
+ * ⚠️ The default is `other`, because that is what this panel is for: its own copy says
+ * "an invoice for the parties, a packing list for the cargo". Defaulting to the airway
+ * bill would crop those at an AWB's coordinates and return whatever text sits at the
+ * boxes — which is what it did before this existed.
+ */
+const KINDS = [{
+  key: "other",
+  label: "Other document"
+}, {
+  key: "awb",
+  label: "Airway bill"
+}];
 const GROUPS = [{
   key: "parties",
   label: "Shipper & consignee",
@@ -983,6 +998,7 @@ const PARTY_REQUIRED = {
     manual: {},
     fitReport: null,
     target: "mawb",
+    KINDS,
     awbCode: "",
     awbNo: "",
     hawbNo: "",
@@ -1370,6 +1386,7 @@ const PARTY_REQUIRED = {
           uid: ++this.seq,
           name: file.name,
           file,
+          kind: "other",
           state: "staged",
           fields: null,
           error: null,
@@ -1401,7 +1418,12 @@ const PARTY_REQUIRED = {
       const file = doc.file;
       const form = new FormData();
       form.append("upload_file", file);
-      form.append("type", "ksr");
+      // 🔴 The routing service reads this. `ksr` matches a registered coordinate template
+      // and goes to /extract; `unstructured` matches none and goes to
+      // /extract-unstructured, which reads the text layer. The panel used to hardcode
+      // `ksr` for everything, so an invoice was cropped at an airway bill's coordinates
+      // and returned whatever text happened to sit at those boxes.
+      form.append("type", doc.kind === "awb" ? "ksr" : "unstructured");
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/upload-awb-file", form).then(({
         data
       }) => {
@@ -1409,6 +1431,12 @@ const PARTY_REQUIRED = {
         d.jobId = data.job_id || data.data;
         this.poll(uid);
       }).catch(e => this.fail(uid, this.messageFor(e)));
+    },
+    setKind(uid, kind) {
+      const doc = this.documents.find(d => d.uid === uid);
+      if (doc) {
+        doc.kind = kind;
+      }
     },
     /* Polled per document. Each has its own timer so a slow scan does not hold up a
        fast one — the operator can assign the first while the second is still reading. */
@@ -2850,7 +2878,27 @@ var render = function render() {
   }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.documents, function (doc) {
     return _c("tr", {
       key: doc.uid
-    }, [_c("td", [_vm._v(_vm._s(doc.name))]), _vm._v(" "), _c("td", [_c("StatusChip", {
+    }, [_c("td", [_vm._v(_vm._s(doc.name))]), _vm._v(" "), _c("td", [_c("select", {
+      staticClass: "fx-input",
+      attrs: {
+        disabled: doc.state === "reading"
+      },
+      domProps: {
+        value: doc.kind
+      },
+      on: {
+        change: function ($event) {
+          return _vm.setKind(doc.uid, $event.target.value);
+        }
+      }
+    }, _vm._l(_vm.KINDS, function (k) {
+      return _c("option", {
+        key: k.key,
+        domProps: {
+          value: k.key
+        }
+      }, [_vm._v(_vm._s(k.label))]);
+    }), 0)]), _vm._v(" "), _c("td", [_c("StatusChip", {
       attrs: {
         value: doc.state
       }
@@ -3083,6 +3131,10 @@ var staticRenderFns = [function () {
       scope: "col"
     }
   }, [_vm._v("Document")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Kind")]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }

@@ -75,6 +75,7 @@
         <thead>
           <tr>
             <th scope="col">Document</th>
+            <th scope="col">Kind</th>
             <th scope="col">State</th>
             <th scope="col"><span class="fx-sr-only">Actions</span></th>
             <th scope="col">Take from it</th>
@@ -83,6 +84,29 @@
         <tbody>
           <tr v-for="doc in documents" :key="doc.uid">
             <td>{{ doc.name }}</td>
+            <td>
+              <!--
+                🔴 WHAT THE FILE IS, which is not the same question as "Extract into"
+                above. That one says where the answer GOES — the master or the house
+                waybill. This says how the file has to be READ.
+
+                An airway bill has a fixed layout, so its boxes are cropped by coordinates:
+                exact, free, and better than any model. An invoice or a packing list has no
+                fixed layout, so there is nothing to crop and the text has to be read
+                instead.
+
+                ⚠️ Locked once reading starts. Changing how a document is parsed while it
+                is being parsed would apply to the next run and not the one on screen.
+              -->
+              <select
+                class="fx-input"
+                :disabled="doc.state === 'reading'"
+                :value="doc.kind"
+                @change="setKind(doc.uid, $event.target.value)"
+              >
+                <option v-for="k in KINDS" :key="k.key" :value="k.key">{{ k.label }}</option>
+              </select>
+            </td>
             <td>
               <StatusChip :value="doc.state" />
               <span v-if="doc.error" class="fx-muted"> {{ doc.error }}</span>
@@ -341,6 +365,19 @@ import { cleanParty } from "@/core/config/awbFieldRules";
  * Exactly the three the operator asked to choose between — parties, cargo, notify — not a
  * row per field. A picker with twenty entries is a form, and the operator already has one.
  */
+/**
+ * How a document has to be READ — not the same question as which waybill it fills.
+ *
+ * ⚠️ The default is `other`, because that is what this panel is for: its own copy says
+ * "an invoice for the parties, a packing list for the cargo". Defaulting to the airway
+ * bill would crop those at an AWB's coordinates and return whatever text sits at the
+ * boxes — which is what it did before this existed.
+ */
+const KINDS = [
+  { key: "other", label: "Other document" },
+  { key: "awb", label: "Airway bill" },
+];
+
 const GROUPS = [
   { key: "parties", label: "Shipper & consignee", paths: ["shipper", "consignee"] },
   { key: "cargo", label: "Cargo — pieces, dimensions, description", paths: ["cargo", "piece_weight", "dimensions", "goods"] },
@@ -474,7 +511,7 @@ export default {
     savedAddresses: {},
     manual: {},
     fitReport: null,
-    target: "mawb",
+    target: "mawb", KINDS,
     awbCode: "", awbNo: "", hawbNo: "",
     saving: false, saveError: null, draftUrl: null,
     dragging: false,
@@ -852,7 +889,7 @@ export default {
         // Staged, not read. The file is held until the operator asks for it — see the
         // Extract button.
         this.documents.push({
-          uid: ++this.seq, name: file.name, file,
+          uid: ++this.seq, name: file.name, file, kind: "other",
           state: "staged", fields: null, error: null, jobId: null,
         });
       });
@@ -882,7 +919,12 @@ export default {
 
       const form = new FormData();
       form.append("upload_file", file);
-      form.append("type", "ksr");
+      // 🔴 The routing service reads this. `ksr` matches a registered coordinate template
+      // and goes to /extract; `unstructured` matches none and goes to
+      // /extract-unstructured, which reads the text layer. The panel used to hardcode
+      // `ksr` for everything, so an invoice was cropped at an airway bill's coordinates
+      // and returned whatever text happened to sit at those boxes.
+      form.append("type", doc.kind === "awb" ? "ksr" : "unstructured");
 
       ApiService.post("/user/upload-awb-file", form)
         .then(({ data }) => {
@@ -891,6 +933,13 @@ export default {
           this.poll(uid);
         })
         .catch((e) => this.fail(uid, this.messageFor(e)));
+    },
+    setKind(uid, kind) {
+      const doc = this.documents.find((d) => d.uid === uid);
+
+      if (doc) {
+        doc.kind = kind;
+      }
     },
     /* Polled per document. Each has its own timer so a slow scan does not hold up a
        fast one — the operator can assign the first while the second is still reading. */

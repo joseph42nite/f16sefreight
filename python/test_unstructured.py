@@ -154,9 +154,12 @@ def _with_model(payload, available=True):
 def test_the_model_fills_only_what_labels_could_not():
     import unstructured
 
+    # ⚠️ FLAT, matching the schema. It was nested until a real model showed that a $ref
+    # schema returns empty documents — see test_the_schema_is_flat_because_refs_defeat_small_models.
     _with_model({
-        "shipper": {"name": "Northwind", "address": "Mumbai"},
-        "cargo": {"description": "Excipients"},
+        "shipper_name": "Northwind",
+        "shipper_address": "Mumbai",
+        "description": "Excipients",
         "unreadable": ["notify party"],
     })
 
@@ -174,10 +177,13 @@ def test_a_fully_labelled_document_never_reaches_the_model():
     must not pay for it."""
     import unstructured
 
-    calls = _with_model({"shipper": {"name": "SHOULD NOT BE USED"}})
+    calls = _with_model({"shipper_name": "SHOULD NOT BE USED"})
 
+    # ⚠️ `piece_weight` has to be complete too — the figures count as a gap, so a fixture
+    # without them would reach the model for a reason this test is not about.
     result = {"read_by": "labels", "shipper": {"name": "A"}, "consignee": {"name": "B"},
-              "cargo": {"description": "C"}}
+              "cargo": {"description": "C"},
+              "piece_weight": {"no_of_pieces": 1, "gross_weight": 1.0}}
     unstructured._apply_model(result, "text")
 
     assert calls["n"] == 0
@@ -188,7 +194,7 @@ def test_an_unreachable_model_leaves_the_label_result_standing():
     """🔴 A document read imperfectly is worth more than a 500."""
     import unstructured
 
-    _with_model({"shipper": {"name": "unused"}}, available=False)
+    _with_model({"shipper_name": "unused"}, available=False)
 
     result = {"read_by": "labels", "shipper": {"name": "Kept"}, "consignee": {}, "cargo": {}}
     unstructured._apply_model(result, "text")
@@ -205,8 +211,83 @@ def test_the_schema_permits_a_model_that_found_nothing():
     from schemas import ExtractedDocument
 
     empty = ExtractedDocument.model_validate({})
-    assert empty.shipper is None
+    assert empty.shipper_name is None
     assert empty.unreadable == []
+
+
+# ─── Grounding ───────────────────────────────────────────────────────────────
+#
+# 🔴 These were written AFTER running a real model, not before. Every case here is
+# something gemma3:1b actually produced.
+
+
+def test_an_invented_value_is_dropped():
+    """Told "never invent a value", the model answered awb_number: "Not specified" — a
+    literal string standing for absence, in a field that would have gone onto a waybill."""
+    import model_extract
+
+    source = "NORTHWIND EXPORTS PVT LTD\n41 Marine Drive\nMumbai 400020, India"
+    kept = model_extract._grounded({"awb_number": "Not specified"}, source)
+
+    assert "awb_number" not in kept
+
+
+def test_a_hallucinated_company_is_dropped():
+    import model_extract
+
+    source = "NORTHWIND EXPORTS PVT LTD\n41 Marine Drive, Mumbai"
+    kept = model_extract._grounded({"shipper_name": "Globex Trading Ltd"}, source)
+
+    assert "shipper_name" not in kept
+
+
+def test_an_address_rejoined_across_lines_survives():
+    """
+    ⚠️ The safeguard fired on the values it was meant to protect. A PDF gives an address on
+    three lines; the model returns it on one, joined with a comma the document does not
+    contain. Comparing on whitespace alone rejected every correctly-read address.
+    """
+    import model_extract
+
+    source = "NORTHWIND EXPORTS PVT LTD\n41 Marine Drive, Unit 7\nMumbai 400020, India"
+    kept = model_extract._grounded(
+        {"shipper_address": "41 Marine Drive, Unit 7, Mumbai 400020, India"}, source
+    )
+
+    assert "shipper_address" in kept
+
+
+def test_non_string_values_pass_through():
+    """Numbers are not grounded — a weight is checked by the operator, not by substring."""
+    import model_extract
+
+    kept = model_extract._grounded({"pieces": 12, "unreadable": []}, "anything")
+
+    assert kept["pieces"] == 12
+
+
+def test_keep_alive_is_a_number_not_a_numeric_string():
+    """
+    🔴 Ollama parses `keep_alive` as a duration. Sending "-1" returns
+    `400 time: missing unit in duration "-1"` and EVERY call fails with the model sitting
+    loaded and idle. Only a real Ollama could have found this — a stub accepts anything.
+    """
+    import model_extract
+
+    assert model_extract._keep_alive("-1") == -1
+    assert model_extract._keep_alive("10m") == "10m"
+
+
+def test_the_schema_is_flat_because_refs_defeat_small_models():
+    """
+    🔴 Measured. With `Party`/`Cargo` as sub-models Pydantic emits `$ref` into `$defs`, and
+    gemma3:1b returned a valid, schema-conformant, COMPLETELY EMPTY document every time.
+    Same model, same document, flattened: every field filled.
+    """
+    from schemas import ExtractedDocument
+
+    schema = ExtractedDocument.model_json_schema()
+    assert "$defs" not in schema, "a $ref schema returns empty documents on a small model"
 
 
 if __name__ == "__main__":

@@ -245,6 +245,18 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
     """Fill the regions label anchoring could not, if a model is reachable."""
     gaps = [r for r in ("shipper", "consignee", "cargo") if _is_blank(result.get(r))]
 
+    # ⚠️ The figures count as a gap too. `_read_piece_weight` needs a LABEL — "gross
+    # weight: 480.5" — and an unlabelled document writes "12 cartons / 480.5 kg", where the
+    # count is found by its unit and the mass is not found at all. The model reads it
+    # perfectly well; it was simply never asked.
+    pw = result.get("piece_weight") or {}
+
+    if not pw.get("gross_weight"):
+        gaps.append("gross_weight")
+
+    if not pw.get("no_of_pieces"):
+        gaps.append("pieces")
+
     if not gaps:
         return
 
@@ -258,19 +270,39 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
 
     filled = []
 
-    for region, key in (("shipper", "shipper"), ("consignee", "consignee")):
-        if region in gaps and parsed.get(key):
-            party = parsed[key]
-            # ⚠️ Back through `process_box`, so a model-derived address is shaped exactly
-            # like a cropped one. The VALUE differs in provenance, never in structure.
-            joined = " ".join(v for v in (party.get("name"), party.get("address")) if v)
-            if joined:
-                result[region] = process_box(region, joined)
-                filled.append(region)
+    for region in ("shipper", "consignee"):
+        if region not in gaps:
+            continue
 
-    if "cargo" in gaps and (parsed.get("cargo") or {}).get("description"):
-        result["cargo"] = process_box("cargo", parsed["cargo"]["description"])
+        # ⚠️ Back through `process_box`, so a model-derived address is shaped exactly like
+        # a cropped one. The VALUE differs in provenance, never in structure.
+        joined = " ".join(
+            v for v in (parsed.get(f"{region}_name"), parsed.get(f"{region}_address")) if v
+        )
+
+        if joined:
+            result[region] = process_box(region, joined)
+            filled.append(region)
+
+    if "cargo" in gaps and parsed.get("description"):
+        result["cargo"] = process_box("cargo", parsed["description"])
         filled.append("cargo")
+
+    # 🔴 Written straight into the existing dict rather than through `process_box`.
+    # `transform_piece_weight` is POSITIONAL and would misread a number handed to it on its
+    # own — the same trap that read "480.5 kg / 12 cartons" as a chargeable weight of 480.5
+    # and a rate of 12.
+    for gap, key, cast in (("gross_weight", "gross_weight", float), ("pieces", "pieces", int)):
+        if gap not in gaps or parsed.get(key) is None:
+            continue
+
+        field = "gross_weight" if gap == "gross_weight" else "no_of_pieces"
+
+        try:
+            result["piece_weight"][field] = cast(parsed[key])
+            filled.append(gap)
+        except (TypeError, ValueError, KeyError):
+            pass
 
     if filled:
         result["read_by"] = "labels+model"

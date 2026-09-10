@@ -656,6 +656,31 @@ Anything reporting mass failures in seconds is contention or a dead database, no
 
 ---
 
+## 🔴 2026-09-10 — Gemma actually ran, and four things only a real model could show
+
+Ollama 0.33.3 built from source (~2h on this CPU), `gemma3:1b` pulled (815 MB), run against
+the real pipeline. **Every one of these was invisible to a stub.**
+
+| # | Finding | Detail |
+|---|---|---|
+| 130 | 🔴 **`keep_alive` as the string `"-1"` fails EVERY call.** Ollama parses it as a duration: `400 time: missing unit in duration "-1"` | The model sat loaded and idle while every request was rejected. It takes a NUMBER of seconds or a unit-bearing string (`"10m"`), never a numeric string. Coerced in `_keep_alive()`. **A stub accepts whatever it is handed — this class of bug cannot be found without a real server** |
+| 131 | 🔴 **A `$ref` schema returns a valid, conformant, COMPLETELY EMPTY document.** Pydantic emits `$defs`/`$ref` for nested sub-models, which is the natural Python shape | Same model, same document, same prompt, fields flattened: **every field filled correctly**. A small model can follow a shape it can see and not one it has to dereference. `ExtractedDocument` is flat, and a test asserts `$defs` never returns |
+| 132 | 🔴 **"Never invent a value" made it invent MORE.** With that clause: `awb_number: "Not specified"`, `origin: "India"`, `destination: "Germany"` — none in the document. Without it: `destination: "12 cartons / 480.5 kg"`, the cargo line in the wrong field | ⚠️ **The instruction is not the safeguard.** `_grounded()` drops any string not actually present in the source, which catches the invention. It does NOT catch misplacement — "12 cartons" really is on the page — which is why the caller consumes only the fields the model is reliable on, and why everything reaches the operator marked for checking |
+| 133 | ⚠️ **The grounding check first rejected every correct address.** A PDF gives an address on three lines; the model returns it on one, joined with a comma the document does not contain | Comparing on whitespace alone fired the safeguard on exactly the values it was meant to protect. Now compared on letters and digits only — still catches an invented company, which shares no run of characters with the page |
+
+### Measured, on this machine
+
+    labelled invoice     2s   read_by=labels          model never called
+    unlabelled invoice  17s   read_by=labels+model    shipper, consignee, cargo all correct
+    cold load           16s   warm ~7-19s per document
+
+⚠️ **A 1B model is not good enough for production and was never meant to be.** It reads the
+parties and the description reliably and then fills the remaining fields with noise —
+that is what `_grounded()` and the narrow consumption list are for. It proves the wiring.
+E4B on the t4g.large (PRD §9.5) is where quality gets judged.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

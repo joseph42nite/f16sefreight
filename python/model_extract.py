@@ -43,7 +43,29 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "gemma3:1b")
 #
 # ⚠️ It is also the reason the model must NOT be the largest that technically fits: a model
 # that gets evicted under memory pressure pays the cold load on every single request.
-OLLAMA_KEEP_ALIVE = os.environ.get("OLLAMA_KEEP_ALIVE", "-1")
+_KEEP_ALIVE_RAW = os.environ.get("OLLAMA_KEEP_ALIVE", "-1")
+
+
+def _keep_alive(value: str):
+    """
+    Ollama accepts a NUMBER of seconds or a duration STRING with a unit ("10m").
+
+    🔴 It does not accept a numeric string. Sending `"-1"` returns
+    `400 time: missing unit in duration "-1"` — the value is parsed as a duration, the unit
+    is missing, and the whole request is rejected. Every call failed with the model sitting
+    right there, loaded and idle.
+
+    ⚠️ Caught only by calling a real Ollama. A stub accepts whatever it is handed, which is
+    exactly the class of bug a stub cannot find.
+    """
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        # A unit-bearing string like "10m" — hand it through untouched.
+        return value
+
+
+OLLAMA_KEEP_ALIVE = _keep_alive(_KEEP_ALIVE_RAW)
 
 # A freight document is short. The default context is far larger than needed and every
 # unused token is memory the model holds for nothing.
@@ -51,12 +73,21 @@ NUM_CTX = int(os.environ.get("OLLAMA_NUM_CTX", "4096"))
 
 TIMEOUT_SECONDS = int(os.environ.get("OLLAMA_TIMEOUT", "60"))
 
-PROMPT = """You are reading a freight document — a commercial invoice, packing list or \
-airway bill.
+# 🔴 THE ROLE HINT IS LOAD-BEARING, and that was measured. With a generic "extract what is
+# written" instruction a 1B model returned the cargo and left BOTH PARTIES EMPTY — the same
+# model, asked in prose who the shipper was, answered correctly. It can read the document;
+# it could not tell which block was which without being told the convention.
+#
+# ⚠️ First-is-shipper is the layout of a freight document, not a guess about this one. Where
+# a document labels its parties, label anchoring has already read them and the model is
+# never asked.
+PROMPT = """This is a freight document — a commercial invoice, packing list or airway bill.
 
-Extract only what is ACTUALLY WRITTEN in the text below. Do not infer, complete or \
-correct anything. If a field is not present, omit it. If you are unsure about a field, \
-omit it and name it in "unreadable".
+The FIRST company and address is the SHIPPER (sender).
+The SECOND company and address is the CONSIGNEE (receiver).
+
+Fill every field you can find. Copy the text exactly as written.
+If a field is genuinely not in the document, omit it.
 
 An invented shipper is worse than a missing one.
 
@@ -117,9 +148,57 @@ def extract(text: str) -> Optional[Dict[str, Any]]:
     raw = body.get("response", "")
 
     try:
-        return ExtractedDocument.model_validate_json(raw).model_dump(exclude_none=True)
+        parsed = ExtractedDocument.model_validate_json(raw).model_dump(exclude_none=True)
     except Exception as e:
         # ⚠️ Logged with the payload, because "the model returned something invalid" is
         # not actionable and "it returned this" is.
         logger.warning(f"model output failed validation: {e} | raw={raw[:300]}")
         return None
+
+    return _grounded(parsed, text)
+
+
+def _grounded(parsed: Dict[str, Any], source: str) -> Dict[str, Any]:
+    """
+    Drop any text the model returned that is not actually in the document.
+
+    🔴 MEASURED, NOT PRECAUTIONARY. Told "never invent a value", a 1B model answered
+    `awb_number: "Not specified"` — a literal string standing for absence, in a field that
+    would have gone onto a waybill. Told nothing, it put the cargo line in `destination`.
+    The instruction is not the safeguard; this is.
+
+    ⚠️ It catches INVENTION, not MISPLACEMENT. "12 cartons / 480.5 kg" really is in the
+    document, so a value stuffed into the wrong field survives this check — which is why
+    the caller consumes only the fields the model is reliable on, and why every extracted
+    field reaches the operator marked for checking rather than as fact.
+    """
+    haystack = _comparable(source)
+
+    clean = {}
+
+    for key, value in parsed.items():
+        if not isinstance(value, str) or not value.strip():
+            clean[key] = value
+            continue
+
+        if _comparable(value) in haystack:
+            clean[key] = value
+        else:
+            logger.info(f"dropped ungrounded {key}={value!r} — not present in the document")
+
+    return clean
+
+
+def _comparable(text: str) -> str:
+    """
+    Letters and digits only, lower case.
+
+    🔴 PUNCTUATION AND WHITESPACE ARE STRIPPED, and that is not laziness. A PDF gives the
+    address on three lines; the model returns it on one, joined with a comma the document
+    does not contain. Comparing on whitespace alone rejected every correctly-read address
+    for a single added comma — the safeguard firing on the values it was meant to protect.
+
+    ⚠️ It still catches what it is for. An invented company name shares no run of letters
+    with the page, and "Not specified" does not appear on an invoice.
+    """
+    return "".join(c for c in text.lower() if c.isalnum())

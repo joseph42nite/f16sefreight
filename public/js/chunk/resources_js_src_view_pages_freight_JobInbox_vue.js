@@ -823,6 +823,15 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  * bill would crop those at an AWB's coordinates and return whatever text sits at the
  * boxes — which is what it did before this existed.
  */
+/**
+ * The floor for "this document has a text layer".
+ *
+ * 🔴 Must match `MIN_TEXT_CHARS` in python/unstructured.py. A scanner leaves a page number
+ * or a header stamp behind, so "any text at all" calls most scans readable — and if the
+ * two ends disagree on where the line sits, the panel tells the operator one thing and the
+ * parser then does another.
+ */
+const TEXT_LAYER_MIN_CHARS = 120;
 const KINDS = [{
   key: "other",
   label: "Other document"
@@ -1014,6 +1023,10 @@ const PARTY_REQUIRED = {
     seq: 0
   }),
   computed: {
+    /** Staged documents the browser could find no text layer in. */
+    scannedDocuments() {
+      return this.documents.filter(d => d.state === "staged" && d.readable === "scan").map(d => d.name);
+    },
     pastedFields() {
       return this.parsePaste(this.pasted).found;
     },
@@ -1368,6 +1381,57 @@ const PARTY_REQUIRED = {
       return doc && doc.state === "ready" && doc.fields ? doc.fields[key] : undefined;
     },
     /**
+     * Can this document be read without paying for vision?
+     *
+     * 🔴 ANSWERED BEFORE UPLOAD, in the browser. pdfjs-dist is already bundled, so the
+     * text layer can be inspected the moment a file is staged — no round trip, no job
+     * record, no credit. The alternative was what the operator had: press Extract, wait
+     * for the queue, and learn only then that the document was a scan.
+     *
+     * ⚠️ AN ADVANCE WARNING, NOT THE DECISION. The server reads every page with PyMuPDF
+     * and its answer is the one that counts; this reads the first three, because a
+     * 200-page file should not freeze the panel to answer a question the server will
+     * answer properly anyway. On disagreement the upload proceeds — a probe that BLOCKED
+     * on its own opinion would turn a cheap hint into a new way to lose a good document.
+     */
+    async probeTextLayer(doc) {
+      try {
+        const pdfjs = await Promise.all(/*! import() | pdfjs */[__webpack_require__.e("common"), __webpack_require__.e("pdfjs")]).then(__webpack_require__.t.bind(__webpack_require__, /*! pdfjs-dist/legacy/build/pdf */ "./node_modules/pdfjs-dist/legacy/build/pdf.js", 23));
+
+        // 🔴 THE WORKER MUST BE IMPORTED, NOT SWITCHED OFF. Setting `workerSrc = ""` does
+        // not disable it in pdfjs 2.x — the library still fetches a worker, from a path
+        // that was never emitted. Laravel then answered that request with the SPA's own
+        // index.html, and the browser reported `Unexpected token '<'`: a JavaScript error
+        // whose real cause is a missing file being served as a web page.
+        //
+        // ⚠️ `pdf.worker.entry` is the packaged entry point. Importing it makes webpack
+        // emit the worker as a real chunk and hands back its URL, so the path is whatever
+        // the build actually produced rather than a guess.
+        const worker = await Promise.all(/*! import() | pdfjs-worker */[__webpack_require__.e("common"), __webpack_require__.e("pdfjs-worker")]).then(__webpack_require__.t.bind(__webpack_require__, /*! pdfjs-dist/legacy/build/pdf.worker.entry */ "./node_modules/pdfjs-dist/legacy/build/pdf.worker.entry.js", 23));
+        pdfjs.GlobalWorkerOptions.workerSrc = worker.default || worker;
+        const buffer = await doc.file.arrayBuffer();
+        const pdf = await pdfjs.getDocument({
+          data: buffer
+        }).promise;
+        let characters = 0;
+        const pages = Math.min(pdf.numPages, 3);
+        for (let n = 1; n <= pages; n += 1) {
+          const page = await pdf.getPage(n);
+          const content = await page.getTextContent();
+          characters += content.items.map(i => i.str).join("").replace(/\s/g, "").length;
+          if (characters >= TEXT_LAYER_MIN_CHARS) break;
+        }
+
+        // 🔴 Matches the server's own floor. A scanner leaves a page number behind, so
+        // "any text at all" would call most scans readable — the two ends have to agree on
+        // where the line is or they will contradict each other in front of the operator.
+        doc.readable = characters >= TEXT_LAYER_MIN_CHARS ? "text" : "scan";
+      } catch (e) {
+        // An unreadable or encrypted PDF is not a verdict — let the server decide.
+        doc.readable = "unknown";
+      }
+    },
+    /**
      * Open the file dialog.
      *
      * ⚠️ Nothing awaits before `.click()`. Chrome requires the call to happen inside the
@@ -1425,7 +1489,7 @@ const PARTY_REQUIRED = {
 
         // Staged, not read. The file is held until the operator asks for it — see the
         // Extract button.
-        this.documents.push({
+        const doc = {
           uid: ++this.seq,
           name: file.name,
           file,
@@ -1433,8 +1497,12 @@ const PARTY_REQUIRED = {
           state: "staged",
           fields: null,
           error: null,
-          jobId: null
-        });
+          jobId: null,
+          // "text" | "scan" | "unknown" — filled by the probe a moment later.
+          readable: "unknown"
+        };
+        this.documents.push(doc);
+        this.probeTextLayer(doc);
       });
 
       // ⚠️ Named, not counted. "2 files ignored" leaves the operator checking which two;
@@ -2951,7 +3019,12 @@ var render = function render() {
     }
   }), _vm._v(" "), _c("p", {
     staticClass: "fx-muted fx-drop__note"
-  }, [_vm._v("\n        Several documents are normal — an invoice for the parties, a packing list for the\n        cargo. Say what to take from each.\n      ")])]), _vm._v(" "), _vm.rejectedFiles.length ? _c("p", {
+  }, [_vm._v("\n        Several documents are normal — an invoice for the parties, a packing list for the\n        cargo. Say what to take from each.\n      ")])]), _vm._v(" "), _vm.scannedDocuments.length ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n      No selectable text in "), _c("strong", [_vm._v(_vm._s(_vm.scannedDocuments.join(", ")))]), _vm._v(" — vision\n      extraction is not deployed yet, so use the paste box below for those.\n    ")]) : _vm._e(), _vm._v(" "), _vm.rejectedFiles.length ? _c("p", {
     staticClass: "fx-warn",
     attrs: {
       role: "status"
@@ -2987,7 +3060,12 @@ var render = function render() {
       }
     }), _vm._v(" "), doc.error ? _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v(" " + _vm._s(doc.error))]) : _vm._e()], 1), _vm._v(" "), _c("td", [doc.state === "staged" ? _c("button", {
+    }, [_vm._v(" " + _vm._s(doc.error))]) : _vm._e(), _vm._v(" "), doc.state === "staged" && doc.readable === "scan" ? _c("span", {
+      staticClass: "fx-staged__flag",
+      attrs: {
+        title: "No selectable text was found in the first pages"
+      }
+    }, [_vm._v("looks scanned")]) : _vm._e()], 1), _vm._v(" "), _c("td", [doc.state === "staged" ? _c("button", {
       staticClass: "fx-btn",
       on: {
         click: function ($event) {

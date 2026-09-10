@@ -91,6 +91,16 @@
         </p>
       </div>
 
+      <!--
+        ⚠️ Fires ONLY when a scan is actually staged, and says so about those files by
+        name. Earlier versions warned on every document before anything was read, which
+        taught operators to ignore it for the times it mattered.
+      -->
+      <p v-if="scannedDocuments.length" class="fx-warn" role="status">
+        No selectable text in <strong>{{ scannedDocuments.join(", ") }}</strong> — vision
+        extraction is not deployed yet, so use the paste box below for those.
+      </p>
+
       <p v-if="rejectedFiles.length" class="fx-warn" role="status">
         Not added — only PDFs can be read here:
         <strong>{{ rejectedFiles.join(", ") }}</strong>
@@ -135,6 +145,20 @@
             <td>
               <StatusChip :value="doc.state" />
               <span v-if="doc.error" class="fx-muted"> {{ doc.error }}</span>
+
+              <!--
+                🔴 KNOWN BEFORE EXTRACT IS PRESSED. The browser reads the text layer at
+                staging, so a scan is named here rather than after the queue has run —
+                which is when the operator used to find out.
+
+                ⚠️ Only while staged. Once a document has been read the real result is on
+                the row and a prediction beside it is noise.
+              -->
+              <span
+                v-if="doc.state === 'staged' && doc.readable === 'scan'"
+                class="fx-staged__flag"
+                title="No selectable text was found in the first pages"
+              >looks scanned</span>
             </td>
             <td>
               <!--
@@ -398,6 +422,16 @@ import { cleanParty } from "@/core/config/awbFieldRules";
  * bill would crop those at an AWB's coordinates and return whatever text sits at the
  * boxes — which is what it did before this existed.
  */
+/**
+ * The floor for "this document has a text layer".
+ *
+ * 🔴 Must match `MIN_TEXT_CHARS` in python/unstructured.py. A scanner leaves a page number
+ * or a header stamp behind, so "any text at all" calls most scans readable — and if the
+ * two ends disagree on where the line sits, the panel tells the operator one thing and the
+ * parser then does another.
+ */
+const TEXT_LAYER_MIN_CHARS = 120;
+
 const KINDS = [
   { key: "other", label: "Other document" },
   { key: "awb", label: "Airway bill" },
@@ -547,6 +581,12 @@ export default {
     seq: 0,
   }),
   computed: {
+    /** Staged documents the browser could find no text layer in. */
+    scannedDocuments() {
+      return this.documents
+        .filter((d) => d.state === "staged" && d.readable === "scan")
+        .map((d) => d.name);
+    },
     pastedFields() {
       return this.parsePaste(this.pasted).found;
     },
@@ -898,6 +938,62 @@ export default {
       return doc && doc.state === "ready" && doc.fields ? doc.fields[key] : undefined;
     },
     /**
+     * Can this document be read without paying for vision?
+     *
+     * 🔴 ANSWERED BEFORE UPLOAD, in the browser. pdfjs-dist is already bundled, so the
+     * text layer can be inspected the moment a file is staged — no round trip, no job
+     * record, no credit. The alternative was what the operator had: press Extract, wait
+     * for the queue, and learn only then that the document was a scan.
+     *
+     * ⚠️ AN ADVANCE WARNING, NOT THE DECISION. The server reads every page with PyMuPDF
+     * and its answer is the one that counts; this reads the first three, because a
+     * 200-page file should not freeze the panel to answer a question the server will
+     * answer properly anyway. On disagreement the upload proceeds — a probe that BLOCKED
+     * on its own opinion would turn a cheap hint into a new way to lose a good document.
+     */
+    async probeTextLayer(doc) {
+      try {
+        const pdfjs = await import(/* webpackChunkName: "pdfjs" */ "pdfjs-dist/legacy/build/pdf");
+
+        // 🔴 THE WORKER MUST BE IMPORTED, NOT SWITCHED OFF. Setting `workerSrc = ""` does
+        // not disable it in pdfjs 2.x — the library still fetches a worker, from a path
+        // that was never emitted. Laravel then answered that request with the SPA's own
+        // index.html, and the browser reported `Unexpected token '<'`: a JavaScript error
+        // whose real cause is a missing file being served as a web page.
+        //
+        // ⚠️ `pdf.worker.entry` is the packaged entry point. Importing it makes webpack
+        // emit the worker as a real chunk and hands back its URL, so the path is whatever
+        // the build actually produced rather than a guess.
+        const worker = await import(
+          /* webpackChunkName: "pdfjs-worker" */ "pdfjs-dist/legacy/build/pdf.worker.entry"
+        );
+
+        pdfjs.GlobalWorkerOptions.workerSrc = worker.default || worker;
+
+        const buffer = await doc.file.arrayBuffer();
+        const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+
+        let characters = 0;
+        const pages = Math.min(pdf.numPages, 3);
+
+        for (let n = 1; n <= pages; n += 1) {
+          const page = await pdf.getPage(n);
+          const content = await page.getTextContent();
+          characters += content.items.map((i) => i.str).join("").replace(/\s/g, "").length;
+
+          if (characters >= TEXT_LAYER_MIN_CHARS) break;
+        }
+
+        // 🔴 Matches the server's own floor. A scanner leaves a page number behind, so
+        // "any text at all" would call most scans readable — the two ends have to agree on
+        // where the line is or they will contradict each other in front of the operator.
+        doc.readable = characters >= TEXT_LAYER_MIN_CHARS ? "text" : "scan";
+      } catch (e) {
+        // An unreadable or encrypted PDF is not a verdict — let the server decide.
+        doc.readable = "unknown";
+      }
+    },
+    /**
      * Open the file dialog.
      *
      * ⚠️ Nothing awaits before `.click()`. Chrome requires the call to happen inside the
@@ -961,10 +1057,15 @@ export default {
 
         // Staged, not read. The file is held until the operator asks for it — see the
         // Extract button.
-        this.documents.push({
+        const doc = {
           uid: ++this.seq, name: file.name, file, kind: "other",
           state: "staged", fields: null, error: null, jobId: null,
-        });
+          // "text" | "scan" | "unknown" — filled by the probe a moment later.
+          readable: "unknown",
+        };
+
+        this.documents.push(doc);
+        this.probeTextLayer(doc);
       });
 
       // ⚠️ Named, not counted. "2 files ignored" leaves the operator checking which two;

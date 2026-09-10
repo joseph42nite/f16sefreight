@@ -2,9 +2,11 @@
     "/js/app.js": "/js/app.js",
     "/js/manifest.js": "/js/manifest.js",
     "/js/chunk/html2canvas.js": "/js/chunk/html2canvas.js?id=c61ccfc5e165caf4",
+    "/js/chunk/pdfjs.js": "/js/chunk/pdfjs.js?id=c86c9c724923a86e",
+    "/js/chunk/pdfjs-worker.js": "/js/chunk/pdfjs-worker.js?id=00e5b99dde4d7629",
     "/vendor.css": "/vendor.css",
     "/vendor.js": "/vendor.js",
     "/common.css": "/common.css",
-    "/js/chunk/common.js": "/js/chunk/common.js?id=075ae5f51e8295e3",
+    "/js/chunk/common.js": "/js/chunk/common.js?id=192de37a1e8b31cf",
     "/css/app.css": "/css/app.css"
 }

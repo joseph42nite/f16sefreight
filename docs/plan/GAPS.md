@@ -741,6 +741,20 @@ before the *document* has been looked at.
 
 ---
 
+## 🟢 2026-09-10 — a scan is named before extraction, in the browser
+
+Owner asked whether a text layer can be detected **before processing**. It can, and for
+free: `pdfjs-dist` was already in `package.json`.
+
+| # | Finding | Detail |
+|---|---|---|
+| 147 | 🟢 **The text layer is probed at STAGING, in the browser** — no upload, no job record, no credit | The operator used to press Extract, wait for the queue, and learn only then that the document was a scan. Now the row says **"looks scanned"** the moment it is added, and the warning names the files it applies to |
+| 148 | 🔴 **`GlobalWorkerOptions.workerSrc = ""` DOES NOT disable the worker in pdfjs 2.x.** The library still fetched one, from a path webpack never emitted — and **Laravel answered that request with the SPA's own index.html** | The browser reported `SyntaxError: Unexpected token '<'`: a JavaScript error whose real cause is a missing file being served as a web page. ⚠️ **A 200 OK from an SPA catch-all is indistinguishable from a real asset until something tries to parse it.** Fixed by importing `pdf.worker.entry`, so webpack emits the worker and hands back whatever URL the build actually produced |
+| 149 | ⚠️ **The probe is an ADVANCE WARNING, never the decision.** It reads the first three pages; the server reads all of them with PyMuPDF and its answer is the one that counts | A 200-page file must not freeze the panel to answer a question the server will answer properly anyway, and on disagreement the upload proceeds — a probe that blocked on its own opinion would turn a cheap hint into a new way to lose a good document |
+| 150 | 🔴 **Both ends share one threshold** — `TEXT_LAYER_MIN_CHARS = 120` in the panel, `MIN_TEXT_CHARS = 120` in `unstructured.py` | If they disagreed on where the line sits, the panel would tell the operator one thing and the parser would then do another, on the same file |
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

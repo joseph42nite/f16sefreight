@@ -1318,28 +1318,29 @@ so the rule lives in one place.
 > with its `llm_usage_logs` row, and an end-to-end vision run. Those need the FastAPI
 > service; the spend decision around them does not, and is asserted.
 
-### 8.2 FastAPI tests (`pytest python/`) ⛔
+### 8.2 FastAPI tests (`python3 python/test_unstructured.py`) 🟢
 
-Mock parser tests against sample airway bills and vendor invoice texts, asserting schema validity and confidence scoring.
+Parser tests against sample airway bills and vendor invoice texts, asserting schema
+validity and the label/model split.
 
-> 🟢 **GAPS #29 is resolved (2026-09-01).** All four pinned versions exist on PyPI, install
-> into a clean venv, and `ocr_server:app` starts and answers `/health` with
-> `{"status":"ok"}`. They simply had not been published when the gap was measured.
+> 🟢 **Unblocked 2026-09-10 — GAPS #38 is closed.** `/extract-unstructured` exists.
+> `python/unstructured.py` reads the text layer (PyMuPDF, pdfplumber as fallback) and
+> returns `extraction_path: 'text'`, or `'none'` when there is no text layer and
+> `allow_vision` was false — so the consent flow finally has something real to park on.
+> `python/model_extract.py` calls Gemma over Ollama to fill only the regions label
+> anchoring could not.
 >
-> ⛔ **Still blocked, on GAPS #38 — a bigger problem than the pins were.**
-> `python/ocr_server.py` is 93 lines exposing exactly two routes, `/health` and `/extract`.
-> There is **no `/extract-unstructured`, no `allow_vision`, no `extraction_path` in any
-> response, and no reference to Gemma or Gemini anywhere in `python/`.**
+> **22 tests, 0 failures** as of 2026-09-10.
 >
-> 🔴 Everything on the Laravel side is built and tested against a contract the parser does
-> not implement: `OcrRoutingService` routes unstructured documents to
-> `/extract-unstructured`, `ProcessPdfOcrJob` sends `allow_vision` and reads
-> `extraction_path` back, and the consent flow parks on `extraction_path = 'none'` — which
-> nothing can currently return. A Tactical or Command tenant uploading an invoice today
-> calls an endpoint that 404s and the job fails instead of parking for consent.
+> ⚠️ **There is no pytest in this environment.** `python/test_unstructured.py` carries its
+> own `__main__` runner, so it is run directly, and it needs `reportlab` to build the
+> fixture PDFs — which only `/usr/bin/python3` (3.9) has. The container image does not
+> carry pytest or reportlab and is not where the tests run:
 >
-> There is nothing to write pytest against until that endpoint exists. The coordinate path
-> (`/extract`) does work and is what production uses today.
+>     /usr/bin/python3 python/test_unstructured.py
+>
+> 🔴 **Still open as GAPS #38a:** the vision half. `google-generativeai` is absent and a
+> scan gets a **501**, so a document with no text layer cannot be read at all.
 
 ### 8.3 Frontend tests (`npm run test:unit`)
 

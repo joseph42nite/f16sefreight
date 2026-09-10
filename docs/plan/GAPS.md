@@ -50,7 +50,7 @@
 
 | # | Gap | Detail | Due |
 |---|---|---|---|
-| 38 | 🔴 **`/extract-unstructured` DOES NOT EXIST in the FastAPI service, so no AI path can run.** `python/ocr_server.py` is 93 lines exposing exactly two routes — `/health` and `/extract` (coordinate extraction via `extract_awb_new.py`). There is no `/extract-unstructured`, no `allow_vision` parameter, no `extraction_path` in any response, and **no reference to Gemma or Gemini anywhere in `python/`**. Verified by grep and by starting the service | Everything Laravel-side is built and tested against this contract: `OcrRoutingService` routes unstructured documents to `/extract-unstructured`, `ProcessPdfOcrJob` sends `allow_vision` and reads `extraction_path` back, and the whole consent flow parks on `extraction_path = 'none'` — **which nothing can currently return.** So a Tactical or Command tenant uploading an invoice today calls an endpoint that 404s, and the job fails rather than parking for consent. ⚠️ Resolving #29 did NOT resolve this: the service installs and the coordinate path works, but the AI half of the parser was never written. What is needed: the text-layer attempt (PyMuPDF/pdfplumber) returning `extraction_path: 'text'` with a Gemma-mapped payload, `extraction_path: 'none'` when there is no text layer and `allow_vision` was false, and the Gemini vision run when it is true | Before any unstructured document is uploaded; blocks §8.2 pytest |
+| 38 | 🟢 **RESOLVED 2026-09-10.** ~~**`/extract-unstructured` DOES NOT EXIST in the FastAPI service, so no AI path can run.** `python/ocr_server.py` is 93 lines exposing exactly two routes — `/health` and `/extract` (coordinate extraction via `extract_awb_new.py`). There is no `/extract-unstructured`, no `allow_vision` parameter, no `extraction_path` in any response, and **no reference to Gemma or Gemini anywhere in `python/`**. Verified by grep and by starting the service~~ | Everything Laravel-side is built and tested against this contract: `OcrRoutingService` routes unstructured documents to `/extract-unstructured`, `ProcessPdfOcrJob` sends `allow_vision` and reads `extraction_path` back, and the whole consent flow parks on `extraction_path = 'none'` — **which nothing can currently return.** So a Tactical or Command tenant uploading an invoice today calls an endpoint that 404s, and the job fails rather than parking for consent. ⚠️ Resolving #29 did NOT resolve this: the service installs and the coordinate path works, but the AI half of the parser was never written. What is needed: the text-layer attempt (PyMuPDF/pdfplumber) returning `extraction_path: 'text'` with a Gemma-mapped payload, `extraction_path: 'none'` when there is no text layer and `allow_vision` was false, and the Gemini vision run when it is true 🟢 **What closed it (2026-09-10):** `python/unstructured.py` reads the text layer (PyMuPDF, with pdfplumber as the fallback) and returns `extraction_path: 'text'` with the same key vocabulary `/extract` uses; `extraction_path: 'none'` when there is no text layer and `allow_vision` was false, so the consent flow now has something real to park on; `python/model_extract.py` calls Gemma over Ollama to fill only the regions label anchoring could not. Verified end-to-end through the container on 2026-09-10: a one-page invoice returned `extraction_path: 'text'`, `read_by: 'labels'`, 480.5 kg / 12 pieces. ⚠️ The vision half is NOT closed — `google-generativeai` is still absent and a scan answers **501**, which is now GAPS #38a. | Before any unstructured document is uploaded; blocks §8.2 pytest |
 
 ---
 
@@ -776,8 +776,39 @@ Reported as `cURL error 7: Failed to connect to 127.0.0.1:8001 … /extract-unst
     gross weight    480.5
 
 ⚠️ **The service and worker are foreground processes started by hand.** They do not survive
-a reboot, and the `ai-server` image still needs rebuilding for `pymupdf` and `pydantic`
-before the containerised path works.
+a reboot. 🟢 The image half of this is now closed — see the rebuild section below.
+
+---
+
+## 🔴 2026-09-10 — the rebuild that rebuilt nothing
+
+`docker compose build ai-server` returned **exit 0** and `docker compose up -d` reported
+**`Up (healthy)`** — and the container still could not `import fitz`.
+
+| # | Finding | Detail |
+|---|---|---|
+| 154 | 🔴 **A green build and a healthy container proved nothing.** `docker images` showed the ai-server image as **"9 days ago"**: every layer was cache-satisfied, so `RUN pip install -r requirements.txt` never re-ran and the image predated `pymupdf` being added to `python/requirements.txt` | ⚠️ **Docker invalidates that layer on the checksum of the COPYed `requirements.txt`, and the file had been edited — so this should have busted.** Whatever the cause, the lesson is the check, not the theory: **a build's exit code says the build ran, not that it installed anything.** `--no-cache` produced the real install (`pymupdf-1.26.5`, `pydantic-2.13.5`) and the image went 739MB → **803MB**. Verify a rebuild by importing the new dependency, never by exit code |
+| 155 | 🔴 **The soft import hid it perfectly.** `unstructured.py` guards PyMuPDF behind `_HAS_MUPDF` and falls back to pdfplumber, which is correct — a missing fast reader must not take `/extract` down with it | 🔴 But it means **a missing dependency has no symptom**: the endpoint answers 200, the output is identical, and only the speed differs. That is why the stale image survived a healthy container and a passing smoke test. The container now reports `_HAS_MUPDF = True` explicitly, which is the thing worth asserting |
+| 156 | 🔴 **`127.0.0.1` inside a container is the container.** `model_extract.py` defaults to loopback, so containerised the model call resolved to nothing — and an unreachable model is treated as *"no model"*, falling back to label anchoring | 🔴 So the failure mode was **quietly worse extraction, not an error**. `docker-compose.yml` now sets `OLLAMA_URL: http://host.docker.internal:11434` with `extra_hosts: host.docker.internal:host-gateway` (Docker Desktop supplies the name; Linux hosts do not) and `OLLAMA_KEEP_ALIVE: "-1"` to stop paying the 10-60s cold load per request. Verified from inside the container: `OK models: ['gemma3:1b']` |
+| 157 | 🔴 **Two labels on one line ran together.** `_blocks_after` terminated a field at a blank line or at a label **starting the next line** — a line-anchored rule. A compact invoice writes `Origin: BLR    Destination: FRA` on one line | 🔴 `departure` came back as **`"BLR DESTINATION: FRA"`**, which is then what the IATA resolver is handed. Found by the first real end-to-end run through the container, not by any test. A third alternative now also stops at a second label on the same line; pinned by two tests — one for the compact lane, one asserting a wrapped multi-line address is still read whole, because that is what the new terminator could plausibly break |
+
+**Verified end to end through the container**, `POST /extract-unstructured`:
+
+    extraction_path  text
+    read_by          labels
+    shipper          ABC Logistics Pvt Ltd, Bengaluru, India
+    departure        BLR          (was "BLR DESTINATION: FRA")
+    destination      FRA
+    pieces           12
+    gross weight     480.5
+
+🟢 `read_by: "labels"` is the **designed** result here, not a model failure: label anchoring
+filled every region, so `gaps` was empty and `_apply_model` returned without calling Gemma.
+The model is a gap-filler, not a first pass.
+
+| # | Gap | Detail |
+|---|---|---|
+| 38a | 🔴 **The vision path is still not built.** `google-generativeai` is not in `python/requirements.txt` and `/extract-unstructured` answers **501** for a document with no text layer | So a **scanned** document cannot be read at all. The consent flow, the credit accounting and the `awaiting_vision_consent` UI are all reachable now — they simply lead to a 501. This is the remaining half of #38 |
 
 ---
 
@@ -958,3 +989,5 @@ Fixed by comparing counterparties with our own address removed.
 - **New models need `composer dump-autoload`** before tinker's bare-name aliasing finds them. `Port::count()` fails with *Class "Port" not found* until then — recurs at every model checkpoint.
 - **Start the database first:** `docker compose up -d db`. A stopped container looks like a config problem, not a stopped container.
 - **`export PATH="/usr/local/opt/php@8.2/bin:$PATH"`** on every PHP command — system PHP is 8.5 and this project cannot run on it.
+- 🔴 **NEVER run two PHP suites at once.** `phpunit.xml` hardcodes one MySQL database, `DB_DATABASE=f16s_test`, so a second run migrates and truncates the tables the first one is mid-way through using. The result is a **large, plausible, entirely fake failure count** — 183, 259, 220, 248 and 245 on five separate occasions, every one of them this and nothing else. ⚠️ The trap is that the failures look like real regressions and invite a hunt. Before believing any failure count, check `pgrep -f "phpunit --configuration"` returns exactly one process, and confirm no earlier background run is still writing its log. 🟢 A per-process database name would remove the footgun permanently; not done, because it changes how everyone runs the suite.
+- ⚠️ **`pgrep -f` matches the shell that is running the `pgrep`.** A monitor that greps for its own target counts itself, so "2 processes" can mean one. Compare start times before concluding two runs overlap.

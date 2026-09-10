@@ -122,6 +122,28 @@ def test_the_lane_resolves_to_iata():
     assert result["destination"] == "FRA"
 
 
+def test_two_labels_on_one_line_do_not_run_together():
+    """
+    A compact invoice puts the lane on a single line. The terminator used to require a
+    label to START a line, so departure read as "BLR DESTINATION: FRA" — the code that
+    was then asked to resolve an IATA code.
+    """
+    compact = INVOICE.replace(
+        "Airport of departure: Mumbai\nAirport of destination: Frankfurt",
+        "Origin: BLR    Destination: FRA",
+    )
+    result = extract_from_text(_pdf(compact))
+    assert result["departure"] == "BLR"
+    assert result["destination"] == "FRA"
+
+
+def test_a_multi_line_address_is_still_read_whole():
+    """The same-line terminator must not cut an address that merely wraps."""
+    result = extract_from_text(_pdf(INVOICE))
+    assert "Marine Drive" in result["shipper"]["full_details"]
+    assert "Mumbai" in result["shipper"]["full_details"]
+
+
 def test_the_raw_text_is_returned_for_the_model_step():
     """Gemma consumes this. Returning it now means adding the model changes one module."""
     result = extract_from_text(_pdf(INVOICE))

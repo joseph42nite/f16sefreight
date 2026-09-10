@@ -147,7 +147,12 @@ def _blocks_after(text: str, labels: List[str]) -> Optional[str]:
     """
     for label in labels:
         pattern = re.compile(
-            r"\b" + re.escape(label) + r"\b\s*[:\-]?\s*(.*?)(?=\n\s*\n|\n[A-Z][A-Za-z ./]{2,30}\s*[:\-]|\Z)",
+            r"\b" + re.escape(label) + r"\b\s*[:\-]?\s*(.*?)"
+            # Stop at a blank line, at a label starting the next line, or — the case a
+            # line-anchored rule misses entirely — at a SECOND label on the SAME line.
+            # "Origin: BLR    Destination: FRA" is one line, and without the third
+            # alternative departure reads as "BLR DESTINATION: FRA".
+            r"(?=\n\s*\n|\n[A-Z][A-Za-z ./]{2,30}\s*[:\-]|[ \t]+[A-Z][A-Za-z ./]{2,30}[ \t]*:|\Z)",
             re.IGNORECASE | re.DOTALL,
         )
         match = pattern.search(text)

@@ -121,6 +121,20 @@ services:
     container_name: f16s-ai
     ports:
       - "8000:8000"
+    environment:
+      # 🔴 `127.0.0.1` INSIDE A CONTAINER IS THE CONTAINER. Ollama runs on the host, so
+      # the default in model_extract.py resolves to nothing here and every model call
+      # would fail silently — the extractor treats an unreachable model as "no model" and
+      # falls back to label anchoring, so the symptom is quietly worse extraction rather
+      # than an error anyone would notice.
+      OLLAMA_URL: http://host.docker.internal:11434
+      # Keep the model resident. A cold load is 10-60s; an evicted model pays it on every
+      # request.
+      OLLAMA_KEEP_ALIVE: "-1"
+    extra_hosts:
+      # ⚠️ Docker Desktop provides this name; Linux hosts do not, so it is declared
+      # explicitly or the container cannot resolve it there at all.
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./python:/app          # live edits without a rebuild
       - chroma_data:/chroma

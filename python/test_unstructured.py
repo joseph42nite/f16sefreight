@@ -290,6 +290,36 @@ def test_the_schema_is_flat_because_refs_defeat_small_models():
     assert "$defs" not in schema, "a $ref schema returns empty documents on a small model"
 
 
+# ─── PyMuPDF ─────────────────────────────────────────────────────────────────
+
+
+def test_both_pdf_readers_return_the_same_text():
+    """
+    🔴 The fallback has to be EQUIVALENT, not merely present. PyMuPDF reads the text layer
+    ~10x faster than pdfplumber (27.2ms vs 2.6ms on a one-page invoice, median of five),
+    but an image that has not been rebuilt yet still runs the slow path — and a fallback
+    that extracts different text would make the same document parse differently depending
+    on which container answered.
+    """
+    import unstructured
+
+    path = _pdf(INVOICE)
+
+    fast, fast_pages = unstructured._page_text_mupdf(path)
+    slow, slow_pages = unstructured._page_text_plumber(path)
+
+    assert fast_pages == slow_pages
+    assert "".join(fast.split()) == "".join(slow.split())
+
+
+def test_the_fast_reader_is_the_one_in_use():
+    """⚠️ Soft import: a missing PyMuPDF must degrade to pdfplumber, never take the OCR
+    service down — /extract does not use this module and should not fail with it."""
+    import unstructured
+
+    assert unstructured._HAS_MUPDF, "PyMuPDF is not installed; the slow path is running"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0

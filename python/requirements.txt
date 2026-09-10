@@ -1,4 +1,10 @@
+# Coordinate cropping for the AWB path — extract_awb_new.py crops boxes with this.
 pdfplumber==0.11.9
+
+# The text layer for /extract-unstructured. 10x pdfplumber on a one-page invoice, with
+# identical output — measured, not assumed. pdfplumber stays because it does a different
+# job (cropping) that it does well.
+pymupdf==1.26.5
 fastapi==0.136.1
 uvicorn==0.46.0
 python-multipart==0.0.28

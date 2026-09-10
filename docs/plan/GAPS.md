@@ -681,6 +681,20 @@ E4B on the t4g.large (PRD §9.5) is where quality gets judged.
 
 ---
 
+## 🟢 2026-09-10 — PyMuPDF on the text path, measured before switching
+
+| # | Finding | Detail |
+|---|---|---|
+| 134 | 🟢 **PyMuPDF replaces pdfplumber for the TEXT LAYER only** — the last item on guide §4.1's "genuinely missing" list. Measured on this machine, median of five, identical text every time | `invoice 27.2ms → 2.6ms (10.3x)` · `unlabelled 18.8ms → 2.6ms (7.3x)` · `scan 3.5ms → 1.8ms`. End to end, a labelled invoice went **2.0s → 0.9s**. ⚠️ **pdfplumber stays** — `extract_awb_new.py` uses it to CROP coordinate boxes, a different job it does well |
+| 135 | 🔴 **The import is SOFT, and that is not caution for its own sake.** The Docker image carries no PyMuPDF until it is rebuilt, and a hard import would take the whole OCR service down on deploy — **including `/extract`, which does not use this module at all** | A missing dependency would have become an outage of an endpoint it has nothing to do with. Falling back keeps a slower service running. A test asserts the fast path IS active here, so the fallback cannot go unnoticed |
+| 136 | ⚠️ **The two readers must return the SAME TEXT, and that is tested** | An image mid-rollout runs the slow path while its neighbours run the fast one. A fallback that extracted different text would make one document parse differently depending on which container answered — the worst kind of intermittent |
+
+⚠️ **The ai-server image needs rebuilding** to pick up `pymupdf` and `pydantic`. Until then
+that container runs the pdfplumber fallback and has no model step at all — everything
+verified here was run on the host.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

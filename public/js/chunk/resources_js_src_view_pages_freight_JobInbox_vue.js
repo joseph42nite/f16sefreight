@@ -1380,6 +1380,28 @@ const PARTY_REQUIRED = {
       const doc = this.documents.find(d => d.uid === uid);
       return doc && doc.state === "ready" && doc.fields ? doc.fields[key] : undefined;
     },
+    /**
+     * Open the file dialog.
+     *
+     * ⚠️ Nothing awaits before `.click()`. Chrome requires the call to happen inside the
+     * user gesture that triggered it; a promise in between silently loses the activation
+     * and the dialog never opens — with no error anywhere to say why.
+     */
+    pick(event) {
+      const input = this.$refs.picker;
+      if (!input) {
+        return;
+      }
+
+      // 🔴 THE INPUT LIVES INSIDE THE ZONE, so the `input.click()` below bubbles straight
+      // back up to the zone's own handler and calls this again — two calls, two file
+      // dialogs, the second one appearing the moment the first is dismissed. Measured: a
+      // single click produced two.
+      if (event && event.target === input) {
+        return;
+      }
+      input.click();
+    },
     onDrop(e) {
       this.dragging = false;
       this.add([...e.dataTransfer.files]);
@@ -2872,11 +2894,25 @@ var render = function render() {
   }, [_c("h3", {
     staticClass: "fx-extract__h"
   }, [_vm._v("1 · Documents")]), _vm._v(" "), _c("div", {
-    staticClass: "fx-drop fx-drop--slim",
+    staticClass: "fx-drop fx-drop--slim is-clickable",
     class: {
       "is-over": _vm.dragging
     },
+    attrs: {
+      role: "button",
+      tabindex: "0"
+    },
     on: {
+      click: _vm.pick,
+      keydown: [function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        $event.preventDefault();
+        return _vm.pick.apply(null, arguments);
+      }, function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "space", 32, $event.key, [" ", "Spacebar"])) return null;
+        $event.preventDefault();
+        return _vm.pick.apply(null, arguments);
+      }],
       dragover: function ($event) {
         $event.preventDefault();
         _vm.dragging = true;
@@ -2892,19 +2928,29 @@ var render = function render() {
     }
   }, [_c("p", {
     staticClass: "fx-drop__lead"
-  }, [_vm._v("Drop PDFs here")]), _vm._v(" "), _c("label", {
-    staticClass: "fx-btn"
-  }, [_vm._v("\n        Choose files\n        "), _c("input", {
+  }, [_vm._v("Drop PDFs here, or click anywhere in this box")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      type: "button"
+    },
+    on: {
+      click: function ($event) {
+        $event.stopPropagation();
+        return _vm.pick.apply(null, arguments);
+      }
+    }
+  }, [_vm._v("\n        Choose files\n      ")]), _vm._v(" "), _c("input", {
+    ref: "picker",
     staticClass: "fx-drop__input",
     attrs: {
       type: "file",
-      accept: "application/pdf",
+      accept: "application/pdf,.pdf",
       multiple: ""
     },
     on: {
       change: _vm.onPick
     }
-  })]), _vm._v(" "), _c("p", {
+  }), _vm._v(" "), _c("p", {
     staticClass: "fx-muted fx-drop__note"
   }, [_vm._v("\n        Several documents are normal — an invoice for the parties, a packing list for the\n        cargo. Say what to take from each.\n      ")])]), _vm._v(" "), _vm.rejectedFiles.length ? _c("p", {
     staticClass: "fx-warn",

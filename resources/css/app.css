@@ -600,6 +600,10 @@ body.fx-split .fx-rail__label { display: none; }
            transition: border-color var(--motion-fast) var(--motion-ease),
                        background var(--motion-fast) var(--motion-ease); }
 .fx-drop.is-over { border-color: var(--portal-accent); background: var(--bg-sunken); }
+/* The whole zone is the target, so it has to look like one. */
+.fx-drop.is-clickable { cursor: pointer; }
+.fx-drop.is-clickable:hover { border-color: var(--portal-accent); }
+.fx-drop.is-clickable:focus-visible { outline: 2px solid var(--portal-accent); outline-offset: 2px; }
 .fx-drop__lead { font-size: .9375rem; font-weight: 600; margin: 0; color: var(--text-primary); }
 .fx-drop__note { font-size: .75rem; }
 /* The real input stays in the DOM for keyboard and screen-reader users; the label is

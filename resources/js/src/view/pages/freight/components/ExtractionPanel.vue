@@ -47,18 +47,44 @@
     <section class="fx-extract__step">
       <h3 class="fx-extract__h">1 · Documents</h3>
 
+      <!--
+        🔴 THE WHOLE ZONE OPENS THE PICKER, not just the button. The button is 83x32px
+        inside a target several times that size, and a click that lands next to it did
+        NOTHING AT ALL — no dialog, no message, nothing to distinguish "you missed" from
+        "this is broken". Every report of the picker not working looks identical from the
+        outside whether the cause is a dead handler or a small target.
+
+        ⚠️ `pick()` is called from the CLICK HANDLER, synchronously. Chrome only opens a
+        file dialog inside a live user gesture, so an `await` anywhere before
+        `input.click()` loses the activation and the dialog silently never appears.
+      -->
       <div
-        class="fx-drop fx-drop--slim"
+        class="fx-drop fx-drop--slim is-clickable"
         :class="{ 'is-over': dragging }"
+        role="button"
+        tabindex="0"
+        @click="pick"
+        @keydown.enter.prevent="pick"
+        @keydown.space.prevent="pick"
         @dragover.prevent="dragging = true"
         @dragleave.prevent="dragging = false"
         @drop.prevent="onDrop"
       >
-        <p class="fx-drop__lead">Drop PDFs here</p>
-        <label class="fx-btn">
+        <p class="fx-drop__lead">Drop PDFs here, or click anywhere in this box</p>
+        <!-- ⚠️ A BUTTON, not a label wrapping the input. A label activates the input
+             natively AND the click bubbles to the zone above, which opened the dialog
+             twice. One path in, one dialog. -->
+        <button type="button" class="fx-btn" @click.stop="pick">
           Choose files
-          <input type="file" accept="application/pdf" multiple class="fx-drop__input" @change="onPick" />
-        </label>
+        </button>
+        <input
+          ref="picker"
+          type="file"
+          accept="application/pdf,.pdf"
+          multiple
+          class="fx-drop__input"
+          @change="onPick"
+        />
         <p class="fx-muted fx-drop__note">
           Several documents are normal — an invoice for the parties, a packing list for the
           cargo. Say what to take from each.
@@ -889,6 +915,30 @@ export default {
       const doc = this.documents.find((d) => d.uid === uid);
 
       return doc && doc.state === "ready" && doc.fields ? doc.fields[key] : undefined;
+    },
+    /**
+     * Open the file dialog.
+     *
+     * ⚠️ Nothing awaits before `.click()`. Chrome requires the call to happen inside the
+     * user gesture that triggered it; a promise in between silently loses the activation
+     * and the dialog never opens — with no error anywhere to say why.
+     */
+    pick(event) {
+      const input = this.$refs.picker;
+
+      if (!input) {
+        return;
+      }
+
+      // 🔴 THE INPUT LIVES INSIDE THE ZONE, so the `input.click()` below bubbles straight
+      // back up to the zone's own handler and calls this again — two calls, two file
+      // dialogs, the second one appearing the moment the first is dismissed. Measured: a
+      // single click produced two.
+      if (event && event.target === input) {
+        return;
+      }
+
+      input.click();
     },
     onDrop(e) {
       this.dragging = false;

@@ -706,6 +706,26 @@ verified here was run on the host.
 
 ---
 
+## 🔴 2026-09-10 — the file picker: a small target and a double dialog
+
+⚠️ **The reported symptom was "no dialog opens at all, on Chrome."** Instrumented in the
+browser: a trusted click on the button reached the input with `defaultPrevented: false` and
+fired a **`cancel`** event — which Chrome emits only when a dialog **has opened and been
+dismissed**. So the mechanism was sound and the button was not the fault.
+
+| # | Finding | Detail |
+|---|---|---|
+| 141 | 🔴 **The target was 83×32px inside a zone 30× that size.** A click landing beside it did **nothing at all** — no dialog, no message, nothing to distinguish "you missed" from "this is broken" | The whole zone now opens the picker: **2,656px² → 78,858px²**. Keyboard too (`Enter`/`Space`, `role="button"`, `tabindex="0"`), which the label pattern gave for free and a bare div would have lost |
+| 142 | 🔴 **Making the zone clickable opened the dialog TWICE.** The input lives inside the zone, so `input.click()` bubbles back to the zone's own handler and calls it again — measured: one click produced two | The second dialog appears the instant the first is dismissed, which reads as the picker being broken in a new way. Guarded by ignoring the event when it originated from the input itself |
+| 143 | ⚠️ **A `<label>` wrapping the input could not stay.** It activates the input natively AND the click bubbles to the zone — two paths, two dialogs | Replaced with a `<button type="button" @click.stop>`. One path in, one dialog |
+
+⚠️ **This may still not be the owner's cause.** The mechanism demonstrably works in this
+browser; what changed is that the target is now hard to miss and every route through it
+fires exactly once. If a click squarely on **Choose files** still opens nothing in their
+Chrome, the next suspects are an extension or a profile setting, not this code.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

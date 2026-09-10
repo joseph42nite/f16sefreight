@@ -755,6 +755,32 @@ free: `pdfjs-dist` was already in `package.json`.
 
 ---
 
+## 🔴 2026-09-10 — "Could not connect to server": three things, not one
+
+Reported as `cURL error 7: Failed to connect to 127.0.0.1:8001 … /extract-unstructured`.
+
+| # | Finding | Detail |
+|---|---|---|
+| 151 | 🔴 **The configured port did not match the deployment.** `config/services.php` defaulted to **8001**; `docker-compose.yml` publishes **8000**, and its healthcheck probes 8000. Nothing set `OCR_SERVICE_URL` in `.env` | So extraction failed with "Could not connect" **even with the container running correctly**. ⚠️ **A default that disagrees with the only place the service is defined is worse than no default** — it fails at the point of use, far from the mismatch, and looks like a network problem. Default corrected and `OCR_SERVICE_URL` added to `.env` and `.env.example` |
+| 152 | 🔴 **Nothing was listening at all.** Only `f16s-db` was up; the `ai-server` container has never been started in this environment | Started on the **host** rather than in the container, deliberately: Ollama runs on the host, and PRD §9.5 cohosts the two over loopback. A containerised FastAPI would need `host.docker.internal` to reach the model and gains nothing locally |
+| 153 | 🔴 **No queue worker was running**, so even with the service reachable the job would sit `pending` forever | `ProcessPdfOcrJob` dispatches to `pdf_processing`, which nothing was consuming. Three separate breaks between the button and a result, each of which alone produces "nothing happens" |
+
+**Verified end to end** — upload → queue → FastAPI → stored:
+
+    status          completed
+    document_type   unstructured
+    extraction_path text
+    shipper         Northwind Exports Pvt Ltd 41 Marine Drive, Unit 7 Mumbai 400020, India
+    destination     FRA
+    pieces          12
+    gross weight    480.5
+
+⚠️ **The service and worker are foreground processes started by hand.** They do not survive
+a reboot, and the `ai-server` image still needs rebuilding for `pymupdf` and `pydantic`
+before the containerised path works.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

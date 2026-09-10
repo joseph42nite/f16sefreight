@@ -30,8 +30,21 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+     * The FastAPI parsing engine.
+     *
+     * 🔴 PORT 8000, matching docker-compose. The default here was 8001 while the only
+     * place the service is actually defined publishes 8000 — and nothing set
+     * OCR_SERVICE_URL, so every extraction failed with "Could not connect to server" even
+     * with the container running correctly. A default that disagrees with the deployment
+     * is worse than no default: it fails at the point of use, far from the mismatch.
+     *
+     * ⚠️ Ollama cohosts with this service over loopback (PRD §9.5). Running FastAPI in a
+     * container while Ollama is on the host needs `host.docker.internal` and gains
+     * nothing locally.
+     */
     'ocr' => [
-        'url' => env('OCR_SERVICE_URL', 'http://127.0.0.1:8001'),
+        'url' => env('OCR_SERVICE_URL', 'http://127.0.0.1:8000'),
     ],
 
     /*

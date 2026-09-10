@@ -34,6 +34,7 @@ from typing import Any, Dict, List, Optional
 
 import pdfplumber
 
+import model_extract
 from extract_awb_new import process_box
 
 # The regions the coordinate path emits. Kept in this order so a response reads the way
@@ -195,6 +196,10 @@ def extract_from_text(pdf_path: str) -> Dict[str, Any]:
         }
 
     result: Dict[str, Any] = {"extraction_path": "text", "page_count": page_count, "text": text}
+    # 🔴 Records WHICH reader produced the fields, because "the regex found the shipper"
+    # and "the model did" are different levels of trust and the operator is entitled to
+    # know which one they are checking.
+    result["read_by"] = "labels"
 
     # Read from the WHOLE document, not from a labelled block: the count and the mass are
     # rarely under one label, and often not under a label at all.
@@ -212,4 +217,64 @@ def extract_from_text(pdf_path: str) -> Dict[str, Any]:
         # box is blank, so a missing region looks the same from both.
         result[region] = process_box(region, block or "")
 
+    # 🔴 THE MODEL FILLS GAPS, IT DOES NOT OVERRULE. Label anchoring found its values
+    # under an explicit label — "Shipper:" — which is stronger evidence than a model's
+    # reading of the same page. So the model is asked only for what is still missing, and
+    # a document whose labels were all found never reaches it at all.
+    #
+    # ⚠️ Failure here is silent ON PURPOSE. If the model is down or returns junk, the
+    # label-anchored result stands: a document read imperfectly is worth more than a 500,
+    # and the operator sees and fixes the fields either way.
+    _apply_model(result, text)
+
     return result
+
+
+def _is_blank(value: Any) -> bool:
+    """Whether a region came back with nothing in it."""
+    if value in (None, "", {}, []):
+        return True
+
+    if isinstance(value, dict):
+        return not any(v not in (None, "", [], 0, 0.0) for v in value.values())
+
+    return False
+
+
+def _apply_model(result: Dict[str, Any], text: str) -> None:
+    """Fill the regions label anchoring could not, if a model is reachable."""
+    gaps = [r for r in ("shipper", "consignee", "cargo") if _is_blank(result.get(r))]
+
+    if not gaps:
+        return
+
+    if not model_extract.available():
+        return
+
+    parsed = model_extract.extract(text)
+
+    if not parsed:
+        return
+
+    filled = []
+
+    for region, key in (("shipper", "shipper"), ("consignee", "consignee")):
+        if region in gaps and parsed.get(key):
+            party = parsed[key]
+            # ⚠️ Back through `process_box`, so a model-derived address is shaped exactly
+            # like a cropped one. The VALUE differs in provenance, never in structure.
+            joined = " ".join(v for v in (party.get("name"), party.get("address")) if v)
+            if joined:
+                result[region] = process_box(region, joined)
+                filled.append(region)
+
+    if "cargo" in gaps and (parsed.get("cargo") or {}).get("description"):
+        result["cargo"] = process_box("cargo", parsed["cargo"]["description"])
+        filled.append("cargo")
+
+    if filled:
+        result["read_by"] = "labels+model"
+        result["model_filled"] = filled
+        # The model's own account of what it could not read, kept so an operator can see
+        # that a blank was a decision rather than an oversight.
+        result["model_unreadable"] = parsed.get("unreadable", [])

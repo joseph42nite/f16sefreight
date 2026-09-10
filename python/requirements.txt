@@ -2,3 +2,8 @@ pdfplumber==0.11.9
 fastapi==0.136.1
 uvicorn==0.46.0
 python-multipart==0.0.28
+
+# Schema validation for the model step. PRD §5.1 constrains the model to a schema AND
+# validates what comes back — validation alone detects a malformed payload, it does not
+# prevent one.
+pydantic==2.13.5

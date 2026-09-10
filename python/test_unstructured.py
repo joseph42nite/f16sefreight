@@ -128,6 +128,87 @@ def test_the_raw_text_is_returned_for_the_model_step():
     assert "Northwind" in result["text"]
 
 
+# ─── The model step ──────────────────────────────────────────────────────────
+#
+# ⚠️ Stubbed, deliberately. These assert the WIRING — who wins, what happens when the
+# model is down — which is exactly what must hold regardless of which model is loaded.
+# Extraction quality is judged against a real model on a machine that can run one.
+
+
+def _with_model(payload, available=True):
+    """Swap the model out for a known answer."""
+    import model_extract
+
+    calls = {"n": 0}
+
+    def _stub(text):
+        calls["n"] += 1
+        return payload
+
+    model_extract.available = lambda: available
+    model_extract.extract = _stub
+
+    return calls
+
+
+def test_the_model_fills_only_what_labels_could_not():
+    import unstructured
+
+    _with_model({
+        "shipper": {"name": "Northwind", "address": "Mumbai"},
+        "cargo": {"description": "Excipients"},
+        "unreadable": ["notify party"],
+    })
+
+    result = {"read_by": "labels", "shipper": {}, "consignee": {"name": "Found By Label"}, "cargo": {}}
+    unstructured._apply_model(result, "some document text")
+
+    assert result["model_filled"] == ["shipper", "cargo"]
+    assert result["read_by"] == "labels+model"
+    # 🔴 The consignee came from an explicit label and the model does not get to argue.
+    assert result["consignee"]["name"] == "Found By Label"
+
+
+def test_a_fully_labelled_document_never_reaches_the_model():
+    """The model costs time and, on a server, memory. A document that did not need it
+    must not pay for it."""
+    import unstructured
+
+    calls = _with_model({"shipper": {"name": "SHOULD NOT BE USED"}})
+
+    result = {"read_by": "labels", "shipper": {"name": "A"}, "consignee": {"name": "B"},
+              "cargo": {"description": "C"}}
+    unstructured._apply_model(result, "text")
+
+    assert calls["n"] == 0
+    assert result["read_by"] == "labels"
+
+
+def test_an_unreachable_model_leaves_the_label_result_standing():
+    """🔴 A document read imperfectly is worth more than a 500."""
+    import unstructured
+
+    _with_model({"shipper": {"name": "unused"}}, available=False)
+
+    result = {"read_by": "labels", "shipper": {"name": "Kept"}, "consignee": {}, "cargo": {}}
+    unstructured._apply_model(result, "text")
+
+    assert result["shipper"]["name"] == "Kept"
+    assert result["read_by"] == "labels"
+    assert "model_filled" not in result
+
+
+def test_the_schema_permits_a_model_that_found_nothing():
+    """⚠️ Every field is optional so a model can say "I could not read this" by omitting
+    it. Forcing a field guarantees it is filled with something, and an invented consignee
+    is worse than a blank one."""
+    from schemas import ExtractedDocument
+
+    empty = ExtractedDocument.model_validate({})
+    assert empty.shipper is None
+    assert empty.unreadable == []
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0

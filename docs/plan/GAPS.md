@@ -726,6 +726,21 @@ Chrome, the next suspects are an extension or a profile setting, not this code.
 
 ---
 
+## 🔴 2026-09-10 — a warning that fired when it was not true
+
+| # | Finding | Detail |
+|---|---|---|
+| 144 | 🔴 **The scan warning fired on STAGING, for every document that was not an airway bill** — before anything had been read, when nobody knew whether it was a scan | So a text PDF, the common case and the one that works, was greeted with a notice saying it might not. ⚠️ **A warning that fires when it is not true teaches operators to ignore it for the times it is.** Removed |
+| 145 | 🔴 **`awaiting_vision_consent` was not handled in the panel's poll at all.** The loop looked only for `completed`, `failed` and `cancelled` | A scan therefore **polled forever** — the one document the warning was about was also the one the UI could not finish. That state is now handled, and it is the moment a scan is *known* to be a scan: the parser found no text layer and said so |
+| 146 | ⚠️ **The message is now per-document and specific** — *"no selectable text — this is a scan, and vision extraction is not deployed yet"* — attached to the file it is true of | It reaches the operator as the outcome of reading that file, not as a caveat about all files. When vision ships this becomes a consent prompt rather than a failure, and nothing else in the panel changes |
+
+⚠️ **This is the third stale-or-premature warning in this panel.** First it said the
+unstructured parser was undeployed (true, then not). Then it warned about scans on every
+document. The pattern to avoid: a notice written from what the *code* cannot do yet, shown
+before the *document* has been looked at.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

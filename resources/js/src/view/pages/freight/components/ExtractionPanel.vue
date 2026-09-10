@@ -96,12 +96,6 @@
         <strong>{{ rejectedFiles.join(", ") }}</strong>
       </p>
 
-      <p v-if="scanWarning" class="fx-warn" role="status">
-        A document with selectable text reads fine. A <strong>scan</strong> cannot be read
-        yet — vision extraction is not deployed — so it will stop and ask, and the paste box
-        below is the way through until it is.
-      </p>
-
       <table v-if="documents.length" class="fx-table fx-extract__docs">
         <thead>
           <tr>
@@ -553,19 +547,6 @@ export default {
     seq: 0,
   }),
   computed: {
-    /**
-     * ⚠️ THIS WARNING IS NOW ABOUT SCANS, NOT ABOUT INVOICES. It used to say the
-     * unstructured parser was not deployed, which was true when it was written and stopped
-     * being true when `/extract-unstructured` shipped — a stale warning is worse than none,
-     * because an operator who reads "this will fail" does not try.
-     *
-     * What remains true: a document with NO TEXT LAYER needs the vision path, and that is
-     * still not built (`google-generativeai` is not installed; the endpoint answers 501).
-     * So a scan will park for consent and then be unable to proceed.
-     */
-    scanWarning() {
-      return this.documents.some((d) => d.kind !== "awb");
-    },
     pastedFields() {
       return this.parsePaste(this.pasted).found;
     },
@@ -1049,6 +1030,22 @@ export default {
               clearInterval(timer);
               doc.fields = data.fields || {};
               doc.state = "ready";
+            } else if (data.job_status === "awaiting_vision_consent") {
+              // 🔴 THIS is when a scan is known to be a scan — the parser found no text
+              // layer and said so. Until this was handled the job polled forever, because
+              // the loop only ever looked for `completed` and `failed`.
+              //
+              // ⚠️ The panel used to WARN ABOUT THIS ON STAGING, before any document had
+              // been read, for every file that was not an airway bill. A text PDF — the
+              // common case, and the one that works — was greeted with a notice saying it
+              // might not. A warning that fires when it is not true teaches operators to
+              // ignore it for the times it is.
+              clearInterval(timer);
+              this.fail(
+                uid,
+                "no selectable text — this is a scan, and vision extraction is not "
+                + "deployed yet. Use the paste box below."
+              );
             } else if (data.job_status === "failed" || data.job_status === "cancelled") {
               clearInterval(timer);
               this.fail(uid, data.error || "could not be read");

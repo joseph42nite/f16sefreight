@@ -17,6 +17,8 @@ use App\OtherCharge;
 use App\OtherCustomInformation;
 use App\Location;
 use Illuminate\Support\Facades\Validator;
+use App\Exceptions\ValidationFailed;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -660,7 +662,59 @@ class AirwayBillController extends Controller
         $handlingCode->save();
         return response()->json(['message' => "Special Handling Codes saved successfully."]);
     }
+    /**
+     * Create a waybill, all of it or none of it.
+     *
+     * 🔴 THIS WAS NOT TRANSACTIONAL — not one `DB::transaction` in the whole method, while
+     * it writes across eleven tables in sequence. Each section that failed validation
+     * returned a 422 and left every section before it ALREADY SAVED, so a rejected request
+     * produced a half-built waybill: a first box with a shipper and no consignee, a routing
+     * with no cargo. The caller saw an error and reasonably assumed nothing had happened.
+     *
+     * 🔴 Worse on the retry. The AWB number is the primary key, so the second attempt hit
+     * a row that already existed — the operator was told the waybill exists while looking
+     * at an error saying it was never created.
+     *
+     * ⚠️ A 422 must ROLL BACK, which is why the sections' early returns became a throw.
+     * Returning out of a closure commits it; only an exception unwinds the transaction, and
+     * a validation failure is exactly the case that has to.
+     *
+     * ⚠️ `WayBillConversion` stays OUTSIDE. It is an external call to the airline's
+     * gateway, and holding row locks across a network round trip is how one slow carrier
+     * blocks every other waybill in the branch.
+     */
     public function store(Request $request)
+    {
+        try {
+            $main_return_data = DB::transaction(fn () => $this->storeSections($request));
+        } catch (ValidationFailed $e) {
+            return $e->response;
+        }
+
+        $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
+
+        $send_response = [];
+
+        if ($request->status == 'send') {
+            $send_response = $this->conversionController->WayBillConversion($awb_id);
+            $send_response = $send_response->getData(true);
+            AirwayBills::where(['id' => $awb_id])->update([
+                't_id' => $send_response['data']['tid'],
+                'send_created' => $send_response['data']['created'],
+                'send_status' => $send_response['status'],
+            ]);
+        }
+
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
+    }
+
+    /**
+     * Every database write `store()` makes. Runs inside one transaction.
+     *
+     * ⚠️ Each section still checks for a 422 the way it always did; the only change is
+     * that it THROWS instead of returning, so the work already done unwinds with it.
+     */
+    private function storeSections(Request $request): array
     {
         $main_return_data = [];
         $error_data = '';
@@ -668,7 +722,7 @@ class AirwayBillController extends Controller
         if (!empty($request->first_box['awb_code'])) {
             $error_data = $this->firstBox($request->first_box);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['first_box'] = $error_data;
         }
@@ -676,7 +730,7 @@ class AirwayBillController extends Controller
         if (!empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
             $error_data = $this->saveShipperAddress($request->first_box['awb_no'], $request->first_box['awb_code'], $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['shipper_address'] = $error_data;
         }
@@ -684,7 +738,7 @@ class AirwayBillController extends Controller
         if (!empty($request->consignee_address['cons_name'])) {
             $error_data = $this->saveConsigneeAddress($request->first_box['awb_no'], $request->first_box['awb_code'], $request->consignee_address, $request->is_consignee_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['consignee_address'] = $error_data;
         }
@@ -692,7 +746,7 @@ class AirwayBillController extends Controller
         if (!empty($request->also_notify_address['also_name'])) {
             $error_data = $this->saveAlsoNotify($request->first_box['awb_no'], $request->first_box['awb_code'], $request->also_notify_address, $request->is_also_notify_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['also_notify_address'] = $error_data;
         }
@@ -701,7 +755,7 @@ class AirwayBillController extends Controller
         if (!empty($request->routing_information['departure_airport'])) {
             $error_data = $this->routingInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->routing_information);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['routing_information'] = $error_data;
         }
@@ -713,7 +767,7 @@ class AirwayBillController extends Controller
         if (!empty($request->custom_origin)) {
             $error_data = $this->customOriginAndOsiInfo($request->first_box['awb_no'], $request->first_box['awb_code'], $request->custom_origin);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['custom_origin'] = $error_data;
         }
@@ -725,7 +779,7 @@ class AirwayBillController extends Controller
         if (!empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment'])) {
             $error_data = $this->paymentInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->payment_info);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['payment_info'] = $error_data;
         }
@@ -733,7 +787,7 @@ class AirwayBillController extends Controller
         if (!empty($request->oci_entries)) {
             $error_data = $this->otherCustomInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->oci_entries);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['oci_entries'] = $error_data;
         }
@@ -741,7 +795,7 @@ class AirwayBillController extends Controller
         if (!empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
             $error_data = $this->totalAmountValume($request->first_box['awb_no'], $request->first_box['awb_code'], $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['totals'] = $error_data;
         }
@@ -783,22 +837,54 @@ class AirwayBillController extends Controller
         // matches nothing is normal — documents are routinely raised before the job exists.
         app(AwbJobLinker::class)->link((int) $awb_id);
 
+        return $main_return_data;
+    }
+    /**
+     * Amend a waybill, all of it or none of it.
+     *
+     * 🔴 Same defect as `store()` and the same fix. Editing writes across the same eleven
+     * tables, and a 422 halfway through used to leave the earlier sections saved — so a
+     * rejected edit left the waybill in a state that was neither what it was nor what the
+     * operator asked for, with nothing to say which fields had moved.
+     *
+     * ⚠️ `WayBillConversion` stays outside the transaction: it is a call to the airline's
+     * gateway, and holding row locks across a network round trip blocks every other
+     * waybill in the branch behind one slow carrier.
+     */
+    public function update(Request $request, $id, $awb_no = null)
+    {
+        try {
+            $main_return_data = DB::transaction(fn () => $this->updateSections($request, $id));
+        } catch (ValidationFailed $e) {
+            return $e->response;
+        }
+
+        $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
+
         $send_response = [];
-        if ($status == 'send') {
+
+        if ($request->status == 'send') {
             $send_response = $this->conversionController->WayBillConversion($awb_id);
             $send_response = $send_response->getData(true);
-            AirwayBills::where(['id' => $awb_id])->update(['t_id' => $send_response['data']['tid'], 'send_created' => $send_response['data']['created'], 'send_status' => $send_response['status']]);
+            AirwayBills::where(['id' => $awb_id])->update([
+                't_id' => $send_response['data']['tid'],
+                'send_created' => $send_response['data']['created'],
+                'send_status' => $send_response['status'],
+            ]);
         }
+
         return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
     }
-    public function update(Request $request, $id, $awb_no = null)
+
+    /** Every database write `update()` makes. Runs inside one transaction. */
+    private function updateSections(Request $request, $id): array
     {
         $main_return_data = [];
         $error_data = '';
         if (!empty($id)) {
             $error_data = $this->firstBox($request->first_box, $id);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422) {
-                return $error_data;
+                throw new ValidationFailed($error_data);
             } else {
                 $main_return_data['first_box'] = $error_data;
             }
@@ -806,35 +892,35 @@ class AirwayBillController extends Controller
         if (!empty($id) && !empty($request->routing_information['departure_airport'])) {
             $error_data = $this->routingInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->routing_information);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['routing_information'] = $error_data;
         }
         if (!empty($id) && !empty($request->totals['total_volume']) && !empty($request->totals['total_amount'])) {
             $error_data = $this->totalAmountValume($request->first_box['awb_no'], $request->first_box['awb_code'], $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['totals'] = $error_data;
         }
         if (!empty($id) && !empty($request->custom_origin)) {
             $error_data = $this->customOriginAndOsiInfo($request->first_box['awb_no'], $request->first_box['awb_code'], $request->custom_origin);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['custom_origin'] = $error_data;
         }
         if (!empty($id) && !empty($request->oci_entries)) {
             $error_data = $this->otherCustomInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->oci_entries);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['oci_entries'] = $error_data;
         }
         if (!empty($id)) {
             $error_data = $this->saveShipperAddress($request->first_box['awb_no'], $request->first_box['awb_code'], $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['shipper_address'] = $error_data;
         }
@@ -842,7 +928,7 @@ class AirwayBillController extends Controller
         if (!empty($id)) {
             $error_data = $this->saveConsigneeAddress($request->first_box['awb_no'], $request->first_box['awb_code'], $request->consignee_address, $request->is_consignee_address_save, $awb_no = null);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['consignee_address'] = $error_data;
         }
@@ -850,14 +936,14 @@ class AirwayBillController extends Controller
         if (!empty($id) && !empty($request->also_notify_address['also_name'])) {
             $error_data = $this->saveAlsoNotify($request->first_box['awb_no'], $request->first_box['awb_code'], $request->also_notify_address, $request->is_also_notify_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['also_notify_address'] = $error_data;
         }
         if (!empty($id) && !empty($request->payment_info['type_of_payment'])) {
             $error_data = $this->paymentInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->payment_info);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-                return $error_data;
+                throw new ValidationFailed($error_data);
             else
                 $main_return_data['payment_info'] = $error_data;
         }
@@ -885,13 +971,8 @@ class AirwayBillController extends Controller
             AirwayBills::where(['id' => $awb_id])->update(['status' => $status, 'awb_email' => $request->awb_email, 'as_agreed' => $request->as_agreed ?? 0]);
         else
             AirwayBills::where(['id' => $awb_id])->update(['awb_email' => $request->awb_email, 'as_agreed' => $request->as_agreed ?? 0]);
-        $send_response = [];
-        if ($status == 'send') {
-            $send_response = $this->conversionController->WayBillConversion($awb_id);
-            $send_response = $send_response->getData(true);
-            AirwayBills::where(['id' => $awb_id])->update(['t_id' => $send_response['data']['tid'], 'send_created' => $send_response['data']['created'], 'send_status' => $send_response['status']]);
-        }
-        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
+
+        return $main_return_data;
     }
     public function show($id)
     {

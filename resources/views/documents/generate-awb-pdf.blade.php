@@ -162,13 +162,13 @@
                                                                                 </tr>
                                                                                 <tr>
                                                                                     <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 2px;">
-                                                                                        @if ($airWayBill->wayBillAddress->ship_phone)
+                                                                                        @if (optional($airWayBill->wayBillAddress)->ship_phone)
                                                                                             Phone : {{ $airWayBill->wayBillAddress->ship_phone ?? ''}} <br/>
                                                                                         @endif
-                                                                                        @if ($airWayBill->wayBillAddress->ship_fax)
+                                                                                        @if (optional($airWayBill->wayBillAddress)->ship_fax)
                                                                                             Fax :{{ $airWayBill->wayBillAddress->ship_fax ?? ''}} <br/>
                                                                                         @endif
-                                                                                        @if ($airWayBill->wayBillAddress->ship_telex)
+                                                                                        @if (optional($airWayBill->wayBillAddress)->ship_telex)
                                                                                             Telex : {{ $airWayBill->wayBillAddress->ship_telex ?? ''}}
                                                                                         @endif
                                                                                     </td>
@@ -291,13 +291,13 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <td align="left" valign="top" style="font-size: 9px;line-height: 11px;font-family:Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;color: #000000;font-weight: 700;padding: 2px;">
-                                                                            @if ($airWayBill->wayBillAddress->cons_phone)
+                                                                            @if (optional($airWayBill->wayBillAddress)->cons_phone)
                                                                                 Phone : {{ $airWayBill->wayBillAddress->cons_phone ?? ''}} <br/>
                                                                             @endif
-                                                                            @if ($airWayBill->wayBillAddress->cons_fax)
+                                                                            @if (optional($airWayBill->wayBillAddress)->cons_fax)
                                                                                 Fax :{{ $airWayBill->wayBillAddress->cons_fax ?? ''}} <br/>
                                                                             @endif
-                                                                            @if ($airWayBill->wayBillAddress->cons_telex)
+                                                                            @if (optional($airWayBill->wayBillAddress)->cons_telex)
                                                                                 Telex : {{ $airWayBill->wayBillAddress->cons_telex ?? ''}}
                                                                             @endif
                                                                         </td>

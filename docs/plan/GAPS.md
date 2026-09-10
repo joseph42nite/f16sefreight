@@ -65,7 +65,7 @@ connects to what. It mostly does not.
 | 39 | 🟢 **RESOLVED 2026-09-01.** **The AWB document was NEVER linked to its job.** `air_way_bills.job_id` is not written by any code path — `AirwayBillController` never sets it, and no other code does either. Meanwhile `JobController::cancel` *clears* it (`job_id → NULL`), so the detach releases a link nothing ever established | The operational half (enquiry → job → cost sheet → invoice → analytics) hangs off `jobs.id`. The document half (MAWB, HAWB, consolidation, PDF, XML, addresses) hangs off `air_way_bills.id`. **They are joined by nothing.** A job "has" an AWB only as loose text in `jobs.awb_number` |
 | 40 | 🟢 **RESOLVED 2026-09-01.** **The two halves did not agree on the number's FORMAT.** `jobs.awb_number` is `176-10000008` — `IcegateValidator` enforces `/^\d{3}-\d{8}$/`, hyphen required. `air_way_bills.id` is the code and number concatenated with **no** separator: `17610000008`. Joining them requires `REPLACE(awb_number,'-','')`, and nothing in the codebase does | So even the string link is not usable as-is. Whichever direction this is fixed, one side changes |
 | 41 | 🟢 **FIXED 2026-09-01.** **`create-focusair` wrote everything, then 500'd, if `status` was omitted.** `$status = $request->status` is NULL, `null != 'generate_pdf'` is true, so it updates `status => null` against a NOT NULL column — **after** every section has already been saved | The caller gets a 500 and cannot tell that the AWB was in fact created and populated. Measured: three AWBs exist, fully populated, from three requests that all returned 500 |
-| 42 | 🔴 **`AirwayBillController::store()` is not transactional at all** (zero `DB::transaction` in the file). Each section — first box, shipper, consignee, routing, consignment, charges, payment, totals — saves independently | Any failure part-way leaves a **half-written airway bill** plus an error response. For a document that goes to an airline and to customs, "saved up to routing, then failed" is a worse state than "not saved" |
+| 42 | 🟢 **FIXED 2026-09-10 — `store()` and `update()` are now transactional.** Was: not transactional at all** (zero `DB::transaction` in the file). Each section — first box, shipper, consignee, routing, consignment, charges, payment, totals — saves independently | Any failure part-way leaves a **half-written airway bill** plus an error response. For a document that goes to an airline and to customs, "saved up to routing, then failed" is a worse state than "not saved" |
 | 43 | 🟢 **FIXED 2026-09-01.** **A direct flight 500'd through the API.** `routingInformation()` reads `to_2`, `by_2`, `flight_2`, `date_2`, `to_3`, `by_3`, `flight_3`, `date_3` unconditionally, though the validator declares all eight `nullable`. Hidden in production only because the Vue form always sends them as empty strings | Any API client, integration or OCR-driven create with a single-leg routing crashes. The validator's contract and the code disagree |
 | 44 | 🟢 **FIXED 2026-09-01.** **The address regex rejected ordinary real addresses.** `ship_address` is validated `/^[a-zA-Z0-9\s.,-]+$/` — no `/`, no `&`, no parentheses, no accents. Measured, all rejected: `Plot 42/A, MIDC Andheri East` · `Müller & Co., Hafenstrasse 12` · `Unit 5 (Rear), Dock Road` | Indian industrial addresses routinely carry `/`; European party names carry `&` and umlauts. This is the same instinct as the silent-truncation defect already fixed in both air forms — an allow-list built from what someone imagined an address looks like |
 
@@ -181,7 +181,7 @@ answered it.
 
 | # | Finding | Detail |
 |---|---|---|
-| 55 | ⚠️ **The AWB PDF template crashes on a waybill with no address row.** `documents/generate-awb-pdf` reads `$airWayBill->wayBillAddress->ship_phone` unguarded, so a waybill whose `way_bill_addresses` row does not exist throws *"Attempt to read property on null"* — a 500 rather than a partly-blank document | **Reachable in production:** `firstBox()` creates the waybill BEFORE any address is saved, so any draft printed before its parties are entered hits this. Found because a test fixture created a waybill without one. Not fixed — guarding a 200-line legacy template is its own pass, and half-guarding it would produce a document that prints blank where it should refuse |
+| 55 | 🟢 **FIXED 2026-09-10.** Was: **The AWB PDF template crashes on a waybill with no address row.** `documents/generate-awb-pdf` reads `$airWayBill->wayBillAddress->ship_phone` unguarded, so a waybill whose `way_bill_addresses` row does not exist throws *"Attempt to read property on null"* — a 500 rather than a partly-blank document | **Reachable in production:** `firstBox()` creates the waybill BEFORE any address is saved, so any draft printed before its parties are entered hits this. Found because a test fixture created a waybill without one. Not fixed — guarding a 200-line legacy template is its own pass, and half-guarding it would produce a document that prints blank where it should refuse |
 
 ---
 
@@ -638,6 +638,21 @@ free disk alone.
 ⚠️ **Vision is refused, not faked.** `allow_vision=true` with no text layer returns **501**,
 because `google-generativeai` is not installed. Silently returning the empty text result
 would spend the operator's credit and hand back nothing on a run they authorised.
+
+---
+
+## 🟢 2026-09-10 — #42 and #55 closed
+
+| # | Finding | Detail |
+|---|---|---|
+| 42 | 🟢 **`store()` and `update()` wrapped in one transaction each** | They write across **eleven tables in sequence** and had **zero** `DB::transaction`. A section failing validation returned 422 and left every section before it **already saved** — a first box with a shipper and no consignee. 🔴 Worse on retry: the AWB number is the primary key, so the second attempt hit a row that already existed, telling the operator the waybill exists while showing an error saying it was never created |
+| 128 | 🔴 **A 422 had to become a THROW, not a return.** Returning out of a closure COMMITS it; only an exception unwinds a transaction | `App\Exceptions\ValidationFailed` carries the section's **original** response rather than rebuilding one — the section already produced the exact payload the client expects, field errors and all. ⚠️ `update()` had the identical defect and was found while fixing `store()`; both are wrapped |
+| 129 | ⚠️ **`WayBillConversion` stays OUTSIDE the transaction** | It calls the airline's gateway. Holding row locks across a network round trip is how one slow carrier blocks every other waybill in the branch |
+| 55 | 🟢 **Six bare `@if` conditions guarded** | The blade used `optional()` almost everywhere but left `@if ($airWayBill->wayBillAddress->ship_phone)` and five siblings bare — a property read on NULL, fatal in Blade. ⚠️ **The document that died is the one the CLIENT receives**, and raising a waybill before filling the parties is an ordinary order of work. Proven by creating exactly that waybill and rendering through the controller's own loader: **271,811 bytes, no crash** |
+
+⚠️ **A reported "248 failed" was an artifact of running two suites against one database at
+once** — the same mistake that produced 183/259/220 earlier. One clean run: **584 passed**.
+Anything reporting mass failures in seconds is contention or a dead database, not code.
 
 ---
 

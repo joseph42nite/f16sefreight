@@ -106,6 +106,34 @@ class AwbPdfGenerationTest extends TestCase
         return $awbId;
     }
 
+    /**
+     * 🔴 A WAYBILL WITH NO ADDRESS ROW MUST STILL PRINT. The blade guarded most of its
+     * address reads with `optional()` but left six `@if` conditions bare —
+     * `@if ($airWayBill->wayBillAddress->ship_phone)` — and on a waybill whose address row
+     * has not been saved yet that is a property read on NULL, which is fatal in Blade.
+     *
+     * ⚠️ The document that dies is the one the CLIENT receives. An operator raising a
+     * waybill before filling the parties is an ordinary order of work, not a mistake, and
+     * it produced a 500 with nothing to say which field was missing.
+     */
+    public function test_the_pdf_renders_for_a_waybill_with_no_address_row(): void
+    {
+        $awbId = $this->seedAwb();
+
+        // The state the template died on: the waybill exists, the address does not.
+        WayBillAddress::where('awb_id', $awbId)->delete();
+
+        $this->assertNull(
+            AirwayBills::find($awbId)->wayBillAddress,
+            'precondition: the address row must be gone'
+        );
+
+        $response = $this->get("/download-awb-pdf/{$awbId}");
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
     public function test_all_three_awb_pdf_routes_render_successfully()
     {
         $awbId = $this->seedAwb();

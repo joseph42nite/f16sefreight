@@ -18,6 +18,21 @@ class UserSeeder extends Seeder
 {
     private const EMAIL = 'user@gmail.com';
 
+    /**
+     * The base account's OWN tenant.
+     *
+     * 🔴 It used to attach to whatever branch happened to be first by id, which put
+     * `user@gmail.com` inside someone else's demo company — an operations user in
+     * "Curl Co", with access to that tenant's shipments. A shared login sitting inside a
+     * demo tenant is the kind of thing that is fine until the demo tenant is a real one.
+     *
+     * ⚠️ `code` is UNIQUE on `companies`, so this value must not collide with a tenant's.
+     * `BASE` is reserved for this and used nowhere else.
+     */
+    private const COMPANY = ['name' => 'F16s Base', 'code' => 'BASE', 'tier' => 'tactical'];
+
+    private const BRANCH = ['agent_name' => 'Base', 'branch_code' => 'BAS'];
+
     public function run()
     {
         if (! DB::table('users')->where('email', self::EMAIL)->exists()) {
@@ -25,21 +40,7 @@ class UserSeeder extends Seeder
             // it never set `branch_name`, which is NOT NULL with no default, so it has
             // been unable to run since that column was added. Idempotence was not the only
             // thing wrong with it.
-            //
-            // ⚠️ It attaches to an EXISTING branch rather than creating one. Inventing a
-            // company here would duplicate `FreightDemoSeeder`, which owns demo tenants
-            // and builds them properly — two seeders minting companies is how a database
-            // ends up with two half-configured ones.
-            $branch = DB::table('agents_info')->orderBy('id')->first(['id', 'company_id']);
-
-            if ($branch === null) {
-                $this->command->warn(
-                    'No branch exists, so ' . self::EMAIL . ' cannot be created — a user '
-                    . 'must belong to one. Run FreightDemoSeeder first.'
-                );
-
-                return;
-            }
+            $branch = $this->baseBranch();
 
             DB::table('users')->insert([
                 'name' => 'dhiraj user',
@@ -48,6 +49,11 @@ class UserSeeder extends Seeder
                 'is_active' => true,
                 'origin_airport_code' => 'BLR',
                 'plan_expiry_date' => '2025-03-26',
+                // ⚠️ SET EXPLICITLY, though the column defaults to it. A designation
+                // decides which portals open and which controls appear; leaning on a
+                // schema default for that means the answer changes if the default ever
+                // does, silently and everywhere.
+                'designation' => 'operations',
                 // ⚠️ `company_name` and `branch_name` hold IDs, not names — see
                 // LoginController, which resolves the tenant from them.
                 'company_name' => $branch->company_id,
@@ -61,5 +67,39 @@ class UserSeeder extends Seeder
                 'role'  => 'user',
             ]);
         }
+    }
+    /**
+     * The base tenant's branch, created on first run.
+     *
+     * ⚠️ Idempotent like everything else here: an existing company is reused, never
+     * rewritten. A tenant that has since been renamed or moved to another tier keeps both.
+     */
+    private function baseBranch(): object
+    {
+        $companyId = DB::table('companies')->where('code', self::COMPANY['code'])->value('id');
+
+        if ($companyId === null) {
+            $companyId = DB::table('companies')->insertGetId(self::COMPANY + [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $branch = DB::table('agents_info')
+            ->where('company_id', $companyId)
+            ->where('branch_code', self::BRANCH['branch_code'])
+            ->first(['id', 'company_id']);
+
+        if ($branch !== null) {
+            return $branch;
+        }
+
+        $branchId = DB::table('agents_info')->insertGetId(self::BRANCH + [
+            'company_id' => $companyId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return (object) ['id' => $branchId, 'company_id' => $companyId];
     }
 }

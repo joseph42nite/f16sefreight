@@ -999,6 +999,7 @@ const PARTY_REQUIRED = {
     fitReport: null,
     target: "mawb",
     KINDS,
+    rejectedFiles: [],
     awbCode: "",
     awbNo: "",
     hawbNo: "",
@@ -1013,10 +1014,18 @@ const PARTY_REQUIRED = {
     seq: 0
   }),
   computed: {
-    /* Honest about GAPS #38: only the coordinate path is deployed, so anything that is
-       not an airway bill will fail at the parser. Saying so beats letting it look broken. */
-    unstructuredWarning() {
-      return this.documents.length > 0;
+    /**
+     * ⚠️ THIS WARNING IS NOW ABOUT SCANS, NOT ABOUT INVOICES. It used to say the
+     * unstructured parser was not deployed, which was true when it was written and stopped
+     * being true when `/extract-unstructured` shipped — a stale warning is worse than none,
+     * because an operator who reads "this will fail" does not try.
+     *
+     * What remains true: a document with NO TEXT LAYER needs the vision path, and that is
+     * still not built (`google-generativeai` is not installed; the endpoint answers 501).
+     * So a scan will park for consent and then be unable to proceed.
+     */
+    scanWarning() {
+      return this.documents.some(d => d.kind !== "awb");
     },
     pastedFields() {
       return this.parsePaste(this.pasted).found;
@@ -1377,9 +1386,34 @@ const PARTY_REQUIRED = {
     },
     onPick(e) {
       this.add([...e.target.files]);
+
+      // 🔴 RESET, or the same file can only ever be chosen ONCE. `change` fires on a
+      // change of value; re-picking the identical path leaves the value the same, no event
+      // fires, and nothing happens. An operator who removes a document and picks it again
+      // gets silence — and reasonably concludes the button is broken.
+      e.target.value = "";
     },
+    /**
+     * Stage the PDFs, and say so when something is not one.
+     *
+     * 🔴 `f.type` IS NOT RELIABLE and filtering on it alone silently ate valid documents.
+     * The browser leaves `type` as an empty string for files picked from some locations
+     * and for drag-drop out of some applications — so a perfectly good PDF was dropped
+     * with no row, no error and no explanation. That is what "the choose file button does
+     * not work" was.
+     *
+     * ⚠️ The extension is the fallback, not the primary: a file that declares
+     * `application/pdf` is taken at its word even if it is named oddly.
+     */
     add(files) {
-      files.filter(f => f.type === "application/pdf").forEach(file => {
+      const rejected = [];
+      files.forEach(file => {
+        const looksLikePdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name || "");
+        if (!looksLikePdf) {
+          rejected.push(file.name || "a file");
+          return;
+        }
+
         // Staged, not read. The file is held until the operator asks for it — see the
         // Extract button.
         this.documents.push({
@@ -1393,6 +1427,10 @@ const PARTY_REQUIRED = {
           jobId: null
         });
       });
+
+      // ⚠️ Named, not counted. "2 files ignored" leaves the operator checking which two;
+      // the names tell them immediately whether it mattered.
+      this.rejectedFiles = rejected;
     },
     extract(uid) {
       const doc = this.documents.find(d => d.uid === uid);
@@ -2868,12 +2906,17 @@ var render = function render() {
     }
   })]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted fx-drop__note"
-  }, [_vm._v("\n        Several documents are normal — an invoice for the parties, a packing list for the\n        cargo. Say what to take from each.\n      ")])]), _vm._v(" "), _vm.unstructuredWarning ? _c("p", {
+  }, [_vm._v("\n        Several documents are normal — an invoice for the parties, a packing list for the\n        cargo. Say what to take from each.\n      ")])]), _vm._v(" "), _vm.rejectedFiles.length ? _c("p", {
     staticClass: "fx-warn",
     attrs: {
       role: "status"
     }
-  }, [_vm._v("\n      Only airway bills extract today. An invoice or packing list needs the unstructured\n      parser, which is not deployed yet — those rows will read as failed, and the paste\n      box below is the way through until it is.\n    ")]) : _vm._e(), _vm._v(" "), _vm.documents.length ? _c("table", {
+  }, [_vm._v("\n      Not added — only PDFs can be read here:\n      "), _c("strong", [_vm._v(_vm._s(_vm.rejectedFiles.join(", ")))])]) : _vm._e(), _vm._v(" "), _vm.scanWarning ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n      A document with selectable text reads fine. A "), _c("strong", [_vm._v("scan")]), _vm._v(" cannot be read\n      yet — vision extraction is not deployed — so it will stop and ask, and the paste box\n      below is the way through until it is.\n    ")]) : _vm._e(), _vm._v(" "), _vm.documents.length ? _c("table", {
     staticClass: "fx-table fx-extract__docs"
   }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.documents, function (doc) {
     return _c("tr", {

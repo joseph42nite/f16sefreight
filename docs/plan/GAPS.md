@@ -695,6 +695,17 @@ verified here was run on the host.
 
 ---
 
+## 🔴 2026-09-10 — "Choose files" silently ate valid PDFs
+
+| # | Finding | Detail |
+|---|---|---|
+| 137 | 🔴 **`add()` filtered on `f.type === "application/pdf"` alone, and the browser does not always set it.** A PDF picked from certain locations, or dragged out of certain applications, arrives with `type: ""` | It was dropped with **no row, no error and no explanation** — which is exactly what "the choose file button is not working" looked like from the outside. The extension is now the fallback; a file that declares `application/pdf` is still taken at its word. ⚠️ The click chain was fine all along — verified reaching the input with `defaultPrevented: false` — so the obvious suspect was innocent |
+| 138 | 🔴 **The input was never reset, so the same file could be chosen ONCE.** `change` fires on a change of value; re-picking the identical path leaves the value untouched and no event fires | An operator who removed a document and picked it again got silence, and reasonably concluded the button was broken. `e.target.value = ""` after each pick |
+| 139 | ⚠️ **A rejected file is now NAMED.** "2 files ignored" leaves the operator checking which two | The names say immediately whether it mattered |
+| 140 | 🔴 **A stale warning was telling operators not to bother.** The panel said *"the unstructured parser is not deployed yet — those rows will read as failed"*, which was true when written and stopped being true when `/extract-unstructured` shipped | **A stale warning is worse than none**: an operator who reads "this will fail" does not try. Rewritten to what is still true — a **scan** cannot be read, because vision is not built and the endpoint answers 501 |
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

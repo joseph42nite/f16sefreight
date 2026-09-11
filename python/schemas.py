@@ -19,9 +19,15 @@ follow a shape it can see and not one it has to dereference.
 ⚠️ Every field is OPTIONAL. A model that cannot find the consignee must be able to say so
 by omitting it — forcing the field guarantees it is filled with something, and an invented
 consignee on a waybill is worse than a blank one an operator notices.
+
+🔴 NO FREE-FORM LIST FIELDS. This used to carry `unreadable: List[str]`, the model's own report
+of what it could not read. On a real two-page invoice gemma3:1b spent 242 seconds filling it
+with price-table numbers and repeated SKU codes, ran out of answer budget mid-string, and the
+whole reply failed validation. Without it the same document took 42 seconds and came back as
+valid JSON. An unbounded list is a loop a small model can fall into and never leave.
 """
 
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -51,9 +57,8 @@ class ExtractedDocument(BaseModel):
     origin: Optional[str] = None
     destination: Optional[str] = None
 
-    awb_number: Optional[str] = None
+    # As written: "SEA", "BY SEA", "AIR". It decides how the lane is read, because an
+    # airport has an IATA code and a seaport does not (air = IATA, sea = UN/LOCODE).
+    transport_mode: Optional[str] = None
 
-    # 🔴 The model's own report of what it could not read. An empty list from a document it
-    # mangled is a lie, but with no channel to say "I was unsure" every field looks equally
-    # trustworthy.
-    unreadable: List[str] = Field(default_factory=list)
+    awb_number: Optional[str] = None

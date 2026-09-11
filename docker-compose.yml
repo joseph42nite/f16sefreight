@@ -128,9 +128,14 @@ services:
       # falls back to label anchoring, so the symptom is quietly worse extraction rather
       # than an error anyone would notice.
       OLLAMA_URL: http://host.docker.internal:11434
-      # Keep the model resident. A cold load is 10-60s; an evicted model pays it on every
-      # request.
-      OLLAMA_KEEP_ALIVE: "-1"
+      # gemma3:4b, not 1b: on a real invoice 1b returned the labels themselves as company
+      # names. model_extract.py defaults to it; named here so the deployed choice is visible.
+      OLLAMA_MODEL: gemma3:4b
+      # 4b took 378s on a two-page invoice on this laptop.
+      OLLAMA_TIMEOUT: "600"
+      # Ten minutes, not forever. On a 9 GB laptop "-1" pinned whichever model ran last and
+      # starved the next; a cold load is 63-153s, so it stays warm between uploads.
+      OLLAMA_KEEP_ALIVE: "10m"
     extra_hosts:
       # ⚠️ Docker Desktop provides this name; Linux hosts do not, so it is declared
       # explicitly or the container cannot resolve it there at all.

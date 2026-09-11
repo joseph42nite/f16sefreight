@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 import tempfile
 import os
@@ -129,7 +130,10 @@ async def extract_unstructured(
             f"Unstructured '{file.filename}' | {len(contents)} bytes | allow_vision={wants_vision}"
         )
 
-        result = extract_from_text(tmp_path)
+        # 🔴 In a worker thread, not on the event loop. A model reading takes minutes, and run
+        # inline it would block every other request, /health included, for the whole reading,
+        # so the container's healthcheck would mark it unhealthy mid-extraction.
+        result = await run_in_threadpool(extract_from_text, tmp_path)
 
         if result["extraction_path"] == "none" and wants_vision:
             # 🔴 Consent was GIVEN and the vision path is not built. Saying so is the

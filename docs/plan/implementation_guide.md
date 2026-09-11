@@ -1330,7 +1330,7 @@ validity and the label/model split.
 > `python/model_extract.py` calls Gemma over Ollama to fill only the regions label
 > anchoring could not.
 >
-> **22 tests, 0 failures** as of 2026-09-10.
+> **28 tests, 0 failures** as of 2026-09-11.
 >
 > ⚠️ **There is no pytest in this environment.** `python/test_unstructured.py` carries its
 > own `__main__` runner, so it is run directly, and it needs `reportlab` to build the

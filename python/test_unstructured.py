@@ -18,6 +18,10 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from unstructured import MIN_TEXT_CHARS, extract_from_text, has_text_layer
+import model_extract
+
+# Captured before any test swaps it out, for the tests that exercise the real client.
+_REAL_EXTRACT = model_extract.extract
 
 INVOICE = """Commercial Invoice
 
@@ -157,15 +161,13 @@ def test_the_raw_text_is_returned_for_the_model_step():
 # Extraction quality is judged against a real model on a machine that can run one.
 
 
-def _with_model(payload, available=True):
-    """Swap the model out for a known answer."""
-    import model_extract
-
+def _with_model(payload, available=True, error=None):
+    """Swap the model out for a known answer, or a known failure."""
     calls = {"n": 0}
 
     def _stub(text):
         calls["n"] += 1
-        return payload
+        return (None, error) if error else (payload, None)
 
     model_extract.available = lambda: available
     model_extract.extract = _stub
@@ -173,47 +175,59 @@ def _with_model(payload, available=True):
     return calls
 
 
-def test_the_model_fills_only_what_labels_could_not():
+def _no_model():
+    """
+    ⚠️ Every test starts with NO model. The label tests used to reach whatever Ollama was
+    running on the machine, so they were slow and their answer depended on which model was
+    loaded. Now that the model's reading replaces the labels, a label test that reached a
+    real model would be testing the model.
+    """
+    model_extract.available = lambda: False
+    model_extract.extract = _REAL_EXTRACT
+
+
+def test_the_model_reading_replaces_the_label_reading():
+    """
+    🔴 On the first real invoice the label reading put the INVOICE NUMBER in the shipper
+    field. Filling only the blanks meant the model was never asked, because that field was
+    not blank.
+    """
     import unstructured
 
-    # ⚠️ FLAT, matching the schema. It was nested until a real model showed that a $ref
-    # schema returns empty documents — see test_the_schema_is_flat_because_refs_defeat_small_models.
     _with_model({
-        "shipper_name": "Northwind",
-        "shipper_address": "Mumbai",
-        "description": "Excipients",
-        "unreadable": ["notify party"],
+        "shipper_name": "TRAILSPEC GEARS PRIVATE LIMITED",
+        "shipper_address": "MASJID ROAD, HMT P.O\nKALAMASEERY , ERNAKULAM - 683503",
+        "description": "PU coated polyester travel backpack",
+        "pieces": 500,
+        "gross_weight": 364.09,
     })
 
-    result = {"read_by": "labels", "shipper": {}, "consignee": {"name": "Found By Label"}, "cargo": {}}
+    result = {"read_by": "labels", "shipper": {"full_details": "TSGEXP/001 & 25-08-2026"},
+              "piece_weight": {"no_of_pieces": 50, "gross_weight": 0.0}}
     unstructured._apply_model(result, "some document text")
 
-    assert result["model_filled"] == ["shipper", "cargo"]
-    assert result["read_by"] == "labels+model"
-    # 🔴 The consignee came from an explicit label and the model does not get to argue.
-    assert result["consignee"]["name"] == "Found By Label"
+    assert result["read_by"] == "model"
+    assert "TRAILSPEC GEARS PRIVATE LIMITED" in result["shipper"]["full_details"]
+    assert "TSGEXP" not in result["shipper"]["full_details"]
+    # 50 was the regex's first "N Pcs": a single table row, not the shipment.
+    assert result["piece_weight"]["no_of_pieces"] == 500
+    assert result["piece_weight"]["gross_weight"] == 364.09
 
 
-def test_a_fully_labelled_document_never_reaches_the_model():
-    """The model costs time and, on a server, memory. A document that did not need it
-    must not pay for it."""
+def test_a_field_the_model_left_out_is_blank_not_the_label_guess():
+    """A blank gets noticed; a wrong value on the card looks like a right one."""
     import unstructured
 
-    calls = _with_model({"shipper_name": "SHOULD NOT BE USED"})
+    _with_model({"shipper_name": "TRAILSPEC GEARS PRIVATE LIMITED"})
 
-    # ⚠️ `piece_weight` has to be complete too — the figures count as a gap, so a fixture
-    # without them would reach the model for a reason this test is not about.
-    result = {"read_by": "labels", "shipper": {"name": "A"}, "consignee": {"name": "B"},
-              "cargo": {"description": "C"},
-              "piece_weight": {"no_of_pieces": 1, "gross_weight": 1.0}}
+    result = {"read_by": "labels", "consignee": {"full_details": "BANK DETAILS"}, "piece_weight": {}}
     unstructured._apply_model(result, "text")
 
-    assert calls["n"] == 0
-    assert result["read_by"] == "labels"
+    assert "BANK DETAILS" not in str(result["consignee"])
 
 
 def test_an_unreachable_model_leaves_the_label_result_standing():
-    """🔴 A document read imperfectly is worth more than a 500."""
+    """🔴 A document read imperfectly is worth more than a 500, and the operator is told why."""
     import unstructured
 
     _with_model({"shipper_name": "unused"}, available=False)
@@ -223,7 +237,50 @@ def test_an_unreachable_model_leaves_the_label_result_standing():
 
     assert result["shipper"]["name"] == "Kept"
     assert result["read_by"] == "labels"
-    assert "model_filled" not in result
+    assert result["model_error"] == "the model is not reachable"
+
+
+def test_a_model_that_times_out_is_reported_not_hidden():
+    """
+    🔴 The old 60s cap timed out every real document, and the job came back looking like a
+    model that had read the page badly. The reason has to reach the operator.
+    """
+    import unstructured
+
+    _with_model(None, error="the model timed out after 600s")
+
+    result = {"read_by": "labels", "shipper": {"name": "Kept"}}
+    unstructured._apply_model(result, "text")
+
+    assert result["read_by"] == "labels"
+    assert result["shipper"]["name"] == "Kept"
+    assert result["model_error"] == "the model timed out after 600s"
+
+
+def test_a_sea_lane_keeps_the_port_and_gets_no_airport_code():
+    """
+    ⚠️ The IATA lookup matches city names, so "Chennai" became MAA, an airport. A port has
+    no IATA code (air = IATA, sea = UN/LOCODE).
+    """
+    import unstructured
+
+    _with_model({"origin": "Chennai", "destination": "Umm Qasr", "transport_mode": "BY SEA"})
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, "text")
+
+    assert result["departure"] == "CHENNAI"
+    assert result["destination"] == "UMM QASR"
+
+
+def test_an_air_lane_still_resolves_to_iata():
+    import unstructured
+
+    _with_model({"origin": "Chennai", "destination": "Frankfurt", "transport_mode": "AIR"})
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, "text")
+
+    assert result["departure"] == "MAA"
+    assert result["destination"] == "FRA"
 
 
 def test_the_schema_permits_a_model_that_found_nothing():
@@ -234,7 +291,7 @@ def test_the_schema_permits_a_model_that_found_nothing():
 
     empty = ExtractedDocument.model_validate({})
     assert empty.shipper_name is None
-    assert empty.unreadable == []
+    assert empty.transport_mode is None
 
 
 # ─── Grounding ───────────────────────────────────────────────────────────────
@@ -283,7 +340,7 @@ def test_non_string_values_pass_through():
     """Numbers are not grounded — a weight is checked by the operator, not by substring."""
     import model_extract
 
-    kept = model_extract._grounded({"pieces": 12, "unreadable": []}, "anything")
+    kept = model_extract._grounded({"pieces": 12}, "anything")
 
     assert kept["pieces"] == 12
 
@@ -310,6 +367,60 @@ def test_the_schema_is_flat_because_refs_defeat_small_models():
 
     schema = ExtractedDocument.model_json_schema()
     assert "$defs" not in schema, "a $ref schema returns empty documents on a small model"
+
+
+def test_the_schema_has_no_free_form_list():
+    """
+    🔴 Measured. An `unreadable: List[str]` field let gemma3:1b loop for 242 seconds filling
+    it with price-table numbers, until the answer ran out mid-string and failed validation.
+    """
+    from schemas import ExtractedDocument
+
+    for name, field in ExtractedDocument.model_json_schema()["properties"].items():
+        types = [field.get("type")] + [a.get("type") for a in field.get("anyOf", [])]
+        assert "array" not in types, f"{name} is a list, and a list is a loop a small model can fall into"
+
+
+# ─── The real client's failure reasons ───────────────────────────────────────
+
+
+def test_an_unreachable_model_says_so():
+    """A closed port, not a stub: the reason comes from the real client."""
+    original = model_extract.OLLAMA_URL
+    model_extract.OLLAMA_URL = "http://127.0.0.1:9"
+    try:
+        fields, error = _REAL_EXTRACT("some document text")
+    finally:
+        model_extract.OLLAMA_URL = original
+
+    assert fields is None
+    assert error == "the model is not reachable"
+
+
+def test_a_slow_model_is_reported_as_a_timeout():
+    """
+    ⚠️ Against a socket that accepts and never answers. `socket.timeout` only became an alias
+    of TimeoutError in Python 3.10, and this runner is 3.9, so catching TimeoutError alone
+    would report a timeout here as "not reachable".
+    """
+    import socket
+
+    server = socket.socket()
+    server.bind(("127.0.0.1", 0))
+    server.listen(1)
+    port = server.getsockname()[1]
+
+    original_url, original_timeout = model_extract.OLLAMA_URL, model_extract.TIMEOUT_SECONDS
+    model_extract.OLLAMA_URL = f"http://127.0.0.1:{port}"
+    model_extract.TIMEOUT_SECONDS = 1
+    try:
+        fields, error = _REAL_EXTRACT("some document text")
+    finally:
+        model_extract.OLLAMA_URL, model_extract.TIMEOUT_SECONDS = original_url, original_timeout
+        server.close()
+
+    assert fields is None
+    assert error == "the model timed out after 1s"
 
 
 # ─── PyMuPDF ─────────────────────────────────────────────────────────────────
@@ -347,6 +458,7 @@ if __name__ == "__main__":
     failed = 0
 
     for test in tests:
+        _no_model()
         try:
             test()
             print(f"  ok   {test.__name__}")

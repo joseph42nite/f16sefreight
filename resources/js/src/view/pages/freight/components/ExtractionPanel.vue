@@ -145,6 +145,7 @@
             <td>
               <StatusChip :value="doc.state" />
               <span v-if="doc.error" class="fx-muted"> {{ doc.error }}</span>
+              <span v-if="doc.warning" class="fx-muted"> ⚠️ {{ doc.warning }}</span>
 
               <!--
                 🔴 KNOWN BEFORE EXTRACT IS PRESSED. The browser reads the text layer at
@@ -1059,7 +1060,7 @@ export default {
         // Extract button.
         const doc = {
           uid: ++this.seq, name: file.name, file, kind: "other",
-          state: "staged", fields: null, error: null, jobId: null,
+          state: "staged", fields: null, error: null, warning: null, jobId: null,
           // "text" | "scan" | "unknown" — filled by the probe a moment later.
           readable: "unknown",
         };
@@ -1078,6 +1079,7 @@ export default {
 
       doc.state = "reading";
       doc.error = null;
+      doc.warning = null;
       this.upload(doc);
     },
     remove(uid) {
@@ -1130,6 +1132,11 @@ export default {
             if (data.job_status === "completed") {
               clearInterval(timer);
               doc.fields = data.fields || {};
+              // 🔴 Why the model did not read it, when it did not. The fields are then the
+              // label reading, and without this they look exactly like the model's.
+              doc.warning = data.model_error
+                ? "read by labels only: " + data.model_error
+                : null;
               doc.state = "ready";
             } else if (data.job_status === "awaiting_vision_consent") {
               // 🔴 THIS is when a scan is known to be a scan — the parser found no text

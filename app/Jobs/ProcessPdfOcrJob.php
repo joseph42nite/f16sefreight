@@ -20,8 +20,25 @@ class ProcessPdfOcrJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries   = 3;
-    public int $timeout = 90;   // Must be > Http::timeout below (80s) + safety buffer
     public int $backoff = 5;    // retry after 5 seconds
+
+    /**
+     * How long the call to the parser may take.
+     *
+     * 🔴 An unstructured document is read by a MODEL now, and gemma3:4b took 378s on a
+     * two-page invoice on the laptop. The parser gives the model 600s; this waits a minute
+     * longer so the parser can answer with its own "timed out" before Laravel gives up on
+     * it. An AWB is read by coordinates and keeps its 80s.
+     */
+    public const AWB_HTTP_TIMEOUT   = 80;
+    public const MODEL_HTTP_TIMEOUT = 660;
+
+    /**
+     * ⚠️ Must exceed the longest HTTP call above, or the worker is killed mid-read. And the
+     * queue's `retry_after` must exceed THIS, or a second worker picks the job up while the
+     * first is still reading: see config/queue.php.
+     */
+    public int $timeout = 720;
 
     public int $processingJobId;
 
@@ -100,9 +117,9 @@ class ProcessPdfOcrJob implements ShouldQueue
                 $params['allow_vision'] = $this->allowVision ? 'true' : 'false';
             }
 
-            // Http timeout MUST be less than the job's $timeout property (90s) to ensure
-            // the HTTP error path is hit cleanly before the worker process is force-killed.
-            $response = Http::timeout(80)
+            // Http timeout MUST be less than the job's $timeout property to ensure the HTTP
+            // error path is hit cleanly before the worker process is force-killed.
+            $response = Http::timeout(self::httpTimeoutFor($route))
                 ->attach('file', file_get_contents($tempPath), basename($tempPath))
                 ->post($ocrUrl, $params);
 
@@ -170,6 +187,12 @@ class ProcessPdfOcrJob implements ShouldQueue
                 'completed_at'  => now(),
             ]);
         }
+    }
+
+    /** The parser call's limit: a model reading needs minutes, a coordinate crop seconds. */
+    public static function httpTimeoutFor(array $route): int
+    {
+        return $route['action'] === 'extract' ? self::AWB_HTTP_TIMEOUT : self::MODEL_HTTP_TIMEOUT;
     }
 
     /**

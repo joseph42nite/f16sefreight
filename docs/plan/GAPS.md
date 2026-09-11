@@ -919,6 +919,52 @@ the extractor cannot assume air — see the air/sea code rule. Not yet fixed.
 
 ---
 
+## 🟢 2026-09-11 — the model reads the document; labels are only the fallback
+
+User's direction: no coordinate mapping (layouts keep changing); **read the PDF, then
+extract**. Built on the gemma3:4b measurement above.
+
+| # | Change | Detail |
+|---|---|---|
+| 162 | 🟢 **The model's reading replaces the label reading.** For shipper, consignee, cargo, the lane, the AWB number, pieces and gross weight, the model's answer wins. A field the model leaves out comes back **blank**, not as the label guess | 🔴 The label guess for the shipper on the real invoice was the invoice number. A wrong value on the card looks like a right one; a blank gets noticed. Labels are still read first, but only as the fallback when the model cannot answer. On the real 4b answer: shipper `TRAILSPEC GEARS PRIVATE LIMITED`, city `KALAMASEERY`, pin `683503`; consignee `SILVER MOON COMMERCIAL BROKERAG CO` whole (the label path had split `BROKERAG CO` off as the city); pieces **500** (the regex had 50, a single table row); gross **364.09** |
+| 163 | 🟢 **A fallback is never silent.** `model_extract.extract()` returns `(fields, None)` or `(None, reason)`: *the model is not reachable*, *the model timed out after Ns*, *the model failed (HTTP n)*, *the model returned something unreadable*. It lands in the result as `model_error`, the status endpoint returns it, and the panel shows **"read by labels only: <reason>"** on that document's row | 🔴 Before this, a timed-out model and a model that read badly looked identical. Both reasons are tested against the **real** client, not a stub: a closed port, and a socket that accepts and never answers. ⚠️ `socket.timeout` only became an alias of `TimeoutError` in Python 3.10 and the host test runner is 3.9, so both are caught |
+| 164 | 🟢 **Timeouts nest.** Model 60 → **600 s**; Laravel → parser 80 → **660 s** for unstructured documents only (an AWB keeps **80 s**); job 90 → **720 s**; `retry_after` on `database` and `redis` → **780 s** | `tests/Unit/OcrJobTimeoutTest.php` pins the nesting: each limit outlasts the one inside it, and `retry_after` outlasts the job, or a second worker picks up a document the first is still reading. ⚠️ `retry_after` is per connection, so a crashed job on those connections now waits 13 minutes before a retry instead of 90 s |
+| 165 | 🔴 **`/extract-unstructured` ran the extraction on the event loop.** An `async` endpoint calling a blocking function | Harmless for a 9 ms label read; with a model reading for minutes it would block **every other request, `/health` included**, and the container healthcheck would mark the ai-server unhealthy mid-extraction. Now `run_in_threadpool` |
+| 166 | 🔴 **A SEA lane was given airport codes.** The IATA lookup matches city names: `Chennai → MAA`, `Mumbai → BOM`, both airports | When the model reports the mode as SEA, the port is kept as written, upper-cased. ⚠️ It should become a UN/LOCODE, but **the `ports` table exists with a `locode` column and 0 rows**, so there is nothing to resolve against. Filling it is a data decision, not invented here — **open, yours** |
+| 167 | 🟢 **Tests no longer reach a real model.** The label tests used to call whatever Ollama was running, so the suite took over two minutes and its result depended on the loaded model | Every test now starts with no model and opts in with a stub. **28 tests in 24 s** |
+| 168 | ⚠️ **The document is capped at 6,000 characters** so the prompt, the text and a 512-token answer fit `num_ctx` 4,096 | Table text ran about 2.4 characters per token. A prompt that overflows the context gets cut, and what gets cut can be the instructions. The cut is logged. **Open limit:** the tail of a longer document is not read by the model |
+| 169 | ⚠️ **`keep_alive` defaults to `10m`, not `-1`**; docker-compose names `gemma3:4b` explicitly | On the 9 GB laptop `-1` pinned whichever model ran last. A dedicated Ollama host (PRD §9.5) should set `OLLAMA_KEEP_ALIVE=-1` |
+
+🔴 **Doc vs code — `QUEUE_CONNECTION=sync` locally.** The upload dispatches `ProcessPdfOcrJob`
+with no connection, so it runs **inside the upload request**. The queue worker started by
+hand listens on `sync`, which never holds a job, so it has never processed one (its log is
+empty). **GAPS #153 says uploads "sit pending forever" without a worker; under this config
+that is not true.** Flagged, not changed. The panel copes either way: no browser-side
+timeout, and each document polls on its own, so a long read shows "reading" on that row only.
+
+Still wrong after this, and the operator's review is what catches it:
+- 4b's **lane** on the real invoice: `Umm Qasr` as origin, `India` as destination (correct:
+  Nhava Sheva → Umm Qasr). Every value is really in the document, so grounding cannot catch it.
+- The model copied the label `Address :` into the consignee address.
+- The `address` field stops at **30 characters**. That is the shared `transform_address_box`,
+  the same as `/extract` does to an AWB box.
+
+🟢 **Verified through the real upload path, with the model unreachable.** Ollama was stopped
+for the check: upload → sync job → ai-server (`available()` false) → `model_error` → status
+endpoint → the panel's row read **"Ready ⚠️ read by labels only: the model is not
+reachable"**. Tests: Python 28/28 (24 s), PHP `OcrJobTimeoutTest` 4/4, jest 35/35, webpack
+compiled. `OcrStatusModelErrorTest` pins the status endpoint carrying `model_error`.
+
+⏳ **Not yet verified: a real upload read by gemma3:4b.** That needs Docker's VM lowered
+(still 4.1 GB); the user is doing it.
+
+⚠️ **Found while checking, filed as a separate task:** the panel's "What will be used" table
+prints each party as a raw JSON dump of `{value, confidence}` pairs, most of them
+`"value": null`. That is very likely what read as "all values are null" on the first
+extraction. Not part of this change.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

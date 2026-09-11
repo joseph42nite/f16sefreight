@@ -23,10 +23,11 @@ path uses — so an address is shaped like an address either way. Two endpoints 
 different keys means `OcrUploadModal.vue` needs two mappers, and they drift the first time
 either side changes.
 
-⚠️ Label anchoring is a FLOOR, not the answer. It finds "Shipper:" and takes what follows,
-which works on documents that label their fields and fails on the many that do not. The
-model step (Gemma over `text`) replaces this function and nothing else — which is why the
-raw text is returned alongside.
+🔴 THE MODEL READS THE DOCUMENT; LABELS ARE ONLY THE FALLBACK. Label anchoring finds
+"Shipper:" and takes what follows, which fails on a table-layout invoice: its text comes out
+in draw order, and on the first real one the exporter's name sat eight lines above its own
+label. So the model's reading replaces the label reading for every field it covers, and the
+label reading is used only when the model cannot answer, with the reason recorded.
 """
 
 import re
@@ -35,7 +36,7 @@ from typing import Any, Dict, List, Optional
 import pdfplumber
 
 import model_extract
-from extract_awb_new import process_box
+from extract_awb_new import normalize_text, process_box
 
 # 🔴 PyMuPDF for the TEXT LAYER, pdfplumber for everything else. Measured on this machine,
 # same documents, median of five: 27.2ms vs 2.6ms on a one-page invoice — 10x, with the
@@ -261,96 +262,65 @@ def extract_from_text(pdf_path: str) -> Dict[str, Any]:
         # box is blank, so a missing region looks the same from both.
         result[region] = process_box(region, block or "")
 
-    # 🔴 THE MODEL FILLS GAPS, IT DOES NOT OVERRULE. Label anchoring found its values
-    # under an explicit label — "Shipper:" — which is stronger evidence than a model's
-    # reading of the same page. So the model is asked only for what is still missing, and
-    # a document whose labels were all found never reaches it at all.
-    #
-    # ⚠️ Failure here is silent ON PURPOSE. If the model is down or returns junk, the
-    # label-anchored result stands: a document read imperfectly is worth more than a 500,
-    # and the operator sees and fixes the fields either way.
+    # 🔴 THE MODEL'S READING REPLACES THE LABEL READING. Labels are read first only so there
+    # is something to fall back to: if the model is down, slow or returns junk, the label
+    # result stands and `model_error` says why. A fallback the operator cannot see looks
+    # exactly like a model that read the page badly.
     _apply_model(result, text)
 
     return result
 
 
-def _is_blank(value: Any) -> bool:
-    """Whether a region came back with nothing in it."""
-    if value in (None, "", {}, []):
-        return True
+# The regions the model reads. For these its answer replaces the label reading entirely: a
+# field the model left out comes back BLANK, not as the label guess. On the first real invoice
+# the label guess for the shipper was the invoice number. A wrong value on the card looks like
+# a right one; a blank gets noticed.
+MODEL_REGIONS = ("shipper", "consignee", "cargo", "departure", "destination", "awb_number")
 
-    if isinstance(value, dict):
-        return not any(v not in (None, "", [], 0, 0.0) for v in value.values())
 
-    return False
+def _party(parsed: Dict[str, Any], role: str) -> str:
+    """Name and address as one block, one per line, the way a cropped address box reads."""
+    return "\n".join(v for v in (parsed.get(f"{role}_name"), parsed.get(f"{role}_address")) if v)
 
 
 def _apply_model(result: Dict[str, Any], text: str) -> None:
-    """Fill the regions label anchoring could not, if a model is reachable."""
-    gaps = [r for r in ("shipper", "consignee", "cargo") if _is_blank(result.get(r))]
-
-    # ⚠️ The figures count as a gap too. `_read_piece_weight` needs a LABEL — "gross
-    # weight: 480.5" — and an unlabelled document writes "12 cartons / 480.5 kg", where the
-    # count is found by its unit and the mass is not found at all. The model reads it
-    # perfectly well; it was simply never asked.
-    pw = result.get("piece_weight") or {}
-
-    if not pw.get("gross_weight"):
-        gaps.append("gross_weight")
-
-    if not pw.get("no_of_pieces"):
-        gaps.append("pieces")
-
-    if not gaps:
-        return
-
+    """Read the document with the model, if one answers. Otherwise record why not."""
     if not model_extract.available():
+        result["model_error"] = "the model is not reachable"
         return
 
-    parsed = model_extract.extract(text)
+    parsed, error = model_extract.extract(text)
 
-    if not parsed:
+    if error:
+        result["model_error"] = error
         return
 
-    filled = []
+    # ⚠️ A port has no IATA code. The IATA lookup matches city names, so "Chennai" came back
+    # as MAA and "Mumbai" as BOM, which are airports. On a SEA lane the port is kept as
+    # written. It should become a UN/LOCODE, but the `ports` table is empty, so there is
+    # nothing to resolve it against yet.
+    sea = "sea" in (parsed.get("transport_mode") or "").lower()
 
-    for region in ("shipper", "consignee"):
-        if region not in gaps:
-            continue
+    values = {
+        "shipper": _party(parsed, "shipper"),
+        "consignee": _party(parsed, "consignee"),
+        "cargo": parsed.get("description") or "",
+        "departure": parsed.get("origin") or "",
+        "destination": parsed.get("destination") or "",
+        "awb_number": parsed.get("awb_number") or "",
+    }
 
-        # ⚠️ Back through `process_box`, so a model-derived address is shaped exactly like
-        # a cropped one. The VALUE differs in provenance, never in structure.
-        joined = " ".join(
-            v for v in (parsed.get(f"{region}_name"), parsed.get(f"{region}_address")) if v
-        )
+    for region in MODEL_REGIONS:
+        if sea and region in ("departure", "destination"):
+            result[region] = normalize_text(values[region]).upper()
+        else:
+            # ⚠️ Through `process_box`, so a model-read address is shaped exactly like a
+            # cropped one. The VALUE differs in provenance, never in structure.
+            result[region] = process_box(region, values[region])
 
-        if joined:
-            result[region] = process_box(region, joined)
-            filled.append(region)
+    # 🔴 Written straight into the dict, not through `process_box`: `transform_piece_weight`
+    # is POSITIONAL and misreads a number handed to it on its own.
+    result["piece_weight"]["gross_weight"] = parsed.get("gross_weight", 0.0)
+    result["piece_weight"]["no_of_pieces"] = parsed.get("pieces", 0)
 
-    if "cargo" in gaps and parsed.get("description"):
-        result["cargo"] = process_box("cargo", parsed["description"])
-        filled.append("cargo")
-
-    # 🔴 Written straight into the existing dict rather than through `process_box`.
-    # `transform_piece_weight` is POSITIONAL and would misread a number handed to it on its
-    # own — the same trap that read "480.5 kg / 12 cartons" as a chargeable weight of 480.5
-    # and a rate of 12.
-    for gap, key, cast in (("gross_weight", "gross_weight", float), ("pieces", "pieces", int)):
-        if gap not in gaps or parsed.get(key) is None:
-            continue
-
-        field = "gross_weight" if gap == "gross_weight" else "no_of_pieces"
-
-        try:
-            result["piece_weight"][field] = cast(parsed[key])
-            filled.append(gap)
-        except (TypeError, ValueError, KeyError):
-            pass
-
-    if filled:
-        result["read_by"] = "labels+model"
-        result["model_filled"] = filled
-        # The model's own account of what it could not read, kept so an operator can see
-        # that a blank was a decision rather than an oversight.
-        result["model_unreadable"] = parsed.get("unreadable", [])
+    result["read_by"] = "model"

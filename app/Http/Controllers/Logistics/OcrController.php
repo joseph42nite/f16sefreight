@@ -115,6 +115,13 @@ class OcrController extends Controller
             $response['fields'] = $fields;
             // The operator's worklist: everything below `high`, dot-pathed.
             $response['needs_review'] = $normaliser->needsReview($fields);
+
+            // 🔴 Why the model did not read this document, when it did not: timed out, not
+            // reachable, or answered with junk. The fields are then the label reading, and
+            // without this they look exactly like a model's.
+            $response['model_error'] = is_array($job->extracted_data)
+                ? ($job->extracted_data['model_error'] ?? null)
+                : null;
         }
 
         // 🔴 The consent prompt has to carry its PRICE. "This document needs vision — 1

@@ -1497,6 +1497,7 @@ const PARTY_REQUIRED = {
           state: "staged",
           fields: null,
           error: null,
+          warning: null,
           jobId: null,
           // "text" | "scan" | "unknown" — filled by the probe a moment later.
           readable: "unknown"
@@ -1514,6 +1515,7 @@ const PARTY_REQUIRED = {
       if (!doc) return;
       doc.state = "reading";
       doc.error = null;
+      doc.warning = null;
       this.upload(doc);
     },
     remove(uid) {
@@ -1564,6 +1566,9 @@ const PARTY_REQUIRED = {
           if (data.job_status === "completed") {
             clearInterval(timer);
             doc.fields = data.fields || {};
+            // 🔴 Why the model did not read it, when it did not. The fields are then the
+            // label reading, and without this they look exactly like the model's.
+            doc.warning = data.model_error ? "read by labels only: " + data.model_error : null;
             doc.state = "ready";
           } else if (data.job_status === "awaiting_vision_consent") {
             // 🔴 THIS is when a scan is known to be a scan — the parser found no text
@@ -3060,7 +3065,9 @@ var render = function render() {
       }
     }), _vm._v(" "), doc.error ? _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v(" " + _vm._s(doc.error))]) : _vm._e(), _vm._v(" "), doc.state === "staged" && doc.readable === "scan" ? _c("span", {
+    }, [_vm._v(" " + _vm._s(doc.error))]) : _vm._e(), _vm._v(" "), doc.warning ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" ⚠️ " + _vm._s(doc.warning))]) : _vm._e(), _vm._v(" "), doc.state === "staged" && doc.readable === "scan" ? _c("span", {
       staticClass: "fx-staged__flag",
       attrs: {
         title: "No selectable text was found in the first pages"

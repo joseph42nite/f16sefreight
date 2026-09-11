@@ -812,6 +812,70 @@ The model is a gap-filler, not a first pass.
 
 ---
 
+## 🔴 2026-09-11 — a real invoice, and what it proves about label anchoring
+
+First live document: a 2-page commercial invoice (TRAILSPEC GEARS → SILVER MOON, Nhava
+Sheva → Umm Qasr). PyMuPDF read it correctly — `extraction_path: text`, 3,005 chars. Every
+field after that was wrong.
+
+| # | Finding | Detail |
+|---|---|---|
+| 158 | 🔴 **A value can appear BEFORE its own label, and another field's value after it.** In the real text the exporter's name is on line 106 and the word `Exporter` on line 114 — eight lines *below* its own value — while line 115, immediately after the label, holds the value belonging to `Invoice No.& Date` on line 101 | 🔴 So anchoring returned the **invoice number as the shipper**: `shipper.full_details = "TSGEXP/001 & 25-08-2026"`. ⚠️ **No anchoring rule survives this** — not after-the-label, not before-the-label, not same-line. The order is not wrong, it is *absent*: PyMuPDF returns the PDF's internal draw order, and a grid-layout invoice interleaves cells from unrelated boxes. Coordinates would fix this one file and break on the next, which is why they were **rejected by the user** as a direction |
+| 159 | 🔴 **Garbage counts as "filled", so the repair never runs.** `_apply_model` only consults the model for regions `_is_blank()` calls empty, and `"TSGEXP/001 & 25-08-2026"` is not empty | 🔴 `read_by: labels`, `model_filled: null` — the one component that could have read the page correctly was never asked. The trigger must be **implausible**, not merely blank: an invoice number in a company field is a worse outcome than a blank one, because nothing about it looks broken |
+| 160 | 🔴 **The prompt's ordinal rule is positional reasoning in disguise.** It said *"the FIRST company is the SHIPPER, the SECOND is the CONSIGNEE"* | In this document the second company is **AXIS BANK LIMITED**, from the bank-details block. The same class of assumption that broke anchoring, moved into the prompt |
+| 161 | 🔴 **A free-form list field is a loop trap for a small model.** `unreadable: List[str]` in the schema | gemma3:1b spent **242 seconds** filling it with hundreds of price-table numbers and repeated SKU codes, then ran out of generation budget mid-string and failed validation — returning `null`. Removing the list and capping `num_predict` took the same document to **41.7s** and valid JSON. ⚠️ Form was fixed; correctness was not |
+
+### 🔴 gemma3:1b cannot do this task — three prompts, three failure modes
+
+| Prompt | Time | shipper_name | origin | destination |
+|---|---|---|---|---|
+| original (with `unreadable`) | 242.2s | — | — | — (invalid JSON, `null`) |
+| bounded schema | 41.7s | `"Exporter"` — the label | `"HUNTER-GREEN"` — a colour | `"India"` |
+| + worked example | 40.3s | `SILVER MOON…` — the consignee | `"INDIA"` | `"INDIA"` |
+
+Correct answers: shipper **TRAILSPEC GEARS PRIVATE LIMITED**, origin **NHAVA SHEVA**,
+destination **Umm Qasr**. The only field it got right in any run was `gross_weight: 364.09`
+— which the existing regex already gets without a model.
+
+🔴 **This is a capacity limit, not a prompting one.** The schema fix and the worked example
+each changed the failure and neither reduced it: a 1B model does not have the reasoning to
+bind values to labels when reading order carries no information. 🟢 Decision (user,
+2026-09-11): **pull gemma3:4b and measure it on this same invoice.**
+
+### 🔴 gemma3:4b could not be measured on this host — it never produced a token
+
+| Stage | Result |
+|---|---|
+| Load | **153 s**: `llama-server started in 153.45 seconds` |
+| Prompt read | ~1,870 tokens (context checkpoints logged at 850 and 1,870) |
+| Generation | **Did not finish in 30 minutes.** The client timed out at 1,800 s and Ollama logged the dropped request as `500 \| 30m2s` |
+| Runner afterwards | Reported "loaded" at 3.04 GB, but **0.00 GB resident, 0% CPU**: the weights were in swap |
+
+🔴 **So the accuracy question is still open. 4b was never tested; only its fit on this
+machine was.** "9 GB RAM, so a 3.3 GB model fits" was arithmetic on the nameplate. What was
+actually free:
+
+- **Swap 6.5 of 7 GB in use, 0.02 GB free RAM, 2.6 GB compressed**, before 4b loaded.
+- **Docker Desktop's VM reserves 4.1 GB** of the 9 GB, while `f16s-ai` + `f16s-db` use
+  about **0.9 GB** of it. Roughly 3 GB is reserved and idle.
+- **`keep_alive: -1` pinned the previous model.** gemma3:1b sat resident until it was
+  unloaded by hand, and 4b would have stayed pinned in swap the same way. I set that
+  value, in docker-compose and on the host `ollama serve`. With more than one model on a
+  small host, "never unload" holds whichever model ran last and starves the next one.
+- **gemma3:4b loads its vision tower as well** (`image_size 896`, `patch_size 14` in the
+  load log). That memory buys nothing for a text-only extraction.
+
+⚠️ PRD §9.6 already said Gemma should not run on a laptop, and this is that warning
+measured. Production cohosts Ollama on a dedicated t4g.large (PRD §9.5). **This laptop
+cannot answer whether 4b is accurate enough**; that needs freed RAM, or the production host.
+
+⚠️ **This invoice is SEA** (Nhava Sheva → Umm Qasr, "BY SEA"), while `departure`/
+`destination` run through an **IATA** resolver. Nhava Sheva is `INNSA` and Umm Qasr `IQUQR`
+as UN/LOCODEs, and neither has an IATA code. A commercial invoice can be either mode, so
+the extractor cannot assume air — see the air/sea code rule. Not yet fixed.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

@@ -902,6 +902,16 @@ ai-server are all in it. With Docker up, the same request produced no token in 3
 Making both fit means shrinking Docker's VM (it reserves 4.1 GB and uses ~0.9 GB), or
 running Ollama on the production host (PRD §9.5).
 
+🔴 **Three stacked timeouts sit below what 4b needs, on any hardware.** On the upload path:
+`model_extract.TIMEOUT_SECONDS` = **60 s** (ai-server → Ollama),
+`ProcessPdfOcrJob.php:105` `Http::timeout(80)` = **80 s** (Laravel → ai-server), and the
+queue worker's `--timeout=120` = **120 s** (the whole job). 4b needed **378 s**. So even on a
+machine with room for the model, the real path would time out at 60 s and **fall back to
+labels silently**, because a timed-out model is treated as "no model" (the same
+quietly-worse-extraction pattern as #156). Job 4 finished in 9 s only because the model
+was never called. ⚠️ Raising them is a product decision, not just a config value: on this
+hardware it means an operator waits about six minutes per document.
+
 ⚠️ **This invoice is SEA** (Nhava Sheva → Umm Qasr, "BY SEA"), while `departure`/
 `destination` run through an **IATA** resolver. Nhava Sheva is `INNSA` and Umm Qasr `IQUQR`
 as UN/LOCODEs, and neither has an IATA code. A commercial invoice can be either mode, so

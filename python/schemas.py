@@ -25,6 +25,11 @@ of what it could not read. On a real two-page invoice gemma3:1b spent 242 second
 with price-table numbers and repeated SKU codes, ran out of answer budget mid-string, and the
 whole reply failed validation. Without it the same document took 42 seconds and came back as
 valid JSON. An unbounded list is a loop a small model can fall into and never leave.
+
+🔴 ONLY WHAT THE PANEL TAKES FROM A DOCUMENT. The Extraction panel's groups are the parties,
+the cargo and the weights. The route and the AWB number do not come from a client's
+document, so the model is not asked for them. When it was asked, on the real invoice it
+returned the bank's SWIFT code as the AWB number.
 """
 
 from typing import Optional
@@ -51,14 +56,3 @@ class ExtractedDocument(BaseModel):
     description: Optional[str] = None
     pieces: Optional[int] = Field(default=None, ge=0)
     gross_weight: Optional[float] = Field(default=None, ge=0)
-
-    # As WRITTEN. Resolving a name to an IATA code is `locations`' job, not the model's —
-    # a model asked for a code will produce a plausible one for a city it has never seen.
-    origin: Optional[str] = None
-    destination: Optional[str] = None
-
-    # As written: "SEA", "BY SEA", "AIR". It decides how the lane is read, because an
-    # airport has an IATA code and a seaport does not (air = IATA, sea = UN/LOCODE).
-    transport_mode: Optional[str] = None
-
-    awb_number: Optional[str] = None

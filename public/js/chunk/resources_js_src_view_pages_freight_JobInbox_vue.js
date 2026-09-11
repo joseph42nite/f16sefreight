@@ -1152,8 +1152,11 @@ const PARTY_REQUIRED = {
             value: this.chargeable
           });
         }
-        const node = this.sourceField(f.key, f.group);
-        const value = raw(node);
+
+        // 🔴 A party is SEVERAL fields (name, address, city, post code, country), shown as one
+        // clean block. Printing the node itself dumped its {value, confidence} pairs into the
+        // cell as JSON, most of them null, which read as "nothing was found".
+        const value = f.party ? this.partyText(f.party, f.group) : raw(this.sourceField(f.key, f.group));
         if (value === null || value === undefined || value === "") {
           return _objectSpread(_objectSpread({}, f), {}, {
             source: null,
@@ -1565,7 +1568,7 @@ const PARTY_REQUIRED = {
         }) => {
           if (data.job_status === "completed") {
             clearInterval(timer);
-            doc.fields = data.fields || {};
+            doc.fields = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenParties)(data.fields || {});
             // 🔴 Why the model did not read it, when it did not. The fields are then the
             // label reading, and without this they look exactly like the model's.
             doc.warning = data.model_error ? "read by labels only: " + data.model_error : null;
@@ -1599,8 +1602,15 @@ const PARTY_REQUIRED = {
       doc.state = "failed";
       doc.error = message;
     },
-    /** Which group this document currently supplies, if any. */
+    /** A party as the operator reads it: the name, the address, then where it is. */
+    partyText(party, groupKey) {
+      const part = suffix => raw(this.sourceField(party + suffix, groupKey));
+      const place = [part("_city") && "City: " + part("_city"), part("_state") && "State: " + part("_state"), part("_post_code") && "Post code: " + part("_post_code"), part("_country") && "Country: " + part("_country")].filter(Boolean).join(" · ");
+      return [part(""), part("_address"), place].filter(Boolean).join("\n") || null;
+    },
+    /** Which group this document currently supplies, if any; "all" when it supplies every one. */
     groupsFrom(uid) {
+      if (GROUPS.every(g => this.assignment[g.key] === uid)) return "all";
       const found = GROUPS.find(g => this.assignment[g.key] === uid);
       return found ? found.key : "";
     },
@@ -1610,7 +1620,11 @@ const PARTY_REQUIRED = {
       Object.keys(next).forEach(k => {
         if (next[k] === uid) delete next[k];
       });
-      if (groupKey) next[groupKey] = uid;
+
+      // "All": this one document supplies every group, taking each from whichever had it.
+      if (groupKey === "all") GROUPS.forEach(g => {
+        next[g.key] = uid;
+      });else if (groupKey) next[groupKey] = uid;
       this.assignment = next;
     },
     /** `Label: value` per line. Anything unrecognised is reported, never guessed at. */
@@ -3115,7 +3129,11 @@ var render = function render() {
       attrs: {
         value: ""
       }
-    }, [_vm._v("— nothing —")]), _vm._v(" "), _vm._l(_vm.GROUPS, function (g) {
+    }, [_vm._v("— nothing —")]), _vm._v(" "), _c("option", {
+      attrs: {
+        value: "all"
+      }
+    }, [_vm._v("All")]), _vm._v(" "), _vm._l(_vm.GROUPS, function (g) {
       return _c("option", {
         key: g.key,
         domProps: {
@@ -3211,7 +3229,11 @@ var render = function render() {
       }
     }), _vm._v(" "), _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("kg")])] : [row.value !== null && row.value !== "" ? _c("span", [_vm._v("\n                " + _vm._s(row.value)), row.unit ? _c("span", {
+    }, [_vm._v("kg")])] : [row.value !== null && row.value !== "" ? _c("span", {
+      class: {
+        "fx-extract__party": row.party
+      }
+    }, [_vm._v("\n                " + _vm._s(row.value)), row.unit ? _c("span", {
       staticClass: "fx-muted"
     }, [_vm._v(" " + _vm._s(row.unit))]) : _vm._e()]) : _c("span", {
       staticClass: "fx-muted"
@@ -3511,9 +3533,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "TARGETS": () => (/* binding */ TARGETS),
 /* harmony export */   "buildPayload": () => (/* binding */ buildPayload),
 /* harmony export */   "createEndpoint": () => (/* binding */ createEndpoint),
+/* harmony export */   "flattenParties": () => (/* binding */ flattenParties),
 /* harmony export */   "formRoute": () => (/* binding */ formRoute),
 /* harmony export */   "masterKey": () => (/* binding */ masterKey)
 /* harmony export */ });
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * How an extracted or pasted field becomes an airway bill payload.
  *
@@ -3702,6 +3730,76 @@ const TARGETS = [{
   key: "hawb",
   label: "House AWB"
 }];
+
+/**
+ * A document's parties, in the flat keys the panel and `buildPayload` work on.
+ *
+ * 🔴 A document's party arrives NESTED: `shipper: { name, address, city, state, pin,
+ * country, full_details }`, each a `{value, confidence}`. The paste, the address book, Fit
+ * and `buildPayload` all use FLAT keys (`shipper`, `shipper_address`, `shipper_city`…), so a
+ * party read from a document was found by none of them: the panel printed the nested object
+ * as JSON, and the draft dropped the party as incomplete.
+ *
+ * ⚠️ The address comes from `full_details`, not `address`. The parser cuts `address` at 30
+ * characters ("…CEE PEE BUILDING MAS"), and a cut address in a draft is data lost without a
+ * word. `full_details` is the whole block, so the name is taken off its front.
+ *
+ * ⚠️ A part the document did not give is LEFT OUT, not set to null. The panel holds back a
+ * party with missing parts; an empty `{value: null}` would look present and send a
+ * half-filled party that the create endpoint refuses.
+ */
+function flattenParties(fields) {
+  const out = _objectSpread({}, fields);
+  ["shipper", "consignee"].forEach(party => {
+    const node = fields[party];
+
+    // Already flat (a pasted value), or not there at all.
+    if (!node || typeof node !== "object" || "value" in node) return;
+    const part = key => node[key] && node[key].value || null;
+    const put = (key, value, from) => {
+      if (value) out[key] = {
+        value,
+        confidence: node[from] && node[from].confidence || "low"
+      };
+    };
+    delete out[party];
+    const name = part("name");
+    const address = withoutLabel(afterName(part("full_details") || "", name)) || part("address");
+    put(party, name, "name");
+    put(party + "_address", address, "full_details");
+    put(party + "_city", part("city"), "city");
+    put(party + "_state", part("state"), "state");
+    put(party + "_post_code", part("pin"), "pin");
+    put(party + "_country", part("country"), "country");
+  });
+  return out;
+}
+
+/**
+ * The text after the name.
+ *
+ * ⚠️ Compared on letters and digits only: the name is the parser's CLEANED copy
+ * ("TSGEXP 001 25 08 2026") while `full_details` keeps the punctuation
+ * ("TSGEXP/001 & 25-08-2026"), so a plain `startsWith` misses whenever the name has any.
+ */
+function afterName(full, name) {
+  const target = String(name || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+  let seen = 0;
+  let i = 0;
+  while (i < full.length && seen < target.length) {
+    if (/[a-z0-9]/i.test(full[i])) {
+      if (full[i].toLowerCase() !== target[seen]) return full;
+      seen += 1;
+    }
+    i += 1;
+  }
+  return seen === target.length ? full.slice(i) : full;
+}
+
+/** The model copies a label along with the value after it: "Address : GARDENS WASFI…". */
+function withoutLabel(text) {
+  return text.replace(/^[\s,.:-]*address\s*:\s*/i, "").trim();
+}
 
 /***/ }),
 

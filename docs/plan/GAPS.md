@@ -926,11 +926,11 @@ extract**. Built on the gemma3:4b measurement above.
 
 | # | Change | Detail |
 |---|---|---|
-| 162 | 🟢 **The model's reading replaces the label reading.** For shipper, consignee, cargo, the lane, the AWB number, pieces and gross weight, the model's answer wins. A field the model leaves out comes back **blank**, not as the label guess | 🔴 The label guess for the shipper on the real invoice was the invoice number. A wrong value on the card looks like a right one; a blank gets noticed. Labels are still read first, but only as the fallback when the model cannot answer. On the real 4b answer: shipper `TRAILSPEC GEARS PRIVATE LIMITED`, city `KALAMASEERY`, pin `683503`; consignee `SILVER MOON COMMERCIAL BROKERAG CO` whole (the label path had split `BROKERAG CO` off as the city); pieces **500** (the regex had 50, a single table row); gross **364.09** |
+| 162 | 🟢 **The model's reading replaces the label reading.** For shipper, consignee, cargo, pieces and gross weight (the Extraction panel's groups; see #170) the model's answer wins. A field the model leaves out comes back **blank**, not as the label guess | 🔴 The label guess for the shipper on the real invoice was the invoice number. A wrong value on the card looks like a right one; a blank gets noticed. Labels are still read first, but only as the fallback when the model cannot answer. On the real 4b answer: shipper `TRAILSPEC GEARS PRIVATE LIMITED`, city `KALAMASEERY`, pin `683503`; consignee `SILVER MOON COMMERCIAL BROKERAG CO` whole (the label path had split `BROKERAG CO` off as the city); pieces **500** (the regex had 50, a single table row); gross **364.09** |
 | 163 | 🟢 **A fallback is never silent.** `model_extract.extract()` returns `(fields, None)` or `(None, reason)`: *the model is not reachable*, *the model timed out after Ns*, *the model failed (HTTP n)*, *the model returned something unreadable*. It lands in the result as `model_error`, the status endpoint returns it, and the panel shows **"read by labels only: <reason>"** on that document's row | 🔴 Before this, a timed-out model and a model that read badly looked identical. Both reasons are tested against the **real** client, not a stub: a closed port, and a socket that accepts and never answers. ⚠️ `socket.timeout` only became an alias of `TimeoutError` in Python 3.10 and the host test runner is 3.9, so both are caught |
 | 164 | 🟢 **Timeouts nest.** Model 60 → **600 s**; Laravel → parser 80 → **660 s** for unstructured documents only (an AWB keeps **80 s**); job 90 → **720 s**; `retry_after` on `database` and `redis` → **780 s** | `tests/Unit/OcrJobTimeoutTest.php` pins the nesting: each limit outlasts the one inside it, and `retry_after` outlasts the job, or a second worker picks up a document the first is still reading. ⚠️ `retry_after` is per connection, so a crashed job on those connections now waits 13 minutes before a retry instead of 90 s |
 | 165 | 🔴 **`/extract-unstructured` ran the extraction on the event loop.** An `async` endpoint calling a blocking function | Harmless for a 9 ms label read; with a model reading for minutes it would block **every other request, `/health` included**, and the container healthcheck would mark the ai-server unhealthy mid-extraction. Now `run_in_threadpool` |
-| 166 | 🔴 **A SEA lane was given airport codes.** The IATA lookup matches city names: `Chennai → MAA`, `Mumbai → BOM`, both airports | When the model reports the mode as SEA, the port is kept as written, upper-cased. ⚠️ It should become a UN/LOCODE, but **the `ports` table exists with a `locode` column and 0 rows**, so there is nothing to resolve against. Filling it is a data decision, not invented here — **open, yours** |
+| 166 | ⚪ **Superseded 2026-09-11 by #170: the model no longer reads the route, so this branch was removed.** ~~A SEA lane was given airport codes.~~ The IATA lookup matches city names: `Chennai → MAA`, `Mumbai → BOM`, both airports | When the model reports the mode as SEA, the port is kept as written, upper-cased. ⚠️ It should become a UN/LOCODE, but **the `ports` table exists with a `locode` column and 0 rows**, so there is nothing to resolve against. Filling it is a data decision, not invented here — **open, yours** |
 | 167 | 🟢 **Tests no longer reach a real model.** The label tests used to call whatever Ollama was running, so the suite took over two minutes and its result depended on the loaded model | Every test now starts with no model and opts in with a stub. **28 tests in 24 s** |
 | 168 | ⚠️ **The document is capped at 6,000 characters** so the prompt, the text and a 512-token answer fit `num_ctx` 4,096 | Table text ran about 2.4 characters per token. A prompt that overflows the context gets cut, and what gets cut can be the instructions. The cut is logged. **Open limit:** the tail of a longer document is not read by the model |
 | 169 | ⚠️ **`keep_alive` defaults to `10m`, not `-1`**; docker-compose names `gemma3:4b` explicitly | On the 9 GB laptop `-1` pinned whichever model ran last. A dedicated Ollama host (PRD §9.5) should set `OLLAMA_KEEP_ALIVE=-1` |
@@ -983,6 +983,35 @@ really is in the document. An AWB number has a fixed shape (a 3-digit airline pr
 prints each party as a raw JSON dump of `{value, confidence}` pairs, most of them
 `"value": null`. That is very likely what read as "all values are null" on the first
 extraction. Not part of this change.
+
+---
+
+## 🟢 2026-09-11 — only what the panel takes, and parties a draft can use
+
+| # | Change | Detail |
+|---|---|---|
+| 170 | 🔴 **The model is asked only for what the Extraction panel takes from a document**: the parties, the cargo and the weights. Route, AWB number and transport mode removed from the schema, the prompt and the mapping | User: *"you are only supposed to extract what I mentioned to extract."* The panel's groups are shipper & consignee; pieces, dimensions, description; gross, volumetric, chargeable; notify party. Asking for the route and AWB was scope nobody set, and it did harm: on the real invoice the model returned the bank's **SWIFT code as the AWB number**. `test_the_model_is_asked_only_for_what_the_panel_takes` pins the field list |
+| 171 | 🔴 **A document's shipper and consignee never reached a draft.** A document delivers each party NESTED (`shipper: {name, address, city, pin, …}`), while the panel's paste, address book, Fit, incomplete-party check and `buildPayload` all read FLAT keys (`shipper`, `shipper_address`, `shipper_city`…) | So Save as draft, which removes parties it thinks are incomplete, removed every party read from a document. `flattenParties()` in `awbMapping.js` now flattens them when extraction finishes. ⚠️ The address comes from `full_details`, not `address`: the parser cuts `address` at 30 characters (`…CEE PEE BUILDING MAS`). ⚠️ Missing parts are **left out**, not set to null, so the incomplete check still sees them. jest spec on **job #8's real fields**, 7/7 |
+| 172 | 🟢 **"What will be used" shows each party as clean lines**: name, address, then city / state / post code / country | It printed the nested object as JSON, mostly `"value": null`. That was what read as *"all values are null"* on the first extraction |
+| 173 | 🟢 **"Take from it" has an "All" option**: one document supplies every group, taking each from whichever document had it | Asked for by the user |
+
+🟢 **Verified in the browser on job #8's real result.** The panel polled the real status
+endpoint; only the upload was skipped, and that path was verified earlier. "Take from it" set
+to **All** gave that document every group. Shipper read *TRAILSPEC GEARS PRIVATE LIMITED /
+22/702/01 - CEE PEE BUILDING MASJID ROAD, HMT P.O, KALAMASEERY , ERNAKULAM - 683503 / City:
+KALAMASEERY · Post code: 683503*. Consignee read *SILVER MOON COMMERCIAL BROKERAG CO / GARDENS
+WASFI AL TAL ST. P.O Box 9192 Amman 11191 JORDAN / Post code: 11191*. No JSON anywhere on the
+page. Tests: jest 42/42 (7 new, on job #8's fields), Python 27/27, webpack compiled.
+
+⚠️ **Both parties are still held back from the draft**, correctly, and the panel now says so:
+*"shipper will not be saved — no state, country"* and *"consignee will not be saved — no
+city, state, country"*. The invoice does not give the shipper's state or country, and the
+parser did not split Amman / Jordan out of the consignee's address. The operator fills them
+(paste `Shipper state: …`, the address book, or the form). That is the create endpoint's own
+rule (GAPS #42). **Open, the user's:** should a draft accept an incomplete party instead?
+
+⚠️ **Open question for the user:** the panel's groups also include dimensions, chargeable
+weight and the notify party, which the model does not read yet. Not added without asking.
 
 ---
 

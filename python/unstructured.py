@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Optional
 import pdfplumber
 
 import model_extract
-from extract_awb_new import normalize_text, process_box
+from extract_awb_new import process_box
 
 # 🔴 PyMuPDF for the TEXT LAYER, pdfplumber for everything else. Measured on this machine,
 # same documents, median of five: 27.2ms vs 2.6ms on a one-page invoice — 10x, with the
@@ -271,11 +271,12 @@ def extract_from_text(pdf_path: str) -> Dict[str, Any]:
     return result
 
 
-# The regions the model reads. For these its answer replaces the label reading entirely: a
-# field the model left out comes back BLANK, not as the label guess. On the first real invoice
-# the label guess for the shipper was the invoice number. A wrong value on the card looks like
-# a right one; a blank gets noticed.
-MODEL_REGIONS = ("shipper", "consignee", "cargo", "departure", "destination", "awb_number")
+# 🔴 ONLY WHAT THE EXTRACTION PANEL TAKES FROM A DOCUMENT: the parties, the cargo and the
+# weights. For these the model's answer replaces the label reading entirely, and a field the
+# model left out comes back BLANK, not as the label guess. On the first real invoice the label
+# guess for the shipper was the invoice number. A wrong value on the card looks like a right
+# one; a blank gets noticed.
+MODEL_REGIONS = ("shipper", "consignee", "cargo")
 
 
 def _party(parsed: Dict[str, Any], role: str) -> str:
@@ -295,28 +296,16 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
         result["model_error"] = error
         return
 
-    # ⚠️ A port has no IATA code. The IATA lookup matches city names, so "Chennai" came back
-    # as MAA and "Mumbai" as BOM, which are airports. On a SEA lane the port is kept as
-    # written. It should become a UN/LOCODE, but the `ports` table is empty, so there is
-    # nothing to resolve it against yet.
-    sea = "sea" in (parsed.get("transport_mode") or "").lower()
-
     values = {
         "shipper": _party(parsed, "shipper"),
         "consignee": _party(parsed, "consignee"),
         "cargo": parsed.get("description") or "",
-        "departure": parsed.get("origin") or "",
-        "destination": parsed.get("destination") or "",
-        "awb_number": parsed.get("awb_number") or "",
     }
 
     for region in MODEL_REGIONS:
-        if sea and region in ("departure", "destination"):
-            result[region] = normalize_text(values[region]).upper()
-        else:
-            # ⚠️ Through `process_box`, so a model-read address is shaped exactly like a
-            # cropped one. The VALUE differs in provenance, never in structure.
-            result[region] = process_box(region, values[region])
+        # ⚠️ Through `process_box`, so a model-read address is shaped exactly like a cropped
+        # one. The VALUE differs in provenance, never in structure.
+        result[region] = process_box(region, values[region])
 
     # 🔴 Written straight into the dict, not through `process_box`: `transform_piece_weight`
     # is POSITIONAL and misreads a number handed to it on its own.

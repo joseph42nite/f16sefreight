@@ -257,30 +257,18 @@ def test_a_model_that_times_out_is_reported_not_hidden():
     assert result["model_error"] == "the model timed out after 600s"
 
 
-def test_a_sea_lane_keeps_the_port_and_gets_no_airport_code():
+def test_the_model_is_asked_only_for_what_the_panel_takes():
     """
-    ⚠️ The IATA lookup matches city names, so "Chennai" became MAA, an airport. A port has
-    no IATA code (air = IATA, sea = UN/LOCODE).
+    🔴 The Extraction panel takes the parties, the cargo and the weights from a document. The
+    route and the AWB number do not come from a client's document, and when the model was
+    asked for them it returned the bank's SWIFT code as the AWB number.
     """
-    import unstructured
+    from schemas import ExtractedDocument
 
-    _with_model({"origin": "Chennai", "destination": "Umm Qasr", "transport_mode": "BY SEA"})
-    result = {"piece_weight": {}}
-    unstructured._apply_model(result, "text")
-
-    assert result["departure"] == "CHENNAI"
-    assert result["destination"] == "UMM QASR"
-
-
-def test_an_air_lane_still_resolves_to_iata():
-    import unstructured
-
-    _with_model({"origin": "Chennai", "destination": "Frankfurt", "transport_mode": "AIR"})
-    result = {"piece_weight": {}}
-    unstructured._apply_model(result, "text")
-
-    assert result["departure"] == "MAA"
-    assert result["destination"] == "FRA"
+    assert set(ExtractedDocument.model_fields) == {
+        "shipper_name", "shipper_address", "consignee_name", "consignee_address",
+        "description", "pieces", "gross_weight",
+    }
 
 
 def test_the_schema_permits_a_model_that_found_nothing():
@@ -291,7 +279,6 @@ def test_the_schema_permits_a_model_that_found_nothing():
 
     empty = ExtractedDocument.model_validate({})
     assert empty.shipper_name is None
-    assert empty.transport_mode is None
 
 
 # ─── Grounding ───────────────────────────────────────────────────────────────

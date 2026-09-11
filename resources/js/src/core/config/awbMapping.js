@@ -168,3 +168,78 @@ export const TARGETS = [
   { key: "mawb", label: "Master AWB" },
   { key: "hawb", label: "House AWB" },
 ];
+
+/**
+ * A document's parties, in the flat keys the panel and `buildPayload` work on.
+ *
+ * 🔴 A document's party arrives NESTED: `shipper: { name, address, city, state, pin,
+ * country, full_details }`, each a `{value, confidence}`. The paste, the address book, Fit
+ * and `buildPayload` all use FLAT keys (`shipper`, `shipper_address`, `shipper_city`…), so a
+ * party read from a document was found by none of them: the panel printed the nested object
+ * as JSON, and the draft dropped the party as incomplete.
+ *
+ * ⚠️ The address comes from `full_details`, not `address`. The parser cuts `address` at 30
+ * characters ("…CEE PEE BUILDING MAS"), and a cut address in a draft is data lost without a
+ * word. `full_details` is the whole block, so the name is taken off its front.
+ *
+ * ⚠️ A part the document did not give is LEFT OUT, not set to null. The panel holds back a
+ * party with missing parts; an empty `{value: null}` would look present and send a
+ * half-filled party that the create endpoint refuses.
+ */
+export function flattenParties(fields) {
+  const out = { ...fields };
+
+  ["shipper", "consignee"].forEach((party) => {
+    const node = fields[party];
+
+    // Already flat (a pasted value), or not there at all.
+    if (!node || typeof node !== "object" || "value" in node) return;
+
+    const part = (key) => (node[key] && node[key].value) || null;
+    const put = (key, value, from) => {
+      if (value) out[key] = { value, confidence: (node[from] && node[from].confidence) || "low" };
+    };
+
+    delete out[party];
+
+    const name = part("name");
+    const address = withoutLabel(afterName(part("full_details") || "", name)) || part("address");
+
+    put(party, name, "name");
+    put(party + "_address", address, "full_details");
+    put(party + "_city", part("city"), "city");
+    put(party + "_state", part("state"), "state");
+    put(party + "_post_code", part("pin"), "pin");
+    put(party + "_country", part("country"), "country");
+  });
+
+  return out;
+}
+
+/**
+ * The text after the name.
+ *
+ * ⚠️ Compared on letters and digits only: the name is the parser's CLEANED copy
+ * ("TSGEXP 001 25 08 2026") while `full_details` keeps the punctuation
+ * ("TSGEXP/001 & 25-08-2026"), so a plain `startsWith` misses whenever the name has any.
+ */
+function afterName(full, name) {
+  const target = String(name || "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+  let seen = 0;
+  let i = 0;
+
+  while (i < full.length && seen < target.length) {
+    if (/[a-z0-9]/i.test(full[i])) {
+      if (full[i].toLowerCase() !== target[seen]) return full;
+      seen += 1;
+    }
+    i += 1;
+  }
+
+  return seen === target.length ? full.slice(i) : full;
+}
+
+/** The model copies a label along with the value after it: "Address : GARDENS WASFI…". */
+function withoutLabel(text) {
+  return text.replace(/^[\s,.:-]*address\s*:\s*/i, "").trim();
+}

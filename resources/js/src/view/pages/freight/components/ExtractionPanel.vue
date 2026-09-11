@@ -205,6 +205,7 @@
                 @change="assign($event.target.value, doc.uid)"
               >
                 <option value="">— nothing —</option>
+                <option value="all">All</option>
                 <option v-for="g in GROUPS" :key="g.key" :value="g.key">{{ g.label }}</option>
               </select>
             </td>
@@ -297,7 +298,7 @@
                 <span class="fx-muted">kg</span>
               </template>
               <template v-else>
-                <span v-if="row.value !== null && row.value !== ''">
+                <span v-if="row.value !== null && row.value !== ''" :class="{ 'fx-extract__party': row.party }">
                   {{ row.value }}<span v-if="row.unit" class="fx-muted"> {{ row.unit }}</span>
                 </span>
                 <span v-else class="fx-muted">—</span>
@@ -406,7 +407,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
-import { buildPayload, createEndpoint, formRoute, masterKey, TARGETS } from "@/core/config/awbMapping";
+import { buildPayload, createEndpoint, flattenParties, formRoute, masterKey, TARGETS } from "@/core/config/awbMapping";
 import { cleanParty } from "@/core/config/awbFieldRules";
 
 /**
@@ -724,8 +725,10 @@ export default {
           };
         }
 
-        const node = this.sourceField(f.key, f.group);
-        const value = raw(node);
+        // 🔴 A party is SEVERAL fields (name, address, city, post code, country), shown as one
+        // clean block. Printing the node itself dumped its {value, confidence} pairs into the
+        // cell as JSON, most of them null, which read as "nothing was found".
+        const value = f.party ? this.partyText(f.party, f.group) : raw(this.sourceField(f.key, f.group));
 
         if (value === null || value === undefined || value === "") {
           return { ...f, source: null, value: null };
@@ -1131,7 +1134,7 @@ export default {
           .then(({ data }) => {
             if (data.job_status === "completed") {
               clearInterval(timer);
-              doc.fields = data.fields || {};
+              doc.fields = flattenParties(data.fields || {});
               // 🔴 Why the model did not read it, when it did not. The fields are then the
               // label reading, and without this they look exactly like the model's.
               doc.warning = data.model_error
@@ -1173,8 +1176,22 @@ export default {
       doc.state = "failed";
       doc.error = message;
     },
-    /** Which group this document currently supplies, if any. */
+    /** A party as the operator reads it: the name, the address, then where it is. */
+    partyText(party, groupKey) {
+      const part = (suffix) => raw(this.sourceField(party + suffix, groupKey));
+      const place = [
+        part("_city") && "City: " + part("_city"),
+        part("_state") && "State: " + part("_state"),
+        part("_post_code") && "Post code: " + part("_post_code"),
+        part("_country") && "Country: " + part("_country"),
+      ].filter(Boolean).join(" · ");
+
+      return [part(""), part("_address"), place].filter(Boolean).join("\n") || null;
+    },
+    /** Which group this document currently supplies, if any; "all" when it supplies every one. */
     groupsFrom(uid) {
+      if (GROUPS.every((g) => this.assignment[g.key] === uid)) return "all";
+
       const found = GROUPS.find((g) => this.assignment[g.key] === uid);
       return found ? found.key : "";
     },
@@ -1186,7 +1203,9 @@ export default {
         if (next[k] === uid) delete next[k];
       });
 
-      if (groupKey) next[groupKey] = uid;
+      // "All": this one document supplies every group, taking each from whichever had it.
+      if (groupKey === "all") GROUPS.forEach((g) => { next[g.key] = uid; });
+      else if (groupKey) next[groupKey] = uid;
 
       this.assignment = next;
     },

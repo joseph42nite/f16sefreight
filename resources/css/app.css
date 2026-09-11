@@ -826,6 +826,8 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
   text-transform: uppercase; color: var(--text-secondary); }
 .fx-extract__weight { width: 9ch; text-align: right; }
 .fx-extract__book { max-width: 14rem; margin-bottom: var(--space-1); }
+/* A party is several lines (name, address, place) and reads as a block. */
+.fx-extract__party { display: inline-block; white-space: pre-line; }
 /* The domain under a client name — context, not a second identity. */
 .fx-enq__domain { display: block; font-size: .75rem; }
 .fx-dir__add { margin-bottom: var(--space-3); }

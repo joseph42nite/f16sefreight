@@ -92,16 +92,16 @@ TIMEOUT_SECONDS = int(os.environ.get("OLLAMA_TIMEOUT", "600"))
 # the bank-details block: positional reasoning moved into the prompt, and just as wrong.
 #
 # ⚠️ The jumbled-order warning and "a label is never a value" are what this prompt adds, and
-# it is the prompt gemma3:4b was measured with. Without them 1B returned "Exporter" as the
-# shipper's name.
+# it is the prompt gemma3:4b was measured with, less the route and AWB fields. Without
+# them 1B returned "Exporter" as the shipper's name.
 PROMPT = """You are reading a freight document (commercial invoice, packing list or airway bill).
 
 The text was extracted from a TABLE, so it is JUMBLED: a value may appear BEFORE or AFTER
 its own label, and unrelated cells are interleaved. Match each value to its label by
 MEANING, not by position.
 
-Never return a label as a value. "Exporter", "Consignee", "Address :", "Port of Loading"
-and "Description of Goods" are LABELS.
+Never return a label as a value. "Exporter", "Consignee", "Address :" and "Description of
+Goods" are LABELS.
 
 Fields:
   shipper_name      company SENDING the goods (labelled Exporter or Shipper). A company
@@ -109,16 +109,12 @@ Fields:
   shipper_address   that company's street address
   consignee_name    company RECEIVING the goods (labelled Consignee)
   consignee_address that company's street address
-  origin            port or airport of loading
-  destination       port or airport of discharge
-  transport_mode    SEA or AIR, as the document states it
   description       what the goods are, in words
   pieces            TOTAL quantity for the whole shipment, not a single table row
   gross_weight      total gross weight
-  awb_number        the air waybill number, if there is one
 
 Ignore the price table, SKU codes and colour names. A colour or a product code is never a
-port, a company or a description.
+company or a description.
 
 Copy text exactly as written. Omit any field you cannot find. Do not invent a value.
 

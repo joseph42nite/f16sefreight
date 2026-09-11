@@ -869,6 +869,39 @@ actually free:
 measured. Production cohosts Ollama on a dedicated t4g.large (PRD §9.5). **This laptop
 cannot answer whether 4b is accurate enough**; that needs freed RAM, or the production host.
 
+### 🟢 gemma3:4b measured with Docker stopped: shipper and consignee are right
+
+Docker Desktop quit to release its VM (user's call, 2026-09-11). Load then took **63 s**
+instead of 153. Same invoice, run from the host:
+
+| Field | Returned | Verdict |
+|---|---|---|
+| shipper_name | TRAILSPEC GEARS PRIVATE LIMITED | ✅ |
+| shipper_address | 22/702/01 - CEE PEE BUILDING, MASJID ROAD, HMT P.O, KALAMASEERY, ERNAKULAM - 683503 | ✅ |
+| consignee_name | SILVER MOON COMMERCIAL BROKERAG CO | ✅ |
+| consignee_address | the correct Amman address, **plus** the Delivery address/Buyer block and `64 X 32 X 64 CM` | ⚠️ over-captured |
+| transport_mode | SEA | ✅ |
+| description | PU coated polyester travel backpack | ✅ |
+| pieces | 500 (the total, not a row) | ✅ |
+| gross_weight / net_weight | 364.09 / 318.33 | ✅ |
+| origin | `Umm Qasr` | ❌ the discharge port |
+| destination | `India` | ❌ the origin country |
+| invoice_number | `BANK DETAILS` | ❌ a label |
+
+**8 correct, 1 partial, 3 wrong** (gemma3:1b: 1 of 6). **378 s** end to end.
+
+🔴 The three misses are the adjacency trap again: `Port of Discharge` is directly
+followed by `Umm Qasr`, and `Invoice No.& Date` by `BANK DETAILS`. ⚠️ **Grounding cannot
+catch them.** Every wrong value is a verbatim substring of the document, and
+`_grounded()` only drops strings that are absent from it. The lane could be checked
+structurally: `India` is a country, not a port, and a SEA lane must resolve to a UN/LOCODE.
+
+🔴 **On this laptop the pipeline cannot use 4b as deployed.** The successful run needed
+Docker **stopped**, but the real path needs Docker **running**: MySQL, the queue and the
+ai-server are all in it. With Docker up, the same request produced no token in 30 minutes.
+Making both fit means shrinking Docker's VM (it reserves 4.1 GB and uses ~0.9 GB), or
+running Ollama on the production host (PRD §9.5).
+
 ⚠️ **This invoice is SEA** (Nhava Sheva → Umm Qasr, "BY SEA"), while `departure`/
 `destination` run through an **IATA** resolver. Nhava Sheva is `INNSA` and Umm Qasr `IQUQR`
 as UN/LOCODEs, and neither has an IATA code. A commercial invoice can be either mode, so

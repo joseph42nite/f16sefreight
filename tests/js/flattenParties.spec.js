@@ -127,7 +127,7 @@ describe("flattenParties", () => {
     expect(flat.shipper_post_code.value).toBe("683503");
   });
 
-  it("leaves out what the document did not give, so the panel can hold the party back", () => {
+  it("leaves out what neither the document nor the fallback found", () => {
     expect(flat.shipper_state).toBeUndefined();
     expect(flat.shipper_country).toBeUndefined();
   });

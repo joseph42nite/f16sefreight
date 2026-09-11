@@ -924,7 +924,9 @@ const ADDRESS_TYPES = {
 };
 
 /** Shown in the paste box, so the accepted labels are visible rather than documented. */
-const PASTE_EXAMPLE = ["Shipper: Globex Exports Pvt Ltd", "Shipper address: Plot 42/A, MIDC Andheri East", "Shipper city: Mumbai", "Consignee: Emirates Trading LLC", "Pieces: 14", "Gross weight: 698.5", "Chargeable weight: 720", "Dimensions: 120x80x90", "Goods: Machine parts"].join("\n");
+/** Parties that can be pasted as a whole block: the label, then the address below it. */
+const PARTY_BLOCKS = ["shipper", "consignee", "notify"];
+const PASTE_EXAMPLE = ["Shipper:", "Globex Exports Pvt Ltd", "Plot 42/A, MIDC Andheri East", "Mumbai 400093, Maharashtra, India", "", "Consignee: Emirates Trading LLC, Jebel Ali Free Zone, Dubai, UAE", "", "Pieces: 14", "Gross weight: 698.5", "Dimensions: 120x80x90", "Goods: Machine parts"].join("\n");
 
 /** What a pasted line may be called. Lower-cased, punctuation-insensitive. */
 /**
@@ -1004,6 +1006,7 @@ const PARTY_REQUIRED = {
     RESULT_FIELDS,
     chargeableEdit: "",
     savedAddresses: {},
+    countries: {},
     manual: {},
     fitReport: null,
     target: "mawb",
@@ -1028,7 +1031,7 @@ const PARTY_REQUIRED = {
       return this.documents.filter(d => d.state === "staged" && d.readable === "scan").map(d => d.name);
     },
     pastedFields() {
-      return this.parsePaste(this.pasted).found;
+      return this.withCountryCodes(this.parsePaste(this.pasted).found);
     },
     pastedUnknown() {
       return this.parsePaste(this.pasted).unknown;
@@ -1080,10 +1083,16 @@ const PARTY_REQUIRED = {
      */
     incomplete() {
       const out = [];
-      const f = this.flatFields;
+      const f = this.withCountryCodes(this.flatFields);
       Object.keys(PARTY_REQUIRED).forEach(party => {
         if (!f[party]) return;
-        const missing = PARTY_REQUIRED[party].filter(part => !f[party + "_" + part]).map(part => part.replace(/_/g, " "));
+
+        // ⚠️ A country counts only as a 2-letter code: a name the list did not recognise is
+        // left off the draft, so it is missing here too.
+        const missing = PARTY_REQUIRED[party].filter(part => {
+          const value = raw(f[party + "_" + part]);
+          return part === "country" ? !/^[A-Z]{2}$/.test(String(value || "")) : !value;
+        }).map(part => part.replace(/_/g, " "));
         if (missing.length) out.push({
           party,
           missing
@@ -1265,6 +1274,7 @@ const PARTY_REQUIRED = {
   },
   created() {
     this.loadAddressBook();
+    this.loadCountries();
   },
   methods: {
     /**
@@ -1284,6 +1294,29 @@ const PARTY_REQUIRED = {
           this.$set(this.savedAddresses, party, []);
         });
       });
+    },
+    /** The form stores a country as its 2-letter code; this is the list that turns "India" into IN. */
+    loadCountries() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/get-country").then(({
+        data
+      }) => {
+        this.countries = data || {};
+      }).catch(() => {
+        this.countries = {};
+      });
+    },
+    /** Country names as the 2-letter codes the form stores. A name the list does not know is left as written. */
+    withCountryCodes(fields) {
+      const out = _objectSpread({}, fields);
+      PARTY_BLOCKS.forEach(party => {
+        const key = party + "_country";
+        const code = out[key] === undefined ? null : (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.countryCode)(raw(out[key]), this.countries);
+        if (code) out[key] = {
+          value: code,
+          confidence: out[key] && out[key].confidence || "high"
+        };
+      });
+      return out;
     },
     savedFor(party) {
       return this.savedAddresses[party] || [];
@@ -1568,7 +1601,7 @@ const PARTY_REQUIRED = {
         }) => {
           if (data.job_status === "completed") {
             clearInterval(timer);
-            doc.fields = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenParties)(data.fields || {});
+            doc.fields = this.withCountryCodes((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenCargo)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenParties)(data.fields || {}, this.countries)));
             // 🔴 Why the model did not read it, when it did not. The fields are then the
             // label reading, and without this they look exactly like the model's.
             doc.warning = data.model_error ? "read by labels only: " + data.model_error : null;
@@ -1627,29 +1660,72 @@ const PARTY_REQUIRED = {
       });else if (groupKey) next[groupKey] = uid;
       this.assignment = next;
     },
-    /** `Label: value` per line. Anything unrecognised is reported, never guessed at. */
+    /**
+     * What the paste box says.
+     *
+     * 🔴 A PARTY IS A BLOCK. "Shipper:" (or just "Shipper"), then the whole address below it
+     * the way it sits on an invoice; `parsePartyBlock` splits it into name, address, city,
+     * state, post code and country. A blank line or the next label ends the block. Anything
+     * else stays `Label: value`, one per line, and a "Shipper city: …" line still overrides
+     * what the block gave.
+     */
     parsePaste(text) {
       const found = {};
       const unknown = [];
+      let block = null;
+      const finish = () => {
+        if (!block) return;
+        const parts = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.parsePartyBlock)(block.lines.join("\n"), this.countries);
+        const suffix = {
+          name: "",
+          address: "_address",
+          city: "_city",
+          state: "_state",
+          post_code: "_post_code",
+          country: "_country"
+        };
+        Object.keys(suffix).forEach(part => {
+          if (parts[part]) found[block.party + suffix[part]] = {
+            value: parts[part],
+            confidence: "high"
+          };
+        });
+        block = null;
+      };
       String(text || "").split(/\r?\n/).forEach(line => {
-        const m = line.match(/^\s*([^:]{1,40}):\s*(.+?)\s*$/);
-        if (!m) {
-          if (line.trim()) unknown.push(line.trim().slice(0, 30));
+        if (!line.trim()) {
+          finish();
           return;
         }
-        const label = m[1].trim().toLowerCase();
+        const m = line.match(/^\s*([^:]{1,40}):\s*(.*?)\s*$/);
+        const label = (m ? m[1] : line).trim().toLowerCase().replace(/[.:]+$/, "");
         const key = Object.keys(PASTE_KEYS).find(k => PASTE_KEYS[k].includes(label));
-        if (!key) {
-          unknown.push(m[1].trim());
+        if (key && PARTY_BLOCKS.includes(key)) {
+          finish();
+          block = {
+            party: key,
+            lines: m && m[2] ? [m[2]] : []
+          };
+          return;
+        }
+        if (key && m) {
+          finish();
+          // Typed by a person, so it is authoritative by definition — not a guess to score.
+          if (m[2]) found[key] = {
+            value: m[2],
+            confidence: "high"
+          };
           return;
         }
 
-        // Typed by a person, so it is authoritative by definition — not a guess to score.
-        found[key] = {
-          value: m[2].trim(),
-          confidence: "high"
-        };
+        // Inside a party, an unrecognised line is part of the address ("P.O Box: 9192").
+        if (block) {
+          block.lines.push(line.trim());
+          return;
+        }
+        if (!key) unknown.push((m ? m[1] : line).trim().slice(0, 30));
       });
+      finish();
       return {
         found,
         unknown
@@ -1697,12 +1773,17 @@ const PARTY_REQUIRED = {
       this.saving = true;
       this.saveError = null;
 
-      // 🔴 Incomplete parties are REMOVED, not sent hopefully. A consignee missing its
-      // post code makes the whole request 422 — and by then the waybill shell exists.
-      // Dropping it saves the rest of the draft and leaves the party for the form.
-      const fields = _objectSpread({}, this.flatFields);
-      this.incomplete.forEach(row => {
-        delete fields[row.party];
+      // 🔴 A draft keeps what was COLLECTED. The endpoint used to refuse a party missing any
+      // part, so this removed them first, and a draft from a real invoice saved only the AWB
+      // number. With `status: "draft"` the endpoint stores what is there; the operator fills
+      // the rest in the draft, and a send still requires every part.
+      const fields = this.withCountryCodes(_objectSpread({}, this.flatFields));
+
+      // ⚠️ Only a 2-letter code is accepted even in a draft, so a country the list did not
+      // recognise is left off rather than failing the whole save.
+      PARTY_BLOCKS.forEach(party => {
+        const key = party + "_country";
+        if (fields[key] && !/^[A-Z]{2}$/.test(String(raw(fields[key])))) delete fields[key];
       });
 
       // The derived figures travel with the draft, so the form opens with the chargeable
@@ -1718,6 +1799,9 @@ const PARTY_REQUIRED = {
         awbNo: this.awbNo,
         hawbNo: this.hawbNo
       });
+
+      // The form's own draft button sends this, and the endpoint keeps a partial party for it.
+      payload.status = "draft";
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.createEndpoint)(this.target), payload).then(() => {
         // Straight to the draft that was just written, not to a blank form.
         this.draftUrl = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.formRoute)(this.target, this.target === "mawb" ? (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.masterKey)(this.awbCode, this.awbNo) : this.hawbNo);
@@ -3271,7 +3355,7 @@ var render = function render() {
       attrs: {
         role: "status"
       }
-    }, [_c("strong", [_vm._v(_vm._s(row.party))]), _vm._v(" will not be saved — no\n      " + _vm._s(row.missing.join(", ")) + ". Add\n      "), _c("code", [_vm._v(_vm._s(row.party) + " " + _vm._s(row.missing[0]) + ":")]), _vm._v(" above, or fill it on the form\n      afterwards.\n    ")]);
+    }, [_c("strong", [_vm._v(_vm._s(row.party))]), _vm._v(" is saved to the draft without\n      " + _vm._s(row.missing.join(", ")) + ". Fill " + _vm._s(row.missing.length > 1 ? "them" : "it") + " in the\n      draft before sending, or add "), _c("code", [_vm._v(_vm._s(row.party) + " " + _vm._s(row.missing[0]) + ":")]), _vm._v(" above.\n    ")]);
   }), _vm._v(" "), _vm.saveError ? _c("p", {
     staticClass: "fx-error",
     attrs: {
@@ -3344,7 +3428,7 @@ var staticRenderFns = [function () {
     _c = _vm._self._c;
   return _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("\n      One "), _c("code", [_vm._v("Label: value")]), _vm._v(" per line. Whatever is recognised here overrides the\n      documents.\n    ")]);
+  }, [_vm._v("\n      Shipper, consignee or notify party: the label, then the whole address below it. Anything else: one "), _c("code", [_vm._v("Label: value")]), _vm._v(" per line. Whatever is recognised here overrides the\n      documents.\n    ")]);
 }, function () {
   var _vm = this,
     _c = _vm._self._c;
@@ -3532,10 +3616,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "TARGETS": () => (/* binding */ TARGETS),
 /* harmony export */   "buildPayload": () => (/* binding */ buildPayload),
+/* harmony export */   "countryCode": () => (/* binding */ countryCode),
 /* harmony export */   "createEndpoint": () => (/* binding */ createEndpoint),
+/* harmony export */   "flattenCargo": () => (/* binding */ flattenCargo),
 /* harmony export */   "flattenParties": () => (/* binding */ flattenParties),
 /* harmony export */   "formRoute": () => (/* binding */ formRoute),
-/* harmony export */   "masterKey": () => (/* binding */ masterKey)
+/* harmony export */   "masterKey": () => (/* binding */ masterKey),
+/* harmony export */   "parsePartyBlock": () => (/* binding */ parsePartyBlock)
 /* harmony export */ });
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -3748,9 +3835,9 @@ const TARGETS = [{
  * party with missing parts; an empty `{value: null}` would look present and send a
  * half-filled party that the create endpoint refuses.
  */
-function flattenParties(fields) {
+function flattenParties(fields, countries) {
   const out = _objectSpread({}, fields);
-  ["shipper", "consignee"].forEach(party => {
+  ["shipper", "consignee", "notify"].forEach(party => {
     const node = fields[party];
 
     // Already flat (a pasted value), or not there at all.
@@ -3767,10 +3854,21 @@ function flattenParties(fields) {
     const address = withoutLabel(afterName(part("full_details") || "", name)) || part("address");
     put(party, name, "name");
     put(party + "_address", address, "full_details");
-    put(party + "_city", part("city"), "city");
-    put(party + "_state", part("state"), "state");
-    put(party + "_post_code", part("pin"), "pin");
-    put(party + "_country", part("country"), "country");
+
+    // 🔴 FALLBACK WHERE CONFIDENCE IS LOW. The parser's split is the first answer; a part it
+    // found nothing for comes back low, and the rule that splits a pasted block fills the gap
+    // from the same address. On the real invoice the parser missed the consignee's city and
+    // Jordan entirely. A filled-in part is marked "medium", so it lands on the review list
+    // instead of passing as read.
+    const guess = parsePartyBlock([name, address].filter(Boolean).join("\n"), countries);
+    [["_city", "city", "city"], ["_state", "state", "state"], ["_post_code", "pin", "post_code"], ["_country", "country", "country"]].forEach(([suffix, from, guessKey]) => {
+      const found = part(from);
+      const strong = found && node[from] && node[from].confidence === "high";
+      if (strong || found && !guess[guessKey]) put(party + suffix, found, from);else if (guess[guessKey]) out[party + suffix] = {
+        value: guess[guessKey],
+        confidence: "medium"
+      };
+    });
   });
   return out;
 }
@@ -3799,6 +3897,142 @@ function afterName(full, name) {
 /** The model copies a label along with the value after it: "Address : GARDENS WASFI…". */
 function withoutLabel(text) {
   return text.replace(/^[\s,.:-]*address\s*:\s*/i, "").trim();
+}
+
+/** Names the country list does not carry, as operators write them. */
+const COUNTRY_ALIASES = {
+  UAE: "AE",
+  "U.A.E": "AE",
+  USA: "US",
+  "U.S.A": "US",
+  UK: "GB"
+};
+
+/**
+ * A country as the form stores it: an ISO alpha-2 code.
+ *
+ * 🔴 The create endpoint accepts only a 2-letter code, so "INDIA" or "Jordan" failed the
+ * whole request. A name the list does not know comes back NULL.
+ */
+function countryCode(value, countries) {
+  const text = String(value || "").trim().replace(/\.$/, "");
+  const list = countries || {};
+  if (!text) return null;
+  if (/^[a-z]{2}$/i.test(text)) {
+    const code = text.toUpperCase();
+    return !Object.keys(list).length || list[code] ? code : null;
+  }
+  const upper = text.toUpperCase();
+  if (COUNTRY_ALIASES[upper]) return COUNTRY_ALIASES[upper];
+  return Object.keys(list).find(code => String(list[code]).toUpperCase() === upper) || null;
+}
+
+/** "Amman 11191 Jordan": a country written at the end of a line rather than on its own. */
+function trailingCountry(text, countries) {
+  const names = Object.keys(countries || {}).map(code => [code, String(countries[code])]).concat(Object.keys(COUNTRY_ALIASES).map(name => [COUNTRY_ALIASES[name], name]));
+  let best = null;
+  names.forEach(([code, name]) => {
+    const m = text.match(new RegExp("[\\s,–-]+" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\.?$", "i"));
+    if (m && (!best || name.length > best.length)) best = {
+      code,
+      rest: text.slice(0, m.index).trim(),
+      length: name.length
+    };
+  });
+  return best;
+}
+
+/**
+ * A party block, split the way the form stores it.
+ *
+ * "Shipper:" then the whole address, on one line or several. The first line is the name (on
+ * a single line, the text before the first comma). The last part is the country, if the list
+ * knows it. The last part that begins or ends with a 4-10 digit number holds the post code,
+ * and the words beside it are the city. Anything between that part and the country is the
+ * state. The rest is the address.
+ *
+ * ⚠️ A RULE, not a reader. It will be wrong on some layouts, so every part it produces is
+ * shown in "What will be used", and a "Shipper city: …" line still overrides it.
+ */
+function parsePartyBlock(text, countries) {
+  const lines = String(text || "").split(/\r?\n/).map(l => withoutLabel(l.trim())).filter(Boolean);
+  if (!lines.length) return {};
+  let name = lines[0];
+  let rest = lines.slice(1);
+  if (!rest.length && name.includes(",")) {
+    rest = [name.slice(name.indexOf(",") + 1)];
+    name = name.slice(0, name.indexOf(","));
+  }
+  const parts = rest.join(", ").split(/\s*,\s*/).map(p => p.trim()).filter(Boolean);
+  const out = {
+    name: name.trim()
+  };
+  const last = parts[parts.length - 1];
+  const code = last ? countryCode(last, countries) : null;
+  if (code) {
+    out.country = code;
+    parts.pop();
+  } else if (last) {
+    const hit = trailingCountry(last, countries);
+    if (hit) {
+      out.country = hit.code;
+      parts[parts.length - 1] = hit.rest;
+    }
+  }
+  for (let i = parts.length - 1; i >= 0; i -= 1) {
+    const end = parts[i].match(/^(.*?)[\s,–-]*\b(\d{4,10})$/); // "Amman 11191", "ERNAKULAM - 683503"
+    const start = parts[i].match(/^(\d{4,10})\s+(\D.*)$/); // "20457 Hamburg"
+
+    // ⚠️ "P.O Box 9192" is a box number, not a post code.
+    if (!start && (!end || /\bbox$/i.test(end[1].trim()))) continue;
+    out.post_code = start ? start[1] : end[2];
+    if (i + 1 < parts.length) out.state = parts.slice(i + 1).join(", ");
+    const before = start ? "" : end[1].trim();
+    // "P.O Box 9192 Amman": the city is the words after the last number.
+    const city = start ? start[2].trim() : before.replace(/^.*\d\S*\s*/, "").trim();
+    const lead = before.slice(0, before.length - city.length).replace(/[\s,–-]+$/, "").trim();
+    parts.splice(i);
+    if (lead) parts.push(lead);
+    if (city) out.city = city;else if (parts.length > 1) out.city = parts.pop();
+    break;
+  }
+  if (!out.post_code && parts.length > 1) out.city = parts.pop();
+  if (parts.length) out.address = parts.join(", ");
+  return out;
+}
+
+/**
+ * A document's pieces, weights, description and dimensions, in the panel's flat keys.
+ *
+ * 🔴 The same nesting as the parties: a document gives `piece_weight.no_of_pieces` and
+ * `cargo.description`, while the panel and `buildPayload` read `pieces` and `goods`, so a
+ * document's cargo reached neither the table nor the draft. A zero is "not found" (the
+ * parser writes 0 for a missing figure), so it is left out rather than shown as 0.
+ */
+function flattenCargo(fields) {
+  const out = _objectSpread({}, fields);
+  const pw = fields.piece_weight || {};
+  const cargo = fields.cargo || {};
+  const value = node => node && typeof node === "object" && "value" in node ? node.value : node;
+  const confidence = node => node && node.confidence || "high";
+  [["pieces", pw.no_of_pieces], ["gross_weight", pw.gross_weight], ["chargeable_weight", pw.chargeable_weight]].forEach(([key, node]) => {
+    const n = parseFloat(value(node));
+    if (n > 0 && out[key] === undefined) out[key] = {
+      value: String(n),
+      confidence: confidence(node)
+    };
+  });
+  const goods = value(cargo.description);
+  if (goods && out.goods === undefined) out.goods = {
+    value: goods,
+    confidence: confidence(cargo.description)
+  };
+  const dims = (Array.isArray(cargo.dimensions) ? cargo.dimensions : []).map(d => value(d && typeof d === "object" && "dimension" in d ? d.dimension : d)).filter(Boolean);
+  if (dims.length && out.dimensions === undefined) out.dimensions = {
+    value: dims.join(", "),
+    confidence: "high"
+  };
+  return out;
 }
 
 /***/ }),

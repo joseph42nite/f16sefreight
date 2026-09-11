@@ -267,8 +267,37 @@ def test_the_model_is_asked_only_for_what_the_panel_takes():
 
     assert set(ExtractedDocument.model_fields) == {
         "shipper_name", "shipper_address", "consignee_name", "consignee_address",
-        "description", "pieces", "gross_weight",
+        "description", "pieces", "gross_weight", "chargeable_weight", "dimensions",
+        "notify_name", "notify_address",
     }
+
+
+def test_notify_dimensions_and_chargeable_weight_are_mapped():
+    """The rest of the panel's groups: set only when the model found them."""
+    import unstructured
+
+    _with_model({
+        "notify_name": "ACME CLEARING LTD",
+        "notify_address": "12 Dock Road\nChennai 600001",
+        "dimensions": "64 X 32 X 64 CM",
+        "chargeable_weight": 420.0,
+    })
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, "text")
+
+    assert result["notify"]["name"] == "ACME CLEARING LTD"
+    assert result["cargo"]["dimensions"] == [{"dimension": "64X32X64", "count": 1}]
+    assert result["piece_weight"]["chargeable_weight"] == 420.0
+
+
+def test_no_notify_party_means_no_notify_region():
+    import unstructured
+
+    _with_model({"shipper_name": "TRAILSPEC GEARS PRIVATE LIMITED"})
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, "text")
+
+    assert "notify" not in result
 
 
 def test_the_schema_permits_a_model_that_found_nothing():

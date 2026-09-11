@@ -231,7 +231,7 @@
       ></textarea>
 
       <p class="fx-muted">
-        One <code>Label: value</code> per line. Whatever is recognised here overrides the
+        Shipper, consignee or notify party: the label, then the whole address below it. Anything else: one <code>Label: value</code> per line. Whatever is recognised here overrides the
         documents.
       </p>
 
@@ -346,10 +346,9 @@
         parts will not land while they can still paste them.
       -->
       <p v-for="row in incomplete" :key="row.party" class="fx-warn" role="status">
-        <strong>{{ row.party }}</strong> will not be saved — no
-        {{ row.missing.join(", ") }}. Add
-        <code>{{ row.party }} {{ row.missing[0] }}:</code> above, or fill it on the form
-        afterwards.
+        <strong>{{ row.party }}</strong> is saved to the draft without
+        {{ row.missing.join(", ") }}. Fill {{ row.missing.length > 1 ? "them" : "it" }} in the
+        draft before sending, or add <code>{{ row.party }} {{ row.missing[0] }}:</code> above.
       </p>
 
       <p v-if="saveError" class="fx-error" role="alert">{{ saveError }}</p>
@@ -407,7 +406,10 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
-import { buildPayload, createEndpoint, flattenParties, formRoute, masterKey, TARGETS } from "@/core/config/awbMapping";
+import {
+  buildPayload, countryCode, createEndpoint, flattenCargo, flattenParties, formRoute, masterKey,
+  parsePartyBlock, TARGETS,
+} from "@/core/config/awbMapping";
 import { cleanParty } from "@/core/config/awbFieldRules";
 
 /**
@@ -478,14 +480,19 @@ const ADDRESS_TYPES = {
 };
 
 /** Shown in the paste box, so the accepted labels are visible rather than documented. */
+/** Parties that can be pasted as a whole block: the label, then the address below it. */
+const PARTY_BLOCKS = ["shipper", "consignee", "notify"];
+
 const PASTE_EXAMPLE = [
-  "Shipper: Globex Exports Pvt Ltd",
-  "Shipper address: Plot 42/A, MIDC Andheri East",
-  "Shipper city: Mumbai",
-  "Consignee: Emirates Trading LLC",
+  "Shipper:",
+  "Globex Exports Pvt Ltd",
+  "Plot 42/A, MIDC Andheri East",
+  "Mumbai 400093, Maharashtra, India",
+  "",
+  "Consignee: Emirates Trading LLC, Jebel Ali Free Zone, Dubai, UAE",
+  "",
   "Pieces: 14",
   "Gross weight: 698.5",
-  "Chargeable weight: 720",
   "Dimensions: 120x80x90",
   "Goods: Machine parts",
 ].join("\n");
@@ -570,6 +577,7 @@ export default {
     RESULT_FIELDS,
     chargeableEdit: "",
     savedAddresses: {},
+    countries: {},
     manual: {},
     fitReport: null,
     target: "mawb", KINDS, rejectedFiles: [],
@@ -590,7 +598,7 @@ export default {
         .map((d) => d.name);
     },
     pastedFields() {
-      return this.parsePaste(this.pasted).found;
+      return this.withCountryCodes(this.parsePaste(this.pasted).found);
     },
     pastedUnknown() {
       return this.parsePaste(this.pasted).unknown;
@@ -640,13 +648,18 @@ export default {
      */
     incomplete() {
       const out = [];
-      const f = this.flatFields;
+      const f = this.withCountryCodes(this.flatFields);
 
       Object.keys(PARTY_REQUIRED).forEach((party) => {
         if (!f[party]) return;
 
+        // ⚠️ A country counts only as a 2-letter code: a name the list did not recognise is
+        // left off the draft, so it is missing here too.
         const missing = PARTY_REQUIRED[party]
-          .filter((part) => !f[party + "_" + part])
+          .filter((part) => {
+            const value = raw(f[party + "_" + part]);
+            return part === "country" ? !/^[A-Z]{2}$/.test(String(value || "")) : !value;
+          })
           .map((part) => part.replace(/_/g, " "));
 
         if (missing.length) out.push({ party, missing });
@@ -829,6 +842,7 @@ export default {
   },
   created() {
     this.loadAddressBook();
+    this.loadCountries();
   },
   methods: {
     /**
@@ -846,6 +860,25 @@ export default {
           })
           .catch(() => { this.$set(this.savedAddresses, party, []); });
       });
+    },
+    /** The form stores a country as its 2-letter code; this is the list that turns "India" into IN. */
+    loadCountries() {
+      ApiService.get("/user/get-country")
+        .then(({ data }) => { this.countries = data || {}; })
+        .catch(() => { this.countries = {}; });
+    },
+    /** Country names as the 2-letter codes the form stores. A name the list does not know is left as written. */
+    withCountryCodes(fields) {
+      const out = { ...fields };
+
+      PARTY_BLOCKS.forEach((party) => {
+        const key = party + "_country";
+        const code = out[key] === undefined ? null : countryCode(raw(out[key]), this.countries);
+
+        if (code) out[key] = { value: code, confidence: (out[key] && out[key].confidence) || "high" };
+      });
+
+      return out;
     },
     savedFor(party) {
       return this.savedAddresses[party] || [];
@@ -1134,7 +1167,7 @@ export default {
           .then(({ data }) => {
             if (data.job_status === "completed") {
               clearInterval(timer);
-              doc.fields = flattenParties(data.fields || {});
+              doc.fields = this.withCountryCodes(flattenCargo(flattenParties(data.fields || {}, this.countries)));
               // 🔴 Why the model did not read it, when it did not. The fields are then the
               // label reading, and without this they look exactly like the model's.
               doc.warning = data.model_error
@@ -1209,29 +1242,66 @@ export default {
 
       this.assignment = next;
     },
-    /** `Label: value` per line. Anything unrecognised is reported, never guessed at. */
+    /**
+     * What the paste box says.
+     *
+     * 🔴 A PARTY IS A BLOCK. "Shipper:" (or just "Shipper"), then the whole address below it
+     * the way it sits on an invoice; `parsePartyBlock` splits it into name, address, city,
+     * state, post code and country. A blank line or the next label ends the block. Anything
+     * else stays `Label: value`, one per line, and a "Shipper city: …" line still overrides
+     * what the block gave.
+     */
     parsePaste(text) {
       const found = {};
       const unknown = [];
+      let block = null;
+
+      const finish = () => {
+        if (!block) return;
+
+        const parts = parsePartyBlock(block.lines.join("\n"), this.countries);
+        const suffix = { name: "", address: "_address", city: "_city", state: "_state", post_code: "_post_code", country: "_country" };
+
+        Object.keys(suffix).forEach((part) => {
+          if (parts[part]) found[block.party + suffix[part]] = { value: parts[part], confidence: "high" };
+        });
+
+        block = null;
+      };
 
       String(text || "").split(/\r?\n/).forEach((line) => {
-        const m = line.match(/^\s*([^:]{1,40}):\s*(.+?)\s*$/);
-        if (!m) {
-          if (line.trim()) unknown.push(line.trim().slice(0, 30));
+        if (!line.trim()) {
+          finish();
           return;
         }
 
-        const label = m[1].trim().toLowerCase();
+        const m = line.match(/^\s*([^:]{1,40}):\s*(.*?)\s*$/);
+        const label = (m ? m[1] : line).trim().toLowerCase().replace(/[.:]+$/, "");
         const key = Object.keys(PASTE_KEYS).find((k) => PASTE_KEYS[k].includes(label));
 
-        if (!key) {
-          unknown.push(m[1].trim());
+        if (key && PARTY_BLOCKS.includes(key)) {
+          finish();
+          block = { party: key, lines: m && m[2] ? [m[2]] : [] };
           return;
         }
 
-        // Typed by a person, so it is authoritative by definition — not a guess to score.
-        found[key] = { value: m[2].trim(), confidence: "high" };
+        if (key && m) {
+          finish();
+          // Typed by a person, so it is authoritative by definition — not a guess to score.
+          if (m[2]) found[key] = { value: m[2], confidence: "high" };
+          return;
+        }
+
+        // Inside a party, an unrecognised line is part of the address ("P.O Box: 9192").
+        if (block) {
+          block.lines.push(line.trim());
+          return;
+        }
+
+        if (!key) unknown.push((m ? m[1] : line).trim().slice(0, 30));
       });
+
+      finish();
 
       return { found, unknown };
     },
@@ -1283,12 +1353,18 @@ export default {
       this.saving = true;
       this.saveError = null;
 
-      // 🔴 Incomplete parties are REMOVED, not sent hopefully. A consignee missing its
-      // post code makes the whole request 422 — and by then the waybill shell exists.
-      // Dropping it saves the rest of the draft and leaves the party for the form.
-      const fields = { ...this.flatFields };
+      // 🔴 A draft keeps what was COLLECTED. The endpoint used to refuse a party missing any
+      // part, so this removed them first, and a draft from a real invoice saved only the AWB
+      // number. With `status: "draft"` the endpoint stores what is there; the operator fills
+      // the rest in the draft, and a send still requires every part.
+      const fields = this.withCountryCodes({ ...this.flatFields });
 
-      this.incomplete.forEach((row) => { delete fields[row.party]; });
+      // ⚠️ Only a 2-letter code is accepted even in a draft, so a country the list did not
+      // recognise is left off rather than failing the whole save.
+      PARTY_BLOCKS.forEach((party) => {
+        const key = party + "_country";
+        if (fields[key] && !/^[A-Z]{2}$/.test(String(raw(fields[key])))) delete fields[key];
+      });
 
       // The derived figures travel with the draft, so the form opens with the chargeable
       // weight the panel showed rather than a blank the operator has to recompute.
@@ -1299,6 +1375,9 @@ export default {
       const payload = buildPayload(this.target, fields, {
         awbCode: this.awbCode, awbNo: this.awbNo, hawbNo: this.hawbNo,
       });
+
+      // The form's own draft button sends this, and the endpoint keeps a partial party for it.
+      payload.status = "draft";
 
       ApiService.post(createEndpoint(this.target), payload)
         .then(() => {

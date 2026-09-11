@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Optional
 import pdfplumber
 
 import model_extract
-from extract_awb_new import process_box
+from extract_awb_new import extract_dimensions, process_box, transform_address_box
 
 # 🔴 PyMuPDF for the TEXT LAYER, pdfplumber for everything else. Measured on this machine,
 # same documents, median of five: 27.2ms vs 2.6ms on a one-page invoice — 10x, with the
@@ -311,5 +311,16 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
     # is POSITIONAL and misreads a number handed to it on its own.
     result["piece_weight"]["gross_weight"] = parsed.get("gross_weight", 0.0)
     result["piece_weight"]["no_of_pieces"] = parsed.get("pieces", 0)
+    result["piece_weight"]["chargeable_weight"] = parsed.get("chargeable_weight", 0.0)
+
+    # Same shape the label path gives: [{"dimension": "64X32X64", "count": 1}].
+    if parsed.get("dimensions"):
+        result["cargo"]["dimensions"] = extract_dimensions(parsed["dimensions"])
+
+    # ⚠️ Only when the model FOUND one. The label path never reads a notify party, so an
+    # empty block here would be a region nobody asked for.
+    notify = _party(parsed, "notify")
+    if notify:
+        result["notify"] = transform_address_box(notify)
 
     result["read_by"] = "model"

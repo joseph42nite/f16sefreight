@@ -1015,6 +1015,34 @@ weight and the notify party, which the model does not read yet. Not added withou
 
 ---
 
+## 🟢 2026-09-12 — Save as draft keeps what was collected; paste takes a whole party
+
+User: *"when i clicked on save as draft it didnt save the shipper consignee details, only saved
+the awb number"* · *"if no state or country is mentioned, still put it and save as draft. It's a
+draft so the user can make the changes in the draft."*
+
+| # | Change | Detail |
+|---|---|---|
+| 174 | 🔴 **Save as draft saved only the AWB number.** Both create endpoints required every party part (name, address, city, state, post code, and a 2-letter country), so the panel removed any party missing one. The master waybill also skipped, **in silence**, any shipper without a country and city | `DraftPartyRules`: with `status = draft` only the party's **name** is required; a part that IS given must still be valid (lengths, 2-letter country). Every other status (`send`, `generate_pdf`) keeps every rule. ⚠️ The AWB form's own draft button also sends `draft`, so it gets the same rule. The panel now sends `status: draft` and keeps partial parties. 43 party assignments that read a missing key (19 AWB, 24 HAWB) now take `?? null` instead of crashing. **Verified in the browser:** test AWB **176-99990001** stored with status `draft`, the full shipper from a paste, and the consignee without a state |
+| 175 | 🟢 **The model also reads dimensions, chargeable weight and the notify party.** User: *"yes I want the other things also. only when i have extracted it or pasted it."* Each is set only when the model found it | 🔴 **And a document's cargo had never reached the panel at all.** A document gives `piece_weight.no_of_pieces` and `cargo.description`; the panel reads `pieces` and `goods`. `flattenCargo()` bridges them, treating a zero as "not found", since the parser writes 0 for a missing figure. It applies to AWB extraction too |
+| 176 | 🟢 **Paste takes a whole party**: `Shipper:` (or just `Shipper`), then the address below it as it sits on the invoice. `parsePartyBlock()` splits it into name, address, city, state, post code and country; a country name becomes the form's 2-letter code from `config('country')`. A `Shipper city: …` line still overrides | ⚠️ **A rule, not a reader.** Name first; country last; the part that begins or ends with a 4-10 digit number holds the post code, with the city beside it; state between them. It skips a `P.O Box` number. It does **not** recognise alphanumeric post codes (UK `SW1A 1AA`), and a single line after the name stays address. Every part shows in "What will be used" before it is saved |
+| 177 | 🟢 **Low-confidence fallback** (user's request): where the Python parser found nothing for a party's city, state, post code or country, the same splitter fills it from that party's address, marked **medium** so it lands on the review list | On job #8 it filled the consignee's **city Amman** and **country JO**, both of which the parser missed. Parts the parser did find are kept |
+| 178 | 🔴 **Every house waybill Save as draft crashed with a 500**, before any party was looked at. `store()` called `totalAmountValume($id, $request->totals)` even when no totals were sent, and the panel sends none unless it has both volume and amount | Guarded the way the master waybill already is. 🔴 **Then it crashed a second time:** it read `$request->agent_head_office['ho_*']` (6 fields, in both `store()` and `update()`) with no fallback, and the panel sends no agent head office; all 12 reads now take `?? null`. ⚠️ **Open:** when the panel does send totals for a house waybill it sends `total_volume` / `total_amount`, but that endpoint requires `master_pcs` / `master_weight`, so such a draft would still be refused. Not fixed |
+
+⚠️ **Open, the user's:** Save as draft still adds the **calculated** chargeable weight
+(max of gross and volumetric) when none was extracted or pasted. The user said the other
+fields should come in *"only when I have extracted it or pasted it"*, so should that
+calculated figure stay out of the draft? Unchanged until answered.
+
+🟢 **Tests.** Full PHP suite: 595 passed, 1 skipped, 1 failed. The failure was the house
+waybill draft test, which ran before the `agent_head_office` fix; after the fix,
+`HouseWaybillDraftTest` passes 2/2 and `AirwayBillDraftTest` 9/9. jest 57/57, Python 29/29.
+
+ℹ️ **Test data left in the dev database:** AWB **176-99990001** (status `draft`), created by the
+browser check of Save as draft.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

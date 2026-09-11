@@ -146,12 +146,10 @@ class AirwayBillDraftTest extends TestCase
     }
 
     /**
-     * ⚠️ GAPS #46 — a party carrying only a NAME is what extraction usually produces, and
-     * the endpoint will not store it. Asserted so the behaviour is known rather than
-     * discovered: the shipper is skipped in silence, which is why `ExtractionPanel` warns
-     * before saving instead of after.
+     * ⚠️ GAPS #46 — OUTSIDE a draft, a party carrying only a NAME is still skipped in silence
+     * (this saves with `generate_pdf`). A draft keeps it: see the tests below.
      */
-    public function test_a_name_only_shipper_is_silently_skipped(): void
+    public function test_a_name_only_shipper_is_silently_skipped_outside_a_draft(): void
     {
         $this->submit($this->draft(['shipper_address' => ['ship_name' => 'Globex Exports Pvt Ltd']]))
             ->assertOk();
@@ -160,5 +158,62 @@ class AirwayBillDraftTest extends TestCase
             DB::table('way_bill_addresses')->where('awb_id', '17690000001')->value('ship_name'),
             'A name-only shipper was stored — the guard in store() has changed.'
         );
+    }
+
+    // ─── A draft keeps what was collected ────────────────────────────────────
+
+    /**
+     * 🔴 The Extraction panel's Save as draft saved only the AWB number: this endpoint refused
+     * a party missing any part, so the panel removed it first. A draft now stores what is
+     * there, and the operator fills the rest in the draft.
+     */
+    public function test_a_draft_keeps_a_party_missing_its_state_and_country(): void
+    {
+        $this->submit($this->draft([
+            'status' => 'draft',
+            'shipper_address' => [
+                'ship_name' => 'TRAILSPEC GEARS PRIVATE LIMITED',
+                'ship_address' => '22/702/01 - CEE PEE BUILDING MASJID ROAD, HMT P.O',
+                'ship_city' => 'KALAMASEERY', 'ship_post_code' => '683503',
+            ],
+        ]))->assertOk();
+
+        $row = DB::table('way_bill_addresses')->where('awb_id', '17690000001')->first();
+
+        $this->assertSame('TRAILSPEC GEARS PRIVATE LIMITED', $row->ship_name);
+        $this->assertSame('KALAMASEERY', $row->ship_city);
+        $this->assertNull($row->ship_state);
+        $this->assertNull($row->ship_country);
+    }
+
+    public function test_a_draft_keeps_a_name_only_party(): void
+    {
+        $this->submit($this->draft([
+            'status' => 'draft',
+            'shipper_address' => ['ship_name' => 'Globex Exports Pvt Ltd'],
+            'consignee_address' => ['cons_name' => 'SILVER MOON COMMERCIAL BROKERAG CO'],
+        ]))->assertOk();
+
+        $row = DB::table('way_bill_addresses')->where('awb_id', '17690000001')->first();
+
+        $this->assertSame('Globex Exports Pvt Ltd', $row->ship_name);
+        $this->assertSame('SILVER MOON COMMERCIAL BROKERAG CO', $row->cons_name);
+    }
+
+    /** ⚠️ A draft relaxes what is REQUIRED, not what is VALID: a country name is still refused. */
+    public function test_a_draft_still_refuses_a_part_in_the_wrong_format(): void
+    {
+        $this->submit($this->draft([
+            'status' => 'draft',
+            'shipper_address' => ['ship_name' => 'Globex Exports Pvt Ltd', 'ship_country' => 'India'],
+        ]))->assertStatus(422);
+    }
+
+    /** 🔴 Only a draft is relaxed. Any other save still needs every part of the consignee. */
+    public function test_outside_a_draft_a_partial_consignee_is_still_refused(): void
+    {
+        $this->submit($this->draft([
+            'consignee_address' => ['cons_name' => 'SILVER MOON COMMERCIAL BROKERAG CO', 'cons_city' => 'Amman'],
+        ]))->assertStatus(422);
     }
 }

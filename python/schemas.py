@@ -26,8 +26,8 @@ with price-table numbers and repeated SKU codes, ran out of answer budget mid-st
 whole reply failed validation. Without it the same document took 42 seconds and came back as
 valid JSON. An unbounded list is a loop a small model can fall into and never leave.
 
-🔴 ONLY WHAT THE PANEL TAKES FROM A DOCUMENT. The Extraction panel's groups are the parties,
-the cargo and the weights. The route and the AWB number do not come from a client's
+🔴 ONLY WHAT THE PANEL TAKES FROM A DOCUMENT. The Extraction panel's groups are the parties
+(shipper, consignee, notify), the cargo (pieces, dimensions, description) and the weights. The route and the AWB number do not come from a client's
 document, so the model is not asked for them. When it was asked, on the real invoice it
 returned the bank's SWIFT code as the AWB number.
 """
@@ -56,3 +56,13 @@ class ExtractedDocument(BaseModel):
     description: Optional[str] = None
     pieces: Optional[int] = Field(default=None, ge=0)
     gross_weight: Optional[float] = Field(default=None, ge=0)
+
+    # Only if the document STATES one. An invoice rarely does; the panel works out volumetric
+    # and chargeable itself when it does not.
+    chargeable_weight: Optional[float] = Field(default=None, ge=0)
+
+    # As written, with the unit: "64 X 32 X 64 CM".
+    dimensions: Optional[str] = None
+
+    notify_name: Optional[str] = None
+    notify_address: Optional[str] = None

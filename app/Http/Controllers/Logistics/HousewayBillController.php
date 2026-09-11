@@ -19,6 +19,8 @@ use Illuminate\Validation\Rule;
 
 class HousewayBillController extends Controller
 {
+    use DraftPartyRules;
+
     /**
      * Characters a real address contains — GAPS #44, fixed on the MAWB 2026-09-01 and
      * MISSED here until 2026-09-03.
@@ -69,7 +71,7 @@ class HousewayBillController extends Controller
         $user = auth()->guard('user-api')->user();
         $agent = $this->getAuthAgent();
 
-        $validator = Validator::make($shipper_address, [
+        $validator = Validator::make($shipper_address, $this->partyRules([
             'ship_name' => 'required|string|max:70',
             'ship_name_2' => 'nullable|string|max:70',
             'ship_account' => 'nullable|string|max:14',
@@ -83,7 +85,7 @@ class HousewayBillController extends Controller
             'ship_phone' => 'nullable|max:20',
             'ship_fax' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
             'ship_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9\s]+$/',
-        ]);
+        ]));
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -94,13 +96,13 @@ class HousewayBillController extends Controller
             $WayBillAddress->ship_name = $shipper_address['ship_name'];
             $WayBillAddress->ship_name_2 = $shipper_address['ship_name_2'] ?? null;
             $WayBillAddress->ship_account = $shipper_address['ship_account'] ?? null;
-            $WayBillAddress->ship_address = $shipper_address['ship_address'];
+            $WayBillAddress->ship_address = $shipper_address['ship_address'] ?? null;
             $WayBillAddress->ship_address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
-            $WayBillAddress->ship_city = $shipper_address['ship_city'];
+            $WayBillAddress->ship_city = $shipper_address['ship_city'] ?? null;
             $WayBillAddress->ship_airport_code = $shipper_address['ship_airport_code'] ?? null;
             $WayBillAddress->ship_post_code = $shipper_address['ship_post_code'] ?? null;
             $WayBillAddress->ship_state = $shipper_address['ship_state'] ?? null;
-            $WayBillAddress->ship_country = $shipper_address['ship_country'];
+            $WayBillAddress->ship_country = $shipper_address['ship_country'] ?? null;
             $WayBillAddress->ship_phone = $shipper_address['ship_phone'] ?? null;
             $WayBillAddress->ship_fax = $shipper_address['ship_fax'] ?? null;
             $WayBillAddress->ship_telex = $shipper_address['ship_telex'] ?? null;
@@ -118,13 +120,13 @@ class HousewayBillController extends Controller
         $WayBillAddress->ship_name = $shipper_address['ship_name'];
         $WayBillAddress->ship_name_2 = $shipper_address['ship_name_2'] ?? null;
         $WayBillAddress->ship_account = $shipper_address['ship_account'] ?? null;
-        $WayBillAddress->ship_address = $shipper_address['ship_address'];
+        $WayBillAddress->ship_address = $shipper_address['ship_address'] ?? null;
         $WayBillAddress->ship_address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
-        $WayBillAddress->ship_city = $shipper_address['ship_city'];
+        $WayBillAddress->ship_city = $shipper_address['ship_city'] ?? null;
         $WayBillAddress->ship_airport_code = $shipper_address['ship_airport_code'] ?? null;
         $WayBillAddress->ship_post_code = $shipper_address['ship_post_code'] ?? null;
         $WayBillAddress->ship_state = $shipper_address['ship_state'] ?? null;
-        $WayBillAddress->ship_country = $shipper_address['ship_country'];
+        $WayBillAddress->ship_country = $shipper_address['ship_country'] ?? null;
         $WayBillAddress->ship_phone = $shipper_address['ship_phone'] ?? null;
         $WayBillAddress->ship_fax = $shipper_address['ship_fax'] ?? null;
         $WayBillAddress->ship_telex = $shipper_address['ship_telex'] ?? null;
@@ -143,13 +145,13 @@ class HousewayBillController extends Controller
                 $SavedAddress->name = $shipper_address['ship_name'];
                 $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
                 $SavedAddress->account = $shipper_address['ship_account'] ?? null;
-                $SavedAddress->address = $shipper_address['ship_address'];
+                $SavedAddress->address = $shipper_address['ship_address'] ?? null;
                 $SavedAddress->address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
-                $SavedAddress->city = $shipper_address['ship_city'];
+                $SavedAddress->city = $shipper_address['ship_city'] ?? null;
                 $SavedAddress->airport_code = $shipper_address['ship_airport_code'] ?? null;
                 $SavedAddress->post_code = $shipper_address['ship_post_code'] ?? null;
                 $SavedAddress->state = $shipper_address['ship_state'] ?? null;
-                $SavedAddress->country = $shipper_address['ship_country'];
+                $SavedAddress->country = $shipper_address['ship_country'] ?? null;
                 $SavedAddress->phone = $shipper_address['ship_phone'] ?? null;
                 $SavedAddress->fax = $shipper_address['ship_fax'] ?? null;
                 $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
@@ -168,13 +170,13 @@ class HousewayBillController extends Controller
             $SavedAddress->name = $shipper_address['ship_name'];
             $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
             $SavedAddress->account = $shipper_address['ship_account'] ?? null;
-            $SavedAddress->address = $shipper_address['ship_address'];
+            $SavedAddress->address = $shipper_address['ship_address'] ?? null;
             $SavedAddress->address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
-            $SavedAddress->city = $shipper_address['ship_city'];
+            $SavedAddress->city = $shipper_address['ship_city'] ?? null;
             $SavedAddress->airport_code = $shipper_address['ship_airport_code'] ?? null;
             $SavedAddress->post_code = $shipper_address['ship_post_code'] ?? null;
             $SavedAddress->state = $shipper_address['ship_state'] ?? null;
-            $SavedAddress->country = $shipper_address['ship_country'];
+            $SavedAddress->country = $shipper_address['ship_country'] ?? null;
             $SavedAddress->phone = $shipper_address['ship_phone'] ?? null;
             $SavedAddress->fax = $shipper_address['ship_fax'] ?? null;
             $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
@@ -186,7 +188,7 @@ class HousewayBillController extends Controller
     {
         $agent = $this->getAuthAgent();
 
-        $validator = Validator::make($consignee_address, [
+        $validator = Validator::make($consignee_address, $this->partyRules([
             'cons_name' => 'required|string|max:70',
             'cons_name_2' => 'nullable|string|max:70',
             'cons_account' => 'nullable|string|max:14',
@@ -200,7 +202,7 @@ class HousewayBillController extends Controller
             'cons_phone' => 'nullable|max:20',
             'cons_fax' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
             'cons_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9\s]+$/',
-        ]);
+        ]));
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -212,13 +214,13 @@ class HousewayBillController extends Controller
         $WayBillAddress->cons_name = $consignee_address['cons_name'];
         $WayBillAddress->cons_name_2 = $consignee_address['cons_name_2'] ?? null;
         $WayBillAddress->cons_account = $consignee_address['cons_account'] ?? null;
-        $WayBillAddress->cons_address = $consignee_address['cons_address'];
+        $WayBillAddress->cons_address = $consignee_address['cons_address'] ?? null;
         $WayBillAddress->cons_address_line_2 = $consignee_address['cons_address_line_2'] ?? null;
-        $WayBillAddress->cons_city = $consignee_address['cons_city'];
+        $WayBillAddress->cons_city = $consignee_address['cons_city'] ?? null;
         $WayBillAddress->cons_airport_code = $consignee_address['cons_airport_code'] ?? null;
         $WayBillAddress->cons_post_code = $consignee_address['cons_post_code'] ?? null;
         $WayBillAddress->cons_state = $consignee_address['cons_state'] ?? null;
-        $WayBillAddress->cons_country = $consignee_address['cons_country'];
+        $WayBillAddress->cons_country = $consignee_address['cons_country'] ?? null;
         $WayBillAddress->cons_phone = $consignee_address['cons_phone'] ?? null;
         $WayBillAddress->cons_fax = $consignee_address['cons_fax'] ?? null;
         $WayBillAddress->cons_telex = $consignee_address['cons_telex'] ?? null;
@@ -237,13 +239,13 @@ class HousewayBillController extends Controller
             $SavedAddress->name = $consignee_address['cons_name'];
             $SavedAddress->name_2 = $consignee_address['cons_name_2'] ?? null;
             $SavedAddress->account = $consignee_address['cons_account'] ?? null;
-            $SavedAddress->address = $consignee_address['cons_address'];
+            $SavedAddress->address = $consignee_address['cons_address'] ?? null;
             $SavedAddress->address_line_2 = $consignee_address['cons_address_line_2'] ?? null;
-            $SavedAddress->city = $consignee_address['cons_city'];
+            $SavedAddress->city = $consignee_address['cons_city'] ?? null;
             $SavedAddress->airport_code = $consignee_address['cons_airport_code'] ?? null;
             $SavedAddress->post_code = $consignee_address['cons_post_code'] ?? null;
             $SavedAddress->state = $consignee_address['cons_state'] ?? null;
-            $SavedAddress->country = $consignee_address['cons_country'];
+            $SavedAddress->country = $consignee_address['cons_country'] ?? null;
             $SavedAddress->phone = $consignee_address['cons_phone'] ?? null;
             $SavedAddress->fax = $consignee_address['cons_fax'] ?? null;
             $SavedAddress->telex = $consignee_address['cons_telex'] ?? null;
@@ -255,7 +257,7 @@ class HousewayBillController extends Controller
     {
         $agent = $this->getAuthAgent();
 
-        $validator = Validator::make($also_notify_address, [
+        $validator = Validator::make($also_notify_address, $this->partyRules([
             'also_name' => 'required|string|max:70',
             'also_address' => ['required', 'max:40', 'regex:' . self::ADDRESS_PATTERN],
             'also_address_line_2' => ['nullable', 'max:30', 'regex:' . self::ADDRESS_PATTERN],
@@ -267,7 +269,7 @@ class HousewayBillController extends Controller
             'also_phone' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
             'also_fax' => 'nullable|regex:/^[a-zA-Z0-9\s]+$/|max:35',
             'also_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9\s]+$/',
-        ]);
+        ]));
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -277,13 +279,13 @@ class HousewayBillController extends Controller
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = $hawb_no;
         $WayBillAddress->also_name = $also_notify_address['also_name'];
-        $WayBillAddress->also_address = $also_notify_address['also_address'];
+        $WayBillAddress->also_address = $also_notify_address['also_address'] ?? null;
         $WayBillAddress->also_address_line_2 = $also_notify_address['also_address_line_2'] ?? null;
-        $WayBillAddress->also_city = $also_notify_address['also_city'];
+        $WayBillAddress->also_city = $also_notify_address['also_city'] ?? null;
         $WayBillAddress->also_airport_code = $also_notify_address['also_airport_code'] ?? null;
         $WayBillAddress->also_post_code = $also_notify_address['also_post_code'] ?? null;
         $WayBillAddress->also_state = $also_notify_address['also_state'] ?? null;
-        $WayBillAddress->also_country = $also_notify_address['also_country'];
+        $WayBillAddress->also_country = $also_notify_address['also_country'] ?? null;
         $WayBillAddress->also_phone = $also_notify_address['also_phone'] ?? null;
         $WayBillAddress->also_fax = $also_notify_address['also_fax'] ?? null;
         $WayBillAddress->also_telex = $also_notify_address['also_telex'] ?? null;
@@ -300,13 +302,13 @@ class HousewayBillController extends Controller
             $SavedAddress->user_id = $user->id ?? null;
             $SavedAddress->address_type = 'also_notify_address';
             $SavedAddress->name = $also_notify_address['also_name'];
-            $SavedAddress->address = $also_notify_address['also_address'];
+            $SavedAddress->address = $also_notify_address['also_address'] ?? null;
             $SavedAddress->address_line_2 = $also_notify_address['also_address_line_2'] ?? null;
-            $SavedAddress->city = $also_notify_address['also_city'];
+            $SavedAddress->city = $also_notify_address['also_city'] ?? null;
             $SavedAddress->airport_code = $also_notify_address['also_airport_code'] ?? null;
             $SavedAddress->post_code = $also_notify_address['also_post_code'] ?? null;
             $SavedAddress->state = $also_notify_address['also_state'] ?? null;
-            $SavedAddress->country = $also_notify_address['also_country'];
+            $SavedAddress->country = $also_notify_address['also_country'] ?? null;
             $SavedAddress->phone = $also_notify_address['also_phone'] ?? null;
             $SavedAddress->fax = $also_notify_address['also_fax'] ?? null;
             $SavedAddress->telex = $also_notify_address['also_telex'] ?? null;
@@ -790,23 +792,30 @@ class HousewayBillController extends Controller
             else
                 $main_return_data['oci_entries'] = $error_data;
         }
-        $error_data = $this->totalAmountValume($hawb_id, $request->totals);
-        if (!is_string($error_data) && $error_data->getStatusCode() == 422)
-            return $error_data;
-        else
-            $main_return_data['totals'] = $error_data;
+        // ⚠️ Only when totals were sent, as the master waybill already does. The Extraction
+        // panel sends none unless it has both volume and amount, so a house waybill draft
+        // crashed here on `Validator::make(null, …)`: a 500 on every panel save.
+        if (!empty($request->totals)) {
+            $error_data = $this->totalAmountValume($hawb_id, $request->totals);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                return $error_data;
+            else
+                $main_return_data['totals'] = $error_data;
+        }
         if (!empty($request->tableCodes) && is_array($request->tableCodes)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($hawb_id, $request->tableCodes);
         }
         $status = $request->status;
         $update_arr = [
             'status' => $status,
-            'ho_name' => $request->agent_head_office['ho_name'],
-            'ho_address' => $request->agent_head_office['ho_address'],
-            'ho_city' => $request->agent_head_office['ho_city'],
-            'ho_pincode' => $request->agent_head_office['ho_pincode'],
-            'ho_state' => $request->agent_head_office['ho_state'],
-            'ho_country' => $request->agent_head_office['ho_country'],
+            // ⚠️ `?? null`: the Extraction panel sends no agent_head_office, and reading a key on
+            // null is an ErrorException here: a 500 on every house waybill draft from the panel.
+            'ho_name' => $request->agent_head_office['ho_name'] ?? null,
+            'ho_address' => $request->agent_head_office['ho_address'] ?? null,
+            'ho_city' => $request->agent_head_office['ho_city'] ?? null,
+            'ho_pincode' => $request->agent_head_office['ho_pincode'] ?? null,
+            'ho_state' => $request->agent_head_office['ho_state'] ?? null,
+            'ho_country' => $request->agent_head_office['ho_country'] ?? null,
             'as_agreed' => $request->as_agreed ?? 0,
         ];
         HousewayBills::where(['id' => $hawb_id])->update($update_arr);
@@ -927,12 +936,14 @@ class HousewayBillController extends Controller
 
         $status = $request->status;
         $update_arr = [
-            'ho_name' => $request->agent_head_office['ho_name'],
-            'ho_address' => $request->agent_head_office['ho_address'],
-            'ho_city' => $request->agent_head_office['ho_city'],
-            'ho_pincode' => $request->agent_head_office['ho_pincode'],
-            'ho_state' => $request->agent_head_office['ho_state'],
-            'ho_country' => $request->agent_head_office['ho_country'],
+            // ⚠️ `?? null`: the Extraction panel sends no agent_head_office, and reading a key on
+            // null is an ErrorException here: a 500 on every house waybill draft from the panel.
+            'ho_name' => $request->agent_head_office['ho_name'] ?? null,
+            'ho_address' => $request->agent_head_office['ho_address'] ?? null,
+            'ho_city' => $request->agent_head_office['ho_city'] ?? null,
+            'ho_pincode' => $request->agent_head_office['ho_pincode'] ?? null,
+            'ho_state' => $request->agent_head_office['ho_state'] ?? null,
+            'ho_country' => $request->agent_head_office['ho_country'] ?? null,
             'as_agreed' => $request->as_agreed ?? 0,
         ];
         if ($status != 'generate_pdf')

@@ -186,10 +186,10 @@ export const TARGETS = [
  * party with missing parts; an empty `{value: null}` would look present and send a
  * half-filled party that the create endpoint refuses.
  */
-export function flattenParties(fields) {
+export function flattenParties(fields, countries) {
   const out = { ...fields };
 
-  ["shipper", "consignee"].forEach((party) => {
+  ["shipper", "consignee", "notify"].forEach((party) => {
     const node = fields[party];
 
     // Already flat (a pasted value), or not there at all.
@@ -207,10 +207,22 @@ export function flattenParties(fields) {
 
     put(party, name, "name");
     put(party + "_address", address, "full_details");
-    put(party + "_city", part("city"), "city");
-    put(party + "_state", part("state"), "state");
-    put(party + "_post_code", part("pin"), "pin");
-    put(party + "_country", part("country"), "country");
+
+    // 🔴 FALLBACK WHERE CONFIDENCE IS LOW. The parser's split is the first answer; a part it
+    // found nothing for comes back low, and the rule that splits a pasted block fills the gap
+    // from the same address. On the real invoice the parser missed the consignee's city and
+    // Jordan entirely. A filled-in part is marked "medium", so it lands on the review list
+    // instead of passing as read.
+    const guess = parsePartyBlock([name, address].filter(Boolean).join("\n"), countries);
+
+    [["_city", "city", "city"], ["_state", "state", "state"], ["_post_code", "pin", "post_code"],
+     ["_country", "country", "country"]].forEach(([suffix, from, guessKey]) => {
+      const found = part(from);
+      const strong = found && node[from] && node[from].confidence === "high";
+
+      if (strong || (found && !guess[guessKey])) put(party + suffix, found, from);
+      else if (guess[guessKey]) out[party + suffix] = { value: guess[guessKey], confidence: "medium" };
+    });
   });
 
   return out;
@@ -242,4 +254,145 @@ function afterName(full, name) {
 /** The model copies a label along with the value after it: "Address : GARDENS WASFI…". */
 function withoutLabel(text) {
   return text.replace(/^[\s,.:-]*address\s*:\s*/i, "").trim();
+}
+
+/** Names the country list does not carry, as operators write them. */
+const COUNTRY_ALIASES = { UAE: "AE", "U.A.E": "AE", USA: "US", "U.S.A": "US", UK: "GB" };
+
+/**
+ * A country as the form stores it: an ISO alpha-2 code.
+ *
+ * 🔴 The create endpoint accepts only a 2-letter code, so "INDIA" or "Jordan" failed the
+ * whole request. A name the list does not know comes back NULL.
+ */
+export function countryCode(value, countries) {
+  const text = String(value || "").trim().replace(/\.$/, "");
+  const list = countries || {};
+
+  if (!text) return null;
+
+  if (/^[a-z]{2}$/i.test(text)) {
+    const code = text.toUpperCase();
+    return !Object.keys(list).length || list[code] ? code : null;
+  }
+
+  const upper = text.toUpperCase();
+  if (COUNTRY_ALIASES[upper]) return COUNTRY_ALIASES[upper];
+
+  return Object.keys(list).find((code) => String(list[code]).toUpperCase() === upper) || null;
+}
+
+/** "Amman 11191 Jordan": a country written at the end of a line rather than on its own. */
+function trailingCountry(text, countries) {
+  const names = Object.keys(countries || {}).map((code) => [code, String(countries[code])])
+    .concat(Object.keys(COUNTRY_ALIASES).map((name) => [COUNTRY_ALIASES[name], name]));
+  let best = null;
+
+  names.forEach(([code, name]) => {
+    const m = text.match(new RegExp("[\\s,–-]+" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\.?$", "i"));
+    if (m && (!best || name.length > best.length)) best = { code, rest: text.slice(0, m.index).trim(), length: name.length };
+  });
+
+  return best;
+}
+
+/**
+ * A party block, split the way the form stores it.
+ *
+ * "Shipper:" then the whole address, on one line or several. The first line is the name (on
+ * a single line, the text before the first comma). The last part is the country, if the list
+ * knows it. The last part that begins or ends with a 4-10 digit number holds the post code,
+ * and the words beside it are the city. Anything between that part and the country is the
+ * state. The rest is the address.
+ *
+ * ⚠️ A RULE, not a reader. It will be wrong on some layouts, so every part it produces is
+ * shown in "What will be used", and a "Shipper city: …" line still overrides it.
+ */
+export function parsePartyBlock(text, countries) {
+  const lines = String(text || "").split(/\r?\n/).map((l) => withoutLabel(l.trim())).filter(Boolean);
+  if (!lines.length) return {};
+
+  let name = lines[0];
+  let rest = lines.slice(1);
+
+  if (!rest.length && name.includes(",")) {
+    rest = [name.slice(name.indexOf(",") + 1)];
+    name = name.slice(0, name.indexOf(","));
+  }
+
+  const parts = rest.join(", ").split(/\s*,\s*/).map((p) => p.trim()).filter(Boolean);
+  const out = { name: name.trim() };
+
+  const last = parts[parts.length - 1];
+  const code = last ? countryCode(last, countries) : null;
+  if (code) {
+    out.country = code;
+    parts.pop();
+  } else if (last) {
+    const hit = trailingCountry(last, countries);
+    if (hit) {
+      out.country = hit.code;
+      parts[parts.length - 1] = hit.rest;
+    }
+  }
+
+  for (let i = parts.length - 1; i >= 0; i -= 1) {
+    const end = parts[i].match(/^(.*?)[\s,–-]*\b(\d{4,10})$/); // "Amman 11191", "ERNAKULAM - 683503"
+    const start = parts[i].match(/^(\d{4,10})\s+(\D.*)$/); // "20457 Hamburg"
+
+    // ⚠️ "P.O Box 9192" is a box number, not a post code.
+    if (!start && (!end || /\bbox$/i.test(end[1].trim()))) continue;
+
+    out.post_code = start ? start[1] : end[2];
+    if (i + 1 < parts.length) out.state = parts.slice(i + 1).join(", ");
+
+    const before = start ? "" : end[1].trim();
+    // "P.O Box 9192 Amman": the city is the words after the last number.
+    const city = start ? start[2].trim() : before.replace(/^.*\d\S*\s*/, "").trim();
+    const lead = before.slice(0, before.length - city.length).replace(/[\s,–-]+$/, "").trim();
+
+    parts.splice(i);
+    if (lead) parts.push(lead);
+
+    if (city) out.city = city;
+    else if (parts.length > 1) out.city = parts.pop();
+    break;
+  }
+
+  if (!out.post_code && parts.length > 1) out.city = parts.pop();
+  if (parts.length) out.address = parts.join(", ");
+
+  return out;
+}
+
+/**
+ * A document's pieces, weights, description and dimensions, in the panel's flat keys.
+ *
+ * 🔴 The same nesting as the parties: a document gives `piece_weight.no_of_pieces` and
+ * `cargo.description`, while the panel and `buildPayload` read `pieces` and `goods`, so a
+ * document's cargo reached neither the table nor the draft. A zero is "not found" (the
+ * parser writes 0 for a missing figure), so it is left out rather than shown as 0.
+ */
+export function flattenCargo(fields) {
+  const out = { ...fields };
+  const pw = fields.piece_weight || {};
+  const cargo = fields.cargo || {};
+  const value = (node) => (node && typeof node === "object" && "value" in node ? node.value : node);
+  const confidence = (node) => (node && node.confidence) || "high";
+
+  [["pieces", pw.no_of_pieces], ["gross_weight", pw.gross_weight], ["chargeable_weight", pw.chargeable_weight]]
+    .forEach(([key, node]) => {
+      const n = parseFloat(value(node));
+      if (n > 0 && out[key] === undefined) out[key] = { value: String(n), confidence: confidence(node) };
+    });
+
+  const goods = value(cargo.description);
+  if (goods && out.goods === undefined) out.goods = { value: goods, confidence: confidence(cargo.description) };
+
+  const dims = (Array.isArray(cargo.dimensions) ? cargo.dimensions : [])
+    .map((d) => value(d && typeof d === "object" && "dimension" in d ? d.dimension : d))
+    .filter(Boolean);
+  if (dims.length && out.dimensions === undefined) out.dimensions = { value: dims.join(", "), confidence: "high" };
+
+  return out;
 }

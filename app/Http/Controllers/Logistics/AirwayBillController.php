@@ -28,6 +28,8 @@ use phpseclib3\Net\SFTP;
 
 class AirwayBillController extends Controller
 {
+    use DraftPartyRules;
+
     /**
      * What a postal address is allowed to contain.
      *
@@ -74,7 +76,7 @@ class AirwayBillController extends Controller
         $user = auth()->guard('user-api')->user();
         $agent = $this->getAuthAgent();
 
-        $validator = Validator::make($shipper_address, [
+        $validator = Validator::make($shipper_address, $this->partyRules([
             'ship_name' => 'required|string|max:70',
             'ship_name_2' => 'nullable|string|max:70',
             'ship_account' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:14',
@@ -88,7 +90,7 @@ class AirwayBillController extends Controller
             'ship_phone' => 'nullable|max:20',
             'ship_fax' => 'nullable|max:50',
             'ship_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9]+$/',
-        ]);
+        ]));
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -103,13 +105,13 @@ class AirwayBillController extends Controller
         $WayBillAddress->ship_name = $shipper_address['ship_name'];
         $WayBillAddress->ship_name_2 = $shipper_address['ship_name_2'] ?? null;
         $WayBillAddress->ship_account = $shipper_address['ship_account'] ?? null;
-        $WayBillAddress->ship_address = $shipper_address['ship_address'];
+        $WayBillAddress->ship_address = $shipper_address['ship_address'] ?? null;
         $WayBillAddress->ship_address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
-        $WayBillAddress->ship_city = $shipper_address['ship_city'];
+        $WayBillAddress->ship_city = $shipper_address['ship_city'] ?? null;
         $WayBillAddress->ship_airport_code = $shipper_address['ship_airport_code'] ?? null;
         $WayBillAddress->ship_post_code = $shipper_address['ship_post_code'] ?? null;
-        $WayBillAddress->ship_state = $shipper_address['ship_state'];
-        $WayBillAddress->ship_country = $shipper_address['ship_country'];
+        $WayBillAddress->ship_state = $shipper_address['ship_state'] ?? null;
+        $WayBillAddress->ship_country = $shipper_address['ship_country'] ?? null;
         $WayBillAddress->ship_phone = $shipper_address['ship_phone'] ?? null;
         $WayBillAddress->ship_fax = $shipper_address['ship_fax'] ?? null;
         $WayBillAddress->ship_telex = $shipper_address['ship_telex'] ?? null;
@@ -127,13 +129,13 @@ class AirwayBillController extends Controller
             $SavedAddress->name = $shipper_address['ship_name'];
             $SavedAddress->name_2 = $shipper_address['ship_name_2'] ?? null;
             $SavedAddress->account = $shipper_address['ship_account'] ?? null;
-            $SavedAddress->address = $shipper_address['ship_address'];
+            $SavedAddress->address = $shipper_address['ship_address'] ?? null;
             $SavedAddress->address_line_2 = $shipper_address['ship_address_line_2'] ?? null;
-            $SavedAddress->city = $shipper_address['ship_city'];
+            $SavedAddress->city = $shipper_address['ship_city'] ?? null;
             $SavedAddress->airport_code = $shipper_address['ship_airport_code'] ?? null;
             $SavedAddress->post_code = $shipper_address['ship_post_code'] ?? null;
             $SavedAddress->state = $shipper_address['ship_state'] ?? null;
-            $SavedAddress->country = $shipper_address['ship_country'];
+            $SavedAddress->country = $shipper_address['ship_country'] ?? null;
             $SavedAddress->phone = $shipper_address['ship_phone'] ?? null;
             $SavedAddress->fax = $shipper_address['ship_fax'] ?? null;
             $SavedAddress->telex = $shipper_address['ship_telex'] ?? null;
@@ -147,7 +149,7 @@ class AirwayBillController extends Controller
     {
         $agent = $this->getAuthAgent();
 
-        $validator = Validator::make($consignee_address, [
+        $validator = Validator::make($consignee_address, $this->partyRules([
             'cons_name' => 'required|string|max:70',
             'cons_name_2' => 'nullable|string|max:70',
             'cons_account' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:14',
@@ -161,7 +163,7 @@ class AirwayBillController extends Controller
             'cons_phone' => 'nullable|max:20',
             'cons_fax' => 'nullable|max:50',
             'cons_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9]+$/',
-        ]);
+        ]));
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -173,13 +175,13 @@ class AirwayBillController extends Controller
         $WayBillAddress->cons_name = $consignee_address['cons_name'];
         $WayBillAddress->cons_name_2 = $consignee_address['cons_name_2'] ?? null;
         $WayBillAddress->cons_account = $consignee_address['cons_account'] ?? null;
-        $WayBillAddress->cons_address = $consignee_address['cons_address'];
+        $WayBillAddress->cons_address = $consignee_address['cons_address'] ?? null;
         $WayBillAddress->cons_address_line_2 = $consignee_address['cons_address_line_2'] ?? null;
-        $WayBillAddress->cons_city = $consignee_address['cons_city'];
+        $WayBillAddress->cons_city = $consignee_address['cons_city'] ?? null;
         $WayBillAddress->cons_airport_code = $consignee_address['cons_airport_code'] ?? null;
         $WayBillAddress->cons_post_code = $consignee_address['cons_post_code'] ?? null;
         $WayBillAddress->cons_state = $consignee_address['cons_state'] ?? null;
-        $WayBillAddress->cons_country = $consignee_address['cons_country'];
+        $WayBillAddress->cons_country = $consignee_address['cons_country'] ?? null;
         $WayBillAddress->cons_phone = $consignee_address['cons_phone'] ?? null;
         $WayBillAddress->cons_fax = $consignee_address['cons_fax'] ?? null;
         $WayBillAddress->cons_telex = $consignee_address['cons_telex'] ?? null;
@@ -198,13 +200,13 @@ class AirwayBillController extends Controller
             $SavedAddress->name = $consignee_address['cons_name'];
             $SavedAddress->name_2 = $consignee_address['cons_name_2'] ?? null;
             $SavedAddress->account = $consignee_address['cons_account'] ?? null;
-            $SavedAddress->address = $consignee_address['cons_address'];
+            $SavedAddress->address = $consignee_address['cons_address'] ?? null;
             $SavedAddress->address_line_2 = $consignee_address['cons_address_line_2'] ?? null;
-            $SavedAddress->city = $consignee_address['cons_city'];
+            $SavedAddress->city = $consignee_address['cons_city'] ?? null;
             $SavedAddress->airport_code = $consignee_address['cons_airport_code'] ?? null;
             $SavedAddress->post_code = $consignee_address['cons_post_code'] ?? null;
             $SavedAddress->state = $consignee_address['cons_state'] ?? null;
-            $SavedAddress->country = $consignee_address['cons_country'];
+            $SavedAddress->country = $consignee_address['cons_country'] ?? null;
             $SavedAddress->phone = $consignee_address['cons_phone'] ?? null;
             $SavedAddress->fax = $consignee_address['cons_fax'] ?? null;
             $SavedAddress->telex = $consignee_address['cons_telex'] ?? null;
@@ -217,7 +219,7 @@ class AirwayBillController extends Controller
     {
         $agent = $this->getAuthAgent();
 
-        $validator = Validator::make($also_notify_address, [
+        $validator = Validator::make($also_notify_address, $this->partyRules([
             'also_name' => 'required|string|max:70',
             'also_name_2' => 'nullable|string|max:70',
             'also_address' => ['required', 'max:255', 'regex:' . self::ADDRESS_PATTERN],
@@ -230,7 +232,7 @@ class AirwayBillController extends Controller
             'also_phone' => 'nullable|max:20',
             'also_fax' => 'nullable|max:35',
             'also_telex' => 'nullable|max:35|regex:/^[a-zA-Z0-9]+$/',
-        ]);
+        ]));
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -240,13 +242,13 @@ class AirwayBillController extends Controller
             $WayBillAddress = new WayBillAddress();
         $WayBillAddress->awb_id = "$awb_id";
         $WayBillAddress->also_name = $also_notify_address['also_name'];
-        $WayBillAddress->also_address = $also_notify_address['also_address'];
+        $WayBillAddress->also_address = $also_notify_address['also_address'] ?? null;
         $WayBillAddress->also_address_line_2 = $also_notify_address['also_address_line_2'] ?? null;
-        $WayBillAddress->also_city = $also_notify_address['also_city'];
+        $WayBillAddress->also_city = $also_notify_address['also_city'] ?? null;
         $WayBillAddress->also_airport_code = $also_notify_address['also_airport_code'] ?? null;
         $WayBillAddress->also_post_code = $also_notify_address['also_post_code'] ?? null;
         $WayBillAddress->also_state = $also_notify_address['also_state'] ?? null;
-        $WayBillAddress->also_country = $also_notify_address['also_country'];
+        $WayBillAddress->also_country = $also_notify_address['also_country'] ?? null;
         $WayBillAddress->also_phone = $also_notify_address['also_phone'] ?? null;
         $WayBillAddress->also_fax = $also_notify_address['also_fax'] ?? null;
         $WayBillAddress->also_telex = $also_notify_address['also_telex'] ?? null;
@@ -261,13 +263,13 @@ class AirwayBillController extends Controller
             // $SavedAddress->id = '123456';
             $SavedAddress->address_type = 'also_notify_address';
             $SavedAddress->name = $also_notify_address['also_name'];
-            $SavedAddress->address = $also_notify_address['also_address'];
+            $SavedAddress->address = $also_notify_address['also_address'] ?? null;
             $SavedAddress->address_line_2 = $also_notify_address['also_address_line_2'] ?? null;
-            $SavedAddress->city = $also_notify_address['also_city'];
+            $SavedAddress->city = $also_notify_address['also_city'] ?? null;
             $SavedAddress->airport_code = $also_notify_address['also_airport_code'] ?? null;
             $SavedAddress->post_code = $also_notify_address['also_post_code'] ?? null;
             $SavedAddress->state = $also_notify_address['also_state'] ?? null;
-            $SavedAddress->country = $also_notify_address['also_country'];
+            $SavedAddress->country = $also_notify_address['also_country'] ?? null;
             $SavedAddress->phone = $also_notify_address['also_phone'] ?? null;
             $SavedAddress->fax = $also_notify_address['also_fax'] ?? null;
             $SavedAddress->telex = $also_notify_address['also_telex'] ?? null;
@@ -727,7 +729,7 @@ class AirwayBillController extends Controller
                 $main_return_data['first_box'] = $error_data;
         }
         //for storing shipper address
-        if (!empty($request->shipper_address['ship_name']) && !empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])) {
+        if (!empty($request->shipper_address['ship_name']) && ($request->status === 'draft' || (!empty($request->shipper_address['ship_country']) && !empty($request->shipper_address['ship_city'])))) {
             $error_data = $this->saveShipperAddress($request->first_box['awb_no'], $request->first_box['awb_code'], $request->shipper_address, $request->is_shipper_address_save);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 throw new ValidationFailed($error_data);

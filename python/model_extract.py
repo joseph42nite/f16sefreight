@@ -112,6 +112,10 @@ Fields:
   description       what the goods are, in words
   pieces            TOTAL quantity for the whole shipment, not a single table row
   gross_weight      total gross weight
+  chargeable_weight the chargeable weight, only if the document states one
+  dimensions        package dimensions as written, length x width x height with the unit
+  notify_name       company to notify (labelled Notify Party or Also Notify), if there is one
+  notify_address    that company's street address
 
 Ignore the price table, SKU codes and colour names. A colour or a product code is never a
 company or a description.

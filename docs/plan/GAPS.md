@@ -955,8 +955,29 @@ endpoint → the panel's row read **"Ready ⚠️ read by labels only: the model
 reachable"**. Tests: Python 28/28 (24 s), PHP `OcrJobTimeoutTest` 4/4, jest 35/35, webpack
 compiled. `OcrStatusModelErrorTest` pins the status endpoint carrying `model_error`.
 
-⏳ **Not yet verified: a real upload read by gemma3:4b.** That needs Docker's VM lowered
-(still 4.1 GB); the user is doing it.
+🟡 **Verified 2026-09-11: a real upload read by gemma3:4b**, with Docker's VM at 2 GB. Job
+#8, `Commercial Invoice.pdf`: `read_by: model`, no `model_error`, **7 min 7 s** end to end.
+Ollama: the prompt took 288 s for 1,877 tokens (6.5 tokens/s), the answer 131 s for 180
+tokens (1.4 tokens/s).
+
+| Field | Result | Verdict |
+|---|---|---|
+| shipper | TRAILSPEC GEARS PRIVATE LIMITED, the full Kalamassery address, pin 683503 | ✅ |
+| consignee | SILVER MOON COMMERCIAL BROKERAG CO, Gardens Wasfi Al Tal St., P.O Box 9192 Amman 11191 Jordan | ✅ no over-capture this time; the `Address :` label is still copied in |
+| origin | NHAVA SHEVA | ✅ |
+| destination | INDIA | ❌ correct: Umm Qasr |
+| description, pieces, gross weight | blank | ❌ the model left them out; the ai-server logged no grounding drops |
+| awb_number | AXISINBB081 | 🔴 the bank's **SWIFT code**, in a field that goes onto a waybill. A sea shipment has no AWB |
+
+🔴 **Small prompt changes move 4b's answer around.** The host test used a slightly different
+prompt and field order: it got the description, pieces and both weights, and missed the
+origin. This run, with the production prompt, got the origin and lost those three. Same
+model, same document, temperature 0. One invoice is not enough to tune against, and the
+operator's review still catches the rest.
+
+🔴 **A wrong AWB number is the worst of these.** It passes grounding, because the SWIFT code
+really is in the document. An AWB number has a fixed shape (a 3-digit airline prefix and an
+8-digit serial), so a format check would blank it. Proposed, not built.
 
 ⚠️ **Found while checking, filed as a separate task:** the panel's "What will be used" table
 prints each party as a raw JSON dump of `{value, confidence}` pairs, most of them

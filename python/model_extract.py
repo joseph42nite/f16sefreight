@@ -23,6 +23,7 @@ the page badly.
 import json
 import logging
 import os
+import re
 import socket
 from typing import Any, Dict, Optional, Tuple
 
@@ -81,7 +82,9 @@ NUM_CTX = int(os.environ.get("OLLAMA_NUM_CTX", "4096"))
 # 6,000 characters plus the prompt and a 512-token answer stays under 4,096. A prompt that
 # overflows gets cut, and what gets cut can be the instructions.
 MAX_DOCUMENT_CHARS = 6000
-MAX_ANSWER_TOKENS = 512
+# Six parts for each of three parties, plus the cargo: a longer answer than the 512 that
+# covered a name and an address each.
+MAX_ANSWER_TOKENS = 768
 
 # 🔴 Ten minutes. gemma3:4b took 378s on a two-page invoice on the laptop, so the old 60s cap
 # timed out every real document and it quietly fell back to labels.
@@ -103,24 +106,37 @@ MEANING, not by position.
 Never return a label as a value. "Exporter", "Consignee", "Address :" and "Description of
 Goods" are LABELS.
 
-Fields:
+Give each party in SIX parts. The address is the street part only: keep the city, state,
+post code and country out of it.
+
   shipper_name      company SENDING the goods (labelled Exporter or Shipper). A company
                     name, usually containing LIMITED, LTD, PVT, CO, GMBH or INC.
-  shipper_address   that company's street address
-  consignee_name    company RECEIVING the goods (labelled Consignee)
-  consignee_address that company's street address
+  shipper_address   its street address
+  shipper_city      its city or town
+  shipper_state     its state, province or emirate
+  shipper_post_code its post code, PIN or ZIP. A P.O Box number is NOT a post code
+  shipper_country   the country of ITS OWN address — never the shipment's destination,
+                    and never another party's country
+  consignee_*       the same six for the company RECEIVING the goods (labelled Consignee)
+  notify_*          the same six for the party to notify (Notify Party, Also Notify), if any
+
   description       what the goods are, in words
   pieces            TOTAL quantity for the whole shipment, not a single table row
   gross_weight      total gross weight
   chargeable_weight the chargeable weight, only if the document states one
   dimensions        package dimensions as written, length x width x height with the unit
-  notify_name       company to notify (labelled Notify Party or Also Notify), if there is one
-  notify_address    that company's street address
+
+IMPORTANT: the STATE and the COUNTRY may be worked out. If the document does not print them,
+give the state and country that the city and post code belong to.
+
+If a part is not there and cannot be worked out, LEAVE IT OUT. Never answer with a word that
+stands for absence, such as NONE, N/A, NIL or "not specified".
+
+Everything else must be copied from the document exactly. Never invent a company name, a
+street address, a city or a post code. Omit any field you cannot find.
 
 Ignore the price table, SKU codes and colour names. A colour or a product code is never a
-company or a description.
-
-Copy text exactly as written. Omit any field you cannot find. Do not invent a value.
+company or a description. A bank's address is not a party's address.
 
 DOCUMENT:
 {text}
@@ -215,6 +231,32 @@ def extract(text: str) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     return _grounded(parsed, text), None
 
 
+# 🔴 A LITERAL STANDING FOR ABSENCE IS NOT A VALUE. gemma3:4b answered
+# `consignee_state: "NONE"` on the real invoice — and state and country skip the grounding
+# check below, because they may be worked out, so nothing else would have stopped it reaching
+# a waybill. The 1B model did the same with `awb_number: "Not specified"`.
+ABSENT_WORDS = {"", "-", "na", "nil", "none", "null", "unknown", "notspecified",
+                "notavailable", "notgiven", "notmentioned", "notapplicable"}
+
+# ⚠️ A P.O Box number is not a post code. The model answered
+# `consignee_post_code: "P.O Box 9192"` while the real one, 11191, sat on the same line.
+BOX_NUMBER = re.compile(r"\b(p\.?\s*o\.?\s*)?box\b", re.IGNORECASE)
+
+
+def _is_box_number(value: str, source: str) -> bool:
+    """
+    A box number, however it is written.
+
+    ⚠️ Dropping the string "P.O Box 9192" only moved the error: the next run answered the bare
+    digits, "9192", while the real post code (11191) sat further along the same line. So the
+    document is asked too — a number it prints right after "Box" is a box number.
+    """
+    if BOX_NUMBER.search(value):
+        return True
+
+    return bool(re.search(r"box\D{0,4}" + re.escape(value.strip()), source, re.IGNORECASE))
+
+
 def _grounded(parsed: Dict[str, Any], source: str) -> Dict[str, Any]:
     """
     Drop any text the model returned that is not actually in the document.
@@ -236,6 +278,22 @@ def _grounded(parsed: Dict[str, Any], source: str) -> Dict[str, Any]:
 
     for key, value in parsed.items():
         if not isinstance(value, str) or not value.strip():
+            clean[key] = value
+            continue
+
+        if _comparable(value) in ABSENT_WORDS:
+            logger.info(f"dropped {key}={value!r} — a word standing for absence")
+            continue
+
+        if key.endswith("_post_code") and _is_box_number(value, source):
+            logger.info(f"dropped {key}={value!r} — a box number is not a post code")
+            continue
+
+        # 🔴 A STATE and a COUNTRY may be WORKED OUT from the city and post code — the prompt
+        # asks for that, because an invoice often prints neither and the form needs both. So
+        # those two fields alone are not required to appear in the document. Everything else
+        # still is: this is what dropped `awb_number: "Not specified"` and an invented company.
+        if key.endswith(("_state", "_country")):
             clean[key] = value
             continue
 

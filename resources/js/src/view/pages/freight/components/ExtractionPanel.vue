@@ -411,7 +411,7 @@ import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import {
   buildPayload, countryCode, createEndpoint, flattenCargo, flattenParties, formRoute, masterKey,
-  parsePartyBlock, TARGETS,
+  parsePartyBlock, TARGETS, withoutWorkedOutParts,
 } from "@/core/config/awbMapping";
 import { cleanParty } from "@/core/config/awbFieldRules";
 
@@ -1360,7 +1360,9 @@ export default {
       // part, so this removed them first, and a draft from a real invoice saved only the AWB
       // number. With `status: "draft"` the endpoint stores what is there; the operator fills
       // the rest in the draft, and a send still requires every part.
-      const fields = this.withCountryCodes({ ...this.flatFields });
+      // 🔴 A state or country the MODEL worked out is shown, never saved on its own: it
+      // answered "Iraq" for an Indian shipper on the real invoice. The draft saves without it.
+      const fields = withoutWorkedOutParts(this.withCountryCodes({ ...this.flatFields }));
 
       // ⚠️ Only a 2-letter code is accepted even in a draft, so a country the list did not
       // recognise is left off rather than failing the whole save.

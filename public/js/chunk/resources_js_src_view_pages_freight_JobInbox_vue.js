@@ -1777,7 +1777,9 @@ const PARTY_REQUIRED = {
       // part, so this removed them first, and a draft from a real invoice saved only the AWB
       // number. With `status: "draft"` the endpoint stores what is there; the operator fills
       // the rest in the draft, and a send still requires every part.
-      const fields = this.withCountryCodes(_objectSpread({}, this.flatFields));
+      // 🔴 A state or country the MODEL worked out is shown, never saved on its own: it
+      // answered "Iraq" for an Indian shipper on the real invoice. The draft saves without it.
+      const fields = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.withoutWorkedOutParts)(this.withCountryCodes(_objectSpread({}, this.flatFields)));
 
       // ⚠️ Only a 2-letter code is accepted even in a draft, so a country the list did not
       // recognise is left off rather than failing the whole save.
@@ -3626,7 +3628,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "flattenParties": () => (/* binding */ flattenParties),
 /* harmony export */   "formRoute": () => (/* binding */ formRoute),
 /* harmony export */   "masterKey": () => (/* binding */ masterKey),
-/* harmony export */   "parsePartyBlock": () => (/* binding */ parsePartyBlock)
+/* harmony export */   "parsePartyBlock": () => (/* binding */ parsePartyBlock),
+/* harmony export */   "withoutWorkedOutParts": () => (/* binding */ withoutWorkedOutParts)
 /* harmony export */ });
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -3870,8 +3873,10 @@ function flattenParties(fields, countries) {
     const guess = parsePartyBlock([name, address].filter(Boolean).join("\n"), countries);
     [["_city", "city", "city"], ["_state", "state", "state"], ["_post_code", "pin", "post_code"], ["_country", "country", "country"]].forEach(([suffix, from, guessKey]) => {
       const found = part(from);
-      const strong = found && node[from] && node[from].confidence === "high";
-      if (strong || found && !guess[guessKey]) put(party + suffix, found, from);else if (guess[guessKey]) out[party + suffix] = {
+
+      // Whatever the document gave — the model's own split, or the parser's — wins. The rule
+      // only fills what neither produced.
+      if (found) put(party + suffix, found, from);else if (guess[guessKey]) out[party + suffix] = {
         value: guess[guessKey],
         confidence: "medium"
       };
@@ -4039,6 +4044,28 @@ function flattenCargo(fields) {
     value: dims.join(", "),
     confidence: "high"
   };
+  return out;
+}
+
+/**
+ * What a draft is allowed to carry: everything except a state or country the model WORKED OUT.
+ *
+ * 🔴 The user's rule: "if the confidence on the country is low then just ignore it and still
+ * let it be saved as draft." On the real invoice the model answered the shipper's country as
+ * "Iraq" — the shipment's destination, printed elsewhere on the page — and that value would
+ * otherwise have gone onto a waybill.
+ *
+ * ⚠️ Only LOW goes. The rule-derived fallback (#177) reads a party's OWN address and is marked
+ * medium, so "Amman" and "JO" still reach the draft; the operator sees both on the review list.
+ */
+function withoutWorkedOutParts(fields) {
+  const out = _objectSpread({}, fields);
+  ["shipper", "consignee", "notify"].forEach(party => {
+    ["_state", "_country"].forEach(suffix => {
+      const node = out[party + suffix];
+      if (node && typeof node === "object" && node.confidence === "low") delete out[party + suffix];
+    });
+  });
   return out;
 }
 

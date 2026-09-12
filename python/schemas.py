@@ -47,11 +47,22 @@ class ExtractedDocument(BaseModel):
     same shapes and `OcrUploadModal.vue` still needs one mapper.
     """
 
+    # 🔴 EVERY PART OF A PARTY, because the form stores them separately and the draft needs
+    # them apart: name, street, city, state, post code, country. The model used to return only
+    # a name and an address, and the split was left to a parser that read "KERALA" as a city.
     shipper_name: Optional[str] = None
     shipper_address: Optional[str] = None
+    shipper_city: Optional[str] = None
+    shipper_state: Optional[str] = None
+    shipper_post_code: Optional[str] = None
+    shipper_country: Optional[str] = None
 
     consignee_name: Optional[str] = None
     consignee_address: Optional[str] = None
+    consignee_city: Optional[str] = None
+    consignee_state: Optional[str] = None
+    consignee_post_code: Optional[str] = None
+    consignee_country: Optional[str] = None
 
     description: Optional[str] = None
     pieces: Optional[int] = Field(default=None, ge=0)
@@ -66,3 +77,7 @@ class ExtractedDocument(BaseModel):
 
     notify_name: Optional[str] = None
     notify_address: Optional[str] = None
+    notify_city: Optional[str] = None
+    notify_state: Optional[str] = None
+    notify_post_code: Optional[str] = None
+    notify_country: Optional[str] = None

@@ -221,9 +221,10 @@ export function flattenParties(fields, countries) {
     [["_city", "city", "city"], ["_state", "state", "state"], ["_post_code", "pin", "post_code"],
      ["_country", "country", "country"]].forEach(([suffix, from, guessKey]) => {
       const found = part(from);
-      const strong = found && node[from] && node[from].confidence === "high";
 
-      if (strong || (found && !guess[guessKey])) put(party + suffix, found, from);
+      // Whatever the document gave — the model's own split, or the parser's — wins. The rule
+      // only fills what neither produced.
+      if (found) put(party + suffix, found, from);
       else if (guess[guessKey]) out[party + suffix] = { value: guess[guessKey], confidence: "medium" };
     });
   });
@@ -396,6 +397,31 @@ export function flattenCargo(fields) {
     .map((d) => value(d && typeof d === "object" && "dimension" in d ? d.dimension : d))
     .filter(Boolean);
   if (dims.length && out.dimensions === undefined) out.dimensions = { value: dims.join(", "), confidence: "high" };
+
+  return out;
+}
+
+/**
+ * What a draft is allowed to carry: everything except a state or country the model WORKED OUT.
+ *
+ * 🔴 The user's rule: "if the confidence on the country is low then just ignore it and still
+ * let it be saved as draft." On the real invoice the model answered the shipper's country as
+ * "Iraq" — the shipment's destination, printed elsewhere on the page — and that value would
+ * otherwise have gone onto a waybill.
+ *
+ * ⚠️ Only LOW goes. The rule-derived fallback (#177) reads a party's OWN address and is marked
+ * medium, so "Amman" and "JO" still reach the draft; the operator sees both on the review list.
+ */
+export function withoutWorkedOutParts(fields) {
+  const out = { ...fields };
+
+  ["shipper", "consignee", "notify"].forEach((party) => {
+    ["_state", "_country"].forEach((suffix) => {
+      const node = out[party + suffix];
+
+      if (node && typeof node === "object" && node.confidence === "low") delete out[party + suffix];
+    });
+  });
 
   return out;
 }

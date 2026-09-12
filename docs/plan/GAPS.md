@@ -1043,6 +1043,29 @@ browser check of Save as draft.
 
 ---
 
+## 🟢 2026-09-12 — the model splits every party, and may work out a state and a country
+
+User: *"i want the gemma model to pull out all the necessary information such as pin code
+state and everything from the invoice. if it state or country hasnt been give or extracted,
+ask gemma to produce it or if the confidence on the country is low then just ignore it and
+still let it be saved as draft."*
+
+| # | Change | Detail |
+|---|---|---|
+| 181 | 🟢 **Every party in six parts** — name, street, city, state, post code, country — for shipper, consignee and notify. The schema went from 11 fields to 23 | The split used to be left to `transform_address_box`, a positional rule that read **KERALA as the shipper's city** and found no state or country at all. Where the model gives a part it wins; the parser's value stands where the model gave none; the paste rule (#177) fills only what neither produced. ⚠️ **Measured on the real invoice: 347.8 s**, against 534 s for the old 11-field answer — a longer answer but a faster one, so the 600 s model limit and the timeouts above it are unchanged |
+| 182 | 🟢 **A state and a country may be WORKED OUT**, as asked: if the document prints neither, the model gives the ones the city and post code belong to. They arrive marked **low**: shown on the review list and **left out of the saved draft**, which is the user's own rule — *"if the confidence on the country is low then just ignore it and still let it be saved as draft"*. The rule-derived fallback (#177), which reads a party's OWN address, stays **medium** and is saved | 🔴 This required the grounding check (which drops any text absent from the document) to stop applying to those two fields. The exemption is **exactly two fields wide**, pinned by a test asserting an invented company and an invented city are still dropped while a worked-out `Kerala` survives |
+| 183 | 🔴 **Two defects in the first 23-field answer, both fixed.** `consignee_state: "NONE"` — a word standing for absence, in a field that now skips grounding, so nothing else would have stopped it reaching a waybill; the same failure as `awb_number: "Not specified"` from the 1B model. And `consignee_post_code: "P.O Box 9192"` — a box number, while the real post code **11191** sat on the same line | Absence words (`NONE`, `N/A`, `NIL`, `not specified`…) and box numbers are dropped, and the prompt says so too. Both pinned by tests. ⚠️ The paste rule already guarded against the P.O Box case; the model had no such guard |
+
+| 184 | 🔴 **A second measured run produced two more wrong values, both fixed.** `shipper_country: "Iraq"` — the shipment's DESTINATION, printed elsewhere on the page, offered as an Indian shipper's country. And `consignee_post_code: "9192"` — the digits of the P.O Box, after the first guard dropped the string `"P.O Box 9192"` | The prompt now says a country must be the party's **own**, never the shipment's destination or another party's. The post-code guard asks the DOCUMENT as well: a number printed right after "Box" is a box number, whatever shape it arrives in. And a worked-out state or country is marked **low** and kept out of the draft by `withoutWorkedOutParts()`. ⚠️ Same model, same text, temperature 0 — the two runs differed because the **prompt** changed between them, so every prompt edit needs its own measurement |
+
+⚠️ **Not a code fix, and worth knowing:** the same run answered `shipper_state: "ERNAKULAM"`
+— the district, not the state (Kerala). It IS on the page, so grounding accepts it, and
+asking the model to work the state out did not produce Kerala here. It reaches the operator
+marked for review, which is what that marking is for. It recurred in the second run, and
+under the rule above it no longer reaches a draft on its own.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

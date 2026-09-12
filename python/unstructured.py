@@ -284,6 +284,27 @@ def _party(parsed: Dict[str, Any], role: str) -> str:
     return "\n".join(v for v in (parsed.get(f"{role}_name"), parsed.get(f"{role}_address")) if v)
 
 
+# The parts the model may WORK OUT rather than copy, so they reach the operator marked for
+# review instead of as fact.
+INFERRED_PARTS = ("state", "country")
+
+
+def _apply_parts(region: Dict[str, Any], parsed: Dict[str, Any], role: str) -> None:
+    """The model's own split of a party, over the parser's guess at it."""
+    for part, key in (("city", "city"), ("state", "state"), ("pin", "post_code"), ("country", "country")):
+        value = parsed.get(f"{role}_{key}")
+
+        if not value:
+            continue
+
+        # 🔴 LOW, not medium. A worked-out state or country may come from anywhere on the page:
+        # on the real invoice the model answered the shipper's country as "Iraq", which is the
+        # shipment's DESTINATION printed elsewhere. Low means shown and reviewed, and left out
+        # of a draft unless the operator accepts it — the rule-derived fallback, which reads a
+        # party's own address, stays medium and is saved.
+        region[part] = {"value": value, "confidence": "low"} if part in INFERRED_PARTS else value
+
+
 def _apply_model(result: Dict[str, Any], text: str) -> None:
     """Read the document with the model, if one answers. Otherwise record why not."""
     if not model_extract.available():
@@ -307,6 +328,11 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
         # one. The VALUE differs in provenance, never in structure.
         result[region] = process_box(region, values[region])
 
+    # ⚠️ The parser split name and address into city/state/pin/country by rule, and got
+    # "KERALA" as a city on the real invoice. Where the model gave a part, it wins.
+    for role in ("shipper", "consignee"):
+        _apply_parts(result[role], parsed, role)
+
     # 🔴 Written straight into the dict, not through `process_box`: `transform_piece_weight`
     # is POSITIONAL and misreads a number handed to it on its own.
     result["piece_weight"]["gross_weight"] = parsed.get("gross_weight", 0.0)
@@ -322,5 +348,6 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
     notify = _party(parsed, "notify")
     if notify:
         result["notify"] = transform_address_box(notify)
+        _apply_parts(result["notify"], parsed, "notify")
 
     result["read_by"] = "model"

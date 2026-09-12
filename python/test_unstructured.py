@@ -265,11 +265,90 @@ def test_the_model_is_asked_only_for_what_the_panel_takes():
     """
     from schemas import ExtractedDocument
 
-    assert set(ExtractedDocument.model_fields) == {
-        "shipper_name", "shipper_address", "consignee_name", "consignee_address",
+    parts = {f"{role}_{part}"
+             for role in ("shipper", "consignee", "notify")
+             for part in ("name", "address", "city", "state", "post_code", "country")}
+
+    assert set(ExtractedDocument.model_fields) == parts | {
         "description", "pieces", "gross_weight", "chargeable_weight", "dimensions",
-        "notify_name", "notify_address",
     }
+
+
+def test_the_model_splits_a_party_and_marks_what_it_worked_out():
+    """
+    🔴 The parser's own split read "KERALA" as the shipper's CITY on the real invoice, and
+    found no state or country at all. The model is asked for the parts directly now.
+    """
+    import unstructured
+
+    _with_model({
+        "shipper_name": "TRAILSPEC GEARS PRIVATE LIMITED",
+        "shipper_address": "22/702/01 - CEE PEE BUILDING, MASJID ROAD",
+        "shipper_city": "KALAMASEERY", "shipper_post_code": "683503",
+        "shipper_state": "Kerala", "shipper_country": "India",
+    })
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, "text")
+
+    assert result["shipper"]["city"] == "KALAMASEERY"
+    assert result["shipper"]["pin"] == "683503"
+    # ⚠️ A state or country the document never printed is the model's reading, not a copy.
+    # 🔴 LOW: the model answered "Iraq" for this shipper's country on a real run — the
+    # shipment's destination, printed elsewhere on the page.
+    assert result["shipper"]["state"] == {"value": "Kerala", "confidence": "low"}
+    assert result["shipper"]["country"] == {"value": "India", "confidence": "low"}
+
+
+def test_a_word_standing_for_absence_is_not_a_value():
+    """
+    🔴 Measured: gemma3:4b answered `consignee_state: "NONE"` on the real invoice. State and
+    country skip the grounding check, so nothing else would have stopped it.
+    """
+    kept = model_extract._grounded(
+        {"consignee_state": "NONE", "notify_country": "N/A", "shipper_state": "Kerala"},
+        "any document text",
+    )
+
+    assert "consignee_state" not in kept
+    assert "notify_country" not in kept
+    assert kept["shipper_state"] == "Kerala"
+
+
+def test_a_po_box_is_not_a_post_code():
+    """⚠️ Measured: the model answered "P.O Box 9192" while the real post code sat beside it."""
+    kept = model_extract._grounded(
+        {"consignee_post_code": "P.O Box 9192", "shipper_post_code": "683503"},
+        "P.O Box 9192 Amman 11191 / KALAMASEERY , ERNAKULAM - 683503",
+    )
+
+    assert "consignee_post_code" not in kept
+    assert kept["shipper_post_code"] == "683503"
+
+
+def test_the_digits_of_a_box_number_are_not_a_post_code_either():
+    """
+    ⚠️ Measured twice. Dropping "P.O Box 9192" moved the error: the next run answered "9192",
+    with the real post code, 11191, on the same line.
+    """
+    source = "P.O Box 9192 Amman 11191"
+
+    assert "consignee_post_code" not in model_extract._grounded({"consignee_post_code": "9192"}, source)
+    assert model_extract._grounded({"consignee_post_code": "11191"}, source)["consignee_post_code"] == "11191"
+
+
+def test_a_worked_out_state_survives_grounding_but_an_invented_company_does_not():
+    """The exemption is exactly two fields wide."""
+    source = "TRAILSPEC GEARS PRIVATE LIMITED\nKALAMASEERY , ERNAKULAM - 683503"
+
+    kept = model_extract._grounded({
+        "shipper_state": "Kerala", "shipper_country": "India",
+        "shipper_name": "Globex Trading Ltd", "shipper_city": "Bengaluru",
+    }, source)
+
+    assert kept["shipper_state"] == "Kerala"
+    assert kept["shipper_country"] == "India"
+    assert "shipper_name" not in kept
+    assert "shipper_city" not in kept
 
 
 def test_notify_dimensions_and_chargeable_weight_are_mapped():

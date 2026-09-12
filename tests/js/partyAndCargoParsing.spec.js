@@ -5,7 +5,9 @@
  * 🔴 The first two blocks are the real invoice's parties, written the way an operator pastes
  * them. The fallback fixture is job #8's real consignee; the cargo fixture is job #6's shape.
  */
-import { buildPayload, countryCode, flattenCargo, flattenParties, parsePartyBlock } from "@/core/config/awbMapping";
+import {
+  buildPayload, countryCode, flattenCargo, flattenParties, parsePartyBlock, withoutWorkedOutParts,
+} from "@/core/config/awbMapping";
 
 const C = { IN: "India", JO: "Jordan", AE: "United Arab Emirates", DE: "Germany", IQ: "Iraq" };
 const node = (value, confidence = "high") => ({ value, confidence });
@@ -142,5 +144,35 @@ describe("buildPayload", () => {
 
     expect(payload.entries[0].chargable_weight).toBe("2016");
     expect(payload.entries[0].gross_weight).toBe("698.5");
+  });
+});
+
+describe("withoutWorkedOutParts", () => {
+  /**
+   * 🔴 On the real invoice the model answered the shipper's country as "Iraq" — the
+   * shipment's destination, printed elsewhere on the page — marked low.
+   */
+  it("keeps a worked-out state and country out of the draft", () => {
+    const out = withoutWorkedOutParts({
+      shipper: node("TRAILSPEC GEARS PRIVATE LIMITED"),
+      shipper_country: { value: "IQ", confidence: "low" },
+      shipper_state: { value: "ERNAKULAM", confidence: "low" },
+    });
+
+    expect(out.shipper_country).toBeUndefined();
+    expect(out.shipper_state).toBeUndefined();
+    expect(out.shipper.value).toBe("TRAILSPEC GEARS PRIVATE LIMITED");
+  });
+
+  it("keeps what was read from the party's own address, and what a person typed", () => {
+    const out = withoutWorkedOutParts({
+      consignee_city: { value: "Amman", confidence: "medium" },
+      consignee_country: { value: "JO", confidence: "medium" },
+      shipper_country: node("IN"),
+    });
+
+    expect(out.consignee_country.value).toBe("JO");
+    expect(out.consignee_city.value).toBe("Amman");
+    expect(out.shipper_country.value).toBe("IN");
   });
 });

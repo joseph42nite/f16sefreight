@@ -116,7 +116,10 @@ export function buildPayload(target, fields, identity) {
       // Fields the AWB form owns and extraction never supplies. Sent empty rather than
       // omitted because the controller reads them positionally on the entry.
       rate_class: "", uld_rate_class: "", service_code: "", commodity_item: "",
-      country_origin_goods: "", slac: "", weight_code: "K", chargable_weight: "", rate: "",
+      // 🔴 `chargable_weight` (the endpoint's spelling) was hardcoded empty while the value sat
+      // in `chargeable` just above, so a chargeable weight never reached a draft at all —
+      // extracted, pasted or typed.
+      country_origin_goods: "", slac: "", weight_code: "K", chargable_weight: chargeable || "", rate: "",
       hsCodes: [], uld_infos: [],
       itemss: [],
     };

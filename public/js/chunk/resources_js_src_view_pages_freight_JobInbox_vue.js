@@ -1157,7 +1157,7 @@ const PARTY_REQUIRED = {
             // ⚠️ "entered" and "pasted text" are different provenances and must not
             // share a label: one is a figure the operator typed against this shipment,
             // the other came from a block of text they pasted in.
-            source: this.chargeableEdit !== "" ? "entered" : typed ? "text" : this.chargeable === null ? null : "calculated",
+            source: this.chargeableEdit !== "" ? "entered" : typed ? "text" : this.chargeable === null ? null : "suggested",
             value: this.chargeable
           });
         }
@@ -1786,11 +1786,13 @@ const PARTY_REQUIRED = {
         if (fields[key] && !/^[A-Z]{2}$/.test(String(raw(fields[key])))) delete fields[key];
       });
 
-      // The derived figures travel with the draft, so the form opens with the chargeable
-      // weight the panel showed rather than a blank the operator has to recompute.
-      if (this.chargeable !== null && !fields.chargeable_weight) {
+      // 🔴 A CALCULATED chargeable weight is a SUGGESTION, not a fact. L×W×H×pcs ÷ 6000 is the
+      // IATA rule, but that figure was neither on a document nor typed by anyone, and a draft
+      // carries what was collected. It reaches the draft only once the operator enters it.
+      const entered = parseFloat(this.chargeableEdit);
+      if (!isNaN(entered) && !fields.chargeable_weight) {
         fields.chargeable_weight = {
-          value: this.chargeable,
+          value: entered,
           confidence: "high"
         };
       }
@@ -3265,7 +3267,9 @@ var render = function render() {
       staticClass: "fx-extract__override"
     }, [_vm._v("pasted text")]) : row.source === "calculated" ? _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("calculated")]) : row.source === "entered" ? _c("span", {
+    }, [_vm._v("calculated")]) : row.source === "suggested" ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("suggested")]) : row.source === "entered" ? _c("span", {
       staticClass: "fx-extract__override"
     }, [_vm._v("entered")]) : row.source ? _c("span", [_vm._v(_vm._s(row.source))]) : _c("span", {
       staticClass: "fx-muted"
@@ -3759,10 +3763,13 @@ function buildPayload(target, fields, identity) {
       uld_rate_class: "",
       service_code: "",
       commodity_item: "",
+      // 🔴 `chargable_weight` (the endpoint's spelling) was hardcoded empty while the value sat
+      // in `chargeable` just above, so a chargeable weight never reached a draft at all —
+      // extracted, pasted or typed.
       country_origin_goods: "",
       slac: "",
       weight_code: "K",
-      chargable_weight: "",
+      chargable_weight: chargeable || "",
       rate: "",
       hsCodes: [],
       uld_infos: [],

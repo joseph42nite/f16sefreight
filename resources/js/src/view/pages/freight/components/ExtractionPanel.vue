@@ -259,6 +259,9 @@
             <td>
               <span v-if="row.source === 'text'" class="fx-extract__override">pasted text</span>
               <span v-else-if="row.source === 'calculated'" class="fx-muted">calculated</span>
+              <!-- 🔴 A SUGGESTION, not a fact: worked out from the dimensions and pieces, and
+                   only saved if the operator types it into the box beside it. -->
+              <span v-else-if="row.source === 'suggested'" class="fx-muted">suggested</span>
               <span v-else-if="row.source === 'entered'" class="fx-extract__override">entered</span>
               <span v-else-if="row.source">{{ row.source }}</span>
               <!-- §4.1 "not set" is an answer, and a different one from "empty". -->
@@ -733,7 +736,7 @@ export default {
             // the other came from a block of text they pasted in.
             source: this.chargeableEdit !== "" ? "entered"
                   : typed ? "text"
-                  : this.chargeable === null ? null : "calculated",
+                  : this.chargeable === null ? null : "suggested",
             value: this.chargeable,
           };
         }
@@ -1366,10 +1369,13 @@ export default {
         if (fields[key] && !/^[A-Z]{2}$/.test(String(raw(fields[key])))) delete fields[key];
       });
 
-      // The derived figures travel with the draft, so the form opens with the chargeable
-      // weight the panel showed rather than a blank the operator has to recompute.
-      if (this.chargeable !== null && !fields.chargeable_weight) {
-        fields.chargeable_weight = { value: this.chargeable, confidence: "high" };
+      // 🔴 A CALCULATED chargeable weight is a SUGGESTION, not a fact. L×W×H×pcs ÷ 6000 is the
+      // IATA rule, but that figure was neither on a document nor typed by anyone, and a draft
+      // carries what was collected. It reaches the draft only once the operator enters it.
+      const entered = parseFloat(this.chargeableEdit);
+
+      if (!isNaN(entered) && !fields.chargeable_weight) {
+        fields.chargeable_weight = { value: entered, confidence: "high" };
       }
 
       const payload = buildPayload(this.target, fields, {

@@ -5,7 +5,7 @@
  * 🔴 The first two blocks are the real invoice's parties, written the way an operator pastes
  * them. The fallback fixture is job #8's real consignee; the cargo fixture is job #6's shape.
  */
-import { countryCode, flattenCargo, flattenParties, parsePartyBlock } from "@/core/config/awbMapping";
+import { buildPayload, countryCode, flattenCargo, flattenParties, parsePartyBlock } from "@/core/config/awbMapping";
 
 const C = { IN: "India", JO: "Jordan", AE: "United Arab Emirates", DE: "Germany", IQ: "Iraq" };
 const node = (value, confidence = "high") => ({ value, confidence });
@@ -126,5 +126,21 @@ describe("flattenCargo", () => {
 
   it("leaves out a zero, which the parser writes for a figure it did not find", () => {
     expect(flat.chargeable_weight).toBeUndefined();
+  });
+});
+
+describe("buildPayload", () => {
+  /**
+   * 🔴 The field was hardcoded empty while the value sat in a variable beside it, so a
+   * chargeable weight never reached a draft — extracted, pasted, or typed by the operator
+   * accepting the suggested figure.
+   */
+  it("carries the chargeable weight into the draft", () => {
+    const payload = buildPayload("mawb", {
+      pieces: node("14"), gross_weight: node("698.5"), chargeable_weight: node("2016"),
+    }, { awbCode: "176", awbNo: "90000001" });
+
+    expect(payload.entries[0].chargable_weight).toBe("2016");
+    expect(payload.entries[0].gross_weight).toBe("698.5");
   });
 });

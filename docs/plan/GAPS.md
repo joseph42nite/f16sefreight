@@ -1058,6 +1058,15 @@ still let it be saved as draft."*
 
 | 184 | 🔴 **A second measured run produced two more wrong values, both fixed.** `shipper_country: "Iraq"` — the shipment's DESTINATION, printed elsewhere on the page, offered as an Indian shipper's country. And `consignee_post_code: "9192"` — the digits of the P.O Box, after the first guard dropped the string `"P.O Box 9192"` | The prompt now says a country must be the party's **own**, never the shipment's destination or another party's. The post-code guard asks the DOCUMENT as well: a number printed right after "Box" is a box number, whatever shape it arrives in. And a worked-out state or country is marked **low** and kept out of the draft by `withoutWorkedOutParts()`. ⚠️ Same model, same text, temperature 0 — the two runs differed because the **prompt** changed between them, so every prompt edit needs its own measurement |
 
+| 185 | 🔴 **The consignee's address was filed under a notify party that the invoice does not name.** Fourth measured run: `notify_address: "GARDENS WASFI"`, `notify_city: "AL TAL ST."` (a street), `notify_country: "JORDAN"` — the consignee's own block — while the consignee came back as a **name and nothing else** | A notify block is now kept only when the model also returns a `notify_name`: an address with no company is not a party. ⚠️ The six notify fields earn their place on a document that names one; on a document that does not, they are somewhere wrong for the consignee's address to go. **Open, the user's:** drop the notify party from the model's schema and fill it from the paste box or the address book instead? |
+
+🟡 **Four measured runs, four different mistakes** — `NONE`; `P.O Box 9192`; `Iraq` and a bare
+`9192`; then the consignee's address under a notify party. Each was guarded after it appeared,
+and the guards held in the run after: the fourth answered `shipper_country: "INDIA"`, with no
+absence word and no box number. But the same document keeps producing a new kind of error, so
+the split is not something to trust unreviewed — which is what the review list and the
+low-confidence rule are for.
+
 ⚠️ **Not a code fix, and worth knowing:** the same run answered `shipper_state: "ERNAKULAM"`
 — the district, not the state (Kerala). It IS on the page, so grounding accepts it, and
 asking the model to work the state out did not produce Kerala here. It reaches the operator

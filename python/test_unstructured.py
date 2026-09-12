@@ -369,6 +369,25 @@ def test_notify_dimensions_and_chargeable_weight_are_mapped():
     assert result["piece_weight"]["chargeable_weight"] == 420.0
 
 
+def test_a_notify_address_without_a_company_is_not_a_party():
+    """
+    🔴 Measured on the real invoice, which names no notify party: the model filed the
+    CONSIGNEE's address under one, while the consignee came back as a name and nothing else.
+    """
+    import unstructured
+
+    _with_model({
+        "consignee_name": "SILVER MOON COMMERCIAL BROKERAG CO",
+        "notify_address": "GARDENS WASFI",
+        "notify_city": "AL TAL ST.",
+        "notify_country": "JORDAN",
+    })
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, "text")
+
+    assert "notify" not in result
+
+
 def test_no_notify_party_means_no_notify_region():
     import unstructured
 

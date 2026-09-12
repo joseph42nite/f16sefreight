@@ -343,11 +343,12 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
     if parsed.get("dimensions"):
         result["cargo"]["dimensions"] = extract_dimensions(parsed["dimensions"])
 
-    # ⚠️ Only when the model FOUND one. The label path never reads a notify party, so an
-    # empty block here would be a region nobody asked for.
-    notify = _party(parsed, "notify")
-    if notify:
-        result["notify"] = transform_address_box(notify)
+    # 🔴 ONLY WITH A NAME. On an invoice that names no notify party, the model filed the
+    # CONSIGNEE's address under one — `notify_address: "GARDENS WASFI"`, `notify_city:
+    # "AL TAL ST."` (a street) — while the consignee came back as a name and nothing else.
+    # An address with no company is not a party.
+    if parsed.get("notify_name"):
+        result["notify"] = transform_address_box(_party(parsed, "notify"))
         _apply_parts(result["notify"], parsed, "notify")
 
     result["read_by"] = "model"

@@ -1037,6 +1037,9 @@ shown as a suggestion instead — see #179.
 🟢 **Tests.** Full PHP suite: 595 passed, 1 skipped, 1 failed. The failure was the house
 waybill draft test, which ran before the `agent_head_office` fix; after the fix,
 `HouseWaybillDraftTest` passes 2/2 and `AirwayBillDraftTest` 9/9. jest 57/57, Python 29/29.
+🟢 **Re-run on the finished code (2026-09-12): 596 passed, 1 skipped, 0 failed** — the whole
+suite green with the draft rules, the house waybill totals guard and the `agent_head_office`
+fallback all in place.
 
 ℹ️ **Test data left in the dev database:** AWB **176-99990001** (status `draft`), created by the
 browser check of Save as draft.

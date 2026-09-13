@@ -1078,6 +1078,29 @@ under the rule above it no longer reaches a draft on its own.
 
 ---
 
+## 🟡 2026-09-13 — the full flow, end to end, on the invoice
+
+Upload → job (inline, `QUEUE_CONNECTION=sync`) → text layer (4 pages) → model **402 s** →
+normaliser → panel → **draft 176-99990002 saved**, no error. ⚠️ The file was a PDF **rebuilt
+from the text the parser stored for job #8** — the original is not on the machine — so the
+lines and their order are identical but the layout is not.
+
+| # | Finding | Detail |
+|---|---|---|
+| 186 | 🟢 **The low-confidence rule did exactly what was asked.** The panel showed the shipper's worked-out state (`ERNAKULAM`) and country (`IRAQ`), and the draft stored **`ship_state` NULL, `ship_country` NULL** — while keeping name, full address `22/702/01 - CEE PEE BUILDING`, city `KALAMASEERY` and post code `683503` | The draft saved without them rather than refusing, which is the user's rule: *"if the confidence on the country is low then just ignore it and still let it be saved as draft."* `IRAQ` is the shipment's destination, so the prompt rule added in #184 did **not** stop the model choosing it — the low-confidence rule is what protected the waybill |
+| 187 | 🔴 **A notify party invented from the consignee's street, for the second time — and it reached the draft.** `also_name: "GARDENS WASFI"`, `also_city: "AL TAL ST."`. The name-only guard (#185) passed it, because this time the model supplied a "name": a fragment of the consignee's own street | A notify party is now kept only when the **document itself names one** — the text must contain "notify" — on top of needing a company name. Two tests: an invoice that never writes the word gets no notify party however the model fills those fields; one that does keeps it |
+| 188 | 🔴 **Asking for 23 fields costs the cargo.** This run returned `description ""`, `dimensions []`, `pieces 0`, `gross_weight 0`, and the consignee as a **name and nothing else** | With **11** fields the model returned the description, pieces, gross weight and dimensions on the same document. With **23** it has returned none of them, in three runs out of three. The party split it now does well; the cargo it has stopped doing |
+
+⚠️ **Open, the user's call — how to get the cargo back:**
+1. **Put the cargo fields first** in the schema, so they are written before the answer runs long. Cheapest; one measured run to judge.
+2. **Trim the notify party to name + address** (four fewer fields), now that a notify block is discarded unless the document names one.
+3. **Two passes** — parties, then cargo — at roughly double the time (~13 min per document on this laptop).
+
+ℹ️ **Test data left in the dev database:** AWB **176-99990002** (draft, carrying the bogus
+notify party above) and job **10** in `pdf_processing_jobs`.
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |

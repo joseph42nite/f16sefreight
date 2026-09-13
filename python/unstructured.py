@@ -343,11 +343,12 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
     if parsed.get("dimensions"):
         result["cargo"]["dimensions"] = extract_dimensions(parsed["dimensions"])
 
-    # 🔴 ONLY WITH A NAME. On an invoice that names no notify party, the model filed the
-    # CONSIGNEE's address under one — `notify_address: "GARDENS WASFI"`, `notify_city:
-    # "AL TAL ST."` (a street) — while the consignee came back as a name and nothing else.
-    # An address with no company is not a party.
-    if parsed.get("notify_name"):
+    # 🔴 ONLY IF THE DOCUMENT SAYS SO. On an invoice that never writes "notify", the model
+    # filed the CONSIGNEE's address under a notify party twice: first with no company name at
+    # all, then with `notify_name: "GARDENS WASFI"` — a fragment of the consignee's street —
+    # which walked straight through a name-only guard. A document that does not name a notify
+    # party does not have one.
+    if parsed.get("notify_name") and "notify" in text.lower():
         result["notify"] = transform_address_box(_party(parsed, "notify"))
         _apply_parts(result["notify"], parsed, "notify")
 

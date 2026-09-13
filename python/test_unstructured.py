@@ -362,11 +362,42 @@ def test_notify_dimensions_and_chargeable_weight_are_mapped():
         "chargeable_weight": 420.0,
     })
     result = {"piece_weight": {}}
-    unstructured._apply_model(result, "text")
+    # ⚠️ The source must NAME a notify party, or the guard above discards the block.
+    unstructured._apply_model(result, "Notify Party: ACME CLEARING LTD")
 
     assert result["notify"]["name"] == "ACME CLEARING LTD"
     assert result["cargo"]["dimensions"] == [{"dimension": "64X32X64", "count": 1}]
     assert result["piece_weight"]["chargeable_weight"] == 420.0
+
+
+def test_a_notify_party_needs_the_document_to_name_one():
+    """
+    🔴 Measured twice on the same invoice, which never writes "notify": the model filed the
+    CONSIGNEE's address under a notify party — once with no name, then with "GARDENS WASFI",
+    a fragment of the consignee's own street, which passed a name-only guard.
+    """
+    import unstructured
+
+    _with_model({
+        "consignee_name": "SILVER MOON COMMERCIAL BROKERAG CO",
+        "notify_name": "GARDENS WASFI",
+        "notify_city": "AL TAL ST.",
+        "notify_country": "JORDAN",
+    })
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, "Consignee\nSILVER MOON COMMERCIAL\nGARDENS WASFI AL TAL ST.")
+
+    assert "notify" not in result
+
+
+def test_a_notify_party_the_document_does_name_is_kept():
+    import unstructured
+
+    _with_model({"notify_name": "ACME CLEARING LTD", "notify_address": "12 Dock Road"})
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, "Notify Party: ACME CLEARING LTD, 12 Dock Road")
+
+    assert result["notify"]["name"] == "ACME CLEARING LTD"
 
 
 def test_a_notify_address_without_a_company_is_not_a_party():

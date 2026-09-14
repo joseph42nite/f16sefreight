@@ -31,14 +31,27 @@ class AiUsageService
         return $row;
     }
 
-    /** Calls this user has made since midnight (app timezone). */
+    /** Documents this user has had read by the model since midnight (app timezone). Help questions are counted separately. */
     public function callsToday(?int $userId): int
     {
         if ($userId === null) {
             return 0;
         }
 
-        return DB::table('llm_usage_logs')->where('user_id', $userId)->where('created_at', '>=', today())->count();
+        return DB::table('llm_usage_logs')->where('user_id', $userId)->whereIn('purpose', ['text', 'vision'])
+            ->where('created_at', '>=', today())->count();
+    }
+
+    /** Help questions this user has asked since midnight — their own limit (user, 2026-09-14). */
+    public function questionsToday(?int $userId): int
+    {
+        return $userId === null ? 0
+            : DB::table('help_questions')->where('user_id', $userId)->where('created_at', '>=', today())->count();
+    }
+
+    public function mayAsk(?int $userId): bool
+    {
+        return $userId === null || $this->questionsToday($userId) < (int) $this->settings()->per_user_daily_questions;
     }
 
     /** Whether this user may call the model now. A job with no user is never limited. */
@@ -55,14 +68,24 @@ class AiUsageService
      */
     public function record(PdfProcessingJob $job, array $usage, string $purpose): void
     {
-        $user = $job->user_id ? User::find($job->user_id) : null;
+        $this->log($usage, $purpose, $job->user_id ? User::find($job->user_id) : null, [
+            'enquiry_id' => $job->enquiry_id, 'job_id' => $job->job_id, 'pdf_processing_job_id' => $job->id,
+        ]);
+    }
 
+    /**
+     * Log any model call: a document, a help question (`help`), or indexing a help document (`help_index`).
+     *
+     * @param  array  $refs  enquiry_id / job_id / pdf_processing_job_id, where there are any
+     */
+    public function log(array $usage, string $purpose, ?User $user = null, array $refs = []): void
+    {
         DB::table('llm_usage_logs')->insert([
             'agent_id'              => $user ? UserContext::for($user)->agentId : null,
-            'user_id'               => $job->user_id,
-            'enquiry_id'            => $job->enquiry_id,
-            'job_id'                => $job->job_id,
-            'pdf_processing_job_id' => $job->id,
+            'user_id'               => $user?->id,
+            'enquiry_id'            => $refs['enquiry_id'] ?? null,
+            'job_id'                => $refs['job_id'] ?? null,
+            'pdf_processing_job_id' => $refs['pdf_processing_job_id'] ?? null,
             'model'                 => mb_substr((string) ($usage['model'] ?? 'unknown'), 0, 50),
             'purpose'               => $purpose,
             'provider'              => isset($usage['provider']) ? mb_substr((string) $usage['provider'], 0, 60) : null,

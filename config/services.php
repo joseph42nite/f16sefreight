@@ -60,6 +60,17 @@ return [
      * and Entra expires it on a schedule — a mailbox that stops syncing with 401s months
      * from now is usually this, not a token bug.
      */
+    // Gemma 4 on OpenRouter, called from Laravel for the help copilot (the parser calls it itself).
+    // The key is the same one the ai-server container reads.
+    'openrouter' => [
+        'key'             => env('OPENROUTER_API_KEY'),
+        'base'            => env('OPENROUTER_BASE', 'https://openrouter.ai/api/v1'),
+        'chat_model'      => env('OPENROUTER_MODEL', 'google/gemma-4-31b-it'),
+        // 1,024 dimensions: small enough to compare every help section in PHP on each question.
+        'embedding_model' => env('OPENROUTER_EMBEDDING_MODEL', 'baai/bge-m3'),
+        'attempt_timeout' => (int) env('OPENROUTER_ATTEMPT_TIMEOUT', 12),
+    ],
+
     // clamd, for mail attachments (guide §4.2). docker-compose publishes it on 3310.
     'clamav' => [
         'host' => env('CLAMAV_HOST', '127.0.0.1'),

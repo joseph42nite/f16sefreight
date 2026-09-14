@@ -58,6 +58,7 @@ class AiUsageController extends Controller
                 'monthly_budget_inr'   => (float) $settings->monthly_budget_inr,
                 'usd_to_inr'           => $rate,
                 'per_user_daily_limit' => (int) $settings->per_user_daily_limit,
+                'per_user_daily_questions' => (int) $settings->per_user_daily_questions,
             ],
             'month'       => $this->usage->month(),
             'by_company'  => $byCompany,
@@ -72,7 +73,10 @@ class AiUsageController extends Controller
             'monthly_budget_inr'   => ['required', 'numeric', 'min:0', 'max:10000000'],
             'usd_to_inr'           => ['required', 'numeric', 'min:1', 'max:1000'],
             'per_user_daily_limit' => ['required', 'integer', 'min:0', 'max:100000'],
+            'per_user_daily_questions' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ]);
+
+        $data = array_filter($data, fn ($v) => $v !== null);
 
         $settings = $this->usage->settings();
 

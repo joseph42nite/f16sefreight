@@ -180,6 +180,12 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     // The month's spend against the budget, per customer and per user, and the per-user limit.
     Route::get('/ai-usage', [\App\Http\Controllers\Platform\AiUsageController::class, 'index']);
     Route::put('/ai-usage/settings', [\App\Http\Controllers\Platform\AiUsageController::class, 'updateSettings']);
+
+    // ── The help library the copilot answers from: one .md or .docx per page ──
+    Route::get('/help-documents', [\App\Http\Controllers\Platform\HelpDocumentController::class, 'index']);
+    Route::post('/help-documents', [\App\Http\Controllers\Platform\HelpDocumentController::class, 'store']);
+    Route::post('/help-documents/{document}', [\App\Http\Controllers\Platform\HelpDocumentController::class, 'update']);
+    Route::delete('/help-documents/{document}', [\App\Http\Controllers\Platform\HelpDocumentController::class, 'destroy']);
     Route::post('logout', [SuperAdminController::class, 'logout']);
     Route::post('verify', [SuperAdminController::class, 'me']);
     Route::put('upadte-detail', [SuperAdminController::class, 'update']);
@@ -341,6 +347,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // ── Support reporting (§5.6). The REPORTER is an ordinary tenant user
     // (PRD.md §5.10); only the desk that works the queue is superadmin-only.
     Route::post('/tickets', [\App\Http\Controllers\Platform\SupportTicketController::class, 'store']);
+    // The help copilot (PRD §5.10): answers from the uploaded help documents.
+    Route::post('/help/ask', [\App\Http\Controllers\Freight\HelpController::class, 'ask']);
 
     // ── Triage (§5.1). Threads, never individual messages: a conversation is the
     // unit of work, and classifying one message of five mints a second enquiry.

@@ -36,6 +36,10 @@ class SupportTicketController extends Controller
             'element_selector' => 'nullable|string|max:255',
             'screenshot_path'  => 'nullable|string|max:500',
             'console_logs'     => 'nullable|array',
+            // The copilot conversation the ticket came from, as the portal recorded it.
+            'help_transcript'  => 'nullable|array|max:20',
+            'help_transcript.*.question' => 'required_with:help_transcript|string|max:1000',
+            'help_transcript.*.answer'   => 'required_with:help_transcript|string|max:4000',
         ]);
 
         $context = UserContext::for(auth()->user());

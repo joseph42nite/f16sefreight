@@ -25,10 +25,10 @@ class SupportTicket extends Model
 
     protected $fillable = [
         'agent_id', 'user_id', 'route', 'element_selector',
-        'screenshot_path', 'console_logs', 'description', 'status',
+        'screenshot_path', 'console_logs', 'help_transcript', 'description', 'status',
     ];
 
-    protected $casts = ['console_logs' => 'array'];
+    protected $casts = ['console_logs' => 'array', 'help_transcript' => 'array'];
 
     protected $attributes = ['status' => 'open'];
 

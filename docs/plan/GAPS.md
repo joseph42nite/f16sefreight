@@ -1202,6 +1202,15 @@ the panel — shipper state Kerala, country India, route BOM → FRA — and sav
 `departure_airport BOM`, `destination_airport FRA`, `flight`/`date` NULL, status `draft`. Python 50/50, jest 66/66,
 PHP 599 passed, 1 skipped.
 
+🟢 **Built 2026-09-14 — the composer: formatting and signatures** (user decisions: TipTap as specified; an "Add signature" switch, on by default):
+
+| # | Built | Detail |
+|---|---|---|
+| 221 | **`MailEditor.vue` — TipTap v1 (1.32.2) with the eight PRD §5.2.4 controls** | Bold, italic, underline, bulleted list, numbered list, link, quote, clear formatting — nothing else. Used by the reply box and by Settings → Mailboxes. ⚠️ The toolbar needs `mousedown.prevent`: without it a button took focus and the next keystroke after "Bulleted list" went nowhere — found typing in the browser |
+| 222 | **`MailBody` — HTMLPurifier is the boundary** | Only `p, br, strong/b, em/i, u, ul, ol, li, a[href], blockquote` survive, links http/https/mailto only; `<script>`, `mso-` styles, classes and images are removed. Sent as one 600px presentation table with inline styles. `ezyang/htmlpurifier` made a direct dependency (it was only transitive) |
+| 223 | **Graph sends HTML** | `sendMail` with `contentType: HTML`; a reply puts the HTML in `comment`. ⚠️ **Not checked against a live tenant** — that `comment` renders as HTML above Graph's own quoted original is documented behaviour, not observed. ⚠️ Graph takes ONE body, so the spec's `multipart/alternative` text part (guide §8, `EmailHtmlSafetyTest`) is left to Exchange; it lands with Gmail, which sends MIME itself |
+| 224 | **Signatures: per mailbox, falling back to the user's** | Settings → Mailboxes: a mailbox editor (`signature_source` `pasted` when something was pasted, else `manual`) and the user's plain-text `signature_text`. Cleaned on save. The server adds the signature at send — it is never typed into the body — and the composer shows it greyed under "Add signature". Another branch's mailbox answers 404 |
+
 ---
 
 ## 🟠 Design decisions with no owner yet

@@ -12,13 +12,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+/* harmony import */ var _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/MailEditor.vue */ "./resources/js/src/view/pages/freight/components/MailEditor.vue");
+/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "MailboxSettings",
   components: {
-    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
+    MailEditor: _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
   },
   data: () => ({
     loading: true,
@@ -26,8 +29,19 @@ __webpack_require__.r(__webpack_exports__);
     connectError: null,
     connections: [],
     connecting: false,
-    busy: null
+    busy: null,
+    /** mailbox id -> signature HTML being edited. */
+    signatures: {},
+    /** mailbox id -> true once something was pasted into its editor. */
+    pastedInto: {},
+    mySignature: "",
+    saved: null
   }),
+  computed: {
+    activeConnections() {
+      return this.connections.filter(c => !c.disconnected_at);
+    }
+  },
   created() {
     this.load();
   },
@@ -37,10 +51,43 @@ __webpack_require__.r(__webpack_exports__);
         data
       }) => {
         this.connections = data.connections || [];
+        this.connections.forEach(c => this.$set(this.signatures, c.id, c.signature_html || ""));
+        this.mySignature = data.my_signature || "";
       }).catch(e => {
         this.error = this.messageFor(e);
       }).finally(() => {
         this.loading = false;
+      });
+    },
+    saveSignature(c) {
+      this.busy = "sig-" + c.id;
+      this.saved = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put("/user/mailboxes/" + c.id + "/signature", {
+        signature_html: this.signatures[c.id] || "",
+        signature_source: this.pastedInto[c.id] ? "pasted" : "manual"
+      }).then(({
+        data
+      }) => {
+        c.signature_source = data.signature_source;
+        this.$set(this.signatures, c.id, data.signature_html || "");
+        this.saved = "sig-" + c.id;
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
+    saveMySignature() {
+      this.busy = "mine";
+      this.saved = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put("/user/signature", {
+        signature_text: this.mySignature
+      }).then(() => {
+        this.saved = "mine";
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
       });
     },
     providerLabel(p) {
@@ -169,6 +216,79 @@ var render = function render() {
       }
     }, [_vm._v("Disconnect")]) : _vm._e()])]);
   }), 0)])]), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Signatures")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Copy your signature from Outlook and paste it in. Replies from a mailbox carry its\n        signature when “Add signature” is on; a mailbox without one uses yours.\n      ")]), _vm._v(" "), _vm._l(_vm.activeConnections, function (c) {
+    return _c("div", {
+      key: "sig-" + c.id,
+      staticClass: "fx-signature"
+    }, [_c("h3", {
+      staticClass: "fx-signature__title"
+    }, [_vm._v("\n          " + _vm._s(c.email_address) + "\n          "), c.signature_source ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" · " + _vm._s(c.signature_source))]) : _vm._e()]), _vm._v(" "), _c("MailEditor", {
+      attrs: {
+        value: _vm.signatures[c.id] || ""
+      },
+      on: {
+        input: function ($event) {
+          return _vm.$set(_vm.signatures, c.id, $event);
+        },
+        paste: function ($event) {
+          return _vm.$set(_vm.pastedInto, c.id, true);
+        }
+      }
+    }), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy === "sig-" + c.id
+      },
+      on: {
+        click: function ($event) {
+          return _vm.saveSignature(c);
+        }
+      }
+    }, [_vm._v("\n          " + _vm._s(_vm.busy === "sig-" + c.id ? "Saving…" : "Save signature") + "\n        ")]), _vm._v(" "), _vm.saved === "sig-" + c.id ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" Saved.")]) : _vm._e()], 1);
+  }), _vm._v(" "), _c("label", {
+    staticClass: "fx-field fx-signature"
+  }, [_c("span", {
+    staticClass: "fx-signature__title"
+  }, [_vm._v("Your own signature (when a mailbox has none)")]), _vm._v(" "), _c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.mySignature,
+      expression: "mySignature"
+    }],
+    staticClass: "fx-input fx-signature__text",
+    attrs: {
+      rows: "3"
+    },
+    domProps: {
+      value: _vm.mySignature
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.mySignature = $event.target.value;
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy === "mine"
+    },
+    on: {
+      click: _vm.saveMySignature
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.busy === "mine" ? "Saving…" : "Save") + "\n      ")]), _vm._v(" "), _vm.saved === "mine" ? _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(" Saved.")]) : _vm._e()], 2), _vm._v(" "), _c("section", {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"

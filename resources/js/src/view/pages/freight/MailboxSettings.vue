@@ -62,6 +62,44 @@
         </table>
       </section>
 
+      <!--
+        🔴 SIGNATURES (PRD §5.2.4): per mailbox, because a user with two accounts usually needs
+        two, and your own as the fallback. Edited HERE, not in the reply box, so it cannot be
+        mangled per message. Outlook has no signature API, so pasting it in is the main path.
+      -->
+      <section class="fx-section">
+        <h2 class="fx-section__title">Signatures</h2>
+        <p class="fx-muted">
+          Copy your signature from Outlook and paste it in. Replies from a mailbox carry its
+          signature when “Add signature” is on; a mailbox without one uses yours.
+        </p>
+
+        <div v-for="c in activeConnections" :key="'sig-' + c.id" class="fx-signature">
+          <h3 class="fx-signature__title">
+            {{ c.email_address }}
+            <span v-if="c.signature_source" class="fx-muted"> · {{ c.signature_source }}</span>
+          </h3>
+          <MailEditor
+            :value="signatures[c.id] || ''"
+            @input="$set(signatures, c.id, $event)"
+            @paste="$set(pastedInto, c.id, true)"
+          />
+          <button class="fx-btn" :disabled="busy === 'sig-' + c.id" @click="saveSignature(c)">
+            {{ busy === 'sig-' + c.id ? "Saving…" : "Save signature" }}
+          </button>
+          <span v-if="saved === 'sig-' + c.id" class="fx-muted"> Saved.</span>
+        </div>
+
+        <label class="fx-field fx-signature">
+          <span class="fx-signature__title">Your own signature (when a mailbox has none)</span>
+          <textarea v-model="mySignature" class="fx-input fx-signature__text" rows="3"></textarea>
+        </label>
+        <button class="fx-btn" :disabled="busy === 'mine'" @click="saveMySignature">
+          {{ busy === 'mine' ? "Saving…" : "Save" }}
+        </button>
+        <span v-if="saved === 'mine'" class="fx-muted"> Saved.</span>
+      </section>
+
       <section class="fx-section">
         <h2 class="fx-section__title">Add a mailbox</h2>
 
@@ -96,24 +134,65 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 
 export default {
   name: "MailboxSettings",
-  components: { StatusChip },
+  components: { MailEditor, StatusChip },
   data: () => ({
     loading: true, error: null, connectError: null,
     connections: [], connecting: false, busy: null,
+    /** mailbox id -> signature HTML being edited. */
+    signatures: {},
+    /** mailbox id -> true once something was pasted into its editor. */
+    pastedInto: {},
+    mySignature: "",
+    saved: null,
   }),
+  computed: {
+    activeConnections() {
+      return this.connections.filter((c) => !c.disconnected_at);
+    },
+  },
   created() {
     this.load();
   },
   methods: {
     load() {
       ApiService.get("/user/mailboxes")
-        .then(({ data }) => { this.connections = data.connections || []; })
+        .then(({ data }) => {
+          this.connections = data.connections || [];
+          this.connections.forEach((c) => this.$set(this.signatures, c.id, c.signature_html || ""));
+          this.mySignature = data.my_signature || "";
+        })
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.loading = false; });
+    },
+    saveSignature(c) {
+      this.busy = "sig-" + c.id;
+      this.saved = null;
+
+      ApiService.put("/user/mailboxes/" + c.id + "/signature", {
+        signature_html: this.signatures[c.id] || "",
+        signature_source: this.pastedInto[c.id] ? "pasted" : "manual",
+      })
+        .then(({ data }) => {
+          c.signature_source = data.signature_source;
+          this.$set(this.signatures, c.id, data.signature_html || "");
+          this.saved = "sig-" + c.id;
+        })
+        .catch((e) => { this.connectError = this.messageFor(e); })
+        .finally(() => { this.busy = null; });
+    },
+    saveMySignature() {
+      this.busy = "mine";
+      this.saved = null;
+
+      ApiService.put("/user/signature", { signature_text: this.mySignature })
+        .then(() => { this.saved = "mine"; })
+        .catch((e) => { this.connectError = this.messageFor(e); })
+        .finally(() => { this.busy = null; });
     },
     providerLabel(p) {
       /* ⚠️ A raw `gmail` in the column looked like a rendering bug the first time this

@@ -11,18 +11,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
 /* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
 /* harmony import */ var _view_pages_freight_components_ExtractionPanel_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/ExtractionPanel.vue */ "./resources/js/src/view/pages/freight/components/ExtractionPanel.vue");
 /* harmony import */ var _view_pages_freight_components_CostSheet_vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/view/pages/freight/components/CostSheet.vue */ "./resources/js/src/view/pages/freight/components/CostSheet.vue");
+/* harmony import */ var _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @/view/pages/freight/components/MailEditor.vue */ "./resources/js/src/view/pages/freight/components/MailEditor.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -98,7 +100,8 @@ const WORKSPACE_TABS = [{
     StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
     FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
     ExtractionPanel: _view_pages_freight_components_ExtractionPanel_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
-    CostSheet: _view_pages_freight_components_CostSheet_vue__WEBPACK_IMPORTED_MODULE_5__["default"]
+    CostSheet: _view_pages_freight_components_CostSheet_vue__WEBPACK_IMPORTED_MODULE_5__["default"],
+    MailEditor: _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_6__["default"]
   },
   data: () => ({
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
@@ -152,15 +155,18 @@ const WORKSPACE_TABS = [{
       to: "",
       cc: "",
       subject: "",
-      body: ""
+      body: "",
+      includeSignature: true
     },
+    /** The signature a reply on the open thread carries — HTML, already cleaned by the server. */
+    signature: null,
     outcomeBusy: false,
     outcomeError: null,
     LOST_REASONS,
     CLASSIFICATIONS,
     WORKSPACE_TABS
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_6__.mapGetters)(["designation", "currentUser"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_7__.mapGetters)(["designation", "currentUser"])), {}, {
     /* Only pricing owns triage — re-classification mints or strands an enquiry. */
     canTriage() {
       return this.designation === "pricing";
@@ -355,14 +361,16 @@ const WORKSPACE_TABS = [{
           to: "",
           cc: "",
           subject: prefixed("Fwd: "),
-          body: ""
+          body: "",
+          includeSignature: true
         };
       } else {
         this.draft = {
           to: strip(last.from).join(", "),
           cc: mode === "replyAll" ? strip(last.cc).concat(strip(last.to)).join(", ") : "",
           subject: prefixed("Re: "),
-          body: ""
+          body: "",
+          includeSignature: true
         };
       }
       this.sendError = null;
@@ -377,7 +385,8 @@ const WORKSPACE_TABS = [{
         to: split(this.draft.to),
         cc: split(this.draft.cc),
         subject: this.draft.subject,
-        body: this.draft.body
+        body: this.draft.body,
+        include_signature: this.draft.includeSignature
       }).then(() => {
         this.composing = false;
         this.sentOk = true;
@@ -611,6 +620,7 @@ const WORKSPACE_TABS = [{
         this.active = data.thread;
         this.pending = data.thread.classification;
         this.messages = data.messages || [];
+        this.signature = data.signature || null;
         /* The cost sheet hangs off the JOB, not the thread, and extraction wants the
            AWB the shipment already carries rather than an empty box — that is what
            ties enquiry, job and waybill into one thread of work.
@@ -2315,32 +2325,60 @@ var render = function render() {
         _vm.$set(_vm.draft, "subject", $event.target.value);
       }
     }
-  })]), _vm._v(" "), _c("textarea", {
+  })]), _vm._v(" "), _c("MailEditor", {
+    model: {
+      value: _vm.draft.body,
+      callback: function ($$v) {
+        _vm.$set(_vm.draft, "body", $$v);
+      },
+      expression: "draft.body"
+    }
+  }), _vm._v(" "), _c("label", {
+    staticClass: "fx-checkbox fx-compose__signature-switch"
+  }, [_c("input", {
     directives: [{
       name: "model",
       rawName: "v-model",
-      value: _vm.draft.body,
-      expression: "draft.body"
+      value: _vm.draft.includeSignature,
+      expression: "draft.includeSignature"
     }],
-    staticClass: "fx-input fx-compose__body",
     attrs: {
-      rows: "6"
+      type: "checkbox"
     },
     domProps: {
-      value: _vm.draft.body
+      checked: Array.isArray(_vm.draft.includeSignature) ? _vm._i(_vm.draft.includeSignature, null) > -1 : _vm.draft.includeSignature
     },
     on: {
-      input: function ($event) {
-        if ($event.target.composing) return;
-        _vm.$set(_vm.draft, "body", $event.target.value);
+      change: function ($event) {
+        var $$a = _vm.draft.includeSignature,
+          $$el = $event.target,
+          $$c = $$el.checked ? true : false;
+        if (Array.isArray($$a)) {
+          var $$v = null,
+            $$i = _vm._i($$a, $$v);
+          if ($$el.checked) {
+            $$i < 0 && _vm.$set(_vm.draft, "includeSignature", $$a.concat([$$v]));
+          } else {
+            $$i > -1 && _vm.$set(_vm.draft, "includeSignature", $$a.slice(0, $$i).concat($$a.slice($$i + 1)));
+          }
+        } else {
+          _vm.$set(_vm.draft, "includeSignature", $$c);
+        }
       }
     }
-  }), _vm._v(" "), _c("div", {
+  }), _vm._v(" "), _c("span", [_vm._v("Add signature")])]), _vm._v(" "), _vm.draft.includeSignature && _vm.signature ? _c("div", {
+    staticClass: "fx-compose__signature",
+    domProps: {
+      innerHTML: _vm._s(_vm.signature)
+    }
+  }) : _vm.draft.includeSignature ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n            No signature set for this mailbox. Add one in Settings → Mailboxes.\n          ")]) : _vm._e(), _vm._v(" "), _c("div", {
     staticClass: "fx-compose__actions"
   }, [_c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
-      disabled: _vm.sending || !_vm.draft.to.trim()
+      disabled: _vm.sending || !_vm.draft.to.trim() || !_vm.draft.body
     },
     on: {
       click: _vm.send

@@ -6,6 +6,7 @@ use App\EmailMessage;
 use App\Http\Middleware\BindPortalScope;
 use App\EmailThread;
 use App\MailboxConnection;
+use App\Services\Mail\MailBody;
 use App\Services\Mail\MailProviderRegistry;
 use App\Enquiry;
 use App\Http\Controllers\Controller;
@@ -150,6 +151,8 @@ class EmailInboxController extends Controller
                 'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status',
             ])),
             'messages' => $messages,
+            // What "Add signature" will put under a reply, shown greyed in the composer.
+            'signature' => $this->threadSignature($thread),
         ]);
     }
 
@@ -327,9 +330,12 @@ class EmailInboxController extends Controller
             'cc'      => ['nullable', 'array'],
             'cc.*'    => ['email'],
             'subject' => ['required', 'string', 'max:255'],
+            // The body as the composer's HTML. Cleaned below — the editor is not the boundary.
             'body'    => ['required', 'string'],
             // The message being answered. Absent = a new mail on this thread.
             'in_reply_to' => ['nullable', 'integer'],
+            // The composer's "Add signature" switch. Absent = on.
+            'include_signature' => ['nullable', 'boolean'],
         ]);
 
         $last = DB::table('email_messages')
@@ -354,12 +360,22 @@ class EmailInboxController extends Controller
             ], 422);
         }
 
+        $mailBody = app(MailBody::class);
+
+        if (trim(strip_tags($mailBody->clean($data['body']))) === '') {
+            return response()->json(['error' => 'The message is empty.', 'reason' => 'empty_body'], 422);
+        }
+
+        // 🔴 The signature is added HERE, from settings, never typed into the body: it is edited in
+        // one place so it cannot be mangled per message (ui_ux_guide §composer).
+        $signature = ($data['include_signature'] ?? true) ? $this->signatureFor($connection) : null;
+
         $result = app(MailProviderRegistry::class)->for($connection->provider)->send(
             $connection,
             $data['to'],
             $data['cc'] ?? [],
             $data['subject'],
-            $data['body'],
+            $mailBody->forEmail($data['body'], $signature),
             // ⚠️ NULL for a historical message that predates provider_message_id. The
             // send still goes out; it simply starts a new thread on the client's side
             // rather than silently failing.
@@ -379,6 +395,33 @@ class EmailInboxController extends Controller
     }
 
     // ─── Internals ───────────────────────────────────────────────────────────
+
+    /**
+     * The signature a mail from this mailbox carries: the mailbox's own, else the sender's.
+     *
+     * PRD §5.2.4: `mailbox_connections.signature_html` overrides `users.signature_text`, because a
+     * user with two connected accounts usually needs two.
+     */
+    /** The signature a reply on this thread would carry, or null. */
+    private function threadSignature(EmailThread $thread): ?string
+    {
+        $connection = MailboxConnection::find(
+            EmailMessage::where('thread_key', $thread->thread_key)->orderByDesc('received_at')->value('mailbox_connection_id')
+        );
+
+        return $connection ? $this->signatureFor($connection) : null;
+    }
+
+    private function signatureFor(MailboxConnection $connection): ?string
+    {
+        $mailBody = app(MailBody::class);
+
+        if (! blank($connection->signature_html)) {
+            return $mailBody->clean($connection->signature_html);
+        }
+
+        return $mailBody->fromText(auth()->user()->signature_text ?? null);
+    }
 
     /**
      * ⚠️ Response latency is measured, not stored — `first_response_at` minus the first

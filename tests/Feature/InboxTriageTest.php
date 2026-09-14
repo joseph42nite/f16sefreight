@@ -581,10 +581,126 @@ class InboxTriageTest extends TestCase
 
         \Illuminate\Support\Facades\Http::assertSent(function ($request) {
             return str_contains($request->url(), '/reply')
-                && $request['comment'] === 'Rate attached.'
+                && str_contains($request['comment'], 'Rate attached.')
                 // The operator's list is sent as given — not recomputed server-side.
                 && $request['message']['ccRecipients'][0]['emailAddress']['address'] === 'broker@client.test';
         });
+    }
+
+    // ─── The composer: formatting and the signature (PRD §5.2.4) ─────────────
+
+    /** Sends a reply and returns the HTML Graph received. */
+    private function sentBody(int $threadId, array $overrides = [], ?User $as = null): string
+    {
+        \Illuminate\Support\Facades\Http::fake(['*/reply' => \Illuminate\Support\Facades\Http::response('', 202)]);
+
+        $this->api($as ?? $this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$threadId}/reply"), array_merge([
+                'to' => ['ops@client.test'], 'subject' => 'Re: Quote request', 'body' => '<p>Rate attached.</p>',
+            ], $overrides))
+            ->assertOk();
+
+        $body = null;
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) use (&$body) {
+            $body = $request['comment'];
+
+            return true;
+        });
+
+        return $body;
+    }
+
+    /** 🔴 The eight primitives survive; anything else is removed on the server, not trusted from the editor. */
+    public function test_formatting_is_kept_and_everything_else_is_removed(): void
+    {
+        $html = $this->sentBody($this->thread(), [
+            'body' => '<p><strong>Bold</strong> <em>italic</em> <u>under</u> <a href="https://f16s.test">link</a></p>'
+                . '<ul><li>one</li></ul><blockquote>quoted</blockquote>'
+                . '<script>alert(1)</script><p style="mso-line-height-rule:exactly" class="MsoNormal">Word</p>'
+                . '<img src="x.png"><a href="javascript:alert(1)">bad</a>',
+        ]);
+
+        foreach (['<strong>Bold</strong>', '<em>italic</em>', '<u>under</u>', 'href="https://f16s.test"', '<li>one</li>', '<blockquote'] as $kept) {
+            $this->assertStringContainsString($kept, $html);
+        }
+
+        foreach (['<script', 'alert(1)', 'mso-', 'MsoNormal', '<img', 'javascript:'] as $removed) {
+            $this->assertStringNotContainsString($removed, $html);
+        }
+    }
+
+    /** ⚠️ Email HTML is not web HTML: one 600px table, inline styles, no <style> block. */
+    public function test_the_body_is_email_safe_html(): void
+    {
+        $html = $this->sentBody($this->thread());
+
+        $this->assertStringStartsWith('<table role="presentation" width="600"', $html);
+        $this->assertStringNotContainsString('<style', $html);
+        $this->assertStringNotContainsString('display:flex', $html);
+    }
+
+    public function test_the_mailbox_signature_is_added_unless_switched_off(): void
+    {
+        DB::table('mailbox_connections')->where('id', $this->connectionId)
+            ->update(['signature_html' => '<p>Sanjay Nair · F16s Freight</p>']);
+
+        $this->assertStringContainsString('Sanjay Nair', $this->sentBody($this->thread()));
+        $this->assertStringNotContainsString('Sanjay Nair', $this->sentBody($this->thread(), ['include_signature' => false]));
+    }
+
+    /** A mailbox without its own signature uses the sender's (users.signature_text). */
+    public function test_a_mailbox_without_a_signature_uses_the_senders(): void
+    {
+        $this->pricing->forceFill(['signature_text' => "Priya\nPricing desk"])->save();
+
+        $html = $this->sentBody($this->thread());
+
+        $this->assertMatchesRegularExpression('/Priya<br \\/>\\s*Pricing desk/', $html);
+    }
+
+    /** The composer shows the signature a reply will carry. */
+    public function test_the_thread_carries_its_signature_for_the_composer(): void
+    {
+        DB::table('mailbox_connections')->where('id', $this->connectionId)
+            ->update(['signature_html' => '<p>Sanjay Nair</p>']);
+
+        $this->api($this->pricing)->getJson($this->url('/api/inbox/threads/' . $this->thread()))
+            ->assertOk()
+            ->assertJsonPath('signature', '<p>Sanjay Nair</p>');
+    }
+
+    public function test_an_empty_body_is_refused(): void
+    {
+        $this->api($this->pricing)
+            ->postJson($this->url('/api/inbox/threads/' . $this->thread() . '/reply'), [
+                'to' => ['ops@client.test'], 'subject' => 'Re: Quote', 'body' => '<p></p>',
+            ])
+            ->assertStatus(422);
+    }
+
+    /** ⚠️ A pasted signature is cleaned on the way in, and another branch's mailbox is not found. */
+    public function test_a_saved_signature_is_cleaned_and_scoped_to_the_branch(): void
+    {
+        $this->api($this->pricing)
+            ->putJson($this->url("/api/user/mailboxes/{$this->connectionId}/signature"), [
+                'signature_html' => '<p class="MsoNormal" style="mso-x:1"><b>Sanjay</b></p><script>x</script>',
+                'signature_source' => 'pasted',
+            ])
+            ->assertOk()
+            ->assertJsonPath('signature_html', '<p><b>Sanjay</b></p>')
+            ->assertJsonPath('signature_source', 'pasted');
+
+        $otherCompany = Company::create(['name' => 'Other', 'code' => 'OTH', 'tier' => 'tactical']);
+        $otherBranch = Agent::create(['company_id' => $otherCompany->id, 'agent_name' => 'MAA', 'branch_code' => 'MAA']);
+        $foreign = DB::table('mailbox_connections')->insertGetId([
+            'agent_id' => $otherBranch->id, 'user_id' => $this->pricing->id, 'email_address' => 'other-' . uniqid() . '@test.local',
+            'provider' => 'outlook', 'is_active' => 1, 'auth_state' => 'connected',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->api($this->pricing)
+            ->putJson($this->url("/api/user/mailboxes/{$foreign}/signature"), ['signature_html' => '<p>x</p>'])
+            ->assertNotFound();
     }
 
     /**

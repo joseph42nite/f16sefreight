@@ -174,10 +174,25 @@
               <span class="fx-field__label">Subject</span>
               <input v-model="draft.subject" class="fx-input" />
             </label>
-            <textarea v-model="draft.body" class="fx-input fx-compose__body" rows="6"></textarea>
+            <!-- 🔴 PRD §5.2.4: eight formatting controls, email-safe HTML, cleaned again on the server. -->
+            <MailEditor v-model="draft.body" />
+
+            <!--
+              The signature comes from Settings → Mailboxes and is added by the server, so it
+              cannot be mangled per message. The switch turns it off for one email.
+            -->
+            <label class="fx-checkbox fx-compose__signature-switch">
+              <input v-model="draft.includeSignature" type="checkbox" />
+              <span>Add signature</span>
+            </label>
+            <!-- eslint-disable-next-line vue/no-v-html — cleaned by HTMLPurifier on the server -->
+            <div v-if="draft.includeSignature && signature" class="fx-compose__signature" v-html="signature"></div>
+            <p v-else-if="draft.includeSignature" class="fx-muted">
+              No signature set for this mailbox. Add one in Settings → Mailboxes.
+            </p>
 
             <div class="fx-compose__actions">
-              <button class="fx-btn fx-btn--primary" :disabled="sending || !draft.to.trim()" @click="send">
+              <button class="fx-btn fx-btn--primary" :disabled="sending || !draft.to.trim() || !draft.body" @click="send">
                 {{ sending ? "Sending…" : "Send" }}
               </button>
               <button class="fx-btn" :disabled="sending" @click="composing = false">Cancel</button>
@@ -438,6 +453,7 @@ import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import ExtractionPanel from "@/view/pages/freight/components/ExtractionPanel.vue";
 import CostSheet from "@/view/pages/freight/components/CostSheet.vue";
+import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 
 const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road"];
 
@@ -492,7 +508,7 @@ const WORKSPACE_TABS = [
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet },
+  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, MailEditor },
   data: () => ({
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
        has no use for a shipping-line folder and a sea operator none for an airline one;
@@ -518,7 +534,9 @@ export default {
        operator edits; splitting happens once, at send. */
     composing: false, sending: false, sendError: null, sentOk: false,
     cargoBusy: false, cargoError: null, cargoSaved: false,
-    draft: { to: "", cc: "", subject: "", body: "" },
+    draft: { to: "", cc: "", subject: "", body: "", includeSignature: true },
+    /** The signature a reply on the open thread carries — HTML, already cleaned by the server. */
+    signature: null,
     outcomeBusy: false, outcomeError: null,
     LOST_REASONS,
     CLASSIFICATIONS, WORKSPACE_TABS,
@@ -745,13 +763,14 @@ export default {
         // Forward deliberately starts EMPTY: it goes to someone not yet on the thread,
         // and pre-filling it with the current recipients is how a confidential rate
         // reaches the wrong party.
-        this.draft = { to: "", cc: "", subject: prefixed("Fwd: "), body: "" };
+        this.draft = { to: "", cc: "", subject: prefixed("Fwd: "), body: "", includeSignature: true };
       } else {
         this.draft = {
           to: strip(last.from).join(", "),
           cc: mode === "replyAll" ? strip(last.cc).concat(strip(last.to)).join(", ") : "",
           subject: prefixed("Re: "),
           body: "",
+          includeSignature: true,
         };
       }
 
@@ -770,6 +789,7 @@ export default {
         cc: split(this.draft.cc),
         subject: this.draft.subject,
         body: this.draft.body,
+        include_signature: this.draft.includeSignature,
       })
         .then(() => {
           this.composing = false;
@@ -979,6 +999,7 @@ export default {
           this.active = data.thread;
           this.pending = data.thread.classification;
           this.messages = data.messages || [];
+          this.signature = data.signature || null;
           /* The cost sheet hangs off the JOB, not the thread, and extraction wants the
              AWB the shipment already carries rather than an empty box — that is what
              ties enquiry, job and waybill into one thread of work.

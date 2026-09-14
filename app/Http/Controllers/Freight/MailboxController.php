@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Freight;
 use App\Http\Controllers\Controller;
 use App\MailboxConnection;
 use App\Services\AuditLogger;
+use App\Services\Mail\MailBody;
 use App\Services\Mail\MailboxSyncService;
 use App\Services\Mail\MailProviderRegistry;
 use App\Support\UserContext;
@@ -45,11 +46,14 @@ class MailboxController extends Controller
 
         $connections = MailboxConnection::where('agent_id', $context->agentId)
             ->get(['id', 'email_address', 'provider', 'is_active', 'auth_state',
-                   'last_synced_at', 'disconnected_at', 'backfill_status']);
+                   'last_synced_at', 'disconnected_at', 'backfill_status',
+                   'signature_html', 'signature_source']);
 
         return response()->json([
             'connections' => $connections,
             'providers'   => $this->providers->available(),
+            // The fallback for a mailbox with no signature of its own.
+            'my_signature' => auth()->user()->signature_text,
         ]);
     }
 
@@ -204,6 +208,48 @@ class MailboxController extends Controller
             $mailbox->id, auth()->id());
 
         return response()->json(['status' => true, 'msg' => 'Mailbox disconnected. Stored credentials were erased.']);
+    }
+
+    /**
+     * A mailbox's signature (PRD §5.2.4) — per mailbox, because a user with two accounts
+     * usually needs two.
+     *
+     * ⚠️ Cleaned on the way in exactly like a composed body: a signature pasted from Outlook
+     * carries `mso-` styles and class soup that would otherwise go out on every mail.
+     */
+    public function updateSignature(Request $request, MailboxConnection $mailbox, MailBody $mailBody): JsonResponse
+    {
+        $context = UserContext::for(auth()->user());
+
+        if ((int) $mailbox->agent_id !== (int) $context->agentId) {
+            return response()->json(['error' => 'Not found.'], 404);
+        }
+
+        $data = $request->validate([
+            'signature_html'   => ['nullable', 'string', 'max:20000'],
+            'signature_source' => ['nullable', 'in:pasted,manual'],
+        ]);
+
+        $html = $mailBody->clean($data['signature_html'] ?? '');
+        $empty = trim(strip_tags($html)) === '';
+
+        $mailbox->forceFill([
+            'signature_html'   => $empty ? null : $html,
+            'signature_source' => $empty ? null : ($data['signature_source'] ?? 'manual'),
+        ])->save();
+
+        return response()->json($mailbox->only(['id', 'signature_html', 'signature_source']));
+    }
+
+    /** The user's own signature, used where a mailbox has none. Plain text, as the column is. */
+    public function updateMySignature(Request $request): JsonResponse
+    {
+        $data = $request->validate(['signature_text' => ['nullable', 'string', 'max:5000']]);
+
+        $user = auth()->user();
+        $user->forceFill(['signature_text' => blank($data['signature_text'] ?? null) ? null : $data['signature_text']])->save();
+
+        return response()->json(['signature_text' => $user->signature_text]);
     }
 
     /** Sync one mailbox now, rather than waiting for the sweep. */

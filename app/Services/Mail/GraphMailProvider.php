@@ -254,6 +254,8 @@ class GraphMailProvider implements MailProviderContract
                     'toRecipients' => $recipients($to),
                     'ccRecipients' => $recipients($cc),
                 ],
+                // ⚠️ HTML: Graph inserts the comment above the quoted original it builds itself.
+                // Not yet checked against a live tenant (GAPS).
                 'comment' => $body,
             ];
         } else {
@@ -261,7 +263,7 @@ class GraphMailProvider implements MailProviderContract
             $payload = [
                 'message' => [
                     'subject'      => $subject,
-                    'body'         => ['contentType' => 'Text', 'content' => $body],
+                    'body'         => ['contentType' => 'HTML', 'content' => $body],
                     'toRecipients' => $recipients($to),
                     'ccRecipients' => $recipients($cc),
                 ],

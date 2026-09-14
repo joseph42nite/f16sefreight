@@ -28,14 +28,91 @@ __webpack_require__.r(__webpack_exports__);
     status: "",
     loading: true,
     busy: false,
-    error: null
+    error: null,
+    /** The chat open beside the queue: { ticket, status, messages }. */
+    chat: null,
+    draft: "",
+    chatTimer: null,
+    queueTimer: null
   }),
   created() {
     this.load();
+    // New chats and new client messages show up without a manual refresh.
+    this.queueTimer = setInterval(() => {
+      if (!this.busy) this.load(true);
+    }, 15000);
+  },
+  beforeDestroy() {
+    clearInterval(this.queueTimer);
+    clearInterval(this.chatTimer);
   },
   methods: {
-    load() {
-      this.loading = true;
+    openChat(ticket) {
+      this.chat = {
+        ticket,
+        status: ticket.status,
+        messages: []
+      };
+      this.pollChat();
+      clearInterval(this.chatTimer);
+      // 🔴 Every 3 s while the chat is open (user's choice — no WebSockets yet).
+      this.chatTimer = setInterval(() => this.pollChat(), 3000);
+    },
+    closeChat() {
+      clearInterval(this.chatTimer);
+      this.chat = null;
+      this.load();
+    },
+    pollChat() {
+      if (!this.chat) return;
+      const chat = this.chat;
+      const last = chat.messages.length ? chat.messages[chat.messages.length - 1].id : 0;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/admin/tickets/" + chat.ticket.id + "/messages?after_id=" + last).then(({
+        data
+      }) => {
+        if (data.messages.length) {
+          chat.messages.push(...data.messages.filter(m => !chat.messages.some(k => k.id === m.id)));
+          this.$nextTick(() => {
+            if (this.$refs.chatLog) this.$refs.chatLog.scrollTop = this.$refs.chatLog.scrollHeight;
+          });
+        }
+        chat.status = data.status;
+      }).catch(e => {
+        this.error = this.readable(e);
+      });
+    },
+    reply() {
+      const body = this.draft.trim();
+      if (!body || this.busy || !this.chat) return;
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/admin/tickets/" + this.chat.ticket.id + "/messages", {
+        body
+      }).then(({
+        data
+      }) => {
+        this.chat.messages.push(data);
+        if (this.chat.status === "open") this.chat.status = "investigating";
+        this.draft = "";
+      }).catch(e => {
+        this.error = this.readable(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    resolveChat() {
+      const ticket = this.chat.ticket;
+      const steps = this.chat.status === "open" ? ["investigating", "resolved"] : ["resolved"];
+      this.busy = true;
+      steps.reduce((p, status) => p.then(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].patch("/admin/tickets", ticket.id, {
+        status
+      })), Promise.resolve()).then(() => this.pollChat()).catch(e => {
+        this.error = this.readable(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    load(quiet = false) {
+      if (!quiet) this.loading = true;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/admin/tickets" + (this.status ? "?status=" + this.status : "")).then(({
         data
       }) => {
@@ -124,7 +201,96 @@ var render = function render() {
     attrs: {
       value: "resolved"
     }
-  }, [_vm._v("Resolved")])])])]), _vm._v(" "), _vm.loading ? _c("p", {
+  }, [_vm._v("Resolved")])])])]), _vm._v(" "), _vm.chat ? _c("section", {
+    staticClass: "fx-section fx-desk-chat",
+    attrs: {
+      "aria-label": "Support chat"
+    }
+  }, [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("strong", [_vm._v("Chat #" + _vm._s(_vm.chat.ticket.id))]), _vm._v(" "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        " + _vm._s(_vm.chat.ticket.reporter ? _vm.chat.ticket.reporter.name : "—") + " ·\n        " + _vm._s(_vm.chat.ticket.branch ? _vm.chat.ticket.branch.agent_name : "—") + " ·\n        started on "), _c("span", {
+    staticClass: "identifier"
+  }, [_vm._v(_vm._s(_vm.chat.ticket.route))])]), _vm._v(" "), _c("StatusChip", {
+    attrs: {
+      value: _vm.chat.status
+    }
+  }), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    on: {
+      click: _vm.closeChat
+    }
+  }, [_vm._v("Back to the queue")])], 1), _vm._v(" "), _vm.chat.ticket.help_transcript && _vm.chat.ticket.help_transcript.length ? _c("details", {
+    staticClass: "fx-muted"
+  }, [_c("summary", [_vm._v("What they asked Help first (" + _vm._s(_vm.chat.ticket.help_transcript.length) + ")")]), _vm._v(" "), _vm._l(_vm.chat.ticket.help_transcript, function (t, i) {
+    return _c("p", {
+      key: i
+    }, [_c("strong", [_vm._v(_vm._s(t.question))]), _c("br"), _vm._v(_vm._s(t.answer))]);
+  })], 2) : _vm._e(), _vm._v(" "), _c("ol", {
+    ref: "chatLog",
+    staticClass: "fx-help__log"
+  }, _vm._l(_vm.chat.messages, function (m) {
+    return _c("li", {
+      key: m.id,
+      staticClass: "fx-help__msg",
+      class: "fx-help__msg--" + (m.sender === "agent" ? "user" : m.sender === "user" ? "agent" : "system")
+    }, [_vm._v("\n        " + _vm._s(m.body) + "\n      ")]);
+  }), 0), _vm._v(" "), _vm.chat.status !== "resolved" ? _c("form", {
+    staticClass: "fx-desk-chat__reply",
+    on: {
+      submit: function ($event) {
+        $event.preventDefault();
+        return _vm.reply.apply(null, arguments);
+      }
+    }
+  }, [_c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.draft,
+      expression: "draft"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      rows: "2",
+      maxlength: "4000",
+      placeholder: "Reply to the client"
+    },
+    domProps: {
+      value: _vm.draft
+    },
+    on: {
+      keydown: function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        if ($event.ctrlKey || $event.shiftKey || $event.altKey || $event.metaKey) return null;
+        $event.preventDefault();
+        return _vm.reply.apply(null, arguments);
+      },
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.draft = $event.target.value;
+      }
+    }
+  }), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.draft.trim()
+    }
+  }, [_vm._v("Send")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        $event.preventDefault();
+        return _vm.resolveChat.apply(null, arguments);
+      }
+    }
+  }, [_vm._v("Close chat")])]) : _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("This chat is closed.")])]) : _vm._e(), _vm._v(" "), _vm.loading ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
     staticClass: "fx-error",
@@ -147,7 +313,9 @@ var render = function render() {
       staticClass: "fx-muted"
     }, [_vm._v(_vm._s(t.reporter ? t.reporter.designation : ""))])]), _vm._v(" "), _c("td", {
       staticClass: "identifier"
-    }, [_vm._v(_vm._s(t.route))]), _vm._v(" "), _c("td", [_vm._v("\n          " + _vm._s(t.description) + "\n          "), t.element_selector ? _c("div", {
+    }, [_vm._v(_vm._s(t.route))]), _vm._v(" "), _c("td", [t.channel === "chat" ? _c("span", [_vm._v("💬 ")]) : _vm._e(), _vm._v(_vm._s(t.description) + "\n          "), t.waiting_messages ? _c("strong", {
+      staticClass: "fx-error"
+    }, [_vm._v(" · " + _vm._s(t.waiting_messages) + " waiting")]) : _vm._e(), _vm._v(" "), t.element_selector ? _c("div", {
       staticClass: "fx-muted identifier fx-ticket__selector"
     }, [_vm._v("\n            " + _vm._s(t.element_selector) + "\n          ")]) : _vm._e()]), _vm._v(" "), _c("td", [_c("StatusChip", {
       attrs: {
@@ -155,7 +323,14 @@ var render = function render() {
       }
     })], 1), _vm._v(" "), _c("td", {
       staticClass: "fx-row-actions"
-    }, [t.status === "open" ? _c("button", {
+    }, [t.channel === "chat" ? _c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      on: {
+        click: function ($event) {
+          return _vm.openChat(t);
+        }
+      }
+    }, [_vm._v("Open chat")]) : _vm._e(), _vm._v(" "), t.status === "open" ? _c("button", {
       staticClass: "fx-btn",
       attrs: {
         disabled: _vm.busy
@@ -187,7 +362,7 @@ var staticRenderFns = [function () {
     staticClass: "fx-page-title"
   }, [_vm._v("Support desk")]), _vm._v(" "), _c("p", {
     staticClass: "fx-page-sub"
-  }, [_vm._v("\n      Bug reports from every tenant. Captured deterministically by the in-app\n      reporter — no model in the path, because a hallucinated selector sends a\n      developer to the wrong screen with confident-looking evidence.\n    ")])]);
+  }, [_vm._v("\n      Bug reports and live chats from every tenant. Reports are captured by the in-app\n      reporter — no model in the path, because a hallucinated selector sends a developer\n      to the wrong screen with confident-looking evidence. A chat is a client who pressed\n      “Talk to a support agent” in Help.\n    ")])]);
 }, function () {
   var _vm = this,
     _c = _vm._self._c;

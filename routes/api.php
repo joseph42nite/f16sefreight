@@ -152,6 +152,9 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'admin'], funct
     Route::get('/tickets', [\App\Http\Controllers\Platform\SupportTicketController::class, 'index']);
     Route::get('/tickets/{ticket}', [\App\Http\Controllers\Platform\SupportTicketController::class, 'show']);
     Route::patch('/tickets/{ticket}', [\App\Http\Controllers\Platform\SupportTicketController::class, 'update']);
+    // The live chat on a `chat` ticket (Connect to Support Agent).
+    Route::get('/tickets/{ticket}/messages', [\App\Http\Controllers\Platform\SupportTicketController::class, 'messages']);
+    Route::post('/tickets/{ticket}/messages', [\App\Http\Controllers\Platform\SupportTicketController::class, 'reply']);
 });
 
 // =================superAdmin section==========================
@@ -349,6 +352,11 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/tickets', [\App\Http\Controllers\Platform\SupportTicketController::class, 'store']);
     // The help copilot (PRD §5.10): answers from the uploaded help documents.
     Route::post('/help/ask', [\App\Http\Controllers\Freight\HelpController::class, 'ask']);
+    // Connect to Support Agent: a chat ticket, and its messages (checked every 3 s while open).
+    Route::post('/support/chats', [\App\Http\Controllers\Freight\SupportChatController::class, 'start']);
+    Route::get('/support/chats/current', [\App\Http\Controllers\Freight\SupportChatController::class, 'current']);
+    Route::get('/support/chats/{ticket}/messages', [\App\Http\Controllers\Freight\SupportChatController::class, 'messages']);
+    Route::post('/support/chats/{ticket}/messages', [\App\Http\Controllers\Freight\SupportChatController::class, 'send']);
 
     // ── Triage (§5.1). Threads, never individual messages: a conversation is the
     // unit of work, and classifying one message of five mints a second enquiry.

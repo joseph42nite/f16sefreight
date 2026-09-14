@@ -63,6 +63,9 @@ class SupportTicketController extends Controller
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->filled('agent_id'), fn ($q) => $q->where('agent_id', $request->integer('agent_id')))
             ->with(['reporter:id,name,email,designation', 'branch:id,agent_name,branch_code'])
+            // A chat whose latest message the desk has not read is waiting on F16s.
+            ->withCount(['messages as waiting_messages' => fn ($q) => $q->where('sender', 'user')
+                ->whereRaw('support_ticket_messages.id > COALESCE(support_tickets.agent_read_message_id, 0)')])
             // Oldest OPEN first: a support queue sorted newest-first buries the ticket
             // that has been waiting longest, which is the one most likely to be a
             // customer about to give up.
@@ -106,6 +109,49 @@ class SupportTicketController extends Controller
 
         $ticket->update(['status' => $data['status']]);
 
+        // A chat that is resolved tells the client so, in the chat itself.
+        if ($ticket->channel === 'chat' && $data['status'] === 'resolved') {
+            $ticket->post('system', 'The support team closed this chat. Start a new one from Help if you need anything else.');
+        }
+
         return response()->json($ticket->fresh());
+    }
+
+    /** A chat's messages after `after_id`; the desk reading them marks them read. */
+    public function messages(Request $request, SupportTicket $ticket): JsonResponse
+    {
+        $messages = $ticket->messages()->where('id', '>', (int) $request->query('after_id', 0))
+            ->get(['id', 'sender', 'body', 'created_at']);
+
+        if ($last = $ticket->messages()->max('id')) {
+            $ticket->forceFill(['agent_read_message_id' => $last])->save();
+        }
+
+        return response()->json(['status' => $ticket->status, 'messages' => $messages]);
+    }
+
+    /**
+     * An agent's reply. The first one moves an open ticket to `investigating` — somebody is on it —
+     * which keeps the queue's "how long did it wait" measure honest.
+     */
+    public function reply(Request $request, SupportTicket $ticket): JsonResponse
+    {
+        $data = $request->validate(['body' => ['required', 'string', 'max:4000']]);
+
+        if ($ticket->channel !== 'chat') {
+            return response()->json(['error' => 'Only a chat ticket has a conversation.', 'reason' => 'not_a_chat'], 422);
+        }
+
+        if ($ticket->status === 'resolved') {
+            return response()->json(['error' => 'This chat is closed.', 'reason' => 'closed'], 422);
+        }
+
+        if ($ticket->status === 'open') {
+            $ticket->update(['status' => 'investigating']);
+        }
+
+        $message = $ticket->post('agent', trim($data['body']), null, auth('superAdmin-api')->id());
+
+        return response()->json($message->only(['id', 'sender', 'body', 'created_at']), 201);
     }
 }

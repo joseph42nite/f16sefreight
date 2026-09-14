@@ -232,6 +232,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
 /**
@@ -247,9 +252,122 @@ __webpack_require__.r(__webpack_exports__);
     open: false,
     question: "",
     busy: false,
-    turns: []
+    turns: [],
+    /** "help" answers from the documents; "chat" is the conversation with an F16s agent. */
+    mode: "help",
+    chat: null,
+    chatDraft: "",
+    chatBusy: false,
+    chatError: null,
+    chatTimer: null,
+    badgeTimer: null
   }),
+  computed: {
+    unread() {
+      return this.chat && !(this.open && this.mode === "chat") ? this.chat.unread || 0 : 0;
+    }
+  },
+  created() {
+    this.loadCurrentChat();
+    // A reply can arrive while Help is closed: check now and then, for the badge.
+    this.badgeTimer = setInterval(() => {
+      if (!this.open) this.loadCurrentChat();
+    }, 30000);
+  },
+  beforeDestroy() {
+    clearInterval(this.badgeTimer);
+    clearInterval(this.chatTimer);
+  },
   methods: {
+    toggle() {
+      this.open = !this.open;
+      if (this.open && this.chat && this.chat.unread) this.openChat();
+    },
+    loadCurrentChat() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/support/chats/current").then(({
+        data
+      }) => {
+        if (!data.chat) return;
+        const known = this.chat && this.chat.id === data.chat.id ? this.chat.messages : [];
+        this.chat = _objectSpread(_objectSpread({}, data.chat), {}, {
+          messages: known
+        });
+      }).catch(() => {});
+    },
+    /** Connect to Support Agent: raises (or reopens) the chat ticket, with the help conversation so far. */
+    connect() {
+      this.chatBusy = true;
+      this.chatError = null;
+      const transcript = this.turns.filter(t => !t.pending).map(t => ({
+        question: t.question,
+        answer: t.answer || ""
+      }));
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/support/chats", {
+        route: this.$route ? this.$route.path : null,
+        help_transcript: transcript.length ? transcript : undefined
+      }).then(({
+        data
+      }) => {
+        this.chat = data;
+        this.openChat();
+      }).catch(e => {
+        this.chatError = this.readable(e, "Could not reach the support team. Raise a ticket instead.");
+      }).finally(() => {
+        this.chatBusy = false;
+      });
+    },
+    openChat() {
+      this.mode = "chat";
+      this.open = true;
+      this.pollChat();
+      clearInterval(this.chatTimer);
+      // 🔴 Every 3 s while the chat is on screen (user's choice — no WebSockets yet).
+      this.chatTimer = setInterval(() => {
+        if (this.open && this.mode === "chat") this.pollChat();else clearInterval(this.chatTimer);
+      }, 3000);
+    },
+    pollChat() {
+      if (!this.chat) return;
+      const last = this.chat.messages.length ? this.chat.messages[this.chat.messages.length - 1].id : 0;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/support/chats/" + this.chat.id + "/messages?after_id=" + last).then(({
+        data
+      }) => {
+        if (data.messages.length) {
+          this.chat.messages.push(...data.messages.filter(m => !this.chat.messages.some(k => k.id === m.id)));
+          this.scrollChat();
+        }
+        this.chat.status = data.status;
+        this.chat.unread = 0;
+      }).catch(() => {});
+    },
+    sendChat() {
+      const body = this.chatDraft.trim();
+      if (!body || this.chatBusy || !this.chat) return;
+      this.chatBusy = true;
+      this.chatError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/support/chats/" + this.chat.id + "/messages", {
+        body
+      }).then(({
+        data
+      }) => {
+        this.chat.messages.push(data);
+        this.chatDraft = "";
+        this.scrollChat();
+      }).catch(e => {
+        this.chatError = this.readable(e, "Not sent. Try again.");
+      }).finally(() => {
+        this.chatBusy = false;
+      });
+    },
+    scrollChat() {
+      this.$nextTick(() => {
+        if (this.$refs.chatLog) this.$refs.chatLog.scrollTop = this.$refs.chatLog.scrollHeight;
+      });
+    },
+    readable(e, fallback) {
+      const d = e.response && e.response.data || {};
+      return d.error || d.message || fallback;
+    },
     ask() {
       const question = this.question.trim();
       if (!question || this.busy) return;
@@ -855,11 +973,14 @@ var render = function render() {
       "aria-expanded": String(_vm.open)
     },
     on: {
-      click: function ($event) {
-        _vm.open = !_vm.open;
-      }
+      click: _vm.toggle
     }
-  }, [_vm._v("💬 Help")]), _vm._v(" "), _vm.open ? _c("section", {
+  }, [_vm._v("💬 Help"), _vm.unread ? _c("span", {
+    staticClass: "fx-help__badge",
+    attrs: {
+      "aria-label": _vm.unread + " new support messages"
+    }
+  }, [_vm._v(_vm._s(_vm.unread))]) : _vm._e()]), _vm._v(" "), _vm.open ? _c("section", {
     staticClass: "fx-help__panel",
     attrs: {
       role: "dialog",
@@ -867,9 +988,16 @@ var render = function render() {
     }
   }, [_c("header", {
     staticClass: "fx-help__head"
-  }, [_c("strong", [_vm._v("Help")]), _vm._v(" "), _c("span", {
+  }, [_c("strong", [_vm._v(_vm._s(_vm.mode === "chat" ? "Support chat" : "Help"))]), _vm._v(" "), _c("span", {
     staticClass: "fx-muted"
-  }, [_vm._v("Ask how to do something in the portal")]), _vm._v(" "), _c("button", {
+  }, [_vm._v(_vm._s(_vm.mode === "chat" ? "" : "Ask how to do something in the portal"))]), _vm._v(" "), _vm.mode === "chat" ? _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    on: {
+      click: function ($event) {
+        _vm.mode = "help";
+      }
+    }
+  }, [_vm._v("Back to help")]) : _vm._e(), _vm._v(" "), _c("button", {
     staticClass: "fx-btn fx-btn--ghost",
     attrs: {
       "aria-label": "Close help"
@@ -879,7 +1007,67 @@ var render = function render() {
         _vm.open = false;
       }
     }
-  }, [_vm._v("✕")])]), _vm._v(" "), _c("ol", {
+  }, [_vm._v("✕")])]), _vm._v(" "), _vm.mode === "chat" && _vm.chat ? [_c("ol", {
+    ref: "chatLog",
+    staticClass: "fx-help__log"
+  }, _vm._l(_vm.chat.messages, function (m) {
+    return _c("li", {
+      key: m.id,
+      staticClass: "fx-help__msg",
+      class: "fx-help__msg--" + m.sender
+    }, [_vm._v(_vm._s(m.body))]);
+  }), 0), _vm._v(" "), _vm.chat.status !== "resolved" ? _c("form", {
+    staticClass: "fx-help__ask",
+    on: {
+      submit: function ($event) {
+        $event.preventDefault();
+        return _vm.sendChat.apply(null, arguments);
+      }
+    }
+  }, [_c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.chatDraft,
+      expression: "chatDraft"
+    }],
+    staticClass: "fx-input fx-help__input",
+    attrs: {
+      rows: "2",
+      maxlength: "4000",
+      placeholder: "Write to the support team",
+      disabled: _vm.chatBusy
+    },
+    domProps: {
+      value: _vm.chatDraft
+    },
+    on: {
+      keydown: function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        if ($event.ctrlKey || $event.shiftKey || $event.altKey || $event.metaKey) return null;
+        $event.preventDefault();
+        return _vm.sendChat.apply(null, arguments);
+      },
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.chatDraft = $event.target.value;
+      }
+    }
+  }), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.chatBusy || !_vm.chatDraft.trim()
+    }
+  }, [_vm._v("Send")])]) : _c("p", {
+    staticClass: "fx-muted fx-help__closed"
+  }, [_vm._v("This chat is closed. "), _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    on: {
+      click: _vm.connect
+    }
+  }, [_vm._v("Start a new chat")])]), _vm._v(" "), _vm.chatError ? _c("p", {
+    staticClass: "fx-error fx-help__closed"
+  }, [_vm._v(_vm._s(_vm.chatError))]) : _vm._e()] : [_c("ol", {
     ref: "log",
     staticClass: "fx-help__log"
   }, [!_vm.turns.length ? _c("li", {
@@ -914,6 +1102,11 @@ var render = function render() {
         }
       }
     }, [_vm._v("Show me")]) : _vm._e(), _vm._v(" "), !t.found ? _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: _vm.connect
+      }
+    }, [_vm._v("Talk to a support agent")]) : _vm._e(), _vm._v(" "), !t.found ? _c("button", {
       staticClass: "fx-btn fx-btn--ghost",
       on: {
         click: _vm.raiseTicket
@@ -963,12 +1156,24 @@ var render = function render() {
     attrs: {
       disabled: _vm.busy || !_vm.question.trim()
     }
-  }, [_vm._v("Ask")])]), _vm._v(" "), _c("button", {
+  }, [_vm._v("Ask")])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-help__escalate"
+  }, [_c("button", {
+    staticClass: "fx-btn fx-btn--ghost fx-help__ticket",
+    attrs: {
+      disabled: _vm.chatBusy
+    },
+    on: {
+      click: _vm.connect
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.chat && _vm.chat.status !== "resolved" ? "Open your support chat" : "Talk to a support agent") + "\n      ")]), _vm._v(" "), _c("button", {
     staticClass: "fx-btn fx-btn--ghost fx-help__ticket",
     on: {
       click: _vm.raiseTicket
     }
-  }, [_vm._v("Still stuck? Raise a ticket")])]) : _vm._e()]);
+  }, [_vm._v("Report a problem on this page")])]), _vm._v(" "), _vm.chatError ? _c("p", {
+    staticClass: "fx-error fx-help__closed"
+  }, [_vm._v(_vm._s(_vm.chatError))]) : _vm._e()]], 2) : _vm._e()]);
 };
 var staticRenderFns = [];
 render._withStripped = true;

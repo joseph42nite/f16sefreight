@@ -24,11 +24,18 @@ class SupportTicket extends Model
     public const STATUSES = ['open', 'investigating', 'resolved'];
 
     protected $fillable = [
-        'agent_id', 'user_id', 'route', 'element_selector',
+        'agent_id', 'user_id', 'channel', 'route', 'element_selector',
         'screenshot_path', 'console_logs', 'help_transcript', 'description', 'status',
+        'last_message_at', 'user_read_message_id', 'agent_read_message_id',
     ];
 
-    protected $casts = ['console_logs' => 'array', 'help_transcript' => 'array'];
+    protected $casts = [
+        'console_logs' => 'array', 'help_transcript' => 'array',
+        'last_message_at' => 'datetime',
+    ];
+
+    /** `report` from the element-picking reporter; `chat` from "Talk to a support agent". */
+    public const CHANNELS = ['report', 'chat'];
 
     protected $attributes = ['status' => 'open'];
 
@@ -40,5 +47,30 @@ class SupportTicket extends Model
     public function branch()
     {
         return $this->belongsTo(Agent::class, 'agent_id');
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(SupportTicketMessage::class)->orderBy('id');
+    }
+
+    /**
+     * Add a line to the chat, and move the ticket's clock with it.
+     *
+     * ⚠️ The SENDER'S OWN read marker moves too: writing a message means having seen the chat up to it.
+     */
+    public function post(string $sender, string $body, ?int $userId = null, ?int $superAdminId = null): SupportTicketMessage
+    {
+        $message = $this->messages()->create([
+            'sender' => $sender, 'body' => $body, 'user_id' => $userId, 'super_admin_id' => $superAdminId,
+        ]);
+
+        $this->forceFill(array_filter([
+            'last_message_at' => $message->created_at,
+            'user_read_message_id' => $sender === 'user' ? $message->id : null,
+            'agent_read_message_id' => $sender === 'agent' ? $message->id : null,
+        ]))->save();
+
+        return $message;
     }
 }

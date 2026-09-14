@@ -6194,6 +6194,24 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 .fx-help__ask { display: flex; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border); }
 .fx-help__input { flex: 1; min-width: 0; height: auto; padding: var(--space-1) var(--space-2); resize: none; font-family: inherit; }
 .fx-help__ticket { align-self: flex-start; margin: 0 var(--space-3) var(--space-2); font-size: .75rem; }
+/* The support chat inside Help: the client's lines on the right, the agent's on the left. */
+.fx-help__msg { max-width: 85%; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm);
+  font-size: .8125rem; line-height: 1.45; white-space: pre-line; }
+.fx-help__msg--user { align-self: flex-end; background: var(--bg-sunken); }
+.fx-help__msg--agent { align-self: flex-start; border: 1px solid var(--border); background: var(--bg-surface); }
+.fx-help__msg--system { align-self: center; max-width: 100%; color: var(--text-secondary); font-size: .75rem; text-align: center; }
+.fx-help__escalate { display: flex; flex-wrap: wrap; gap: var(--space-1); padding: 0 var(--space-3) var(--space-2); }
+.fx-help__escalate .fx-help__ticket { margin: 0; }
+.fx-help__closed { margin: var(--space-2) var(--space-3); font-size: .75rem; }
+.fx-help__badge { display: inline-block; min-width: 1.1rem; margin-left: 4px; padding: 0 4px; border-radius: 999px;
+  background: var(--status-danger, #b42318); color: #fff; font-size: .6875rem; line-height: 1.1rem; text-align: center; }
+
+/* Support desk: a chat opened beside the queue. */
+.fx-desk-chat { display: flex; flex-direction: column; max-height: 70vh; }
+.fx-desk-chat .fx-help__log { list-style: none; margin: 0; padding: var(--space-3); overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); min-height: 12rem; }
+.fx-desk-chat__reply { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+.fx-desk-chat__reply textarea { flex: 1; height: auto; padding: var(--space-2); font-family: inherit; }
 
 @charset "UTF-8";
 html {

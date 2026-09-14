@@ -264,18 +264,15 @@ class GraphMailProvider implements MailProviderContract
     }
 
     /**
-     * Send through Graph — a reply when `$replyToProviderId` is given, otherwise a new
-     * message.
+     * Send through Graph — a reply or forward when `$replyToProviderId` is given, otherwise a
+     * new message.
      *
-     * 🔴 `/reply` rather than `/sendMail` for an answer, because Graph then sets
-     * `In-Reply-To` and `References` itself. Threading built by hand from those headers
-     * is threading that breaks the first time a client's mail server rewrites them — and
-     * a reply that starts a new thread in the customer's Outlook looks, to them, like we
-     * lost the conversation.
+     * 🔴 `/reply` and `/forward` rather than `/sendMail` for an answer, because Graph then sets
+     * `In-Reply-To` and `References` itself. Threading built by hand from those headers is
+     * threading that breaks the first time a client's mail server rewrites them.
      *
-     * ⚠️ NOTHING IS WRITTEN LOCALLY. The sent message returns on the next delta as an
-     * echo and is upserted on its unique `message_id`. Writing a row here would create a
-     * second copy of the same mail the moment that echo lands.
+     * ⚠️ NOTHING IS WRITTEN LOCALLY. The sent message returns on the next delta as an echo and
+     * is upserted on its unique `message_id`.
      */
     public function send(
         MailboxConnection $connection,
@@ -283,21 +280,21 @@ class GraphMailProvider implements MailProviderContract
         array $cc,
         string $subject,
         string $body,
-        ?string $replyToProviderId = null
+        ?string $replyToProviderId = null,
+        array $attachments = [],
+        string $mode = 'reply'
     ): array {
-        $recipients = fn (array $list) => array_values(array_map(
-            fn ($address) => ['emailAddress' => ['address' => $address]],
-            $list
-        ));
+        if ($attachments !== []) {
+            return $this->sendWithAttachments($connection, $to, $cc, $subject, $body, $replyToProviderId, $attachments, $mode);
+        }
 
         if ($replyToProviderId !== null) {
-            $url = $this->api() . '/me/messages/' . rawurlencode($replyToProviderId) . '/reply';
-            // Graph carries the original recipients on a reply, so `message` here is the
-            // delta: our text, plus anyone the operator ADDED.
+            $url = $this->api() . '/me/messages/' . rawurlencode($replyToProviderId) . ($mode === 'forward' ? '/forward' : '/reply');
+            // Graph builds the quoted original; `message` carries the recipients the operator chose.
             $payload = [
                 'message' => [
-                    'toRecipients' => $recipients($to),
-                    'ccRecipients' => $recipients($cc),
+                    'toRecipients' => $this->recipients($to),
+                    'ccRecipients' => $this->recipients($cc),
                 ],
                 // ⚠️ HTML: Graph inserts the comment above the quoted original it builds itself.
                 // Not yet checked against a live tenant (GAPS).
@@ -309,28 +306,152 @@ class GraphMailProvider implements MailProviderContract
                 'message' => [
                     'subject'      => $subject,
                     'body'         => ['contentType' => 'HTML', 'content' => $body],
-                    'toRecipients' => $recipients($to),
-                    'ccRecipients' => $recipients($cc),
+                    'toRecipients' => $this->recipients($to),
+                    'ccRecipients' => $this->recipients($cc),
                 ],
                 'saveToSentItems' => true,
             ];
         }
 
-        $response = Http::withToken($connection->access_token)
-            ->asJson()
-            ->post($url, $payload);
+        $response = Http::withToken($connection->access_token)->asJson()->post($url, $payload);
 
         if ($response->failed()) {
-            // ⚠️ Graph's own message, not a generic one. "Send failed" tells an operator
-            // nothing they can act on; "mailbox is over quota" or "recipient rejected"
-            // tells them whether to retry or to fix the address.
-            return [
-                'ok'    => false,
-                'error' => $response->json('error.message') ?? ('HTTP ' . $response->status()),
-            ];
+            // ⚠️ Graph's own message, not a generic one: "mailbox is over quota" tells an
+            // operator whether to retry or fix the address; "send failed" does not.
+            return ['ok' => false, 'error' => $this->graphError($response)];
         }
 
         return ['ok' => true, 'error' => null];
+    }
+
+    /** Graph takes at most this much attachment in one request; larger files go up in pieces. */
+    private const SMALL_ATTACHMENT = 3 * 1024 * 1024;
+
+    /** An upload-session piece: Graph requires a multiple of 320 KiB. */
+    private const UPLOAD_CHUNK = 10 * 320 * 1024;
+
+    /**
+     * With files: build a DRAFT, attach, then send it.
+     *
+     * 🔴 `/reply` and `/sendMail` carry at most 3 MB of attachments in one request, so anything
+     * with files goes through a draft: `createReply` / `createForward` (still threaded, and Graph
+     * still writes the quoted original), our body put above that original, each file attached —
+     * under 3 MB in one call, larger through an upload session — and then `/send`.
+     *
+     * ⚠️ A draft that fails half way is DELETED, or it sits in the user's Drafts folder looking
+     * like something they started.
+     */
+    private function sendWithAttachments(
+        MailboxConnection $connection, array $to, array $cc, string $subject, string $body,
+        ?string $replyToProviderId, array $attachments, string $mode
+    ): array {
+        $api = $this->api();
+        $http = fn () => Http::withToken($connection->access_token)->acceptJson();
+
+        $created = $replyToProviderId !== null
+            ? $http()->withBody('{}', 'application/json')
+                ->post($api . '/me/messages/' . rawurlencode($replyToProviderId) . ($mode === 'forward' ? '/createForward' : '/createReply'))
+            : $http()->asJson()->post($api . '/me/messages', [
+                'subject' => $subject,
+                'body' => ['contentType' => 'HTML', 'content' => $body],
+                'toRecipients' => $this->recipients($to),
+                'ccRecipients' => $this->recipients($cc),
+            ]);
+
+        if ($created->failed() || blank($created->json('id'))) {
+            return ['ok' => false, 'error' => $this->graphError($created)];
+        }
+
+        $draft = $api . '/me/messages/' . rawurlencode($created->json('id'));
+
+        try {
+            if ($replyToProviderId !== null) {
+                $this->check($http()->asJson()->patch($draft, [
+                    'toRecipients' => $this->recipients($to),
+                    'ccRecipients' => $this->recipients($cc),
+                    'body' => ['contentType' => 'HTML', 'content' => $this->aboveQuote($body, (string) $created->json('body.content'))],
+                ]));
+            }
+
+            foreach ($attachments as $file) {
+                $this->attach($connection, $draft, $file);
+            }
+
+            $this->check($http()->withBody('{}', 'application/json')->post($draft . '/send'));
+        } catch (RuntimeException $e) {
+            Http::withToken($connection->access_token)->delete($draft);
+
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+
+        return ['ok' => true, 'error' => null];
+    }
+
+    /** One file onto a draft. */
+    private function attach(MailboxConnection $connection, string $draft, array $file): void
+    {
+        $size = strlen($file['bytes']);
+
+        if ($size < self::SMALL_ATTACHMENT) {
+            $this->check(Http::withToken($connection->access_token)->asJson()->post($draft . '/attachments', [
+                '@odata.type'  => '#microsoft.graph.fileAttachment',
+                'name'         => $file['name'],
+                'contentType'  => $file['mime_type'],
+                'contentBytes' => base64_encode($file['bytes']),
+            ]));
+
+            return;
+        }
+
+        $session = $this->check(Http::withToken($connection->access_token)->asJson()
+            ->post($draft . '/attachments/createUploadSession', [
+                'AttachmentItem' => ['attachmentType' => 'file', 'name' => $file['name'], 'size' => $size],
+            ]));
+
+        $uploadUrl = $session->json('uploadUrl');
+
+        for ($offset = 0; $offset < $size; $offset += self::UPLOAD_CHUNK) {
+            $piece = substr($file['bytes'], $offset, self::UPLOAD_CHUNK);
+            $last = $offset + strlen($piece) - 1;
+
+            // 🔴 NO Authorization header: the upload URL is pre-authenticated, and Graph REJECTS
+            // a request to it that carries a bearer token.
+            $this->check(Http::withHeaders(['Content-Range' => "bytes {$offset}-{$last}/{$size}"])
+                ->withBody($piece, 'application/octet-stream')
+                ->put($uploadUrl));
+        }
+    }
+
+    /** Our body inside the draft's HTML, above the original Graph quoted. */
+    private function aboveQuote(string $body, string $draftHtml): string
+    {
+        if (preg_match('/<body[^>]*>/i', $draftHtml, $m, PREG_OFFSET_CAPTURE)) {
+            $at = $m[0][1] + strlen($m[0][0]);
+
+            return substr($draftHtml, 0, $at) . $body . substr($draftHtml, $at);
+        }
+
+        return $body . $draftHtml;
+    }
+
+    private function recipients(array $list): array
+    {
+        return array_values(array_map(fn ($address) => ['emailAddress' => ['address' => $address]], $list));
+    }
+
+    /** @throws RuntimeException with Graph's own message */
+    private function check($response)
+    {
+        if ($response->failed()) {
+            throw new RuntimeException($this->graphError($response));
+        }
+
+        return $response;
+    }
+
+    private function graphError($response): string
+    {
+        return $response->json('error.message') ?? ('HTTP ' . $response->status());
     }
 
     private function api(): string

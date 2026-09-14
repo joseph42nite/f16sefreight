@@ -81,6 +81,10 @@ interface MailProviderContract
      * @param  ?string   $replyToProviderId  the provider's id for the message being
      *                                       answered. Set it and the provider threads the
      *                                       reply; omit it and this starts a new thread.
+     * @param  array<int, array{name: string, mime_type: string, bytes: string}>  $attachments
+     *                                       already scanned; at most 25 MB together
+     * @param  string    $mode               'reply' or 'forward' — which one the provider builds
+     *                                       from `$replyToProviderId`
      * @return array{ok: bool, error: ?string}
      */
     public function send(
@@ -89,6 +93,8 @@ interface MailProviderContract
         array $cc,
         string $subject,
         string $body,
-        ?string $replyToProviderId = null
+        ?string $replyToProviderId = null,
+        array $attachments = [],
+        string $mode = 'reply'
     ): array;
 }

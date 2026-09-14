@@ -836,6 +836,174 @@ class InboxTriageTest extends TestCase
         $this->api($this->pricing)->get($this->url("/api/inbox/attachments/{$attachmentId}"))->assertNotFound();
     }
 
+    // ─── Attachments on a reply or forward (PRD §5.2.3) ──────────────────────
+
+    /** Graph, answering the draft flow; every request is recorded in order. */
+    private array $graphCalls = [];
+
+    private function fakeGraphDrafts(int $attachmentStatus = 201): void
+    {
+        $this->graphCalls = [];
+
+        \Illuminate\Support\Facades\Http::fake(function ($request) use ($attachmentStatus) {
+            $this->graphCalls[] = $request;
+            $url = $request->url();
+
+            if (str_contains($url, '/createReply') || str_contains($url, '/createForward')) {
+                return \Illuminate\Support\Facades\Http::response(['id' => 'draft-1', 'body' => ['content' => '<html><body><div>original mail</div></body></html>']], 201);
+            }
+            if (str_contains($url, '/createUploadSession')) {
+                return \Illuminate\Support\Facades\Http::response(['uploadUrl' => 'https://upload.graph.test/session-1'], 201);
+            }
+            if (str_contains($url, 'upload.graph.test')) {
+                return \Illuminate\Support\Facades\Http::response('', 200);
+            }
+            if (str_contains($url, '/attachments')) {
+                return \Illuminate\Support\Facades\Http::response(['error' => ['message' => 'The attachment is too large.']], $attachmentStatus);
+            }
+
+            return \Illuminate\Support\Facades\Http::response('', 202);
+        });
+    }
+
+    private function called(string $method, string $fragment): array
+    {
+        return array_values(array_filter($this->graphCalls, fn ($r) => $r->method() === $method && str_contains($r->url(), $fragment)));
+    }
+
+    private function replyWith(int $threadId, array $fields)
+    {
+        return $this->api($this->pricing)->post($this->url("/api/inbox/threads/{$threadId}/reply"), array_merge([
+            'to' => ['ops@client.test'], 'subject' => 'Re: Quote request', 'body' => '<p>Packing list attached.</p>',
+        ], $fields), ['Accept' => 'application/json']);
+    }
+
+    /**
+     * 🔴 With files, a reply goes through a DRAFT: created as a reply (so it stays threaded), our
+     * body put above Graph's quoted original, the file attached, then sent.
+     */
+    public function test_a_reply_with_an_upload_is_sent_through_a_threaded_draft(): void
+    {
+        $this->fakeGraphDrafts();
+        $this->scanner();
+
+        $this->replyWith($this->thread(), [
+            'files' => [\Illuminate\Http\UploadedFile::fake()->createWithContent('rate.pdf', '%PDF-1.4 rate')],
+        ])->assertOk();
+
+        $this->assertCount(1, $this->called('POST', '/createReply'));
+
+        $patch = $this->called('PATCH', '/me/messages/draft-1')[0];
+        $this->assertMatchesRegularExpression('/<body><table.*Packing list attached\..*<\/table><div>original mail/s', $patch['body']['content']);
+
+        $attached = $this->called('POST', '/draft-1/attachments')[0];
+        $this->assertSame('rate.pdf', $attached['name']);
+        $this->assertSame(base64_encode('%PDF-1.4 rate'), $attached['contentBytes']);
+
+        $this->assertCount(1, $this->called('POST', '/draft-1/send'));
+    }
+
+    /** PRD §5.2.3: a forward re-attaches the original files — from the cache, no re-download. */
+    public function test_a_forward_carries_the_conversations_files_from_the_cache(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        \Illuminate\Support\Facades\Storage::disk('local')->put('mail-attachments/pl', '%PDF-1.4 packing list');
+        $this->fakeGraphDrafts();
+        $this->scanner();
+
+        $id = $this->thread();
+        $attachmentId = $this->attachment($id, ['fetch_state' => 'cached', 'file_path' => 'mail-attachments/pl']);
+
+        $this->replyWith($id, ['mode' => 'forward', 'to' => ['agent@overseas.test'], 'attachment_ids' => [$attachmentId]])
+            ->assertOk();
+
+        $this->assertCount(1, $this->called('POST', '/createForward'));
+        $this->assertCount(0, $this->called('GET', '$value'), 'A cached file is not fetched again.');
+        $this->assertSame(base64_encode('%PDF-1.4 packing list'), $this->called('POST', '/draft-1/attachments')[0]['contentBytes']);
+    }
+
+    public function test_a_forward_without_files_uses_graphs_forward(): void
+    {
+        $this->fakeGraphDrafts();
+
+        $this->replyWith($this->thread(), ['mode' => 'forward', 'to' => ['agent@overseas.test']])->assertOk();
+
+        $this->assertCount(1, $this->called('POST', '/forward'));
+    }
+
+    /** 🔴 Over 3 MB goes up in pieces, and the upload URL is pre-authenticated — no bearer token. */
+    public function test_a_large_file_is_uploaded_in_pieces_without_the_token(): void
+    {
+        $this->fakeGraphDrafts();
+        $this->scanner();
+
+        $this->replyWith($this->thread(), [
+            'files' => [\Illuminate\Http\UploadedFile::fake()->createWithContent('scan.pdf', str_repeat('A', 4 * 1024 * 1024))],
+        ])->assertOk();
+
+        $this->assertCount(1, $this->called('POST', '/createUploadSession'));
+        $puts = $this->called('PUT', 'upload.graph.test');
+        $this->assertCount(2, $puts);
+        $this->assertSame('bytes 0-3276799/4194304', $puts[0]->header('Content-Range')[0]);
+        $this->assertSame('bytes 3276800-4194303/4194304', $puts[1]->header('Content-Range')[0]);
+        $this->assertFalse($puts[0]->hasHeader('Authorization'));
+        $inOneRequest = array_filter($this->called('POST', '/draft-1/attachments'), fn ($r) => ! str_contains($r->url(), 'createUploadSession'));
+        $this->assertCount(0, $inOneRequest, 'Not also sent in one request.');
+    }
+
+    public function test_an_infected_upload_is_refused_and_nothing_is_sent(): void
+    {
+        $this->fakeGraphDrafts();
+        $this->scanner('Eicar-Test-Signature');
+
+        $this->replyWith($this->thread(), [
+            'files' => [\Illuminate\Http\UploadedFile::fake()->createWithContent('bad.pdf', 'X5O!P%@AP')],
+        ])->assertStatus(422)->assertJsonPath('reason', 'blocked');
+
+        $this->assertSame([], $this->graphCalls);
+    }
+
+    public function test_more_than_25_mb_together_is_refused(): void
+    {
+        $this->fakeGraphDrafts();
+        $this->scanner();
+
+        $this->replyWith($this->thread(), [
+            'files' => [
+                \Illuminate\Http\UploadedFile::fake()->createWithContent('a.pdf', str_repeat('A', 13 * 1024 * 1024)),
+                \Illuminate\Http\UploadedFile::fake()->createWithContent('b.pdf', str_repeat('B', 13 * 1024 * 1024)),
+            ],
+        ])->assertStatus(422)->assertJsonPath('reason', 'too_large');
+
+        $this->assertSame([], $this->graphCalls);
+    }
+
+    /** ⚠️ Only this conversation's files can be attached. */
+    public function test_a_file_from_another_conversation_is_refused(): void
+    {
+        $this->fakeGraphDrafts();
+        $this->scanner();
+
+        $elsewhere = $this->attachment($this->thread(), ['fetch_state' => 'cached', 'file_path' => 'x']);
+
+        $this->replyWith($this->thread(), ['attachment_ids' => [$elsewhere]])
+            ->assertStatus(422)->assertJsonPath('reason', 'not_on_thread');
+    }
+
+    /** ⚠️ A draft that fails half way is deleted, so it does not sit in the user's Drafts folder. */
+    public function test_a_failed_attachment_deletes_the_draft(): void
+    {
+        $this->fakeGraphDrafts(413);
+        $this->scanner();
+
+        $this->replyWith($this->thread(), [
+            'files' => [\Illuminate\Http\UploadedFile::fake()->createWithContent('rate.pdf', '%PDF')],
+        ])->assertStatus(502)->assertJsonPath('error', 'The attachment is too large.');
+
+        $this->assertCount(1, $this->called('DELETE', '/me/messages/draft-1'));
+        $this->assertCount(0, $this->called('POST', '/draft-1/send'));
+    }
+
     /**
      * 🔴 NOTHING IS WRITTEN LOCALLY on send. The message comes back on the next delta as
      * an echo and upserts on its unique `message_id`; a row written here would be a second

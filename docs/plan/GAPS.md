@@ -1222,7 +1222,18 @@ PHP 599 passed, 1 skipped.
 | 229 | **Migration** `2026_09_14_100000` | `mime_type` 50 → 255 (an .xlsx type is 65), `provider_attachment_id` 255 → 512, `size_bytes` added |
 | 230 | **Chips under each mail; PDFs go straight to Extraction** | Click opens the file in a new tab; **Extract** stages the PDF in the Extraction panel (reading it is still an explicit Extract). Shown only where the panel exists — an enquiry with a job |
 | 231 | **Demo files** — `DemoMailAttachmentsSeeder` | A "Commercial Invoice (sample).pdf" and "Packing List (sample).pdf" on each of the 40 demo mails that say a packing list is attached, generated from the thread's own lane and pieces, marked SAMPLE, scanned, stored as `cached`. Called from `FreightDemoSeeder`. ⚠️ Helvetica, not DejaVu: embedding DejaVu made each 2-page-less sample 880 KB and ran PHP out of memory |
-| 232 | ⚪ **Not built yet** | `attachments:evict-cache` (the daily drop of bytes past `cache_expires_at`, guide §4.7); Forward re-attaching the originals and outbound attachments (PRD §5.2.3); `AttachmentRefetchTest` re-fetch after eviction. The 25 MB cap is not enforced on open |
+| 232 | ⚪ **Not built yet** | `attachments:evict-cache` (the daily drop of bytes past `cache_expires_at`, guide §4.7); `AttachmentRefetchTest` re-fetch after eviction. The 25 MB cap is not enforced on open. ~~Forward re-attaching the originals and outbound attachments~~ — built, #233 |
+
+🟢 **Built 2026-09-14 — attachments on replies and forwards** (user decisions: upload + files on the thread, not job documents; up to 25 MB, larger refused):
+
+| # | Built / found | Detail |
+|---|---|---|
+| 233 | **The composer attaches files** | **Attach files** (from the computer) and a multi-select **From this conversation** dropdown; attached files show as removable chips; over 25 MB together the composer says so and Send is disabled. **Forward starts with the forwarded mail's own files attached** (PRD §5.2.3), taken from the cache where already fetched — no re-download |
+| 234 | **Server: scanned, capped, thread-scoped** | `files[]` and `attachment_ids[]` on `POST /inbox/threads/{id}/reply`. Every upload goes through ClamAV (infected → 422, scanner down → 503, nothing sent); conversation files through `AttachmentStore` — the fetch-scan-keep logic `EmailAttachmentController` now shares. An id from another conversation → 422. 25 MB together (PRD §5.2.3) |
+| 235 | 🔴 **Found: Forward was sent as a REPLY** | The composer's Forward only changed the starting recipients; the server always called Graph `/reply`, which answers the original sender. `mode: forward` now uses `/forward` (or `createForward` with files), and the composer sends the message it forwards as `in_reply_to` |
+| 236 | **Graph: files go through a draft** | `/reply` and `/sendMail` carry at most 3 MB of attachments, so with files: `createReply`/`createForward` (still threaded; Graph still quotes the original) → our HTML put inside the draft's `<body>`, above the quote → each file attached (< 3 MB in one call; larger through `createUploadSession`, 3,276,800-byte pieces, **no bearer token** on the pre-authenticated upload URL) → `/send`. A draft that fails half way is **deleted**. ⚠️ Not yet run against a live tenant |
+| 237 | ⚠️ **The local dev server allowed 2 MB uploads** | Homebrew PHP defaults (`upload_max_filesize` 2M, `post_max_size` 8M). `.claude/launch.json` now sets `PHP_INI_SCAN_DIR=:$PWD/docker/php`, loading the same `local.ini` Docker uses (25M / 30M); nginx already allows 30M. **Production needs the same three settings** |
+| 238 | ⚪ **Not built** | Job documents in the picker (the table has no rows and no screen yet); a share link for anything over 25 MB (PRD §5.7) |
 
 ---
 

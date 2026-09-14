@@ -221,8 +221,51 @@
               No signature set for this mailbox. Add one in Settings → Mailboxes.
             </p>
 
+            <!--
+              🔴 ATTACHMENTS (PRD §5.2.3): from the operator's computer, or files already on this
+              conversation. Forward starts with the forwarded mail's own files. Up to 25 MB
+              together; every upload is virus-scanned by the server before it leaves.
+            -->
+            <div class="fx-compose__attach">
+              <button type="button" class="fx-btn" :disabled="sending" @click="$refs.attachPicker.click()">📎 Attach files</button>
+              <input ref="attachPicker" type="file" multiple class="fx-drop__input" @change="onAttach" />
+
+              <div v-if="threadAttachments.length" class="fx-multi">
+                <button
+                  type="button"
+                  class="fx-input fx-multi__button"
+                  :disabled="sending"
+                  aria-haspopup="listbox"
+                  :aria-expanded="String(pickingThreadFiles)"
+                  @click="pickingThreadFiles = !pickingThreadFiles"
+                >From this conversation{{ draft.attachmentIds.length ? " (" + draft.attachmentIds.length + ")" : "" }}</button>
+                <ul v-if="pickingThreadFiles" class="fx-multi__menu" role="listbox" aria-multiselectable="true">
+                  <li
+                    v-for="a in threadAttachments"
+                    :key="a.id"
+                    role="option"
+                    :aria-selected="String(draft.attachmentIds.includes(a.id))"
+                    class="fx-multi__option"
+                    @click="toggleThreadFile(a.id)"
+                  ><span class="fx-multi__tick">{{ draft.attachmentIds.includes(a.id) ? "✓" : "" }}</span>{{ a.filename }}
+                    <span v-if="a.size_bytes" class="fx-muted">{{ fileSize(a.size_bytes) }}</span></li>
+                </ul>
+              </div>
+            </div>
+
+            <ul v-if="attachedList.length" class="fx-attachments">
+              <li v-for="f in attachedList" :key="f.key" class="fx-attachment">
+                <span class="fx-attachment__open">📎 {{ f.name }}
+                  <span v-if="f.size" class="fx-muted">{{ fileSize(f.size) }}</span></span>
+                <button type="button" class="fx-btn fx-btn--ghost" :aria-label="'Remove ' + f.name" :disabled="sending" @click="f.remove()">✕</button>
+              </li>
+            </ul>
+            <p v-if="attachedBytes > ATTACHMENT_CAP_BYTES" class="fx-error" role="alert">
+              The attachments come to {{ fileSize(attachedBytes) }}; a mail can carry at most 25 MB.
+            </p>
+
             <div class="fx-compose__actions">
-              <button class="fx-btn fx-btn--primary" :disabled="sending || !draft.to.trim() || !draft.body" @click="send">
+              <button class="fx-btn fx-btn--primary" :disabled="sending || !draft.to.trim() || !draft.body || attachedBytes > ATTACHMENT_CAP_BYTES" @click="send">
                 {{ sending ? "Sending…" : "Send" }}
               </button>
               <button class="fx-btn" :disabled="sending" @click="composing = false">Cancel</button>
@@ -486,6 +529,9 @@ import ExtractionPanel from "@/view/pages/freight/components/ExtractionPanel.vue
 import CostSheet from "@/view/pages/freight/components/CostSheet.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 
+/** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
+const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
+
 const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road"];
 
 /* §740's tab set. The two carrying real data today come first; the rest name the
@@ -565,7 +611,10 @@ export default {
        operator edits; splitting happens once, at send. */
     composing: false, sending: false, sendError: null, sentOk: false,
     cargoBusy: false, cargoError: null, cargoSaved: false,
-    draft: { to: "", cc: "", subject: "", body: "", includeSignature: true },
+    draft: { to: "", cc: "", subject: "", body: "", includeSignature: true, mode: "reply", inReplyTo: null, files: [], attachmentIds: [] },
+    ATTACHMENT_CAP_BYTES,
+    /** The "From this conversation" dropdown is open. */
+    pickingThreadFiles: false,
     /** The signature a reply on the open thread carries — HTML, already cleaned by the server. */
     signature: null,
     /** The attachment being fetched, and why the last one could not be. */
@@ -642,6 +691,26 @@ export default {
           confidence: cargo[k].confidence,
         }));
     },
+    /** Every file on this conversation, for the composer's picker. Blocked files cannot be sent. */
+    threadAttachments() {
+      return this.messages
+        .flatMap((m) => m.attachments || [])
+        .filter((a) => a.fetch_state !== "blocked");
+    },
+    /** What the draft carries, uploads and conversation files alike, each removable. */
+    attachedList() {
+      const picked = this.threadAttachments
+        .filter((a) => this.draft.attachmentIds.includes(a.id))
+        .map((a) => ({ key: "t" + a.id, name: a.filename, size: a.size_bytes, remove: () => this.toggleThreadFile(a.id) }));
+      const uploads = this.draft.files.map((f, i) => ({
+        key: "u" + i + f.name, name: f.name, size: f.size, remove: () => this.draft.files.splice(i, 1),
+      }));
+
+      return picked.concat(uploads);
+    },
+    attachedBytes() {
+      return this.attachedList.reduce((sum, f) => sum + (f.size || 0), 0);
+    },
     /** The Extraction panel exists only once the enquiry has a job (see the drawer's chain). */
     canExtractAttachments() {
       return this.workspaceTabs.length > 0 && !!(this.active && this.active.enquiry && this.active.job);
@@ -700,9 +769,13 @@ export default {
   created() {
     this.load();
   },
+  mounted() {
+    document.addEventListener("mousedown", this.closeThreadFiles);
+  },
   /* Leaving the inbox with the workspace open would strand the body class and collapse
      the rail on every other screen. */
   beforeDestroy() {
+    document.removeEventListener("mousedown", this.closeThreadFiles);
     document.body.classList.remove("fx-split");
   },
   methods: {
@@ -800,7 +873,12 @@ export default {
         // Forward deliberately starts EMPTY: it goes to someone not yet on the thread,
         // and pre-filling it with the current recipients is how a confidential rate
         // reaches the wrong party.
-        this.draft = { to: "", cc: "", subject: prefixed("Fwd: "), body: "", includeSignature: true };
+        this.draft = {
+          to: "", cc: "", subject: prefixed("Fwd: "), body: "", includeSignature: true,
+          // PRD §5.2.3: a forward re-attaches the original files, from the cache where fetched.
+          mode: "forward", inReplyTo: last.id, files: [],
+          attachmentIds: (last.attachments || []).filter((a) => a.fetch_state !== "blocked").map((a) => a.id),
+        };
       } else {
         this.draft = {
           to: strip(last.from).join(", "),
@@ -808,6 +886,7 @@ export default {
           subject: prefixed("Re: "),
           body: "",
           includeSignature: true,
+          mode: "reply", inReplyTo: last.id, files: [], attachmentIds: [],
         };
       }
 
@@ -821,13 +900,19 @@ export default {
       this.sending = true;
       this.sendError = null;
 
-      ApiService.post("/inbox/threads/" + this.active.id + "/reply", {
-        to: split(this.draft.to),
-        cc: split(this.draft.cc),
-        subject: this.draft.subject,
-        body: this.draft.body,
-        include_signature: this.draft.includeSignature,
-      })
+      // Multipart, because files go with it.
+      const form = new FormData();
+      split(this.draft.to).forEach((a) => form.append("to[]", a));
+      split(this.draft.cc).forEach((a) => form.append("cc[]", a));
+      form.append("subject", this.draft.subject);
+      form.append("body", this.draft.body);
+      form.append("include_signature", this.draft.includeSignature ? "1" : "0");
+      form.append("mode", this.draft.mode);
+      if (this.draft.inReplyTo) form.append("in_reply_to", this.draft.inReplyTo);
+      this.draft.attachmentIds.forEach((id) => form.append("attachment_ids[]", id));
+      this.draft.files.forEach((f) => form.append("files[]", f));
+
+      ApiService.post("/inbox/threads/" + this.active.id + "/reply", form)
         .then(() => {
           this.composing = false;
           this.sentOk = true;
@@ -871,6 +956,20 @@ export default {
         .then(() => { this.cargoSaved = true; })
         .catch((e) => { this.cargoError = this.messageFor(e); })
         .finally(() => { this.cargoBusy = false; });
+    },
+    onAttach(e) {
+      this.draft.files.push(...e.target.files);
+      // Reset, or picking the same file again fires no change event.
+      e.target.value = "";
+    },
+    toggleThreadFile(id) {
+      const at = this.draft.attachmentIds.indexOf(id);
+      if (at === -1) this.draft.attachmentIds.push(id);
+      else this.draft.attachmentIds.splice(at, 1);
+    },
+    /** A click outside the open "From this conversation" dropdown closes it. */
+    closeThreadFiles(event) {
+      if (this.pickingThreadFiles && !event.target.closest(".fx-compose .fx-multi")) this.pickingThreadFiles = false;
     },
     isPdf(a) {
       return a.mime_type === "application/pdf" || /\.pdf$/i.test(a.filename || "");

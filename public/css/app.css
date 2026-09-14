@@ -5582,6 +5582,8 @@ body {
   padding-top: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
 .fx-compose__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .fx-compose__body { font-family: inherit; resize: vertical; }
+/* The composer's attach controls: a button and the conversation's files. */
+.fx-compose__attach { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
 /* The files a mail carried, as chips under its text. */
 .fx-attachments { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .fx-attachment { display: inline-flex; align-items: center; gap: var(--space-1); }

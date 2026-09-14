@@ -6,6 +6,9 @@ use App\EmailMessage;
 use App\Http\Middleware\BindPortalScope;
 use App\EmailThread;
 use App\MailboxConnection;
+use App\EmailAttachment;
+use App\Services\Mail\AttachmentException;
+use App\Services\Mail\AttachmentStore;
 use App\Services\Mail\MailBody;
 use App\Services\Mail\MailProviderRegistry;
 use App\Enquiry;
@@ -339,6 +342,12 @@ class EmailInboxController extends Controller
             'in_reply_to' => ['nullable', 'integer'],
             // The composer's "Add signature" switch. Absent = on.
             'include_signature' => ['nullable', 'boolean'],
+            'mode'    => ['nullable', 'in:reply,forward'],
+            // Files from the operator's computer, and files already on this conversation.
+            'files'   => ['nullable', 'array'],
+            'files.*' => ['file', 'max:' . (self::ATTACHMENT_CAP_BYTES / 1024)],
+            'attachment_ids'   => ['nullable', 'array'],
+            'attachment_ids.*' => ['integer'],
         ]);
 
         $last = DB::table('email_messages')
@@ -373,6 +382,12 @@ class EmailInboxController extends Controller
         // one place so it cannot be mangled per message (ui_ux_guide §composer).
         $signature = ($data['include_signature'] ?? true) ? $this->signatureFor($connection) : null;
 
+        try {
+            $attachments = $this->outgoingAttachments($request, $thread, $data['attachment_ids'] ?? []);
+        } catch (AttachmentException $e) {
+            return response()->json(['error' => $e->getMessage(), 'reason' => $e->reason], $e->status);
+        }
+
         $result = app(MailProviderRegistry::class)->for($connection->provider)->send(
             $connection,
             $data['to'],
@@ -382,7 +397,9 @@ class EmailInboxController extends Controller
             // ⚠️ NULL for a historical message that predates provider_message_id. The
             // send still goes out; it simply starts a new thread on the client's side
             // rather than silently failing.
-            $last->provider_message_id
+            $last->provider_message_id,
+            $attachments,
+            $data['mode'] ?? 'reply'
         );
 
         if (! $result['ok']) {
@@ -398,6 +415,56 @@ class EmailInboxController extends Controller
     }
 
     // ─── Internals ───────────────────────────────────────────────────────────
+
+    /** PRD §5.2.3: the provider cap, for everything attached to one mail together. */
+    private const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
+
+    /**
+     * The files a reply or forward carries: uploads, and files already on this conversation.
+     *
+     * 🔴 Every upload is virus-scanned before it leaves, and a conversation's file is fetched and
+     * scanned the same way opening it would (AttachmentStore) — a forward re-uses the cached copy.
+     * ⚠️ A file id from ANOTHER conversation is refused: the picker only offers this thread's.
+     *
+     * @return array<int, array{name: string, mime_type: string, bytes: string}>
+     * @throws AttachmentException
+     */
+    private function outgoingAttachments(Request $request, EmailThread $thread, array $attachmentIds): array
+    {
+        $store = app(AttachmentStore::class);
+        $files = [];
+
+        if ($attachmentIds !== []) {
+            $onThread = EmailAttachment::whereIn('id', $attachmentIds)
+                ->whereIn('email_message_id', EmailMessage::where('thread_key', $thread->thread_key)->select('id'))
+                ->get();
+
+            if ($onThread->count() !== count(array_unique($attachmentIds))) {
+                throw new AttachmentException('A file you picked is not on this conversation.', 'not_on_thread', 422);
+            }
+
+            foreach ($onThread as $attachment) {
+                $files[] = ['name' => $attachment->filename, 'mime_type' => $attachment->mime_type, 'bytes' => $store->bytes($attachment)];
+            }
+        }
+
+        foreach ($request->file('files', []) as $upload) {
+            $bytes = (string) file_get_contents($upload->getRealPath());
+            $name = $upload->getClientOriginalName();
+            $store->scan($bytes, null, $name);
+            $files[] = ['name' => $name, 'mime_type' => $upload->getMimeType() ?: 'application/octet-stream', 'bytes' => $bytes];
+        }
+
+        $total = array_sum(array_map(fn ($f) => strlen($f['bytes']), $files));
+
+        if ($total > self::ATTACHMENT_CAP_BYTES) {
+            throw new AttachmentException(
+                'The attachments come to ' . round($total / 1048576, 1) . ' MB; a mail can carry at most 25 MB.', 'too_large', 422
+            );
+        }
+
+        return $files;
+    }
 
     /**
      * The signature a mail from this mailbox carries: the mailbox's own, else the sender's.

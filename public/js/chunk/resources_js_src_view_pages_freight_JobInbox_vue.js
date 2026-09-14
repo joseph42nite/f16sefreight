@@ -34,6 +34,9 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 
 
+
+/** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
+const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
 const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road"];
 
 /* §740's tab set. The two carrying real data today come first; the rest name the
@@ -158,8 +161,15 @@ const WORKSPACE_TABS = [{
       cc: "",
       subject: "",
       body: "",
-      includeSignature: true
+      includeSignature: true,
+      mode: "reply",
+      inReplyTo: null,
+      files: [],
+      attachmentIds: []
     },
+    ATTACHMENT_CAP_BYTES,
+    /** The "From this conversation" dropdown is open. */
+    pickingThreadFiles: false,
     /** The signature a reply on the open thread carries — HTML, already cleaned by the server. */
     signature: null,
     /** The attachment being fetched, and why the last one could not be. */
@@ -230,6 +240,29 @@ const WORKSPACE_TABS = [{
         confidence: cargo[k].confidence
       }));
     },
+    /** Every file on this conversation, for the composer's picker. Blocked files cannot be sent. */
+    threadAttachments() {
+      return this.messages.flatMap(m => m.attachments || []).filter(a => a.fetch_state !== "blocked");
+    },
+    /** What the draft carries, uploads and conversation files alike, each removable. */
+    attachedList() {
+      const picked = this.threadAttachments.filter(a => this.draft.attachmentIds.includes(a.id)).map(a => ({
+        key: "t" + a.id,
+        name: a.filename,
+        size: a.size_bytes,
+        remove: () => this.toggleThreadFile(a.id)
+      }));
+      const uploads = this.draft.files.map((f, i) => ({
+        key: "u" + i + f.name,
+        name: f.name,
+        size: f.size,
+        remove: () => this.draft.files.splice(i, 1)
+      }));
+      return picked.concat(uploads);
+    },
+    attachedBytes() {
+      return this.attachedList.reduce((sum, f) => sum + (f.size || 0), 0);
+    },
     /** The Extraction panel exists only once the enquiry has a job (see the drawer's chain). */
     canExtractAttachments() {
       return this.workspaceTabs.length > 0 && !!(this.active && this.active.enquiry && this.active.job);
@@ -279,9 +312,13 @@ const WORKSPACE_TABS = [{
   created() {
     this.load();
   },
+  mounted() {
+    document.addEventListener("mousedown", this.closeThreadFiles);
+  },
   /* Leaving the inbox with the workspace open would strand the body class and collapse
      the rail on every other screen. */
   beforeDestroy() {
+    document.removeEventListener("mousedown", this.closeThreadFiles);
     document.body.classList.remove("fx-split");
   },
   methods: {
@@ -371,7 +408,12 @@ const WORKSPACE_TABS = [{
           cc: "",
           subject: prefixed("Fwd: "),
           body: "",
-          includeSignature: true
+          includeSignature: true,
+          // PRD §5.2.3: a forward re-attaches the original files, from the cache where fetched.
+          mode: "forward",
+          inReplyTo: last.id,
+          files: [],
+          attachmentIds: (last.attachments || []).filter(a => a.fetch_state !== "blocked").map(a => a.id)
         };
       } else {
         this.draft = {
@@ -379,7 +421,11 @@ const WORKSPACE_TABS = [{
           cc: mode === "replyAll" ? strip(last.cc).concat(strip(last.to)).join(", ") : "",
           subject: prefixed("Re: "),
           body: "",
-          includeSignature: true
+          includeSignature: true,
+          mode: "reply",
+          inReplyTo: last.id,
+          files: [],
+          attachmentIds: []
         };
       }
       this.sendError = null;
@@ -390,13 +436,19 @@ const WORKSPACE_TABS = [{
       const split = v => v.split(",").map(a => a.trim()).filter(Boolean);
       this.sending = true;
       this.sendError = null;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/inbox/threads/" + this.active.id + "/reply", {
-        to: split(this.draft.to),
-        cc: split(this.draft.cc),
-        subject: this.draft.subject,
-        body: this.draft.body,
-        include_signature: this.draft.includeSignature
-      }).then(() => {
+
+      // Multipart, because files go with it.
+      const form = new FormData();
+      split(this.draft.to).forEach(a => form.append("to[]", a));
+      split(this.draft.cc).forEach(a => form.append("cc[]", a));
+      form.append("subject", this.draft.subject);
+      form.append("body", this.draft.body);
+      form.append("include_signature", this.draft.includeSignature ? "1" : "0");
+      form.append("mode", this.draft.mode);
+      if (this.draft.inReplyTo) form.append("in_reply_to", this.draft.inReplyTo);
+      this.draft.attachmentIds.forEach(id => form.append("attachment_ids[]", id));
+      this.draft.files.forEach(f => form.append("files[]", f));
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/inbox/threads/" + this.active.id + "/reply", form).then(() => {
         this.composing = false;
         this.sentOk = true;
         /* No optimistic row. The sent mail returns on the next mailbox sync as an echo,
@@ -442,6 +494,19 @@ const WORKSPACE_TABS = [{
       }).finally(() => {
         this.cargoBusy = false;
       });
+    },
+    onAttach(e) {
+      this.draft.files.push(...e.target.files);
+      // Reset, or picking the same file again fires no change event.
+      e.target.value = "";
+    },
+    toggleThreadFile(id) {
+      const at = this.draft.attachmentIds.indexOf(id);
+      if (at === -1) this.draft.attachmentIds.push(id);else this.draft.attachmentIds.splice(at, 1);
+    },
+    /** A click outside the open "From this conversation" dropdown closes it. */
+    closeThreadFiles(event) {
+      if (this.pickingThreadFiles && !event.target.closest(".fx-compose .fx-multi")) this.pickingThreadFiles = false;
     },
     isPdf(a) {
       return a.mime_type === "application/pdf" || /\.pdf$/i.test(a.filename || "");
@@ -2489,11 +2554,101 @@ var render = function render() {
   }) : _vm.draft.includeSignature ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n            No signature set for this mailbox. Add one in Settings → Mailboxes.\n          ")]) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-compose__attach"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      type: "button",
+      disabled: _vm.sending
+    },
+    on: {
+      click: function ($event) {
+        return _vm.$refs.attachPicker.click();
+      }
+    }
+  }, [_vm._v("📎 Attach files")]), _vm._v(" "), _c("input", {
+    ref: "attachPicker",
+    staticClass: "fx-drop__input",
+    attrs: {
+      type: "file",
+      multiple: ""
+    },
+    on: {
+      change: _vm.onAttach
+    }
+  }), _vm._v(" "), _vm.threadAttachments.length ? _c("div", {
+    staticClass: "fx-multi"
+  }, [_c("button", {
+    staticClass: "fx-input fx-multi__button",
+    attrs: {
+      type: "button",
+      disabled: _vm.sending,
+      "aria-haspopup": "listbox",
+      "aria-expanded": String(_vm.pickingThreadFiles)
+    },
+    on: {
+      click: function ($event) {
+        _vm.pickingThreadFiles = !_vm.pickingThreadFiles;
+      }
+    }
+  }, [_vm._v("From this conversation" + _vm._s(_vm.draft.attachmentIds.length ? " (" + _vm.draft.attachmentIds.length + ")" : ""))]), _vm._v(" "), _vm.pickingThreadFiles ? _c("ul", {
+    staticClass: "fx-multi__menu",
+    attrs: {
+      role: "listbox",
+      "aria-multiselectable": "true"
+    }
+  }, _vm._l(_vm.threadAttachments, function (a) {
+    return _c("li", {
+      key: a.id,
+      staticClass: "fx-multi__option",
+      attrs: {
+        role: "option",
+        "aria-selected": String(_vm.draft.attachmentIds.includes(a.id))
+      },
+      on: {
+        click: function ($event) {
+          return _vm.toggleThreadFile(a.id);
+        }
+      }
+    }, [_c("span", {
+      staticClass: "fx-multi__tick"
+    }, [_vm._v(_vm._s(_vm.draft.attachmentIds.includes(a.id) ? "✓" : ""))]), _vm._v(_vm._s(a.filename) + "\n                  "), a.size_bytes ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(_vm.fileSize(a.size_bytes)))]) : _vm._e()]);
+  }), 0) : _vm._e()]) : _vm._e()]), _vm._v(" "), _vm.attachedList.length ? _c("ul", {
+    staticClass: "fx-attachments"
+  }, _vm._l(_vm.attachedList, function (f) {
+    return _c("li", {
+      key: f.key,
+      staticClass: "fx-attachment"
+    }, [_c("span", {
+      staticClass: "fx-attachment__open"
+    }, [_vm._v("📎 " + _vm._s(f.name) + "\n                "), f.size ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(_vm.fileSize(f.size)))]) : _vm._e()]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        type: "button",
+        "aria-label": "Remove " + f.name,
+        disabled: _vm.sending
+      },
+      on: {
+        click: function ($event) {
+          return f.remove();
+        }
+      }
+    }, [_vm._v("✕")])]);
+  }), 0) : _vm._e(), _vm._v(" "), _vm.attachedBytes > _vm.ATTACHMENT_CAP_BYTES ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v("\n            The attachments come to " + _vm._s(_vm.fileSize(_vm.attachedBytes)) + "; a mail can carry at most 25 MB.\n          ")]) : _vm._e(), _vm._v(" "), _c("div", {
     staticClass: "fx-compose__actions"
   }, [_c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
-      disabled: _vm.sending || !_vm.draft.to.trim() || !_vm.draft.body
+      disabled: _vm.sending || !_vm.draft.to.trim() || !_vm.draft.body || _vm.attachedBytes > _vm.ATTACHMENT_CAP_BYTES
     },
     on: {
       click: _vm.send

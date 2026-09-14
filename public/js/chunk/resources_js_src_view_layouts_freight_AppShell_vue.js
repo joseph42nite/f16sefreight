@@ -314,7 +314,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         this.chat = data;
         this.openChat();
       }).catch(e => {
-        this.chatError = this.readable(e, "Could not reach the support team. Raise a ticket instead.");
+        this.chatError = this.errorText(e, "Could not reach the support team. Raise a ticket instead.");
       }).finally(() => {
         this.chatBusy = false;
       });
@@ -357,7 +357,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         this.chatDraft = "";
         this.scrollChat();
       }).catch(e => {
-        this.chatError = this.readable(e, "Not sent. Try again.");
+        this.chatError = this.errorText(e, "Not sent. Try again.");
       }).finally(() => {
         this.chatBusy = false;
       });
@@ -367,7 +367,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         if (this.$refs.chatLog) this.$refs.chatLog.scrollTop = this.$refs.chatLog.scrollHeight;
       });
     },
-    readable(e, fallback) {
+    errorText(e, fallback) {
       const d = e.response && e.response.data || {};
       return d.error || d.message || fallback;
     },
@@ -604,8 +604,11 @@ function selectorFor(el) {
         element_selector: selectorFor(target),
         console_logs: _core_services_console_recorder__WEBPACK_IMPORTED_MODULE_1__["default"].entries()
       };
-      this.form = true;
-      this.capture(target);
+
+      // The page is captured BEFORE the form opens, or the screenshot shows the form over it.
+      this.capture().finally(() => {
+        this.form = true;
+      });
     },
     /**
      * html2canvas, loaded ON DEMAND.
@@ -616,7 +619,7 @@ function selectorFor(el) {
      * precondition.
      */
     capture() {
-      __webpack_require__.e(/*! import() | html2canvas */ "html2canvas").then(__webpack_require__.t.bind(__webpack_require__, /*! html2canvas */ "./node_modules/html2canvas/dist/html2canvas.js", 23)).then(mod => (mod.default || mod)(document.body, {
+      return __webpack_require__.e(/*! import() | html2canvas */ "html2canvas").then(__webpack_require__.t.bind(__webpack_require__, /*! html2canvas */ "./node_modules/html2canvas/dist/html2canvas.js", 23)).then(mod => (mod.default || mod)(document.body, {
         logging: false,
         scale: 0.5,
         // half scale: legible, and a fraction of the bytes
@@ -733,15 +736,9 @@ var render = function render() {
         "aria-label": "Requires an upgrade"
       }
     }, [_vm._v("🔒")]) : _vm._e()]);
-  }), 1)]), _vm._v(" "), _c("div", {
-    staticClass: "fx-body"
-  }, [_c("header", {
-    staticClass: "fx-header"
-  }, [_vm.portal ? _c("span", {
-    staticClass: "fx-portal-chip"
-  }, [_vm._v("\n        " + _vm._s(_vm.portalGlyph) + " " + _vm._s(_vm.portal.label) + "\n      ")]) : _vm._e(), _vm._v(" "), _c("div", {
-    staticClass: "fx-header__spacer"
-  }), _vm._v(" "), _c("HelpAssistant", {
+  }), 1), _vm._v(" "), _c("div", {
+    staticClass: "fx-rail__foot"
+  }, [_c("HelpAssistant", {
     on: {
       "raise-ticket": function ($event) {
         return _vm.$refs.reporter.reportWithConversation($event);
@@ -749,6 +746,14 @@ var render = function render() {
     }
   }), _vm._v(" "), _c("VisualReporter", {
     ref: "reporter"
+  })], 1)]), _vm._v(" "), _c("div", {
+    staticClass: "fx-body"
+  }, [_c("header", {
+    staticClass: "fx-header"
+  }, [_vm.portal ? _c("span", {
+    staticClass: "fx-portal-chip"
+  }, [_vm._v("\n        " + _vm._s(_vm.portalGlyph) + " " + _vm._s(_vm.portal.label) + "\n      ")]) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-header__spacer"
   }), _vm._v(" "), _c("BellPanel"), _vm._v(" "), _c("span", {
     staticClass: "fx-header__who"
   }, [_vm._v("\n        " + _vm._s(_vm.designation)), _vm.tier ? [_vm._v(" · " + _vm._s(_vm.tier))] : _vm._e()], 2)], 1), _vm._v(" "), _c("main", {
@@ -982,7 +987,7 @@ var render = function render() {
   return _c("div", {
     staticClass: "fx-help"
   }, [_c("button", {
-    staticClass: "fx-btn fx-btn--ghost",
+    staticClass: "fx-rail__item fx-help__launch",
     attrs: {
       "aria-label": "Help assistant",
       "data-help": "help-assistant",
@@ -991,7 +996,7 @@ var render = function render() {
     on: {
       click: _vm.toggle
     }
-  }, [_vm._v("💬 Help"), _vm.unread ? _c("span", {
+  }, [_vm._m(0), _vm.unread ? _c("span", {
     staticClass: "fx-help__badge",
     attrs: {
       "aria-label": _vm.unread + " new support messages"
@@ -1187,14 +1192,23 @@ var render = function render() {
     }
   }, [_vm._v("\n        " + _vm._s(_vm.chat && _vm.chat.status !== "resolved" ? "Open your support chat" : "Talk to a support agent") + "\n      ")]), _vm._v(" "), _c("button", {
     staticClass: "fx-btn fx-btn--ghost fx-help__ticket",
+    attrs: {
+      "data-help": "report-problem"
+    },
     on: {
       click: _vm.raiseTicket
     }
-  }, [_vm._v("Report a problem on this page")])]), _vm._v(" "), _vm.chatError ? _c("p", {
+  }, [_vm._v("⚑ Raise a ticket · point at what's wrong")])]), _vm._v(" "), _vm.chatError ? _c("p", {
     staticClass: "fx-error fx-help__closed"
   }, [_vm._v(_vm._s(_vm.chatError))]) : _vm._e()]], 2) : _vm._e()]);
 };
-var staticRenderFns = [];
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("span", [_vm._v("💬 "), _c("span", {
+    staticClass: "fx-rail__label"
+  }, [_vm._v("Help")])]);
+}];
 render._withStripped = true;
 
 
@@ -1214,16 +1228,7 @@ __webpack_require__.r(__webpack_exports__);
 var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
-  return _c("div", [!_vm.picking && !_vm.form ? _c("button", {
-    staticClass: "fx-btn fx-btn--ghost fx-reporter__launch",
-    attrs: {
-      "aria-label": "Report a problem",
-      "data-help": "report-problem"
-    },
-    on: {
-      click: _vm.startPicking
-    }
-  }, [_vm._v("⚑")]) : _vm._e(), _vm._v(" "), _vm.picking ? _c("div", {
+  return _c("div", [_vm.picking ? _c("div", {
     staticClass: "fx-reporter__banner",
     attrs: {
       role: "status"

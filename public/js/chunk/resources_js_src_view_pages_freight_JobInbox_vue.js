@@ -1677,10 +1677,16 @@ const PARTY_REQUIRED = {
         if (node !== undefined) source[key] = node;
       });
       const result = (0,_core_config_awbFieldRules__WEBPACK_IMPORTED_MODULE_3__.cleanParty)(this.target, party, source);
+
+      // 🔴 Only what actually changed, and at the confidence it already had: a state or country the
+      // model only worked out stays a suggestion, so cleaning it does not get it saved.
       Object.keys(result.values).forEach(key => {
+        const node = source[key];
+        if (raw(node) === result.values[key]) return;
+        const confidence = node && typeof node === "object" && node.confidence || "high";
         this.$set(this.manual, key, {
           value: result.values[key],
-          confidence: "high"
+          confidence
         });
       });
       this.fitReport = result.changes.length ? {
@@ -4128,12 +4134,15 @@ var render = function render() {
       }
     }, [_vm._v(_vm._s(_vm.editing[row.key] ? "Done" : "Edit"))]) : _vm._e(), _vm._v(" "), row.party && row.value ? _c("button", {
       staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        title: "Tidy spaces, remove characters the " + _vm.targetLabel + " will not accept, and check the lengths"
+      },
       on: {
         click: function ($event) {
           return _vm.fit(row.party);
         }
       }
-    }, [_vm._v("Fit to " + _vm._s(_vm.targetLabel))]) : _vm._e()])]);
+    }, [_vm._v("Clean for " + _vm._s(_vm.targetLabel))]) : _vm._e()])]);
   }), 0)]), _vm._v(" "), _vm.fitReport ? _c("div", {
     staticClass: "fx-warn",
     attrs: {
@@ -4275,7 +4284,7 @@ var staticRenderFns = [function () {
     }
   }, [_c("span", {
     staticClass: "fx-sr-only"
-  }, [_vm._v("Fit to the form")])])])]);
+  }, [_vm._v("Edit or clean for the waybill")])])])]);
 }];
 render._withStripped = true;
 

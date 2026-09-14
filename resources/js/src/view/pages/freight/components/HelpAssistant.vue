@@ -1,13 +1,13 @@
 <template>
   <div class="fx-help">
-    <!-- The launcher sits beside Report a problem: help first, a ticket when help runs out. -->
+    <!-- At the foot of the sidebar (user, 2026-09-14): help, support chat and tickets in one place. -->
     <button
-      class="fx-btn fx-btn--ghost"
+      class="fx-rail__item fx-help__launch"
       aria-label="Help assistant"
       data-help="help-assistant"
       :aria-expanded="String(open)"
       @click="toggle"
-    >💬 Help<span v-if="unread" class="fx-help__badge" :aria-label="unread + ' new support messages'">{{ unread }}</span></button>
+    ><span>💬 <span class="fx-rail__label">Help</span></span><span v-if="unread" class="fx-help__badge" :aria-label="unread + ' new support messages'">{{ unread }}</span></button>
 
     <section v-if="open" class="fx-help__panel" role="dialog" aria-label="Help assistant">
       <header class="fx-help__head">
@@ -88,7 +88,7 @@
         <button class="fx-btn fx-btn--ghost fx-help__ticket" :disabled="chatBusy" @click="connect">
           {{ chat && chat.status !== "resolved" ? "Open your support chat" : "Talk to a support agent" }}
         </button>
-        <button class="fx-btn fx-btn--ghost fx-help__ticket" @click="raiseTicket">Report a problem on this page</button>
+        <button class="fx-btn fx-btn--ghost fx-help__ticket" data-help="report-problem" @click="raiseTicket">⚑ Raise a ticket · point at what's wrong</button>
       </div>
       <p v-if="chatError" class="fx-error fx-help__closed">{{ chatError }}</p>
       </template>
@@ -153,7 +153,7 @@ export default {
 
       ApiService.post("/support/chats", { route: this.$route ? this.$route.path : null, help_transcript: transcript.length ? transcript : undefined })
         .then(({ data }) => { this.chat = data; this.openChat(); })
-        .catch((e) => { this.chatError = this.readable(e, "Could not reach the support team. Raise a ticket instead."); })
+        .catch((e) => { this.chatError = this.errorText(e, "Could not reach the support team. Raise a ticket instead."); })
         .finally(() => { this.chatBusy = false; });
     },
     openChat() {
@@ -196,13 +196,13 @@ export default {
           this.chatDraft = "";
           this.scrollChat();
         })
-        .catch((e) => { this.chatError = this.readable(e, "Not sent. Try again."); })
+        .catch((e) => { this.chatError = this.errorText(e, "Not sent. Try again."); })
         .finally(() => { this.chatBusy = false; });
     },
     scrollChat() {
       this.$nextTick(() => { if (this.$refs.chatLog) this.$refs.chatLog.scrollTop = this.$refs.chatLog.scrollHeight; });
     },
-    readable(e, fallback) {
+    errorText(e, fallback) {
       const d = (e.response && e.response.data) || {};
       return d.error || d.message || fallback;
     },

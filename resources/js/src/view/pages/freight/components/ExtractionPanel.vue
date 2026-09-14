@@ -287,7 +287,7 @@
             <th scope="col">Field</th>
             <th scope="col">Source</th>
             <th scope="col">Value</th>
-            <th scope="col"><span class="fx-sr-only">Fit to the form</span></th>
+            <th scope="col"><span class="fx-sr-only">Edit or clean for the waybill</span></th>
           </tr>
         </thead>
         <tbody>
@@ -385,8 +385,9 @@
               <button
                 v-if="row.party && row.value"
                 class="fx-btn fx-btn--ghost"
+                :title="'Tidy spaces, remove characters the ' + targetLabel + ' will not accept, and check the lengths'"
                 @click="fit(row.party)"
-              >Fit to {{ targetLabel }}</button>
+              >Clean for {{ targetLabel }}</button>
             </td>
           </tr>
         </tbody>
@@ -1093,8 +1094,14 @@ export default {
 
       const result = cleanParty(this.target, party, source);
 
+      // 🔴 Only what actually changed, and at the confidence it already had: a state or country the
+      // model only worked out stays a suggestion, so cleaning it does not get it saved.
       Object.keys(result.values).forEach((key) => {
-        this.$set(this.manual, key, { value: result.values[key], confidence: "high" });
+        const node = source[key];
+        if (raw(node) === result.values[key]) return;
+
+        const confidence = (node && typeof node === "object" && node.confidence) || "high";
+        this.$set(this.manual, key, { value: result.values[key], confidence });
       });
 
       this.fitReport = result.changes.length

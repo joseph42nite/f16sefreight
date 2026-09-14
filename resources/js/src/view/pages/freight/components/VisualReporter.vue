@@ -1,15 +1,6 @@
 <template>
   <div>
-    <!-- The launcher. Always reachable, because a bug is reported from wherever it
-         happened — not from a settings page you have to navigate to first. -->
-    <button
-      v-if="!picking && !form"
-      class="fx-btn fx-btn--ghost fx-reporter__launch"
-      aria-label="Report a problem"
-      data-help="report-problem"
-      @click="startPicking"
-    >⚑</button>
-
+    <!-- No launcher of its own: tickets are raised from Help (user, 2026-09-14), which opens this. -->
     <!--
       Element-selection mode. §5.10 — the cursor changes and the hovered element is
       outlined, so the operator can see exactly what they are about to attach.
@@ -183,8 +174,8 @@ export default {
         console_logs: recorder.entries(),
       };
 
-      this.form = true;
-      this.capture(target);
+      // The page is captured BEFORE the form opens, or the screenshot shows the form over it.
+      this.capture().finally(() => { this.form = true; });
     },
     /**
      * html2canvas, loaded ON DEMAND.
@@ -195,7 +186,7 @@ export default {
      * precondition.
      */
     capture() {
-      import(/* webpackChunkName: "html2canvas" */ "html2canvas")
+      return import(/* webpackChunkName: "html2canvas" */ "html2canvas")
         .then((mod) => (mod.default || mod)(document.body, {
           logging: false,
           scale: 0.5,               // half scale: legible, and a fraction of the bytes

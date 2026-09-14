@@ -39,8 +39,8 @@ export const HELP_TARGETS = [
   { name: "mailbox-signature", page: "/mailboxes", label: "Signature editor for a mailbox" },
 
   // Everywhere
-  { name: "report-problem", page: null, label: "Report a problem (⚑) in the header" },
-  { name: "help-assistant", page: null, label: "Help assistant button in the header" },
+  { name: "report-problem", page: null, label: "Raise a ticket (⚑) inside Help" },
+  { name: "help-assistant", page: null, label: "Help button at the bottom of the sidebar" },
 ];
 
 export const HELP_TARGET_NAMES = HELP_TARGETS.map((t) => t.name);

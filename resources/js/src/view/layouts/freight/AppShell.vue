@@ -30,6 +30,11 @@
           <span v-if="item.locked" class="fx-rail__lock" aria-label="Requires an upgrade">🔒</span>
         </router-link>
       </nav>
+
+      <div class="fx-rail__foot">
+        <HelpAssistant @raise-ticket="$refs.reporter.reportWithConversation($event)" />
+        <VisualReporter ref="reporter" />
+      </div>
     </aside>
 
     <div class="fx-body">
@@ -45,8 +50,6 @@
 
         <div class="fx-header__spacer"></div>
 
-        <HelpAssistant @raise-ticket="$refs.reporter.reportWithConversation($event)" />
-        <VisualReporter ref="reporter" />
         <BellPanel />
 
         <span class="fx-header__who">
@@ -107,6 +110,8 @@ export default {
   border-right: 1px solid var(--border);
   border-top: 3px solid var(--portal-accent); /* §8.4 portal accent */
   display: flex; flex-direction: column;
+  /* Sticky, so Help at the foot of the rail is on screen however long the page is. */
+  position: sticky; top: 0; height: 100vh;
   transition: width var(--motion-base) var(--motion-ease);
 }
 .fx-rail.is-collapsed { width: 56px; flex-basis: 56px; }
@@ -123,7 +128,8 @@ export default {
   color: var(--text-secondary); padding: var(--space-1);
 }
 
-.fx-rail__nav { padding: var(--space-2) 0; display: flex; flex-direction: column; }
+.fx-rail__nav { padding: var(--space-2) 0; display: flex; flex-direction: column; flex: 1 1 auto; overflow-y: auto; }
+.fx-rail__foot { border-top: 1px solid var(--border); padding: var(--space-2) 0; }
 .fx-rail__item {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
   padding: var(--space-2) var(--space-4);

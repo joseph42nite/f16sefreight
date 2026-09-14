@@ -2903,11 +2903,11 @@ const HELP_TARGETS = [
 {
   name: "report-problem",
   page: null,
-  label: "Report a problem (⚑) in the header"
+  label: "Raise a ticket (⚑) inside Help"
 }, {
   name: "help-assistant",
   page: null,
-  label: "Help assistant button in the header"
+  label: "Help button at the bottom of the sidebar"
 }];
 const HELP_TARGET_NAMES = HELP_TARGETS.map(t => t.name);
 

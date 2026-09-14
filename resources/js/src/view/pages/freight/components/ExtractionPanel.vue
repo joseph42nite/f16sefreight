@@ -263,6 +263,7 @@
                    only saved if the operator types it into the box beside it. -->
               <span v-else-if="row.source === 'suggested'" class="fx-muted">suggested</span>
               <span v-else-if="row.source === 'entered'" class="fx-extract__override">entered</span>
+              <span v-else-if="row.source === 'missing'" class="fx-muted">not on the document</span>
               <span v-else-if="row.source">{{ row.source }}</span>
               <!-- §4.1 "not set" is an answer, and a different one from "empty". -->
               <span v-else class="fx-muted">not set</span>
@@ -348,6 +349,18 @@
         after the waybill shell has already been written. The operator should know which
         parts will not land while they can still paste them.
       -->
+      <!-- 🔴 WHICH COUNT WAS USED. The user: "use carton as 1 piece … but mention it in the bottom that
+           that was selected." -->
+      <p v-if="piecesNote" class="fx-muted" role="status">
+        Pieces: <strong>{{ piecesNote.count }}</strong> —
+        <template v-if="piecesNote.unit === 'pcs'">as written</template>
+        <template v-else>each {{ singular(piecesNote.unit) }} counted as one piece</template>
+        (written as “{{ piecesNote.written }}”).<template v-if="piecesNote.also"> The document also lists “{{ piecesNote.also }}”.</template>
+      </p>
+      <p v-for="d in mailDeviations" :key="'mail-' + d.key" class="fx-warn" role="status">
+        The mail said {{ d.label }} <strong>{{ d.mail }}</strong>; the document gives <strong>{{ d.document }}</strong>.
+      </p>
+
       <p v-for="row in incomplete" :key="row.party" class="fx-warn" role="status">
         <strong>{{ row.party }}</strong> is saved to the draft without
         {{ row.missing.join(", ") }}. Fill {{ row.missing.length > 1 ? "them" : "it" }} in the
@@ -411,7 +424,7 @@ import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import {
   buildPayload, countryCode, createEndpoint, flattenCargo, flattenParties, formRoute, masterKey,
-  parsePartyBlock, TARGETS, withoutWorkedOutParts,
+  mailDeviations, parsePartyBlock, TARGETS, withoutWorkedOutParts,
 } from "@/core/config/awbMapping";
 import { cleanParty } from "@/core/config/awbFieldRules";
 
@@ -572,6 +585,8 @@ export default {
      * how a draft ends up under a different waybill from the shipment it belongs to.
      */
     prefillAwb: { type: String, default: null },
+    /** The thread's `staged_cargo` — what the mail said — to compare the documents against. */
+    mailCargo: { type: Object, default: null },
   },
   data: () => ({
     GROUPS,
@@ -639,6 +654,18 @@ export default {
 
       return out;
     },
+    /** What the cargo's piece count was taken from, when a read document supplies the cargo. */
+    piecesNote() {
+      const doc = this.documents.find((d) => d.uid === this.assignment.cargo);
+      return doc && doc.state === "ready" ? doc.piecesNote : null;
+    },
+    /** Where what will be used disagrees with what the mail said. */
+    mailDeviations() {
+      return mailDeviations(this.mailCargo, {
+        pieces: raw(this.sourceField("pieces", "cargo")),
+        gross_weight: raw(this.sourceField("gross_weight", "weights")),
+      });
+    },
     anyResolved() {
       return GROUPS.some((g) => this.resolved[g.key].source !== null);
     },
@@ -651,7 +678,11 @@ export default {
      */
     incomplete() {
       const out = [];
-      const f = this.withCountryCodes(this.flatFields);
+      // ⚠️ Through the SAME filter Save as draft uses. Without it a worked-out state or country
+      // counted as present here and was then silently left out of the draft: the warning said
+      // the consignee lacked "state, post code" while its low-confidence "JO" was dropped too,
+      // and the shipper got no warning at all.
+      const f = withoutWorkedOutParts(this.withCountryCodes(this.flatFields));
 
       Object.keys(PARTY_REQUIRED).forEach((party) => {
         if (!f[party]) return;
@@ -747,7 +778,11 @@ export default {
         const value = f.party ? this.partyText(f.party, f.group) : raw(this.sourceField(f.key, f.group));
 
         if (value === null || value === undefined || value === "") {
-          return { ...f, source: null, value: null };
+          // 🔴 "Not on the document" is a different answer from "not set": a document WAS read for
+          // this group and did not give the field. Values are taken as written, never inferred,
+          // and the user asked that the panel say so — "you can mention that it wasn't there".
+          const read = this.documents.find((d) => d.uid === this.assignment[f.group]);
+          return { ...f, source: read && read.state === "ready" ? "missing" : null, value: null };
         }
 
         // Named source: the paste, or the document assigned to this field's group.
@@ -1099,7 +1134,7 @@ export default {
         // Extract button.
         const doc = {
           uid: ++this.seq, name: file.name, file, kind: "other",
-          state: "staged", fields: null, error: null, warning: null, jobId: null,
+          state: "staged", fields: null, error: null, warning: null, piecesNote: null, jobId: null,
           // "text" | "scan" | "unknown" — filled by the probe a moment later.
           readable: "unknown",
         };
@@ -1171,6 +1206,8 @@ export default {
             if (data.job_status === "completed") {
               clearInterval(timer);
               doc.fields = this.withCountryCodes(flattenCargo(flattenParties(data.fields || {}, this.countries)));
+              // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
+              doc.piecesNote = (data.data && data.data.pieces_note) || null;
               // 🔴 Why the model did not read it, when it did not. The fields are then the
               // label reading, and without this they look exactly like the model's.
               doc.warning = data.model_error
@@ -1225,6 +1262,10 @@ export default {
       return [part(""), part("_address"), place].filter(Boolean).join("\n") || null;
     },
     /** Which group this document currently supplies, if any; "all" when it supplies every one. */
+    /** "cartons" → "carton", "boxes" → "box", for "each carton counted as one piece". */
+    singular(unit) {
+      return String(unit || "").replace(/(es|s)$/, (m) => (unit.endsWith("xes") ? "" : m === "es" ? "e" : ""));
+    },
     groupsFrom(uid) {
       if (GROUPS.every((g) => this.assignment[g.key] === uid)) return "all";
 

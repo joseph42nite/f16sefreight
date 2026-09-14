@@ -186,6 +186,72 @@ CHARGEABLE_PATTERN = re.compile(
 )
 
 
+# 🔴 PIECES ARE PACKAGES, TAKEN AS WRITTEN. The user: "use carton as 1 piece", and "if it's
+# clearly not written as pieces or pcs as number then don't determine". The model answered 500 —
+# the item quantity — twice, even when told to count packages, so the count is read off the
+# document by its LABEL instead: a written carton/package count first, a written pieces/pcs
+# count second, and nothing at all when the document is not clear.
+PACKAGE_WORDS = r"(?:CTNS?|CARTONS?|PACKAGES?|PKGS?|BOXES|PALLETS?|SKIDS?)"
+PIECE_WORDS = r"(?:PCS?|PIECES?)"
+
+UNIT_NAMES = (("CTN", "cartons"), ("CARTON", "cartons"), ("PKG", "packages"), ("PACKAGE", "packages"),
+              ("BOX", "boxes"), ("PALLET", "pallets"), ("SKID", "skids"))
+
+
+def _counts(patterns: List[str], text: str) -> List[tuple]:
+    """Every (number, as written) the patterns find."""
+    found = []
+    for pattern in patterns:
+        for m in re.finditer(pattern, text, re.IGNORECASE):
+            found.append((int(m.group("n")), " ".join(m.group(0).split())))
+    return found
+
+
+def _pick(totals: List[tuple], bare: List[tuple]) -> Optional[tuple]:
+    """
+    A labelled TOTAL wins. Otherwise one number, only if the document agrees with itself.
+
+    ⚠️ Several different counts ("50 Pcs", "20 Pcs", "15 Pcs"…) are the rows of a table, not the
+    shipment — that is not "clearly written", so nothing is taken.
+    """
+    if totals:
+        return totals[0]
+
+    return bare[0] if len({n for n, _ in bare}) == 1 else None
+
+
+def _written_pieces(text: str) -> Dict[str, Any]:
+    """
+    The piece count the document writes, and what it was written as — or {} if it is not clear.
+
+    {"count": 26, "unit": "cartons", "written": "TOTAL CTNS 26", "also": "TOTAL QTY 500 Pcs"}
+    """
+    packages = _pick(
+        _counts([rf"\bTOTAL\s+{PACKAGE_WORDS}\s*[:\-]?\s*(?P<n>\d+)\b"], text),
+        _counts([rf"\b(?P<n>\d+)\s*{PACKAGE_WORDS}\b",
+                 rf"\b{PACKAGE_WORDS}\s*[:\-]\s*(?P<n>\d+)\b"], text),
+    )
+    pieces = _pick(
+        _counts([rf"\bTOTAL\s+(?:QTY|QUANTITY)?\s*[:\-]?\s*(?P<n>\d+)\s*{PIECE_WORDS}\b",
+                 rf"\bTOTAL\s+{PIECE_WORDS}\s*[:\-]?\s*(?P<n>\d+)\b"], text),
+        _counts([rf"\b(?P<n>\d+)\s*{PIECE_WORDS}\b",
+                 rf"\b{PIECE_WORDS}\s*[:\-]\s*(?P<n>\d+)\b"], text),
+    )
+
+    if packages:
+        upper = packages[1].upper()
+        unit = next((name for word, name in UNIT_NAMES if word in upper), "packages")
+        note = {"count": packages[0], "unit": unit, "written": packages[1]}
+        if pieces and pieces[0] != packages[0]:
+            note["also"] = pieces[1]
+        return note
+
+    if pieces:
+        return {"count": pieces[0], "unit": "pcs", "written": pieces[1]}
+
+    return {}
+
+
 def _read_piece_weight(text: str) -> Dict[str, Any]:
     """
     Pieces and weights, in the shape `/extract` emits.
@@ -206,10 +272,9 @@ def _read_piece_weight(text: str) -> Dict[str, Any]:
         except (TypeError, ValueError):
             return 0.0
 
-    pieces_match = PIECES_PATTERN.search(text)
-
     return {
-        "no_of_pieces": int(pieces_match.group(1)) if pieces_match else 0,
+        # Packages as written — see `_written_pieces`. 0 when the document is not clear.
+        "no_of_pieces": _written_pieces(text).get("count", 0),
         "gross_weight": _number(GROSS_PATTERN),
         # ⚠️ Blank rather than guessed. Rate class is a single IATA letter off the waybill
         # and an invoice does not carry one; inventing a default would put a value in a
@@ -249,6 +314,9 @@ def extract_from_text(pdf_path: str) -> Dict[str, Any]:
     # Read from the WHOLE document, not from a labelled block: the count and the mass are
     # rarely under one label, and often not under a label at all.
     result["piece_weight"] = _read_piece_weight(text)
+
+    # What the piece count was taken from, so the panel can say so — and say when it was not there.
+    result["pieces_note"] = _written_pieces(text) or None
 
     for region in REGIONS:
         if region == "piece_weight":
@@ -344,7 +412,8 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
     # 🔴 Written straight into the dict, not through `process_box`: `transform_piece_weight`
     # is POSITIONAL and misreads a number handed to it on its own.
     result["piece_weight"]["gross_weight"] = parsed.get("gross_weight", 0.0)
-    result["piece_weight"]["no_of_pieces"] = parsed.get("pieces", 0)
+    # ⚠️ NOT the model's `pieces`: it gave the item quantity (500) twice when the invoice's cartons
+    # were 26. The written count from `_read_piece_weight` stands.
     result["piece_weight"]["chargeable_weight"] = parsed.get("chargeable_weight", 0.0)
 
     # Same shape the label path gives: [{"dimension": "64X32X64", "count": 1}].

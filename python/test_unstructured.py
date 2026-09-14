@@ -148,6 +148,47 @@ def test_a_multi_line_address_is_still_read_whole():
     assert "Mumbai" in result["shipper"]["full_details"]
 
 
+# ─── Pieces: packages, as written ────────────────────────────────────────────
+
+# The real invoice's lines, in the jumbled order the PDF gives them.
+JUMBLED = "TOTAL CTN\nVessel/Flight No.\n50\nPcs\n17\n20\nPcs\n10\nTOTAL QTY                               500 Pcs\nTOTAL CTNS\n26\nTOTAL NET WEIGHT"
+
+
+def test_a_carton_count_is_the_piece_count():
+    """🔴 The user: "use carton as 1 piece". The invoice says TOTAL CTNS 26 and TOTAL QTY 500 Pcs."""
+    import unstructured
+
+    note = unstructured._written_pieces(JUMBLED)
+
+    assert note["count"] == 26
+    assert note["unit"] == "cartons"
+    assert note["written"] == "TOTAL CTNS 26"
+    assert note["also"] == "TOTAL QTY 500 Pcs"
+
+
+def test_without_cartons_a_written_pcs_total_is_used():
+    import unstructured
+
+    note = unstructured._written_pieces("50\nPcs\n20\nPcs\nTOTAL QTY 500 Pcs")
+
+    assert (note["count"], note["unit"]) == (500, "pcs")
+
+
+def test_table_rows_alone_are_not_a_piece_count():
+    """⚠️ The user: "if it's clearly not written as pieces or pcs as number then don't determine"."""
+    import unstructured
+
+    assert unstructured._written_pieces("50\nPcs\n20\nPcs\n15\nPcs") == {}
+    assert unstructured._written_pieces("Commodity: backpacks") == {}
+
+
+def test_one_clearly_written_count_is_used():
+    import unstructured
+
+    assert unstructured._written_pieces("Pieces: 14")["count"] == 14
+    assert unstructured._written_pieces("Packed in 3 pallets")["unit"] == "pallets"
+
+
 def test_the_raw_text_is_returned_for_the_model_step():
     """Gemma consumes this. Returning it now means adding the model changes one module."""
     result = extract_from_text(_pdf(INVOICE))
@@ -203,14 +244,14 @@ def test_the_model_reading_replaces_the_label_reading():
     })
 
     result = {"read_by": "labels", "shipper": {"full_details": "TSGEXP/001 & 25-08-2026"},
-              "piece_weight": {"no_of_pieces": 50, "gross_weight": 0.0}}
+              "piece_weight": {"no_of_pieces": 26, "gross_weight": 0.0}}
     unstructured._apply_model(result, "some document text")
 
     assert result["read_by"] == "model"
     assert "TRAILSPEC GEARS PRIVATE LIMITED" in result["shipper"]["full_details"]
     assert "TSGEXP" not in result["shipper"]["full_details"]
-    # 50 was the regex's first "N Pcs": a single table row, not the shipment.
-    assert result["piece_weight"]["no_of_pieces"] == 500
+    # 🔴 Pieces are the WRITTEN package count, never the model's: it answered 500, the items.
+    assert result["piece_weight"]["no_of_pieces"] == 26
     assert result["piece_weight"]["gross_weight"] == 364.09
 
 

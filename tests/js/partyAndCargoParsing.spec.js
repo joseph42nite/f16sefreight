@@ -6,7 +6,8 @@
  * them. The fallback fixture is job #8's real consignee; the cargo fixture is job #6's shape.
  */
 import {
-  buildPayload, countryCode, flattenCargo, flattenParties, parsePartyBlock, withoutWorkedOutParts,
+  buildPayload, countryCode, flattenCargo, flattenParties, mailDeviations, parsePartyBlock,
+  withoutWorkedOutParts,
 } from "@/core/config/awbMapping";
 
 const C = { IN: "India", JO: "Jordan", AE: "United Arab Emirates", DE: "Germany", IQ: "Iraq" };
@@ -174,5 +175,19 @@ describe("withoutWorkedOutParts", () => {
     expect(out.consignee_country.value).toBe("JO");
     expect(out.consignee_city.value).toBe("Amman");
     expect(out.shipper_country.value).toBe("IN");
+  });
+});
+
+describe("mailDeviations", () => {
+  /** 🔴 The user: "show if there is a deviation from what the mail said". */
+  it("flags where the document disagrees with the mail", () => {
+    expect(mailDeviations({ pieces: { value: 3, confidence: "high" } }, { pieces: "26", gross_weight: "364.09" }))
+      .toEqual([{ key: "pieces", label: "pieces", mail: "3", document: "26" }]);
+  });
+
+  it("says nothing when they agree, or when either side is missing", () => {
+    expect(mailDeviations({ pieces: { value: 26 } }, { pieces: "26" })).toEqual([]);
+    expect(mailDeviations(null, { pieces: "26" })).toEqual([]);
+    expect(mailDeviations({ gross_weight: { value: 364 } }, { gross_weight: null })).toEqual([]);
   });
 });

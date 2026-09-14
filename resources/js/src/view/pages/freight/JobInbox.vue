@@ -419,7 +419,7 @@
 
           <!-- The waybill this conversation is already about, so the operator is not
                asked to retype a number the job already holds. -->
-          <ExtractionPanel v-else :prefill-awb="jobAwb" @apply="onExtracted" />
+          <ExtractionPanel v-else :prefill-awb="jobAwb" :mail-cargo="active && active.staged_cargo" @apply="onExtracted" />
         </section>
       </template>
 

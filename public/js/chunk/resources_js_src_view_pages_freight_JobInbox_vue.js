@@ -997,6 +997,11 @@ const PARTY_REQUIRED = {
     prefillAwb: {
       type: String,
       default: null
+    },
+    /** The thread's `staged_cargo` — what the mail said — to compare the documents against. */
+    mailCargo: {
+      type: Object,
+      default: null
     }
   },
   data: () => ({
@@ -1071,6 +1076,18 @@ const PARTY_REQUIRED = {
       });
       return out;
     },
+    /** What the cargo's piece count was taken from, when a read document supplies the cargo. */
+    piecesNote() {
+      const doc = this.documents.find(d => d.uid === this.assignment.cargo);
+      return doc && doc.state === "ready" ? doc.piecesNote : null;
+    },
+    /** Where what will be used disagrees with what the mail said. */
+    mailDeviations() {
+      return (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.mailDeviations)(this.mailCargo, {
+        pieces: raw(this.sourceField("pieces", "cargo")),
+        gross_weight: raw(this.sourceField("gross_weight", "weights"))
+      });
+    },
     anyResolved() {
       return GROUPS.some(g => this.resolved[g.key].source !== null);
     },
@@ -1083,7 +1100,11 @@ const PARTY_REQUIRED = {
      */
     incomplete() {
       const out = [];
-      const f = this.withCountryCodes(this.flatFields);
+      // ⚠️ Through the SAME filter Save as draft uses. Without it a worked-out state or country
+      // counted as present here and was then silently left out of the draft: the warning said
+      // the consignee lacked "state, post code" while its low-confidence "JO" was dropped too,
+      // and the shipper got no warning at all.
+      const f = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.withoutWorkedOutParts)(this.withCountryCodes(this.flatFields));
       Object.keys(PARTY_REQUIRED).forEach(party => {
         if (!f[party]) return;
 
@@ -1167,8 +1188,12 @@ const PARTY_REQUIRED = {
         // cell as JSON, most of them null, which read as "nothing was found".
         const value = f.party ? this.partyText(f.party, f.group) : raw(this.sourceField(f.key, f.group));
         if (value === null || value === undefined || value === "") {
+          // 🔴 "Not on the document" is a different answer from "not set": a document WAS read for
+          // this group and did not give the field. Values are taken as written, never inferred,
+          // and the user asked that the panel say so — "you can mention that it wasn't there".
+          const read = this.documents.find(d => d.uid === this.assignment[f.group]);
           return _objectSpread(_objectSpread({}, f), {}, {
-            source: null,
+            source: read && read.state === "ready" ? "missing" : null,
             value: null
           });
         }
@@ -1534,6 +1559,7 @@ const PARTY_REQUIRED = {
           fields: null,
           error: null,
           warning: null,
+          piecesNote: null,
           jobId: null,
           // "text" | "scan" | "unknown" — filled by the probe a moment later.
           readable: "unknown"
@@ -1602,6 +1628,8 @@ const PARTY_REQUIRED = {
           if (data.job_status === "completed") {
             clearInterval(timer);
             doc.fields = this.withCountryCodes((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenCargo)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenParties)(data.fields || {}, this.countries)));
+            // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
+            doc.piecesNote = data.data && data.data.pieces_note || null;
             // 🔴 Why the model did not read it, when it did not. The fields are then the
             // label reading, and without this they look exactly like the model's.
             doc.warning = data.model_error ? "read by labels only: " + data.model_error : null;
@@ -1642,6 +1670,10 @@ const PARTY_REQUIRED = {
       return [part(""), part("_address"), place].filter(Boolean).join("\n") || null;
     },
     /** Which group this document currently supplies, if any; "all" when it supplies every one. */
+    /** "cartons" → "carton", "boxes" → "box", for "each carton counted as one piece". */
+    singular(unit) {
+      return String(unit || "").replace(/(es|s)$/, m => unit.endsWith("xes") ? "" : m === "es" ? "e" : "");
+    },
     groupsFrom(uid) {
       if (GROUPS.every(g => this.assignment[g.key] === uid)) return "all";
       const found = GROUPS.find(g => this.assignment[g.key] === uid);
@@ -2482,7 +2514,8 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("\n          No enquiry on this conversation yet, so there is no shipment to confirm.\n        ")]) : _c("ExtractionPanel", {
     attrs: {
-      "prefill-awb": _vm.jobAwb
+      "prefill-awb": _vm.jobAwb,
+      "mail-cargo": _vm.active && _vm.active.staged_cargo
     },
     on: {
       apply: _vm.onExtracted
@@ -3273,7 +3306,9 @@ var render = function render() {
       staticClass: "fx-muted"
     }, [_vm._v("suggested")]) : row.source === "entered" ? _c("span", {
       staticClass: "fx-extract__override"
-    }, [_vm._v("entered")]) : row.source ? _c("span", [_vm._v(_vm._s(row.source))]) : _c("span", {
+    }, [_vm._v("entered")]) : row.source === "missing" ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("not on the document")]) : row.source ? _c("span", [_vm._v(_vm._s(row.source))]) : _c("span", {
       staticClass: "fx-muted"
     }, [_vm._v("not set")])]), _vm._v(" "), _c("td", [row.party ? _c("select", {
       staticClass: "fx-input fx-extract__book",
@@ -3354,7 +3389,20 @@ var render = function render() {
     attrs: {
       role: "status"
     }
-  }, [_vm._v("\n      " + _vm._s(_vm.lowConfidence.length) + " field(s) the extractor was unsure of:\n      " + _vm._s(_vm.lowConfidence.join(", ")) + ". Check them before this reaches a document.\n    ")]) : _vm._e(), _vm._v(" "), _vm._l(_vm.incomplete, function (row) {
+  }, [_vm._v("\n      " + _vm._s(_vm.lowConfidence.length) + " field(s) the extractor was unsure of:\n      " + _vm._s(_vm.lowConfidence.join(", ")) + ". Check them before this reaches a document.\n    ")]) : _vm._e(), _vm._v(" "), _vm.piecesNote ? _c("p", {
+    staticClass: "fx-muted",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n      Pieces: "), _c("strong", [_vm._v(_vm._s(_vm.piecesNote.count))]), _vm._v(" —\n      "), _vm.piecesNote.unit === "pcs" ? [_vm._v("as written")] : [_vm._v("each " + _vm._s(_vm.singular(_vm.piecesNote.unit)) + " counted as one piece")], _vm._v("\n      (written as “" + _vm._s(_vm.piecesNote.written) + "”)."), _vm.piecesNote.also ? [_vm._v(" The document also lists “" + _vm._s(_vm.piecesNote.also) + "”.")] : _vm._e()], 2) : _vm._e(), _vm._v(" "), _vm._l(_vm.mailDeviations, function (d) {
+    return _c("p", {
+      key: "mail-" + d.key,
+      staticClass: "fx-warn",
+      attrs: {
+        role: "status"
+      }
+    }, [_vm._v("\n      The mail said " + _vm._s(d.label) + " "), _c("strong", [_vm._v(_vm._s(d.mail))]), _vm._v("; the document gives "), _c("strong", [_vm._v(_vm._s(d.document))]), _vm._v(".\n    ")]);
+  }), _vm._v(" "), _vm._l(_vm.incomplete, function (row) {
     return _c("p", {
       key: row.party,
       staticClass: "fx-warn",
@@ -3627,6 +3675,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "flattenCargo": () => (/* binding */ flattenCargo),
 /* harmony export */   "flattenParties": () => (/* binding */ flattenParties),
 /* harmony export */   "formRoute": () => (/* binding */ formRoute),
+/* harmony export */   "mailDeviations": () => (/* binding */ mailDeviations),
 /* harmony export */   "masterKey": () => (/* binding */ masterKey),
 /* harmony export */   "parsePartyBlock": () => (/* binding */ parsePartyBlock),
 /* harmony export */   "withoutWorkedOutParts": () => (/* binding */ withoutWorkedOutParts)
@@ -4065,6 +4114,33 @@ function withoutWorkedOutParts(fields) {
       const node = out[party + suffix];
       if (node && typeof node === "object" && node.confidence === "low") delete out[party + suffix];
     });
+  });
+  return out;
+}
+
+/**
+ * Where what the documents give disagrees with what the mail said.
+ *
+ * 🔴 The user: "show if there is a deviation from what the mail said". The mail's figures are the
+ * thread's `staged_cargo` — what the inbox shows under "What the mail said". Nothing is flagged
+ * when either side is missing: a figure the mail never gave is not a disagreement.
+ */
+function mailDeviations(mailCargo, found) {
+  const out = [];
+  const mail = mailCargo || {};
+  const blank = v => v === null || v === undefined || v === "";
+  [["pieces", "pieces"], ["gross_weight", "gross weight"]].forEach(([key, label]) => {
+    const said = mail[key] && typeof mail[key] === "object" ? mail[key].value : mail[key];
+    const got = found[key];
+    if (blank(said) || blank(got)) return;
+    if (parseFloat(said) !== parseFloat(got)) {
+      out.push({
+        key,
+        label,
+        mail: String(said),
+        document: String(got)
+      });
+    }
   });
   return out;
 }

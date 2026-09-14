@@ -1129,7 +1129,32 @@ showed what was really happening.
 
 | # | Finding | Detail |
 |---|---|---|
-| 194 | 🔴 **Asked to say where each state and country came from, gemma3:4b got the important cases backwards; asked for packages, it still gave the item count.** One probe on job #11's text with every key required-but-nullable, `*_state_source` / `*_country_source` fields, a whole-section prompt and packages wording: **pieces 500** (the invoice says `TOTAL CTNS 26`); the consignee's **`Jordan`** — printed in its own block — reported **worked_out**; the shipper's **`ERNAKULAM`** — a district, not the state — reported **printed**; the shipper's correct **`INDIA`** reported worked_out. **447 s**, against 175 s before | Shipping it would have **saved a wrong state onto the draft** while still dropping both correct countries. So it was **stashed, not committed** (`git stash list`: *extraction: gemma-reported sources + packages prompt (measured, not shipped)*), and the ai-server runs the verified code from `ef6b40e4`: every state and country the model returns is shown and left out of the draft. The cargo did still come back. **Open, the user's:** how to get state, country and package count right |
+| 194 | 🔴 **Asked to say where each state and country came from, gemma3:4b got the important cases backwards; asked for packages, it still gave the item count.** One probe on job #11's text with every key required-but-nullable, `*_state_source` / `*_country_source` fields, a whole-section prompt and packages wording: **pieces 500** (the invoice says `TOTAL CTNS 26`); the consignee's **`Jordan`** — printed in its own block — reported **worked_out**; the shipper's **`ERNAKULAM`** — a district, not the state — reported **printed**; the shipper's correct **`INDIA`** reported worked_out. **447 s**, against 175 s before | Shipping it would have **saved a wrong state onto the draft** while still dropping both correct countries. So it was **stashed, not committed** (`git stash list`: *extraction: gemma-reported sources + packages prompt (measured, not shipped)*), and the ai-server runs the verified code from `ef6b40e4`: every state and country the model returns is shown and left out of the draft. The cargo did still come back. 🟢 **Answered — see #195–199** |
+
+---
+
+## 🟢 2026-09-14 — values as written: cartons as pieces, the mail compared, and "not on the document"
+
+User: *"if it's clearly not written as pieces or pcs as number then don't determine. these values
+are to be given at absolute not inferred. you can mention that it wasn't there"* · *"use carton
+as 1 piece … mention it in the bottom that that was selected, and show if there is a deviation
+from what the mail said."*
+
+| # | Change | Detail |
+|---|---|---|
+| 195 | 🟢 **Pieces are the written package count, read off the document by its label.** In order: a `TOTAL` carton/package count; one unambiguous carton/package count; a `TOTAL` pcs count; one unambiguous pcs count; otherwise **nothing** | The model's `pieces` is not used — it gave the item quantity (500) twice, even when told to count packages. Several different counts (`50 Pcs`, `20 Pcs`, `15 Pcs`…) are table rows, not a total, so they are not taken. On the real invoice: **26 cartons** (`TOTAL CTNS 26`), with `TOTAL QTY 500 Pcs` recorded alongside. Verified inside the ai-server on the invoice text. The label path uses the same reader |
+| 196 | 🟢 **The panel says which count was used**, under the table: *"Pieces: 26 — each carton counted as one piece (written as “TOTAL CTNS 26”). The document also lists “TOTAL QTY 500 Pcs”."* | From the parser's `pieces_note`, carried through the status endpoint's raw `data` |
+| 197 | 🟢 **A difference from what the mail said is flagged.** The thread's `staged_cargo` — "What the mail said" in the inbox — is now passed to the panel, and pieces and gross weight are compared | Verified in the browser: *"The mail said gross weight 480; the document gives 364.09."* Nothing is flagged when either side is missing — a figure the mail never gave is not a disagreement. jest spec |
+| 198 | 🟢 **"not on the document"**: when a document WAS read for a group and did not give a field, the table says so | "not set" stays for a group no document or paste has supplied. Verified in the browser on the notify party |
+| 199 | ⚪ **PIN → district/state lookup: skipped for now** (user, 2026-09-14) | The rule when it is built, in the user's words: *"use the pincode as absolute and check for other state or district and everything from what's given. if not then suggest it as such"* — e.g. ERNAKULAM, a district, → Kerala. It needs India Post's *All India Pincode Directory* (data.gov.in), which blocks automated access (403 on the page, 500 on the file); nothing in the project maps PIN codes today. Until then a state or country from a document stays a suggestion, shown and never saved. The attempt that had Gemma label its own readings is kept in `git stash` (#194) |
+| 200 | 🔴 **The missing-parts warning disagreed with what the draft saved.** It checked the fields BEFORE the filter that leaves worked-out states and countries out, so it told the operator the consignee lacked *"state, post code"* while its low-confidence `JO` was dropped too — and gave the shipper, whose worked-out `ERNAKULAM` and `IN` were also dropped, no warning at all | The warning now runs through the same `withoutWorkedOutParts()` as Save as draft, so it names every part the draft will not carry |
+
+🟢 **Verified end to end (job #13 → draft 176-99990005):** the panel showed pieces **26** with
+the note under the table, volumetric **568 kg** (was 10,922.7), chargeable **suggested 568**, the
+notify party **"not on the document"**, and *"The mail said gross weight 480; the document gives
+364.09."* The draft stored **pieces 26**, a dimension line of **`pcs: 26`** at 64×32×64 CMT, gross
+364.09, the description, no chargeable weight, both parties without their worked-out state and
+country, and no notify party.
 
 ---
 

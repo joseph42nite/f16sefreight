@@ -425,3 +425,29 @@ export function withoutWorkedOutParts(fields) {
 
   return out;
 }
+
+/**
+ * Where what the documents give disagrees with what the mail said.
+ *
+ * 🔴 The user: "show if there is a deviation from what the mail said". The mail's figures are the
+ * thread's `staged_cargo` — what the inbox shows under "What the mail said". Nothing is flagged
+ * when either side is missing: a figure the mail never gave is not a disagreement.
+ */
+export function mailDeviations(mailCargo, found) {
+  const out = [];
+  const mail = mailCargo || {};
+  const blank = (v) => v === null || v === undefined || v === "";
+
+  [["pieces", "pieces"], ["gross_weight", "gross weight"]].forEach(([key, label]) => {
+    const said = mail[key] && typeof mail[key] === "object" ? mail[key].value : mail[key];
+    const got = found[key];
+
+    if (blank(said) || blank(got)) return;
+
+    if (parseFloat(said) !== parseFloat(got)) {
+      out.push({ key, label, mail: String(said), document: String(got) });
+    }
+  });
+
+  return out;
+}

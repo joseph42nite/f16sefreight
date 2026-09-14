@@ -30,13 +30,14 @@ label. So the model's reading replaces the label reading for every field it cove
 label reading is used only when the model cannot answer, with the reason recorded.
 """
 
+import bisect
 import re
 from typing import Any, Dict, List, Optional
 
 import pdfplumber
 
 import model_extract
-from extract_awb_new import extract_dimensions, process_box, transform_address_box
+from extract_awb_new import AIRPORT_IATA_MAP, extract_dimensions, process_box, resolve_iata
 
 # 🔴 PyMuPDF for the TEXT LAYER, pdfplumber for everything else. Measured on this machine,
 # same documents, median of five: 27.2ms vs 2.6ms on a one-page invoice — 10x, with the
@@ -339,38 +340,128 @@ def extract_from_text(pdf_path: str) -> Dict[str, Any]:
     return result
 
 
-# 🔴 ONLY WHAT THE EXTRACTION PANEL TAKES FROM A DOCUMENT: the parties, the cargo and the
-# weights. For these the model's answer replaces the label reading entirely, and a field the
-# model left out comes back BLANK, not as the label guess. On the first real invoice the label
-# guess for the shipper was the invoice number. A wrong value on the card looks like a right
-# one; a blank gets noticed.
-MODEL_REGIONS = ("shipper", "consignee", "cargo")
+# 🔴 ONLY WHAT THE EXTRACTION PANEL TAKES FROM A DOCUMENT: the parties, the cargo, the weights
+# and the route. For these the model's answer replaces the label reading entirely, and a field
+# the model left out comes back BLANK, not as the label guess. On the first real invoice the
+# label guess for the shipper was the invoice number, and for the departure an IEC number.
+# A wrong value on the card looks like a right one; a blank gets noticed.
 
 
-def _party(parsed: Dict[str, Any], role: str) -> str:
-    """Name and address as one block, one per line, the way a cropped address box reads."""
-    return "\n".join(v for v in (parsed.get(f"{role}_name"), parsed.get(f"{role}_address")) if v)
+def _party(parsed: Dict[str, Any], role: str, text: str) -> Dict[str, Any]:
+    """
+    A party as the model split it, in the region shape the coordinate path emits.
+
+    🔴 NOT through `transform_address_box`. That parser was written for a cropped AWB box and
+    re-split the model's answer by rule: it read `702` in `22/702/01 - CEE PEE BUILDING` as a
+    PIN, dropped it, and stored the address as `22 01 CEE PEE BUILDING`. The model has already
+    split the party, so its parts are kept as they are.
+    """
+    part = lambda key: parsed.get(f"{role}_{key}") or None
+    block = _party_block(text, parsed, role)
+
+    return {
+        "full_details": " ".join(v for v in (part("name"), part("address")) if v) or None,
+        "name": part("name"),
+        "address": part("address"),
+        "city": part("city"),
+        # 🔴 A state is always LOW: on the real invoice the model gave the DISTRICT, ERNAKULAM.
+        # Shown and reviewed, never saved on its own, until a PIN lookup exists (GAPS #199).
+        "state": {"value": part("state"), "confidence": "low"} if part("state") else None,
+        # ⚠️ The model often misses a post code printed in the party's own lines ("Amman 11191"),
+        # so one written there is taken when the model gave none.
+        "pin": part("post_code") or _written_post_code(block[1:]),
+        "country": _country(part("country"), block),
+        "phone": None, "email": None, "fax": None, "eori": None,
+    }
 
 
-# The parts the model may WORK OUT rather than copy, so they reach the operator marked for
-# review instead of as fact.
-INFERRED_PARTS = ("state", "country")
+def _party_block(text: str, parsed: Dict[str, Any], role: str) -> List[str]:
+    """
+    The party's own lines on the page: from its name to one line past the last line holding
+    its address, city or post code.
+
+    ⚠️ Found from what the MODEL read, not from a label, so it survives jumbled table text. A
+    part printed more than three lines past the block is not the party's, and does not stretch it.
+    """
+    name = _comparable(parsed.get(f"{role}_name") or "")
+    lines = [line.strip() for line in text.splitlines()]
+    flat = [_comparable(line) for line in lines]
+
+    starts, pos = [], 0
+    for line in flat:
+        starts.append(pos)
+        pos += len(line)
+
+    joined = "".join(flat)
+    at = joined.find(name) if name else -1
+
+    if at < 0:
+        return []
+
+    line_of = lambda offset: bisect.bisect_right(starts, offset) - 1
+    first, last = line_of(at), line_of(at + len(name) - 1)
+
+    for key in ("address", "city", "post_code"):
+        value = _comparable(parsed.get(f"{role}_{key}") or "")
+        found = joined.find(value, at) if value else -1
+
+        if found >= 0 and line_of(found) <= last + 3:
+            last = max(last, line_of(found + len(value) - 1))
+
+    return [line for line in lines[first:last + 2] if line]
 
 
-def _apply_parts(region: Dict[str, Any], parsed: Dict[str, Any], role: str) -> None:
-    """The model's own split of a party, over the parser's guess at it."""
-    for part, key in (("city", "city"), ("state", "state"), ("pin", "post_code"), ("country", "country")):
-        value = parsed.get(f"{role}_{key}")
+# A standalone run of 4-10 digits: not part of "22/702/01", a date, or a GST number.
+POST_CODE = re.compile(r"(?<![\w/.-])(\d{4,10})(?![\w/-])")
 
-        if not value:
-            continue
 
-        # 🔴 LOW, not medium. A worked-out state or country may come from anywhere on the page:
-        # on the real invoice the model answered the shipper's country as "Iraq", which is the
-        # shipment's DESTINATION printed elsewhere. Low means shown and reviewed, and left out
-        # of a draft unless the operator accepts it — the rule-derived fallback, which reads a
-        # party's own address, stays medium and is saved.
-        region[part] = {"value": value, "confidence": "low"} if part in INFERRED_PARTS else value
+def _written_post_code(lines: List[str]) -> Optional[str]:
+    """
+    The one post code written in the party's lines, or None.
+
+    ⚠️ A number after "Box" is a box number. More than one candidate is not guessed between —
+    a phone number and a post code look alike, and a value must be as written, not inferred.
+    """
+    found = {
+        m.group(1)
+        for line in lines
+        for m in POST_CODE.finditer(line)
+        if not re.search(r"box\D{0,4}$", line[:m.start()], re.IGNORECASE)
+    }
+
+    return found.pop() if len(found) == 1 else None
+
+
+def _country(value: Optional[str], block: List[str]) -> Optional[Dict[str, str]]:
+    """
+    🔴 HIGH only when printed in the party's OWN lines; otherwise LOW, shown and not saved.
+
+    On the real invoice the consignee block ends `Amman 11191 / Jordan`, and Jordan was still
+    left out of the draft because every model country was treated as worked out. The shipper's
+    INDIA is printed only as the goods' origin, and the model once answered "Iraq" — the
+    destination — for it: neither is in the shipper's lines, so both stay low.
+    """
+    if not value:
+        return None
+
+    printed = re.search(r"\b" + re.escape(value) + r"\b", "\n".join(block), re.IGNORECASE)
+
+    return {"value": value, "confidence": "high" if printed else "low"}
+
+
+def _comparable(text: str) -> str:
+    """Letters and digits only, lower case — the same comparison the grounding check uses."""
+    return "".join(c for c in text.lower() if c.isalnum())
+
+
+AIRPORT_CODES = set(AIRPORT_IATA_MAP.values())
+
+
+def _airport_code(place: Optional[str]) -> Optional[str]:
+    """The IATA code for a place, or None when it is not an airport (a sea port, a country)."""
+    code = resolve_iata(place) if place else None
+
+    return code if code in AIRPORT_CODES else None
 
 
 def _apply_model(result: Dict[str, Any], text: str) -> None:
@@ -393,21 +484,20 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
         result["model_error"] = "the model returned nothing usable"
         return
 
-    values = {
-        "shipper": _party(parsed, "shipper"),
-        "consignee": _party(parsed, "consignee"),
-        "cargo": parsed.get("description") or "",
-    }
-
-    for region in MODEL_REGIONS:
-        # ⚠️ Through `process_box`, so a model-read address is shaped exactly like a cropped
-        # one. The VALUE differs in provenance, never in structure.
-        result[region] = process_box(region, values[region])
-
-    # ⚠️ The parser split name and address into city/state/pin/country by rule, and got
-    # "KERALA" as a city on the real invoice. Where the model gave a part, it wins.
     for role in ("shipper", "consignee"):
-        _apply_parts(result[role], parsed, role)
+        result[role] = _party(parsed, role, text)
+
+    result["cargo"] = process_box("cargo", parsed.get("description") or "")
+
+    # The route as written, and its airport code when it is an airport. A sea port such as
+    # NHAVA SHEVA has none, and the panel says so rather than saving it.
+    origin, destination = parsed.get("origin"), parsed.get("destination")
+    result["departure"] = origin or ""
+    result["destination"] = destination or ""
+    result["route"] = {
+        "origin": origin, "origin_code": _airport_code(origin),
+        "destination": destination, "destination_code": _airport_code(destination),
+    }
 
     # 🔴 Written straight into the dict, not through `process_box`: `transform_piece_weight`
     # is POSITIONAL and misreads a number handed to it on its own.
@@ -426,7 +516,6 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
     # which walked straight through a name-only guard. A document that does not name a notify
     # party does not have one.
     if parsed.get("notify_name") and "notify" in text.lower():
-        result["notify"] = transform_address_box(_party(parsed, "notify"))
-        _apply_parts(result["notify"], parsed, "notify")
+        result["notify"] = _party(parsed, "notify", text)
 
     result["read_by"] = "model"

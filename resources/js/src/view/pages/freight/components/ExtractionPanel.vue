@@ -192,22 +192,33 @@
                 claim the shipper would need a tie-break the operator cannot see, and the
                 whole point of this panel is that they can.
 
-                🔴 Selectable while the document is still STAGED. Saying what you want from
-                a file before reading it is the natural order — you know an invoice carries
-                the parties without opening it — and gating the picker on a finished
-                extraction meant dropping a file and finding the only control greyed out.
-                Only disabled mid-read, when the answer is genuinely in flight.
+                🔴 TICK BOXES, not one choice (user, 2026-09-14): an invoice gives the parties
+                AND the route while a packing list gives the cargo and weights. Ticking a group
+                on one document moves it off whichever document had it.
+
+                Selectable while the document is still STAGED — you know an invoice carries
+                the parties without opening it. Only disabled mid-read.
               -->
-              <select
-                class="fx-input"
-                :disabled="doc.state === 'reading'"
-                :value="groupsFrom(doc.uid)"
-                @change="assign($event.target.value, doc.uid)"
-              >
-                <option value="">— nothing —</option>
-                <option value="all">All</option>
-                <option v-for="g in GROUPS" :key="g.key" :value="g.key">{{ g.label }}</option>
-              </select>
+              <div class="fx-extract__takes">
+                <label class="fx-checkbox">
+                  <input
+                    type="checkbox"
+                    :disabled="doc.state === 'reading'"
+                    :checked="takesAll(doc.uid)"
+                    @change="takeAll(doc.uid, $event.target.checked)"
+                  />
+                  <span>All</span>
+                </label>
+                <label v-for="g in GROUPS" :key="g.key" class="fx-checkbox">
+                  <input
+                    type="checkbox"
+                    :disabled="doc.state === 'reading'"
+                    :checked="assignment[g.key] === doc.uid"
+                    @change="take(g.key, doc.uid, $event.target.checked)"
+                  />
+                  <span>{{ g.label }}</span>
+                </label>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -264,6 +275,7 @@
               <span v-else-if="row.source === 'suggested'" class="fx-muted">suggested</span>
               <span v-else-if="row.source === 'entered'" class="fx-extract__override">entered</span>
               <span v-else-if="row.source === 'missing'" class="fx-muted">not on the document</span>
+              <span v-else-if="row.source === 'mail'" class="fx-muted">the mail</span>
               <span v-else-if="row.source">{{ row.source }}</span>
               <!-- §4.1 "not set" is an answer, and a different one from "empty". -->
               <span v-else class="fx-muted">not set</span>
@@ -301,14 +313,44 @@
                 />
                 <span class="fx-muted">kg</span>
               </template>
+              <!--
+                🔴 EVERY FIELD CAN BE CORRECTED BEFORE THE DRAFT IS SAVED (user, 2026-09-14). What is
+                typed wins over the paste, the documents and the mail, and is saved as typed —
+                including a state or country the model only suggested.
+              -->
+              <div v-else-if="editing[row.key]" class="fx-extract__edit">
+                <template v-if="row.party">
+                  <label v-for="p in PARTY_PARTS" :key="p.suffix" class="fx-field">
+                    <span class="fx-field__label">{{ p.label }}</span>
+                    <input
+                      class="fx-input"
+                      :value="raw(sourceField(row.party + p.suffix, row.group))"
+                      @input="setManual(row.party + p.suffix, $event.target.value)"
+                    />
+                  </label>
+                </template>
+                <input
+                  v-else
+                  class="fx-input"
+                  :value="raw(sourceField(row.key, row.group))"
+                  :placeholder="row.group === 'route' ? 'Airport code, e.g. BOM' : ''"
+                  @input="setManual(row.key, $event.target.value)"
+                />
+              </div>
               <template v-else>
                 <span v-if="row.value !== null && row.value !== ''" :class="{ 'fx-extract__party': row.party }">
                   {{ row.value }}<span v-if="row.unit" class="fx-muted"> {{ row.unit }}</span>
                 </span>
                 <span v-else class="fx-muted">—</span>
+                <span v-if="row.note" class="fx-muted"> ({{ row.note }})</span>
               </template>
             </td>
             <td class="fx-num">
+              <button
+                v-if="!row.editable && !row.derived"
+                class="fx-btn fx-btn--ghost"
+                @click="toggleEdit(row.key)"
+              >{{ editing[row.key] ? "Done" : "Edit" }}</button>
               <!--
                 🔴 NOT an AI call. A character limit and a charset have an exact right
                 answer, so a model here would be slower, cost a credit, differ next
@@ -359,6 +401,10 @@
       </p>
       <p v-for="d in mailDeviations" :key="'mail-' + d.key" class="fx-warn" role="status">
         The mail said {{ d.label }} <strong>{{ d.mail }}</strong>; the document gives <strong>{{ d.document }}</strong>.
+      </p>
+      <p v-for="d in routeDeviations" :key="'route-' + d.document" class="fx-warn" role="status">
+        The mail said <strong>{{ d.mail }}</strong>; {{ d.document }} gives <strong>{{ d.found }}</strong>.
+        <template v-if="d.notAirports"> Those are not airports, so that route is not saved from it.</template>
       </p>
 
       <p v-for="row in incomplete" :key="row.party" class="fx-warn" role="status">
@@ -423,8 +469,8 @@
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import {
-  buildPayload, countryCode, createEndpoint, flattenCargo, flattenParties, formRoute, masterKey,
-  mailDeviations, parsePartyBlock, TARGETS, withoutWorkedOutParts,
+  airportCode, buildPayload, countryCode, createEndpoint, flattenCargo, flattenParties, flattenRoute,
+  formRoute, masterKey, mailDeviations, parsePartyBlock, routeDeviations, TARGETS, withoutWorkedOutParts,
 } from "@/core/config/awbMapping";
 import { cleanParty } from "@/core/config/awbFieldRules";
 
@@ -466,7 +512,12 @@ const GROUPS = [
      pieces and description they usually sit beside. */
   { key: "weights", label: "Weights — gross, volumetric, chargeable", paths: ["gross_weight", "volumetric_weight", "chargeable_weight", "volume"] },
   { key: "notify", label: "Notify party", paths: ["also_notify", "notify"] },
+  /* 🔴 The mail's route is used until a document is ticked for it (user, 2026-09-14). */
+  { key: "route", label: "Route — origin, destination", paths: ["route_origin", "route_destination"] },
 ];
+
+/** The route's rows, which fall back to what the mail said. */
+const ROUTE_KEYS = { route_origin: "origin", route_destination: "destination" };
 
 /**
  * Step 3 lists FIELDS, not groups.
@@ -486,6 +537,15 @@ const RESULT_FIELDS = [
   { key: "volumetric_weight", label: "Volumetric weight", group: "weights", unit: "kg", derived: true },
   { key: "chargeable_weight", label: "Chargeable weight", group: "weights", unit: "kg", editable: true },
   { key: "notify", label: "Notify party", group: "notify", party: "notify" },
+  { key: "route_origin", label: "Origin", group: "route" },
+  { key: "route_destination", label: "Destination", group: "route" },
+];
+
+/** A party's parts, as the edit boxes list them. */
+const PARTY_PARTS = [
+  { suffix: "", label: "Name" }, { suffix: "_address", label: "Address" },
+  { suffix: "_city", label: "City" }, { suffix: "_state", label: "State" },
+  { suffix: "_post_code", label: "Post code" }, { suffix: "_country", label: "Country" },
 ];
 
 /** `saved_addresses.address_type` for each party. */
@@ -593,6 +653,9 @@ export default {
     TARGETS,
     PASTE_EXAMPLE,
     RESULT_FIELDS,
+    PARTY_PARTS,
+    /** row key -> true while its edit boxes are open. */
+    editing: {},
     chargeableEdit: "",
     savedAddresses: {},
     countries: {},
@@ -665,6 +728,14 @@ export default {
         pieces: raw(this.sourceField("pieces", "cargo")),
         gross_weight: raw(this.sourceField("gross_weight", "weights")),
       });
+    },
+    /** Every read document whose route disagrees with the mail's — ticked or not. */
+    routeDeviations() {
+      const read = this.documents
+        .filter((d) => d.state === "ready" && d.fields)
+        .map((d) => ({ name: d.name, route_origin: d.fields.route_origin, route_destination: d.fields.route_destination }));
+
+      return routeDeviations(this.mailCargo, read);
     },
     anyResolved() {
       return GROUPS.some((g) => this.resolved[g.key].source !== null);
@@ -785,14 +856,27 @@ export default {
           return { ...f, source: read && read.state === "ready" ? "missing" : null, value: null };
         }
 
-        // Named source: the paste, or the document assigned to this field's group.
+        // Named source: typed here, the paste, the mail, or the document assigned to this group.
+        if (this.rowKeys(f).some((k) => this.manual[k] !== undefined)) {
+          return { ...f, source: "entered", value };
+        }
+
         if (this.pastedFields[f.key] !== undefined) {
           return { ...f, source: "text", value };
         }
 
+        const node = this.sourceField(f.key, f.group);
+
+        if (node && node.fromMail) {
+          return { ...f, source: "mail", value };
+        }
+
         const doc = this.documents.find((d) => d.uid === this.assignment[f.group]);
 
-        return { ...f, source: doc ? doc.name : null, value };
+        // ⚠️ A sea port is shown as written and said to be left out: the waybill stores an airport.
+        const note = ROUTE_KEYS[f.key] && !airportCode(node) ? "not an airport — not saved" : null;
+
+        return { ...f, source: doc ? doc.name : null, value: node && node.written ? node.written : value, note };
       });
     },
     /**
@@ -835,8 +919,17 @@ export default {
         Object.keys(r.fields || {}).forEach((k) => { out[k] = r.fields[k]; });
       });
 
+      // The mail's route, where no ticked document gives one.
+      Object.keys(ROUTE_KEYS).forEach((k) => {
+        if (out[k] === undefined && this.mailRoute(k)) out[k] = this.mailRoute(k);
+      });
+
       // The paste wins over anything a document said, at the field level too.
       Object.keys(this.pastedFields).forEach((k) => { out[k] = this.pastedFields[k]; });
+
+      // 🔴 And what the operator typed, picked from the address book or fitted wins over all.
+      // These sat in `manual` and were shown in the table, but never reached the draft.
+      Object.keys(this.manual).forEach((k) => { out[k] = this.manual[k]; });
 
       return out;
     },
@@ -1009,8 +1102,32 @@ export default {
 
       const uid = this.assignment[groupKey];
       const doc = this.documents.find((d) => d.uid === uid);
+      const found = doc && doc.state === "ready" && doc.fields ? doc.fields[key] : undefined;
 
-      return doc && doc.state === "ready" && doc.fields ? doc.fields[key] : undefined;
+      if (found !== undefined || !ROUTE_KEYS[key]) return found;
+
+      // The route falls back to what the mail said.
+      return this.mailRoute(key);
+    },
+    /** The mail's origin or destination as a field, marked so the table can name the mail. */
+    mailRoute(key) {
+      const said = raw((this.mailCargo || {})[ROUTE_KEYS[key]]);
+      return said ? { value: said, confidence: "high", fromMail: true } : undefined;
+    },
+    /** Open or close a row's edit boxes. */
+    toggleEdit(key) {
+      this.$set(this.editing, key, !this.editing[key]);
+    },
+    /** What the operator types wins over every source, and is saved as typed. */
+    setManual(key, value) {
+      this.$set(this.manual, key, { value, confidence: "high" });
+    },
+    raw(node) {
+      return raw(node);
+    },
+    /** A row's keys: a party's six parts, or the one field. */
+    rowKeys(row) {
+      return row.party ? PARTY_PARTS.map((p) => row.party + p.suffix) : [row.key];
     },
     /**
      * Can this document be read without paying for vision?
@@ -1205,7 +1322,7 @@ export default {
           .then(({ data }) => {
             if (data.job_status === "completed") {
               clearInterval(timer);
-              doc.fields = this.withCountryCodes(flattenCargo(flattenParties(data.fields || {}, this.countries)));
+              doc.fields = this.withCountryCodes(flattenRoute(flattenCargo(flattenParties(data.fields || {}, this.countries))));
               // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
               doc.piecesNote = (data.data && data.data.pieces_note) || null;
               // 🔴 Why the model did not read it, when it did not. The fields are then the
@@ -1252,39 +1369,38 @@ export default {
     /** A party as the operator reads it: the name, the address, then where it is. */
     partyText(party, groupKey) {
       const part = (suffix) => raw(this.sourceField(party + suffix, groupKey));
+      // ⚠️ A state or country the model worked out is left out of the draft, so it says so.
+      const suggested = (suffix) => {
+        const node = this.sourceField(party + suffix, groupKey);
+        return node && node.confidence === "low" ? " (suggested, not saved)" : "";
+      };
       const place = [
         part("_city") && "City: " + part("_city"),
-        part("_state") && "State: " + part("_state"),
+        part("_state") && "State: " + part("_state") + suggested("_state"),
         part("_post_code") && "Post code: " + part("_post_code"),
-        part("_country") && "Country: " + part("_country"),
+        part("_country") && "Country: " + part("_country") + suggested("_country"),
       ].filter(Boolean).join(" · ");
 
       return [part(""), part("_address"), place].filter(Boolean).join("\n") || null;
     },
-    /** Which group this document currently supplies, if any; "all" when it supplies every one. */
     /** "cartons" → "carton", "boxes" → "box", for "each carton counted as one piece". */
     singular(unit) {
       return String(unit || "").replace(/(es|s)$/, (m) => (unit.endsWith("xes") ? "" : m === "es" ? "e" : ""));
     },
-    groupsFrom(uid) {
-      if (GROUPS.every((g) => this.assignment[g.key] === uid)) return "all";
-
-      const found = GROUPS.find((g) => this.assignment[g.key] === uid);
-      return found ? found.key : "";
+    takesAll(uid) {
+      return GROUPS.every((g) => this.assignment[g.key] === uid);
     },
-    /** Assigning a group to a document takes it away from whichever had it. */
-    assign(groupKey, uid) {
+    /** Ticking a group takes it from whichever document had it; unticking leaves it unsupplied. */
+    take(groupKey, uid, on) {
       const next = { ...this.assignment };
 
-      Object.keys(next).forEach((k) => {
-        if (next[k] === uid) delete next[k];
-      });
-
-      // "All": this one document supplies every group, taking each from whichever had it.
-      if (groupKey === "all") GROUPS.forEach((g) => { next[g.key] = uid; });
-      else if (groupKey) next[groupKey] = uid;
+      if (on) next[groupKey] = uid;
+      else if (next[groupKey] === uid) delete next[groupKey];
 
       this.assignment = next;
+    },
+    takeAll(uid, on) {
+      GROUPS.forEach((g) => this.take(g.key, uid, on));
     },
     /**
      * What the paste box says.

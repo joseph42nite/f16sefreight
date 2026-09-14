@@ -209,6 +209,31 @@ class AirwayBillDraftTest extends TestCase
         ]))->assertStatus(422);
     }
 
+    /**
+     * 🔴 A route read from a document is an origin and a destination — never a carrier, flight
+     * or date — so a draft saves the two airports alone.
+     */
+    public function test_a_draft_keeps_a_route_of_two_airports(): void
+    {
+        $this->submit($this->draft([
+            'status' => 'draft',
+            'routing_information' => ['departure_airport' => 'BOM', 'destination_airport' => 'FRA', 'from' => 'BOM'],
+        ]))->assertOk();
+
+        $row = DB::table('air_way_bills')->where('awb_code', '176')->where('awb_no', '90000001')->first();
+
+        $this->assertSame('BOM', $row->departure_airport);
+        $this->assertSame('FRA', $row->destination_airport);
+        $this->assertNull($row->flight);
+    }
+
+    public function test_outside_a_draft_a_route_still_needs_its_flight(): void
+    {
+        $this->submit($this->draft([
+            'routing_information' => ['departure_airport' => 'BOM', 'destination_airport' => 'FRA', 'from' => 'BOM'],
+        ]))->assertStatus(422);
+    }
+
     /** 🔴 Only a draft is relaxed. Any other save still needs every part of the consignee. */
     public function test_outside_a_draft_a_partial_consignee_is_still_refused(): void
     {

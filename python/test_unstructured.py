@@ -318,9 +318,9 @@ def test_a_model_that_times_out_is_reported_not_hidden():
 
 def test_the_model_is_asked_only_for_what_the_panel_takes():
     """
-    🔴 The Extraction panel takes the parties, the cargo and the weights from a document. The
-    route and the AWB number do not come from a client's document, and when the model was
-    asked for them it returned the bank's SWIFT code as the AWB number.
+    🔴 The Extraction panel takes the parties, the cargo, the weights and the route from a
+    document. The AWB number does not come from a client's document, and when the model was
+    asked for it it returned the bank's SWIFT code.
     """
     from schemas import ExtractedDocument
 
@@ -330,6 +330,7 @@ def test_the_model_is_asked_only_for_what_the_panel_takes():
 
     assert set(ExtractedDocument.model_fields) == parts | {
         "description", "pieces", "gross_weight", "chargeable_weight", "dimensions",
+        "origin", "destination",
     }
 
 
@@ -391,6 +392,118 @@ def test_the_model_splits_a_party_and_marks_what_it_worked_out():
     # shipment's destination, printed elsewhere on the page.
     assert result["shipper"]["state"] == {"value": "Kerala", "confidence": "low"}
     assert result["shipper"]["country"] == {"value": "India", "confidence": "low"}
+
+
+# The parties' lines as the real invoice's text layer gives them (job #16), with a table cell
+# on either side.
+PARTIES_TEXT = """Iraq
+UTIB0001647
+TRAILSPEC GEARS PRIVATE LIMITED
+22/702/01 - CEE PEE BUILDING
+MASJID ROAD, HMT P.O,
+KALAMASEERY , ERNAKULAM - 683503
+GST NO : 32AATCA6213H1ZR
+Date : 12/03/2026
+Country of Origin of goods
+India
+LB05-CARRIZ-BLACK
+Consignee
+SILVER MOON COMMERCIAL
+BROKERAG CO
+Address : GARDENS WASFI
+AL TAL ST.
+P.O Box 9192 Amman 11191
+Jordan
+Delivery address/Buyer
+Dr. Ahmed Neamah
+"""
+
+REAL_PARTIES = {
+    "shipper_name": "TRAILSPEC GEARS PRIVATE LIMITED",
+    "shipper_address": "22/702/01 - CEE PEE BUILDING",
+    "shipper_city": "KALAMASEERY", "shipper_state": "ERNAKULAM",
+    "shipper_post_code": "683503", "shipper_country": "INDIA",
+    "consignee_name": "SILVER MOON COMMERCIAL BROKERAG CO",
+    "consignee_address": "GARDENS WASFI", "consignee_city": "AMMAN", "consignee_country": "Jordan",
+}
+
+
+def test_the_models_address_is_kept_as_written():
+    """
+    🔴 GAPS #204: the coordinate-era parser read `702` in `22/702/01` as a PIN and stored the
+    address as `22 01 CEE PEE BUILDING`.
+    """
+    import unstructured
+
+    _with_model(dict(REAL_PARTIES))
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, PARTIES_TEXT)
+
+    assert result["shipper"]["address"] == "22/702/01 - CEE PEE BUILDING"
+    assert result["shipper"]["pin"] == "683503"
+    assert result["shipper"]["city"] == "KALAMASEERY"
+
+
+def test_a_country_printed_in_the_partys_own_lines_is_high():
+    """
+    🔴 GAPS #201: `Jordan` ends the consignee's own block and was still left out of the draft.
+    The shipper's INDIA is printed only as the goods' origin, so it stays low.
+    """
+    import unstructured
+
+    _with_model(dict(REAL_PARTIES))
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, PARTIES_TEXT)
+
+    assert result["consignee"]["country"] == {"value": "Jordan", "confidence": "high"}
+    assert result["shipper"]["country"] == {"value": "INDIA", "confidence": "low"}
+    # A state stays low even when printed: ERNAKULAM is a district.
+    assert result["shipper"]["state"] == {"value": "ERNAKULAM", "confidence": "low"}
+
+
+def test_a_country_from_elsewhere_on_the_page_stays_low():
+    """The model once answered the destination, Iraq, for the shipper's country."""
+    import unstructured
+
+    _with_model({**REAL_PARTIES, "shipper_country": "Iraq"})
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, PARTIES_TEXT)
+
+    assert result["shipper"]["country"] == {"value": "Iraq", "confidence": "low"}
+
+
+def test_a_post_code_written_in_the_partys_lines_is_taken():
+    """🔴 GAPS #202: the model missed `11191`; the box number beside it is not a post code."""
+    import unstructured
+
+    _with_model(dict(REAL_PARTIES))
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, PARTIES_TEXT)
+
+    assert result["consignee"]["pin"] == "11191"
+
+
+def test_two_candidate_post_codes_are_not_guessed_between():
+    import unstructured
+
+    assert unstructured._written_post_code(["Amman 11191", "Tel 4567890"]) is None
+    assert unstructured._written_post_code(["P.O Box 9192 Amman 11191"]) == "11191"
+    assert unstructured._written_post_code(["22/702/01 - CEE PEE BUILDING", "Date : 12/03/2026"]) is None
+
+
+def test_the_route_is_kept_as_written_with_its_airport_code():
+    """A sea port has no airport code, so the panel shows it and does not save it."""
+    import unstructured
+
+    _with_model({"origin": "NHAVA SHEVA", "destination": "Frankfurt", "shipper_name": "X"})
+    result = {"piece_weight": {}}
+    unstructured._apply_model(result, "text")
+
+    assert result["route"] == {
+        "origin": "NHAVA SHEVA", "origin_code": None,
+        "destination": "Frankfurt", "destination_code": "FRA",
+    }
+    assert result["departure"] == "NHAVA SHEVA"
 
 
 def test_a_word_standing_for_absence_is_not_a_value():
@@ -532,7 +645,7 @@ def test_the_schema_permits_a_model_that_found_nothing():
     # ⚠️ The cargo keys are required, so a model that found nothing says so with nulls.
     empty = ExtractedDocument.model_validate({
         "description": None, "pieces": None, "gross_weight": None,
-        "chargeable_weight": None, "dimensions": None,
+        "chargeable_weight": None, "dimensions": None, "origin": None, "destination": None,
     })
     assert empty.shipper_name is None
 

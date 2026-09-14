@@ -114,6 +114,11 @@ Start with the GOODS:
   chargeable_weight the chargeable weight, only if the document states one
   dimensions        package dimensions as written, length x width x height with the unit
 
+Then the ROUTE, as written:
+
+  origin            the port or airport of LOADING (departure)
+  destination       the port or airport of DISCHARGE (destination) — not a country
+
 Then give each party in SIX parts. The address is the street part only: keep the city, state,
 post code and country out of it.
 

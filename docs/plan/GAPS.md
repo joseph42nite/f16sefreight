@@ -1171,6 +1171,33 @@ three runs gave identical output; #16 took **416 s**, no model error. Cargo was 
 | 208 | ⚪ **Upload only stages** | Dropping the file does not start extraction; Extract must be clicked. Two earlier runs (#14 at 14:29, #15 at 14:33) overlapped on Ollama |
 | 209 | ⚪ **`Delivery address/Buyer` (Dr. Ahmed Neamah, Baghdad) not taken** | Correct by the notify rule (the document never says "notify"), recorded so it is a decision, not an accident |
 
+🟢 **Fixed 2026-09-14 — #201, #202, #204** (user: *"fix 1, 2 and 4"*):
+
+| # | Resolution |
+|---|---|
+| 201 | A model country is **high** when it is printed in the party's **own lines** — from its name to one line past the last line holding its address, city or post code — and low otherwise. The consignee's `Jordan` is now saved; the shipper's `INDIA` (printed only as the goods' origin) and a stray `Iraq` stay low. ⚠️ A **state stays low** even when printed: the shipper's printed ERNAKULAM is a district (#199) |
+| 202 | When the model gives no post code, the one standalone 4–10-digit number in the party's lines is taken — not one after "Box", and **never a guess between two** (a phone number looks like a post code) |
+| 204 | The model's party no longer goes through `transform_address_box`; its parts are kept as the model split them, so the address stays `22/702/01 - CEE PEE BUILDING` |
+
+🟢 **Built 2026-09-14 — the route, tick boxes, editing** (user decisions, asked and answered):
+
+| # | Decision | Detail |
+|---|---|---|
+| 210 | **Take from it is tick boxes**, one per group per document | Each group still comes from exactly ONE document; ticking it on another moves it. "All" ticks every group |
+| 211 | **Route: the mail first, a ticked document replaces it** | Gemma is asked for `origin` and `destination` as written (required-nullable). The panel's Origin/Destination rows say "the mail" until a document is ticked for Route. #206 closes with it: the job stores the model's route, not the IEC number |
+| 212 | **The route is saved only as two airport codes** | `resolve_iata` gives the code; a sea port (NHAVA SHEVA) has none, is shown "not an airport — not saved", and nothing reaches `routing_information`. A draft saves the two airports without carrier, flight or date (`routeRules`, both waybill controllers); a send keeps every rule |
+| 213 | **The route is compared with the mail for every read document** | *"The mail said BOM → FRA; Commercial Invoice.pdf gives NHAVA SHEVA → UMM QASR."* — #207 |
+| 214 | **Every row can be edited before saving** | Party rows open six boxes (name … country); the rest one box. Typed values win over the paste, documents and mail, and are saved as typed. Volumetric stays calculated |
+| 215 | 🔴 **Fit, the address book and typed values never reached the draft** | They were written to `manual` and shown in the table, but `flatFields` — what Save as draft sends — never read `manual`. It does now. Found while adding editing |
+| 216 | ⚪ **A suggested state or country now says so in the table** | *"State: ERNAKULAM (suggested, not saved)"* — #205 |
+| 217 | 🔴 **OPEN — gemma3:4b read the route wrong on the real invoice (job #17, 469 s)** | `origin: "Umm Qasr"` — the port of DISCHARGE — and `destination: "India"` — the goods' country of origin; the port of loading is NHAVA SHEVA. Both words are on the page, so grounding passes (the same misplacement #194's predecessor saw). **Nothing wrong was saved:** neither is an airport, the rows say "not an airport — not saved", and the mismatch message names them. But the message shows the operator a wrong route. Needs the user's call on a guard |
+
+🟢 **Verified end to end (job #17 → draft 176-99990006):** consignee `Jordan` high → saved `JO`, post code
+`11191`, shipper address `22/702/01 - CEE PEE BUILDING`; the shipper's `Iraq` stayed low and unsaved. Edited in
+the panel — shipper state Kerala, country India, route BOM → FRA — and saved: `ship_state Kerala`, `ship_country IN`,
+`departure_airport BOM`, `destination_airport FRA`, `flight`/`date` NULL, status `draft`. Python 50/50, jest 66/66,
+PHP 599 passed, 1 skipped.
+
 ---
 
 ## 🟠 Design decisions with no owner yet

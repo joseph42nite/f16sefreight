@@ -860,7 +860,18 @@ const GROUPS = [{
   key: "notify",
   label: "Notify party",
   paths: ["also_notify", "notify"]
+}, /* 🔴 The mail's route is used until a document is ticked for it (user, 2026-09-14). */
+{
+  key: "route",
+  label: "Route — origin, destination",
+  paths: ["route_origin", "route_destination"]
 }];
+
+/** The route's rows, which fall back to what the mail said. */
+const ROUTE_KEYS = {
+  route_origin: "origin",
+  route_destination: "destination"
+};
 
 /**
  * Step 3 lists FIELDS, not groups.
@@ -914,6 +925,35 @@ const RESULT_FIELDS = [{
   label: "Notify party",
   group: "notify",
   party: "notify"
+}, {
+  key: "route_origin",
+  label: "Origin",
+  group: "route"
+}, {
+  key: "route_destination",
+  label: "Destination",
+  group: "route"
+}];
+
+/** A party's parts, as the edit boxes list them. */
+const PARTY_PARTS = [{
+  suffix: "",
+  label: "Name"
+}, {
+  suffix: "_address",
+  label: "Address"
+}, {
+  suffix: "_city",
+  label: "City"
+}, {
+  suffix: "_state",
+  label: "State"
+}, {
+  suffix: "_post_code",
+  label: "Post code"
+}, {
+  suffix: "_country",
+  label: "Country"
 }];
 
 /** `saved_addresses.address_type` for each party. */
@@ -1009,6 +1049,9 @@ const PARTY_REQUIRED = {
     TARGETS: _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.TARGETS,
     PASTE_EXAMPLE,
     RESULT_FIELDS,
+    PARTY_PARTS,
+    /** row key -> true while its edit boxes are open. */
+    editing: {},
     chargeableEdit: "",
     savedAddresses: {},
     countries: {},
@@ -1087,6 +1130,15 @@ const PARTY_REQUIRED = {
         pieces: raw(this.sourceField("pieces", "cargo")),
         gross_weight: raw(this.sourceField("gross_weight", "weights"))
       });
+    },
+    /** Every read document whose route disagrees with the mail's — ticked or not. */
+    routeDeviations() {
+      const read = this.documents.filter(d => d.state === "ready" && d.fields).map(d => ({
+        name: d.name,
+        route_origin: d.fields.route_origin,
+        route_destination: d.fields.route_destination
+      }));
+      return (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.routeDeviations)(this.mailCargo, read);
     },
     anyResolved() {
       return GROUPS.some(g => this.resolved[g.key].source !== null);
@@ -1198,17 +1250,34 @@ const PARTY_REQUIRED = {
           });
         }
 
-        // Named source: the paste, or the document assigned to this field's group.
+        // Named source: typed here, the paste, the mail, or the document assigned to this group.
+        if (this.rowKeys(f).some(k => this.manual[k] !== undefined)) {
+          return _objectSpread(_objectSpread({}, f), {}, {
+            source: "entered",
+            value
+          });
+        }
         if (this.pastedFields[f.key] !== undefined) {
           return _objectSpread(_objectSpread({}, f), {}, {
             source: "text",
             value
           });
         }
+        const node = this.sourceField(f.key, f.group);
+        if (node && node.fromMail) {
+          return _objectSpread(_objectSpread({}, f), {}, {
+            source: "mail",
+            value
+          });
+        }
         const doc = this.documents.find(d => d.uid === this.assignment[f.group]);
+
+        // ⚠️ A sea port is shown as written and said to be left out: the waybill stores an airport.
+        const note = ROUTE_KEYS[f.key] && !(0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.airportCode)(node) ? "not an airport — not saved" : null;
         return _objectSpread(_objectSpread({}, f), {}, {
           source: doc ? doc.name : null,
-          value
+          value: node && node.written ? node.written : value,
+          note
         });
       });
     },
@@ -1252,9 +1321,20 @@ const PARTY_REQUIRED = {
         });
       });
 
+      // The mail's route, where no ticked document gives one.
+      Object.keys(ROUTE_KEYS).forEach(k => {
+        if (out[k] === undefined && this.mailRoute(k)) out[k] = this.mailRoute(k);
+      });
+
       // The paste wins over anything a document said, at the field level too.
       Object.keys(this.pastedFields).forEach(k => {
         out[k] = this.pastedFields[k];
+      });
+
+      // 🔴 And what the operator typed, picked from the address book or fitted wins over all.
+      // These sat in `manual` and were shown in the table, but never reached the draft.
+      Object.keys(this.manual).forEach(k => {
+        out[k] = this.manual[k];
       });
       return out;
     },
@@ -1439,7 +1519,38 @@ const PARTY_REQUIRED = {
       if (this.pastedFields[key] !== undefined) return this.pastedFields[key];
       const uid = this.assignment[groupKey];
       const doc = this.documents.find(d => d.uid === uid);
-      return doc && doc.state === "ready" && doc.fields ? doc.fields[key] : undefined;
+      const found = doc && doc.state === "ready" && doc.fields ? doc.fields[key] : undefined;
+      if (found !== undefined || !ROUTE_KEYS[key]) return found;
+
+      // The route falls back to what the mail said.
+      return this.mailRoute(key);
+    },
+    /** The mail's origin or destination as a field, marked so the table can name the mail. */
+    mailRoute(key) {
+      const said = raw((this.mailCargo || {})[ROUTE_KEYS[key]]);
+      return said ? {
+        value: said,
+        confidence: "high",
+        fromMail: true
+      } : undefined;
+    },
+    /** Open or close a row's edit boxes. */
+    toggleEdit(key) {
+      this.$set(this.editing, key, !this.editing[key]);
+    },
+    /** What the operator types wins over every source, and is saved as typed. */
+    setManual(key, value) {
+      this.$set(this.manual, key, {
+        value,
+        confidence: "high"
+      });
+    },
+    raw(node) {
+      return raw(node);
+    },
+    /** A row's keys: a party's six parts, or the one field. */
+    rowKeys(row) {
+      return row.party ? PARTY_PARTS.map(p => row.party + p.suffix) : [row.key];
     },
     /**
      * Can this document be read without paying for vision?
@@ -1627,7 +1738,7 @@ const PARTY_REQUIRED = {
         }) => {
           if (data.job_status === "completed") {
             clearInterval(timer);
-            doc.fields = this.withCountryCodes((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenCargo)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenParties)(data.fields || {}, this.countries)));
+            doc.fields = this.withCountryCodes((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenRoute)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenCargo)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenParties)(data.fields || {}, this.countries))));
             // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
             doc.piecesNote = data.data && data.data.pieces_note || null;
             // 🔴 Why the model did not read it, when it did not. The fields are then the
@@ -1666,31 +1777,29 @@ const PARTY_REQUIRED = {
     /** A party as the operator reads it: the name, the address, then where it is. */
     partyText(party, groupKey) {
       const part = suffix => raw(this.sourceField(party + suffix, groupKey));
-      const place = [part("_city") && "City: " + part("_city"), part("_state") && "State: " + part("_state"), part("_post_code") && "Post code: " + part("_post_code"), part("_country") && "Country: " + part("_country")].filter(Boolean).join(" · ");
+      // ⚠️ A state or country the model worked out is left out of the draft, so it says so.
+      const suggested = suffix => {
+        const node = this.sourceField(party + suffix, groupKey);
+        return node && node.confidence === "low" ? " (suggested, not saved)" : "";
+      };
+      const place = [part("_city") && "City: " + part("_city"), part("_state") && "State: " + part("_state") + suggested("_state"), part("_post_code") && "Post code: " + part("_post_code"), part("_country") && "Country: " + part("_country") + suggested("_country")].filter(Boolean).join(" · ");
       return [part(""), part("_address"), place].filter(Boolean).join("\n") || null;
     },
-    /** Which group this document currently supplies, if any; "all" when it supplies every one. */
     /** "cartons" → "carton", "boxes" → "box", for "each carton counted as one piece". */
     singular(unit) {
       return String(unit || "").replace(/(es|s)$/, m => unit.endsWith("xes") ? "" : m === "es" ? "e" : "");
     },
-    groupsFrom(uid) {
-      if (GROUPS.every(g => this.assignment[g.key] === uid)) return "all";
-      const found = GROUPS.find(g => this.assignment[g.key] === uid);
-      return found ? found.key : "";
+    takesAll(uid) {
+      return GROUPS.every(g => this.assignment[g.key] === uid);
     },
-    /** Assigning a group to a document takes it away from whichever had it. */
-    assign(groupKey, uid) {
+    /** Ticking a group takes it from whichever document had it; unticking leaves it unsupplied. */
+    take(groupKey, uid, on) {
       const next = _objectSpread({}, this.assignment);
-      Object.keys(next).forEach(k => {
-        if (next[k] === uid) delete next[k];
-      });
-
-      // "All": this one document supplies every group, taking each from whichever had it.
-      if (groupKey === "all") GROUPS.forEach(g => {
-        next[g.key] = uid;
-      });else if (groupKey) next[groupKey] = uid;
+      if (on) next[groupKey] = uid;else if (next[groupKey] === uid) delete next[groupKey];
       this.assignment = next;
+    },
+    takeAll(uid, on) {
+      GROUPS.forEach(g => this.take(g.key, uid, on));
     },
     /**
      * What the paste box says.
@@ -3233,34 +3342,41 @@ var render = function render() {
           return _vm.remove(doc.uid);
         }
       }
-    }, [_vm._v("Remove")])]), _vm._v(" "), _c("td", [_c("select", {
-      staticClass: "fx-input",
+    }, [_vm._v("Remove")])]), _vm._v(" "), _c("td", [_c("div", {
+      staticClass: "fx-extract__takes"
+    }, [_c("label", {
+      staticClass: "fx-checkbox"
+    }, [_c("input", {
       attrs: {
+        type: "checkbox",
         disabled: doc.state === "reading"
       },
       domProps: {
-        value: _vm.groupsFrom(doc.uid)
+        checked: _vm.takesAll(doc.uid)
       },
       on: {
         change: function ($event) {
-          return _vm.assign($event.target.value, doc.uid);
+          return _vm.takeAll(doc.uid, $event.target.checked);
         }
       }
-    }, [_c("option", {
-      attrs: {
-        value: ""
-      }
-    }, [_vm._v("— nothing —")]), _vm._v(" "), _c("option", {
-      attrs: {
-        value: "all"
-      }
-    }, [_vm._v("All")]), _vm._v(" "), _vm._l(_vm.GROUPS, function (g) {
-      return _c("option", {
+    }), _vm._v(" "), _c("span", [_vm._v("All")])]), _vm._v(" "), _vm._l(_vm.GROUPS, function (g) {
+      return _c("label", {
         key: g.key,
+        staticClass: "fx-checkbox"
+      }, [_c("input", {
+        attrs: {
+          type: "checkbox",
+          disabled: doc.state === "reading"
+        },
         domProps: {
-          value: g.key
+          checked: _vm.assignment[g.key] === doc.uid
+        },
+        on: {
+          change: function ($event) {
+            return _vm.take(g.key, doc.uid, $event.target.checked);
+          }
         }
-      }, [_vm._v(_vm._s(g.label))]);
+      }), _vm._v(" "), _c("span", [_vm._v(_vm._s(g.label))])]);
     })], 2)])]);
   }), 0)]) : _vm._e()]), _vm._v(" "), _c("section", {
     staticClass: "fx-extract__step"
@@ -3308,7 +3424,9 @@ var render = function render() {
       staticClass: "fx-extract__override"
     }, [_vm._v("entered")]) : row.source === "missing" ? _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("not on the document")]) : row.source ? _c("span", [_vm._v(_vm._s(row.source))]) : _c("span", {
+    }, [_vm._v("not on the document")]) : row.source === "mail" ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("the mail")]) : row.source ? _c("span", [_vm._v(_vm._s(row.source))]) : _c("span", {
       staticClass: "fx-muted"
     }, [_vm._v("not set")])]), _vm._v(" "), _c("td", [row.party ? _c("select", {
       staticClass: "fx-input fx-extract__book",
@@ -3354,7 +3472,39 @@ var render = function render() {
       }
     }), _vm._v(" "), _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("kg")])] : [row.value !== null && row.value !== "" ? _c("span", {
+    }, [_vm._v("kg")])] : _vm.editing[row.key] ? _c("div", {
+      staticClass: "fx-extract__edit"
+    }, [row.party ? _vm._l(_vm.PARTY_PARTS, function (p) {
+      return _c("label", {
+        key: p.suffix,
+        staticClass: "fx-field"
+      }, [_c("span", {
+        staticClass: "fx-field__label"
+      }, [_vm._v(_vm._s(p.label))]), _vm._v(" "), _c("input", {
+        staticClass: "fx-input",
+        domProps: {
+          value: _vm.raw(_vm.sourceField(row.party + p.suffix, row.group))
+        },
+        on: {
+          input: function ($event) {
+            return _vm.setManual(row.party + p.suffix, $event.target.value);
+          }
+        }
+      })]);
+    }) : _c("input", {
+      staticClass: "fx-input",
+      attrs: {
+        placeholder: row.group === "route" ? "Airport code, e.g. BOM" : ""
+      },
+      domProps: {
+        value: _vm.raw(_vm.sourceField(row.key, row.group))
+      },
+      on: {
+        input: function ($event) {
+          return _vm.setManual(row.key, $event.target.value);
+        }
+      }
+    })], 2) : [row.value !== null && row.value !== "" ? _c("span", {
       class: {
         "fx-extract__party": row.party
       }
@@ -3362,9 +3512,18 @@ var render = function render() {
       staticClass: "fx-muted"
     }, [_vm._v(" " + _vm._s(row.unit))]) : _vm._e()]) : _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("—")])]], 2), _vm._v(" "), _c("td", {
+    }, [_vm._v("—")]), _vm._v(" "), row.note ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" (" + _vm._s(row.note) + ")")]) : _vm._e()]], 2), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
-    }, [row.party && row.value ? _c("button", {
+    }, [!row.editable && !row.derived ? _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.toggleEdit(row.key);
+        }
+      }
+    }, [_vm._v(_vm._s(_vm.editing[row.key] ? "Done" : "Edit"))]) : _vm._e(), _vm._v(" "), row.party && row.value ? _c("button", {
       staticClass: "fx-btn fx-btn--ghost",
       on: {
         click: function ($event) {
@@ -3402,6 +3561,14 @@ var render = function render() {
         role: "status"
       }
     }, [_vm._v("\n      The mail said " + _vm._s(d.label) + " "), _c("strong", [_vm._v(_vm._s(d.mail))]), _vm._v("; the document gives "), _c("strong", [_vm._v(_vm._s(d.document))]), _vm._v(".\n    ")]);
+  }), _vm._v(" "), _vm._l(_vm.routeDeviations, function (d) {
+    return _c("p", {
+      key: "route-" + d.document,
+      staticClass: "fx-warn",
+      attrs: {
+        role: "status"
+      }
+    }, [_vm._v("\n      The mail said "), _c("strong", [_vm._v(_vm._s(d.mail))]), _vm._v("; " + _vm._s(d.document) + " gives "), _c("strong", [_vm._v(_vm._s(d.found))]), _vm._v(".\n      "), d.notAirports ? [_vm._v(" Those are not airports, so that route is not saved from it.")] : _vm._e()], 2);
   }), _vm._v(" "), _vm._l(_vm.incomplete, function (row) {
     return _c("p", {
       key: row.party,
@@ -3669,15 +3836,18 @@ function cleanParty(target, party, fields) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "TARGETS": () => (/* binding */ TARGETS),
+/* harmony export */   "airportCode": () => (/* binding */ airportCode),
 /* harmony export */   "buildPayload": () => (/* binding */ buildPayload),
 /* harmony export */   "countryCode": () => (/* binding */ countryCode),
 /* harmony export */   "createEndpoint": () => (/* binding */ createEndpoint),
 /* harmony export */   "flattenCargo": () => (/* binding */ flattenCargo),
 /* harmony export */   "flattenParties": () => (/* binding */ flattenParties),
+/* harmony export */   "flattenRoute": () => (/* binding */ flattenRoute),
 /* harmony export */   "formRoute": () => (/* binding */ formRoute),
 /* harmony export */   "mailDeviations": () => (/* binding */ mailDeviations),
 /* harmony export */   "masterKey": () => (/* binding */ masterKey),
 /* harmony export */   "parsePartyBlock": () => (/* binding */ parsePartyBlock),
+/* harmony export */   "routeDeviations": () => (/* binding */ routeDeviations),
 /* harmony export */   "withoutWorkedOutParts": () => (/* binding */ withoutWorkedOutParts)
 /* harmony export */ });
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
@@ -3830,6 +4000,19 @@ function buildPayload(target, fields, identity) {
     const line = dimensionLine(dimensions, pieces);
     if (line) entry.itemss.push(line);
     payload.entries = [entry];
+  }
+
+  // ── Route ─────────────────────────────────────────────────────────────────
+  // ⚠️ Only as AIRPORT CODES. An invoice's route is often a sea port (NHAVA SHEVA), and the
+  // waybill stores a 3-letter airport; a port is shown in the panel and never saved.
+  const origin = airportCode(fields.route_origin);
+  const destination = airportCode(fields.route_destination);
+  if (origin && destination) {
+    payload.routing_information = {
+      departure_airport: origin,
+      destination_airport: destination,
+      from: origin
+    };
   }
 
   // ── Totals ────────────────────────────────────────────────────────────────
@@ -4094,6 +4277,68 @@ function flattenCargo(fields) {
     confidence: "high"
   };
   return out;
+}
+
+/** A route end as a 3-letter airport code, or null — a document's sea port is not one. */
+function airportCode(node) {
+  if (node && typeof node === "object" && node.airport === false) return null;
+  const value = String(raw(node) || "").trim();
+  return /^[a-z]{3}$/i.test(value) ? value.toUpperCase() : null;
+}
+
+/**
+ * A document's route in the panel's flat keys: `route_origin` and `route_destination`.
+ *
+ * ⚠️ NOT `destination`: the document's top-level `destination` is the label reading, so the
+ * route keeps names of its own. The value is the airport code when there is one, otherwise the
+ * place as written, marked `airport: false` so it is shown and not saved.
+ */
+function flattenRoute(fields) {
+  const out = _objectSpread({}, fields);
+  const route = fields.route;
+  if (!route || typeof route !== "object" || "value" in route) return out;
+  delete out.route;
+  ["origin", "destination"].forEach(end => {
+    const written = raw(route[end]);
+    const code = raw(route[end + "_code"]);
+    if (written) out["route_" + end] = {
+      value: code || written,
+      written,
+      airport: Boolean(code),
+      confidence: "high"
+    };
+  });
+  return out;
+}
+
+/**
+ * Where a document's route disagrees with the mail's, one entry per document.
+ *
+ * 🔴 The user: "you can mention the mismatch from the mail and the extracted data." Compared on
+ * what each side gives: a mail with no destination is not a disagreement about one.
+ */
+function routeDeviations(mailCargo, documents) {
+  const mail = mailCargo || {};
+  const said = {
+    origin: raw(mail.origin),
+    destination: raw(mail.destination)
+  };
+  const text = node => String(raw(node) || "").trim().toUpperCase();
+  return (documents || []).map(doc => {
+    const got = {
+      origin: doc.route_origin,
+      destination: doc.route_destination
+    };
+    const differs = ["origin", "destination"].some(end => said[end] && raw(got[end]) && text(said[end]) !== text(got[end]));
+    if (!differs) return null;
+    const shown = node => node ? node.written || raw(node) : "?";
+    return {
+      document: doc.name,
+      mail: (said.origin || "?") + " → " + (said.destination || "?"),
+      found: shown(got.origin) + " → " + shown(got.destination),
+      notAirports: [got.origin, got.destination].some(node => node && !airportCode(node))
+    };
+  }).filter(Boolean);
 }
 
 /**

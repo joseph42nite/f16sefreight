@@ -130,6 +130,16 @@ export function buildPayload(target, fields, identity) {
     payload.entries = [entry];
   }
 
+  // ── Route ─────────────────────────────────────────────────────────────────
+  // ⚠️ Only as AIRPORT CODES. An invoice's route is often a sea port (NHAVA SHEVA), and the
+  // waybill stores a 3-letter airport; a port is shown in the panel and never saved.
+  const origin = airportCode(fields.route_origin);
+  const destination = airportCode(fields.route_destination);
+
+  if (origin && destination) {
+    payload.routing_information = { departure_airport: origin, destination_airport: destination, from: origin };
+  }
+
   // ── Totals ────────────────────────────────────────────────────────────────
   // ⚠️ Only sent when BOTH are present: `totalAmountValume` requires volume AND amount,
   // and amount is commercial — it never comes from a scanned packing list.
@@ -399,6 +409,68 @@ export function flattenCargo(fields) {
   if (dims.length && out.dimensions === undefined) out.dimensions = { value: dims.join(", "), confidence: "high" };
 
   return out;
+}
+
+/** A route end as a 3-letter airport code, or null — a document's sea port is not one. */
+export function airportCode(node) {
+  if (node && typeof node === "object" && node.airport === false) return null;
+
+  const value = String(raw(node) || "").trim();
+
+  return /^[a-z]{3}$/i.test(value) ? value.toUpperCase() : null;
+}
+
+/**
+ * A document's route in the panel's flat keys: `route_origin` and `route_destination`.
+ *
+ * ⚠️ NOT `destination`: the document's top-level `destination` is the label reading, so the
+ * route keeps names of its own. The value is the airport code when there is one, otherwise the
+ * place as written, marked `airport: false` so it is shown and not saved.
+ */
+export function flattenRoute(fields) {
+  const out = { ...fields };
+  const route = fields.route;
+
+  if (!route || typeof route !== "object" || "value" in route) return out;
+
+  delete out.route;
+
+  ["origin", "destination"].forEach((end) => {
+    const written = raw(route[end]);
+    const code = raw(route[end + "_code"]);
+
+    if (written) out["route_" + end] = { value: code || written, written, airport: Boolean(code), confidence: "high" };
+  });
+
+  return out;
+}
+
+/**
+ * Where a document's route disagrees with the mail's, one entry per document.
+ *
+ * 🔴 The user: "you can mention the mismatch from the mail and the extracted data." Compared on
+ * what each side gives: a mail with no destination is not a disagreement about one.
+ */
+export function routeDeviations(mailCargo, documents) {
+  const mail = mailCargo || {};
+  const said = { origin: raw(mail.origin), destination: raw(mail.destination) };
+  const text = (node) => String(raw(node) || "").trim().toUpperCase();
+
+  return (documents || []).map((doc) => {
+    const got = { origin: doc.route_origin, destination: doc.route_destination };
+    const differs = ["origin", "destination"].some((end) => said[end] && raw(got[end]) && text(said[end]) !== text(got[end]));
+
+    if (!differs) return null;
+
+    const shown = (node) => (node ? node.written || raw(node) : "?");
+
+    return {
+      document: doc.name,
+      mail: (said.origin || "?") + " → " + (said.destination || "?"),
+      found: shown(got.origin) + " → " + shown(got.destination),
+      notAirports: [got.origin, got.destination].some((node) => node && !airportCode(node)),
+    };
+  }).filter(Boolean);
 }
 
 /**

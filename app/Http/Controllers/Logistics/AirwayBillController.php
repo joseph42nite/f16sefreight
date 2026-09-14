@@ -345,7 +345,7 @@ class AirwayBillController extends Controller
     {
         $agent = $this->getAuthAgent();
 
-        $validator = Validator::make($routing_information, [
+        $validator = Validator::make($routing_information, $this->routeRules([
             'departure_airport' => 'required|string',
             'destination_airport' => 'required|string',
             'from' => 'nullable|string',
@@ -361,7 +361,7 @@ class AirwayBillController extends Controller
             'by_3' => 'nullable|string|size:2',
             'flight_3' => 'nullable|string|max:4',
             'date_3' => 'nullable',
-        ]);
+        ]));
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -379,11 +379,12 @@ class AirwayBillController extends Controller
 
         $AirwayBills->departure_airport = $routing_information['departure_airport'];
         $AirwayBills->destination_airport = $routing_information['destination_airport'];
-        $AirwayBills->from = $routing_information['from'];
-        $AirwayBills->to = $routing_information['to'];
-        $AirwayBills->by = $routing_information['by'];
-        $AirwayBills->flight = $routing_information['flight'];
-        $AirwayBills->date = $routing_information['date'];
+        // ⚠️ `?? null`: a draft's route from a document carries only the two airports.
+        $AirwayBills->from = $routing_information['from'] ?? null;
+        $AirwayBills->to = $routing_information['to'] ?? null;
+        $AirwayBills->by = $routing_information['by'] ?? null;
+        $AirwayBills->flight = $routing_information['flight'] ?? null;
+        $AirwayBills->date = $routing_information['date'] ?? null;
         // 🔴 The second and third legs are `nullable` in the validator above, so they may
         // legitimately be ABSENT — a direct flight has one leg. Reading them unconditionally
         // threw "Undefined array key to_2" and returned a 500 (GAPS #43). It never showed in

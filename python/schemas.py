@@ -27,9 +27,9 @@ whole reply failed validation. Without it the same document took 42 seconds and 
 valid JSON. An unbounded list is a loop a small model can fall into and never leave.
 
 🔴 ONLY WHAT THE PANEL TAKES FROM A DOCUMENT. The Extraction panel's groups are the parties
-(shipper, consignee, notify), the cargo (pieces, dimensions, description) and the weights. The route and the AWB number do not come from a client's
-document, so the model is not asked for them. When it was asked, on the real invoice it
-returned the bank's SWIFT code as the AWB number.
+(shipper, consignee, notify), the cargo (pieces, dimensions, description), the weights and the
+route (user, 2026-09-14). The AWB number does not come from a client's document, so the model
+is not asked for it: when it was, on the real invoice it returned the bank's SWIFT code.
 """
 
 from typing import Optional
@@ -63,6 +63,11 @@ class ExtractedDocument(BaseModel):
 
     # As written, with the unit: "64 X 32 X 64 CM".
     dimensions: Optional[str]
+
+    # The route as written — a port or an airport. Required-nullable for the same reason as
+    # the goods: an optional key gets skipped.
+    origin: Optional[str]
+    destination: Optional[str]
 
     # 🔴 EVERY PART OF A PARTY, because the form stores them separately and the draft needs
     # them apart: name, street, city, state, post code, country. The model used to return only

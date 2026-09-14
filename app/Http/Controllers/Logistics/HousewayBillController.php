@@ -361,7 +361,7 @@ class HousewayBillController extends Controller
     {
         $agent = $this->getAuthAgent();
 
-        $validator = Validator::make($routing_information, [
+        $validator = Validator::make($routing_information, $this->routeRules([
             'departure_airport' => 'required|string',
             'destination_airport' => 'required|string',
             'from' => 'required|string',
@@ -379,7 +379,7 @@ class HousewayBillController extends Controller
             'date_3' => 'nullable',
             'master_origin' => 'required|regex:/^[a-zA-Z0-9]+$/|max:3',
             'master_destination' => 'required|regex:/^[a-zA-Z0-9]+$/|max:3'
-        ]);
+        ]));
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -396,20 +396,20 @@ class HousewayBillController extends Controller
             $HousewayBills->departure_airport = $routing_information['departure_airport'];
             $HousewayBills->destination_airport = $routing_information['destination_airport'];
             $HousewayBills->from = $routing_information['departure_airport'];
-            $HousewayBills->to = $routing_information['to'];
-            $HousewayBills->by = $routing_information['by'];
-            $HousewayBills->flight = $routing_information['flight'];
-            $HousewayBills->date = $routing_information['date'];
-            $HousewayBills->to_2 = $routing_information['to_2'];
-            $HousewayBills->by_2 = $routing_information['by_2'];
-            $HousewayBills->flight_2 = $routing_information['flight_2'];
-            $HousewayBills->date_2 = $routing_information['date_2'];
-            $HousewayBills->to_3 = $routing_information['to_3'];
-            $HousewayBills->by_3 = $routing_information['by_3'];
-            $HousewayBills->flight_3 = $routing_information['flight_3'];
-            $HousewayBills->date_3 = $routing_information['date_3'];
-            $HousewayBills->master_origin = $routing_information['master_origin'];
-            $HousewayBills->master_destination = $routing_information['master_destination'];
+            $HousewayBills->to = $routing_information['to'] ?? null;
+            $HousewayBills->by = $routing_information['by'] ?? null;
+            $HousewayBills->flight = $routing_information['flight'] ?? null;
+            $HousewayBills->date = $routing_information['date'] ?? null;
+            $HousewayBills->to_2 = $routing_information['to_2'] ?? null;
+            $HousewayBills->by_2 = $routing_information['by_2'] ?? null;
+            $HousewayBills->flight_2 = $routing_information['flight_2'] ?? null;
+            $HousewayBills->date_2 = $routing_information['date_2'] ?? null;
+            $HousewayBills->to_3 = $routing_information['to_3'] ?? null;
+            $HousewayBills->by_3 = $routing_information['by_3'] ?? null;
+            $HousewayBills->flight_3 = $routing_information['flight_3'] ?? null;
+            $HousewayBills->date_3 = $routing_information['date_3'] ?? null;
+            $HousewayBills->master_origin = $routing_information['master_origin'] ?? null;
+            $HousewayBills->master_destination = $routing_information['master_destination'] ?? null;
             $HousewayBills->agent_id = $agent->id ?? null;
             $HousewayBills->save();
             return response()->json([
@@ -423,20 +423,20 @@ class HousewayBillController extends Controller
         $HousewayBills->departure_airport = $routing_information['departure_airport'];
         $HousewayBills->destination_airport = $routing_information['destination_airport'];
         $HousewayBills->from = $routing_information['departure_airport'];
-        $HousewayBills->to = $routing_information['to'];
-        $HousewayBills->by = $routing_information['by'];
-        $HousewayBills->flight = $routing_information['flight'];
-        $HousewayBills->date = $routing_information['date'];
-        $HousewayBills->to_2 = $routing_information['to_2'];
-        $HousewayBills->by_2 = $routing_information['by_2'];
-        $HousewayBills->flight_2 = $routing_information['flight_2'];
-        $HousewayBills->date_2 = $routing_information['date_2'];
-        $HousewayBills->to_3 = $routing_information['to_3'];
-        $HousewayBills->by_3 = $routing_information['by_3'];
-        $HousewayBills->flight_3 = $routing_information['flight_3'];
-        $HousewayBills->date_3 = $routing_information['date_3'];
-        $HousewayBills->master_origin = $routing_information['master_origin'];
-        $HousewayBills->master_destination = $routing_information['master_destination'];
+        $HousewayBills->to = $routing_information['to'] ?? null;
+        $HousewayBills->by = $routing_information['by'] ?? null;
+        $HousewayBills->flight = $routing_information['flight'] ?? null;
+        $HousewayBills->date = $routing_information['date'] ?? null;
+        $HousewayBills->to_2 = $routing_information['to_2'] ?? null;
+        $HousewayBills->by_2 = $routing_information['by_2'] ?? null;
+        $HousewayBills->flight_2 = $routing_information['flight_2'] ?? null;
+        $HousewayBills->date_2 = $routing_information['date_2'] ?? null;
+        $HousewayBills->to_3 = $routing_information['to_3'] ?? null;
+        $HousewayBills->by_3 = $routing_information['by_3'] ?? null;
+        $HousewayBills->flight_3 = $routing_information['flight_3'] ?? null;
+        $HousewayBills->date_3 = $routing_information['date_3'] ?? null;
+        $HousewayBills->master_origin = $routing_information['master_origin'] ?? null;
+        $HousewayBills->master_destination = $routing_information['master_destination'] ?? null;
         $HousewayBills->agent_id = $agent->id ?? null;
         $HousewayBills->save();
         return "Routing Information saved successfull";

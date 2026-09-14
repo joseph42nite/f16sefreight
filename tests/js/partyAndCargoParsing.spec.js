@@ -6,8 +6,8 @@
  * them. The fallback fixture is job #8's real consignee; the cargo fixture is job #6's shape.
  */
 import {
-  buildPayload, countryCode, flattenCargo, flattenParties, mailDeviations, parsePartyBlock,
-  withoutWorkedOutParts,
+  airportCode, buildPayload, countryCode, flattenCargo, flattenParties, flattenRoute, mailDeviations,
+  parsePartyBlock, routeDeviations, withoutWorkedOutParts,
 } from "@/core/config/awbMapping";
 
 const C = { IN: "India", JO: "Jordan", AE: "United Arab Emirates", DE: "Germany", IQ: "Iraq" };
@@ -189,5 +189,48 @@ describe("mailDeviations", () => {
     expect(mailDeviations({ pieces: { value: 26 } }, { pieces: "26" })).toEqual([]);
     expect(mailDeviations(null, { pieces: "26" })).toEqual([]);
     expect(mailDeviations({ gross_weight: { value: 364 } }, { gross_weight: null })).toEqual([]);
+  });
+});
+
+describe("the route", () => {
+  // The normalised shape `/ocr-status` returns for job #16's route.
+  const route = {
+    origin: node("NHAVA SHEVA"), origin_code: node(null, "low"),
+    destination: node("Frankfurt"), destination_code: node("FRA"),
+  };
+
+  it("keeps a document's route under its own keys, with the airport code when there is one", () => {
+    const out = flattenRoute({ route, destination: node("UMM QASR") });
+
+    expect(out.route).toBeUndefined();
+    // ⚠️ The label reading's own `destination` is left alone.
+    expect(out.destination.value).toBe("UMM QASR");
+    expect(out.route_origin).toEqual({ value: "NHAVA SHEVA", written: "NHAVA SHEVA", airport: false, confidence: "high" });
+    expect(out.route_destination).toEqual({ value: "FRA", written: "Frankfurt", airport: true, confidence: "high" });
+  });
+
+  it("saves a route only as two airport codes", () => {
+    const identity = { awbCode: "176", awbNo: "99990006" };
+
+    expect(buildPayload("mawb", { route_origin: node("BOM"), route_destination: node("fra") }, identity).routing_information)
+      .toEqual({ departure_airport: "BOM", destination_airport: "FRA", from: "BOM" });
+    expect(buildPayload("mawb", flattenRoute({ route }), identity).routing_information).toBeUndefined();
+  });
+
+  it("does not take a three-letter sea port for an airport", () => {
+    expect(airportCode({ value: "SEA", airport: false })).toBeNull();
+    expect(airportCode(node("amm"))).toBe("AMM");
+  });
+
+  /** 🔴 The user: "you can mention the mismatch from the mail and the extracted data." */
+  it("names each document whose route disagrees with the mail", () => {
+    const mail = { origin: node("BOM", "low"), destination: node("FRA", "low") };
+    const invoice = { name: "Commercial Invoice.pdf", ...flattenRoute({ route }) };
+
+    expect(routeDeviations(mail, [invoice])).toEqual([{
+      document: "Commercial Invoice.pdf", mail: "BOM → FRA", found: "NHAVA SHEVA → Frankfurt", notAirports: true,
+    }]);
+    expect(routeDeviations(mail, [{ name: "ok.pdf", route_origin: node("BOM"), route_destination: node("FRA") }])).toEqual([]);
+    expect(routeDeviations(mail, [{ name: "none.pdf" }])).toEqual([]);
   });
 });

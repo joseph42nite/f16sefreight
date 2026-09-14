@@ -826,6 +826,11 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
   text-transform: uppercase; color: var(--text-secondary); }
 .fx-extract__weight { width: 9ch; text-align: right; }
 .fx-extract__book { max-width: 14rem; margin-bottom: var(--space-1); }
+/* One tick box per group a document can supply, stacked so the labels stay readable. */
+.fx-extract__takes { display: flex; flex-direction: column; gap: 2px; }
+/* A party's six edit boxes, two to a row where there is room. */
+.fx-extract__edit { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-2); margin-top: var(--space-1); }
 /* A party is several lines (name, address, place) and reads as a block. */
 .fx-extract__party { display: inline-block; white-space: pre-line; }
 /* The domain under a client name — context, not a second identity. */

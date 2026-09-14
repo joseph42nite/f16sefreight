@@ -426,8 +426,12 @@ export function airportCode(node) {
  * ⚠️ NOT `destination`: the document's top-level `destination` is the label reading, so the
  * route keeps names of its own. The value is the airport code when there is one, otherwise the
  * place as written, marked `airport: false` so it is shown and not saved.
+ *
+ * 🔴 A COUNTRY IS NOT A ROUTE END (user, 2026-09-14). On the real invoice the model gave
+ * `destination: "India"` — the goods' country of origin. A country name is dropped unless it is
+ * also an airport (Singapore is SIN), so the row reads "not on the document" instead.
  */
-export function flattenRoute(fields) {
+export function flattenRoute(fields, countries) {
   const out = { ...fields };
   const route = fields.route;
 
@@ -439,7 +443,9 @@ export function flattenRoute(fields) {
     const written = raw(route[end]);
     const code = raw(route[end + "_code"]);
 
-    if (written) out["route_" + end] = { value: code || written, written, airport: Boolean(code), confidence: "high" };
+    if (!written || (!code && countryCode(written, countries))) return;
+
+    out["route_" + end] = { value: code || written, written, airport: Boolean(code), confidence: "high" };
   });
 
   return out;
@@ -462,12 +468,12 @@ export function routeDeviations(mailCargo, documents) {
 
     if (!differs) return null;
 
-    const shown = (node) => (node ? node.written || raw(node) : "?");
+    const shown = (node, end) => (node ? node.written || raw(node) : "no " + end);
 
     return {
       document: doc.name,
-      mail: (said.origin || "?") + " → " + (said.destination || "?"),
-      found: shown(got.origin) + " → " + shown(got.destination),
+      mail: (said.origin || "no origin") + " → " + (said.destination || "no destination"),
+      found: shown(got.origin, "origin") + " → " + shown(got.destination, "destination"),
       notAirports: [got.origin, got.destination].some((node) => node && !airportCode(node)),
     };
   }).filter(Boolean);

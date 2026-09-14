@@ -217,6 +217,16 @@ describe("the route", () => {
     expect(buildPayload("mawb", flattenRoute({ route }), identity).routing_information).toBeUndefined();
   });
 
+  /** 🔴 The user: "don't accept a country as the route". Job #17 gave destination "India". */
+  it("does not take a country as a route end, unless it is also an airport", () => {
+    const out = flattenRoute({
+      route: { origin: node("Singapore"), origin_code: node("SIN"), destination: node("India"), destination_code: node(null, "low") },
+    }, { IN: "India", SG: "Singapore" });
+
+    expect(out.route_destination).toBeUndefined();
+    expect(out.route_origin.value).toBe("SIN");
+  });
+
   it("does not take a three-letter sea port for an airport", () => {
     expect(airportCode({ value: "SEA", airport: false })).toBeNull();
     expect(airportCode(node("amm"))).toBe("AMM");
@@ -232,5 +242,8 @@ describe("the route", () => {
     }]);
     expect(routeDeviations(mail, [{ name: "ok.pdf", route_origin: node("BOM"), route_destination: node("FRA") }])).toEqual([]);
     expect(routeDeviations(mail, [{ name: "none.pdf" }])).toEqual([]);
+    // Job #18: the destination was a country and was dropped.
+    expect(routeDeviations(mail, [{ name: "invoice.pdf", route_origin: { value: "Umm Qasr", written: "Umm Qasr", airport: false } }])[0].found)
+      .toBe("Umm Qasr → no destination");
   });
 });

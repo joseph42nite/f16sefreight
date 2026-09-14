@@ -1052,6 +1052,8 @@ const PARTY_REQUIRED = {
     PARTY_PARTS,
     /** row key -> true while its edit boxes are open. */
     editing: {},
+    /** The document whose "Take from it" dropdown is open, if any. */
+    openTakes: null,
     chargeableEdit: "",
     savedAddresses: {},
     countries: {},
@@ -1738,7 +1740,7 @@ const PARTY_REQUIRED = {
         }) => {
           if (data.job_status === "completed") {
             clearInterval(timer);
-            doc.fields = this.withCountryCodes((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenRoute)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenCargo)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenParties)(data.fields || {}, this.countries))));
+            doc.fields = this.withCountryCodes((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenRoute)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenCargo)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenParties)(data.fields || {}, this.countries)), this.countries));
             // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
             doc.piecesNote = data.data && data.data.pieces_note || null;
             // 🔴 Why the model did not read it, when it did not. The fields are then the
@@ -1788,6 +1790,16 @@ const PARTY_REQUIRED = {
     /** "cartons" → "carton", "boxes" → "box", for "each carton counted as one piece". */
     singular(unit) {
       return String(unit || "").replace(/(es|s)$/, m => unit.endsWith("xes") ? "" : m === "es" ? "e" : "");
+    },
+    /** What the closed dropdown shows: "All", the groups' short names, or nothing. */
+    takesSummary(uid) {
+      if (this.takesAll(uid)) return "All";
+      const taken = GROUPS.filter(g => this.assignment[g.key] === uid).map(g => g.label.split(" — ")[0]);
+      return taken.length ? taken.join(", ") : "— nothing —";
+    },
+    /** A click outside an open dropdown closes it. */
+    closeTakes(event) {
+      if (this.openTakes !== null && !event.target.closest(".fx-multi")) this.openTakes = null;
     },
     takesAll(uid) {
       return GROUPS.every(g => this.assignment[g.key] === uid);
@@ -1969,7 +1981,11 @@ const PARTY_REQUIRED = {
       return d.error || d.message || "something went wrong";
     }
   },
+  mounted() {
+    document.addEventListener("mousedown", this.closeTakes);
+  },
   beforeDestroy() {
+    document.removeEventListener("mousedown", this.closeTakes);
     this.documents.forEach(d => d.timer && clearInterval(d.timer));
   }
 });
@@ -3343,41 +3359,56 @@ var render = function render() {
         }
       }
     }, [_vm._v("Remove")])]), _vm._v(" "), _c("td", [_c("div", {
-      staticClass: "fx-extract__takes"
-    }, [_c("label", {
-      staticClass: "fx-checkbox"
-    }, [_c("input", {
+      staticClass: "fx-multi"
+    }, [_c("button", {
+      staticClass: "fx-input fx-multi__button",
       attrs: {
-        type: "checkbox",
-        disabled: doc.state === "reading"
-      },
-      domProps: {
-        checked: _vm.takesAll(doc.uid)
+        type: "button",
+        disabled: doc.state === "reading",
+        "aria-haspopup": "listbox",
+        "aria-expanded": String(_vm.openTakes === doc.uid)
       },
       on: {
-        change: function ($event) {
-          return _vm.takeAll(doc.uid, $event.target.checked);
+        click: function ($event) {
+          _vm.openTakes = _vm.openTakes === doc.uid ? null : doc.uid;
         }
       }
-    }), _vm._v(" "), _c("span", [_vm._v("All")])]), _vm._v(" "), _vm._l(_vm.GROUPS, function (g) {
-      return _c("label", {
+    }, [_vm._v(_vm._s(_vm.takesSummary(doc.uid)))]), _vm._v(" "), _vm.openTakes === doc.uid ? _c("ul", {
+      staticClass: "fx-multi__menu",
+      attrs: {
+        role: "listbox",
+        "aria-multiselectable": "true"
+      }
+    }, [_c("li", {
+      staticClass: "fx-multi__option",
+      attrs: {
+        role: "option",
+        "aria-selected": String(_vm.takesAll(doc.uid))
+      },
+      on: {
+        click: function ($event) {
+          _vm.takeAll(doc.uid, !_vm.takesAll(doc.uid));
+        }
+      }
+    }, [_c("span", {
+      staticClass: "fx-multi__tick"
+    }, [_vm._v(_vm._s(_vm.takesAll(doc.uid) ? "✓" : ""))]), _vm._v("All")]), _vm._v(" "), _vm._l(_vm.GROUPS, function (g) {
+      return _c("li", {
         key: g.key,
-        staticClass: "fx-checkbox"
-      }, [_c("input", {
+        staticClass: "fx-multi__option",
         attrs: {
-          type: "checkbox",
-          disabled: doc.state === "reading"
-        },
-        domProps: {
-          checked: _vm.assignment[g.key] === doc.uid
+          role: "option",
+          "aria-selected": String(_vm.assignment[g.key] === doc.uid)
         },
         on: {
-          change: function ($event) {
-            return _vm.take(g.key, doc.uid, $event.target.checked);
+          click: function ($event) {
+            return _vm.take(g.key, doc.uid, _vm.assignment[g.key] !== doc.uid);
           }
         }
-      }), _vm._v(" "), _c("span", [_vm._v(_vm._s(g.label))])]);
-    })], 2)])]);
+      }, [_c("span", {
+        staticClass: "fx-multi__tick"
+      }, [_vm._v(_vm._s(_vm.assignment[g.key] === doc.uid ? "✓" : ""))]), _vm._v(_vm._s(g.label))]);
+    })], 2) : _vm._e()])])]);
   }), 0)]) : _vm._e()]), _vm._v(" "), _c("section", {
     staticClass: "fx-extract__step"
   }, [_c("h3", {
@@ -3568,7 +3599,7 @@ var render = function render() {
       attrs: {
         role: "status"
       }
-    }, [_vm._v("\n      The mail said "), _c("strong", [_vm._v(_vm._s(d.mail))]), _vm._v("; " + _vm._s(d.document) + " gives "), _c("strong", [_vm._v(_vm._s(d.found))]), _vm._v(".\n      "), d.notAirports ? [_vm._v(" Those are not airports, so that route is not saved from it.")] : _vm._e()], 2);
+    }, [_vm._v("\n      The mail said "), _c("strong", [_vm._v(_vm._s(d.mail))]), _vm._v("; " + _vm._s(d.document) + " gives "), _c("strong", [_vm._v(_vm._s(d.found))]), _vm._v(".\n      "), d.notAirports ? [_vm._v(" It is not an airport route, so it is not saved from that document.")] : _vm._e()], 2);
   }), _vm._v(" "), _vm._l(_vm.incomplete, function (row) {
     return _c("p", {
       key: row.party,
@@ -4292,8 +4323,12 @@ function airportCode(node) {
  * ⚠️ NOT `destination`: the document's top-level `destination` is the label reading, so the
  * route keeps names of its own. The value is the airport code when there is one, otherwise the
  * place as written, marked `airport: false` so it is shown and not saved.
+ *
+ * 🔴 A COUNTRY IS NOT A ROUTE END (user, 2026-09-14). On the real invoice the model gave
+ * `destination: "India"` — the goods' country of origin. A country name is dropped unless it is
+ * also an airport (Singapore is SIN), so the row reads "not on the document" instead.
  */
-function flattenRoute(fields) {
+function flattenRoute(fields, countries) {
   const out = _objectSpread({}, fields);
   const route = fields.route;
   if (!route || typeof route !== "object" || "value" in route) return out;
@@ -4301,7 +4336,8 @@ function flattenRoute(fields) {
   ["origin", "destination"].forEach(end => {
     const written = raw(route[end]);
     const code = raw(route[end + "_code"]);
-    if (written) out["route_" + end] = {
+    if (!written || !code && countryCode(written, countries)) return;
+    out["route_" + end] = {
       value: code || written,
       written,
       airport: Boolean(code),
@@ -4331,11 +4367,11 @@ function routeDeviations(mailCargo, documents) {
     };
     const differs = ["origin", "destination"].some(end => said[end] && raw(got[end]) && text(said[end]) !== text(got[end]));
     if (!differs) return null;
-    const shown = node => node ? node.written || raw(node) : "?";
+    const shown = (node, end) => node ? node.written || raw(node) : "no " + end;
     return {
       document: doc.name,
-      mail: (said.origin || "?") + " → " + (said.destination || "?"),
-      found: shown(got.origin) + " → " + shown(got.destination),
+      mail: (said.origin || "no origin") + " → " + (said.destination || "no destination"),
+      found: shown(got.origin, "origin") + " → " + shown(got.destination, "destination"),
       notAirports: [got.origin, got.destination].some(node => node && !airportCode(node))
     };
   }).filter(Boolean);

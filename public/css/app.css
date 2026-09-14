@@ -6105,8 +6105,22 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
   text-transform: uppercase; color: var(--text-secondary); }
 .fx-extract__weight { width: 9ch; text-align: right; }
 .fx-extract__book { max-width: 14rem; margin-bottom: var(--space-1); }
-/* One tick box per group a document can supply, stacked so the labels stay readable. */
-.fx-extract__takes { display: flex; flex-direction: column; gap: 2px; }
+/* "Take from it": a dropdown that selects several groups. */
+.fx-multi { position: relative; }
+.fx-multi__button { text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; max-width: 18rem; padding-right: var(--space-4);
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 12px) 13px, calc(100% - 8px) 13px;
+  background-size: 4px 4px; background-repeat: no-repeat; }
+.fx-multi__menu { position: absolute; z-index: 20; top: calc(100% + 2px); left: 0; min-width: 100%;
+  margin: 0; padding: var(--space-1) 0; list-style: none; background: var(--bg-raised);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .08); }
+.fx-multi__option { display: flex; align-items: center; gap: var(--space-2); white-space: nowrap;
+  padding: var(--space-1) var(--space-3); font-size: .8125rem; cursor: pointer; }
+.fx-multi__option:hover { background: var(--bg-sunken); }
+.fx-multi__tick { display: inline-block; width: 1em; }
 /* A party's six edit boxes, two to a row where there is room. */
 .fx-extract__edit { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   gap: var(--space-2); margin-top: var(--space-1); }

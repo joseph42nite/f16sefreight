@@ -192,32 +192,44 @@
                 claim the shipper would need a tie-break the operator cannot see, and the
                 whole point of this panel is that they can.
 
-                🔴 TICK BOXES, not one choice (user, 2026-09-14): an invoice gives the parties
-                AND the route while a packing list gives the cargo and weights. Ticking a group
-                on one document moves it off whichever document had it.
+                🔴 A DROPDOWN WITH MULTIPLE SELECTION, not one choice (user, 2026-09-14): an invoice
+                gives the parties AND the route while a packing list gives the cargo and weights.
+                Selecting a group on one document moves it off whichever document had it.
 
                 Selectable while the document is still STAGED — you know an invoice carries
                 the parties without opening it. Only disabled mid-read.
               -->
-              <div class="fx-extract__takes">
-                <label class="fx-checkbox">
-                  <input
-                    type="checkbox"
-                    :disabled="doc.state === 'reading'"
-                    :checked="takesAll(doc.uid)"
-                    @change="takeAll(doc.uid, $event.target.checked)"
-                  />
-                  <span>All</span>
-                </label>
-                <label v-for="g in GROUPS" :key="g.key" class="fx-checkbox">
-                  <input
-                    type="checkbox"
-                    :disabled="doc.state === 'reading'"
-                    :checked="assignment[g.key] === doc.uid"
-                    @change="take(g.key, doc.uid, $event.target.checked)"
-                  />
-                  <span>{{ g.label }}</span>
-                </label>
+              <div class="fx-multi">
+                <button
+                  type="button"
+                  class="fx-input fx-multi__button"
+                  :disabled="doc.state === 'reading'"
+                  aria-haspopup="listbox"
+                  :aria-expanded="String(openTakes === doc.uid)"
+                  @click="openTakes = openTakes === doc.uid ? null : doc.uid"
+                >{{ takesSummary(doc.uid) }}</button>
+
+                <ul
+                  v-if="openTakes === doc.uid"
+                  class="fx-multi__menu"
+                  role="listbox"
+                  aria-multiselectable="true"
+                >
+                  <li
+                    role="option"
+                    :aria-selected="String(takesAll(doc.uid))"
+                    class="fx-multi__option"
+                    @click="takeAll(doc.uid, !takesAll(doc.uid))"
+                  ><span class="fx-multi__tick">{{ takesAll(doc.uid) ? "✓" : "" }}</span>All</li>
+                  <li
+                    v-for="g in GROUPS"
+                    :key="g.key"
+                    role="option"
+                    :aria-selected="String(assignment[g.key] === doc.uid)"
+                    class="fx-multi__option"
+                    @click="take(g.key, doc.uid, assignment[g.key] !== doc.uid)"
+                  ><span class="fx-multi__tick">{{ assignment[g.key] === doc.uid ? "✓" : "" }}</span>{{ g.label }}</li>
+                </ul>
               </div>
             </td>
           </tr>
@@ -404,7 +416,7 @@
       </p>
       <p v-for="d in routeDeviations" :key="'route-' + d.document" class="fx-warn" role="status">
         The mail said <strong>{{ d.mail }}</strong>; {{ d.document }} gives <strong>{{ d.found }}</strong>.
-        <template v-if="d.notAirports"> Those are not airports, so that route is not saved from it.</template>
+        <template v-if="d.notAirports"> It is not an airport route, so it is not saved from that document.</template>
       </p>
 
       <p v-for="row in incomplete" :key="row.party" class="fx-warn" role="status">
@@ -656,6 +668,8 @@ export default {
     PARTY_PARTS,
     /** row key -> true while its edit boxes are open. */
     editing: {},
+    /** The document whose "Take from it" dropdown is open, if any. */
+    openTakes: null,
     chargeableEdit: "",
     savedAddresses: {},
     countries: {},
@@ -1322,7 +1336,7 @@ export default {
           .then(({ data }) => {
             if (data.job_status === "completed") {
               clearInterval(timer);
-              doc.fields = this.withCountryCodes(flattenRoute(flattenCargo(flattenParties(data.fields || {}, this.countries))));
+              doc.fields = this.withCountryCodes(flattenRoute(flattenCargo(flattenParties(data.fields || {}, this.countries)), this.countries));
               // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
               doc.piecesNote = (data.data && data.data.pieces_note) || null;
               // 🔴 Why the model did not read it, when it did not. The fields are then the
@@ -1386,6 +1400,17 @@ export default {
     /** "cartons" → "carton", "boxes" → "box", for "each carton counted as one piece". */
     singular(unit) {
       return String(unit || "").replace(/(es|s)$/, (m) => (unit.endsWith("xes") ? "" : m === "es" ? "e" : ""));
+    },
+    /** What the closed dropdown shows: "All", the groups' short names, or nothing. */
+    takesSummary(uid) {
+      if (this.takesAll(uid)) return "All";
+
+      const taken = GROUPS.filter((g) => this.assignment[g.key] === uid).map((g) => g.label.split(" — ")[0]);
+      return taken.length ? taken.join(", ") : "— nothing —";
+    },
+    /** A click outside an open dropdown closes it. */
+    closeTakes(event) {
+      if (this.openTakes !== null && !event.target.closest(".fx-multi")) this.openTakes = null;
     },
     takesAll(uid) {
       return GROUPS.every((g) => this.assignment[g.key] === uid);
@@ -1564,7 +1589,11 @@ export default {
       return d.error || d.message || "something went wrong";
     },
   },
+  mounted() {
+    document.addEventListener("mousedown", this.closeTakes);
+  },
   beforeDestroy() {
+    document.removeEventListener("mousedown", this.closeTakes);
     this.documents.forEach((d) => d.timer && clearInterval(d.timer));
   },
 };

@@ -27,7 +27,7 @@ whole reply failed validation. Without it the same document took 42 seconds and 
 valid JSON. An unbounded list is a loop a small model can fall into and never leave.
 
 🔴 ONLY WHAT THE PANEL TAKES FROM A DOCUMENT. The Extraction panel's groups are the parties
-(shipper, consignee, notify), the cargo (pieces, dimensions, description), the weights and the
+(shipper, consignee), the cargo (dimensions, description), the weights and the
 route (user, 2026-09-14). The AWB number does not come from a client's document, so the model
 is not asked for it: when it was, on the real invoice it returned the bank's SWIFT code.
 """
@@ -53,8 +53,12 @@ class ExtractedDocument(BaseModel):
     # answer began at `shipper_name`, having written 270 of 768 tokens, so it was not out of room.
     # A required key has to be WRITTEN, so the model must face the question; null is still a
     # valid answer, so nothing has to be invented.
+    #
+    # 🔴 NO `pieces` and NO notify party (user, 2026-09-14): every key costs answer tokens, and
+    # answer tokens are most of the time. The piece count is read from what the document writes
+    # ("TOTAL CTNS 26") and the model's was thrown away; a notify party is rare, was guarded out
+    # unless the document said "notify", and is pasted or typed in the panel instead.
     description: Optional[str]
-    pieces: Optional[int] = Field(..., ge=0)
     gross_weight: Optional[float] = Field(..., ge=0)
 
     # Only if the document STATES one. An invoice rarely does; the panel works out volumetric
@@ -86,9 +90,3 @@ class ExtractedDocument(BaseModel):
     consignee_post_code: Optional[str] = None
     consignee_country: Optional[str] = None
 
-    notify_name: Optional[str] = None
-    notify_address: Optional[str] = None
-    notify_city: Optional[str] = None
-    notify_state: Optional[str] = None
-    notify_post_code: Optional[str] = None
-    notify_country: Optional[str] = None

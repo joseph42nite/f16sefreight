@@ -11,9 +11,11 @@ a job on 'none' and asks a human to authorise a paid vision run. Report 'text' f
 and the operator is handed an empty extraction as a success.
 """
 
+import json
 import os
 import sys
 import tempfile
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -22,6 +24,7 @@ import model_extract
 
 # Captured before any test swaps it out, for the tests that exercise the real client.
 _REAL_EXTRACT = model_extract.extract
+_REAL_AVAILABLE = model_extract.available
 
 INVOICE = """Commercial Invoice
 
@@ -208,7 +211,7 @@ def _with_model(payload, available=True, error=None):
 
     def _stub(text):
         calls["n"] += 1
-        return (None, error) if error else (payload, None)
+        return (None, error, None) if error else (payload, None, {"model": "stub", "cost_usd": 0.0003})
 
     model_extract.available = lambda: available
     model_extract.extract = _stub
@@ -321,15 +324,18 @@ def test_the_model_is_asked_only_for_what_the_panel_takes():
     🔴 The Extraction panel takes the parties, the cargo, the weights and the route from a
     document. The AWB number does not come from a client's document, and when the model was
     asked for it it returned the bank's SWIFT code.
+
+    🔴 NO pieces and NO notify party (user, 2026-09-14): every key is answer tokens, and answer
+    tokens are most of the time. Pieces are read as written; a notify party is pasted or typed.
     """
     from schemas import ExtractedDocument
 
     parts = {f"{role}_{part}"
-             for role in ("shipper", "consignee", "notify")
+             for role in ("shipper", "consignee")
              for part in ("name", "address", "city", "state", "post_code", "country")}
 
     assert set(ExtractedDocument.model_fields) == parts | {
-        "description", "pieces", "gross_weight", "chargeable_weight", "dimensions",
+        "description", "gross_weight", "chargeable_weight", "dimensions",
         "origin", "destination",
     }
 
@@ -343,7 +349,7 @@ def test_the_cargo_is_asked_for_before_the_parties():
     from schemas import ExtractedDocument
 
     order = list(ExtractedDocument.model_json_schema()["properties"])
-    cargo = ["description", "pieces", "gross_weight", "chargeable_weight", "dimensions"]
+    cargo = ["description", "gross_weight", "chargeable_weight", "dimensions"]
 
     assert order[:len(cargo)] == cargo, order[:8]
 
@@ -357,7 +363,7 @@ def test_the_cargo_keys_must_be_written_but_may_be_null():
     from schemas import ExtractedDocument
 
     schema = ExtractedDocument.model_json_schema()
-    cargo = {"description", "pieces", "gross_weight", "chargeable_weight", "dimensions"}
+    cargo = {"description", "gross_weight", "chargeable_weight", "dimensions"}
 
     assert cargo <= set(schema.get("required", [])), schema.get("required")
 
@@ -558,80 +564,28 @@ def test_a_worked_out_state_survives_grounding_but_an_invented_company_does_not(
     assert "shipper_city" not in kept
 
 
-def test_notify_dimensions_and_chargeable_weight_are_mapped():
+def test_dimensions_and_chargeable_weight_are_mapped():
     """The rest of the panel's groups: set only when the model found them."""
     import unstructured
 
-    _with_model({
-        "notify_name": "ACME CLEARING LTD",
-        "notify_address": "12 Dock Road\nChennai 600001",
-        "dimensions": "64 X 32 X 64 CM",
-        "chargeable_weight": 420.0,
-    })
+    _with_model({"dimensions": "64 X 32 X 64 CM", "chargeable_weight": 420.0})
     result = {"piece_weight": {}}
-    # ⚠️ The source must NAME a notify party, or the guard above discards the block.
-    unstructured._apply_model(result, "Notify Party: ACME CLEARING LTD")
+    unstructured._apply_model(result, "text")
 
-    assert result["notify"]["name"] == "ACME CLEARING LTD"
     assert result["cargo"]["dimensions"] == [{"dimension": "64X32X64", "count": 1}]
     assert result["piece_weight"]["chargeable_weight"] == 420.0
 
 
-def test_a_notify_party_needs_the_document_to_name_one():
+def test_a_document_gives_no_notify_party():
     """
-    🔴 Measured twice on the same invoice, which never writes "notify": the model filed the
-    CONSIGNEE's address under a notify party — once with no name, then with "GARDENS WASFI",
-    a fragment of the consignee's own street, which passed a name-only guard.
-    """
-    import unstructured
-
-    _with_model({
-        "consignee_name": "SILVER MOON COMMERCIAL BROKERAG CO",
-        "notify_name": "GARDENS WASFI",
-        "notify_city": "AL TAL ST.",
-        "notify_country": "JORDAN",
-    })
-    result = {"piece_weight": {}}
-    unstructured._apply_model(result, "Consignee\nSILVER MOON COMMERCIAL\nGARDENS WASFI AL TAL ST.")
-
-    assert "notify" not in result
-
-
-def test_a_notify_party_the_document_does_name_is_kept():
-    import unstructured
-
-    _with_model({"notify_name": "ACME CLEARING LTD", "notify_address": "12 Dock Road"})
-    result = {"piece_weight": {}}
-    unstructured._apply_model(result, "Notify Party: ACME CLEARING LTD, 12 Dock Road")
-
-    assert result["notify"]["name"] == "ACME CLEARING LTD"
-
-
-def test_a_notify_address_without_a_company_is_not_a_party():
-    """
-    🔴 Measured on the real invoice, which names no notify party: the model filed the
-    CONSIGNEE's address under one, while the consignee came back as a name and nothing else.
+    🔴 Not asked for (user, 2026-09-14). When it was, the model twice filed the CONSIGNEE's
+    address under a notify party on an invoice that names none. A stray key is ignored.
     """
     import unstructured
 
-    _with_model({
-        "consignee_name": "SILVER MOON COMMERCIAL BROKERAG CO",
-        "notify_address": "GARDENS WASFI",
-        "notify_city": "AL TAL ST.",
-        "notify_country": "JORDAN",
-    })
+    _with_model({"shipper_name": "TRAILSPEC GEARS PRIVATE LIMITED", "notify_name": "ACME CLEARING LTD"})
     result = {"piece_weight": {}}
-    unstructured._apply_model(result, "text")
-
-    assert "notify" not in result
-
-
-def test_no_notify_party_means_no_notify_region():
-    import unstructured
-
-    _with_model({"shipper_name": "TRAILSPEC GEARS PRIVATE LIMITED"})
-    result = {"piece_weight": {}}
-    unstructured._apply_model(result, "text")
+    unstructured._apply_model(result, "Notify Party: ACME CLEARING LTD")
 
     assert "notify" not in result
 
@@ -644,7 +598,7 @@ def test_the_schema_permits_a_model_that_found_nothing():
 
     # ⚠️ The cargo keys are required, so a model that found nothing says so with nulls.
     empty = ExtractedDocument.model_validate({
-        "description": None, "pieces": None, "gross_weight": None,
+        "description": None, "gross_weight": None,
         "chargeable_weight": None, "dimensions": None, "origin": None, "destination": None,
     })
     assert empty.shipper_name is None
@@ -701,18 +655,6 @@ def test_non_string_values_pass_through():
     assert kept["pieces"] == 12
 
 
-def test_keep_alive_is_a_number_not_a_numeric_string():
-    """
-    🔴 Ollama parses `keep_alive` as a duration. Sending "-1" returns
-    `400 time: missing unit in duration "-1"` and EVERY call fails with the model sitting
-    loaded and idle. Only a real Ollama could have found this — a stub accepts anything.
-    """
-    import model_extract
-
-    assert model_extract._keep_alive("-1") == -1
-    assert model_extract._keep_alive("10m") == "10m"
-
-
 def test_the_schema_is_flat_because_refs_defeat_small_models():
     """
     🔴 Measured. With `Party`/`Cargo` as sub-models Pydantic emits `$ref` into `$defs`, and
@@ -737,46 +679,192 @@ def test_the_schema_has_no_free_form_list():
         assert "array" not in types, f"{name} is a list, and a list is a loop a small model can fall into"
 
 
-# ─── The real client's failure reasons ───────────────────────────────────────
+# ─── The real client: OpenRouter (user, 2026-09-14) ──────────────────────────
+
+
+def _openrouter(handler_answers):
+    """
+    A local stand-in for OpenRouter. `handler_answers` is a list, one entry per request:
+    a dict to answer with, or "hang" to accept the call and never answer.
+    """
+    import http.server
+    import threading
+
+    seen = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            seen.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+            answer = handler_answers[len(seen) - 1]
+            if answer == "hang":
+                time.sleep(3)
+                return
+            body = json.dumps(answer).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            pass
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+
+    return server, seen
+
+
+def _answer(fields, cost=0.00028, provider="DeepInfra"):
+    return {
+        "model": "google/gemma-4-31b-it", "provider": provider,
+        "choices": [{"message": {"content": json.dumps(fields)}}],
+        "usage": {"prompt_tokens": 2100, "completion_tokens": 260, "cost": cost},
+    }
+
+
+_EMPTY_ANSWER = {k: None for k in ("description", "gross_weight", "chargeable_weight", "dimensions", "origin", "destination")}
+
+
+def _with_openrouter(answers, timeout=1):
+    server, seen = _openrouter(answers)
+    saved = (model_extract.OPENROUTER_URL, model_extract.OPENROUTER_API_KEY, model_extract.ATTEMPT_TIMEOUT_SECONDS)
+    model_extract.OPENROUTER_URL = f"http://127.0.0.1:{server.server_address[1]}/api/v1/chat/completions"
+    model_extract.OPENROUTER_API_KEY = "test-key"
+    model_extract.ATTEMPT_TIMEOUT_SECONDS = timeout
+    # ⚠️ The runner stubs `available` to "no model" before every test; these test the real client.
+    model_extract.available = _REAL_AVAILABLE
+
+    def restore():
+        model_extract.OPENROUTER_URL, model_extract.OPENROUTER_API_KEY, model_extract.ATTEMPT_TIMEOUT_SECONDS = saved
+        server.shutdown()
+
+    return seen, restore
+
+
+def test_without_a_key_the_model_is_not_configured():
+    saved = model_extract.OPENROUTER_API_KEY
+    model_extract.OPENROUTER_API_KEY = ""
+    model_extract.available = _REAL_AVAILABLE
+    try:
+        fields, error, usage = _REAL_EXTRACT("some document text")
+    finally:
+        model_extract.OPENROUTER_API_KEY = saved
+
+    assert fields is None and usage is None
+    assert error == "the model is not configured (no OPENROUTER_API_KEY)"
+
+
+def test_the_request_asks_for_the_schema_and_no_data_keeping_provider():
+    """🔴 An invoice carries a client's parties: no provider that keeps or trains on prompts."""
+    seen, restore = _with_openrouter([_answer({**_EMPTY_ANSWER, "shipper_name": "TRAILSPEC"})])
+    try:
+        fields, error, usage = _REAL_EXTRACT("TRAILSPEC GEARS")
+    finally:
+        restore()
+
+    request = seen[0]
+    assert request["model"] == "google/gemma-4-31b-it"
+    assert request["provider"]["data_collection"] == "deny"
+    assert request["provider"]["require_parameters"] is True
+    assert request["response_format"]["type"] == "json_schema"
+    schema = request["response_format"]["json_schema"]["schema"]
+    assert schema["additionalProperties"] is False
+    assert set(schema["required"]) == set(schema["properties"])
+    assert error is None and fields["shipper_name"] == "TRAILSPEC"
+    assert usage == {"model": "google/gemma-4-31b-it", "provider": "DeepInfra", "tokens_in": 2100,
+                     "tokens_out": 260, "cost_usd": 0.00028, "execution_ms": usage["execution_ms"], "attempts": 1}
+
+
+def test_a_stuck_provider_moves_to_a_differently_routed_attempt():
+    """
+    🔴 The user: "if it is stuck then it can immediately shift to another provider". OpenRouter does
+    not move on SLOWNESS, so the attempt times out here and the next asks for a different routing.
+    """
+    seen, restore = _with_openrouter(["hang", _answer({**_EMPTY_ANSWER, "shipper_name": "TRAILSPEC"})])
+    try:
+        fields, error, usage = _REAL_EXTRACT("TRAILSPEC GEARS")
+    finally:
+        restore()
+
+    assert [r["provider"]["sort"] for r in seen] == ["latency", "throughput"]
+    assert error is None and fields["shipper_name"] == "TRAILSPEC"
+    assert usage["attempts"] == 2
+
+
+def test_when_every_attempt_is_stuck_the_reason_says_so():
+    seen, restore = _with_openrouter(["hang", "hang", "hang"])
+    try:
+        fields, error, usage = _REAL_EXTRACT("some document text")
+    finally:
+        restore()
+
+    assert len(seen) == 3
+    assert fields is None and usage is None
+    assert error == "the model timed out after 1s"
 
 
 def test_an_unreachable_model_says_so():
-    """A closed port, not a stub: the reason comes from the real client."""
-    original = model_extract.OLLAMA_URL
-    model_extract.OLLAMA_URL = "http://127.0.0.1:9"
+    saved = (model_extract.OPENROUTER_URL, model_extract.OPENROUTER_API_KEY)
+    model_extract.OPENROUTER_URL, model_extract.OPENROUTER_API_KEY = "http://127.0.0.1:9/x", "test-key"
+    model_extract.available = _REAL_AVAILABLE
     try:
-        fields, error = _REAL_EXTRACT("some document text")
+        fields, error, usage = _REAL_EXTRACT("some document text")
     finally:
-        model_extract.OLLAMA_URL = original
+        model_extract.OPENROUTER_URL, model_extract.OPENROUTER_API_KEY = saved
 
     assert fields is None
     assert error == "the model is not reachable"
 
 
-def test_a_slow_model_is_reported_as_a_timeout():
-    """
-    ⚠️ Against a socket that accepts and never answers. `socket.timeout` only became an alias
-    of TimeoutError in Python 3.10, and this runner is 3.9, so catching TimeoutError alone
-    would report a timeout here as "not reachable".
-    """
-    import socket
-
-    server = socket.socket()
-    server.bind(("127.0.0.1", 0))
-    server.listen(1)
-    port = server.getsockname()[1]
-
-    original_url, original_timeout = model_extract.OLLAMA_URL, model_extract.TIMEOUT_SECONDS
-    model_extract.OLLAMA_URL = f"http://127.0.0.1:{port}"
-    model_extract.TIMEOUT_SECONDS = 1
+def test_a_scan_is_sent_as_page_images_with_the_same_schema():
+    """Gemma 4 reads images: one model for text and scans (user, 2026-09-14)."""
+    seen, restore = _with_openrouter([_answer({**_EMPTY_ANSWER, "consignee_name": "SILVER MOON"})])
     try:
-        fields, error = _REAL_EXTRACT("some document text")
+        fields, error, usage = model_extract.extract_images([b"\x89PNG page1", b"\x89PNG page2"])
     finally:
-        model_extract.OLLAMA_URL, model_extract.TIMEOUT_SECONDS = original_url, original_timeout
-        server.close()
+        restore()
 
-    assert fields is None
-    assert error == "the model timed out after 1s"
+    parts = seen[0]["messages"][0]["content"]
+    assert parts[0]["type"] == "text" and "IMAGES" in parts[0]["text"] and "{text}" not in parts[0]["text"]
+    assert [p["type"] for p in parts[1:]] == ["image_url", "image_url"]
+    assert parts[1]["image_url"]["url"].startswith("data:image/png;base64,")
+    # ⚠️ Nothing to ground against on a scan, so the value is kept.
+    assert fields["consignee_name"] == "SILVER MOON"
+
+
+def test_a_scan_pdf_is_read_through_the_vision_path():
+    import unstructured
+
+    sent = {}
+
+    def _images(pages):
+        sent["pages"] = len(pages)
+        return {"consignee_name": "SILVER MOON COMMERCIAL BROKERAG CO", "gross_weight": 364.09}, None, {"cost_usd": 0.0004}
+
+    saved = model_extract.extract_images
+    model_extract.extract_images = _images
+    try:
+        result = unstructured.extract_from_images(_pdf(boxes_only=True))
+    finally:
+        model_extract.extract_images = saved
+
+    assert result["extraction_path"] == "vision"
+    assert sent["pages"] == 1
+    assert result["read_by"] == "model"
+    assert result["consignee"]["name"] == "SILVER MOON COMMERCIAL BROKERAG CO"
+    assert result["piece_weight"]["gross_weight"] == 364.09
+    assert result["model_usage"] == {"cost_usd": 0.0004}
+
+
+def test_over_the_daily_limit_the_labels_stand_and_no_model_is_called():
+    calls = _with_model({"shipper_name": "unused"})
+
+    result = extract_from_text(_pdf(INVOICE), use_model=False)
+
+    assert calls["n"] == 0
+    assert result["read_by"] == "labels"
+    assert result["model_error"] == "the daily AI limit has been reached"
 
 
 # ─── PyMuPDF ─────────────────────────────────────────────────────────────────

@@ -1005,11 +1005,10 @@ const GROUPS = [{
   key: "weights",
   label: "Weights — gross, volumetric, chargeable",
   paths: ["gross_weight", "volumetric_weight", "chargeable_weight", "volume"]
-}, {
-  key: "notify",
-  label: "Notify party",
-  paths: ["also_notify", "notify"]
-}, /* 🔴 The mail's route is used until a document is ticked for it (user, 2026-09-14). */
+},
+/* ⚠️ No "Notify party" group: a document no longer supplies one (user, 2026-09-14 — it cost
+   Gemma answer time and was rarely there). The Notify row takes a paste, Edit or the address book. */
+/* 🔴 The mail's route is used until a document is ticked for it (user, 2026-09-14). */
 {
   key: "route",
   label: "Route — origin, destination",

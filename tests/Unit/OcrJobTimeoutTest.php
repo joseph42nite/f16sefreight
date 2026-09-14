@@ -8,12 +8,10 @@ use Tests\TestCase;
 /**
  * The limits on reading a document, which have to nest.
  *
- * 🔴 An unstructured document is read by a model now, and gemma3:4b took 378s on a two-page
- * invoice. Three limits sit on that path: the parser's own model timeout (600s), Laravel's
- * HTTP call to the parser, and the queue job. Each has to outlast the one inside it, and the
- * queue's `retry_after` has to outlast the job, or a second worker starts reading the same
- * document while the first is still on it. The old values (60s, 80s, 90s) timed out every
- * real document, and nothing reported it.
+ * 🔴 An unstructured document is read by Gemma 4 on OpenRouter: three attempts of 12s each in the
+ * parser, then Laravel's HTTP call to the parser, then the queue job. Each has to outlast the one
+ * inside it, and the queue's `retry_after` has to outlast the job, or a second worker starts
+ * reading the same document while the first is still on it.
  */
 class OcrJobTimeoutTest extends TestCase
 {
@@ -22,11 +20,11 @@ class OcrJobTimeoutTest extends TestCase
         $this->assertSame(80, ProcessPdfOcrJob::httpTimeoutFor(['action' => 'extract']));
     }
 
-    public function test_a_model_reading_outlasts_the_parsers_own_timeout(): void
+    public function test_a_model_reading_outlasts_the_parsers_own_attempts(): void
     {
-        // The parser gives the model 600s (python/model_extract.py TIMEOUT_SECONDS). Laravel
-        // has to wait longer, so the parser's "timed out" answer arrives instead of a dropped call.
-        $this->assertGreaterThan(600, ProcessPdfOcrJob::httpTimeoutFor(['action' => 'extract_unstructured']));
+        // Three attempts of 12s (python/model_extract.py). Laravel has to wait longer, so the
+        // parser's "timed out" answer arrives instead of a dropped call.
+        $this->assertGreaterThan(3 * 12, ProcessPdfOcrJob::httpTimeoutFor(['action' => 'extract_unstructured']));
     }
 
     public function test_the_job_outlasts_its_longest_http_call(): void

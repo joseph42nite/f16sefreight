@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\PdfProcessingJob; // Corrected to point to project specific App root location
+use App\Services\AiUsageService;
 use App\Services\OcrCreditService;
 use App\Services\OcrRoutingService;
 use App\Services\VisionConsentService;
@@ -25,20 +26,22 @@ class ProcessPdfOcrJob implements ShouldQueue
     /**
      * How long the call to the parser may take.
      *
-     * 🔴 An unstructured document is read by a MODEL now, and gemma3:4b took 378s on a
-     * two-page invoice on the laptop. The parser gives the model 600s; this waits a minute
-     * longer so the parser can answer with its own "timed out" before Laravel gives up on
-     * it. An AWB is read by coordinates and keeps its 80s.
+     * An unstructured document is read by Gemma 4 on OpenRouter: three attempts of 12s each
+     * (python/model_extract.py), plus rendering a scan's pages. This waits longer than all three,
+     * so the parser's own "timed out" answer arrives instead of a dropped call. An AWB is read by
+     * coordinates and keeps its 80s.
+     *
+     * ⚠️ These were 660s / 720s while gemma3:4b ran on the laptop and took minutes per invoice.
      */
     public const AWB_HTTP_TIMEOUT   = 80;
-    public const MODEL_HTTP_TIMEOUT = 660;
+    public const MODEL_HTTP_TIMEOUT = 60;
 
     /**
      * ⚠️ Must exceed the longest HTTP call above, or the worker is killed mid-read. And the
      * queue's `retry_after` must exceed THIS, or a second worker picks the job up while the
      * first is still reading: see config/queue.php.
      */
-    public int $timeout = 720;
+    public int $timeout = 100;
 
     public int $processingJobId;
 
@@ -115,6 +118,11 @@ class ProcessPdfOcrJob implements ShouldQueue
                 // 🔒 The FIRST unstructured call is always free. Vision is only ever
                 // enabled by the consent endpoint handing this job `allowVision = true`.
                 $params['allow_vision'] = $this->allowVision ? 'true' : 'false';
+
+                // The user's daily AI limit (superadmin): over it, the parser reads by labels and
+                // says why. A consented scan is not limited — a human authorised it and paid a credit.
+                $params['use_model'] = ($this->allowVision || app(AiUsageService::class)->allowed($job->user_id))
+                    ? 'true' : 'false';
             }
 
             // Http timeout MUST be less than the job's $timeout property to ensure the HTTP
@@ -156,6 +164,11 @@ class ProcessPdfOcrJob implements ShouldQueue
                 ]);
 
                 return;
+            }
+
+            // What the model call cost, logged against the user and branch — whatever it answered.
+            if (! empty($data['model_usage']) && is_array($data['model_usage'])) {
+                app(AiUsageService::class)->record($job, $data['model_usage'], $extractionPath === 'vision' ? 'vision' : 'text');
             }
 
             $job->update([

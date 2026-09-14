@@ -39,9 +39,7 @@ return [
      * with the container running correctly. A default that disagrees with the deployment
      * is worse than no default: it fails at the point of use, far from the mismatch.
      *
-     * ⚠️ Ollama cohosts with this service over loopback (PRD §9.5). Running FastAPI in a
-     * container while Ollama is on the host needs `host.docker.internal` and gains
-     * nothing locally.
+     * The parser calls Gemma 4 through OpenRouter itself; Laravel only calls the parser.
      */
     'ocr' => [
         'url' => env('OCR_SERVICE_URL', 'http://127.0.0.1:8000'),

@@ -15,7 +15,7 @@ CONFIG_FILE_PATH = str(CURRENT_DIR / "boxes_config.json")
 # Import your pre-existing logic -- this loads ONCE at startup
 # and stays resident in memory forever.
 from extract_awb_new import extract_all_boxes
-from unstructured import extract_from_text
+from unstructured import extract_from_images, extract_from_text
 
 # Setup structured logging
 logging.basicConfig(
@@ -99,6 +99,7 @@ async def extract(
 async def extract_unstructured(
     file: UploadFile = File(...),
     allow_vision: str = Form("false"),
+    use_model: str = Form("true"),
 ):
     """
     Read a document that has no fixed layout — a commercial invoice, a packing list.
@@ -109,15 +110,16 @@ async def extract_unstructured(
     a vision run. Until this endpoint existed nothing could return that value, so the
     consent flow was unreachable and every unstructured upload hit a 404.
 
-    ⚠️ `allow_vision` is accepted and, for now, only ever REFUSED. Laravel sends it, and
-    answering "vision was requested and this build cannot do it" is honest; silently
-    returning a text-path result for a scan would report an empty extraction as a
-    successful one.
+    🔴 `allow_vision` is TRUE only after a human authorised the paid run. The scan's pages then go
+    to the same Gemma 4 model as images (`extract_from_images`).
+
+    ⚠️ `use_model` is FALSE when the user's daily AI limit is reached: the label reading stands.
     """
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
 
     wants_vision = str(allow_vision).lower() in ("1", "true", "yes")
+    model_allowed = str(use_model).lower() in ("1", "true", "yes")
 
     tmp_path = None
     try:
@@ -130,20 +132,13 @@ async def extract_unstructured(
             f"Unstructured '{file.filename}' | {len(contents)} bytes | allow_vision={wants_vision}"
         )
 
-        # 🔴 In a worker thread, not on the event loop. A model reading takes minutes, and run
-        # inline it would block every other request, /health included, for the whole reading,
-        # so the container's healthcheck would mark it unhealthy mid-extraction.
-        result = await run_in_threadpool(extract_from_text, tmp_path)
+        # 🔴 In a worker thread, not on the event loop. A model call takes seconds, and run inline it
+        # would block every other request, /health included, for the whole reading.
+        result = await run_in_threadpool(extract_from_text, tmp_path, model_allowed)
 
         if result["extraction_path"] == "none" and wants_vision:
-            # 🔴 Consent was GIVEN and the vision path is not built. Saying so is the
-            # only honest answer: returning the empty text result would spend the
-            # operator's credit and hand back nothing, and they authorised a paid run.
-            logger.warning("Vision authorised but no vision provider is installed in this build.")
-            raise HTTPException(
-                status_code=501,
-                detail="Vision extraction is not available in this build.",
-            )
+            # Consent was given: read the scan's pages as images.
+            result = await run_in_threadpool(extract_from_images, tmp_path)
 
         logger.info(
             f"Unstructured '{file.filename}' -> {result['extraction_path']} "

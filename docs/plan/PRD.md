@@ -99,7 +99,7 @@ Resolved by subdomain; the hostname binds the request scope. **Six hosts, settle
 ### 1.5 Technology Stack
 
 - **Backend:** Laravel 7+ (PHP-FPM) + Horizon queue workers, MySQL 8.0, Redis, Soketi (Pusher-compatible WebSockets)
-- **AI / OCR microservice:** Python **FastAPI** — PyMuPDF (`fitz`) for fast text extraction, local **Ollama / Gemma 4 E4B** for JSON mapping, **Gemini 2.5 Flash** cloud fallback for scanned/visual OCR, **ChromaDB** + `nomic-embed-text` for SOP retrieval
+- **AI / OCR microservice:** Python **FastAPI** — PyMuPDF (`fitz`) for fast text extraction, **Gemma 4 31B via OpenRouter** for JSON mapping of text **and** scanned pages (the same model reads images), **ChromaDB** + embeddings for SOP retrieval *(hosting of the copilot's retrieval pending — GAPS #240)*. *(Changed 2026-09-14, user decision: the model is **Gemma 4 31B through OpenRouter**, paid per call, for text AND scans. Self-hosted Ollama on a GPU-less `t4g.large` took minutes per invoice; a GPU host is too expensive to keep idle. See GAPS #239.)*
 - **Frontend:** Vue 2.7 SPA with the drawer-workspace pattern, `vuedraggable` Kanban, ApexCharts, Driver.js tours, `html2canvas` for visual bug reports
 - **Infrastructure:** Docker Compose locally; AWS ECS/Fargate + RDS + ElastiCache in production; a dedicated AWS `t4g.large` (Graviton) instance inside a private VPC for the AI stack
 
@@ -549,10 +549,10 @@ graph LR
 
 | Input | Path | Cost |
 |---|---|---|
-| Text-selectable digital PDF | PyMuPDF → local **Gemma 4 E4B** (Ollama) → JSON | free |
-| Scanned PDF / image (no selectable text) | **Gemini 2.5 Flash** vision OCR | 1 OCR credit |
+| Text-selectable digital PDF | PyMuPDF → **Gemma 4 31B** (OpenRouter) → JSON | no credit; ≈ ₹0.03 per document to F16s, logged in `llm_usage_logs` |
+| Scanned PDF / image (no selectable text) | **Gemma 4 31B** vision (page images, OpenRouter) | 1 OCR credit |
 
-**Schema conformance is enforced twice, and the order matters.** The model is first **constrained** to emit the schema — Gemini `response_schema`, Ollama `format` — and the result is then **validated** by Pydantic (`python/schemas.py`) before anything returns to Laravel. Validation alone is not enough: it detects a malformed payload, it does not prevent one. Every parsed field carries a **confidence score** (high / medium / low) based on whether the value matched exact coordinates or was extrapolated from structure.
+**Schema conformance is enforced twice, and the order matters.** The model is first **constrained** to emit the schema — OpenRouter `response_format` with a strict JSON schema — and the result is then **validated** by Pydantic (`python/schemas.py`) before anything returns to Laravel. Validation alone is not enough: it detects a malformed payload, it does not prevent one. Every parsed field carries a **confidence score** (high / medium / low) based on whether the value matched exact coordinates or was extrapolated from structure.
 
 > **Prompt caching plays no part in this.** Caching makes a schema cheaper and faster to *send*; it has no bearing on whether the model *obeys* it. The two are unrelated and both are needed — see §9.1.
 
@@ -1461,7 +1461,7 @@ Keeping the LLM out of this path is deliberate: a hallucinated selector or route
 
 **Passive and event-driven — no polling crons.** The system assumes healthy (green) by default:
 
-- **Reactive exception catching:** any failed HTTP call to FastAPI or Ollama writes a failure payload to the Redis key `platform:status:ai_server`.
+- **Reactive exception catching:** any failed HTTP call to FastAPI or OpenRouter writes a failure payload to the Redis key `platform:status:ai_server`.
 - **Self-healing:** the next successful call deletes the key, restoring green automatically.
 - **Tail log viewer:** last 100 lines of `storage/logs/laravel.log` via resource-buffered pointers — safe on gigabyte files.
 - **Horizon failed-job inspector:** stack traces from the Redis failed queue with one-click retry.
@@ -2019,7 +2019,7 @@ Hard rules:
 1. **Every number is pre-computed and passed through verbatim.** Gemma may not derive, sum, or compare.
 2. Output is structured JSON — `{talking_points[], suggested_action, tone}` — validated by Pydantic, the same pattern already used for OCR extraction.
 3. The packet states its `mode`; narration must **never** reference the other transport mode.
-4. **Reuse the prompt prefix across calls.** ⚠️ *Corrected 2026-08-26 — this previously read "cache the system prompt and schema via Ollama `num_ctx`", which is wrong: `num_ctx` sets the context-window **size** and caches nothing.* Bake the system prompt and schema into the `Modelfile` so they are not re-sent, and rely on Ollama's KV/prefix cache to skip re-processing an identical prefix. Set `num_ctx` large enough to hold prompt + packet, which is a **prerequisite** for that reuse, not the mechanism.
+4. **Reuse the prompt prefix across calls.** ⚠️ *Corrected 2026-08-26 — this previously read "cache the system prompt and schema via Ollama `num_ctx`", which is wrong: `num_ctx` sets the context-window **size** and caches nothing.* *(2026-09-14: the model is hosted on OpenRouter — keep the fixed instructions first and the packet last so a provider's prefix cache can apply; there is no `Modelfile`.)* Earlier text, for the record: bake the system prompt and schema into the `Modelfile` so they are not re-sent, and rely on the KV/prefix cache to skip re-processing an identical prefix. Set `num_ctx` large enough to hold prompt + packet, which is a **prerequisite** for that reuse, not the mechanism.
 5. Log tokens to `llm_usage_logs`.
 6. **On failure, degrade to raw indices** — leave `narrated_text` NULL. The numbers are the product; the prose is garnish.
 
@@ -2220,8 +2220,8 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 | Area | Approach |
 |---|---|
 | **PDF processing** | Never write uploads to disk on the FastAPI server — `fitz.open(stream=…)` processes the binary buffer in memory, eliminating disk I/O |
-| **LLM prompts** | Bake system prompts and Pydantic schemas into the Ollama `Modelfile` (`ollama create gemma-custom -f ./Modelfile`) so they are neither re-sent nor re-processed. **This is a latency win, not a cost win** — Gemma runs locally and is free. See the caching note below before implementing Gemini context caching |
-| **Model residency** | `OLLAMA_KEEP_ALIVE=-1` keeps the model **weights** permanently in RAM. This removes model *load* time (seconds per cold call); it is **not** prompt caching and does not reduce prompt processing. The two are separate optimisations and both are worth having |
+| **LLM prompts** | The model is hosted (Gemma 4 31B on OpenRouter), so there is no `Modelfile`. Keep the fixed instructions at the START of the prompt and the document last, so a provider's prompt cache can reuse the prefix. Cost per call is logged in `llm_usage_logs` and capped per user per day (superadmin → AI usage) |
+| **Model residency** | Not applicable: nothing is hosted. *(Was `OLLAMA_KEEP_ALIVE=-1` for a self-hosted Ollama, retired 2026-09-14.)* |
 
 > #### ⚠️ Where prompt caching actually pays — read before implementing it
 > *Added 2026-08-26.* An earlier version of this table claimed caching "cuts prompt token cost by up to 80%". That figure is misleading here, because **it applies to the path where we spend nothing and barely applies to the path where we do.**
@@ -2255,7 +2255,7 @@ Integration with cargo booking portals, shipping line portals and airline APIs (
 - **MIME sniffing** — `finfo_file`, never extension checks.
 - **Secrets** — production keys (Gemini, Plaid/Setu, Google/Microsoft OAuth) live in AWS Secrets Manager or HashiCorp Vault, injected at runtime. Never in the repository or a production `.env`.
 - **WebSocket authorization** — `Broadcast::channel()` verifies the user's branch matches the requested `private-branch.{agent_id}`.
-- **AI server isolation** — the `t4g.large` instance sits in a private VPC subnet with no public IP; inbound is restricted to ports `11434` (Ollama) and `8000` (FastAPI) from the web/Horizon application servers only. This protects proprietary SOP vectors from external exposure.
+- **AI server isolation** — the FastAPI parser has no public IP; inbound is restricted to port `8000` from the web/Horizon application servers only. It calls OpenRouter outbound with `data_collection: deny`, so only providers that do not keep or train on prompts receive a document.
 
 ### 9.3 Data Integrity & Retention
 
@@ -2319,14 +2319,14 @@ Re-fetched bytes are re-cached and `cache_expires_at` is pushed out, so anything
 | `db` | MySQL 8.0 with persistent volume `db_data:/var/lib/mysql` |
 | `redis` | Cache, Horizon queues, distributed locks |
 | `soketi` | Node WebSocket server (Pusher-compatible) |
-| `ai-server` | FastAPI + ChromaDB + Ollama |
+| `ai-server` | FastAPI (the model is Gemma 4 31B on OpenRouter) |
 
 **Service names, not IPs:** `DB_HOST=db`, `REDIS_HOST=redis`, `AI_SERVER_URL=http://ai-server:8000`.
 
 **Production:**
 - **Web & workers** — Laravel and Soketi images on AWS ECS/Fargate; ElastiCache for Redis; RDS for MySQL
-- **AI stack** — FastAPI + ChromaDB + Ollama via Docker Compose on a dedicated AWS **`t4g.large`** (2 vCPU, 8 GB RAM, Graviton ARM) in a private subnet
-- **Cohosting rationale** — FastAPI, ChromaDB and Ollama all execute over localhost loopback on the same instance, eliminating cross-network latency and keeping RAG and inference sub-second, while completely isolating compute-heavy work from Laravel's HTTP throughput
+- **AI stack** — FastAPI via Docker Compose; the model is **Gemma 4 31B on OpenRouter** (text and vision). No model instance is provisioned. *(Changed 2026-09-14, user decision: the model is **Gemma 4 31B through OpenRouter**, paid per call, for text AND scans. Self-hosted Ollama on a GPU-less `t4g.large` took minutes per invoice; a GPU host is too expensive to keep idle. See GAPS #239.)*
+- **Why hosted** — per-invoice cost is ≈ ₹0.03, a GPU instance idles at far more than that, and OpenRouter moves to another provider on an error; a stuck provider is retried with a different routing after a 12 s attempt timeout.
 - **DNS** — CNAME records for `focusair.`, `focussea.` and `admin.` pointing at the load balancer; Nginx virtual hosts forward all three to the Laravel entrypoint for dynamic session scope binding
 
 **Architectural gates** (resolve before writing functional logic):
@@ -2361,7 +2361,7 @@ documents 2-4 · backfill 2-4 · analytics 1-2      ≈ 30-45 workers
 | **Queue workers (split out at scale)** | same host | dedicated `m6g.large` per worker group | Split `ocr` and `analytics` off first — they are the CPU-heavy ones |
 | **MySQL** | **RDS `db.t4g.medium`** (2 vCPU, 4 GB) | `db.m6g.large` → `db.m6g.xlarge` | See storage note below |
 | **Redis** | **ElastiCache `cache.t4g.small`** | `cache.m6g.large` | Queues + cache + locks + body cache |
-| **AI stack** | **`t4g.large`** (2 vCPU, 8 GB) | unchanged | Already specified — Ollama, ChromaDB, FastAPI cohosted over loopback |
+| **AI stack** | none (FastAPI only) | unchanged | Gemma 4 31B through OpenRouter — see §9 note, GAPS #239 |
 | **Soketi** | container on the web host | own `t4g.small` | Split out only when concurrent sockets get heavy |
 
 #### Database stays small — because bodies are offloaded

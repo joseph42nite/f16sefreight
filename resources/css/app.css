@@ -893,3 +893,6 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
   padding: var(--space-2) var(--space-3); cursor: pointer; color: var(--text-secondary); }
 .fx-tabs__tab.is-active { border-bottom-color: var(--accent, #355594); color: var(--text-primary);
   font-weight: 600; }
+
+/* Superadmin AI usage: the three limit fields side by side where there is room. */
+.fx-ai-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-3); margin-bottom: var(--space-3); max-width: 50rem; }

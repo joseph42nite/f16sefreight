@@ -206,6 +206,13 @@ const router = new Router({
         {
           // Platform reference data: prefix, name and domain, curated once for every
           // tenant rather than re-keyed by each branch.
+          // What Gemma 4 on OpenRouter costs: the month against the budget, and the per-user limit.
+          path: "ai-usage",
+          name: "superadmin-ai-usage",
+          component: () => import("@/view/pages/admin/AiUsage.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "airlines",
           name: "superadmin-airlines",
           component: () => import("@/view/pages/admin/AirlineDirectory.vue"),

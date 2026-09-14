@@ -287,7 +287,7 @@ def _read_piece_weight(text: str) -> Dict[str, Any]:
     }
 
 
-def extract_from_text(pdf_path: str) -> Dict[str, Any]:
+def extract_from_text(pdf_path: str, use_model: bool = True) -> Dict[str, Any]:
     """
     Read the document's text layer and map what can be found onto the AWB regions.
 
@@ -335,7 +335,45 @@ def extract_from_text(pdf_path: str) -> Dict[str, Any]:
     # is something to fall back to: if the model is down, slow or returns junk, the label
     # result stands and `model_error` says why. A fallback the operator cannot see looks
     # exactly like a model that read the page badly.
-    _apply_model(result, text)
+    # ⚠️ `use_model=False` when the user's daily AI limit is reached (Laravel decides): the label
+    # reading stands and the panel says why.
+    if use_model:
+        _apply_model(result, text)
+    else:
+        result["model_error"] = "the daily AI limit has been reached"
+
+    return result
+
+
+def extract_from_images(pdf_path: str) -> Dict[str, Any]:
+    """
+    Read a SCAN: its pages as images, through the same model and the same schema.
+
+    🔴 Only ever called when a human authorised the paid vision run (ProcessPdfOcrJob). The result
+    has the same shape as the text path, so the panel needs nothing new; `extraction_path` says
+    `vision` and `read_by` says `model`.
+    """
+    result: Dict[str, Any] = {"extraction_path": "vision", "text": "", "read_by": "labels"}
+    pages: List[bytes] = []
+
+    with fitz.open(pdf_path) as doc:
+        result["page_count"] = doc.page_count
+        for page in list(doc)[:model_extract.MAX_VISION_PAGES]:
+            pages.append(page.get_pixmap(dpi=150).tobytes("png"))
+
+    for region in REGIONS:
+        result[region] = process_box(region, "")
+    result["piece_weight"] = _read_piece_weight("")
+    result["pieces_note"] = None
+
+    parsed, error, usage = model_extract.extract_images(pages)
+    result["model_usage"] = usage
+
+    if error:
+        result["model_error"] = error
+        return result
+
+    _apply_parsed(result, parsed, "")
 
     return result
 
@@ -470,11 +508,19 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
         result["model_error"] = "the model is not reachable"
         return
 
-    parsed, error = model_extract.extract(text)
+    parsed, error, usage = model_extract.extract(text)
+    # What the call cost, whatever it answered — Laravel logs it against the user and branch.
+    result["model_usage"] = usage
 
     if error:
         result["model_error"] = error
         return
+
+    _apply_parsed(result, parsed, text)
+
+
+def _apply_parsed(result: Dict[str, Any], parsed: Dict[str, Any], text: str) -> None:
+    """The model's answer onto the regions. `text` is empty for a scan."""
 
     # 🔴 AN EMPTY ANSWER IS A FAILURE, NOT A READING. On the real invoice the model once came
     # back with nothing usable — no shipper, no consignee, no cargo — and because an answer
@@ -502,20 +548,15 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
     # 🔴 Written straight into the dict, not through `process_box`: `transform_piece_weight`
     # is POSITIONAL and misreads a number handed to it on its own.
     result["piece_weight"]["gross_weight"] = parsed.get("gross_weight", 0.0)
-    # ⚠️ NOT the model's `pieces`: it gave the item quantity (500) twice when the invoice's cartons
-    # were 26. The written count from `_read_piece_weight` stands.
+    # ⚠️ The model is not asked for pieces: it gave the item quantity (500) twice when the invoice's
+    # cartons were 26. The written count from `_read_piece_weight` stands.
     result["piece_weight"]["chargeable_weight"] = parsed.get("chargeable_weight", 0.0)
 
     # Same shape the label path gives: [{"dimension": "64X32X64", "count": 1}].
     if parsed.get("dimensions"):
         result["cargo"]["dimensions"] = extract_dimensions(parsed["dimensions"])
 
-    # 🔴 ONLY IF THE DOCUMENT SAYS SO. On an invoice that never writes "notify", the model
-    # filed the CONSIGNEE's address under a notify party twice: first with no company name at
-    # all, then with `notify_name: "GARDENS WASFI"` — a fragment of the consignee's street —
-    # which walked straight through a name-only guard. A document that does not name a notify
-    # party does not have one.
-    if parsed.get("notify_name") and "notify" in text.lower():
-        result["notify"] = _party(parsed, "notify", text)
+    # ⚠️ No notify party from a document (user, 2026-09-14): it is pasted or typed in the panel.
+    # When the model was asked, it twice filed the consignee's address under one.
 
     result["read_by"] = "model"

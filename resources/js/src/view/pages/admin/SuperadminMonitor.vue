@@ -20,6 +20,13 @@
 
     <p v-if="error" class="fx-error" role="alert">{{ error }}</p>
 
+    <!-- 🔴 The AI budget, where it will be seen: reached is SAID, not enforced (user, 2026-09-14). -->
+    <p v-if="aiMonth && aiMonth.over_budget" class="fx-warn" role="alert">
+      <strong>AI spend has reached this month's budget</strong> — ₹{{ aiMonth.spend_inr }} of
+      ₹{{ aiMonth.budget_inr }}. Extraction is still running.
+      <router-link to="/superadmin/ai-usage">Open AI usage</router-link>
+    </p>
+
     <!--
       🔴 A health endpoint that 500s tells you nothing. Each subsystem reports its own
       state, so a dead Redis is a red card next to a green database — not a blank page.
@@ -82,6 +89,8 @@ export default {
   name: "SuperadminMonitor",
   components: { Figure, StatusChip },
   data: () => ({
+    /** This month's AI spend against the budget, for the banner. */
+    aiMonth: null,
     health: null, checkedAt: null, loading: false, error: null,
     logLines: [], logPath: null, logSize: null, logLoading: false,
   }),
@@ -114,6 +123,9 @@ export default {
   },
   created() {
     this.load();
+    ApiService.get("/superadmin/ai-usage")
+      .then(({ data }) => { this.aiMonth = data.month; })
+      .catch(() => { this.aiMonth = null; });
   },
   methods: {
     load() {

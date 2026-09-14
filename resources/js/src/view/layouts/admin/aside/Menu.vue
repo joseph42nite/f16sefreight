@@ -21,6 +21,26 @@
     </router-link>
 
     <router-link
+      to="/superadmin/ai-usage"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+     >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <i class="menu-icon fas fa-coins"></i>
+          <span class="menu-text">AI usage</span>
+        </a>
+      </li>
+    </router-link>
+
+    <router-link
       to="/superadmin/airlines"
       v-slot="{ href, navigate, isActive, isExactActive }"
      >

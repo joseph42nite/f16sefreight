@@ -38,7 +38,7 @@ return [
             'driver' => 'database',
             'table' => 'jobs',
             'queue' => 'default',
-            'retry_after' => 780,  // must exceed ProcessPdfOcrJob::$timeout (720s)
+            'retry_after' => 130,  // must exceed ProcessPdfOcrJob::$timeout (100s)
         ],
 
         'beanstalkd' => [
@@ -63,7 +63,7 @@ return [
             'driver'      => 'redis',
             'connection'  => 'default',
             'queue'       => env('REDIS_QUEUE', 'pdf_processing'),
-            'retry_after' => 780,       // MUST exceed ProcessPdfOcrJob::$timeout (720s) — prevents duplicate dispatch
+            'retry_after' => 130,       // MUST exceed ProcessPdfOcrJob::$timeout (100s) — prevents duplicate dispatch
             'block_for'   => null,
         ],
 

@@ -24,6 +24,8 @@ __webpack_require__.r(__webpack_exports__);
     StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
   },
   data: () => ({
+    /** This month's AI spend against the budget, for the banner. */
+    aiMonth: null,
     health: null,
     checkedAt: null,
     loading: false,
@@ -80,6 +82,13 @@ __webpack_require__.r(__webpack_exports__);
   },
   created() {
     this.load();
+    _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/superadmin/ai-usage").then(({
+      data
+    }) => {
+      this.aiMonth = data.month;
+    }).catch(() => {
+      this.aiMonth = null;
+    });
   },
   methods: {
     load() {
@@ -163,7 +172,16 @@ var render = function render() {
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.error))]) : _vm._e(), _vm._v(" "), _c("section", {
+  }, [_vm._v(_vm._s(_vm.error))]) : _vm._e(), _vm._v(" "), _vm.aiMonth && _vm.aiMonth.over_budget ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "alert"
+    }
+  }, [_c("strong", [_vm._v("AI spend has reached this month's budget")]), _vm._v(" — ₹" + _vm._s(_vm.aiMonth.spend_inr) + " of\n    ₹" + _vm._s(_vm.aiMonth.budget_inr) + ". Extraction is still running.\n    "), _c("router-link", {
+    attrs: {
+      to: "/superadmin/ai-usage"
+    }
+  }, [_vm._v("Open AI usage")])], 1) : _vm._e(), _vm._v(" "), _c("section", {
     staticClass: "fx-section"
   }, [_c("div", {
     staticClass: "fx-tiles"

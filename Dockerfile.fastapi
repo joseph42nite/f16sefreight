@@ -8,13 +8,10 @@
 # a one-page invoice) and pydantic (schema validation for the model step). pdfplumber
 # stays: extract_awb_new.py uses it to CROP coordinate boxes, a different job.
 #
-# ⚠️ Ollama and ChromaDB are NOT in this image, and are not meant to be. In production
-# they cohost with it on a dedicated t4g.large over loopback (PRD §9.5); locally the
-# container reaches Ollama on the host via host.docker.internal, set in docker-compose.
-# Gemma needs ~6 GB resident, which PRD §9.6 says not to run on a laptop.
-#
-# 🔴 Still missing: google-generativeai. /extract-unstructured answers 501 for a scan
-# rather than pretending — a document with no text layer cannot be read at all yet.
+# 🔴 No model runs in this image or beside it. Text and scans are read by Gemma 4 31B through
+# OpenRouter (model_extract.py, user decision 2026-09-14): self-hosted gemma3:4b took minutes per
+# invoice without a GPU, and a GPU host is too expensive to keep idle. OPENROUTER_API_KEY comes
+# from the environment.
 FROM python:3.11-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

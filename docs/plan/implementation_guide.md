@@ -52,7 +52,7 @@ Private bridge network `f16s-network`:
 | `db` | MySQL 8.0 with persistent host volume `db_data:/var/lib/mysql` |
 | `redis` | Cache, Horizon queues, distributed locks |
 | `soketi` | Node WebSocket server (Pusher-compatible) |
-| `ai-server` | FastAPI + ChromaDB + Ollama |
+| `ai-server` | FastAPI (calls Gemma 4 31B on OpenRouter) |
 
 **Resolve services by name, never by IP:** `DB_HOST=db` (3306) · `REDIS_HOST=redis` (6379) · `AI_SERVER_URL=http://ai-server:8000`.
 
@@ -62,7 +62,7 @@ Also create `Dockerfile.laravel` and `Dockerfile.fastapi`.
 >
 > Three deliberate departures from the text above, each for a reason:
 > - **Host ports are offset** — `db` on `3307`, `redis` on `6380` — so the stack does not collide with a MySQL or Redis already installed on the machine.
-> - **`ai-server` builds the real `./python` service** and starts with the rest of the stack. It is light today (FastAPI + pdfplumber). **Ollama and ChromaDB are deliberately not in that image** — Gemma needs ~6 GB resident, and `PRD.md` §9.6 says to point a laptop at a shared dev AI instance rather than run the model locally.
+> - **`ai-server` builds the real `./python` service** and starts with the rest of the stack. **No model runs locally or on a dedicated instance:** the parser calls Gemma 4 31B through OpenRouter with `OPENROUTER_API_KEY` from `.env` (changed 2026-09-14, GAPS #239).
 > - **A `queue` service runs `queue:work` across all seven named queues in §4.10's priority order**, since `laravel/horizon` is not yet a dependency. Replace the command with `php artisan horizon` when it is.
 >
 > **This is additive.** The `php artisan serve` + SQLite workflow is untouched and remains the default; the committed `.env` still points at SQLite. Reach for the stack when you need MySQL 8 semantics — the CHECK constraints, the generated column and the triggers behaving exactly as production will.
@@ -86,11 +86,11 @@ CNAME records at the DNS provider (Route 53 / Cloudflare) pointing at the applic
 
 Add Nginx virtual hosts inside the `web` container listening on all six server names and forwarding to the single Laravel entrypoint, so Laravel can bind the request scope from the host.
 
-### 0.3 AI instance provisioning (AWS EC2)
+### 0.3 AI model access (OpenRouter) — *replaces the AWS AI instance, 2026-09-14*
 
-- **Instance:** dedicated **`t4g.large`** (2 vCPU, 8 GB RAM, Graviton ARM), separate from the web tier
-- **Networking:** private VPC subnet, **no public IP**. Security group allows inbound TCP on `11434` (Ollama) and `8000` (FastAPI) **only** from the web/Horizon server addresses
-- **Deployment:** install Docker + Compose, clone the `/python` microservice, build and run, then verify connectivity from the `web` container
+- **No instance.** Gemma 4 31B through OpenRouter for text and scans. Set `OPENROUTER_API_KEY` in `.env`; set a **credit limit on the key** in the OpenRouter dashboard as the hard spending stop
+- **Budget and limits** live in the superadmin portal (AI usage): monthly budget in ₹ (shown when reached, never enforced), per-user daily limit (over it, documents are read by labels only)
+- **Networking:** the parser needs outbound HTTPS to `openrouter.ai`; inbound stays restricted to `8000` from the web/Horizon servers
 
 ✅ **Checkpoint 0**
 ```bash
@@ -513,7 +513,7 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
 >
 > Laravel already calls it: `ProcessPdfOcrJob` posts to `config('services.ocr.url') . '/extract'`, passing coordinates pulled from `system_templates`. **This is the structured-document path `PRD.md` §5.1 says to keep** — the steps below are additive, and `/extract` must keep working unchanged.
 >
-> **What is genuinely missing:** `/extract-unstructured`, PyMuPDF, `google-generativeai`, `schemas.py`, and any Ollama/ChromaDB client.
+> **What is genuinely missing:** ~~`/extract-unstructured`, PyMuPDF, `schemas.py`~~ built. The model client is OpenRouter (`python/model_extract.py`); the copilot's retrieval store is pending a decision (GAPS #240).
 >
 > ⚠️ **One existing behaviour contradicts `PRD.md` §9.1.** `ocr_server.py` writes each upload to a `tempfile.NamedTemporaryFile` on disk before parsing, while §9.1 requires the binary buffer be processed **in memory**. pdfplumber accepts a file-like object, so `pdfplumber.open(io.BytesIO(contents))` removes the disk round-trip for the existing path too — not just the new one. Worth fixing while you are in the file.
 
@@ -522,7 +522,7 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
 
    | Layer | Mechanism | Without it |
    |---|---|---|
-   | **Constrain** | Gemini `response_mime_type: "application/json"` + `response_schema`; Ollama `format: <json-schema>` | The model returns prose, markdown-fenced JSON, or invented field names |
+   | **Constrain** | OpenRouter `response_format: {type: json_schema, strict: true}` | The model returns prose, markdown-fenced JSON, or invented field names |
    | **Validate** | Pydantic schemas in `python/schemas.py` — Invoice, Packing List, per-field `confidence` (high/medium/low) | Malformed payloads reach Laravel and blow up in the Vue form |
    | **Map** | One shared key vocabulary → `FocusAir.vue` / `FocusSea*.vue` fields | Three codebases invent three sets of names and silently drift |
 
@@ -533,8 +533,8 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
    | Level | How | Guarantees |
    |---|---|---|
    | 1. Ask in the prompt | *"Reply with JSON"* | **Nothing.** Usually works, fails unpredictably |
-   | 2. JSON mode | Gemini `response_mime_type: "application/json"` · Ollama `format: "json"` | Valid JSON **syntax** — but any shape. Fields may be renamed, nested differently, or missing |
-   | 3. **Schema-constrained decoding** | Gemini `response_schema` (+ the mime type) · Ollama `format: <json-schema object>` | **The shape.** The decoder is grammar-constrained, so a token that would break the schema is literally not sampleable |
+   | 2. JSON mode | OpenRouter `response_format: {type: json_object}` | Valid JSON **syntax** — but any shape. Fields may be renamed, nested differently, or missing |
+   | 3. **Schema-constrained decoding** | OpenRouter `response_format: {type: json_schema, strict: true}` with `provider.require_parameters: true` | **The shape.** The decoder is grammar-constrained, so a token that would break the schema is literally not sampleable |
 
    Use **level 3 on both models.** It is not a prompt hint — it is enforced during generation, so a malformed response is impossible rather than unlikely.
 
@@ -564,7 +564,7 @@ Route::group(['middleware' => 'tier:command'], ...);           // ledger, reconc
    One shape difference to reconcile deliberately: `/extract` returns bare values, while the new path returns `{value, confidence}`. **Unify upward** — have `/extract` wrap its values too, stamping `confidence: "high"` (a coordinate hit *is* high confidence, exactly as `PRD.md` §5.1 defines it). Then one mapper and one orange-highlight rule serve both paths.
 3. **`/extract-unstructured` endpoint:**
    - `fitz.open(stream=…)` — process the binary buffer **in memory**, never to disk
-   - Text-selectable PDF → local **Gemma 4 E4B** via Ollama at `http://<ai-private-ip>:11434`
+   - Text-selectable PDF → **Gemma 4 31B** through OpenRouter (text); a consented scan → the same model with page images
    - Scanned PDF / image → **Gemini 2.5 Flash** vision fallback, translating foreign documents to standard English
 #### 4.1.2 Field constraints — what the schema enforces, and what it must NOT
 
@@ -646,10 +646,10 @@ A client curates each trading partner **once** in settings, and every future shi
 > ⚠️ **Match, then confirm — never silently substitute.** Replacing an extracted consignee with a *similar* saved one is exactly the class of error that ships cargo to the wrong company. Show which saved record matched and at what score, and let the operator reject it. `PRD.md` §5.8 already requires address textareas to be read-only until an entity is chosen from the lookup, for the same reason.
 
 4. **Retain `pdfplumber`** in `extract_awb_new.py` for structured AWBs — coordinate extraction is the correct tool for a fixed layout
-5. **Ollama configuration:** `OLLAMA_KEEP_ALIVE=-1` pins the model **weights** in RAM (kills cold-start load time — *not* prompt caching, a separate thing). Bake system prompts and JSON schemas into a custom `Modelfile` (`ollama create gemma-custom -f ./Modelfile`) so they are neither re-sent nor re-processed, and size `num_ctx` to hold prompt + payload so the prefix cache can actually be reused. **All of this is a latency win — Gemma is local and free, so there is no token bill to cut here.**
-6. **Gemini context caching — measure before you build it.** See the caching note in `PRD.md` §9.1. Two things make the naive version a loss: the cached block (Pydantic schema + SOP prompt) may fall **below Google's minimum cacheable size**, and the specified **300 s TTL** is billed by storage duration, so at realistic upload density the cache expires between nearly every request — creation cost paid, no reuse gained. Verify the current minimum and pricing against Google's docs, then either raise the TTL to match observed density or skip it.
+5. **Model access:** Gemma 4 31B through OpenRouter (`python/model_extract.py`): strict JSON-schema output, `provider.data_collection: deny`, three attempts of 12 s each routed by latency, then throughput, then price. *(Was Ollama with `OLLAMA_KEEP_ALIVE` and a `Modelfile`, retired 2026-09-14.)*
+6. **Prompt caching — measure before you build it.** Keep fixed instructions first and the document last so a provider's prefix cache can apply; do not build explicit caching until a measurement shows it pays.
    **On the vision path the prompt is not the expensive part** — the page image is. The cost levers that matter, in order: the opt-in consent gate (§4.1.1), sending fewer pages, and downscaling images before upload (vision tokens scale with resolution).
-7. **ChromaDB** cohosted on the same instance; embeddings via `nomic-embed-text` queried over loopback
+7. **Copilot retrieval (ChromaDB)** — hosting and embeddings pending a decision now that there is no model instance (GAPS #240)
 
 #### 4.1.1 Tier branching & the credit gate — `ProcessPdfOcrJob`
 
@@ -1327,7 +1327,7 @@ validity and the label/model split.
 > `python/unstructured.py` reads the text layer (PyMuPDF, pdfplumber as fallback) and
 > returns `extraction_path: 'text'`, or `'none'` when there is no text layer and
 > `allow_vision` was false — so the consent flow finally has something real to park on.
-> `python/model_extract.py` calls Gemma over Ollama to fill only the regions label
+> `python/model_extract.py` calls Gemma 4 31B on OpenRouter to fill only the regions label
 > anchoring could not.
 >
 > **28 tests, 0 failures** as of 2026-09-11.

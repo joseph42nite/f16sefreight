@@ -175,6 +175,11 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::get('/airlines', [\App\Http\Controllers\Platform\AirlineDirectoryController::class, 'index']);
     Route::post('/airlines', [\App\Http\Controllers\Platform\AirlineDirectoryController::class, 'store']);
     Route::put('/airlines/{airline}', [\App\Http\Controllers\Platform\AirlineDirectoryController::class, 'update']);
+
+    // ── What the hosted model costs (Gemma 4 on OpenRouter) ─────────────────
+    // The month's spend against the budget, per customer and per user, and the per-user limit.
+    Route::get('/ai-usage', [\App\Http\Controllers\Platform\AiUsageController::class, 'index']);
+    Route::put('/ai-usage/settings', [\App\Http\Controllers\Platform\AiUsageController::class, 'updateSettings']);
     Route::post('logout', [SuperAdminController::class, 'logout']);
     Route::post('verify', [SuperAdminController::class, 'me']);
     Route::put('upadte-detail', [SuperAdminController::class, 'update']);

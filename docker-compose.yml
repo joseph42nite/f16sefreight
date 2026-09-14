@@ -110,10 +110,8 @@ services:
       - "9601:9601"
     networks: [f16s-network]
 
-  # The real parsing service, source in ./python. Today it is FastAPI + pdfplumber
-  # coordinate extraction (/health, /extract) — light enough to run locally.
-  # Ollama and ChromaDB are deliberately NOT here: Gemma needs ~6 GB resident and
-  # PRD §9.6 says to point at a shared dev AI instance rather than run it on a laptop.
+  # The parsing service, source in ./python: FastAPI, pdfplumber coordinates for an AWB, PyMuPDF
+  # text for an invoice. The model it calls is Gemma 4 31B on OpenRouter — nothing is hosted here.
   ai-server:
     build:
       context: .
@@ -122,27 +120,14 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # 🔴 `127.0.0.1` INSIDE A CONTAINER IS THE CONTAINER. Ollama runs on the host, so
-      # the default in model_extract.py resolves to nothing here and every model call
-      # would fail silently — the extractor treats an unreachable model as "no model" and
-      # falls back to label anchoring, so the symptom is quietly worse extraction rather
-      # than an error anyone would notice.
-      OLLAMA_URL: http://host.docker.internal:11434
-      # gemma3:4b, not 1b: on a real invoice 1b returned the labels themselves as company
-      # names. model_extract.py defaults to it; named here so the deployed choice is visible.
-      OLLAMA_MODEL: gemma3:4b
-      # 4b took 378s on a two-page invoice on this laptop.
-      OLLAMA_TIMEOUT: "600"
-      # Ten minutes, not forever. On a 9 GB laptop "-1" pinned whichever model ran last and
-      # starved the next; a cold load is 63-153s, so it stays warm between uploads.
-      OLLAMA_KEEP_ALIVE: "10m"
-    extra_hosts:
-      # ⚠️ Docker Desktop provides this name; Linux hosts do not, so it is declared
-      # explicitly or the container cannot resolve it there at all.
-      - "host.docker.internal:host-gateway"
+      # 🔐 From the project's .env, never written here. Without it the parser reads by labels
+      # only and says "the model is not configured".
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: google/gemma-4-31b-it
+      # Per attempt; three attempts, each routed to a different kind of provider.
+      OPENROUTER_ATTEMPT_TIMEOUT: "12"
     volumes:
       - ./python:/app          # live edits without a rebuild
-      - chroma_data:/chroma
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8000/health')\""]
       interval: 10s
@@ -179,5 +164,4 @@ networks:
 volumes:
   db_data:
   redis_data:
-  chroma_data:
   clamav_data:

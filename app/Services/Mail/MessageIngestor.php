@@ -43,7 +43,7 @@ class MessageIngestor
             // Each message in its OWN transaction. A page of 50 that fails on the 49th must
             // not roll back the 48 already stored — the cursor would then re-deliver them
             // and the run makes no progress at all.
-            DB::transaction(function () use ($connection, $message, &$stats) {
+            $storedId = DB::transaction(function () use ($connection, $message, &$stats) {
                 $existing = DB::table('email_messages')
                     ->where('message_id', $message->messageId)
                     ->first(['id', 'thread_key']);
@@ -58,7 +58,7 @@ class MessageIngestor
 
                     $stats['echoes']++;
 
-                    return;
+                    return null;
                 }
 
                 $match = $this->matcher->resolve($message, $connection->agent_id, (string) $connection->email_address);
@@ -70,7 +70,7 @@ class MessageIngestor
                     $this->touchThread($match['thread_key'], $message);
                 }
 
-                DB::table('email_messages')->insert([
+                $id = DB::table('email_messages')->insertGetId([
                     'agent_id'              => $connection->agent_id,
                     'mailbox_connection_id' => $connection->id,
                     'thread_key'            => $match['thread_key'],
@@ -107,10 +107,50 @@ class MessageIngestor
                 // and stayed that way until a human picked from the dropdown. A classifier
                 // nobody invokes is a constant wearing the shape of a decision.
                 $this->stageClassification($message);
+
+                return $id;
             });
+
+            // OUTSIDE the transaction: a provider call must not hold the message's row lock,
+            // and a failed listing must not undo a message that was stored correctly.
+            if ($storedId !== null && $message->hasAttachments && $message->providerId !== null) {
+                $this->indexAttachments($connection, $storedId, $message->providerId);
+            }
         }
 
         return $stats;
+    }
+
+    /**
+     * Record a message's attachments — names, types and sizes, never the bytes (guide §4.2).
+     *
+     * ⚠️ A listing that fails is logged, not thrown: the mail is still worth having without its
+     * chips, and a sync that stopped on one attachment call would stop the whole mailbox.
+     */
+    private function indexAttachments(MailboxConnection $connection, int $messageId, string $providerMessageId): void
+    {
+        try {
+            $files = app(MailProviderRegistry::class)->for($connection->provider)
+                ->attachments($connection, $providerMessageId);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return;
+        }
+
+        foreach ($files as $file) {
+            DB::table('email_attachments')->insert([
+                'email_message_id'       => $messageId,
+                'filename'               => mb_substr($file['name'], 0, 255),
+                'provider_attachment_id' => $file['id'],
+                'mime_type'              => mb_substr($file['mime_type'], 0, 255),
+                'size_bytes'             => $file['size'],
+                // Listed, not downloaded: the bytes are fetched when someone opens the file.
+                'fetch_state'            => 'remote',
+                'created_at'             => now(),
+                'updated_at'             => now(),
+            ]);
+        }
     }
 
     /**

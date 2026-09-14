@@ -62,6 +62,12 @@ return [
      * and Entra expires it on a schedule — a mailbox that stops syncing with 401s months
      * from now is usually this, not a token bug.
      */
+    // clamd, for mail attachments (guide §4.2). docker-compose publishes it on 3310.
+    'clamav' => [
+        'host' => env('CLAMAV_HOST', '127.0.0.1'),
+        'port' => env('CLAMAV_PORT', 3310),
+    ],
+
     'graph' => [
         'client_id'     => env('GRAPH_CLIENT_ID'),
         'client_secret' => env('GRAPH_CLIENT_SECRET'),

@@ -150,6 +150,28 @@ services:
       retries: 5
     networks: [f16s-network]
 
+  # Virus scanning for mail attachments (guide §4.2: "ClamAV scan before any attachment is
+  # persisted"). Laravel talks to clamd over TCP with INSTREAM, so no files are shared.
+  clamav:
+    image: clamav/clamav:stable
+    container_name: f16s-clamav
+    environment:
+      # ⚠️ No concurrent reload: a signature update would otherwise hold TWO copies of the
+      # database in memory for a moment, and Docker here has 2 GB for everything.
+      CLAMD_CONF_ConcurrentDatabaseReload: "no"
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav_data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 180s
+    restart: unless-stopped
+    networks: [f16s-network]
+
 networks:
   f16s-network:
     driver: bridge
@@ -158,3 +180,4 @@ volumes:
   db_data:
   redis_data:
   chroma_data:
+  clamav_data:

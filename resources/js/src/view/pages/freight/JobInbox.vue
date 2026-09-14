@@ -115,6 +115,7 @@
         </header>
 
         <p v-if="actionError" class="fx-error fx-inbox__pad" role="alert">{{ actionError }}</p>
+        <p v-if="attachmentError" class="fx-error fx-inbox__pad" role="alert">{{ attachmentError }}</p>
 
         <!--
           §4.2 the SLA pair, side by side and never conflated. first_triage_at is
@@ -145,6 +146,35 @@
               to {{ m.to || "—" }}<template v-if="m.cc"> · cc {{ m.cc }}</template>
             </div>
             <p class="fx-message__body">{{ m.body_snippet }}</p>
+
+            <!--
+              🔴 The files the mail carried (guide §4.2). Listed at sync; the bytes are fetched,
+              virus-scanned and kept only when someone opens one. A PDF can go straight into
+              Extraction, beside the mail that carried it.
+            -->
+            <ul v-if="m.attachments && m.attachments.length" class="fx-attachments">
+              <li v-for="a in m.attachments" :key="a.id" class="fx-attachment">
+                <button
+                  type="button"
+                  class="fx-attachment__open"
+                  :disabled="attachmentBusy === a.id || a.fetch_state === 'blocked'"
+                  :title="a.fetch_state === 'blocked' ? 'Blocked by the virus scan' : 'Open ' + a.filename"
+                  @click="openAttachment(a)"
+                >
+                  📎 {{ a.filename }}
+                  <span v-if="a.size_bytes" class="fx-muted">{{ fileSize(a.size_bytes) }}</span>
+                  <span v-if="attachmentBusy === a.id" class="fx-muted">· opening…</span>
+                  <span v-if="a.fetch_state === 'blocked'" class="fx-error">· blocked by virus scan</span>
+                </button>
+                <button
+                  v-if="canExtractAttachments && isPdf(a) && a.fetch_state !== 'blocked'"
+                  type="button"
+                  class="fx-btn fx-btn--ghost"
+                  :disabled="attachmentBusy === a.id"
+                  @click="extractAttachment(a)"
+                >Extract</button>
+              </li>
+            </ul>
           </li>
         </ol>
 
@@ -434,7 +464,7 @@
 
           <!-- The waybill this conversation is already about, so the operator is not
                asked to retype a number the job already holds. -->
-          <ExtractionPanel v-else :prefill-awb="jobAwb" :mail-cargo="active && active.staged_cargo" @apply="onExtracted" />
+          <ExtractionPanel v-else ref="extraction" :prefill-awb="jobAwb" :mail-cargo="active && active.staged_cargo" @apply="onExtracted" />
         </section>
       </template>
 
@@ -447,6 +477,7 @@
 
 <script>
 import { mapGetters } from "vuex";
+import Vue from "vue";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
@@ -537,6 +568,8 @@ export default {
     draft: { to: "", cc: "", subject: "", body: "", includeSignature: true },
     /** The signature a reply on the open thread carries — HTML, already cleaned by the server. */
     signature: null,
+    /** The attachment being fetched, and why the last one could not be. */
+    attachmentBusy: null, attachmentError: null,
     outcomeBusy: false, outcomeError: null,
     LOST_REASONS,
     CLASSIFICATIONS, WORKSPACE_TABS,
@@ -608,6 +641,10 @@ export default {
           value: cargo[k].value,
           confidence: cargo[k].confidence,
         }));
+    },
+    /** The Extraction panel exists only once the enquiry has a job (see the drawer's chain). */
+    canExtractAttachments() {
+      return this.workspaceTabs.length > 0 && !!(this.active && this.active.enquiry && this.active.job);
     },
     workspaceTabs() {
       const isEnquiry = this.active && this.active.classification === "customer_enquiry";
@@ -834,6 +871,70 @@ export default {
         .then(() => { this.cargoSaved = true; })
         .catch((e) => { this.cargoError = this.messageFor(e); })
         .finally(() => { this.cargoBusy = false; });
+    },
+    isPdf(a) {
+      return a.mime_type === "application/pdf" || /\.pdf$/i.test(a.filename || "");
+    },
+    fileSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1048576) return Math.round(bytes / 1024) + " KB";
+      return (bytes / 1048576).toFixed(1) + " MB";
+    },
+    /**
+     * The file's bytes, through the API (the JWT is a header, so a plain link cannot fetch it).
+     *
+     * ⚠️ An error arrives as a Blob too, so its JSON is read back out for the message.
+     */
+    fetchAttachment(a) {
+      this.attachmentBusy = a.id;
+      this.attachmentError = null;
+
+      return Vue.axios.get("/inbox/attachments/" + a.id, { responseType: "blob" })
+        .then(({ data }) => {
+          // Fetched once, then kept: the chip reflects it without reloading the thread.
+          a.fetch_state = "cached";
+          return data;
+        })
+        .catch(async (e) => {
+          let message = "The file could not be opened.";
+          try {
+            const body = JSON.parse(await e.response.data.text());
+            message = body.error || message;
+            if (body.reason === "blocked") a.fetch_state = "blocked";
+          } catch (ignored) { /* not JSON — keep the generic message */ }
+          this.attachmentError = a.filename + ": " + message;
+          throw e;
+        })
+        .finally(() => { this.attachmentBusy = null; });
+    },
+    openAttachment(a) {
+      // ⚠️ The tab is opened NOW, inside the click; opened after the fetch it is a popup and blocked.
+      const tab = window.open("", "_blank");
+
+      this.fetchAttachment(a)
+        .then((blob) => {
+          const url = URL.createObjectURL(blob.type ? blob : new Blob([blob], { type: a.mime_type }));
+          if (tab) tab.location.href = url;
+          else window.location.href = url;
+        })
+        .catch(() => { if (tab) tab.close(); });
+    },
+    /** Straight into Extraction, staged — reading it is still an explicit Extract. */
+    extractAttachment(a) {
+      this.fetchAttachment(a)
+        .then((blob) => {
+          this.openWorkspace();
+          this.openExtraction();
+
+          // ⚠️ The panel renders when the drawer opens, which can be a few ticks away.
+          const file = new File([blob], a.filename, { type: "application/pdf" });
+          const hand = (tries) => {
+            if (this.$refs.extraction) this.$refs.extraction.add([file]);
+            else if (tries > 0) setTimeout(() => hand(tries - 1), 100);
+          };
+          this.$nextTick(() => hand(20));
+        })
+        .catch(() => {});
     },
     openExtraction() {
       this.tab = "extraction";

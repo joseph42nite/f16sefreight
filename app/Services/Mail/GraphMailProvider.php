@@ -172,6 +172,51 @@ class GraphMailProvider implements MailProviderContract
         );
     }
 
+    public function attachments(MailboxConnection $connection, string $providerMessageId): array
+    {
+        $response = Http::withToken($connection->access_token)
+            ->acceptJson()
+            ->get($this->api() . '/me/messages/' . rawurlencode($providerMessageId) . '/attachments', [
+                '$select' => 'id,name,contentType,size,isInline',
+            ]);
+
+        if ($response->failed()) {
+            throw new RuntimeException('Graph attachments failed: ' . $response->status() . ' ' . $response->body());
+        }
+
+        $files = [];
+
+        foreach ($response->json('value') ?? [] as $raw) {
+            // ⚠️ Only FILE attachments have bytes to fetch. An attached Outlook item (a forwarded
+            // mail) or a OneDrive link has no `$value`, and an inline image is the signature logo.
+            if (($raw['@odata.type'] ?? '') !== '#microsoft.graph.fileAttachment' || ! empty($raw['isInline'])) {
+                continue;
+            }
+
+            $files[] = [
+                'id'        => $raw['id'],
+                'name'      => $raw['name'] ?? 'attachment',
+                'mime_type' => $raw['contentType'] ?? 'application/octet-stream',
+                'size'      => isset($raw['size']) ? (int) $raw['size'] : null,
+            ];
+        }
+
+        return $files;
+    }
+
+    public function attachmentContent(MailboxConnection $connection, string $providerMessageId, string $providerAttachmentId): string
+    {
+        $response = Http::withToken($connection->access_token)
+            ->get($this->api() . '/me/messages/' . rawurlencode($providerMessageId)
+                . '/attachments/' . rawurlencode($providerAttachmentId) . '/$value');
+
+        if ($response->failed()) {
+            throw new RuntimeException('Graph attachment download failed: ' . $response->status());
+        }
+
+        return $response->body();
+    }
+
     /** In-Reply-To + References, flattened — thread-match tier 2. */
     private function references(array $headers): array
     {

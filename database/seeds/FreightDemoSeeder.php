@@ -97,6 +97,8 @@ class FreightDemoSeeder extends Seeder
 
         $this->seedPlatformStaff();
         $this->syncSequenceCounters();
+        // The files the demo mails say are attached (needs ClamAV: `docker compose up -d clamav`).
+        $this->call(DemoMailAttachmentsSeeder::class);
         $this->summary();
     }
 

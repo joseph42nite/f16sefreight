@@ -15,7 +15,7 @@ class EmailAttachment extends Model
 {
     protected $fillable = [
         'email_message_id', 'filename', 'file_path', 'provider_attachment_id',
-        'cache_expires_at', 'fetch_state', 'mime_type',
+        'cache_expires_at', 'fetch_state', 'mime_type', 'size_bytes',
     ];
 
     protected $casts = ['cache_expires_at' => 'datetime'];

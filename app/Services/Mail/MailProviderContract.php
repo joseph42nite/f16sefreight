@@ -55,6 +55,19 @@ interface MailProviderContract
     public function delta(MailboxConnection $connection, ?string $cursor): array;
 
     /**
+     * The files attached to one message — names and types only, never the bytes.
+     *
+     * 🔴 LAZY (guide §4.2): the bytes are fetched only when someone opens or extracts the file.
+     * Inline images (signature logos) are left out; they are part of the body, not documents.
+     *
+     * @return array<int, array{id: string, name: string, mime_type: string, size: ?int}>
+     */
+    public function attachments(MailboxConnection $connection, string $providerMessageId): array;
+
+    /** The bytes of one attachment. Throws when the provider refuses. */
+    public function attachmentContent(MailboxConnection $connection, string $providerMessageId, string $providerAttachmentId): string;
+
+    /**
      * Send a message from the connected mailbox.
      *
      * 🔴 The provider sends it, and the SAME message comes back on the next delta as an

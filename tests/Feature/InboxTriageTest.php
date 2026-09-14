@@ -703,6 +703,139 @@ class InboxTriageTest extends TestCase
             ->assertNotFound();
     }
 
+    // ─── Opening an attachment (guide §4.2) ──────────────────────────────────
+
+    /** An attachment on the thread's first message, listed but never fetched. */
+    private function attachment(int $threadId, array $overrides = []): int
+    {
+        $key = DB::table('email_threads')->where('id', $threadId)->value('thread_key');
+
+        return DB::table('email_attachments')->insertGetId(array_merge([
+            'email_message_id' => DB::table('email_messages')->where('thread_key', $key)->value('id'),
+            'filename' => 'Packing List.pdf', 'mime_type' => 'application/pdf', 'size_bytes' => 12,
+            'provider_attachment_id' => 'att-1', 'fetch_state' => 'remote',
+            'created_at' => now(), 'updated_at' => now(),
+        ], $overrides));
+    }
+
+    /** A scanner that answers without a clamd. */
+    private function scanner(?string $signature = null, bool $down = false): void
+    {
+        $this->app->instance(\App\Services\VirusScanner::class, new class($signature, $down) extends \App\Services\VirusScanner {
+            public int $calls = 0;
+
+            public function __construct(private ?string $signature, private bool $down)
+            {
+            }
+
+            public function scan(string $bytes): array
+            {
+                $this->calls++;
+
+                if ($this->down) {
+                    throw new \RuntimeException('clamd down');
+                }
+
+                return ['clean' => $this->signature === null, 'signature' => $this->signature];
+            }
+        });
+    }
+
+    public function test_the_thread_lists_each_messages_attachments(): void
+    {
+        $id = $this->thread();
+        $this->attachment($id);
+
+        $this->api($this->pricing)->getJson($this->url("/api/inbox/threads/{$id}"))
+            ->assertOk()
+            ->assertJsonPath('messages.0.attachments.0.filename', 'Packing List.pdf')
+            ->assertJsonPath('messages.0.attachments.0.fetch_state', 'remote');
+    }
+
+    /** 🔴 Fetched on first open, scanned, stored — and the second open does not go back to the mailbox. */
+    public function test_an_attachment_is_fetched_once_scanned_and_kept(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        \Illuminate\Support\Facades\Http::fake(['*/$value' => \Illuminate\Support\Facades\Http::response('%PDF-1.4 demo', 200)]);
+        $this->scanner();
+
+        $attachmentId = $this->attachment($this->thread());
+
+        $this->api($this->pricing)->get($this->url("/api/inbox/attachments/{$attachmentId}"))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+        $row = DB::table('email_attachments')->find($attachmentId);
+        $this->assertSame('cached', $row->fetch_state);
+        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($row->file_path);
+
+        $this->api($this->pricing)->get($this->url("/api/inbox/attachments/{$attachmentId}"))->assertOk();
+
+        \Illuminate\Support\Facades\Http::assertSentCount(1);
+    }
+
+    public function test_an_infected_attachment_is_blocked_and_not_stored(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response('X5O!P%@AP', 200)]);
+        $this->scanner('Eicar-Test-Signature');
+
+        $attachmentId = $this->attachment($this->thread());
+
+        $this->api($this->pricing)->get($this->url("/api/inbox/attachments/{$attachmentId}"))
+            ->assertStatus(422)
+            ->assertJsonPath('reason', 'blocked');
+
+        $this->assertSame('blocked', DB::table('email_attachments')->where('id', $attachmentId)->value('fetch_state'));
+        $this->assertEmpty(\Illuminate\Support\Facades\Storage::disk('local')->allFiles());
+    }
+
+    /** 🔴 Fails closed: no scanner, no file. */
+    public function test_without_the_scanner_the_file_is_neither_stored_nor_served(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response('%PDF-1.4', 200)]);
+        $this->scanner(null, true);
+
+        $attachmentId = $this->attachment($this->thread());
+
+        $this->api($this->pricing)->get($this->url("/api/inbox/attachments/{$attachmentId}"))
+            ->assertStatus(503)
+            ->assertJsonPath('reason', 'scanner_unavailable');
+
+        $this->assertSame('remote', DB::table('email_attachments')->where('id', $attachmentId)->value('fetch_state'));
+        $this->assertEmpty(\Illuminate\Support\Facades\Storage::disk('local')->allFiles());
+    }
+
+    /** ⚠️ An HTML attachment is handed over as a download, never shown as one of our own pages. */
+    public function test_an_html_attachment_is_never_served_in_place(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response('<script>x</script>', 200)]);
+        $this->scanner();
+
+        $attachmentId = $this->attachment($this->thread(), ['filename' => 'page.html', 'mime_type' => 'text/html']);
+
+        $this->api($this->pricing)->get($this->url("/api/inbox/attachments/{$attachmentId}"))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/octet-stream');
+    }
+
+    public function test_another_branchs_attachment_is_not_found(): void
+    {
+        $otherCompany = Company::create(['name' => 'Other', 'code' => 'OTA', 'tier' => 'tactical']);
+        $otherBranch = Agent::create(['company_id' => $otherCompany->id, 'agent_name' => 'DEL', 'branch_code' => 'DEL']);
+        // A thread that belongs to the other branch, attachment and all.
+        $threadId = $this->thread();
+        $attachmentId = $this->attachment($threadId, ['filename' => 'secret.pdf']);
+        $key = DB::table('email_threads')->where('id', $threadId)->value('thread_key');
+        DB::table('email_threads')->where('id', $threadId)->update(['agent_id' => $otherBranch->id]);
+        DB::table('email_messages')->where('thread_key', $key)->update(['agent_id' => $otherBranch->id]);
+
+        $this->api($this->pricing)->get($this->url("/api/inbox/attachments/{$attachmentId}"))->assertNotFound();
+    }
+
     /**
      * 🔴 NOTHING IS WRITTEN LOCALLY on send. The message comes back on the next delta as
      * an echo and upserts on its unique `message_id`; a row written here would be a second

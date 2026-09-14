@@ -12,6 +12,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
@@ -24,6 +25,7 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -160,6 +162,9 @@ const WORKSPACE_TABS = [{
     },
     /** The signature a reply on the open thread carries — HTML, already cleaned by the server. */
     signature: null,
+    /** The attachment being fetched, and why the last one could not be. */
+    attachmentBusy: null,
+    attachmentError: null,
     outcomeBusy: false,
     outcomeError: null,
     LOST_REASONS,
@@ -224,6 +229,10 @@ const WORKSPACE_TABS = [{
         value: cargo[k].value,
         confidence: cargo[k].confidence
       }));
+    },
+    /** The Extraction panel exists only once the enquiry has a job (see the drawer's chain). */
+    canExtractAttachments() {
+      return this.workspaceTabs.length > 0 && !!(this.active && this.active.enquiry && this.active.job);
     },
     workspaceTabs() {
       const isEnquiry = this.active && this.active.classification === "customer_enquiry";
@@ -433,6 +442,71 @@ const WORKSPACE_TABS = [{
       }).finally(() => {
         this.cargoBusy = false;
       });
+    },
+    isPdf(a) {
+      return a.mime_type === "application/pdf" || /\.pdf$/i.test(a.filename || "");
+    },
+    fileSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1048576) return Math.round(bytes / 1024) + " KB";
+      return (bytes / 1048576).toFixed(1) + " MB";
+    },
+    /**
+     * The file's bytes, through the API (the JWT is a header, so a plain link cannot fetch it).
+     *
+     * ⚠️ An error arrives as a Blob too, so its JSON is read back out for the message.
+     */
+    fetchAttachment(a) {
+      this.attachmentBusy = a.id;
+      this.attachmentError = null;
+      return vue__WEBPACK_IMPORTED_MODULE_8__["default"].axios.get("/inbox/attachments/" + a.id, {
+        responseType: "blob"
+      }).then(({
+        data
+      }) => {
+        // Fetched once, then kept: the chip reflects it without reloading the thread.
+        a.fetch_state = "cached";
+        return data;
+      }).catch(async e => {
+        let message = "The file could not be opened.";
+        try {
+          const body = JSON.parse(await e.response.data.text());
+          message = body.error || message;
+          if (body.reason === "blocked") a.fetch_state = "blocked";
+        } catch (ignored) {/* not JSON — keep the generic message */}
+        this.attachmentError = a.filename + ": " + message;
+        throw e;
+      }).finally(() => {
+        this.attachmentBusy = null;
+      });
+    },
+    openAttachment(a) {
+      // ⚠️ The tab is opened NOW, inside the click; opened after the fetch it is a popup and blocked.
+      const tab = window.open("", "_blank");
+      this.fetchAttachment(a).then(blob => {
+        const url = URL.createObjectURL(blob.type ? blob : new Blob([blob], {
+          type: a.mime_type
+        }));
+        if (tab) tab.location.href = url;else window.location.href = url;
+      }).catch(() => {
+        if (tab) tab.close();
+      });
+    },
+    /** Straight into Extraction, staged — reading it is still an explicit Extract. */
+    extractAttachment(a) {
+      this.fetchAttachment(a).then(blob => {
+        this.openWorkspace();
+        this.openExtraction();
+
+        // ⚠️ The panel renders when the drawer opens, which can be a few ticks away.
+        const file = new File([blob], a.filename, {
+          type: "application/pdf"
+        });
+        const hand = tries => {
+          if (this.$refs.extraction) this.$refs.extraction.add([file]);else if (tries > 0) setTimeout(() => hand(tries - 1), 100);
+        };
+        this.$nextTick(() => hand(20));
+      }).catch(() => {});
     },
     openExtraction() {
       this.tab = "extraction";
@@ -2196,7 +2270,12 @@ var render = function render() {
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), _c("dl", {
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), _vm.attachmentError ? _c("p", {
+    staticClass: "fx-error fx-inbox__pad",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.attachmentError))]) : _vm._e(), _vm._v(" "), _c("dl", {
     staticClass: "fx-defs fx-convo__sla"
   }, [_c("dt", [_vm._v("First triaged")]), _vm._v(" "), _c("dd", [_c("Figure", {
     attrs: {
@@ -2230,7 +2309,43 @@ var render = function render() {
       staticClass: "fx-message__to"
     }, [_vm._v("\n            to " + _vm._s(m.to || "—")), m.cc ? [_vm._v(" · cc " + _vm._s(m.cc))] : _vm._e()], 2), _vm._v(" "), _c("p", {
       staticClass: "fx-message__body"
-    }, [_vm._v(_vm._s(m.body_snippet))])]);
+    }, [_vm._v(_vm._s(m.body_snippet))]), _vm._v(" "), m.attachments && m.attachments.length ? _c("ul", {
+      staticClass: "fx-attachments"
+    }, _vm._l(m.attachments, function (a) {
+      return _c("li", {
+        key: a.id,
+        staticClass: "fx-attachment"
+      }, [_c("button", {
+        staticClass: "fx-attachment__open",
+        attrs: {
+          type: "button",
+          disabled: _vm.attachmentBusy === a.id || a.fetch_state === "blocked",
+          title: a.fetch_state === "blocked" ? "Blocked by the virus scan" : "Open " + a.filename
+        },
+        on: {
+          click: function ($event) {
+            return _vm.openAttachment(a);
+          }
+        }
+      }, [_vm._v("\n                📎 " + _vm._s(a.filename) + "\n                "), a.size_bytes ? _c("span", {
+        staticClass: "fx-muted"
+      }, [_vm._v(_vm._s(_vm.fileSize(a.size_bytes)))]) : _vm._e(), _vm._v(" "), _vm.attachmentBusy === a.id ? _c("span", {
+        staticClass: "fx-muted"
+      }, [_vm._v("· opening…")]) : _vm._e(), _vm._v(" "), a.fetch_state === "blocked" ? _c("span", {
+        staticClass: "fx-error"
+      }, [_vm._v("· blocked by virus scan")]) : _vm._e()]), _vm._v(" "), _vm.canExtractAttachments && _vm.isPdf(a) && a.fetch_state !== "blocked" ? _c("button", {
+        staticClass: "fx-btn fx-btn--ghost",
+        attrs: {
+          type: "button",
+          disabled: _vm.attachmentBusy === a.id
+        },
+        on: {
+          click: function ($event) {
+            return _vm.extractAttachment(a);
+          }
+        }
+      }, [_vm._v("Extract")]) : _vm._e()]);
+    }), 0) : _vm._e()]);
   }), 0), _vm._v(" "), _vm.messages.length ? _c("section", {
     staticClass: "fx-compose"
   }, [!_vm.composing ? _c("div", {
@@ -2676,6 +2791,7 @@ var render = function render() {
   }, [_vm._v(_vm._s(_vm.outcomeError))]) : _vm._e()], 2) : !_vm.active.enquiry ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n          No enquiry on this conversation yet, so there is no shipment to confirm.\n        ")]) : _c("ExtractionPanel", {
+    ref: "extraction",
     attrs: {
       "prefill-awb": _vm.jobAwb,
       "mail-cargo": _vm.active && _vm.active.staged_cargo

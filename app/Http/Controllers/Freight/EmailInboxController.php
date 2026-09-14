@@ -142,6 +142,9 @@ class EmailInboxController extends Controller
             ->orderBy('received_at')
             // `cc` rides along so the reading pane can show who else is on the
             // conversation — and so Reply All has the list without a second round trip.
+            // The files each message carried, for the chips under it. Names and state only —
+            // the bytes are fetched when someone opens one (EmailAttachmentController).
+            ->with('attachments:id,email_message_id,filename,mime_type,size_bytes,fetch_state')
             ->get(['id', 'direction', 'from', 'to', 'cc', 'subject', 'body_snippet', 'received_at', 'send_state']);
 
         return response()->json([

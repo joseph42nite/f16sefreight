@@ -341,6 +341,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // unit of work, and classifying one message of five mints a second enquiry.
     Route::get('/inbox/threads', [\App\Http\Controllers\Freight\EmailInboxController::class, 'index']);
     Route::get('/inbox/threads/{thread}', [\App\Http\Controllers\Freight\EmailInboxController::class, 'show']);
+    Route::get('/inbox/attachments/{attachment}', [\App\Http\Controllers\Freight\EmailAttachmentController::class, 'show']);
     Route::post('/inbox/threads/{thread}/classify', [\App\Http\Controllers\Freight\EmailInboxController::class, 'classify']);
     Route::post('/inbox/threads/{thread}/claim', [\App\Http\Controllers\Freight\EmailInboxController::class, 'claim']);
     // Reply, reply-all and forward are one endpoint — they differ only in the recipient

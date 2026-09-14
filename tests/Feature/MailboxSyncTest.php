@@ -73,6 +73,9 @@ class MailboxSyncTest extends TestCase
 
     private ?array $nextToken = null;
 
+    /** What `/messages/{id}/attachments` answers. */
+    private array $nextAttachments = [];
+
     private int $graphStatus = 200;
 
     private function installFake(): void
@@ -86,6 +89,10 @@ class MailboxSyncTest extends TestCase
 
             if ($this->graphStatus !== 200) {
                 return Http::response('upstream exploded', $this->graphStatus);
+            }
+
+            if (str_contains($request->url(), '/attachments')) {
+                return Http::response(['value' => $this->nextAttachments], 200);
             }
 
             return Http::response($this->nextDelta, 200);
@@ -141,6 +148,48 @@ class MailboxSyncTest extends TestCase
         $this->assertSame(1, $result['ingested']);
         $this->assertSame(1, $result['threads_created']);
         $this->assertSame(1, DB::table('email_threads')->where('agent_id', $this->branch->id)->count());
+    }
+
+    /**
+     * 🔴 A mail's files are RECORDED at sync — names, types, sizes — and never downloaded
+     * (guide §4.2, lazy attachments). An inline signature logo and an attached Outlook item
+     * have no document to open, so they are left out.
+     */
+    public function test_attachments_are_listed_at_sync_but_not_downloaded(): void
+    {
+        $this->nextAttachments = [
+            ['@odata.type' => '#microsoft.graph.fileAttachment', 'id' => 'att-1', 'name' => 'Packing List.pdf',
+             'contentType' => 'application/pdf', 'size' => 48213, 'isInline' => false],
+            ['@odata.type' => '#microsoft.graph.fileAttachment', 'id' => 'att-2', 'name' => 'logo.png',
+             'contentType' => 'image/png', 'size' => 900, 'isInline' => true],
+            ['@odata.type' => '#microsoft.graph.itemAttachment', 'id' => 'att-3', 'name' => 'Fwd: booking',
+             'contentType' => null, 'size' => 3000, 'isInline' => false],
+        ];
+        $this->fakeDelta([$this->graphMessage(['hasAttachments' => true])]);
+
+        $this->assertTrue($this->sync()['ok']);
+
+        $rows = DB::table('email_attachments')
+            ->join('email_messages', 'email_messages.id', '=', 'email_attachments.email_message_id')
+            ->where('email_messages.agent_id', $this->branch->id)
+            ->get(['filename', 'mime_type', 'size_bytes', 'fetch_state', 'file_path', 'provider_attachment_id']);
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('Packing List.pdf', $rows[0]->filename);
+        $this->assertSame(48213, (int) $rows[0]->size_bytes);
+        $this->assertSame('remote', $rows[0]->fetch_state);
+        $this->assertNull($rows[0]->file_path, 'Nothing is downloaded at sync.');
+        $this->assertSame('att-1', $rows[0]->provider_attachment_id);
+    }
+
+    /** A mail without attachments costs no attachment call at all. */
+    public function test_a_mail_without_attachments_is_not_asked_for_any(): void
+    {
+        $this->fakeDelta([$this->graphMessage(['hasAttachments' => false])]);
+
+        $this->sync();
+
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/attachments'));
     }
 
     /**

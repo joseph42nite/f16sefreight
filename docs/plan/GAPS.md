@@ -1211,6 +1211,19 @@ PHP 599 passed, 1 skipped.
 | 223 | **Graph sends HTML** | `sendMail` with `contentType: HTML`; a reply puts the HTML in `comment`. ⚠️ **Not checked against a live tenant** — that `comment` renders as HTML above Graph's own quoted original is documented behaviour, not observed. ⚠️ Graph takes ONE body, so the spec's `multipart/alternative` text part (guide §8, `EmailHtmlSafetyTest`) is left to Exchange; it lands with Gmail, which sends MIME itself |
 | 224 | **Signatures: per mailbox, falling back to the user's** | Settings → Mailboxes: a mailbox editor (`signature_source` `pasted` when something was pasted, else `manual`) and the user's plain-text `signature_text`. Cleaned on save. The server adds the signature at send — it is never typed into the body — and the composer shows it greyed under "Add signature". Another branch's mailbox answers 404 |
 
+🟢 **Built 2026-09-14 — mail attachments, lazily fetched and virus-scanned** (user decisions: real mailboxes plus demo files; ClamAV in Docker now):
+
+| # | Built / found | Detail |
+|---|---|---|
+| 225 | 🔴 **Found: no attachment was ever recorded** | "Dimensions and packing list attached" was demo text with no file behind it, and for a real Outlook mailbox the sync read `hasAttachments` and did nothing with it — `email_attachments` had 0 rows and the conversation had no place to show one |
+| 226 | **Sync lists attachments, never downloads them** (guide §4.2) | `MailProviderContract::attachments()`; Graph `GET /me/messages/{id}/attachments`. File attachments only — inline signature logos and attached Outlook items are skipped. Rows start `fetch_state = remote`. Listed OUTSIDE the message transaction, and a failed listing is reported, not thrown |
+| 227 | **Opened on demand: fetch → scan → keep 90 days** | `GET /api/inbox/attachments/{id}`. First open fetches `$value`, scans, stores under `storage/app/mail-attachments/{id}` as `cached`; later opens do not call the mailbox. Infected → `blocked`, never stored or served. **Fails closed:** no scanner → 503, nothing stored. Only PDF and PNG/JPEG/GIF are served in place; anything else (HTML, SVG) as `application/octet-stream` download, always `nosniff`. Another branch's attachment → 404 through the tenant-scoped message |
+| 228 | **ClamAV** | `clamav/clamav:stable` in docker-compose on 3310, `ConcurrentDatabaseReload no`. `VirusScanner` speaks clamd INSTREAM over TCP. Verified against the real daemon: a clean file passes, EICAR returns `Eicar-Test-Signature`. ⚠️ **clamd holds ~960 MB** of the 2 GB Docker has — MySQL and the ai-server fit beside it today, a queue worker or Redis may not |
+| 229 | **Migration** `2026_09_14_100000` | `mime_type` 50 → 255 (an .xlsx type is 65), `provider_attachment_id` 255 → 512, `size_bytes` added |
+| 230 | **Chips under each mail; PDFs go straight to Extraction** | Click opens the file in a new tab; **Extract** stages the PDF in the Extraction panel (reading it is still an explicit Extract). Shown only where the panel exists — an enquiry with a job |
+| 231 | **Demo files** — `DemoMailAttachmentsSeeder` | A "Commercial Invoice (sample).pdf" and "Packing List (sample).pdf" on each of the 40 demo mails that say a packing list is attached, generated from the thread's own lane and pieces, marked SAMPLE, scanned, stored as `cached`. Called from `FreightDemoSeeder`. ⚠️ Helvetica, not DejaVu: embedding DejaVu made each 2-page-less sample 880 KB and ran PHP out of memory |
+| 232 | ⚪ **Not built yet** | `attachments:evict-cache` (the daily drop of bytes past `cache_expires_at`, guide §4.7); Forward re-attaching the originals and outbound attachments (PRD §5.2.3); `AttachmentRefetchTest` re-fetch after eviction. The 25 MB cap is not enforced on open |
+
 ---
 
 ## 🟠 Design decisions with no owner yet

@@ -68,7 +68,16 @@ return [
         'chat_model'      => env('OPENROUTER_MODEL', 'google/gemma-4-31b-it'),
         // 1,024 dimensions: small enough to compare every help section in PHP on each question.
         'embedding_model' => env('OPENROUTER_EMBEDDING_MODEL', 'baai/bge-m3'),
-        'attempt_timeout' => (int) env('OPENROUTER_ATTEMPT_TIMEOUT', 12),
+        // Cheap first, fast fallback always: economy under this ceiling (US$/M tokens), then any provider.
+        'economy_max_prompt'     => (float) env('OPENROUTER_ECONOMY_MAX_PROMPT', 0.20),
+        'economy_max_completion' => (float) env('OPENROUTER_ECONOMY_MAX_COMPLETION', 0.50),
+        // Named providers, in order (measured 2026-09-14): economy stays within its list; the fast
+        // fallback may go to any provider after its own.
+        'economy_providers'      => env('OPENROUTER_ECONOMY_PROVIDERS', 'CoreWeave,Chutes,DeepInfra,Venice'),
+        'fast_providers'         => env('OPENROUTER_FAST_PROVIDERS', 'ModelRun'),
+        // Seconds per try for a help answer: economy, fast, economy by throughput.
+        'help_timeouts'          => env('OPENROUTER_HELP_TIMEOUTS', '6,6,8'),
+        'embedding_timeout'      => (int) env('OPENROUTER_EMBEDDING_TIMEOUT', 8),
     ],
 
     // clamd, for mail attachments (guide §4.2). docker-compose publishes it on 3310.

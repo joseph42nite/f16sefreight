@@ -124,8 +124,15 @@ services:
       # only and says "the model is not configured".
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENROUTER_MODEL: google/gemma-4-31b-it
-      # Per attempt; three attempts, each routed to a different kind of provider.
-      OPENROUTER_ATTEMPT_TIMEOUT: "12"
+      # 🔴 Cheap first, fast fallback always (user, 2026-09-14): economy providers under this ceiling
+      # (US$ per million tokens) are tried first; each try's limit in seconds is below.
+      OPENROUTER_ECONOMY_MAX_PROMPT: "0.20"
+      OPENROUTER_ECONOMY_MAX_COMPLETION: "0.50"
+      # Named providers, in order — measured 2026-09-14 on the real invoice (GAPS #262).
+      OPENROUTER_ECONOMY_PROVIDERS: "CoreWeave,Chutes,DeepInfra,Venice"
+      OPENROUTER_FAST_PROVIDERS: "ModelRun"
+      OPENROUTER_TEXT_TIMEOUTS: "9,8,12"
+      OPENROUTER_VISION_TIMEOUTS: "15,15,20"
     volumes:
       - ./python:/app          # live edits without a rebuild
     healthcheck:

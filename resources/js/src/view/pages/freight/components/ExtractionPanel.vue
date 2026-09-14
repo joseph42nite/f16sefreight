@@ -98,8 +98,9 @@
         taught operators to ignore it for the times it mattered.
       -->
       <p v-if="scannedDocuments.length" class="fx-warn" role="status">
-        No selectable text in <strong>{{ scannedDocuments.join(", ") }}</strong> — vision
-        extraction is not deployed yet, so use the paste box below for those.
+        No selectable text in <strong>{{ scannedDocuments.join(", ") }}</strong> — reading a scan
+        with AI needs approval for a credit, which this panel cannot ask for yet, so use the paste
+        box below for those.
       </p>
 
       <p v-if="rejectedFiles.length" class="fx-warn" role="status">
@@ -145,6 +146,14 @@
             </td>
             <td>
               <StatusChip :value="doc.state" />
+              <!--
+                🔴 A LIVE COUNT while the AI reads (user: "the best UX"). Economy providers usually answer
+                in 5-15 s and the fast fallback takes over when they do not, so the count says the wait is
+                expected rather than stuck.
+              -->
+              <span v-if="doc.state === 'reading'" class="fx-muted" role="status" aria-live="off">
+                Reading with AI… {{ secondsReading(doc) }} s · usually 5–15 s
+              </span>
               <span v-if="doc.error" class="fx-muted"> {{ doc.error }}</span>
               <span v-if="doc.warning" class="fx-muted"> ⚠️ {{ doc.warning }}</span>
 
@@ -675,6 +684,8 @@ export default {
     editing: {},
     /** The document whose "Take from it" dropdown is open, if any. */
     openTakes: null,
+    /** Now, ticking while a document reads, for "Reading with AI… 6 s". */
+    now: Date.now(), ticker: null,
     chargeableEdit: "",
     savedAddresses: {},
     countries: {},
@@ -1288,13 +1299,15 @@ export default {
       if (!doc) return;
 
       doc.state = "reading";
+      doc.startedAt = Date.now();
+      this.tick();
       doc.error = null;
       doc.warning = null;
       this.upload(doc);
     },
     remove(uid) {
       const doc = this.documents.find((d) => d.uid === uid);
-      if (doc && doc.timer) clearInterval(doc.timer);
+      if (doc && doc.timer) clearTimeout(doc.timer);
 
       // Whatever it was supplying is no longer supplied by anything.
       const next = { ...this.assignment };
@@ -1335,12 +1348,14 @@ export default {
        fast one — the operator can assign the first while the second is still reading. */
     poll(uid) {
       const doc = this.documents.find((d) => d.uid === uid);
+      // ⚠️ A timeout chain, not an interval: every 1 s for the first 20 s — most documents finish
+      // there, and a 2 s poll added up to 2 s to each — then every 2 s.
 
-      const timer = setInterval(() => {
+      const check = () => {
         ApiService.get("/user/ocr-status/" + doc.jobId)
           .then(({ data }) => {
             if (data.job_status === "completed") {
-              clearInterval(timer);
+              clearTimeout(doc.timer);
               doc.fields = this.withCountryCodes(flattenRoute(flattenCargo(flattenParties(data.fields || {}, this.countries)), this.countries));
               // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
               doc.piecesNote = (data.data && data.data.pieces_note) || null;
@@ -1360,24 +1375,45 @@ export default {
               // common case, and the one that works — was greeted with a notice saying it
               // might not. A warning that fires when it is not true teaches operators to
               // ignore it for the times it is.
-              clearInterval(timer);
+              clearTimeout(doc.timer);
+              // ⚠️ Reading a scan uses a credit and needs a person's approval, which this panel does not
+              // ask for yet (GAPS #261) — so it says what to do instead.
               this.fail(
                 uid,
-                "no selectable text — this is a scan, and vision extraction is not "
-                + "deployed yet. Use the paste box below."
+                "no selectable text — this is a scan. Reading scans with AI needs approval for "
+                + "1 credit, which this panel cannot ask for yet. Use the paste box below."
               );
             } else if (data.job_status === "failed" || data.job_status === "cancelled") {
-              clearInterval(timer);
+              clearTimeout(doc.timer);
               this.fail(uid, data.error || "could not be read");
             }
           })
           .catch((e) => {
-            clearInterval(timer);
+            clearTimeout(doc.timer);
             this.fail(uid, this.messageFor(e));
+          })
+          .finally(() => {
+            if (doc.state === "reading") {
+              doc.timer = setTimeout(check, Date.now() - doc.startedAt < 20000 ? 1000 : 2000);
+            }
           });
-      }, 2000);
+      };
 
-      doc.timer = timer;
+      doc.timer = setTimeout(check, 1000);
+    },
+    secondsReading(doc) {
+      return doc.startedAt ? Math.max(0, Math.round((this.now - doc.startedAt) / 1000)) : 0;
+    },
+    /** Ticks `now` once a second while any document is reading, for the live count. */
+    tick() {
+      if (this.ticker) return;
+      this.ticker = setInterval(() => {
+        this.now = Date.now();
+        if (!this.documents.some((d) => d.state === "reading")) {
+          clearInterval(this.ticker);
+          this.ticker = null;
+        }
+      }, 1000);
     },
     fail(uid, message) {
       const doc = this.documents.find((d) => d.uid === uid);
@@ -1599,7 +1635,8 @@ export default {
   },
   beforeDestroy() {
     document.removeEventListener("mousedown", this.closeTakes);
-    this.documents.forEach((d) => d.timer && clearInterval(d.timer));
+    this.documents.forEach((d) => d.timer && clearTimeout(d.timer));
+    clearInterval(this.ticker);
   },
 };
 </script>

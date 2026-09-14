@@ -255,6 +255,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     question: "",
     busy: false,
     turns: [],
+    now: Date.now(),
     /** "help" answers from the documents; "chat" is the conversation with an F16s agent. */
     mode: "help",
     chat: null,
@@ -387,8 +388,14 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         steps: [],
         page: null,
         note: null,
-        answered: false
+        answered: false,
+        startedAt: Date.now()
       };
+      // A live count while it looks (economy first, fast fallback when slow).
+      const ticker = setInterval(() => {
+        this.now = Date.now();
+        if (!turn.pending) clearInterval(ticker);
+      }, 1000);
       this.turns.push(turn);
       this.question = "";
       this.busy = true;
@@ -1088,8 +1095,11 @@ var render = function render() {
     }, [_c("p", {
       staticClass: "fx-help__question"
     }, [_vm._v(_vm._s(t.question))]), _vm._v(" "), t.pending ? _c("p", {
-      staticClass: "fx-muted"
-    }, [_vm._v("Looking in the help documents…")]) : [_c("p", {
+      staticClass: "fx-muted",
+      attrs: {
+        role: "status"
+      }
+    }, [_vm._v("Looking in the help documents… " + _vm._s(Math.max(0, Math.round((_vm.now - t.startedAt) / 1000))) + " s")]) : [_c("p", {
       staticClass: "fx-help__answer",
       class: {
         "fx-help__answer--unsure": !t.found

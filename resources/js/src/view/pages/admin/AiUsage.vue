@@ -32,6 +32,17 @@
             <span class="fx-tile__value">{{ data.month.used_percent }}%</span>
             <p class="fx-muted fx-tile__detail">of ₹{{ inr(data.month.budget_inr) }}</p>
           </div>
+          <!-- 🔴 Cheap first, fast fallback always: how often the ≈6× dearer fallback answered. -->
+          <div class="fx-tile">
+            <span class="fx-tile__label">Answered by economy</span>
+            <span class="fx-tile__value">{{ data.tiers.economy.share_percent }}%</span>
+            <p class="fx-muted fx-tile__detail">{{ data.tiers.economy.calls }} calls · avg {{ data.tiers.economy.avg_seconds }} s · ₹{{ inr(data.tiers.economy.cost_inr) }}</p>
+          </div>
+          <div class="fx-tile">
+            <span class="fx-tile__label">Needed the fast fallback</span>
+            <span class="fx-tile__value">{{ data.tiers.fast.share_percent }}%</span>
+            <p class="fx-muted fx-tile__detail">{{ data.tiers.fast.calls }} calls · avg {{ data.tiers.fast.avg_seconds }} s · ₹{{ inr(data.tiers.fast.cost_inr) }}</p>
+          </div>
           <div class="fx-tile">
             <span class="fx-tile__label">Per-user daily limit</span>
             <span class="fx-tile__value">{{ data.settings.per_user_daily_limit }}</span>
@@ -97,10 +108,10 @@
         <h2 class="fx-section__title">Providers</h2>
         <p class="fx-muted">Which OpenRouter provider answered, how fast, and how often a stuck attempt was retried elsewhere.</p>
         <table v-if="data.by_provider.length" class="fx-table">
-          <thead><tr><th scope="col">Provider</th><th scope="col">Kind</th><th scope="col" class="fx-num">Calls</th><th scope="col" class="fx-num">Average</th><th scope="col" class="fx-num">Retried</th></tr></thead>
+          <thead><tr><th scope="col">Provider</th><th scope="col">Tier</th><th scope="col">Kind</th><th scope="col" class="fx-num">Calls</th><th scope="col" class="fx-num">Average</th><th scope="col" class="fx-num">Retried</th></tr></thead>
           <tbody>
             <tr v-for="p in data.by_provider" :key="(p.provider || '-') + p.purpose">
-              <td>{{ p.provider || "—" }}</td><td>{{ p.purpose }}</td><td class="fx-num">{{ p.calls }}</td>
+              <td>{{ p.provider || "—" }}</td><td>{{ p.tier || "—" }}</td><td>{{ p.purpose }}</td><td class="fx-num">{{ p.calls }}</td>
               <td class="fx-num">{{ (p.avg_ms / 1000).toFixed(1) }} s</td><td class="fx-num">{{ p.retried }}</td>
             </tr>
           </tbody>

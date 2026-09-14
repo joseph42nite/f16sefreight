@@ -26,15 +26,15 @@ class ProcessPdfOcrJob implements ShouldQueue
     /**
      * How long the call to the parser may take.
      *
-     * An unstructured document is read by Gemma 4 on OpenRouter: three attempts of 12s each
-     * (python/model_extract.py), plus rendering a scan's pages. This waits longer than all three,
-     * so the parser's own "timed out" answer arrives instead of a dropped call. An AWB is read by
-     * coordinates and keeps its 80s.
+     * An unstructured document is read by Gemma 4 on OpenRouter: economy, fast fallback, economy again —
+     * 9+12+9 s for text, 15+20+15 s for a scan (python/model_extract.py), plus rendering a scan's pages.
+     * This waits longer than the slowest of those, so the parser's own "timed out" answer arrives
+     * instead of a dropped call. An AWB is read by coordinates and keeps its 80s.
      *
      * ⚠️ These were 660s / 720s while gemma3:4b ran on the laptop and took minutes per invoice.
      */
     public const AWB_HTTP_TIMEOUT   = 80;
-    public const MODEL_HTTP_TIMEOUT = 60;
+    public const MODEL_HTTP_TIMEOUT = 75;
 
     /**
      * ⚠️ Must exceed the longest HTTP call above, or the worker is killed mid-read. And the

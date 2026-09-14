@@ -129,6 +129,22 @@ var render = function render() {
     staticClass: "fx-tile"
   }, [_c("span", {
     staticClass: "fx-tile__label"
+  }, [_vm._v("Answered by economy")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-tile__value"
+  }, [_vm._v(_vm._s(_vm.data.tiers.economy.share_percent) + "%")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-tile__detail"
+  }, [_vm._v(_vm._s(_vm.data.tiers.economy.calls) + " calls · avg " + _vm._s(_vm.data.tiers.economy.avg_seconds) + " s · ₹" + _vm._s(_vm.inr(_vm.data.tiers.economy.cost_inr)))])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-tile"
+  }, [_c("span", {
+    staticClass: "fx-tile__label"
+  }, [_vm._v("Needed the fast fallback")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-tile__value"
+  }, [_vm._v(_vm._s(_vm.data.tiers.fast.share_percent) + "%")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-tile__detail"
+  }, [_vm._v(_vm._s(_vm.data.tiers.fast.calls) + " calls · avg " + _vm._s(_vm.data.tiers.fast.avg_seconds) + " s · ₹" + _vm._s(_vm.inr(_vm.data.tiers.fast.cost_inr)))])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-tile"
+  }, [_c("span", {
+    staticClass: "fx-tile__label"
   }, [_vm._v("Per-user daily limit")]), _vm._v(" "), _c("span", {
     staticClass: "fx-tile__value"
   }, [_vm._v(_vm._s(_vm.data.settings.per_user_daily_limit))]), _vm._v(" "), _c("p", {
@@ -322,7 +338,7 @@ var render = function render() {
   }, [_vm._m(3), _vm._v(" "), _c("tbody", _vm._l(_vm.data.by_provider, function (p) {
     return _c("tr", {
       key: (p.provider || "-") + p.purpose
-    }, [_c("td", [_vm._v(_vm._s(p.provider || "—"))]), _c("td", [_vm._v(_vm._s(p.purpose))]), _c("td", {
+    }, [_c("td", [_vm._v(_vm._s(p.provider || "—"))]), _c("td", [_vm._v(_vm._s(p.tier || "—"))]), _c("td", [_vm._v(_vm._s(p.purpose))]), _c("td", {
       staticClass: "fx-num"
     }, [_vm._v(_vm._s(p.calls))]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
@@ -390,6 +406,10 @@ var staticRenderFns = [function () {
       scope: "col"
     }
   }, [_vm._v("Provider")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Tier")]), _c("th", {
     attrs: {
       scope: "col"
     }

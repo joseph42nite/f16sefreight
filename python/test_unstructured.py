@@ -699,6 +699,17 @@ def _openrouter(handler_answers):
             if answer == "hang":
                 time.sleep(3)
                 return
+            if answer == "trickle":
+                # What OpenRouter does while a slow model works: headers at once, then whitespace.
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                for _ in range(10):
+                    self.wfile.write(b" ")
+                    self.wfile.flush()
+                    time.sleep(0.3)
+                self.wfile.write(b"{}")
+                return
             body = json.dumps(answer).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -728,15 +739,16 @@ _EMPTY_ANSWER = {k: None for k in ("description", "gross_weight", "chargeable_we
 
 def _with_openrouter(answers, timeout=1):
     server, seen = _openrouter(answers)
-    saved = (model_extract.OPENROUTER_URL, model_extract.OPENROUTER_API_KEY, model_extract.ATTEMPT_TIMEOUT_SECONDS)
+    saved = (model_extract.OPENROUTER_URL, model_extract.OPENROUTER_API_KEY, model_extract.TEXT_TIMEOUTS, model_extract.VISION_TIMEOUTS)
     model_extract.OPENROUTER_URL = f"http://127.0.0.1:{server.server_address[1]}/api/v1/chat/completions"
     model_extract.OPENROUTER_API_KEY = "test-key"
-    model_extract.ATTEMPT_TIMEOUT_SECONDS = timeout
+    model_extract.TEXT_TIMEOUTS = model_extract.VISION_TIMEOUTS = (timeout, timeout, timeout)
     # ⚠️ The runner stubs `available` to "no model" before every test; these test the real client.
     model_extract.available = _REAL_AVAILABLE
 
     def restore():
-        model_extract.OPENROUTER_URL, model_extract.OPENROUTER_API_KEY, model_extract.ATTEMPT_TIMEOUT_SECONDS = saved
+        (model_extract.OPENROUTER_URL, model_extract.OPENROUTER_API_KEY,
+         model_extract.TEXT_TIMEOUTS, model_extract.VISION_TIMEOUTS) = saved
         server.shutdown()
 
     return seen, restore
@@ -773,13 +785,14 @@ def test_the_request_asks_for_the_schema_and_no_data_keeping_provider():
     assert set(schema["required"]) == set(schema["properties"])
     assert error is None and fields["shipper_name"] == "TRAILSPEC"
     assert usage == {"model": "google/gemma-4-31b-it", "provider": "DeepInfra", "tokens_in": 2100,
-                     "tokens_out": 260, "cost_usd": 0.00028, "execution_ms": usage["execution_ms"], "attempts": 1}
+                     "tokens_out": 260, "cost_usd": 0.00028, "execution_ms": usage["execution_ms"], "attempts": 1,
+                     "tier": "economy"}
 
 
-def test_a_stuck_provider_moves_to_a_differently_routed_attempt():
+def test_economy_first_then_the_fast_fallback_when_it_is_stuck():
     """
-    🔴 The user: "if it is stuck then it can immediately shift to another provider". OpenRouter does
-    not move on SLOWNESS, so the attempt times out here and the next asks for a different routing.
+    🔴 The user: cheaper providers first, "but we keep fallback always". The first try carries the
+    price ceiling; when it is stuck (OpenRouter does not move on SLOWNESS), the fallback has none.
     """
     seen, restore = _with_openrouter(["hang", _answer({**_EMPTY_ANSWER, "shipper_name": "TRAILSPEC"})])
     try:
@@ -787,9 +800,55 @@ def test_a_stuck_provider_moves_to_a_differently_routed_attempt():
     finally:
         restore()
 
-    assert [r["provider"]["sort"] for r in seen] == ["latency", "throughput"]
+    assert seen[0]["provider"]["max_price"] == {"prompt": 0.20, "completion": 0.50}
+    # Named providers, cheapest-fast first, and economy never leaves them.
+    assert seen[0]["provider"]["order"] == ["CoreWeave", "Chutes", "DeepInfra", "Venice"]
+    assert seen[0]["provider"]["allow_fallbacks"] is False
+    assert "max_price" not in seen[1]["provider"]
+    assert seen[1]["provider"]["order"] == ["ModelRun"] and seen[1]["provider"]["allow_fallbacks"] is True
     assert error is None and fields["shipper_name"] == "TRAILSPEC"
-    assert usage["attempts"] == 2
+    assert usage["attempts"] == 2 and usage["tier"] == "fast"
+    # Timed from the first try, because that is what the operator waited.
+    assert usage["execution_ms"] >= 1000
+
+
+def test_a_provider_kept_alive_with_whitespace_still_times_out():
+    """
+    🔴 Measured: economy calls ran 10-18 s past a 9 s limit, because OpenRouter sends whitespace while
+    the model works and a per-read timeout never fires. The limit is on the whole try.
+    """
+    seen, restore = _with_openrouter(["trickle", _answer({**_EMPTY_ANSWER, "shipper_name": "TRAILSPEC"})])
+    try:
+        started = time.monotonic()
+        fields, error, usage = _REAL_EXTRACT("TRAILSPEC GEARS")
+        waited = time.monotonic() - started
+    finally:
+        restore()
+
+    assert usage["tier"] == "fast" and usage["attempts"] == 2
+    assert waited < 2.5, f"the first try ran {waited:.1f}s past its 1s limit"
+
+
+def test_the_last_try_is_economy_by_throughput():
+    seen, restore = _with_openrouter(["hang", "hang", _answer({**_EMPTY_ANSWER, "shipper_name": "TRAILSPEC"})])
+    try:
+        fields, error, usage = _REAL_EXTRACT("TRAILSPEC GEARS")
+    finally:
+        restore()
+
+    assert seen[2]["provider"]["sort"] == "throughput" and "order" not in seen[2]["provider"]
+    assert "max_price" in seen[2]["provider"]
+    assert usage["tier"] == "economy" and usage["attempts"] == 3
+
+
+def test_try_limits_are_read_as_three_numbers():
+    import os
+    os.environ["OPENROUTER_TEST_T"] = "9,12"
+    try:
+        assert model_extract._seconds("OPENROUTER_TEST_T", "1") == (9, 12, 12)
+        assert model_extract._seconds("OPENROUTER_TEST_MISSING", "15,20,15") == (15, 20, 15)
+    finally:
+        del os.environ["OPENROUTER_TEST_T"]
 
 
 def test_when_every_attempt_is_stuck_the_reason_says_so():

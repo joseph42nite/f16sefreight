@@ -23,6 +23,7 @@ says why. The caller keeps the label reading and passes the reason on.
 
 import base64
 import json
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 import logging
 import os
 import re
@@ -45,14 +46,43 @@ OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 # One model for text and for scans (user, 2026-09-14): Gemma 4 31B reads images too.
 MODEL = os.environ.get("OPENROUTER_MODEL", "google/gemma-4-31b-it")
 
-# Each attempt's limit. Three attempts, each routed differently, so a stuck provider costs one
-# attempt rather than the whole extraction.
-ATTEMPT_TIMEOUT_SECONDS = int(os.environ.get("OPENROUTER_ATTEMPT_TIMEOUT", "12"))
-ROUTES = ("latency", "throughput", "price")
+# 🔴 CHEAP FIRST, FAST FALLBACK ALWAYS (user, 2026-09-14), with the providers NAMED, not left to
+# OpenRouter's "latency" sort — which, measured on the real invoice, picked 10-18 s providers while
+# CoreWeave answered in 3.0-3.4 s at the economy price. Pinned, two runs each: CoreWeave 3.0/3.4 s,
+# Chutes 5.1/6.0 s, DeepInfra 6.9/11.8 s, Venice 7.9/9.7 s (≈ ₹0.01-0.03); ModelRun 1.3/4.4 s (≈ ₹0.16);
+# Together 45-65 s, Novita 7-50 s, Parasail 19 s, Friendli 14 s or 429.
+#   1. economy — the named economy providers, in order, under the price ceiling;
+#   2. fast    — the named fast provider, then any provider;
+#   3. economy again, any provider under the ceiling, routed by throughput.
+# Each try gives up after its own limit, because OpenRouter moves providers on errors, not on slowness.
+TIERS = (("economy", "order"), ("fast", "order"), ("economy", "throughput"))
+
+# Provider names as OpenRouter writes them. Settings, because providers drift: superadmin → AI usage
+# shows each one's average time.
+ECONOMY_PROVIDERS = [p.strip() for p in os.environ.get("OPENROUTER_ECONOMY_PROVIDERS", "CoreWeave,Chutes,DeepInfra,Venice").split(",") if p.strip()]
+FAST_PROVIDERS = [p.strip() for p in os.environ.get("OPENROUTER_FAST_PROVIDERS", "ModelRun").split(",") if p.strip()]
+
+# The economy ceiling, US$ per million tokens.
+ECONOMY_MAX_PROMPT = float(os.environ.get("OPENROUTER_ECONOMY_MAX_PROMPT", "0.20"))
+ECONOMY_MAX_COMPLETION = float(os.environ.get("OPENROUTER_ECONOMY_MAX_COMPLETION", "0.50"))
+
+
+def _seconds(name: str, default: str) -> Tuple[int, int, int]:
+    """"9,12,9" → (9, 12, 9): each try's limit."""
+    parts = [int(p) for p in os.environ.get(name, default).split(",")]
+    return tuple((parts + parts[-1:] * 3)[:3])
+
+
+# Per try: an invoice's answer is ~220-290 tokens; a scan also uploads page images.
+TEXT_TIMEOUTS = _seconds("OPENROUTER_TEXT_TIMEOUTS", "9,8,12")
+VISION_TIMEOUTS = _seconds("OPENROUTER_VISION_TIMEOUTS", "15,15,20")
 
 # 🔴 Enough for the whole invoice, and a hard stop on a model that starts repeating itself.
 MAX_DOCUMENT_CHARS = 12000
 MAX_ANSWER_TOKENS = 768
+
+# Worker threads for model calls, so each try can be abandoned at its deadline (see _read_by_deadline).
+_POOL = ThreadPoolExecutor(max_workers=16, thread_name_prefix="openrouter")
 
 # At 150 dpi a page is legible and a few hundred KB; three pages cover an invoice and its
 # packing list. More pages is more image tokens for text the operator can paste.
@@ -144,7 +174,7 @@ def extract(text: str) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optiona
         logger.warning(f"document is {len(text)} chars; the model reads the first {MAX_DOCUMENT_CHARS}")
 
     content = PROMPT.format(text=text[:MAX_DOCUMENT_CHARS])
-    fields, error, usage = _ask(content)
+    fields, error, usage = _ask(content, TEXT_TIMEOUTS)
 
     return (_grounded(fields, text) if fields is not None else None), error, usage
 
@@ -164,27 +194,29 @@ def extract_images(pages: List[bytes]) -> Tuple[Optional[Dict[str, Any]], Option
         {"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(p).decode()}}
         for p in pages[:MAX_VISION_PAGES]
     ]
-    fields, error, usage = _ask(content)
+    fields, error, usage = _ask(content, VISION_TIMEOUTS)
 
     return (_grounded(fields, "", check_presence=False) if fields is not None else None), error, usage
 
 
-def _ask(content) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
-    """One question, up to three attempts, each routed to a different kind of provider."""
+def _ask(content, timeouts: Tuple[int, int, int]) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
+    """One question: economy, then the fast fallback, then economy by throughput (see TIERS)."""
     if not available():
         return None, "the model is not configured (no OPENROUTER_API_KEY)", None
 
     reason = "the model is not reachable"
+    started_all = time.monotonic()
 
-    for attempt, sort in enumerate(ROUTES, start=1):
-        started = time.monotonic()
-        body, reason = _post(content, sort)
+    for attempt, ((tier, sort), timeout) in enumerate(zip(TIERS, timeouts), start=1):
+        body, reason = _post(content, tier, sort, timeout)
 
         if body is None:
-            logger.warning(f"attempt {attempt} ({sort}) failed: {reason}")
+            logger.warning(f"attempt {attempt} ({tier}, {sort}) failed: {reason}")
             continue
 
-        usage = _usage(body, attempt, started)
+        # ⚠️ Timed from the FIRST try: a fallback that answers in 4 s after a 9 s economy timeout
+        # took the operator 13 s, and that is the number worth seeing in superadmin.
+        usage = _usage(body, attempt, started_all, tier)
         raw = ((body.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
 
         try:
@@ -199,7 +231,7 @@ def _ask(content) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dic
     return None, reason, None
 
 
-def _post(content, sort: str) -> Tuple[Optional[Dict[str, Any]], str]:
+def _post(content, tier: str, sort: str, timeout: int) -> Tuple[Optional[Dict[str, Any]], str]:
     """One HTTP call. Returns the body, or None and the reason."""
     payload = {
         "model": MODEL,
@@ -210,13 +242,7 @@ def _post(content, sort: str) -> Tuple[Optional[Dict[str, Any]], str]:
             "type": "json_schema",
             "json_schema": {"name": "extracted_document", "strict": True, "schema": _strict_schema()},
         },
-        "provider": {
-            "sort": sort,
-            # 🔴 Only providers that support the schema, and none that keep or train on prompts —
-            # an invoice carries a client's parties and addresses.
-            "require_parameters": True,
-            "data_collection": "deny",
-        },
+        "provider": _provider(tier, sort),
         # The cost of THIS call, in the response, for llm_usage_logs.
         "usage": {"include": True},
     }
@@ -231,11 +257,10 @@ def _post(content, sort: str) -> Tuple[Optional[Dict[str, Any]], str]:
         },
     )
 
-    timed_out = f"the model timed out after {ATTEMPT_TIMEOUT_SECONDS}s"
+    timed_out = f"the model timed out after {timeout}s"
 
     try:
-        with urllib.request.urlopen(request, timeout=ATTEMPT_TIMEOUT_SECONDS) as response:
-            body = json.loads(response.read())
+        body = json.loads(_read_by_deadline(request, timeout))
     # ⚠️ Both names: `socket.timeout` only became an alias of TimeoutError in Python 3.10.
     except (TimeoutError, socket.timeout):
         return None, timed_out
@@ -277,7 +302,47 @@ def _strict_schema() -> Dict[str, Any]:
     return schema
 
 
-def _usage(body: Dict[str, Any], attempt: int, started: float) -> Dict[str, Any]:
+def _provider(tier: str, sort: str) -> Dict[str, Any]:
+    """OpenRouter's provider routing for one try."""
+    # 🔴 Only providers that support the schema, and none that keep or train on prompts — an invoice
+    # carries a client's parties and addresses.
+    routing: Dict[str, Any] = {"require_parameters": True, "data_collection": "deny"}
+
+    if tier == "economy":
+        routing["max_price"] = {"prompt": ECONOMY_MAX_PROMPT, "completion": ECONOMY_MAX_COMPLETION}
+
+    if sort == "order":
+        # Economy stays within its named providers; the fast fallback may go to ANY provider after its own.
+        routing["order"] = ECONOMY_PROVIDERS if tier == "economy" else FAST_PROVIDERS
+        routing["allow_fallbacks"] = tier != "economy"
+    else:
+        routing["sort"] = sort
+
+    return routing
+
+
+def _read_by_deadline(request, seconds: int) -> bytes:
+    """
+    The whole response, or `TimeoutError` once `seconds` have passed IN TOTAL.
+
+    🔴 MEASURED 2026-09-14: `urlopen(timeout=9)` let economy calls run 10-18 s and never fell back.
+    That timeout is per socket read, and OpenRouter keeps a slow request alive by sending whitespace
+    while the model works — the connection is never silent, so the read never times out. The call runs
+    in a worker thread and is waited for at most `seconds`; a call left behind finishes on its own.
+    """
+    def call() -> bytes:
+        with urllib.request.urlopen(request, timeout=seconds + 60) as response:
+            return response.read()
+
+    future = _POOL.submit(call)
+
+    try:
+        return future.result(timeout=seconds)
+    except FutureTimeout:
+        raise TimeoutError()
+
+
+def _usage(body: Dict[str, Any], attempt: int, started: float, tier: str) -> Dict[str, Any]:
     """What the answering call used and cost, as Laravel logs it."""
     usage = body.get("usage") or {}
 
@@ -289,6 +354,8 @@ def _usage(body: Dict[str, Any], attempt: int, started: float) -> Dict[str, Any]
         "cost_usd": float(usage.get("cost") or 0),
         "execution_ms": int((time.monotonic() - started) * 1000),
         "attempts": attempt,
+        # economy or fast — how often the ₹0.16 fallback was needed.
+        "tier": tier,
     }
 
 

@@ -237,6 +237,41 @@ class HelpCopilotTest extends TestCase
             ->assertJsonPath('answer', 'Open the job and click [[job-documents]]. Then press [[upload-document]]. Do not press made-up.');
     }
 
+    /**
+     * 🔴 Cheap first, fast fallback always (user, 2026-09-14): the answer is asked of economy providers
+     * under the price ceiling first; when that fails, the fallback has no ceiling, and the tier is logged.
+     */
+    public function test_help_asks_economy_first_and_falls_back(): void
+    {
+        $this->fakeOpenRouter();
+        $this->upload();
+
+        $chats = [];
+        Http::swap(new \Illuminate\Http\Client\Factory());
+        Http::fake(function ($request) use (&$chats) {
+            if (str_ends_with($request->url(), '/embeddings')) {
+                return Http::response(['data' => [['embedding' => [1, 0, 0]]], 'usage' => ['prompt_tokens' => 10, 'cost' => 0]], 200);
+            }
+
+            $chats[] = $request['provider'];
+
+            return count($chats) === 1
+                ? Http::response(['error' => ['message' => 'No endpoints found']], 503)
+                : Http::response(['model' => 'google/gemma-4-31b-it', 'provider' => 'ModelRun',
+                    'choices' => [['message' => ['content' => json_encode(['found' => true, 'answer' => 'Use [[job-documents]].', 'page' => '/jobs', 'steps' => []])]]],
+                    'usage' => ['prompt_tokens' => 900, 'completion_tokens' => 50, 'cost' => 0.0012]], 200);
+        });
+
+        $this->ask('An arrival notice came in, where do I put it?')->assertOk()->assertJsonPath('found', true);
+
+        $this->assertSame(['prompt' => 0.2, 'completion' => 0.5], $chats[0]['max_price']);
+        $this->assertSame(['CoreWeave', 'Chutes', 'DeepInfra', 'Venice'], $chats[0]['order']);
+        $this->assertFalse($chats[0]['allow_fallbacks']);
+        $this->assertArrayNotHasKey('max_price', $chats[1]);
+        $this->assertSame(['ModelRun'], $chats[1]['order']);
+        $this->assertSame('fast', DB::table('llm_usage_logs')->where('purpose', 'help')->orderByDesc('id')->value('tier'));
+    }
+
     /** 🔴 Nothing close enough: the model is not called, and the reply offers a ticket. */
     public function test_a_question_the_documents_do_not_cover_is_not_sent_to_the_model(): void
     {

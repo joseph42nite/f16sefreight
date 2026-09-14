@@ -55,7 +55,7 @@
         <li v-for="(t, i) in turns" :key="i" class="fx-help__turn">
           <p class="fx-help__question">{{ t.question }}</p>
 
-          <p v-if="t.pending" class="fx-muted">Looking in the help documents…</p>
+          <p v-if="t.pending" class="fx-muted" role="status">Looking in the help documents… {{ Math.max(0, Math.round((now - t.startedAt) / 1000)) }} s</p>
           <template v-else>
             <p class="fx-help__answer" :class="{ 'fx-help__answer--unsure': !t.found }">{{ readable(t.answer) }}</p>
 
@@ -110,7 +110,7 @@ import { HELP_TARGETS } from "@/core/config/helpTargets";
 export default {
   name: "HelpAssistant",
   data: () => ({
-    open: false, question: "", busy: false, turns: [],
+    open: false, question: "", busy: false, turns: [], now: Date.now(),
     /** "help" answers from the documents; "chat" is the conversation with an F16s agent. */
     mode: "help",
     chat: null, chatDraft: "", chatBusy: false, chatError: null,
@@ -214,7 +214,9 @@ export default {
       const history = this.turns.filter((t) => !t.pending && t.answered)
         .slice(-3).map((t) => ({ question: t.question, answer: t.answer }));
 
-      const turn = { question, pending: true, found: false, answer: "", steps: [], page: null, note: null, answered: false };
+      const turn = { question, pending: true, found: false, answer: "", steps: [], page: null, note: null, answered: false, startedAt: Date.now() };
+      // A live count while it looks (economy first, fast fallback when slow).
+      const ticker = setInterval(() => { this.now = Date.now(); if (!turn.pending) clearInterval(ticker); }, 1000);
       this.turns.push(turn);
       this.question = "";
       this.busy = true;

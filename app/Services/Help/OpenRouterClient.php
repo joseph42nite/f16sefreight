@@ -10,13 +10,13 @@ use RuntimeException;
  * Gemma 4 and an embedding model on OpenRouter, from Laravel (user decision, 2026-09-14).
  *
  * 🔴 The same rules as the parser's client (python/model_extract.py): only providers that do not
- * keep prompts, the answer constrained to a JSON schema, and "stuck" is OUR timeout — OpenRouter
- * moves providers on errors, not on slowness — so each attempt is short and the next is routed
- * differently.
+ * keep prompts, the answer constrained to a JSON schema, and CHEAP FIRST WITH A FAST FALLBACK ALWAYS —
+ * economy providers under the price ceiling, then any provider, then economy by throughput. "Stuck" is
+ * OUR timeout: OpenRouter moves providers on errors, not on slowness.
  */
 class OpenRouterClient
 {
-    private const ROUTES = ['latency', 'throughput', 'price'];
+    private const TIERS = [['economy', 'order'], ['fast', 'order'], ['economy', 'throughput']];
 
     public function configured(): bool
     {
@@ -38,7 +38,15 @@ class OpenRouterClient
         $started = microtime(true);
 
         foreach (array_chunk($texts, 32) as $batch) {
-            $body = $this->post('/embeddings', ['model' => $model, 'input' => $batch, 'provider' => ['data_collection' => 'deny']]);
+            $payload = ['model' => $model, 'input' => $batch, 'provider' => ['data_collection' => 'deny']];
+            $timeout = (int) config('services.openrouter.embedding_timeout');
+
+            // Embeddings cost a fraction of a paisa, so there is no economy tier — one retry is the fallback.
+            try {
+                $body = $this->post('/embeddings', $payload, $timeout);
+            } catch (RuntimeException $e) {
+                $body = $this->post('/embeddings', $payload, $timeout);
+            }
 
             foreach ($body['data'] ?? [] as $row) {
                 $vectors[] = self::normalise($row['embedding'] ?? []);
@@ -66,9 +74,27 @@ class OpenRouterClient
     public function json(array $messages, array $schema, string $name): array
     {
         $reason = 'the model is not reachable';
+        $started = microtime(true);
+        $timeouts = array_map('intval', explode(',', (string) config('services.openrouter.help_timeouts')));
 
-        foreach (self::ROUTES as $i => $sort) {
-            $started = microtime(true);
+        foreach (self::TIERS as $i => [$tier, $sort]) {
+            $provider = ['require_parameters' => true, 'data_collection' => 'deny'];
+
+            if ($tier === 'economy') {
+                $provider['max_price'] = [
+                    'prompt' => (float) config('services.openrouter.economy_max_prompt'),
+                    'completion' => (float) config('services.openrouter.economy_max_completion'),
+                ];
+            }
+
+            if ($sort === 'order') {
+                // Named providers: economy stays within its list; the fast fallback may go anywhere after its own.
+                $names = config($tier === 'economy' ? 'services.openrouter.economy_providers' : 'services.openrouter.fast_providers');
+                $provider['order'] = array_values(array_filter(array_map('trim', explode(',', (string) $names))));
+                $provider['allow_fallbacks'] = $tier !== 'economy';
+            } else {
+                $provider['sort'] = $sort;
+            }
 
             try {
                 $body = $this->post('/chat/completions', [
@@ -77,9 +103,9 @@ class OpenRouterClient
                     'temperature' => 0,
                     'max_tokens' => 700,
                     'response_format' => ['type' => 'json_schema', 'json_schema' => ['name' => $name, 'strict' => true, 'schema' => $schema]],
-                    'provider' => ['sort' => $sort, 'require_parameters' => true, 'data_collection' => 'deny'],
+                    'provider' => $provider,
                     'usage' => ['include' => true],
-                ]);
+                ], $timeouts[$i] ?? end($timeouts));
             } catch (RuntimeException $e) {
                 $reason = $e->getMessage();
 
@@ -98,8 +124,10 @@ class OpenRouterClient
                 'tokens_in' => (int) ($body['usage']['prompt_tokens'] ?? 0),
                 'tokens_out' => (int) ($body['usage']['completion_tokens'] ?? 0),
                 'cost_usd' => (float) ($body['usage']['cost'] ?? 0),
+                // Timed from the first try: what the user actually waited.
                 'execution_ms' => (int) ((microtime(true) - $started) * 1000),
                 'attempts' => $i + 1,
+                'tier' => $tier,
             ]];
         }
 
@@ -107,13 +135,11 @@ class OpenRouterClient
     }
 
     /** @throws RuntimeException with a reason fit to show an operator */
-    private function post(string $path, array $payload): array
+    private function post(string $path, array $payload, int $timeout): array
     {
         if (! $this->configured()) {
             throw new RuntimeException('the model is not configured (no OPENROUTER_API_KEY)');
         }
-
-        $timeout = (int) config('services.openrouter.attempt_timeout');
 
         try {
             $response = Http::withToken(config('services.openrouter.key'))

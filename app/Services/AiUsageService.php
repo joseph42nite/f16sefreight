@@ -94,6 +94,7 @@ class AiUsageService
             'cost_usd'              => round((float) ($usage['cost_usd'] ?? 0), 6),
             'execution_ms'          => (int) ($usage['execution_ms'] ?? 0),
             'attempts'              => (int) ($usage['attempts'] ?? 1),
+            'tier'                  => in_array($usage['tier'] ?? null, ['economy', 'fast'], true) ? $usage['tier'] : null,
             'created_at'            => now(),
             'updated_at'            => now(),
         ]);

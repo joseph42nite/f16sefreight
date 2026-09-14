@@ -20,11 +20,11 @@ class OcrJobTimeoutTest extends TestCase
         $this->assertSame(80, ProcessPdfOcrJob::httpTimeoutFor(['action' => 'extract']));
     }
 
-    public function test_a_model_reading_outlasts_the_parsers_own_attempts(): void
+    public function test_a_model_reading_outlasts_the_parsers_own_tries(): void
     {
-        // Three attempts of 12s (python/model_extract.py). Laravel has to wait longer, so the
-        // parser's "timed out" answer arrives instead of a dropped call.
-        $this->assertGreaterThan(3 * 12, ProcessPdfOcrJob::httpTimeoutFor(['action' => 'extract_unstructured']));
+        // A scan's three tries: 15 + 20 + 15 s (python/model_extract.py VISION_TIMEOUTS). Laravel has to
+        // wait longer, so the parser's "timed out" answer arrives instead of a dropped call.
+        $this->assertGreaterThan(15 + 20 + 15, ProcessPdfOcrJob::httpTimeoutFor(['action' => 'extract_unstructured']));
     }
 
     public function test_the_job_outlasts_its_longest_http_call(): void

@@ -49,9 +49,21 @@ class AiUsageController extends Controller
         // How the providers have behaved: a slow or often-retried one shows up here first.
         $byProvider = DB::table('llm_usage_logs')
             ->where('created_at', '>=', $since)
-            ->groupBy('provider', 'purpose')
-            ->get(['provider', 'purpose', DB::raw('COUNT(*) AS calls'), DB::raw('ROUND(AVG(execution_ms)) AS avg_ms'),
+            ->groupBy('provider', 'tier', 'purpose')
+            ->get(['provider', 'tier', 'purpose', DB::raw('COUNT(*) AS calls'), DB::raw('ROUND(AVG(execution_ms)) AS avg_ms'),
                    DB::raw('SUM(attempts > 1) AS retried')]);
+
+        // 🔴 Cheap first, fast fallback always: how often the fallback (≈ 6× the cost) was needed.
+        $tiers = DB::table('llm_usage_logs')->where('created_at', '>=', $since)->whereNotNull('tier')
+            ->groupBy('tier')->get(['tier', DB::raw('COUNT(*) AS calls'), DB::raw('SUM(cost_usd) AS cost_usd'),
+                                    DB::raw('ROUND(AVG(execution_ms)) AS avg_ms')])->keyBy('tier');
+        $tierCalls = (int) $tiers->sum('calls');
+        $tierShape = fn (string $tier) => [
+            'calls' => (int) ($tiers[$tier]->calls ?? 0),
+            'share_percent' => $tierCalls ? round(($tiers[$tier]->calls ?? 0) / $tierCalls * 100, 1) : 0.0,
+            'cost_inr' => round((float) ($tiers[$tier]->cost_usd ?? 0) * $rate, 2),
+            'avg_seconds' => round((float) ($tiers[$tier]->avg_ms ?? 0) / 1000, 1),
+        ];
 
         return response()->json([
             'settings'    => [
@@ -64,6 +76,7 @@ class AiUsageController extends Controller
             'by_company'  => $byCompany,
             'by_user'     => $byUser,
             'by_provider' => $byProvider,
+            'tiers'       => ['economy' => $tierShape('economy'), 'fast' => $tierShape('fast')],
         ]);
     }
 

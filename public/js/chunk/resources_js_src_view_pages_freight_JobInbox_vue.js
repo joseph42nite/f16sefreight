@@ -1202,6 +1202,9 @@ const PARTY_REQUIRED = {
     editing: {},
     /** The document whose "Take from it" dropdown is open, if any. */
     openTakes: null,
+    /** Now, ticking while a document reads, for "Reading with AI… 6 s". */
+    now: Date.now(),
+    ticker: null,
     chargeableEdit: "",
     savedAddresses: {},
     countries: {},
@@ -1837,6 +1840,8 @@ const PARTY_REQUIRED = {
       const doc = this.documents.find(d => d.uid === uid);
       if (!doc) return;
       doc.state = "reading";
+      doc.startedAt = Date.now();
+      this.tick();
       doc.error = null;
       doc.warning = null;
       this.upload(doc);
@@ -1882,12 +1887,15 @@ const PARTY_REQUIRED = {
        fast one — the operator can assign the first while the second is still reading. */
     poll(uid) {
       const doc = this.documents.find(d => d.uid === uid);
-      const timer = setInterval(() => {
+      // ⚠️ A timeout chain, not an interval: every 1 s for the first 20 s — most documents finish
+      // there, and a 2 s poll added up to 2 s to each — then every 2 s.
+
+      const check = () => {
         _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/ocr-status/" + doc.jobId).then(({
           data
         }) => {
           if (data.job_status === "completed") {
-            clearInterval(timer);
+            clearTimeout(doc.timer);
             doc.fields = this.withCountryCodes((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenRoute)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenCargo)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenParties)(data.fields || {}, this.countries)), this.countries));
             // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
             doc.piecesNote = data.data && data.data.pieces_note || null;
@@ -1905,18 +1913,38 @@ const PARTY_REQUIRED = {
             // common case, and the one that works — was greeted with a notice saying it
             // might not. A warning that fires when it is not true teaches operators to
             // ignore it for the times it is.
-            clearInterval(timer);
-            this.fail(uid, "no selectable text — this is a scan, and vision extraction is not " + "deployed yet. Use the paste box below.");
+            clearTimeout(doc.timer);
+            // ⚠️ Reading a scan uses a credit and needs a person's approval, which this panel does not
+            // ask for yet (GAPS #261) — so it says what to do instead.
+            this.fail(uid, "no selectable text — this is a scan. Reading scans with AI needs approval for " + "1 credit, which this panel cannot ask for yet. Use the paste box below.");
           } else if (data.job_status === "failed" || data.job_status === "cancelled") {
-            clearInterval(timer);
+            clearTimeout(doc.timer);
             this.fail(uid, data.error || "could not be read");
           }
         }).catch(e => {
-          clearInterval(timer);
+          clearTimeout(doc.timer);
           this.fail(uid, this.messageFor(e));
+        }).finally(() => {
+          if (doc.state === "reading") {
+            doc.timer = setTimeout(check, Date.now() - doc.startedAt < 20000 ? 1000 : 2000);
+          }
         });
-      }, 2000);
-      doc.timer = timer;
+      };
+      doc.timer = setTimeout(check, 1000);
+    },
+    secondsReading(doc) {
+      return doc.startedAt ? Math.max(0, Math.round((this.now - doc.startedAt) / 1000)) : 0;
+    },
+    /** Ticks `now` once a second while any document is reading, for the live count. */
+    tick() {
+      if (this.ticker) return;
+      this.ticker = setInterval(() => {
+        this.now = Date.now();
+        if (!this.documents.some(d => d.state === "reading")) {
+          clearInterval(this.ticker);
+          this.ticker = null;
+        }
+      }, 1000);
     },
     fail(uid, message) {
       const doc = this.documents.find(d => d.uid === uid);
@@ -2134,7 +2162,8 @@ const PARTY_REQUIRED = {
   },
   beforeDestroy() {
     document.removeEventListener("mousedown", this.closeTakes);
-    this.documents.forEach(d => d.timer && clearInterval(d.timer));
+    this.documents.forEach(d => d.timer && clearTimeout(d.timer));
+    clearInterval(this.ticker);
   }
 });
 
@@ -3630,7 +3659,7 @@ var render = function render() {
     attrs: {
       role: "status"
     }
-  }, [_vm._v("\n      No selectable text in "), _c("strong", [_vm._v(_vm._s(_vm.scannedDocuments.join(", ")))]), _vm._v(" — vision\n      extraction is not deployed yet, so use the paste box below for those.\n    ")]) : _vm._e(), _vm._v(" "), _vm.rejectedFiles.length ? _c("p", {
+  }, [_vm._v("\n      No selectable text in "), _c("strong", [_vm._v(_vm._s(_vm.scannedDocuments.join(", ")))]), _vm._v(" — reading a scan\n      with AI needs approval for a credit, which this panel cannot ask for yet, so use the paste\n      box below for those.\n    ")]) : _vm._e(), _vm._v(" "), _vm.rejectedFiles.length ? _c("p", {
     staticClass: "fx-warn",
     attrs: {
       role: "status"
@@ -3664,7 +3693,13 @@ var render = function render() {
       attrs: {
         value: doc.state
       }
-    }), _vm._v(" "), doc.error ? _c("span", {
+    }), _vm._v(" "), doc.state === "reading" ? _c("span", {
+      staticClass: "fx-muted",
+      attrs: {
+        role: "status",
+        "aria-live": "off"
+      }
+    }, [_vm._v("\n              Reading with AI… " + _vm._s(_vm.secondsReading(doc)) + " s · usually 5–15 s\n            ")]) : _vm._e(), _vm._v(" "), doc.error ? _c("span", {
       staticClass: "fx-muted"
     }, [_vm._v(" " + _vm._s(doc.error))]) : _vm._e(), _vm._v(" "), doc.warning ? _c("span", {
       staticClass: "fx-muted"

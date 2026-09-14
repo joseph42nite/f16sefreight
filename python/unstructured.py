@@ -287,7 +287,7 @@ def _read_piece_weight(text: str) -> Dict[str, Any]:
     }
 
 
-def extract_from_text(pdf_path: str, use_model: bool = True) -> Dict[str, Any]:
+def extract_from_text(pdf_path: str, use_model: bool = True, skip_reason: str = "the daily AI limit has been reached") -> Dict[str, Any]:
     """
     Read the document's text layer and map what can be found onto the AWB regions.
 
@@ -340,7 +340,7 @@ def extract_from_text(pdf_path: str, use_model: bool = True) -> Dict[str, Any]:
     if use_model:
         _apply_model(result, text)
     else:
-        result["model_error"] = "the daily AI limit has been reached"
+        result["model_error"] = skip_reason
 
     return result
 

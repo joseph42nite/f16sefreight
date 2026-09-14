@@ -129,6 +129,64 @@ class AiUsageTest extends TestCase
         $this->assertSame('vision', DB::table('llm_usage_logs')->value('purpose'));
     }
 
+    // ─── Credits per document (user, 2026-09-14): AWB 0 · text 1 · scan 3 ────
+
+    private function balance(): int
+    {
+        return (int) Company::withoutGlobalScopes()->whereKey($this->company->id)->value('ocr_credits_balance');
+    }
+
+    /** 🔴 An invoice read by the AI uses 1 credit — charged once the AI has answered. */
+    public function test_an_invoice_read_by_ai_uses_one_credit(): void
+    {
+        Company::withoutGlobalScopes()->whereKey($this->company->id)->update(['ocr_credits_balance' => 10]);
+
+        ['job' => $job] = $this->runJob(['extraction_path' => 'text', 'page_count' => 2, 'model_usage' => $this->usage()]);
+
+        $this->assertSame(9, $this->balance());
+        $this->assertSame(-1, (int) DB::table('ocr_credit_transactions')->where('pdf_processing_job_id', $job->id)->value('amount'));
+    }
+
+    /** A document the AI did not answer is read by labels and uses nothing. */
+    public function test_a_document_read_by_labels_uses_no_credit(): void
+    {
+        Company::withoutGlobalScopes()->whereKey($this->company->id)->update(['ocr_credits_balance' => 10]);
+
+        $this->runJob(['extraction_path' => 'text', 'page_count' => 1, 'model_error' => 'the model timed out after 9s']);
+
+        $this->assertSame(10, $this->balance());
+    }
+
+    /** 🔴 Out of credits: the AI is not asked, the labels stand, and the reason says so. */
+    public function test_without_credits_the_invoice_is_read_by_labels(): void
+    {
+        // tactical overdraft floor comes from config; go below it.
+        $floor = $this->company->fresh()->creditFloor();
+        Company::withoutGlobalScopes()->whereKey($this->company->id)->update(['ocr_credits_balance' => $floor]);
+
+        ['sent' => $sent] = $this->runJob(['extraction_path' => 'text', 'page_count' => 1]);
+
+        $this->assertSame('false', $sent['use_model']);
+        $this->assertStringContainsString('no credits left', $sent['skip_reason']);
+    }
+
+    public function test_the_workspace_shows_credits_per_document(): void
+    {
+        Company::withoutGlobalScopes()->whereKey($this->company->id)->update(['ocr_credits_balance' => 10]);
+        $this->runJob(['extraction_path' => 'text', 'page_count' => 2, 'model_usage' => $this->usage()]);
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->user), 'Accept' => 'application/json',
+        ])->getJson('http://focusair.localhost/api/user/credits')
+            ->assertOk()
+            ->assertJsonPath('balance', 9)
+            ->assertJsonPath('rates', ['awb' => 0, 'text' => 1, 'scan' => 3])
+            ->assertJsonPath('month.credits', 1)
+            ->assertJsonPath('recent.0.filename', 'inv.pdf')
+            ->assertJsonPath('recent.0.kind', 'text')
+            ->assertJsonPath('recent.0.credits', 1);
+    }
+
     // ─── The superadmin portal ───────────────────────────────────────────────
 
     private function asStaff(): self

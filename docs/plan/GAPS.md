@@ -1283,6 +1283,15 @@ PHP 599 passed, 1 skipped.
 | 265 | ⚠️ **An abandoned try is still billed, and is not logged** | When economy passes its limit the call is left to finish at the provider, which charges for it, while only the answering call reaches `llm_usage_logs`. In the measured runs that was 2 of 5 invoices (≈ ₹0.03 each, unlogged). Superadmin spend therefore reads slightly low; the OpenRouter dashboard is the exact figure. Logging the late answer when it arrives would close it |
 | 266 | ⚪ **Help's closeness cutoff** | Covered questions scored 0.55–0.71 against the test document, uncovered ones 0.45–0.50 — so at 0.35 the uncovered ones still reach Gemma (which correctly says "not covered"). A cutoff near 0.52 would skip those calls but sits close to a covered question at 0.548; tune it on the unanswered list once real documents are uploaded |
 
+🟢 **Built 2026-09-14 — credits per document, and a compact prompt**
+
+| # | Decision / built | Detail |
+|---|---|---|
+| 267 | 🔴 **Doc vs code, resolved by the user: new credit rates** | PRD §5.1 and `OcrRoutingService` said text documents were free and a scan 1 credit. Now: **airway bill 0 · invoice or packing list read by AI 1 · scan read by AI 3**. The text credit is charged only once the AI has answered; a document read by labels uses none. Out of credits → the invoice is read by labels with "no credits left — add credits to read documents with AI" (scans stay blocked as before). Help questions are free. PRD table and routing docblock updated |
+| 268 | **Workspace → Credits** (everyone who uses the workspace) | Credits left, how far below zero they may run, what each kind of document uses, this month by kind (documents and credits), and the 25 most recent documents with who ran them and what each used — never money. The Extraction panel shows each document's credits when it is ready ("Ready · 1 credit"). `GET /api/user/credits`; the kind comes from the usage log, so documents read by AI before the rates existed show as AI-read with 0. ⚠️ Documents read by the laptop Gemma before usage logging existed show as "read by labels" |
+| 269 | **The prompt is a file: `python/prompts/extract_document.txt`** | Tuned without code changes as more documents are tested; `PROMPT_VERSION` (first 8 hex of its SHA-256) is recorded on every extraction's usage. Rewritten from 2,265 to ~1,100 characters keeping every rule that answers a measured failure. Repeated lines with no digits (colours, "Pcs") are sent once; every line with a number is kept. Real invoice: **2,090 → 1,737 tokens in (−17%)**, $0.00031 → $0.00027, 3.0–6.4 s on CoreWeave, same fields correct on 5 of 5 (city still ERNAKULAM on 4 of 5) |
+| 270 | ⚪ **Prompt caching needs no code** | No Gemma 4 31B provider caches implicitly; Chutes and DeepInfra cache a repeated prefix automatically (measured: 2,089 of 2,090 tokens cached, $0.00034 → $0.00013), CoreWeave charges the same for cached input. Only the fixed instructions are shared between different documents, and caching did not make answers faster. The prompt keeps instructions first and the document last so it applies where offered |
+
 ---
 
 ## 🟠 Design decisions with no owner yet

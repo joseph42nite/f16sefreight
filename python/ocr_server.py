@@ -104,6 +104,7 @@ async def extract_unstructured(
     file: UploadFile = File(...),
     allow_vision: str = Form("false"),
     use_model: str = Form("true"),
+    skip_reason: str = Form("the daily AI limit has been reached"),
 ):
     """
     Read a document that has no fixed layout — a commercial invoice, a packing list.
@@ -138,7 +139,7 @@ async def extract_unstructured(
 
         # 🔴 In a worker thread, not on the event loop. A model call takes seconds, and run inline it
         # would block every other request, /health included, for the whole reading.
-        result = await run_in_threadpool(extract_from_text, tmp_path, model_allowed)
+        result = await run_in_threadpool(extract_from_text, tmp_path, model_allowed, skip_reason[:120])
 
         if result["extraction_path"] == "none" and wants_vision:
             # Consent was given: read the scan's pages as images.

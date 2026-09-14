@@ -122,6 +122,10 @@ class OcrController extends Controller
             $response['model_error'] = is_array($job->extracted_data)
                 ? ($job->extracted_data['model_error'] ?? null)
                 : null;
+
+            // What THIS document used, in credits (user, 2026-09-14): charges less refunds.
+            $response['credits_used'] = -(int) \Illuminate\Support\Facades\DB::table('ocr_credit_transactions')
+                ->where('pdf_processing_job_id', $job->id)->sum('amount');
         }
 
         // 🔴 The consent prompt has to carry its PRICE. "This document needs vision — 1

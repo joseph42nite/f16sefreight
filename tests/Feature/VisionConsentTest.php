@@ -6,6 +6,7 @@ use App\Agent;
 use App\Company;
 use App\Jobs\ProcessPdfOcrJob;
 use App\PdfProcessingJob;
+use App\Services\OcrCreditService;
 use App\Services\OcrRoutingService;
 use App\Services\VisionConsentService;
 use App\User;
@@ -141,14 +142,14 @@ class VisionConsentTest extends TestCase
             ->assertStatus(202)
             ->assertJsonPath('job_status', 'processing');
 
-        $this->assertSame(9, $this->balance($company));
+        $this->assertSame(10 - OcrCreditService::VISION_COST, $this->balance($company));
 
         $rows = DB::table('ocr_credit_transactions')
             ->where('pdf_processing_job_id', $extraction->id)->get();
 
         $this->assertCount(1, $rows);
         $this->assertSame('consumption', $rows[0]->transaction_type);
-        $this->assertSame(-1, (int) $rows[0]->amount);
+        $this->assertSame(-OcrCreditService::VISION_COST, (int) $rows[0]->amount);
     }
 
     /**
@@ -186,7 +187,7 @@ class VisionConsentTest extends TestCase
         $this->api($user)->postJson($this->url($extraction->id), ['decision' => 'accept'])
             ->assertStatus(202);
 
-        $this->assertSame(-1, $this->balance($company), 'The overdraft is what lets the month finish.');
+        $this->assertSame(-OcrCreditService::VISION_COST, $this->balance($company), 'The overdraft is what lets the month finish.');
     }
 
     /**
@@ -228,7 +229,7 @@ class VisionConsentTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('reason', VisionConsentService::NOT_AWAITING);
 
-        $this->assertSame(9, $this->balance($company), 'The second answer charged again.');
+        $this->assertSame(10 - OcrCreditService::VISION_COST, $this->balance($company), 'The second answer charged again.');
     }
 
     /** ⚠️ Declining after accepting cannot un-spend a credit — the prompt is answered. */
@@ -242,7 +243,7 @@ class VisionConsentTest extends TestCase
         $this->api($user)->postJson($this->url($extraction->id), ['decision' => 'accept'])->assertStatus(202);
         $this->api($user)->postJson($this->url($extraction->id), ['decision' => 'decline'])->assertStatus(422);
 
-        $this->assertSame(9, $this->balance($company));
+        $this->assertSame(10 - OcrCreditService::VISION_COST, $this->balance($company));
         $this->assertSame('processing', $extraction->fresh()->status);
     }
 
@@ -341,7 +342,7 @@ class VisionConsentTest extends TestCase
 
         Bus::fake();
         $this->api($user)->postJson($this->url($extraction->id), ['decision' => 'accept'])->assertStatus(202);
-        $this->assertSame(9, $this->balance($company));
+        $this->assertSame(10 - OcrCreditService::VISION_COST, $this->balance($company));
 
         $consent = app(VisionConsentService::class);
         $reservation = $consent->reservationFor($extraction->fresh());

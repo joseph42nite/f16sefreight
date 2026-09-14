@@ -549,8 +549,11 @@ graph LR
 
 | Input | Path | Cost |
 |---|---|---|
-| Text-selectable digital PDF | PyMuPDF → **Gemma 4 31B** (OpenRouter) → JSON | no credit; ≈ ₹0.03 per document to F16s, logged in `llm_usage_logs` |
-| Scanned PDF / image (no selectable text) | **Gemma 4 31B** vision (page images, OpenRouter) | 1 OCR credit |
+| Text-selectable digital PDF | PyMuPDF → **Gemma 4 31B** (OpenRouter) → JSON | **1 credit**, charged once the AI answers; 0 when read by labels (credits or daily limit exhausted) |
+| Scanned PDF / image (no selectable text) | **Gemma 4 31B** vision (page images, OpenRouter) | **3 credits**, reserved at consent, refunded if the call fails |
+| Airway bill with a coordinate template | pdfplumber boxes, no AI | 0 credits |
+
+*(Rates changed by the user 2026-09-14: text documents were free and scans 1 credit. The workspace's Credits tab shows them per document, never in money — GAPS #267.)*
 
 **Schema conformance is enforced twice, and the order matters.** The model is first **constrained** to emit the schema — OpenRouter `response_format` with a strict JSON schema — and the result is then **validated** by Pydantic (`python/schemas.py`) before anything returns to Laravel. Validation alone is not enough: it detects a malformed payload, it does not prevent one. Every parsed field carries a **confidence score** (high / medium / low) based on whether the value matched exact coordinates or was extrapolated from structure.
 

@@ -394,6 +394,10 @@
           </p>
         </section>
 
+        <section v-else-if="tab === 'credits'">
+          <CreditsPanel />
+        </section>
+
         <!-- §6.7 — the cost sheet, decoupled from the manifest. -->
         <section v-else-if="tab === 'cost'">
           <p v-if="!active.enquiry" class="fx-muted">
@@ -528,6 +532,7 @@ import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import ExtractionPanel from "@/view/pages/freight/components/ExtractionPanel.vue";
 import CostSheet from "@/view/pages/freight/components/CostSheet.vue";
+import CreditsPanel from "@/view/pages/freight/components/CreditsPanel.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 
 /** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
@@ -582,11 +587,13 @@ const COST_SHEET_ROLES = ["pricing", "accounts", "boss"];
 const WORKSPACE_TABS = [
   { key: "extraction", label: "Extraction" },
   { key: "cost", label: "Cost sheet" },
+  // Credits per document (user, 2026-09-14) — for everyone who works in the workspace.
+  { key: "credits", label: "Credits" },
 ];
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, MailEditor },
+  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, CreditsPanel, MailEditor },
   data: () => ({
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
        has no use for a shipping-line folder and a sea operator none for an airline one;

@@ -13,9 +13,9 @@ must emit against; `ExtractedDocument` then validates what came back. Validation
 malformed payload, it does not prevent one.
 
 ⚠️ "STUCK" IS OUR TIMEOUT, NOT OPENROUTER'S. OpenRouter moves to another provider on an error,
-a rate limit or downtime — not on a provider that is merely slow. So each attempt has its own
-short timeout, and the next attempt asks OpenRouter to route differently (latency, then
-throughput, then price), which lands on a different provider.
+a rate limit or downtime — not on a provider that is merely slow. So each try has its own total
+deadline: named economy providers first, the named fast provider next, economy by throughput last
+(see TIERS).
 
 ⚠️ FAILURE IS NOT AN EXCEPTION, AND IT IS NOT SILENT EITHER. If every attempt fails, `extract()`
 says why. The caller keeps the label reading and passes the reason on.
@@ -88,71 +88,58 @@ _POOL = ThreadPoolExecutor(max_workers=16, thread_name_prefix="openrouter")
 # packing list. More pages is more image tokens for text the operator can paste.
 MAX_VISION_PAGES = 3
 
-# 🔴 NO ORDINAL RULE. The previous prompt said "the FIRST company is the SHIPPER, the SECOND
-# is the CONSIGNEE". On the first real invoice the second company was AXIS BANK LIMITED, from
-# the bank-details block: positional reasoning moved into the prompt, and just as wrong.
+# 🔴 THE PROMPT LIVES IN python/prompts/extract_document.txt, so it can be tuned as more documents are
+# tested without touching code. Every rule in it answers a measured failure: labels returned as values
+# (1B), the bank as the consignee, a P.O Box as the post code, the destination as the shipper's country,
+# NONE as a value, the discharge port as the origin. Rewritten 2026-09-14 from ~2,265 to ~1,100
+# characters (user: "compress the input token / prompt").
 #
-# ⚠️ The jumbled-order warning and "a label is never a value" are what this prompt adds, and
-# it is the prompt gemma3:4b was measured with, less the route and AWB fields. Without
-# them 1B returned "Exporter" as the shipper's name.
-PROMPT = """You are reading a freight document (commercial invoice, packing list or airway bill).
+# ⚠️ FIXED TEXT FIRST, THE DOCUMENT LAST. Providers that cache (Chutes, DeepInfra — measured: 2,089 of
+# 2,090 tokens cached on a repeat, $0.00034 → $0.00013) can then reuse the instructions across different
+# documents. Editing the file changes PROMPT_VERSION, which is recorded on every extraction.
+_PROMPT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts", "extract_document.txt")
 
-The text was extracted from a TABLE, so it is JUMBLED: a value may appear BEFORE or AFTER
-its own label, and unrelated cells are interleaved. Match each value to its label by
-MEANING, not by position.
+with open(_PROMPT_FILE, encoding="utf-8") as _f:
+    _INSTRUCTIONS = _f.read().strip()
 
-Never return a label as a value. "Exporter", "Consignee", "Address :" and "Description of
-Goods" are LABELS.
+PROMPT_VERSION = __import__("hashlib").sha256(_INSTRUCTIONS.encode()).hexdigest()[:8]
 
-Start with the GOODS:
-
-  description       what the goods are, in words
-  gross_weight      total gross weight
-  chargeable_weight the chargeable weight, only if the document states one
-  dimensions        package dimensions as written, length x width x height with the unit
-
-Then the ROUTE, as written:
-
-  origin            the port or airport of LOADING (departure)
-  destination       the port or airport of DISCHARGE (destination) — not a country
-
-Then give each party in SIX parts. The address is the street part only: keep the city, state,
-post code and country out of it.
-
-  shipper_name      company SENDING the goods (labelled Exporter or Shipper). A company
-                    name, usually containing LIMITED, LTD, PVT, CO, GMBH or INC.
-  shipper_address   its street address
-  shipper_city      its city or town
-  shipper_state     its state, province or emirate
-  shipper_post_code its post code, PIN or ZIP. A P.O Box number is NOT a post code
-  shipper_country   the country of ITS OWN address — never the shipment's destination,
-                    and never another party's country
-  consignee_*       the same six for the company RECEIVING the goods (labelled Consignee)
-
-IMPORTANT: the STATE and the COUNTRY may be worked out. If the document does not print them,
-give the state and country that the city and post code belong to.
-
-If a part is not there and cannot be worked out, LEAVE IT OUT. Never answer with a word that
-stands for absence, such as NONE, N/A, NIL or "not specified".
-
-Everything else must be copied from the document exactly. Never invent a company name, a
-street address, a city or a post code. Omit any field you cannot find.
-
-Ignore the price table, SKU codes and colour names. A colour or a product code is never a
-company or a description. A bank's address is not a party's address.
-
-DOCUMENT:
-{text}
-"""
-
+PROMPT = _INSTRUCTIONS.replace(
+    "{source_note}",
+    "The text comes from a TABLE and is JUMBLED: a value may sit before or after its label, among "
+    "unrelated cells. Match values to labels by meaning, not position.",
+) + "\n\nDOCUMENT:\n{text}\n"
 
 # The same instructions for a scan, where there is no extracted text to be jumbled.
-VISION_PROMPT = PROMPT.replace(
-    "The text was extracted from a TABLE, so it is JUMBLED: a value may appear BEFORE or AFTER\n"
-    "its own label, and unrelated cells are interleaved. Match each value to its label by\n"
-    "MEANING, not by position.",
-    "The document is given as page IMAGES. Read every page before answering.",
-).replace("DOCUMENT:\n{text}\n", "")
+VISION_PROMPT = _INSTRUCTIONS.replace("{source_note}", "The document is given as page IMAGES. Read every page before answering.")
+
+
+def compact(text: str) -> str:
+    """
+    The document text with its filler removed, before it is sent (user: "compress the input token").
+
+    ⚠️ ONLY LINES WITH NO DIGITS are de-duplicated — repeated colour names, "Pcs", "BLACK", "SIZE". A line
+    with a number is kept every time: "364.09" or "26" repeated next to a different label is a different
+    fact, and the jumbled order means the model needs each one where it sits.
+    """
+    seen = set()
+    lines = []
+
+    for line in text.splitlines():
+        line = " ".join(line.split())
+
+        if not line:
+            continue
+
+        if not any(c.isdigit() for c in line):
+            key = line.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+
+        lines.append(line)
+
+    return "\n".join(lines)
 
 
 def available() -> bool:
@@ -173,7 +160,7 @@ def extract(text: str) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optiona
     if len(text) > MAX_DOCUMENT_CHARS:
         logger.warning(f"document is {len(text)} chars; the model reads the first {MAX_DOCUMENT_CHARS}")
 
-    content = PROMPT.format(text=text[:MAX_DOCUMENT_CHARS])
+    content = PROMPT.format(text=compact(text)[:MAX_DOCUMENT_CHARS])
     fields, error, usage = _ask(content, TEXT_TIMEOUTS)
 
     return (_grounded(fields, text) if fields is not None else None), error, usage
@@ -356,6 +343,8 @@ def _usage(body: Dict[str, Any], attempt: int, started: float, tier: str) -> Dic
         "attempts": attempt,
         # economy or fast — how often the ₹0.16 fallback was needed.
         "tier": tier,
+        # Which prompt read it, so a change to prompts/extract_document.txt can be compared.
+        "prompt_version": PROMPT_VERSION,
     }
 
 

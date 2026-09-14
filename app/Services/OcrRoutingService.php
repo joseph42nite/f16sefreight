@@ -11,10 +11,13 @@ use App\User;
  *
  * 🔴 **The route is tier × DOCUMENT CLASS, not tier alone.**
  *
- *   tier      structured (has a template)   unstructured        scanned / image
- *   core      /extract, free                upgrade_required    upgrade_required
- *   tactical  /extract, free                Gemma, free         Gemini, 1 credit
- *   command   /extract, free                Gemma, free         Gemini, 1 credit
+ *   tier      structured (has a template)   unstructured              scanned / image
+ *   core      /extract, 0 credits           upgrade_required          upgrade_required
+ *   tactical  /extract, 0 credits           Gemma 4, 1 credit*        Gemma 4 vision, 3 credits
+ *   command   /extract, 0 credits           Gemma 4, 1 credit*        Gemma 4 vision, 3 credits
+ *
+ *   * charged once the AI answers; read by labels (0 credits) when credits or the daily limit run out.
+ *   Rates set by the user 2026-09-14 — were "Gemma, free" and "Gemini, 1 credit".
  *
  * **A Core tenant uploading an invoice must be TOLD, not silently disappointed.**
  * pdfplumber needs a coordinate template and none exists for an arbitrary client

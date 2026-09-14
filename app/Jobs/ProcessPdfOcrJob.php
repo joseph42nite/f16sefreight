@@ -119,10 +119,14 @@ class ProcessPdfOcrJob implements ShouldQueue
                 // enabled by the consent endpoint handing this job `allowVision = true`.
                 $params['allow_vision'] = $this->allowVision ? 'true' : 'false';
 
-                // The user's daily AI limit (superadmin): over it, the parser reads by labels and
-                // says why. A consented scan is not limited — a human authorised it and paid a credit.
-                $params['use_model'] = ($this->allowVision || app(AiUsageService::class)->allowed($job->user_id))
-                    ? 'true' : 'false';
+                // The AI reads it only if the user is under the daily limit AND the company can pay the
+                // text credit (user, 2026-09-14). Otherwise the parser reads by labels and says why.
+                // A consented scan already reserved its credits and is not limited.
+                $skip = $this->allowVision ? null : $this->reasonNotToUseAi($job);
+                $params['use_model'] = $skip === null ? 'true' : 'false';
+                if ($skip !== null) {
+                    $params['skip_reason'] = $skip;
+                }
             }
 
             // Http timeout MUST be less than the job's $timeout property to ensure the HTTP
@@ -169,6 +173,11 @@ class ProcessPdfOcrJob implements ShouldQueue
             // What the model call cost, logged against the user and branch — whatever it answered.
             if (! empty($data['model_usage']) && is_array($data['model_usage'])) {
                 app(AiUsageService::class)->record($job, $data['model_usage'], $extractionPath === 'vision' ? 'vision' : 'text');
+
+                // 🔴 The text credit, charged only now that the AI has answered (a scan's was reserved at consent).
+                if ($extractionPath === OcrRoutingService::PATH_TEXT && ($company = $this->companyFor($job))) {
+                    app(OcrCreditService::class)->reserve($company, $job, OcrCreditService::TEXT_COST, 'Invoice or packing list read by AI');
+                }
             }
 
             $job->update([
@@ -200,6 +209,31 @@ class ProcessPdfOcrJob implements ShouldQueue
                 'completed_at'  => now(),
             ]);
         }
+    }
+
+    /** Why the AI should not read this document, or null when it may: the daily limit, then credits. */
+    private function reasonNotToUseAi(PdfProcessingJob $job): ?string
+    {
+        if (! app(AiUsageService::class)->allowed($job->user_id)) {
+            return 'the daily AI limit has been reached';
+        }
+
+        $company = $this->companyFor($job);
+
+        if ($company !== null && ! app(OcrCreditService::class)->canAfford($company, OcrCreditService::TEXT_COST)) {
+            return 'no credits left — add credits to read documents with AI';
+        }
+
+        return null;
+    }
+
+    /** The paying company, through the user's branch — never the legacy `users.company_name`. */
+    private function companyFor(PdfProcessingJob $job): ?\App\Company
+    {
+        $user = $job->user_id ? \App\User::find($job->user_id) : null;
+        $companyId = $user ? \App\Support\UserContext::for($user)->companyId : null;
+
+        return $companyId ? \App\Company::withoutGlobalScopes()->find($companyId) : null;
     }
 
     /** The parser call's limit: a model reading needs minutes, a coordinate crop seconds. */

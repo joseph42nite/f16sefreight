@@ -786,7 +786,7 @@ def test_the_request_asks_for_the_schema_and_no_data_keeping_provider():
     assert error is None and fields["shipper_name"] == "TRAILSPEC"
     assert usage == {"model": "google/gemma-4-31b-it", "provider": "DeepInfra", "tokens_in": 2100,
                      "tokens_out": 260, "cost_usd": 0.00028, "execution_ms": usage["execution_ms"], "attempts": 1,
-                     "tier": "economy"}
+                     "tier": "economy", "prompt_version": model_extract.PROMPT_VERSION}
 
 
 def test_economy_first_then_the_fast_fallback_when_it_is_stuck():
@@ -810,6 +810,20 @@ def test_economy_first_then_the_fast_fallback_when_it_is_stuck():
     assert usage["attempts"] == 2 and usage["tier"] == "fast"
     # Timed from the first try, because that is what the operator waited.
     assert usage["execution_ms"] >= 1000
+
+
+def test_repeated_filler_lines_are_sent_once_but_every_number_stays():
+    """User: "compress the input token". Colours and "Pcs" repeat; a repeated number is a different fact."""
+    text = "BLACK\n26\nPcs\n  BLACK  \nTOTAL CTNS\n26\nPcs\n\n364.09\nGROSS WEIGHT\n364.09"
+
+    assert model_extract.compact(text) == "BLACK\n26\nPcs\nTOTAL CTNS\n26\n364.09\nGROSS WEIGHT\n364.09"
+
+
+def test_the_prompt_comes_from_its_file_with_a_version():
+    assert "P.O Box number is NOT a post code" in model_extract.PROMPT
+    assert model_extract.PROMPT.rstrip().endswith("DOCUMENT:\n{text}")
+    assert "IMAGES" in model_extract.VISION_PROMPT and "{" not in model_extract.VISION_PROMPT
+    assert len(model_extract.PROMPT_VERSION) == 8
 
 
 def test_a_provider_kept_alive_with_whitespace_still_times_out():

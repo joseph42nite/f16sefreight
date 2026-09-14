@@ -123,10 +123,11 @@ class OcrCreditGateTest extends TestCase
         $transactionId = app(OcrCreditService::class)->reserve($company, $extraction);
 
         $this->assertNotNull($transactionId);
-        $this->assertSame(499, (int) $company->fresh()->ocr_credits_balance);
+        // A scan's rate (user, 2026-09-14: 3 credits).
+        $this->assertSame(500 - OcrCreditService::VISION_COST, (int) $company->fresh()->ocr_credits_balance);
 
         $row = DB::table('ocr_credit_transactions')->find($transactionId);
-        $this->assertSame(-1, (int) $row->amount);
+        $this->assertSame(-OcrCreditService::VISION_COST, (int) $row->amount);
         $this->assertSame('consumption', $row->transaction_type);
         $this->assertSame($extraction->id, (int) $row->pdf_processing_job_id,
             'Which extraction burned the credit must be answerable.');
@@ -143,11 +144,12 @@ class OcrCreditGateTest extends TestCase
 
         $service = app(OcrCreditService::class);
 
-        $this->assertNotNull($service->reserve($company->fresh(), $this->extraction($user->id)),
+        // One credit at a time (a text document's rate), so the floor itself is what is tested.
+        $this->assertNotNull($service->reserve($company->fresh(), $this->extraction($user->id), 1),
             'At -49 one more credit reaches the -50 floor and is allowed.');
         $this->assertSame(-50, (int) $company->fresh()->ocr_credits_balance);
 
-        $this->assertNull($service->reserve($company->fresh(), $this->extraction($user->id)),
+        $this->assertNull($service->reserve($company->fresh(), $this->extraction($user->id), 1),
             'Below the floor the reservation must be refused.');
         $this->assertSame(-50, (int) $company->fresh()->ocr_credits_balance,
             'A refused reservation must not move the balance.');
@@ -181,7 +183,7 @@ class OcrCreditGateTest extends TestCase
         $service = app(OcrCreditService::class);
 
         $transactionId = $service->reserve($company, $this->extraction($user->id));
-        $this->assertSame(499, (int) $company->fresh()->ocr_credits_balance);
+        $this->assertSame(500 - OcrCreditService::VISION_COST, (int) $company->fresh()->ocr_credits_balance);
 
         $this->assertTrue($service->refund($transactionId));
         $this->assertSame(500, (int) $company->fresh()->ocr_credits_balance);

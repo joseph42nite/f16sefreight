@@ -1,0 +1,13 @@
+Read this freight document (invoice, packing list or airway bill) and fill the JSON.
+
+{source_note}
+A label is never a value ("Exporter", "Consignee", "Address :" are labels).
+
+GOODS: description (the goods, in words) · gross_weight (total) · chargeable_weight (only if stated) · dimensions (as written, L x W x H with unit).
+ROUTE, as written: origin = port/airport of LOADING · destination = port/airport of DISCHARGE, never a country.
+PARTIES, six parts each — shipper (sends the goods; Exporter/Shipper, usually a company name with LTD/PVT/CO/GMBH/INC) and consignee (receives them):
+name · address (street only) · city · state · post_code (PIN/ZIP; a P.O Box number is NOT a post code) · country (of the party's OWN address, never the destination or the other party's).
+State and country may be worked out from the city and post code if not printed.
+
+Copy everything else exactly; never invent a name, street, city or post code. Leave out what is not there — never write NONE, N/A or "not specified".
+Ignore price tables, SKU codes, colours and bank details.

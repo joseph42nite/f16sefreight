@@ -156,6 +156,8 @@
               </span>
               <span v-if="doc.error" class="fx-muted"> {{ doc.error }}</span>
               <span v-if="doc.warning" class="fx-muted"> ⚠️ {{ doc.warning }}</span>
+              <!-- What this document used, in credits (user, 2026-09-14). -->
+              <span v-if="doc.state === 'ready' && doc.credits !== null" class="fx-muted"> · {{ doc.credits }} {{ doc.credits === 1 ? "credit" : "credits" }}</span>
 
               <!--
                 🔴 KNOWN BEFORE EXTRACT IS PRESSED. The browser reads the text layer at
@@ -1281,7 +1283,7 @@ export default {
         // Extract button.
         const doc = {
           uid: ++this.seq, name: file.name, file, kind: "other",
-          state: "staged", fields: null, error: null, warning: null, piecesNote: null, jobId: null,
+          state: "staged", fields: null, error: null, warning: null, piecesNote: null, jobId: null, credits: null,
           // "text" | "scan" | "unknown" — filled by the probe a moment later.
           readable: "unknown",
         };
@@ -1359,6 +1361,7 @@ export default {
               doc.fields = this.withCountryCodes(flattenRoute(flattenCargo(flattenParties(data.fields || {}, this.countries)), this.countries));
               // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
               doc.piecesNote = (data.data && data.data.pieces_note) || null;
+              doc.credits = typeof data.credits_used === "number" ? data.credits_used : null;
               // 🔴 Why the model did not read it, when it did not. The fields are then the
               // label reading, and without this they look exactly like the model's.
               doc.warning = data.model_error

@@ -13,9 +13,14 @@ use Illuminate\Support\Facades\DB;
  * Spending someone's money is exactly the kind of irreversible act the product refuses
  * to perform without explicit acceptance — a credit is no different from an email.
  *
+ * 🔴 RATES, user 2026-09-14: an airway bill (read by fixed boxes, no AI) 0 · an invoice or packing
+ * list read by the AI 1 · a scan read by the AI from page images 3. The text credit is charged only
+ * once the AI has ANSWERED (a document read by labels costs nothing); the scan credit is reserved at
+ * consent and refunded if the call fails.
+ *
  *   upload
- *     └─ /extract-unstructured (allow_vision = false)     ← always free, always first
- *          ├─ text found ─────► Gemma parses it           ← free, no prompt
+ *     └─ /extract-unstructured (allow_vision = false)     ← no prompt
+ *          ├─ text found ─────► Gemma parses it           ← 1 credit once it answers; labels if none left
  *          └─ no text layer ─► extraction_path = 'none'
  *                              status = awaiting_vision_consent   ← NOTHING spent
  *                                 ├─ declines ─► cancelled        ← still nothing spent
@@ -35,7 +40,8 @@ use Illuminate\Support\Facades\DB;
  */
 class OcrCreditService
 {
-    public const VISION_COST = 1;
+    public const TEXT_COST = 1;
+    public const VISION_COST = 3;
 
     /**
      * Reserve one credit against a company, atomically.
@@ -43,9 +49,9 @@ class OcrCreditService
      * @return int|null the consumption transaction id, or NULL when the balance is
      *                  exhausted — in which case NO FastAPI call may be made.
      */
-    public function reserve(Company $company, PdfProcessingJob $extraction, int $amount = self::VISION_COST): ?int
+    public function reserve(Company $company, PdfProcessingJob $extraction, int $amount = self::VISION_COST, ?string $note = null): ?int
     {
-        return DB::transaction(function () use ($company, $extraction, $amount) {
+        return DB::transaction(function () use ($company, $extraction, $amount, $note) {
             // Row lock: two uploads racing must not both pass a balance check that only
             // one of them can afford.
             $locked = Company::withoutGlobalScopes()
@@ -75,7 +81,7 @@ class OcrCreditService
                 'pdf_processing_job_id' => $extraction->id,
                 'amount'                => -$amount,
                 'transaction_type'      => 'consumption',
-                'notes'                 => sprintf('Vision OCR, %s page(s)', $extraction->page_count ?? '?'),
+                'notes'                 => $note ?? sprintf('Scan read by AI, %s page(s)', $extraction->page_count ?? '?'),
                 'created_at'            => now(),
             ]);
 

@@ -240,6 +240,24 @@ def test_an_unreachable_model_leaves_the_label_result_standing():
     assert result["model_error"] == "the model is not reachable"
 
 
+def test_an_empty_model_answer_keeps_the_label_reading():
+    """
+    🔴 Measured: a real run returned nothing usable, and because the model's answer replaces
+    the label reading, every field went blank and the draft saved only its AWB number.
+    """
+    import unstructured
+
+    for empty in ({}, {"description": "", "pieces": 0, "gross_weight": 0.0}):
+        _with_model(empty)
+        result = {"read_by": "labels", "shipper": {"name": "Kept"}, "piece_weight": {"no_of_pieces": 50}}
+        unstructured._apply_model(result, "text")
+
+        assert result["read_by"] == "labels"
+        assert result["shipper"]["name"] == "Kept"
+        assert result["piece_weight"]["no_of_pieces"] == 50
+        assert result["model_error"] == "the model returned nothing usable"
+
+
 def test_a_model_that_times_out_is_reported_not_hidden():
     """
     🔴 The old 60s cap timed out every real document, and the job came back looking like a
@@ -272,6 +290,41 @@ def test_the_model_is_asked_only_for_what_the_panel_takes():
     assert set(ExtractedDocument.model_fields) == parts | {
         "description", "pieces", "gross_weight", "chargeable_weight", "dimensions",
     }
+
+
+def test_the_cargo_is_asked_for_before_the_parties():
+    """
+    🔴 Measured: asked for 23 fields with the parties first, gemma3:4b returned no description,
+    pieces, weight or dimensions in three runs out of three. It writes the answer in schema
+    order, so the goods come first.
+    """
+    from schemas import ExtractedDocument
+
+    order = list(ExtractedDocument.model_json_schema()["properties"])
+    cargo = ["description", "pieces", "gross_weight", "chargeable_weight", "dimensions"]
+
+    assert order[:len(cargo)] == cargo, order[:8]
+
+
+def test_the_cargo_keys_must_be_written_but_may_be_null():
+    """
+    🔴 Measured: with every field optional, the raw answer began at `shipper_name` — the model
+    skipped the optional cargo keys outright, in four runs out of four. A required key has to be
+    written; null is still an answer, so nothing has to be invented.
+    """
+    from schemas import ExtractedDocument
+
+    schema = ExtractedDocument.model_json_schema()
+    cargo = {"description", "pieces", "gross_weight", "chargeable_weight", "dimensions"}
+
+    assert cargo <= set(schema.get("required", [])), schema.get("required")
+
+    for key in cargo:
+        types = [a.get("type") for a in schema["properties"][key].get("anyOf", [])]
+        assert "null" in types, f"{key} must allow null"
+
+    # The parties stay optional: an invented consignee is worse than a missing one.
+    assert "shipper_name" not in schema.get("required", [])
 
 
 def test_the_model_splits_a_party_and_marks_what_it_worked_out():
@@ -435,7 +488,11 @@ def test_the_schema_permits_a_model_that_found_nothing():
     is worse than a blank one."""
     from schemas import ExtractedDocument
 
-    empty = ExtractedDocument.model_validate({})
+    # ⚠️ The cargo keys are required, so a model that found nothing says so with nulls.
+    empty = ExtractedDocument.model_validate({
+        "description": None, "pieces": None, "gross_weight": None,
+        "chargeable_weight": None, "dimensions": None,
+    })
     assert empty.shipper_name is None
 
 

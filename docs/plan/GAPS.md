@@ -1101,6 +1101,30 @@ notify party above) and job **10** in `pdf_processing_jobs`.
 
 ---
 
+## 🔴 2026-09-14 — moving the cargo first did not bring it back, and why
+
+The user chose to put the cargo fields first. The full flow ran (upload → job #11 → draft
+176-99990003, no error), but the extraction came back **completely empty**. A replay of job
+#11's own text through the model, printing the raw answer before validation and grounding,
+showed what was really happening.
+
+| # | Finding | Detail |
+|---|---|---|
+| 189 | 🔴 **The model skips optional keys; order does not make it answer them.** The raw answer **began at `shipper_name`** — no `description`, `pieces`, `gross_weight`, `chargeable_weight` or `dimensions` key at all, although the schema listed them first | Every field was optional, so constrained generation allowed leaving any key out, and the model left out the cargo. It was **not out of room**: it wrote 270 of the 768 tokens allowed and stopped on its own. So #188's diagnosis — the answer running long — was wrong. 🟢 **Fixed and verified end to end (#191):** the five cargo keys are **required but nullable**. A required key has to be written, so the model must face the question; null is still a valid answer, so nothing has to be invented. The parties stay optional |
+| 190 | 🔴 **An empty model answer wiped out the label reading.** Job #11: `read_by: model`, no `model_error`, every field blank, and the draft saved only its AWB number | Because the model's answer replaces the labels, an empty answer blanked everything with no error anywhere. ⚠️ **It did not reproduce:** the identical request replayed afterwards (same text, same prompt, temperature 0) returned both parties filled. That is run-to-run variation in the model, not a code path. Fixed: an answer with no usable value is now a failure — the label reading stands, and the row says *"the model returned nothing usable"*. Pinned by a test |
+
+---
+
+## 🟡 2026-09-14 — the cargo is back, and two meanings to settle
+
+| # | Finding | Detail |
+|---|---|---|
+| 191 | 🟢 **Required-but-nullable cargo keys brought the cargo back, through the real app.** Job #12 (175 s, `read_by: model`, no error): description `PU coated polyester travel backpack`, pieces 500, gross 364.09, dimensions `64X32X64`, and both parties. Draft **176-99990004** stored the cargo row and both parties, and **no notify party** (`also_name` NULL) | The raw answer now writes the cargo keys first; `chargeable_weight` came back **null** rather than invented, since the invoice gives none. The shipper's worked-out `ERNAKULAM` and `Iraq` stayed out of the draft (`ship_state`, `ship_country` NULL). The suggested chargeable weight stayed a suggestion (`chargable_weight` NULL) |
+| 192 | 🔴 **Pieces is the item count, not the package count.** The model answered **500** — the invoice's `TOTAL QTY` — because the prompt asks for *"TOTAL quantity for the whole shipment"*. On an air waybill, pieces are the **packages handed to the airline**: the invoice says `TOTAL CTNS 26` | The dimensions `64 X 32 X 64 CM` are per carton, so the panel's volumetric came out **10,922.7 kg** (500 × dims ÷ 6000) instead of about **568 kg** (26 cartons — which matches the invoice's `CBM = 3.40`), and the suggested chargeable weight was about 30× the real figure. It was not saved, but the draft's piece count (500) and its dimension line (`pcs: 500`) are wrong. **Open, the user's:** confirm pieces = packages |
+| 193 | 🔴 **A printed country was dropped as if it were worked out.** `Jordan` is printed in the consignee's own block (line 184, straight after `Amman 11191`), but every state and country the model returns is marked low, so `cons_country` is NULL | The rule cannot tell a country the document prints from one the model guessed — and `Iraq`, the guess for the shipper, is on the page too (line 104), so "is it on the page" does not separate them. **Open, the user's:** count a state or country as READ when the document prints it right after that party's own city or post code — here that saves Jordan and still drops Iraq |
+
+---
+
 ## 🟠 Design decisions with no owner yet
 
 | # | Gap | Why it matters | Due by |
@@ -1280,3 +1304,4 @@ Fixed by comparing counterparties with our own address removed.
 - **`export PATH="/usr/local/opt/php@8.2/bin:$PATH"`** on every PHP command — system PHP is 8.5 and this project cannot run on it.
 - 🔴 **NEVER run two PHP suites at once.** `phpunit.xml` hardcodes one MySQL database, `DB_DATABASE=f16s_test`, so a second run migrates and truncates the tables the first one is mid-way through using. The result is a **large, plausible, entirely fake failure count** — 183, 259, 220, 248 and 245 on five separate occasions, every one of them this and nothing else. ⚠️ The trap is that the failures look like real regressions and invite a hunt. Before believing any failure count, check `pgrep -f "phpunit --configuration"` returns exactly one process, and confirm no earlier background run is still writing its log. 🟢 A per-process database name would remove the footgun permanently; not done, because it changes how everyone runs the suite.
 - ⚠️ **`pgrep -f` matches the shell that is running the `pgrep`.** A monitor that greps for its own target counts itself, so "2 processes" can mean one. Compare start times before concluding two runs overlap.
+- ⚠️ **A script run from `/tmp` inside the ai-server container cannot import the app.** Python puts the SCRIPT's directory on `sys.path`, not the working directory, so `python /tmp/probe.py` fails with *No module named 'model_extract'*, while `python -c "…"` works because it starts from `/app`. Run scratch scripts with `-e PYTHONPATH=/app`.

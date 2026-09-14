@@ -106,7 +106,15 @@ MEANING, not by position.
 Never return a label as a value. "Exporter", "Consignee", "Address :" and "Description of
 Goods" are LABELS.
 
-Give each party in SIX parts. The address is the street part only: keep the city, state,
+Start with the GOODS:
+
+  description       what the goods are, in words
+  pieces            TOTAL quantity for the whole shipment, not a single table row
+  gross_weight      total gross weight
+  chargeable_weight the chargeable weight, only if the document states one
+  dimensions        package dimensions as written, length x width x height with the unit
+
+Then give each party in SIX parts. The address is the street part only: keep the city, state,
 post code and country out of it.
 
   shipper_name      company SENDING the goods (labelled Exporter or Shipper). A company
@@ -119,12 +127,6 @@ post code and country out of it.
                     and never another party's country
   consignee_*       the same six for the company RECEIVING the goods (labelled Consignee)
   notify_*          the same six for the party to notify (Notify Party, Also Notify), if any
-
-  description       what the goods are, in words
-  pieces            TOTAL quantity for the whole shipment, not a single table row
-  gross_weight      total gross weight
-  chargeable_weight the chargeable weight, only if the document states one
-  dimensions        package dimensions as written, length x width x height with the unit
 
 IMPORTANT: the STATE and the COUNTRY may be worked out. If the document does not print them,
 give the state and country that the city and post code belong to.

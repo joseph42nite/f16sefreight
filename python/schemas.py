@@ -47,6 +47,23 @@ class ExtractedDocument(BaseModel):
     same shapes and `OcrUploadModal.vue` still needs one mapper.
     """
 
+    # 🔴 THE GOODS FIRST, AND REQUIRED — BUT NULLABLE. Asked for 23 fields, gemma3:4b returned no
+    # description, pieces, weight or dimensions in four runs out of four. Putting them first did
+    # not help: every field was optional, and the model simply skipped the optional keys — its raw
+    # answer began at `shipper_name`, having written 270 of 768 tokens, so it was not out of room.
+    # A required key has to be WRITTEN, so the model must face the question; null is still a
+    # valid answer, so nothing has to be invented.
+    description: Optional[str]
+    pieces: Optional[int] = Field(..., ge=0)
+    gross_weight: Optional[float] = Field(..., ge=0)
+
+    # Only if the document STATES one. An invoice rarely does; the panel works out volumetric
+    # and chargeable itself when it does not.
+    chargeable_weight: Optional[float] = Field(..., ge=0)
+
+    # As written, with the unit: "64 X 32 X 64 CM".
+    dimensions: Optional[str]
+
     # 🔴 EVERY PART OF A PARTY, because the form stores them separately and the draft needs
     # them apart: name, street, city, state, post code, country. The model used to return only
     # a name and an address, and the split was left to a parser that read "KERALA" as a city.
@@ -63,17 +80,6 @@ class ExtractedDocument(BaseModel):
     consignee_state: Optional[str] = None
     consignee_post_code: Optional[str] = None
     consignee_country: Optional[str] = None
-
-    description: Optional[str] = None
-    pieces: Optional[int] = Field(default=None, ge=0)
-    gross_weight: Optional[float] = Field(default=None, ge=0)
-
-    # Only if the document STATES one. An invoice rarely does; the panel works out volumetric
-    # and chargeable itself when it does not.
-    chargeable_weight: Optional[float] = Field(default=None, ge=0)
-
-    # As written, with the unit: "64 X 32 X 64 CM".
-    dimensions: Optional[str] = None
 
     notify_name: Optional[str] = None
     notify_address: Optional[str] = None

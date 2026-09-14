@@ -317,6 +317,14 @@ def _apply_model(result: Dict[str, Any], text: str) -> None:
         result["model_error"] = error
         return
 
+    # 🔴 AN EMPTY ANSWER IS A FAILURE, NOT A READING. On the real invoice the model once came
+    # back with nothing usable — no shipper, no consignee, no cargo — and because an answer
+    # replaces the label reading, every field went blank and the draft saved only its AWB
+    # number, with no error anywhere to say why.
+    if not any(v not in (None, "", 0, 0.0) for v in parsed.values()):
+        result["model_error"] = "the model returned nothing usable"
+        return
+
     values = {
         "shipper": _party(parsed, "shipper"),
         "consignee": _party(parsed, "consignee"),

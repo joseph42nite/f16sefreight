@@ -47,7 +47,8 @@ class RegexClassificationService
     /** Sea quotes volume; air quotes weight. */
     private const CBM_PATTERN = '/(\d+(?:\.\d+)?)\s*(?:cbm|m3|cubic\s*met(?:er|re)s?)\b/i';
 
-    private const PIECES_PATTERN = '/(\d+)\s*(?:pcs?|pieces?|packages?|cartons?|pkgs?)\b/i';
+    /** A pallet is one piece (user, 2026-09-14): "3 pallets BOM to SIN" is 3 pieces. */
+    private const PIECES_PATTERN = '/(\d+)\s*(?:pcs?|pieces?|packages?|cartons?|pkgs?|pallets?|plts?)\b/i';
 
     /**
      * A lane, written the way clients write one: "BOM to HAM", "BOM-HAM", "BOM → HAM",

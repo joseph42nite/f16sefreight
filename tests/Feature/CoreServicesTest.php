@@ -214,6 +214,15 @@ class CoreServicesTest extends TestCase
         $this->assertSame(12, $cargo['pieces']['value']);
     }
 
+    /** 🔴 A pallet is a piece: the demo subject "3 pallets BOM to SIN" gave no pieces at all. */
+    public function test_pallets_are_counted_as_pieces(): void
+    {
+        $service = app(RegexClassificationService::class);
+
+        $this->assertSame(3, $service->extractCargo('Still awaiting your rate — 3 pallets BOM to SIN', 'air')['pieces']['value']);
+        $this->assertSame(1, $service->extractCargo('1 pallet, 480 kg', 'air')['pieces']['value']);
+    }
+
     /** An unlabelled figure is still captured, but flagged for a human to check. */
     public function test_an_unlabelled_weight_is_stored_as_gross_with_low_confidence(): void
     {

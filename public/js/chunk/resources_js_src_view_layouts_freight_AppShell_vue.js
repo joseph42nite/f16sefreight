@@ -232,11 +232,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _core_config_helpTargets__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/config/helpTargets */ "./resources/js/src/core/config/helpTargets.js");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 /**
@@ -446,7 +448,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           element: selector(s),
           popover: {
             title: "Step " + (i + 1),
-            description: s.instruction
+            description: this.readable(s.instruction)
           }
         }))
       }).drive();
@@ -459,6 +461,13 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         await new Promise(r => setTimeout(r, 200));
       }
       return [];
+    },
+    /** `[[analyze-pdf]]` → "Analyze PDF button": the control's label from the list writers use. */
+    readable(text) {
+      return String(text || "").replace(/\[\[([a-z0-9-]+)\]\]/gi, (m, name) => {
+        const target = _core_config_helpTargets__WEBPACK_IMPORTED_MODULE_1__.HELP_TARGETS.find(t => t.name === name.toLowerCase());
+        return target ? "“" + target.label + "”" : name;
+      });
     },
     raiseTicket() {
       const transcript = this.turns.filter(t => !t.pending).map(t => ({
@@ -1085,7 +1094,7 @@ var render = function render() {
       class: {
         "fx-help__answer--unsure": !t.found
       }
-    }, [_vm._v(_vm._s(t.answer))]), _vm._v(" "), _c("div", {
+    }, [_vm._v(_vm._s(_vm.readable(t.answer)))]), _vm._v(" "), _c("div", {
       staticClass: "fx-help__actions"
     }, [t.page && !_vm.onPage(t.page) ? _c("button", {
       staticClass: "fx-btn fx-btn--ghost",

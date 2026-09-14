@@ -75,9 +75,9 @@ You are the help assistant inside F16s Freight OS, a freight forwarding portal. 
 
 Answer ONLY from the PASSAGES. If they do not answer the question, set found to false and say briefly that the help documents do not cover it — never guess how the portal works.
 
-Keep the answer short and practical: what to do, in order. Plain text, no Markdown headings.
+Keep the answer short and practical: what to do, in order. Plain text, no Markdown headings. When you mention a control a passage marks as [[name]], write it exactly as [[name]].
 
-steps: only when a passage marks a control as [[name]]. Use exactly that name as target, one step per action, in order. Never make up a name.
+steps: whenever the passages mark controls as [[name]] for the task, list them — one step per action, in order, target = the name without brackets. Never make up a name.
 page: the page path the user should go to, taken from a passage's "(page …)", or null.
 TXT;
 
@@ -110,12 +110,27 @@ TXT;
             }
         }
 
+        $answer = trim((string) ($data['answer'] ?? ''));
+
+        // ⚠️ Measured on the first real run: Gemma wrote the right answer, marked the controls in it,
+        // and returned no steps. The steps are then the controls the ANSWER marks, in its order — still
+        // only names the sections contain, each with the sentence it sits in as the instruction.
+        if ($steps === [] && preg_match_all('/[^.!?\n]*\[\[([a-z0-9][a-z0-9-]{0,60})\]\][^.!?\n]*[.!?]?/i', $answer, $found, PREG_SET_ORDER)) {
+            foreach ($found as [$sentence, $name]) {
+                $name = strtolower($name);
+                if (in_array($name, $targets, true) && ! in_array($name, array_column($steps, 'target'), true) && count($steps) < 8) {
+                    $steps[] = ['target' => $name, 'instruction' => mb_substr(trim($sentence), 0, 200)];
+                }
+            }
+        }
+
         $page = $data['page'] ?? null;
 
         return [
             'found' => (bool) ($data['found'] ?? false),
-            // `[[upload-invoice]]` reads as "upload-invoice" in the chat; the tour highlights it.
-            'answer' => trim(preg_replace('/\[\[([^\]]+)\]\]/', '$1', (string) ($data['answer'] ?? ''))),
+            // The marks stay: the chat shows each as the control's label, and a name the sections do not
+            // contain is shown as plain text, never as a control.
+            'answer' => preg_replace_callback('/\[\[([^\]]+)\]\]/', fn ($m) => in_array(strtolower($m[1]), $targets, true) ? $m[0] : $m[1], $answer),
             'page' => in_array($page, $routes, true) ? $page : null,
             'steps' => $steps,
         ];

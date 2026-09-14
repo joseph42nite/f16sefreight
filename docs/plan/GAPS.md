@@ -1262,6 +1262,16 @@ PHP 599 passed, 1 skipped.
 | 254 | ⚠️ **Read markers are message ids, not timestamps** | First built with `*_last_read_at` timestamps: a reply in the same second as the last read counted as read (seconds precision), so the badge missed it. Now `user_read_message_id` / `agent_read_message_id`. ⚠️ The first version of that migration also added a `(user_id, channel, status)` index that the `user_id` foreign key then depended on, so its rollback failed half way on both databases; finished by hand and the index removed — rollback re-verified |
 | 255 | ⚪ **Not built** | No notification to F16s staff when a chat starts (they see it in the desk, refreshed every 15 s); no email to the client (user chose "reply appears later"); WebSockets (Soketi is in docker-compose; laravel-echo and pusher-js are not installed) |
 
+🟢 **Measured 2026-09-14 — first runs on OpenRouter with the real key**
+
+| # | Finding | Detail |
+|---|---|---|
+| 256 | 🟢 **Gemma 4 31B reads the real invoice correctly** | Route NHAVA SHEVA → Umm Qasr (gemma3:4b had it backwards), shipper full street to KALAMASEERY and PIN 683503, state Kerala (suggested), consignee "GARDENS WASFI AL TAL ST.", 11191, Jordan (printed → saved), 26 cartons, 364.09 kg — the same on 5 of 5 runs, 2,090 tokens in / 218 out. #244's worry does not hold on 31B; the 18-field schema stays. ⚠️ City came back ERNAKULAM (the district) rather than KALAMASEERY |
+| 257 | 🔴 **Our own code spent 4.7 s of a 10.4 s extraction** | `resolve_iata` sorted 8,383 airport names and compiled a regex for each on EVERY call — 0.39 s a lookup, four per invoice. Patterns now built once (`_iata_patterns`, warmed at parser start-up); a lookup is 1–3 ms and the extraction total equals the model time |
+| 258 | 🟠 **OPEN — speed vs cost is a provider choice** | `sort: latency` picked **ModelRun: 3.9–5.7 s, $0.0018 (≈ ₹0.16) an invoice**; with a price ceiling ($0.20/M in, $0.50/M out) **DeepInfra / Venice: 6.8–13.4 s, $0.0002–0.00035 (≈ ₹0.02–0.03)**. Latency routing is a recent average, not a promise: one browser run landed on DeepInfra at 13.5 s (16.6 s in the panel, of which ~2 s is its status polling). At 26,000 invoices a month that is ≈ ₹4,200 vs ≈ ₹500–800. Needs the user's call |
+| 259 | 🟢 **The help assistant answers from a document in 2–4 s** | A test document (indexed in 2.2 s, 2 sections, bge-m3 1,024 dimensions) answered "I got a packing list… how do I get it into the airway bill?" correctly with page `/inbox` and five guided steps, and "How do I change my company GST number?" with "the help documents do not cover…" plus the chat and ticket offers. The test document was deleted afterwards |
+| 260 | ⚠️ **Gemma marked the controls but returned no steps** | First run: correct answer, `steps: []`, and the chat showed raw names ("press analyze-pdf"). The server now takes the steps from the `[[name]]` marks in the answer when the model lists none (still only names the sections contain), and the chat shows each mark as its label ("“Analyze PDF button”") |
+
 ---
 
 ## 🟠 Design decisions with no owner yet

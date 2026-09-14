@@ -203,7 +203,7 @@ class HelpCopilotTest extends TestCase
         $this->ask('An arrival notice came in, where do I put it?')
             ->assertOk()
             ->assertJsonPath('found', true)
-            ->assertJsonPath('answer', 'Open the job, click job-documents, then upload-document.')
+            ->assertJsonPath('answer', 'Open the job, click [[job-documents]], then [[upload-document]].')
             ->assertJsonPath('page', null)
             ->assertJsonPath('steps', [
                 ['target' => 'job-documents', 'instruction' => 'Open Documents'],
@@ -216,6 +216,25 @@ class HelpCopilotTest extends TestCase
 
         $this->assertSame(1, DB::table('help_questions')->where('found', true)->count());
         $this->assertSame(['help', 'help'], DB::table('llm_usage_logs')->where('purpose', 'help')->pluck('purpose')->all());
+    }
+
+    /** Measured: Gemma marked the controls in its answer and returned no steps — they come from the answer. */
+    public function test_steps_come_from_the_answer_when_the_model_lists_none(): void
+    {
+        $this->fakeOpenRouter();
+        $this->upload();
+        $this->fakeOpenRouter([
+            'found' => true, 'page' => '/jobs', 'steps' => [],
+            'answer' => 'Open the job and click [[job-documents]]. Then press [[upload-document]]. Do not press [[made-up]].',
+        ]);
+
+        $this->ask('An arrival notice came in, where do I put it?')
+            ->assertOk()
+            ->assertJsonPath('steps', [
+                ['target' => 'job-documents', 'instruction' => 'Open the job and click [[job-documents]].'],
+                ['target' => 'upload-document', 'instruction' => 'Then press [[upload-document]].'],
+            ])
+            ->assertJsonPath('answer', 'Open the job and click [[job-documents]]. Then press [[upload-document]]. Do not press made-up.');
     }
 
     /** 🔴 Nothing close enough: the model is not called, and the reply offers a ticket. */

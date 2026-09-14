@@ -14,8 +14,12 @@ CONFIG_FILE_PATH = str(CURRENT_DIR / "boxes_config.json")
 
 # Import your pre-existing logic -- this loads ONCE at startup
 # and stays resident in memory forever.
-from extract_awb_new import extract_all_boxes
+from extract_awb_new import _iata_patterns, extract_all_boxes
 from unstructured import extract_from_images, extract_from_text
+
+# ⚠️ Built at startup, not on the first document: compiling the 8,383 airport-name patterns takes
+# ~0.6 s, which the first invoice after a restart would otherwise pay.
+_iata_patterns()
 
 # Setup structured logging
 logging.basicConfig(

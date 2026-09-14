@@ -57,7 +57,7 @@
 
           <p v-if="t.pending" class="fx-muted">Looking in the help documents…</p>
           <template v-else>
-            <p class="fx-help__answer" :class="{ 'fx-help__answer--unsure': !t.found }">{{ t.answer }}</p>
+            <p class="fx-help__answer" :class="{ 'fx-help__answer--unsure': !t.found }">{{ readable(t.answer) }}</p>
 
             <div class="fx-help__actions">
               <!-- A page the documents named, not one the model made up (the server checks it). -->
@@ -98,6 +98,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { HELP_TARGETS } from "@/core/config/helpTargets";
 
 /**
  * The help copilot (PRD §5.10, user decisions 2026-09-14).
@@ -264,7 +265,7 @@ export default {
         showProgress: steps.length > 1,
         steps: steps.map((s, i) => ({
           element: selector(s),
-          popover: { title: "Step " + (i + 1), description: s.instruction },
+          popover: { title: "Step " + (i + 1), description: this.readable(s.instruction) },
         })),
       }).drive();
     },
@@ -276,6 +277,13 @@ export default {
         await new Promise((r) => setTimeout(r, 200));
       }
       return [];
+    },
+    /** `[[analyze-pdf]]` → "Analyze PDF button": the control's label from the list writers use. */
+    readable(text) {
+      return String(text || "").replace(/\[\[([a-z0-9-]+)\]\]/gi, (m, name) => {
+        const target = HELP_TARGETS.find((t) => t.name === name.toLowerCase());
+        return target ? "“" + target.label + "”" : name;
+      });
     },
     raiseTicket() {
       const transcript = this.turns.filter((t) => !t.pending).map((t) => ({ question: t.question, answer: t.answer || "" }));

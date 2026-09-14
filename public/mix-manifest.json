@@ -2,6 +2,7 @@
     "/js/app.js": "/js/app.js",
     "/js/manifest.js": "/js/manifest.js",
     "/js/chunk/html2canvas.js": "/js/chunk/html2canvas.js?id=c61ccfc5e165caf4",
+    "/js/chunk/driver.js": "/js/chunk/driver.js?id=f6e58a12c39ee0a9",
     "/js/chunk/pdfjs.js": "/js/chunk/pdfjs.js?id=c86c9c724923a86e",
     "/js/chunk/pdfjs-worker.js": "/js/chunk/pdfjs-worker.js?id=00e5b99dde4d7629",
     "/vendor.css": "/vendor.css",

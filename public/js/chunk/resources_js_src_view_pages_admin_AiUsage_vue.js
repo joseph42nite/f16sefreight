@@ -206,6 +206,37 @@ var render = function render() {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
+  }, [_vm._v("Per-user daily help questions")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.form.per_user_daily_questions,
+      expression: "form.per_user_daily_questions",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "number",
+      min: "0"
+    },
+    domProps: {
+      value: _vm.form.per_user_daily_questions
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "per_user_daily_questions", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
   }, [_vm._v("₹ per US$ (for showing cost)")]), _vm._v(" "), _c("input", {
     directives: [{
       name: "model",

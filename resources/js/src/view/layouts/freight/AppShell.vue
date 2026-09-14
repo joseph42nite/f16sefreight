@@ -45,7 +45,8 @@
 
         <div class="fx-header__spacer"></div>
 
-        <VisualReporter />
+        <HelpAssistant @raise-ticket="$refs.reporter.reportWithConversation($event)" />
+        <VisualReporter ref="reporter" />
         <BellPanel />
 
         <span class="fx-header__who">
@@ -66,10 +67,11 @@ import { visibleNavFor } from "@/core/config/navigation";
 import { LOAD_CONTEXT } from "@/core/services/store/context.module";
 import BellPanel from "@/view/pages/freight/components/BellPanel.vue";
 import VisualReporter from "@/view/pages/freight/components/VisualReporter.vue";
+import HelpAssistant from "@/view/pages/freight/components/HelpAssistant.vue";
 
 export default {
   name: "AppShell",
-  components: { BellPanel, VisualReporter },
+  components: { BellPanel, HelpAssistant, VisualReporter },
   data: () => ({ collapsed: false }),
   /* The shell is the first thing that needs to know who is looking at it, so a session
      that arrived without a stored context recovers here rather than drawing a rail with

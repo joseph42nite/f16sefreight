@@ -6,7 +6,7 @@
       the conversation changes. A single-pane inbox that navigates away and back loses
       scroll position on every decision.
     -->
-    <aside class="fx-inbox__folders" aria-label="Folders">
+    <aside class="fx-inbox__folders" aria-label="Folders" data-help="inbox-folders">
       <button
         v-for="f in folders"
         :key="f.key"
@@ -79,6 +79,7 @@
               v-if="!active.assigned_ops"
               class="fx-btn"
               :disabled="busy"
+              data-help="claim-thread"
               @click="claim"
             >Claim</button>
 
@@ -86,7 +87,7 @@
               §8.1 role forbids -> HIDDEN. Only pricing re-classifies; operations reads
               and claims. A disabled dropdown would just invite "why can't I?" tickets.
             -->
-            <select v-if="canTriage" v-model="pending" class="fx-input" :disabled="busy" @change="classify">
+            <select v-if="canTriage" v-model="pending" class="fx-input" :disabled="busy" data-help="thread-classification" @change="classify">
               <option v-for="c in CLASSIFICATIONS" :key="c" :value="c">{{ c.replace(/_/g, " ") }}</option>
             </select>
 
@@ -108,9 +109,9 @@
             <!-- ⚠️ Hidden, not disabled, on a non-enquiry thread. A greyed button invites
                  a click and then explains nothing; the workspace already says which
                  classification unlocks the work, for anyone who opens it. -->
-            <button v-if="workspaceTabs.length" class="fx-btn" @click="openExtraction">Analyze PDF</button>
+            <button v-if="workspaceTabs.length" class="fx-btn" data-help="analyze-pdf" @click="openExtraction">Analyze PDF</button>
 
-            <button class="fx-btn fx-btn--primary" @click="openWorkspace">Open workspace</button>
+            <button class="fx-btn fx-btn--primary" data-help="open-workspace" @click="openWorkspace">Open workspace</button>
           </div>
         </header>
 
@@ -152,7 +153,7 @@
               virus-scanned and kept only when someone opens one. A PDF can go straight into
               Extraction, beside the mail that carried it.
             -->
-            <ul v-if="m.attachments && m.attachments.length" class="fx-attachments">
+            <ul v-if="m.attachments && m.attachments.length" class="fx-attachments" data-help="mail-attachments">
               <li v-for="a in m.attachments" :key="a.id" class="fx-attachment">
                 <button
                   type="button"
@@ -186,9 +187,9 @@
         -->
         <section v-if="messages.length" class="fx-compose">
           <div v-if="!composing" class="fx-compose__actions">
-            <button class="fx-btn fx-btn--primary" @click="compose('reply')">Reply</button>
-            <button class="fx-btn" @click="compose('replyAll')">Reply all</button>
-            <button class="fx-btn" @click="compose('forward')">Forward</button>
+            <button class="fx-btn fx-btn--primary" data-help="reply" @click="compose('reply')">Reply</button>
+            <button class="fx-btn" data-help="reply-all" @click="compose('replyAll')">Reply all</button>
+            <button class="fx-btn" data-help="forward" @click="compose('forward')">Forward</button>
           </div>
 
           <template v-else>
@@ -205,13 +206,13 @@
               <input v-model="draft.subject" class="fx-input" />
             </label>
             <!-- 🔴 PRD §5.2.4: eight formatting controls, email-safe HTML, cleaned again on the server. -->
-            <MailEditor v-model="draft.body" />
+            <MailEditor v-model="draft.body" data-help="compose-editor" />
 
             <!--
               The signature comes from Settings → Mailboxes and is added by the server, so it
               cannot be mangled per message. The switch turns it off for one email.
             -->
-            <label class="fx-checkbox fx-compose__signature-switch">
+            <label class="fx-checkbox fx-compose__signature-switch" data-help="add-signature">
               <input v-model="draft.includeSignature" type="checkbox" />
               <span>Add signature</span>
             </label>
@@ -227,7 +228,7 @@
               together; every upload is virus-scanned by the server before it leaves.
             -->
             <div class="fx-compose__attach">
-              <button type="button" class="fx-btn" :disabled="sending" @click="$refs.attachPicker.click()">📎 Attach files</button>
+              <button type="button" class="fx-btn" :disabled="sending" data-help="attach-files" @click="$refs.attachPicker.click()">📎 Attach files</button>
               <input ref="attachPicker" type="file" multiple class="fx-drop__input" @change="onAttach" />
 
               <div v-if="threadAttachments.length" class="fx-multi">
@@ -265,7 +266,7 @@
             </p>
 
             <div class="fx-compose__actions">
-              <button class="fx-btn fx-btn--primary" :disabled="sending || !draft.to.trim() || !draft.body || attachedBytes > ATTACHMENT_CAP_BYTES" @click="send">
+              <button class="fx-btn fx-btn--primary" :disabled="sending || !draft.to.trim() || !draft.body || attachedBytes > ATTACHMENT_CAP_BYTES" data-help="send-mail" @click="send">
                 {{ sending ? "Sending…" : "Send" }}
               </button>
               <button class="fx-btn" :disabled="sending" @click="composing = false">Cancel</button>

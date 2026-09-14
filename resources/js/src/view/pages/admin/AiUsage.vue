@@ -52,6 +52,10 @@
             <input v-model.number="form.per_user_daily_limit" type="number" min="0" class="fx-input" />
           </label>
           <label class="fx-field">
+            <span class="fx-field__label">Per-user daily help questions</span>
+            <input v-model.number="form.per_user_daily_questions" type="number" min="0" class="fx-input" />
+          </label>
+          <label class="fx-field">
             <span class="fx-field__label">₹ per US$ (for showing cost)</span>
             <input v-model.number="form.usd_to_inr" type="number" min="1" step="0.5" class="fx-input" />
           </label>

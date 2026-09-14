@@ -21,6 +21,26 @@
     </router-link>
 
     <router-link
+      to="/superadmin/help-documents"
+      v-slot="{ href, navigate, isActive, isExactActive }"
+     >
+      <li
+        aria-haspopup="true"
+        data-menu-toggle="hover"
+        class="menu-item"
+        :class="[
+          isActive && 'menu-item-active',
+          isExactActive && 'menu-item-active',
+        ]"
+      >
+        <a :href="href" class="menu-link" @click="navigate">
+          <i class="menu-icon fas fa-life-ring"></i>
+          <span class="menu-text">Help documents</span>
+        </a>
+      </li>
+    </router-link>
+
+    <router-link
       to="/superadmin/ai-usage"
       v-slot="{ href, navigate, isActive, isExactActive }"
      >

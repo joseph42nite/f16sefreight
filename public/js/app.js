@@ -10319,6 +10319,13 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       // Platform reference data: prefix, name and domain, curated once for every
       // tenant rather than re-keyed by each branch.
       // What Gemma 4 on OpenRouter costs: the month against the budget, and the per-user limit.
+      path: "help-documents",
+      name: "superadmin-help-documents",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_admin_HelpDocuments_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/HelpDocuments.vue */ "./resources/js/src/view/pages/admin/HelpDocuments.vue")),
+      meta: {
+        userType: 'superadmin'
+      }
+    }, {
       path: "ai-usage",
       name: "superadmin-ai-usage",
       component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_admin_AiUsage_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/AiUsage.vue */ "./resources/js/src/view/pages/admin/AiUsage.vue")),

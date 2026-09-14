@@ -11,11 +11,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_config_navigation__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/config/navigation */ "./resources/js/src/core/config/navigation.js");
 /* harmony import */ var _core_services_store_context_module__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/store/context.module */ "./resources/js/src/core/services/store/context.module.js");
 /* harmony import */ var _view_pages_freight_components_BellPanel_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/BellPanel.vue */ "./resources/js/src/view/pages/freight/components/BellPanel.vue");
 /* harmony import */ var _view_pages_freight_components_VisualReporter_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/VisualReporter.vue */ "./resources/js/src/view/pages/freight/components/VisualReporter.vue");
+/* harmony import */ var _view_pages_freight_components_HelpAssistant_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/HelpAssistant.vue */ "./resources/js/src/view/pages/freight/components/HelpAssistant.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -26,10 +27,12 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 
 
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "AppShell",
   components: {
     BellPanel: _view_pages_freight_components_BellPanel_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    HelpAssistant: _view_pages_freight_components_HelpAssistant_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
     VisualReporter: _view_pages_freight_components_VisualReporter_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
   },
   data: () => ({
@@ -41,7 +44,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
   created() {
     this.$store.dispatch(_core_services_store_context_module__WEBPACK_IMPORTED_MODULE_1__.LOAD_CONTEXT);
   },
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_4__.mapGetters)(["designation", "tier", "portal", "tierAtLeast"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_5__.mapGetters)(["designation", "tier", "portal", "tierAtLeast"])), {}, {
     nav() {
       return (0,_core_config_navigation__WEBPACK_IMPORTED_MODULE_0__.visibleNavFor)({
         designation: this.designation,
@@ -218,6 +221,145 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=script&lang=js":
+/*!******************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=script&lang=js ***!
+  \******************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+
+
+/**
+ * The help copilot (PRD §5.10, user decisions 2026-09-14).
+ *
+ * 🔴 Answers come only from the help documents F16s uploads; when they do not cover the question it
+ * says so and offers a ticket. "Show me" highlights the controls a document names as `[[name]]`
+ * (see core/config/helpTargets.js) — the server has already dropped any name the documents do not use.
+ */
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "HelpAssistant",
+  data: () => ({
+    open: false,
+    question: "",
+    busy: false,
+    turns: []
+  }),
+  methods: {
+    ask() {
+      const question = this.question.trim();
+      if (!question || this.busy) return;
+
+      // The last three answered turns, so "and where is that?" is understood.
+      const history = this.turns.filter(t => !t.pending && t.answered).slice(-3).map(t => ({
+        question: t.question,
+        answer: t.answer
+      }));
+      const turn = {
+        question,
+        pending: true,
+        found: false,
+        answer: "",
+        steps: [],
+        page: null,
+        note: null,
+        answered: false
+      };
+      this.turns.push(turn);
+      this.question = "";
+      this.busy = true;
+      this.scrollDown();
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/help/ask", {
+        question,
+        route: this.$route ? this.$route.path : null,
+        history
+      }).then(({
+        data
+      }) => Object.assign(turn, {
+        found: data.found,
+        answer: data.answer,
+        steps: data.steps || [],
+        page: data.page,
+        answered: true
+      })).catch(e => {
+        const d = e.response && e.response.data || {};
+        Object.assign(turn, {
+          found: false,
+          answer: d.error || "Help could not answer just now. Try again, or raise a ticket."
+        });
+      }).finally(() => {
+        turn.pending = false;
+        this.busy = false;
+        this.scrollDown();
+      });
+    },
+    onPage(page) {
+      return !!this.$route && this.$route.path.startsWith(page);
+    },
+    goTo(page) {
+      this.$router.push(page).catch(() => {});
+    },
+    /**
+     * The guided steps, on the page they belong to.
+     *
+     * ⚠️ A control can be on the page but not open yet — the Extraction panel lives in the workspace
+     * drawer — so steps whose control is not on screen are skipped, and the note says so.
+     */
+    async showMe(turn) {
+      if (turn.page && !this.onPage(turn.page)) {
+        await this.$router.push(turn.page).catch(() => {});
+      }
+      const selector = s => '[data-help="' + s.target + '"]';
+      const visible = await this.waitFor(turn.steps.map(selector));
+      const steps = turn.steps.filter(s => visible.includes(selector(s)));
+      turn.note = steps.length < turn.steps.length ? steps.length ? "Some steps are on a part of the page that is not open yet." : "Those controls are not on screen yet — open the part of the page the answer describes, then press Show me again." : null;
+      if (!steps.length) return;
+      const [{
+        driver
+      }] = await Promise.all([Promise.all(/*! import() | driver */[__webpack_require__.e("css/app"), __webpack_require__.e("driver")]).then(__webpack_require__.bind(__webpack_require__, /*! driver.js */ "./node_modules/driver.js/dist/driver.js.mjs")), Promise.all(/*! import() | driver */[__webpack_require__.e("css/app"), __webpack_require__.e("driver")]).then(__webpack_require__.bind(__webpack_require__, /*! driver.js/dist/driver.css */ "./node_modules/driver.js/dist/driver.css"))]);
+      this.open = false;
+      driver({
+        showProgress: steps.length > 1,
+        steps: steps.map((s, i) => ({
+          element: selector(s),
+          popover: {
+            title: "Step " + (i + 1),
+            description: s.instruction
+          }
+        }))
+      }).drive();
+    },
+    /** Selectors that are on screen, waiting up to ~3 s for a page that is still rendering. */
+    async waitFor(selectors) {
+      for (let i = 0; i < 15; i += 1) {
+        const found = selectors.filter(sel => document.querySelector(sel));
+        if (found.length === selectors.length || i === 14) return found;
+        await new Promise(r => setTimeout(r, 200));
+      }
+      return [];
+    },
+    raiseTicket() {
+      const transcript = this.turns.filter(t => !t.pending).map(t => ({
+        question: t.question,
+        answer: t.answer || ""
+      }));
+      this.open = false;
+      this.$emit("raise-ticket", transcript);
+    },
+    scrollDown() {
+      this.$nextTick(() => {
+        if (this.$refs.log) this.$refs.log.scrollTop = this.$refs.log.scrollHeight;
+      });
+    }
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/VisualReporter.vue?vue&type=script&lang=js":
 /*!*******************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/VisualReporter.vue?vue&type=script&lang=js ***!
@@ -278,12 +420,23 @@ function selectorFor(el) {
       element_selector: "",
       console_logs: []
     },
+    /** The help assistant's conversation, when the ticket was raised from it (PRD §5.10). */
+    transcript: [],
     highlighted: null
   }),
   beforeDestroy() {
     this.teardown();
   },
   methods: {
+    /**
+     * Raised from the help assistant: the same report, with the conversation attached.
+     *
+     * ⚠️ The page, element and logs are still captured by the browser, never written by the model.
+     */
+    reportWithConversation(transcript) {
+      this.transcript = (transcript || []).slice(-20);
+      this.startPicking();
+    },
     startPicking() {
       this.picking = true;
       document.body.classList.add("fx-picking");
@@ -347,7 +500,8 @@ function selectorFor(el) {
         route: this.captured.route,
         description: this.description,
         element_selector: this.captured.element_selector,
-        console_logs: this.captured.console_logs
+        console_logs: this.captured.console_logs,
+        help_transcript: this.transcript.length ? this.transcript : undefined
         /* The image is NOT posted: `support_tickets.screenshot_path` expects a path to
            object storage, and a multi-megabyte data URI in a VARCHAR(500) would be
            truncated into garbage. Upload lands with the storage decision — GAPS #35. */
@@ -371,6 +525,7 @@ function selectorFor(el) {
       this.shot = null;
       this.shotError = null;
       this.error = null;
+      this.transcript = [];
     }
   }
 });
@@ -452,7 +607,15 @@ var render = function render() {
     staticClass: "fx-portal-chip"
   }, [_vm._v("\n        " + _vm._s(_vm.portalGlyph) + " " + _vm._s(_vm.portal.label) + "\n      ")]) : _vm._e(), _vm._v(" "), _c("div", {
     staticClass: "fx-header__spacer"
-  }), _vm._v(" "), _c("VisualReporter"), _vm._v(" "), _c("BellPanel"), _vm._v(" "), _c("span", {
+  }), _vm._v(" "), _c("HelpAssistant", {
+    on: {
+      "raise-ticket": function ($event) {
+        return _vm.$refs.reporter.reportWithConversation($event);
+      }
+    }
+  }), _vm._v(" "), _c("VisualReporter", {
+    ref: "reporter"
+  }), _vm._v(" "), _c("BellPanel"), _vm._v(" "), _c("span", {
     staticClass: "fx-header__who"
   }, [_vm._v("\n        " + _vm._s(_vm.designation)), _vm.tier ? [_vm._v(" · " + _vm._s(_vm.tier))] : _vm._e()], 2)], 1), _vm._v(" "), _c("main", {
     staticClass: "fx-main",
@@ -668,6 +831,151 @@ render._withStripped = true;
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=template&id=ec86d528":
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=template&id=ec86d528 ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", {
+    staticClass: "fx-help"
+  }, [_c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    attrs: {
+      "aria-label": "Help assistant",
+      "data-help": "help-assistant",
+      "aria-expanded": String(_vm.open)
+    },
+    on: {
+      click: function ($event) {
+        _vm.open = !_vm.open;
+      }
+    }
+  }, [_vm._v("💬 Help")]), _vm._v(" "), _vm.open ? _c("section", {
+    staticClass: "fx-help__panel",
+    attrs: {
+      role: "dialog",
+      "aria-label": "Help assistant"
+    }
+  }, [_c("header", {
+    staticClass: "fx-help__head"
+  }, [_c("strong", [_vm._v("Help")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Ask how to do something in the portal")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    attrs: {
+      "aria-label": "Close help"
+    },
+    on: {
+      click: function ($event) {
+        _vm.open = false;
+      }
+    }
+  }, [_vm._v("✕")])]), _vm._v(" "), _c("ol", {
+    ref: "log",
+    staticClass: "fx-help__log"
+  }, [!_vm.turns.length ? _c("li", {
+    staticClass: "fx-muted fx-help__hint"
+  }, [_vm._v("\n        For example: “An arrival notice came in — where do I enter it?”\n      ")]) : _vm._e(), _vm._v(" "), _vm._l(_vm.turns, function (t, i) {
+    return _c("li", {
+      key: i,
+      staticClass: "fx-help__turn"
+    }, [_c("p", {
+      staticClass: "fx-help__question"
+    }, [_vm._v(_vm._s(t.question))]), _vm._v(" "), t.pending ? _c("p", {
+      staticClass: "fx-muted"
+    }, [_vm._v("Looking in the help documents…")]) : [_c("p", {
+      staticClass: "fx-help__answer",
+      class: {
+        "fx-help__answer--unsure": !t.found
+      }
+    }, [_vm._v(_vm._s(t.answer))]), _vm._v(" "), _c("div", {
+      staticClass: "fx-help__actions"
+    }, [t.page && !_vm.onPage(t.page) ? _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.goTo(t.page);
+        }
+      }
+    }, [_vm._v("Go to page")]) : _vm._e(), _vm._v(" "), t.steps && t.steps.length ? _c("button", {
+      staticClass: "fx-btn",
+      on: {
+        click: function ($event) {
+          return _vm.showMe(t);
+        }
+      }
+    }, [_vm._v("Show me")]) : _vm._e(), _vm._v(" "), !t.found ? _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: _vm.raiseTicket
+      }
+    }, [_vm._v("Raise a ticket")]) : _vm._e()]), _vm._v(" "), t.note ? _c("p", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(t.note))]) : _vm._e()]], 2);
+  })], 2), _vm._v(" "), _c("form", {
+    staticClass: "fx-help__ask",
+    on: {
+      submit: function ($event) {
+        $event.preventDefault();
+        return _vm.ask.apply(null, arguments);
+      }
+    }
+  }, [_c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.question,
+      expression: "question"
+    }],
+    staticClass: "fx-input fx-help__input",
+    attrs: {
+      rows: "2",
+      maxlength: "1000",
+      placeholder: "Type your question",
+      disabled: _vm.busy
+    },
+    domProps: {
+      value: _vm.question
+    },
+    on: {
+      keydown: function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        if ($event.ctrlKey || $event.shiftKey || $event.altKey || $event.metaKey) return null;
+        $event.preventDefault();
+        return _vm.ask.apply(null, arguments);
+      },
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.question = $event.target.value;
+      }
+    }
+  }), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.question.trim()
+    }
+  }, [_vm._v("Ask")])]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--ghost fx-help__ticket",
+    on: {
+      click: _vm.raiseTicket
+    }
+  }, [_vm._v("Still stuck? Raise a ticket")])]) : _vm._e()]);
+};
+var staticRenderFns = [];
+render._withStripped = true;
+
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/VisualReporter.vue?vue&type=template&id=4c94b482":
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/VisualReporter.vue?vue&type=template&id=4c94b482 ***!
@@ -685,7 +993,8 @@ var render = function render() {
   return _c("div", [!_vm.picking && !_vm.form ? _c("button", {
     staticClass: "fx-btn fx-btn--ghost fx-reporter__launch",
     attrs: {
-      "aria-label": "Report a problem"
+      "aria-label": "Report a problem",
+      "data-help": "report-problem"
     },
     on: {
       click: _vm.startPicking
@@ -729,7 +1038,7 @@ var render = function render() {
     staticClass: "identifier"
   }, [_vm._v(_vm._s(_vm.captured.route))]), _vm._v(" "), _c("dt", [_vm._v("Element")]), _vm._v(" "), _c("dd", {
     staticClass: "identifier"
-  }, [_vm._v(_vm._s(_vm.captured.element_selector || "—"))]), _vm._v(" "), _c("dt", [_vm._v("Console")]), _vm._v(" "), _c("dd", [_vm._v(_vm._s(_vm.captured.console_logs.length) + " recent entries")]), _vm._v(" "), _c("dt", [_vm._v("Screenshot")]), _vm._v(" "), _c("dd", [_vm._v(_vm._s(_vm.shot ? "attached" : _vm.shotError || "not captured"))])]), _vm._v(" "), _vm.shot ? _c("img", {
+  }, [_vm._v(_vm._s(_vm.captured.element_selector || "—"))]), _vm._v(" "), _c("dt", [_vm._v("Console")]), _vm._v(" "), _c("dd", [_vm._v(_vm._s(_vm.captured.console_logs.length) + " recent entries")]), _vm._v(" "), _c("dt", [_vm._v("Screenshot")]), _vm._v(" "), _c("dd", [_vm._v(_vm._s(_vm.shot ? "attached" : _vm.shotError || "not captured"))]), _vm._v(" "), _vm.transcript.length ? [_c("dt", [_vm._v("Help conversation")]), _vm._v(" "), _c("dd", [_vm._v(_vm._s(_vm.transcript.length) + " question(s) attached")])] : _vm._e()], 2), _vm._v(" "), _vm.shot ? _c("img", {
     staticClass: "fx-reporter__shot",
     attrs: {
       src: _vm.shot,
@@ -886,6 +1195,44 @@ component.options.__file = "resources/js/src/view/pages/freight/components/BellP
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/components/HelpAssistant.vue":
+/*!**************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/HelpAssistant.vue ***!
+  \**************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _HelpAssistant_vue_vue_type_template_id_ec86d528__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./HelpAssistant.vue?vue&type=template&id=ec86d528 */ "./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=template&id=ec86d528");
+/* harmony import */ var _HelpAssistant_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./HelpAssistant.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=script&lang=js");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+;
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _HelpAssistant_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _HelpAssistant_vue_vue_type_template_id_ec86d528__WEBPACK_IMPORTED_MODULE_0__.render,
+  _HelpAssistant_vue_vue_type_template_id_ec86d528__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/freight/components/HelpAssistant.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/components/VisualReporter.vue":
 /*!***************************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/components/VisualReporter.vue ***!
@@ -954,6 +1301,21 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=script&lang=js":
+/*!**************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=script&lang=js ***!
+  \**************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_HelpAssistant_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./HelpAssistant.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_HelpAssistant_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/components/VisualReporter.vue?vue&type=script&lang=js":
 /*!***************************************************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/components/VisualReporter.vue?vue&type=script&lang=js ***!
@@ -997,6 +1359,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_BellPanel_vue_vue_type_template_id_039dade0__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_BellPanel_vue_vue_type_template_id_039dade0__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./BellPanel.vue?vue&type=template&id=039dade0 */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/BellPanel.vue?vue&type=template&id=039dade0");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=template&id=ec86d528":
+/*!********************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=template&id=ec86d528 ***!
+  \********************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_HelpAssistant_vue_vue_type_template_id_ec86d528__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_HelpAssistant_vue_vue_type_template_id_ec86d528__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_HelpAssistant_vue_vue_type_template_id_ec86d528__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./HelpAssistant.vue?vue&type=template&id=ec86d528 */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/HelpAssistant.vue?vue&type=template&id=ec86d528");
 
 
 /***/ }),

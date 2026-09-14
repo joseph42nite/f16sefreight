@@ -15,7 +15,7 @@
     <section class="fx-extract__step">
       <h3 class="fx-extract__h">Extract into</h3>
 
-      <div class="fx-extract__target">
+      <div class="fx-extract__target" data-help="extract-into">
         <label v-for="t in TARGETS" :key="t.key" class="fx-radio">
           <input type="radio" :value="t.key" v-model="target" />
           <span>{{ t.label }}</span>
@@ -60,6 +60,7 @@
       -->
       <div
         class="fx-drop fx-drop--slim is-clickable"
+        data-help="choose-files"
         :class="{ 'is-over': dragging }"
         role="button"
         tabindex="0"
@@ -171,6 +172,7 @@
               <button
                 v-if="doc.state === 'staged'"
                 class="fx-btn"
+                data-help="extract-document"
                 @click="extract(doc.uid)"
               >Extract</button>
               <button
@@ -199,7 +201,7 @@
                 Selectable while the document is still STAGED — you know an invoice carries
                 the parties without opening it. Only disabled mid-read.
               -->
-              <div class="fx-multi">
+              <div class="fx-multi" data-help="take-from-it">
                 <button
                   type="button"
                   class="fx-input fx-multi__button"
@@ -248,6 +250,7 @@
       -->
       <textarea
         v-model="pasted"
+        data-help="paste-text"
         class="fx-input fx-extract__paste"
         rows="5"
         :placeholder="PASTE_EXAMPLE"
@@ -267,7 +270,7 @@
     <section class="fx-extract__step">
       <h3 class="fx-extract__h">3 · What will be used</h3>
 
-      <table class="fx-table">
+      <table class="fx-table" data-help="what-will-be-used">
         <thead>
           <tr>
             <th scope="col">Field</th>
@@ -437,6 +440,7 @@
         <button
           class="fx-btn fx-btn--primary"
           :disabled="!canSave || saving"
+          data-help="save-draft"
           @click="saveDraft"
         >{{ saving ? "Saving…" : "Save as draft" }}</button>
 

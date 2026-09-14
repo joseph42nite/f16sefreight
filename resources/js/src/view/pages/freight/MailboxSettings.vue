@@ -80,6 +80,7 @@
             <span v-if="c.signature_source" class="fx-muted"> · {{ c.signature_source }}</span>
           </h3>
           <MailEditor
+            data-help="mailbox-signature"
             :value="signatures[c.id] || ''"
             @input="$set(signatures, c.id, $event)"
             @paste="$set(pastedInto, c.id, true)"
@@ -116,7 +117,7 @@
 
         <p v-if="connectError" class="fx-error" role="alert">{{ connectError }}</p>
 
-        <button class="fx-btn fx-btn--primary" :disabled="connecting" @click="connect('outlook')">
+        <button class="fx-btn fx-btn--primary" :disabled="connecting" data-help="connect-outlook" @click="connect('outlook')">
           {{ connecting ? "Opening Microsoft…" : "Connect Outlook / Microsoft 365" }}
         </button>
 

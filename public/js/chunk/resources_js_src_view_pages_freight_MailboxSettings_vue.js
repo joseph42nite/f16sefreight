@@ -231,6 +231,7 @@ var render = function render() {
       staticClass: "fx-muted"
     }, [_vm._v(" · " + _vm._s(c.signature_source))]) : _vm._e()]), _vm._v(" "), _c("MailEditor", {
       attrs: {
+        "data-help": "mailbox-signature",
         value: _vm.signatures[c.id] || ""
       },
       on: {
@@ -302,7 +303,8 @@ var render = function render() {
   }, [_vm._v(_vm._s(_vm.connectError))]) : _vm._e(), _vm._v(" "), _c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
-      disabled: _vm.connecting
+      disabled: _vm.connecting,
+      "data-help": "connect-outlook"
     },
     on: {
       click: function ($event) {

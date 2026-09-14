@@ -896,3 +896,22 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 
 /* Superadmin AI usage: the three limit fields side by side where there is room. */
 .fx-ai-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-3); margin-bottom: var(--space-3); max-width: 50rem; }
+
+/* The help assistant (PRD §5.10): a panel under the header, over the page, not a modal — the page
+   the question is about stays visible behind it. */
+.fx-help { position: relative; }
+.fx-help__panel { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; width: min(24rem, calc(100vw - 2rem));
+  display: flex; flex-direction: column; max-height: min(34rem, calc(100vh - 6rem));
+  background: var(--bg-raised); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12); }
+.fx-help__head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border); }
+.fx-help__head .fx-muted { flex: 1; font-size: .75rem; }
+.fx-help__log { list-style: none; margin: 0; padding: var(--space-3); overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: var(--space-3); }
+.fx-help__question { margin: 0 0 var(--space-1); font-weight: 600; font-size: .8125rem; }
+.fx-help__answer { margin: 0; white-space: pre-line; font-size: .8125rem; line-height: 1.5; }
+.fx-help__answer--unsure { color: var(--text-secondary); }
+.fx-help__actions { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-1); }
+.fx-help__ask { display: flex; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border); }
+.fx-help__input { flex: 1; min-width: 0; height: auto; padding: var(--space-1) var(--space-2); resize: none; font-family: inherit; }
+.fx-help__ticket { align-self: flex-start; margin: 0 var(--space-3) var(--space-2); font-size: .75rem; }

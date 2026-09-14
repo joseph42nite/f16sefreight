@@ -2162,7 +2162,8 @@ var render = function render() {
   }, [_c("aside", {
     staticClass: "fx-inbox__folders",
     attrs: {
-      "aria-label": "Folders"
+      "aria-label": "Folders",
+      "data-help": "inbox-folders"
     }
   }, _vm._l(_vm.folders, function (f) {
     return _c("button", {
@@ -2285,7 +2286,8 @@ var render = function render() {
   }, [!_vm.active.assigned_ops ? _c("button", {
     staticClass: "fx-btn",
     attrs: {
-      disabled: _vm.busy
+      disabled: _vm.busy,
+      "data-help": "claim-thread"
     },
     on: {
       click: _vm.claim
@@ -2299,7 +2301,8 @@ var render = function render() {
     }],
     staticClass: "fx-input",
     attrs: {
-      disabled: _vm.busy
+      disabled: _vm.busy,
+      "data-help": "thread-classification"
     },
     on: {
       change: [function ($event) {
@@ -2321,11 +2324,17 @@ var render = function render() {
     }, [_vm._v(_vm._s(c.replace(/_/g, " ")))]);
   }), 0) : _vm._e(), _vm._v(" "), _vm.workspaceTabs.length ? _c("button", {
     staticClass: "fx-btn",
+    attrs: {
+      "data-help": "analyze-pdf"
+    },
     on: {
       click: _vm.openExtraction
     }
   }, [_vm._v("Analyze PDF")]) : _vm._e(), _vm._v(" "), _c("button", {
     staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      "data-help": "open-workspace"
+    },
     on: {
       click: _vm.openWorkspace
     }
@@ -2374,7 +2383,10 @@ var render = function render() {
     }, [_vm._v("\n            to " + _vm._s(m.to || "—")), m.cc ? [_vm._v(" · cc " + _vm._s(m.cc))] : _vm._e()], 2), _vm._v(" "), _c("p", {
       staticClass: "fx-message__body"
     }, [_vm._v(_vm._s(m.body_snippet))]), _vm._v(" "), m.attachments && m.attachments.length ? _c("ul", {
-      staticClass: "fx-attachments"
+      staticClass: "fx-attachments",
+      attrs: {
+        "data-help": "mail-attachments"
+      }
     }, _vm._l(m.attachments, function (a) {
       return _c("li", {
         key: a.id,
@@ -2416,6 +2428,9 @@ var render = function render() {
     staticClass: "fx-compose__actions"
   }, [_c("button", {
     staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      "data-help": "reply"
+    },
     on: {
       click: function ($event) {
         return _vm.compose("reply");
@@ -2423,6 +2438,9 @@ var render = function render() {
     }
   }, [_vm._v("Reply")]), _vm._v(" "), _c("button", {
     staticClass: "fx-btn",
+    attrs: {
+      "data-help": "reply-all"
+    },
     on: {
       click: function ($event) {
         return _vm.compose("replyAll");
@@ -2430,6 +2448,9 @@ var render = function render() {
     }
   }, [_vm._v("Reply all")]), _vm._v(" "), _c("button", {
     staticClass: "fx-btn",
+    attrs: {
+      "data-help": "forward"
+    },
     on: {
       click: function ($event) {
         return _vm.compose("forward");
@@ -2505,6 +2526,9 @@ var render = function render() {
       }
     }
   })]), _vm._v(" "), _c("MailEditor", {
+    attrs: {
+      "data-help": "compose-editor"
+    },
     model: {
       value: _vm.draft.body,
       callback: function ($$v) {
@@ -2513,7 +2537,10 @@ var render = function render() {
       expression: "draft.body"
     }
   }), _vm._v(" "), _c("label", {
-    staticClass: "fx-checkbox fx-compose__signature-switch"
+    staticClass: "fx-checkbox fx-compose__signature-switch",
+    attrs: {
+      "data-help": "add-signature"
+    }
   }, [_c("input", {
     directives: [{
       name: "model",
@@ -2558,7 +2585,8 @@ var render = function render() {
     staticClass: "fx-btn",
     attrs: {
       type: "button",
-      disabled: _vm.sending
+      disabled: _vm.sending,
+      "data-help": "attach-files"
     },
     on: {
       click: function ($event) {
@@ -2647,7 +2675,8 @@ var render = function render() {
   }, [_c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
-      disabled: _vm.sending || !_vm.draft.to.trim() || !_vm.draft.body || _vm.attachedBytes > _vm.ATTACHMENT_CAP_BYTES
+      disabled: _vm.sending || !_vm.draft.to.trim() || !_vm.draft.body || _vm.attachedBytes > _vm.ATTACHMENT_CAP_BYTES,
+      "data-help": "send-mail"
     },
     on: {
       click: _vm.send
@@ -3431,7 +3460,10 @@ var render = function render() {
   }, [_c("h3", {
     staticClass: "fx-extract__h"
   }, [_vm._v("Extract into")]), _vm._v(" "), _c("div", {
-    staticClass: "fx-extract__target"
+    staticClass: "fx-extract__target",
+    attrs: {
+      "data-help": "extract-into"
+    }
   }, [_vm._l(_vm.TARGETS, function (t) {
     return _c("label", {
       key: t.key,
@@ -3539,6 +3571,7 @@ var render = function render() {
       "is-over": _vm.dragging
     },
     attrs: {
+      "data-help": "choose-files",
       role: "button",
       tabindex: "0"
     },
@@ -3642,6 +3675,9 @@ var render = function render() {
       }
     }, [_vm._v("looks scanned")]) : _vm._e()], 1), _vm._v(" "), _c("td", [doc.state === "staged" ? _c("button", {
       staticClass: "fx-btn",
+      attrs: {
+        "data-help": "extract-document"
+      },
       on: {
         click: function ($event) {
           return _vm.extract(doc.uid);
@@ -3667,7 +3703,10 @@ var render = function render() {
         }
       }
     }, [_vm._v("Remove")])]), _vm._v(" "), _c("td", [_c("div", {
-      staticClass: "fx-multi"
+      staticClass: "fx-multi",
+      attrs: {
+        "data-help": "take-from-it"
+      }
     }, [_c("button", {
       staticClass: "fx-input fx-multi__button",
       attrs: {
@@ -3730,6 +3769,7 @@ var render = function render() {
     }],
     staticClass: "fx-input fx-extract__paste",
     attrs: {
+      "data-help": "paste-text",
       rows: "5",
       placeholder: _vm.PASTE_EXAMPLE
     },
@@ -3749,7 +3789,10 @@ var render = function render() {
   }, [_c("h3", {
     staticClass: "fx-extract__h"
   }, [_vm._v("3 · What will be used")]), _vm._v(" "), _c("table", {
-    staticClass: "fx-table"
+    staticClass: "fx-table",
+    attrs: {
+      "data-help": "what-will-be-used"
+    }
   }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.fieldRows, function (row) {
     return _c("tr", {
       key: row.key
@@ -3926,7 +3969,8 @@ var render = function render() {
   }, [_c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
-      disabled: !_vm.canSave || _vm.saving
+      disabled: !_vm.canSave || _vm.saving,
+      "data-help": "save-draft"
     },
     on: {
       click: _vm.saveDraft

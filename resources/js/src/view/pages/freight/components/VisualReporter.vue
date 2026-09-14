@@ -6,6 +6,7 @@
       v-if="!picking && !form"
       class="fx-btn fx-btn--ghost fx-reporter__launch"
       aria-label="Report a problem"
+      data-help="report-problem"
       @click="startPicking"
     >⚑</button>
 
@@ -44,6 +45,10 @@
             <dd>{{ captured.console_logs.length }} recent entries</dd>
             <dt>Screenshot</dt>
             <dd>{{ shot ? "attached" : shotError || "not captured" }}</dd>
+            <template v-if="transcript.length">
+              <dt>Help conversation</dt>
+              <dd>{{ transcript.length }} question(s) attached</dd>
+            </template>
           </dl>
 
           <img v-if="shot" :src="shot" alt="Captured screenshot" class="fx-reporter__shot" />
@@ -125,12 +130,23 @@ export default {
     picking: false, form: false, busy: false, sent: false,
     description: "", error: null, shot: null, shotError: null,
     captured: { route: "", element_selector: "", console_logs: [] },
+    /** The help assistant's conversation, when the ticket was raised from it (PRD §5.10). */
+    transcript: [],
     highlighted: null,
   }),
   beforeDestroy() {
     this.teardown();
   },
   methods: {
+    /**
+     * Raised from the help assistant: the same report, with the conversation attached.
+     *
+     * ⚠️ The page, element and logs are still captured by the browser, never written by the model.
+     */
+    reportWithConversation(transcript) {
+      this.transcript = (transcript || []).slice(-20);
+      this.startPicking();
+    },
     startPicking() {
       this.picking = true;
       document.body.classList.add("fx-picking");
@@ -197,6 +213,7 @@ export default {
         description: this.description,
         element_selector: this.captured.element_selector,
         console_logs: this.captured.console_logs,
+        help_transcript: this.transcript.length ? this.transcript : undefined,
         /* The image is NOT posted: `support_tickets.screenshot_path` expects a path to
            object storage, and a multi-megabyte data URI in a VARCHAR(500) would be
            truncated into garbage. Upload lands with the storage decision — GAPS #35. */
@@ -221,6 +238,7 @@ export default {
       this.shot = null;
       this.shotError = null;
       this.error = null;
+      this.transcript = [];
     },
   },
 };

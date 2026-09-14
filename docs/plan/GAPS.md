@@ -1156,6 +1156,21 @@ notify party **"not on the document"**, and *"The mail said gross weight 480; th
 364.09, the description, no chargeable weight, both parties without their worked-out state and
 country, and no notify party.
 
+🟡 **User upload test, 2026-09-14 (jobs #14, #15, #16 — the real `Commercial Invoice.pdf`).** All
+three runs gave identical output; #16 took **416 s**, no model error. Cargo was right. Found, **not yet fixed**:
+
+| # | Found | Detail |
+|---|---|---|
+| 201 | 🔴 **A country printed in the party's own block is still left out of the draft** | The consignee block ends `Amman 11191 / Jordan`, yet `JO` is marked low like every model country and dropped. The panel still shows `Country: JO` in the value column — only the warning below says it will not be saved |
+| 202 | 🔴 **Consignee post code `11191` missed** | Printed as `P.O Box 9192 Amman 11191`. The box guard correctly dropped `9192`; the model never offered `11191` |
+| 203 | 🟡 **Both addresses truncated to one line** | Shipper lacks `MASJID ROAD, HMT P.O,`; consignee lacks `AL TAL ST.` (and the P.O Box). The model returns only the first address line |
+| 204 | 🟡 **`shipper.address` stored as `22 01 CEE PEE BUILDING`** | The coordinate-era `transform_address_box` (extract_awb_new.py) reads `702` in `22/702/01` as a PIN and strips it, and cuts addresses at 30 characters. The panel hides it by rebuilding from `full_details`; anything reading `address` directly gets the mangled value |
+| 205 | 🟡 **District shown as State** | `State: ERNAKULAM` appears in the panel value. It is not saved, but it reads as an accepted value. Kerala is written only in the bank's address (#199) |
+| 206 | 🟡 **Departure read as `IEC: AATCA6213H`** | Label anchoring on jumbled text; the port of loading is `NHAVA SHEVA`. Not shown in the panel, but stored on the job |
+| 207 | 🟡 **The route in the mail is not compared** | Mail: BOM → FRA, air. Invoice: Nhava Sheva → Umm Qasr **by sea**, final destination Iraq. `mailDeviations` only compares pieces and gross weight, so a document that may belong to another shipment raises no warning |
+| 208 | ⚪ **Upload only stages** | Dropping the file does not start extraction; Extract must be clicked. Two earlier runs (#14 at 14:29, #15 at 14:33) overlapped on Ollama |
+| 209 | ⚪ **`Delivery address/Buyer` (Dr. Ahmed Neamah, Baghdad) not taken** | Correct by the notify rule (the document never says "notify"), recorded so it is a decision, not an accident |
+
 ---
 
 ## 🟠 Design decisions with no owner yet

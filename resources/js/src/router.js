@@ -1,6 +1,7 @@
 import Vue from "vue";
 import store from "@/core/services/store";
 import { LANDING_ROUTE } from "@/core/config/navigation";
+import { mainSiteUrl, portalFromHost } from "@/core/config/portalHosts";
 import Router from "vue-router";
 Vue.use(Router);
 
@@ -30,85 +31,85 @@ const router = new Router({
           name: "userlogin",
           path: "/",
           component: () => import("@/view/pages/public/Home"),
-          meta: { logo: 'white' }
+          meta: { site: true, logo: 'white' }
         },
         {
           name: "About Us",
           path: "/about-us",
           component: () => import("@/view/pages/public/AboutUs"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Services",
           path: "/services",
           component: () => import("@/view/pages/public/Services"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Solutions",
           path: "/solutions",
           component: () => import("@/view/pages/public/Solutions"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Contact Us",
           path: "/contact-us",
           component: () => import("@/view/pages/public/ContactUs"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Scalable Architecture",
           path: "/scalable-architecture",
           component: () => import("@/view/pages/public/services/ScalableArchitecture"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Cloud Storage",
           path: "/cloud-storage",
           component: () => import("@/view/pages/public/services/CloudStorage"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Privacy",
           path: "/privacy",
           component: () => import("@/view/pages/public/legal/Privacy"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "End to End",
           path: "/end-to-end",
           component: () => import("@/view/pages/public/services/EndToEnd"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Product Description",
           path: "/product-description",
           component: () => import("@/view/pages/public/services/ProductDescription"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Blogs and News",
           path: "/blogs-and-news",
           component: () => import("@/view/pages/public/BlogsAndNews"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Blog Post",
           path: "/blog/:slug",
           component: () => import("@/view/pages/public/BlogPost"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Terms&Condition",
           path: "/terms-conditions",
           component: () => import("@/view/pages/public/legal/TermsAndConditions"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           name: "Privacy Policy",
           path: "/privacy-policy",
           component: () => import("@/view/pages/public/legal/PrivacyPolicy"),
-          meta: { logo: 'blue' }
+          meta: { site: true, logo: 'blue' }
         },
         {
           path: '/PasswordForgotForm/:token?/:email?/:userType?',
@@ -313,13 +314,13 @@ const router = new Router({
       path: "/joseph-ceo-938204719284",
       name: "Joseph CEO Card",
       component: () => import("@/view/pages/public/JosephCard.vue"),
-      meta: { logo: 'none' }
+      meta: { site: true, logo: 'none' }
     },
     {
       path: "/deepanjan-coo-839204817294",
       name: "Deepanjan COO Card",
       component: () => import("@/view/pages/public/DeepanjanCard.vue"),
-      meta: { logo: 'none' }
+      meta: { site: true, logo: 'none' }
     },
 
     //-----------Freight OS — the operational shell------------------------------
@@ -432,6 +433,15 @@ const router = new Router({
       ]
     },
 
+    //-----------A portal's own sign-in page ---------------------------------------
+    // focusair.<domain>, focussea.<domain>… open straight onto this, with nothing from the company website
+    // (user, 2026-09-15). The website lives on the main domain.
+    {
+      path: "/sign-in",
+      name: "portal-sign-in",
+      component: () => import("@/view/pages/public/PortalSignIn.vue"),
+    },
+
     {
       path: "*",
       redirect: "/404"
@@ -456,6 +466,32 @@ const router = new Router({
  * by the `portal` middleware and the role gates. Someone bypassing this guard reaches an
  * endpoint that refuses them — this only spares them the round trip.
  */
+/**
+ * A portal address is the portal only (user, 2026-09-15). On focusair.<domain> and the rest, "/" is the
+ * portal's sign-in page (or the app, once signed in) and a company website page goes to the main domain,
+ * so a portal never downloads the website.
+ */
+router.beforeEach((to, from, next) => {
+  const portal = portalFromHost(window.location.hostname);
+
+  if (!portal) {
+    // The main domain has no portal sign-in page of its own: its header's Sign In asks which portal.
+    return to.name === "portal-sign-in" ? next({ path: "/", query: { signin: "1" } }) : next();
+  }
+
+  const home = portal === "superadmin" ? "/superadmin/all-users" : LANDING_ROUTE[store.getters.designation] || "/focus-air";
+
+  // Already signed in: the sign-in page is the app.
+  if (to.name === "portal-sign-in") return store.getters.isAuthenticated ? next(home) : next();
+
+  if (!(to.meta && to.meta.site)) return next();
+
+  if (to.path === "/") return store.getters.isAuthenticated ? next(home) : next({ name: "portal-sign-in" });
+
+  window.location.href = mainSiteUrl(window.location, to.fullPath);
+  return next(false);
+});
+
 router.beforeEach((to, from, next) => {
   const meta = to.meta || {};
   if (!meta.designations && !meta.minTier) return next();

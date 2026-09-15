@@ -8830,6 +8830,85 @@ function visibleNavFor({
 
 /***/ }),
 
+/***/ "./resources/js/src/core/config/portalHosts.js":
+/*!*****************************************************!*\
+  !*** ./resources/js/src/core/config/portalHosts.js ***!
+  \*****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "SIGN_IN_PORTALS": () => (/* binding */ SIGN_IN_PORTALS),
+/* harmony export */   "mainSiteUrl": () => (/* binding */ mainSiteUrl),
+/* harmony export */   "portalFromHost": () => (/* binding */ portalFromHost),
+/* harmony export */   "portalSignInUrl": () => (/* binding */ portalSignInUrl)
+/* harmony export */ });
+/**
+ * Which portal a sign-in is for, and where that portal lives.
+ *
+ * 🔴 Each portal is its own subdomain (config/f16s.php `portals`): the server decides the portal from the
+ * HOST, and the sign-in token is stored per subdomain. So choosing a portal means signing in ON its
+ * subdomain — the password is only ever sent to the portal that was picked.
+ *
+ * The company website is only on the main domain; a portal address is that portal's sign-in and app.
+ *
+ * Superadmin is deliberately not offered (user, 2026-09-15): F16s staff sign in at superadmin.<domain>.
+ * FocusRoad has no screens yet (PRD §11), so it is not offered either.
+ */
+const SIGN_IN_PORTALS = [{
+  key: "focusair",
+  label: "FocusAir",
+  note: "Air freight"
+}, {
+  key: "focussea",
+  label: "FocusSea",
+  note: "Sea freight"
+},
+// The ledger is a Command plan feature: a Tactical company has no Accounts portal (config/f16s.php min_tier).
+{
+  key: "accounts",
+  label: "Accounts",
+  note: "Command plan only"
+}, {
+  key: "admin",
+  label: "Tenant Admin",
+  note: "For the director"
+}];
+const ALL_PORTALS = ["focusair", "focussea", "focusroad", "accounts", "admin", "superadmin"];
+
+/** The portal a hostname names ("focussea.localhost" → "focussea"), or null for a bare host. */
+function portalFromHost(hostname) {
+  const first = String(hostname || "").split(".")[0].toLowerCase();
+  return ALL_PORTALS.includes(first) ? first : null;
+}
+
+/** The main domain behind any address: "focusair.f16sefreight.com" → "f16sefreight.com". */
+function mainDomain(location) {
+  const labels = String(location.hostname).split(".");
+  return portalFromHost(location.hostname) ? labels.slice(1).join(".") : labels.join(".");
+}
+function origin(location, host) {
+  return `${location.protocol}//${host}${location.port ? ":" + location.port : ""}`;
+}
+
+/**
+ * A portal's sign-in page: same protocol, domain and port, that portal's subdomain.
+ *
+ * @param {string} key a portal key
+ * @param {{protocol: string, hostname: string, port: string}} location window.location
+ */
+function portalSignInUrl(key, location) {
+  return `${origin(location, key + "." + mainDomain(location))}/sign-in`;
+}
+
+/** The same page on the company website, the main domain. */
+function mainSiteUrl(location, path = "/") {
+  return origin(location, mainDomain(location)) + path;
+}
+
+/***/ }),
+
 /***/ "./resources/js/src/core/plugins/bootstrap-vue.js":
 /*!********************************************************!*\
   !*** ./resources/js/src/core/plugins/bootstrap-vue.js ***!
@@ -10077,16 +10156,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
 /* harmony import */ var _core_services_store__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/store */ "./resources/js/src/core/services/store/index.js");
 /* harmony import */ var _core_config_navigation__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/config/navigation */ "./resources/js/src/core/config/navigation.js");
-/* harmony import */ var vue_router__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue-router */ "./node_modules/vue-router/dist/vue-router.esm.js");
+/* harmony import */ var _core_config_portalHosts__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/config/portalHosts */ "./resources/js/src/core/config/portalHosts.js");
+/* harmony import */ var vue_router__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vue-router */ "./node_modules/vue-router/dist/vue-router.esm.js");
 
 
 
 
-vue__WEBPACK_IMPORTED_MODULE_2__["default"].use(vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]);
-const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
+
+vue__WEBPACK_IMPORTED_MODULE_3__["default"].use(vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]);
+const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
   mode: "history",
   scrollBehavior: (to, from, savedPosition) => {
     if (savedPosition) {
@@ -10119,6 +10200,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_public_Home_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/Home */ "./resources/js/src/view/pages/public/Home.vue")),
       meta: {
+        site: true,
         logo: 'white'
       }
     }, {
@@ -10126,6 +10208,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/about-us",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_public_AboutUs_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/AboutUs */ "./resources/js/src/view/pages/public/AboutUs.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10133,6 +10216,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/services",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_public_Services_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/Services */ "./resources/js/src/view/pages/public/Services.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10140,6 +10224,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/solutions",
       component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_public_Solutions_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/Solutions */ "./resources/js/src/view/pages/public/Solutions.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10147,6 +10232,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/contact-us",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_public_ContactUs_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/ContactUs */ "./resources/js/src/view/pages/public/ContactUs.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10154,6 +10240,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/scalable-architecture",
       component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_public_services_ScalableArchitecture_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/services/ScalableArchitecture */ "./resources/js/src/view/pages/public/services/ScalableArchitecture.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10161,6 +10248,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/cloud-storage",
       component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_public_services_CloudStorage_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/services/CloudStorage */ "./resources/js/src/view/pages/public/services/CloudStorage.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10168,6 +10256,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/privacy",
       component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_public_legal_Privacy_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/legal/Privacy */ "./resources/js/src/view/pages/public/legal/Privacy.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10175,6 +10264,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/end-to-end",
       component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_public_services_EndToEnd_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/services/EndToEnd */ "./resources/js/src/view/pages/public/services/EndToEnd.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10182,6 +10272,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/product-description",
       component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_public_services_ProductDescription_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/services/ProductDescription */ "./resources/js/src/view/pages/public/services/ProductDescription.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10189,6 +10280,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/blogs-and-news",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_public_BlogsAndNews_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/BlogsAndNews */ "./resources/js/src/view/pages/public/BlogsAndNews.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10196,6 +10288,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/blog/:slug",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_public_BlogPost_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/BlogPost */ "./resources/js/src/view/pages/public/BlogPost.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10203,6 +10296,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/terms-conditions",
       component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_public_legal_TermsAndConditions_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/legal/TermsAndConditions */ "./resources/js/src/view/pages/public/legal/TermsAndConditions.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10210,6 +10304,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
       path: "/privacy-policy",
       component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_public_legal_PrivacyPolicy_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/legal/PrivacyPolicy */ "./resources/js/src/view/pages/public/legal/PrivacyPolicy.vue")),
       meta: {
+        site: true,
         logo: 'blue'
       }
     }, {
@@ -10443,6 +10538,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
     name: "Joseph CEO Card",
     component: () => Promise.all(/*! import() */[__webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_public_JosephCard_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/JosephCard.vue */ "./resources/js/src/view/pages/public/JosephCard.vue")),
     meta: {
+      site: true,
       logo: 'none'
     }
   }, {
@@ -10450,6 +10546,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
     name: "Deepanjan COO Card",
     component: () => Promise.all(/*! import() */[__webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_public_DeepanjanCard_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/DeepanjanCard.vue */ "./resources/js/src/view/pages/public/DeepanjanCard.vue")),
     meta: {
+      site: true,
       logo: 'none'
     }
   },
@@ -10596,6 +10693,14 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
         userType: 'user'
       }
     }]
+  },
+  //-----------A portal's own sign-in page ---------------------------------------
+  // focusair.<domain>, focussea.<domain>… open straight onto this, with nothing from the company website
+  // (user, 2026-09-15). The website lives on the main domain.
+  {
+    path: "/sign-in",
+    name: "portal-sign-in",
+    component: () => Promise.all(/*! import() */[__webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_public_PortalSignIn_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/public/PortalSignIn.vue */ "./resources/js/src/view/pages/public/PortalSignIn.vue"))
   }, {
     path: "*",
     redirect: "/404"
@@ -10618,6 +10723,33 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
  * by the `portal` middleware and the role gates. Someone bypassing this guard reaches an
  * endpoint that refuses them — this only spares them the round trip.
  */
+/**
+ * A portal address is the portal only (user, 2026-09-15). On focusair.<domain> and the rest, "/" is the
+ * portal's sign-in page (or the app, once signed in) and a company website page goes to the main domain,
+ * so a portal never downloads the website.
+ */
+router.beforeEach((to, from, next) => {
+  const portal = (0,_core_config_portalHosts__WEBPACK_IMPORTED_MODULE_2__.portalFromHost)(window.location.hostname);
+  if (!portal) {
+    // The main domain has no portal sign-in page of its own: its header's Sign In asks which portal.
+    return to.name === "portal-sign-in" ? next({
+      path: "/",
+      query: {
+        signin: "1"
+      }
+    }) : next();
+  }
+  const home = portal === "superadmin" ? "/superadmin/all-users" : _core_config_navigation__WEBPACK_IMPORTED_MODULE_1__.LANDING_ROUTE[_core_services_store__WEBPACK_IMPORTED_MODULE_0__["default"].getters.designation] || "/focus-air";
+
+  // Already signed in: the sign-in page is the app.
+  if (to.name === "portal-sign-in") return _core_services_store__WEBPACK_IMPORTED_MODULE_0__["default"].getters.isAuthenticated ? next(home) : next();
+  if (!(to.meta && to.meta.site)) return next();
+  if (to.path === "/") return _core_services_store__WEBPACK_IMPORTED_MODULE_0__["default"].getters.isAuthenticated ? next(home) : next({
+    name: "portal-sign-in"
+  });
+  window.location.href = (0,_core_config_portalHosts__WEBPACK_IMPORTED_MODULE_2__.mainSiteUrl)(window.location, to.fullPath);
+  return next(false);
+});
 router.beforeEach((to, from, next) => {
   const meta = to.meta || {};
   if (!meta.designations && !meta.minTier) return next();

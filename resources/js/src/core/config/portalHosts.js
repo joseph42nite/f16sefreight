@@ -5,6 +5,8 @@
  * HOST, and the sign-in token is stored per subdomain. So choosing a portal means signing in ON its
  * subdomain — the password is only ever sent to the portal that was picked.
  *
+ * The company website is only on the main domain; a portal address is that portal's sign-in and app.
+ *
  * Superadmin is deliberately not offered (user, 2026-09-15): F16s staff sign in at superadmin.<domain>.
  * FocusRoad has no screens yet (PRD §11), so it is not offered either.
  */
@@ -25,17 +27,27 @@ export function portalFromHost(hostname) {
   return ALL_PORTALS.includes(first) ? first : null;
 }
 
+/** The main domain behind any address: "focusair.f16sefreight.com" → "f16sefreight.com". */
+function mainDomain(location) {
+  const labels = String(location.hostname).split(".");
+  return portalFromHost(location.hostname) ? labels.slice(1).join(".") : labels.join(".");
+}
+
+function origin(location, host) {
+  return `${location.protocol}//${host}${location.port ? ":" + location.port : ""}`;
+}
+
 /**
- * The sign-in address on another portal: same protocol, domain and port, that portal's subdomain,
- * and `?signin=1` so the sign-in box opens there.
+ * A portal's sign-in page: same protocol, domain and port, that portal's subdomain.
  *
  * @param {string} key a portal key
  * @param {{protocol: string, hostname: string, port: string}} location window.location
  */
 export function portalSignInUrl(key, location) {
-  const labels = String(location.hostname).split(".");
-  const domain = portalFromHost(location.hostname) ? labels.slice(1).join(".") : labels.join(".");
-  const port = location.port ? ":" + location.port : "";
+  return `${origin(location, key + "." + mainDomain(location))}/sign-in`;
+}
 
-  return `${location.protocol}//${key}.${domain}${port}/?signin=1`;
+/** The same page on the company website, the main domain. */
+export function mainSiteUrl(location, path = "/") {
+  return origin(location, mainDomain(location)) + path;
 }

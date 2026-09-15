@@ -46,6 +46,8 @@ class AuthServiceProvider extends ServiceProvider
 
         // ── Enquiry lifecycle — pricing owns triage and conversion ───────────
         $this->define('triage',     ['pricing'], 'tactical');
+        // Adding a client and writing in its name and details (user, 2026-09-16) — not operations.
+        $this->define('editClients', ['pricing', 'sales', 'accounts', 'boss'], 'tactical');
 
         // Reading the branch's enquiry list: pricing works it, sales follows it read-only (user, 2026-09-15).
         $this->define('viewEnquiries', ['pricing', 'sales'], 'tactical');

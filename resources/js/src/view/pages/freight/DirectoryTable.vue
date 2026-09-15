@@ -106,13 +106,77 @@
       </button>
     </section>
 
+    <!--
+      Clients: add one, or write in and correct its details (user, 2026-09-16). On Tactical there are no accounts, so
+      no GSTIN, PAN, terms or credit limit — the domain is what is known, and the name is written in here.
+    -->
+    <button
+      v-if="endpoint === '/customers' && canEditClients && !client"
+      class="fx-btn fx-btn--primary fx-dir__add"
+      @click="editClient(null)"
+    >Add client</button>
+
+    <section v-if="client" class="fx-section fx-dir__form">
+      <div class="fx-dir__grid">
+        <label class="fx-field">
+          <span class="fx-field__label">Name</span>
+          <input v-model="client.name" class="fx-input" />
+        </label>
+        <label class="fx-field">
+          <span class="fx-field__label">Email domain</span>
+          <input v-model="client.email_domain" class="fx-input" placeholder="client.com" />
+        </label>
+        <label class="fx-field">
+          <span class="fx-field__label">Email</span>
+          <input v-model="client.email" class="fx-input" type="email" />
+        </label>
+        <label class="fx-field">
+          <span class="fx-field__label">Phone</span>
+          <input v-model="client.phone" class="fx-input" />
+        </label>
+        <template v-if="withAccounts">
+          <label class="fx-field">
+            <span class="fx-field__label">GSTIN</span>
+            <input v-model="client.gst_no" class="fx-input" />
+          </label>
+          <label class="fx-field">
+            <span class="fx-field__label">PAN</span>
+            <input v-model="client.pan_no" class="fx-input" />
+          </label>
+          <label class="fx-field">
+            <span class="fx-field__label">Terms (days)</span>
+            <input v-model="client.payment_terms_days" class="fx-input" type="number" min="0" />
+          </label>
+          <label class="fx-field">
+            <span class="fx-field__label">Credit limit (₹)</span>
+            <input v-model="client.credit_limit" class="fx-input" type="number" min="0" />
+          </label>
+        </template>
+      </div>
+      <label class="fx-field">
+        <span class="fx-field__label">Address</span>
+        <input v-model="client.address" class="fx-input" />
+      </label>
+
+      <p v-if="saveError" class="fx-error" role="alert">{{ saveError }}</p>
+      <div class="fx-toolbar">
+        <button class="fx-btn fx-btn--primary" :disabled="saving || !client.name" @click="saveClient">
+          {{ saving ? "Saving…" : client.id ? "Save changes" : "Add client" }}
+        </button>
+        <button class="fx-btn fx-btn--ghost" :disabled="saving" @click="client = null">Cancel</button>
+      </div>
+    </section>
+
     <p v-if="loading" class="fx-muted">Loading…</p>
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
     <p v-else-if="!rows.length" class="fx-muted">Nothing matches.</p>
 
     <table v-else class="fx-table">
       <thead>
-        <tr><th v-for="c in columns" :key="c.key" :class="{ 'fx-num': c.numeric }" scope="col">{{ c.label }}</th></tr>
+        <tr>
+          <th v-for="c in columns" :key="c.key" :class="{ 'fx-num': c.numeric }" scope="col">{{ c.label }}</th>
+          <th v-if="endpoint === '/customers' && canEditClients" scope="col"></th>
+        </tr>
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="row.id">
@@ -122,6 +186,9 @@
             <!-- §4.1 NULL is not zero, and an absent value is not an empty string. -->
             <span v-else class="is-empty" aria-label="Not recorded"></span>
           </td>
+          <td v-if="endpoint === '/customers' && canEditClients" class="fx-row-actions">
+            <button class="fx-btn fx-btn--ghost" @click="editClient(row)">Edit</button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -129,6 +196,7 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 
@@ -137,13 +205,13 @@ const SHAPES = {
     title: "Customers",
     subtitle:
       "Shared across every branch of this tenant. A client with several branches is several rows sharing one email domain — that pair is the group key.",
-    searchPlaceholder: "Name, domain or GSTIN…",
+    searchPlaceholder: "Name or domain…",
     columns: [
       { key: "name", label: "Name" },
       { key: "email_domain", label: "Domain", mono: true },
-      { key: "gst_no", label: "GSTIN", mono: true },
-      { key: "payment_terms_days", label: "Terms (days)", numeric: true, kind: "count" },
-      { key: "credit_limit", label: "Credit limit", numeric: true, kind: "currency" },
+      { key: "gst_no", label: "GSTIN", mono: true, accounts: true },
+      { key: "payment_terms_days", label: "Terms (days)", numeric: true, kind: "count", accounts: true },
+      { key: "credit_limit", label: "Credit limit", numeric: true, kind: "currency", accounts: true },
     ],
   },
   "/partners": {
@@ -168,15 +236,22 @@ export default {
   data: () => ({
     rows: [], types: [], loading: true, error: null, query: "", type: "", timer: null,
     adding: false, saving: false, saveError: null, copied: false, siblings: [],
+    /* The client being added or edited, and whether this company has accounts (Command) — the server says. */
+    client: null, withAccounts: false,
     form: { name: "", partner_type: "customs_broker", email: "", phone: "", address: "", gst_no: "", pan_no: "" },
   }),
   computed: {
+    ...mapGetters(["designation"]),
+    /** Mirrors the server's `editClients`. */
+    canEditClients() {
+      return ["pricing", "sales", "accounts", "boss"].indexOf(this.designation) !== -1;
+    },
     shape() {
       return SHAPES[this.endpoint];
     },
     title() { return this.shape.title; },
     subtitle() { return this.shape.subtitle; },
-    columns() { return this.shape.columns; },
+    columns() { return this.shape.columns.filter((c) => !c.accounts || this.withAccounts); },
     searchPlaceholder() { return this.shape.searchPlaceholder; },
   },
   created() {
@@ -242,6 +317,32 @@ export default {
         })
         .finally(() => { this.saving = false; });
     },
+    editClient(row) {
+      this.saveError = null;
+      this.client = row
+        ? { ...row }
+        : { name: "", email_domain: "", email: "", phone: "", address: "", gst_no: "", pan_no: "", payment_terms_days: "", credit_limit: "" };
+    },
+    saveClient() {
+      this.saving = true;
+      this.saveError = null;
+      const fields = ["name", "email_domain", "email", "phone", "address"]
+        .concat(this.withAccounts ? ["gst_no", "pan_no", "payment_terms_days", "credit_limit"] : []);
+      const body = {};
+      fields.forEach((f) => { body[f] = this.client[f] === "" ? null : this.client[f]; });
+
+      const request = this.client.id
+        ? ApiService.put("/customers/" + this.client.id, body)
+        : ApiService.post("/customers", body);
+
+      request
+        .then(() => { this.client = null; this.load(); })
+        .catch((e) => {
+          const d = (e.response && e.response.data) || {};
+          this.saveError = d.errors ? Object.values(d.errors).flat().join(" ") : (d.error || d.message || "Could not save.");
+        })
+        .finally(() => { this.saving = false; });
+    },
     /* Debounced so a search does not fire a request per keystroke. */
     debouncedLoad() {
       clearTimeout(this.timer);
@@ -254,7 +355,7 @@ export default {
       if (this.type) params.push("type=" + encodeURIComponent(this.type));
 
       ApiService.get(this.endpoint + (params.length ? "?" + params.join("&") : ""))
-        .then(({ data }) => { this.rows = data.data || []; this.error = null; })
+        .then(({ data }) => { this.rows = data.data || []; this.withAccounts = !!data.with_accounts; this.error = null; })
         .catch((e) => {
           const d = (e.response && e.response.data) || {};
           this.error = d.error || d.message || "Something went wrong.";

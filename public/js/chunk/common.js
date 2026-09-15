@@ -351,15 +351,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 const SHAPES = {
   "/customers": {
     title: "Customers",
     subtitle: "Shared across every branch of this tenant. A client with several branches is several rows sharing one email domain — that pair is the group key.",
-    searchPlaceholder: "Name, domain or GSTIN…",
+    searchPlaceholder: "Name or domain…",
     columns: [{
       key: "name",
       label: "Name"
@@ -370,17 +377,20 @@ const SHAPES = {
     }, {
       key: "gst_no",
       label: "GSTIN",
-      mono: true
+      mono: true,
+      accounts: true
     }, {
       key: "payment_terms_days",
       label: "Terms (days)",
       numeric: true,
-      kind: "count"
+      kind: "count",
+      accounts: true
     }, {
       key: "credit_limit",
       label: "Credit limit",
       numeric: true,
-      kind: "currency"
+      kind: "currency",
+      accounts: true
     }]
   },
   "/partners": {
@@ -431,6 +441,9 @@ const SHAPES = {
     saveError: null,
     copied: false,
     siblings: [],
+    /* The client being added or edited, and whether this company has accounts (Command) — the server says. */
+    client: null,
+    withAccounts: false,
     form: {
       name: "",
       partner_type: "customs_broker",
@@ -441,7 +454,11 @@ const SHAPES = {
       pan_no: ""
     }
   }),
-  computed: {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["designation"])), {}, {
+    /** Mirrors the server's `editClients`. */
+    canEditClients() {
+      return ["pricing", "sales", "accounts", "boss"].indexOf(this.designation) !== -1;
+    },
     shape() {
       return SHAPES[this.endpoint];
     },
@@ -452,12 +469,12 @@ const SHAPES = {
       return this.shape.subtitle;
     },
     columns() {
-      return this.shape.columns;
+      return this.shape.columns.filter(c => !c.accounts || this.withAccounts);
     },
     searchPlaceholder() {
       return this.shape.searchPlaceholder;
     }
-  },
+  }),
   created() {
     this.load();
     if (this.endpoint === "/partners") {
@@ -527,6 +544,39 @@ const SHAPES = {
         this.saving = false;
       });
     },
+    editClient(row) {
+      this.saveError = null;
+      this.client = row ? _objectSpread({}, row) : {
+        name: "",
+        email_domain: "",
+        email: "",
+        phone: "",
+        address: "",
+        gst_no: "",
+        pan_no: "",
+        payment_terms_days: "",
+        credit_limit: ""
+      };
+    },
+    saveClient() {
+      this.saving = true;
+      this.saveError = null;
+      const fields = ["name", "email_domain", "email", "phone", "address"].concat(this.withAccounts ? ["gst_no", "pan_no", "payment_terms_days", "credit_limit"] : []);
+      const body = {};
+      fields.forEach(f => {
+        body[f] = this.client[f] === "" ? null : this.client[f];
+      });
+      const request = this.client.id ? _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put("/customers/" + this.client.id, body) : _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/customers", body);
+      request.then(() => {
+        this.client = null;
+        this.load();
+      }).catch(e => {
+        const d = e.response && e.response.data || {};
+        this.saveError = d.errors ? Object.values(d.errors).flat().join(" ") : d.error || d.message || "Could not save.";
+      }).finally(() => {
+        this.saving = false;
+      });
+    },
     /* Debounced so a search does not fire a request per keystroke. */
     debouncedLoad() {
       clearTimeout(this.timer);
@@ -541,6 +591,7 @@ const SHAPES = {
         data
       }) => {
         this.rows = data.data || [];
+        this.withAccounts = !!data.with_accounts;
         this.error = null;
       }).catch(e => {
         const d = e.response && e.response.data || {};
@@ -2073,7 +2124,246 @@ var render = function render() {
     on: {
       click: _vm.save
     }
-  }, [_vm._v("\n      " + _vm._s(_vm.saving ? "Saving…" : "Save partner") + "\n    ")])]) : _vm._e(), _vm._v(" "), _vm.loading ? _c("p", {
+  }, [_vm._v("\n      " + _vm._s(_vm.saving ? "Saving…" : "Save partner") + "\n    ")])]) : _vm._e(), _vm._v(" "), _vm.endpoint === "/customers" && _vm.canEditClients && !_vm.client ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary fx-dir__add",
+    on: {
+      click: function ($event) {
+        return _vm.editClient(null);
+      }
+    }
+  }, [_vm._v("Add client")]) : _vm._e(), _vm._v(" "), _vm.client ? _c("section", {
+    staticClass: "fx-section fx-dir__form"
+  }, [_c("div", {
+    staticClass: "fx-dir__grid"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Name")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.client.name,
+      expression: "client.name"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.client.name
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.client, "name", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Email domain")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.client.email_domain,
+      expression: "client.email_domain"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "client.com"
+    },
+    domProps: {
+      value: _vm.client.email_domain
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.client, "email_domain", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Email")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.client.email,
+      expression: "client.email"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "email"
+    },
+    domProps: {
+      value: _vm.client.email
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.client, "email", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Phone")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.client.phone,
+      expression: "client.phone"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.client.phone
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.client, "phone", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _vm.withAccounts ? [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("GSTIN")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.client.gst_no,
+      expression: "client.gst_no"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.client.gst_no
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.client, "gst_no", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("PAN")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.client.pan_no,
+      expression: "client.pan_no"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.client.pan_no
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.client, "pan_no", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Terms (days)")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.client.payment_terms_days,
+      expression: "client.payment_terms_days"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "number",
+      min: "0"
+    },
+    domProps: {
+      value: _vm.client.payment_terms_days
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.client, "payment_terms_days", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Credit limit (₹)")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.client.credit_limit,
+      expression: "client.credit_limit"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "number",
+      min: "0"
+    },
+    domProps: {
+      value: _vm.client.credit_limit
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.client, "credit_limit", $event.target.value);
+      }
+    }
+  })])] : _vm._e()], 2), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Address")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.client.address,
+      expression: "client.address"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.client.address
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.client, "address", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _vm.saveError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.saveError))]) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.saving || !_vm.client.name
+    },
+    on: {
+      click: _vm.saveClient
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.saving ? "Saving…" : _vm.client.id ? "Save changes" : "Add client") + "\n      ")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    attrs: {
+      disabled: _vm.saving
+    },
+    on: {
+      click: function ($event) {
+        _vm.client = null;
+      }
+    }
+  }, [_vm._v("Cancel")])])]) : _vm._e(), _vm._v(" "), _vm.loading ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
     staticClass: "fx-error",
@@ -2084,7 +2374,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("Nothing matches.")]) : _c("table", {
     staticClass: "fx-table"
-  }, [_c("thead", [_c("tr", _vm._l(_vm.columns, function (c) {
+  }, [_c("thead", [_c("tr", [_vm._l(_vm.columns, function (c) {
     return _c("th", {
       key: c.key,
       class: {
@@ -2094,10 +2384,14 @@ var render = function render() {
         scope: "col"
       }
     }, [_vm._v(_vm._s(c.label))]);
-  }), 0)]), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+  }), _vm._v(" "), _vm.endpoint === "/customers" && _vm.canEditClients ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()], 2)]), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
     return _c("tr", {
       key: row.id
-    }, _vm._l(_vm.columns, function (c) {
+    }, [_vm._l(_vm.columns, function (c) {
       return _c("td", {
         key: c.key,
         class: [{
@@ -2115,7 +2409,16 @@ var render = function render() {
           "aria-label": "Not recorded"
         }
       })], 1);
-    }), 0);
+    }), _vm._v(" "), _vm.endpoint === "/customers" && _vm.canEditClients ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.editClient(row);
+        }
+      }
+    }, [_vm._v("Edit")])]) : _vm._e()], 2);
   }), 0)])]);
 };
 var staticRenderFns = [];

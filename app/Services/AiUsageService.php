@@ -80,8 +80,12 @@ class AiUsageService
      */
     public function log(array $usage, string $purpose, ?User $user = null, array $refs = []): void
     {
+        $context = $user ? UserContext::for($user) : null;
+
         DB::table('llm_usage_logs')->insert([
-            'agent_id'              => $user ? UserContext::for($user)->agentId : null,
+            'agent_id'              => $context?->agentId,
+            // The company the call is charged to — its monthly AI limit (CompanyAiBudget).
+            'company_id'            => $context?->companyId,
             'user_id'               => $user?->id,
             'enquiry_id'            => $refs['enquiry_id'] ?? null,
             'job_id'                => $refs['job_id'] ?? null,

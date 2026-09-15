@@ -23,23 +23,23 @@
           class="fx-input"
           type="search"
           placeholder="Name or domain…"
-          @keyup.enter="load"
+          @keyup.enter="search"
         />
       </label>
       <label class="fx-field">
         <span class="fx-field__label">Status</span>
         <!-- Server-side, like the client search: the list is paginated, so filtering the
              rows already fetched would hide matches sitting on the next page. -->
-        <select v-model="status" class="fx-input" @change="load">
+        <select v-model="status" class="fx-input" @change="search">
           <option value="">All</option>
           <option v-for="s in STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
         </select>
       </label>
-      <button class="fx-btn" @click="load">Search</button>
+      <button class="fx-btn" @click="search">Search</button>
       <button
         v-if="client || status"
         class="fx-btn fx-btn--ghost"
-        @click="client = ''; status = ''; load()"
+        @click="client = ''; status = ''; search()"
       >Clear</button>
     </div>
 
@@ -105,6 +105,13 @@
         </tr>
       </tbody>
     </table>
+
+    <!-- 50 a page, so a large branch never loads its whole history at once (user, 2026-09-15). -->
+    <nav v-if="lastPage > 1" class="fx-pager" aria-label="Enquiry pages">
+      <button class="fx-btn fx-btn--ghost" :disabled="loading || page <= 1" @click="goTo(page - 1)">← Previous</button>
+      <span class="fx-muted">Page {{ page }} of {{ lastPage }} · {{ total }} enquiries</span>
+      <button class="fx-btn fx-btn--ghost" :disabled="loading || page >= lastPage" @click="goTo(page + 1)">Next →</button>
+    </nav>
   </div>
 </template>
 
@@ -133,11 +140,12 @@ export default {
   name: "EnquiryBoard",
   components: { StatusChip, Figure },
   data: () => ({
-    client: "", status: "", rows: [], loading: true, error: null, busyId: null, STATUSES }),
+    client: "", status: "", rows: [], loading: true, error: null, busyId: null, STATUSES,
+    page: 1, lastPage: 1, total: 0 }),
   computed: {
     ...mapGetters(["portalLabel", "can"]),
     canConvert() {
-      // Mirrors the server gate. Convenience only — the API re-checks it.
+      // Mirrors the server gate. Convenience only — the API re-checks it. Sales read the list only.
       return this.can(["pricing"], "tactical");
     },
   },
@@ -145,17 +153,31 @@ export default {
     this.load();
   },
   methods: {
+    /** A new search starts again from the first page. */
+    search() {
+      this.page = 1;
+      this.load();
+    },
+    goTo(page) {
+      this.page = page;
+      this.load();
+      window.scrollTo(0, 0);
+    },
     load() {
       this.loading = true;
+      this.error = null;
       // The client filter is a server-side search across the customer record AND the
       // sending domain — see EnquiryController::index.
-      const q = [];
+      const q = ["page=" + this.page];
       if (this.client) q.push("client=" + encodeURIComponent(this.client));
       if (this.status) q.push("status=" + encodeURIComponent(this.status));
 
-      ApiService.get("/enquiries" + (q.length ? "?" + q.join("&") : ""))
+      ApiService.get("/enquiries?" + q.join("&"))
         .then(({ data }) => {
           this.rows = data.data || [];
+          this.page = data.current_page || 1;
+          this.lastPage = data.last_page || 1;
+          this.total = data.total || this.rows.length;
         })
         .catch((e) => {
           this.error = this.readable(e);

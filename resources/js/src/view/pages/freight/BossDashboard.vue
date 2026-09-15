@@ -8,6 +8,34 @@
       </p>
     </header>
 
+    <!--
+      AI use against the company's monthly limit, set by F16s (user, 2026-09-15). Help and email drafts pause
+      at 70% of today's budget so documents keep being read; at 100% the work continues without AI.
+    -->
+    <section v-if="ai" class="fx-section">
+      <h2 class="fx-section__title">AI use</h2>
+      <p v-if="!ai.has_limit" class="fx-muted">AI is not included for your company. Ask F16s to set an AI limit.</p>
+      <template v-else>
+        <div class="fx-tiles">
+          <div class="fx-tile">
+            <span class="fx-tile__label">This month's AI allowance</span>
+            <span class="fx-tile__value">{{ ai.used_month_percent }}% used</span>
+            <p class="fx-muted fx-tile__detail">{{ ai.days_left }} days left this month</p>
+          </div>
+          <div class="fx-tile">
+            <span class="fx-tile__label">Today's AI budget</span>
+            <span class="fx-tile__value">{{ ai.used_today_percent === null ? "—" : ai.used_today_percent + "% used" }}</span>
+            <p class="fx-muted fx-tile__detail">Help and drafts pause at {{ ai.other_uses_share_percent }}%</p>
+          </div>
+          <div class="fx-tile">
+            <span class="fx-tile__label">Read by AI this month</span>
+            <span class="fx-tile__value">{{ ai.month.documents }} documents</span>
+            <p class="fx-muted fx-tile__detail">{{ ai.month.help }} help questions · {{ ai.month.drafts }} email drafts</p>
+          </div>
+        </div>
+      </template>
+    </section>
+
     <!-- ── Cross-branch, cross-mode ─────────────────────────────────────── -->
     <section v-if="branches.length" class="fx-section">
       <h2 class="fx-section__title">
@@ -140,10 +168,12 @@ export default {
   data: () => ({
     periods: [], loading: true, error: null, grain: "month", basis: "fiscal",
     branches: [], modes: [], asOf: null, targets: null, branchesReason: null,
+    ai: null,
   }),
   created() {
     this.load();
     this.loadBranches();
+    ApiService.get("/ai-usage/company").then(({ data }) => { this.ai = data; }).catch(() => { this.ai = null; });
   },
   methods: {
     loadBranches() {

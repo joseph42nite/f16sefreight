@@ -34,6 +34,16 @@ class HelpController extends Controller
             return response()->json(['error' => 'Help is not set up yet. Raise a ticket and the support team will answer.', 'reason' => 'not_configured'], 503);
         }
 
+        $company = \App\Company::withoutGlobalScopes()->find(\App\Support\UserContext::for($user)->companyId);
+        $refusal = app(\App\Services\CompanyAiBudget::class)->refusal($company, 'help');
+
+        if ($refusal !== null) {
+            return response()->json([
+                'error' => 'Help is paused: ' . $refusal . '. Raise a ticket and the support team will answer.',
+                'reason' => 'ai_budget',
+            ], 429);
+        }
+
         if (! $usage->mayAsk($user->id)) {
             return response()->json([
                 'error' => "You've reached today's limit for help questions. Raise a ticket and the support team will answer.",

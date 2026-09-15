@@ -363,7 +363,7 @@ const router = new Router({
           path: "enquiries",
           name: "Enquiries",
           component: () => import("@/view/pages/freight/EnquiryBoard"),
-          meta: { userType: 'user', designations: ['pricing'], minTier: 'tactical' }
+          meta: { userType: 'user', designations: ['pricing', 'sales'], minTier: 'tactical' }
         },
         {
           path: "kanban",

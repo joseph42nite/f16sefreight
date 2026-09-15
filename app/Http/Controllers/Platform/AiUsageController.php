@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Platform;
 
 use App\Http\Controllers\Controller;
+use App\Company;
 use App\Services\AiUsageService;
+use App\Services\CompanyAiBudget;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +17,7 @@ use Illuminate\Support\Facades\DB;
  */
 class AiUsageController extends Controller
 {
-    public function __construct(private AiUsageService $usage)
+    public function __construct(private AiUsageService $usage, private CompanyAiBudget $budget)
     {
     }
 
@@ -25,15 +27,7 @@ class AiUsageController extends Controller
         $rate = (float) $settings->usd_to_inr;
         $since = now()->startOfMonth();
 
-        $byCompany = DB::table('llm_usage_logs as l')
-            ->leftJoin('agents_info as a', 'a.id', '=', 'l.agent_id')
-            ->leftJoin('companies as c', 'c.id', '=', 'a.company_id')
-            ->where('l.created_at', '>=', $since)
-            ->groupBy('c.id', 'c.name')
-            ->orderByRaw('SUM(l.cost_usd) DESC')
-            ->get(['c.id', 'c.name', DB::raw('COUNT(*) AS calls'), DB::raw('SUM(l.cost_usd) AS cost_usd')])
-            ->map(fn ($r) => ['company' => $r->name ?? 'No branch', 'calls' => (int) $r->calls,
-                              'cost_inr' => round((float) $r->cost_usd * $rate, 2)]);
+        $byCompany = $this->companies($rate, $since);
 
         $byUser = DB::table('llm_usage_logs as l')
             ->leftJoin('users as u', 'u.id', '=', 'l.user_id')
@@ -78,6 +72,39 @@ class AiUsageController extends Controller
             'by_provider' => $byProvider,
             'tiers'       => ['economy' => $tierShape('economy'), 'fast' => $tierShape('fast')],
         ]);
+    }
+
+    /**
+     * Every company with its AI use this month by kind, its monthly limit, and today's rolling budget
+     * (CompanyAiBudget). Tenant companies only — calls with no company are F16s's own help indexing.
+     */
+    private function companies(float $rate, $since)
+    {
+        $use = DB::table('llm_usage_logs')->where('created_at', '>=', $since)->whereNotNull('company_id')
+            ->groupBy('company_id')
+            ->get(['company_id', DB::raw('COUNT(*) AS calls'), DB::raw('SUM(cost_usd) AS cost_usd'),
+                   DB::raw("SUM(purpose IN ('text', 'vision')) AS documents"), DB::raw("SUM(purpose = 'help') AS help"),
+                   DB::raw("SUM(purpose = 'sales_draft') AS drafts")])
+            ->keyBy('company_id');
+
+        return Company::withoutGlobalScopes()->orderBy('name')->get()->map(function (Company $c) use ($use, $rate) {
+            $u = $use[$c->id] ?? null;
+
+            return ['id' => $c->id, 'company' => $c->name, 'tier' => $c->tier,
+                'calls' => (int) ($u->calls ?? 0), 'cost_inr' => round((float) ($u->cost_usd ?? 0) * $rate, 2),
+                'documents' => (int) ($u->documents ?? 0), 'help' => (int) ($u->help ?? 0), 'drafts' => (int) ($u->drafts ?? 0),
+                'budget' => $this->budget->status($c)];
+        })->sortByDesc('cost_inr')->values();
+    }
+
+    /** Set a company's monthly AI limit in ₹, or clear it (NULL) to follow the plan. */
+    public function updateCompanyLimit(Request $request, int $company): JsonResponse
+    {
+        $data = $request->validate(['ai_monthly_limit_inr' => ['nullable', 'numeric', 'min:0', 'max:10000000']]);
+
+        Company::withoutGlobalScopes()->findOrFail($company)->update(['ai_monthly_limit_inr' => $data['ai_monthly_limit_inr']]);
+
+        return $this->index();
     }
 
     public function updateSettings(Request $request): JsonResponse

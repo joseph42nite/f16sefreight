@@ -75,17 +75,55 @@
         <span v-if="saved" class="fx-muted"> Saved.</span>
       </section>
 
+      <!--
+        Per company (user, 2026-09-15): what AI each customer used this month, against its monthly limit.
+        Today's budget = (limit − spent before today) ÷ days left. Help and drafts stop at 70 % of it;
+        extraction may use the whole day; at 100 % AI stops and the work continues without it.
+      -->
       <section class="fx-section">
         <h2 class="fx-section__title">By customer</h2>
-        <p v-if="!data.by_company.length" class="fx-muted">No AI calls this month.</p>
-        <table v-else class="fx-table">
-          <thead><tr><th scope="col">Customer</th><th scope="col" class="fx-num">Calls</th><th scope="col" class="fx-num">Cost</th></tr></thead>
-          <tbody>
-            <tr v-for="c in data.by_company" :key="c.company">
-              <td>{{ c.company }}</td><td class="fx-num">{{ c.calls }}</td><td class="fx-num">₹{{ inr(c.cost_inr) }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <p class="fx-muted">
+          Monthly AI limit per customer — empty follows the plan (Tactical ₹500, Command ₹2,000, Core none).
+          Help questions and email drafts pause at 70% of today's budget so documents keep being read.
+        </p>
+        <div class="fx-table-wrap">
+          <table class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Customer</th>
+                <th scope="col" class="fx-num">Documents</th>
+                <th scope="col" class="fx-num">Help</th>
+                <th scope="col" class="fx-num">Drafts</th>
+                <th scope="col" class="fx-num">Spent this month</th>
+                <th scope="col" class="fx-num">Today</th>
+                <th scope="col">Monthly limit (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="c in data.by_company" :key="c.id">
+                <td>{{ c.company }} <span class="fx-muted">· {{ c.tier }}</span></td>
+                <td class="fx-num">{{ c.documents }}</td>
+                <td class="fx-num">{{ c.help }}</td>
+                <td class="fx-num">{{ c.drafts }}</td>
+                <td class="fx-num" :class="{ 'fx-error': c.budget.used_month_percent >= 100 }">
+                  ₹{{ inr(c.budget.spent_month) }}
+                  <span class="fx-muted">{{ c.budget.used_month_percent === null ? "" : "· " + c.budget.used_month_percent + "%" }}</span>
+                </td>
+                <td class="fx-num">
+                  ₹{{ inr(c.budget.spent_today) }} of ₹{{ inr(c.budget.today_budget) }}
+                </td>
+                <td>
+                  <input
+                    v-model="limits[c.id]"
+                    type="number" min="0" step="100" class="fx-input fx-ai-limit"
+                    :placeholder="'Plan: ' + inr(c.budget.limit)"
+                    @change="saveLimit(c)"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section class="fx-section">
@@ -126,7 +164,7 @@ import ApiService from "@/core/services/api.service";
 
 export default {
   name: "AiUsage",
-  data: () => ({ data: null, loading: true, error: null, saving: false, saved: false, form: {} }),
+  data: () => ({ data: null, loading: true, error: null, saving: false, saved: false, form: {}, limits: {} }),
   created() {
     this.load();
   },
@@ -141,7 +179,15 @@ export default {
     apply(data) {
       this.data = data;
       this.form = { ...data.settings };
+      // Only an override shows in the box; an empty box follows the plan (the placeholder says how much).
+      this.limits = Object.fromEntries(data.by_company.map((c) => [c.id, c.budget.overridden ? c.budget.limit : ""]));
       this.error = null;
+    },
+    saveLimit(c) {
+      const value = this.limits[c.id];
+      ApiService.put(`/superadmin/ai-usage/companies/${c.id}/limit`, { ai_monthly_limit_inr: value === "" || value === null ? null : Number(value) })
+        .then(({ data }) => { this.apply(data); })
+        .catch((e) => { this.error = this.readable(e); });
     },
     save() {
       this.saving = true;
@@ -161,3 +207,8 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.fx-ai-limit { width: 9rem; }
+.fx-table-wrap { overflow-x: auto; }
+</style>

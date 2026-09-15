@@ -61,11 +61,14 @@ const STATUSES = [{
     loading: true,
     error: null,
     busyId: null,
-    STATUSES
+    STATUSES,
+    page: 1,
+    lastPage: 1,
+    total: 0
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)(["portalLabel", "can"])), {}, {
     canConvert() {
-      // Mirrors the server gate. Convenience only — the API re-checks it.
+      // Mirrors the server gate. Convenience only — the API re-checks it. Sales read the list only.
       return this.can(["pricing"], "tactical");
     }
   }),
@@ -73,17 +76,31 @@ const STATUSES = [{
     this.load();
   },
   methods: {
+    /** A new search starts again from the first page. */
+    search() {
+      this.page = 1;
+      this.load();
+    },
+    goTo(page) {
+      this.page = page;
+      this.load();
+      window.scrollTo(0, 0);
+    },
     load() {
       this.loading = true;
+      this.error = null;
       // The client filter is a server-side search across the customer record AND the
       // sending domain — see EnquiryController::index.
-      const q = [];
+      const q = ["page=" + this.page];
       if (this.client) q.push("client=" + encodeURIComponent(this.client));
       if (this.status) q.push("status=" + encodeURIComponent(this.status));
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/enquiries" + (q.length ? "?" + q.join("&") : "")).then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/enquiries?" + q.join("&")).then(({
         data
       }) => {
         this.rows = data.data || [];
+        this.page = data.current_page || 1;
+        this.lastPage = data.last_page || 1;
+        this.total = data.total || this.rows.length;
       }).catch(e => {
         this.error = this.readable(e);
       }).finally(() => {
@@ -153,7 +170,7 @@ var render = function render() {
     on: {
       keyup: function ($event) {
         if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
-        return _vm.load.apply(null, arguments);
+        return _vm.search.apply(null, arguments);
       },
       input: function ($event) {
         if ($event.target.composing) return;
@@ -181,7 +198,7 @@ var render = function render() {
           return val;
         });
         _vm.status = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
-      }, _vm.load]
+      }, _vm.search]
     }
   }, [_c("option", {
     attrs: {
@@ -197,7 +214,7 @@ var render = function render() {
   })], 2)]), _vm._v(" "), _c("button", {
     staticClass: "fx-btn",
     on: {
-      click: _vm.load
+      click: _vm.search
     }
   }, [_vm._v("Search")]), _vm._v(" "), _vm.client || _vm.status ? _c("button", {
     staticClass: "fx-btn fx-btn--ghost",
@@ -205,7 +222,7 @@ var render = function render() {
       click: function ($event) {
         _vm.client = "";
         _vm.status = "";
-        _vm.load();
+        _vm.search();
       }
     }
   }, [_vm._v("Clear")]) : _vm._e()]), _vm._v(" "), _vm.loading ? _c("p", {
@@ -269,7 +286,34 @@ var render = function render() {
         }
       }
     }, [_vm._v("\n            " + _vm._s(_vm.busyId === row.id ? "Converting…" : "Confirm shipment") + "\n          ")]) : _vm._e()])]);
-  }), 0)])]);
+  }), 0)]), _vm._v(" "), _vm.lastPage > 1 ? _c("nav", {
+    staticClass: "fx-pager",
+    attrs: {
+      "aria-label": "Enquiry pages"
+    }
+  }, [_c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    attrs: {
+      disabled: _vm.loading || _vm.page <= 1
+    },
+    on: {
+      click: function ($event) {
+        return _vm.goTo(_vm.page - 1);
+      }
+    }
+  }, [_vm._v("← Previous")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Page " + _vm._s(_vm.page) + " of " + _vm._s(_vm.lastPage) + " · " + _vm._s(_vm.total) + " enquiries")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    attrs: {
+      disabled: _vm.loading || _vm.page >= _vm.lastPage
+    },
+    on: {
+      click: function ($event) {
+        return _vm.goTo(_vm.page + 1);
+      }
+    }
+  }, [_vm._v("Next →")])]) : _vm._e()]);
 };
 var staticRenderFns = [function () {
   var _vm = this,

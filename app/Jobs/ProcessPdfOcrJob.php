@@ -224,7 +224,8 @@ class ProcessPdfOcrJob implements ShouldQueue
             return 'no credits left — add credits to read documents with AI';
         }
 
-        return null;
+        // The company's AI budget (user, 2026-09-15) — extraction may use the whole day.
+        return app(\App\Services\CompanyAiBudget::class)->refusal($company, 'text');
     }
 
     /** The paying company, through the user's branch — never the legacy `users.company_name`. */

@@ -187,6 +187,8 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     // How reps respond to suggested client emails — sent, dismissed and why — to improve the suggestions.
     Route::get('/suggestion-feedback', [\App\Http\Controllers\Platform\SuggestionFeedbackController::class, 'index']);
     Route::put('/ai-usage/settings', [\App\Http\Controllers\Platform\AiUsageController::class, 'updateSettings']);
+    // A company's monthly AI limit in ₹; null follows the plan (user, 2026-09-15).
+    Route::put('/ai-usage/companies/{company}/limit', [\App\Http\Controllers\Platform\AiUsageController::class, 'updateCompanyLimit'])->whereNumber('company');
 
     // ── The help library the copilot answers from: one .md or .docx per page ──
     Route::get('/help-documents', [\App\Http\Controllers\Platform\HelpDocumentController::class, 'index']);
@@ -388,6 +390,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/sales/actions', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'actions']);
     Route::get('/sales/accounts', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'accounts']);
     // Client emails: findings from the client's own trends, drafted by Gemma, sent by the rep (PRD §7.3.7).
+    // The Boss's view of the company's AI use against its limit (user, 2026-09-15).
+    Route::get('/ai-usage/company', [\App\Http\Controllers\Freight\CompanyAiUsageController::class, 'show']);
     Route::get('/sales/outreach', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'index']);
     Route::get('/sales/outreach/dismissed', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'dismissed']);
     Route::post('/sales/outreach/{id}/draft', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'draft'])->whereNumber('id');

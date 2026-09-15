@@ -24,6 +24,9 @@ use Illuminate\Support\Facades\DB;
  */
 class EnquiryController extends Controller
 {
+    /** Enquiries per page on every enquiry list. */
+    private const PAGE_SIZE = 50;
+
     public function __construct(
         private readonly EnquirySequenceService $sequences,
         private readonly AuditLogger $audit,
@@ -33,8 +36,8 @@ class EnquiryController extends Controller
     public function index(Request $request): JsonResponse
     {
         // The Kanban's unassigned pool is for whoever claims work, and claiming is `viewInbox` (pricing and
-        // operations — PRD §5.5 "anyone to claim"). Every other enquiry list stays pricing's.
-        $this->authorize($request->boolean('unclaimed') ? 'viewInbox' : 'triage');
+        // operations — PRD §5.5 "anyone to claim"). The list itself: pricing, and sales read-only.
+        $this->authorize($request->boolean('unclaimed') ? 'viewInbox' : 'viewEnquiries');
 
         $context = UserContext::for(auth()->user());
 
@@ -78,7 +81,8 @@ class EnquiryController extends Controller
                 }))
             ->with('customer:id,name,email_domain')
             ->latest()
-            ->paginate(50);
+            // 🔴 50 a page, never the whole branch (user, 2026-09-15: "so our server is not overloaded").
+            ->paginate(self::PAGE_SIZE);
 
         // 🔴 WHO the enquiry is from, at the grain each tier can act on.
         //
@@ -88,23 +92,28 @@ class EnquiryController extends Controller
         //              handle to nothing; and where no customer was ever onboarded the
         //              sending DOMAIN is the honest label rather than a blank.
         $isCommand = $context->tierAtLeast('command');
+        // Tactical sales see a client by its domain, never its name (PRD §2.3.3).
+        $namesHidden = $context->designation === 'sales' && ! $isCommand;
 
-        $enquiries->getCollection()->transform(function ($enquiry) use ($isCommand) {
-            $domain = $this->senderDomainFor($enquiry);
+        // One query each for the page's threads and sender domains — not two per row.
+        $ids = $enquiries->getCollection()->pluck('id');
+        $threads = DB::table('email_threads')->whereIn('enquiry_id', $ids)->pluck('id', 'enquiry_id');
+        $domains = $this->senderDomainsFor($ids);
 
-            $enquiry->client_label = $enquiry->customer->name ?? $domain;
+        $enquiries->getCollection()->transform(function ($enquiry) use ($isCommand, $namesHidden, $threads, $domains) {
+            $domain = $domains[$enquiry->id] ?? null;
+
             $enquiry->client_domain = $enquiry->customer->email_domain ?? $domain;
+            $enquiry->client_label = $namesHidden ? $enquiry->client_domain : ($enquiry->customer->name ?? $domain);
 
             // ⚠️ The THREAD is what gets claimed, so the pool needs its id to offer the
             // button. Claiming from the board and claiming from the inbox are the same
             // act writing the same column — not two mechanisms that must be kept in step.
-            $enquiry->thread_id = DB::table('email_threads')
-                ->where('enquiry_id', $enquiry->id)
-                ->value('id');
+            $enquiry->thread_id = $threads[$enquiry->id] ?? null;
 
             // ⚠️ Below Command the id is REMOVED, not merely unused. A tier that cannot
             // open a customer record has no business carrying a key to one.
-            if (! $isCommand) {
+            if (! $isCommand || $namesHidden) {
                 $enquiry->makeHidden('customer');
                 $enquiry->customer_id = null;
             }
@@ -122,18 +131,22 @@ class EnquiryController extends Controller
      * `enquiries` would be a second place for the same fact to drift — an enquiry created
      * by hand has no thread and therefore, correctly, no domain.
      */
-    private function senderDomainFor(Enquiry $enquiry): ?string
+    private function senderDomainsFor($enquiryIds): array
     {
-        $from = DB::table('email_threads as t')
+        // The first inbound sender on each enquiry's conversation.
+        return DB::table('email_threads as t')
             ->join('email_messages as m', 'm.thread_key', '=', 't.thread_key')
-            ->where('t.enquiry_id', $enquiry->id)
+            ->whereIn('t.enquiry_id', $enquiryIds)
             ->where('m.direction', 'inbound')
             ->orderBy('m.received_at')
-            ->value('m.from');
+            ->get(['t.enquiry_id', 'm.from'])
+            ->unique('enquiry_id')
+            ->mapWithKeys(function ($r) {
+                $at = strrpos((string) $r->from, '@');
 
-        $at = $from === null ? false : strrpos($from, '@');
-
-        return $at === false ? null : strtolower(substr($from, $at + 1));
+                return [$r->enquiry_id => $at === false ? null : strtolower(rtrim(substr($r->from, $at + 1), '>'))];
+            })
+            ->all();
     }
 
     /**

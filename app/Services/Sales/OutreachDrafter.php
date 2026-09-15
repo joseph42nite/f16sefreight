@@ -100,6 +100,12 @@ class OutreachDrafter
             return null;
         }
 
+        // The company's AI budget: past today's share for drafts, the plain template is used instead.
+        $company = \App\Company::withoutGlobalScopes()->find(\App\Support\UserContext::for($rep)->companyId);
+        if (app(\App\Services\CompanyAiBudget::class)->refusal($company, 'sales_draft') !== null) {
+            return null;
+        }
+
         $packet = json_encode(['client' => $client, 'facts' => $facts], JSON_UNESCAPED_UNICODE);
 
         try {

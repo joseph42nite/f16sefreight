@@ -171,6 +171,19 @@ class OcrController extends Controller
 
         $user = Auth::user();
 
+        // A scan read by AI spends the company's AI budget too; refused before a credit is reserved.
+        if ($data['decision'] === VisionConsentService::ACCEPT) {
+            $company = \App\Company::withoutGlobalScopes()->find(\App\Support\UserContext::for($user)->companyId);
+            $refusal = app(\App\Services\CompanyAiBudget::class)->refusal($company, 'vision');
+
+            if ($refusal !== null) {
+                return response()->json([
+                    'status' => false, 'job_id' => $extraction->id, 'job_status' => $extraction->status,
+                    'reason' => 'ai_budget', 'error' => ucfirst($refusal) . '. No credit was spent.',
+                ], 422);
+            }
+        }
+
         $result = $data['decision'] === VisionConsentService::ACCEPT
             ? $consent->accept($extraction, $user)
             : $consent->decline($extraction, $user);

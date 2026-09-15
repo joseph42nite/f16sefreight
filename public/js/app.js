@@ -8695,11 +8695,13 @@ const NAV_ITEMS = [
   icon: "columns",
   designations: ["pricing", "operations"],
   minTier: "tactical"
-}, {
+},
+// Sales follow the branch's enquiries read-only (user, 2026-09-15).
+{
   path: "/enquiries",
   label: "Enquiries",
   icon: "list-ul",
-  designations: ["pricing"],
+  designations: ["pricing", "sales"],
   minTier: "tactical"
 },
 // ── Document forms — the only surface Core sees ──────────────────────────
@@ -10424,7 +10426,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
     }, {
       path: "ai-usage",
       name: "superadmin-ai-usage",
-      component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_admin_AiUsage_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/AiUsage.vue */ "./resources/js/src/view/pages/admin/AiUsage.vue")),
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_admin_AiUsage_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/AiUsage.vue */ "./resources/js/src/view/pages/admin/AiUsage.vue")),
       meta: {
         userType: 'superadmin'
       }
@@ -10599,7 +10601,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_EnquiryBoard_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/EnquiryBoard */ "./resources/js/src/view/pages/freight/EnquiryBoard.vue")),
       meta: {
         userType: 'user',
-        designations: ['pricing'],
+        designations: ['pricing', 'sales'],
         minTier: 'tactical'
       }
     }, {

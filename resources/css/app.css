@@ -485,6 +485,9 @@ body {
 .fx-outreach__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .fx-outreach__why { margin: 0; font-size: .8125rem; color: var(--text-secondary); flex: 1; }
 .fx-outreach__actions { display: flex; gap: var(--space-2); }
+/* Previous / next under a paged list. */
+.fx-pager { display: flex; align-items: center; justify-content: center; gap: var(--space-3); margin-top: var(--space-3); flex-wrap: wrap; }
+
 .fx-outreach__note { font-size: .75rem; margin: 0 0 var(--space-2); }
 .fx-outreach__dismiss { display: flex; flex-direction: column; gap: var(--space-2); }
 .fx-outreach__history { margin-top: var(--space-3); font-size: .8125rem; }

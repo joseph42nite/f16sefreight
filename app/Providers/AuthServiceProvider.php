@@ -47,6 +47,9 @@ class AuthServiceProvider extends ServiceProvider
         // ── Enquiry lifecycle — pricing owns triage and conversion ───────────
         $this->define('triage',     ['pricing'], 'tactical');
 
+        // Reading the branch's enquiry list: pricing works it, sales follows it read-only (user, 2026-09-15).
+        $this->define('viewEnquiries', ['pricing', 'sales'], 'tactical');
+
         // 🔴 SEPARATE from `triage`, deliberately. Re-classifying a thread is the one
         // place a human tells the system its regex was wrong, and the people who read the
         // mail are the ones who know — primarily pricing and operations, and sales for

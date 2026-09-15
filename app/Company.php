@@ -18,6 +18,8 @@ class Company extends Model
         'name', 'code', 'tier', 'email_domain',
         'ocr_credits_balance', 'ocr_credits_monthly_allowance', 'ocr_credits_limit',
         'templates_config', 'in_testing_mode',
+        // NULL follows the plan (config/f16s.php ai_monthly_limit_inr).
+        'ai_monthly_limit_inr',
     ];
 
     protected $casts = [

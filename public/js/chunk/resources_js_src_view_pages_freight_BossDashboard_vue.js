@@ -30,11 +30,19 @@ __webpack_require__.r(__webpack_exports__);
     modes: [],
     asOf: null,
     targets: null,
-    branchesReason: null
+    branchesReason: null,
+    ai: null
   }),
   created() {
     this.load();
     this.loadBranches();
+    _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/ai-usage/company").then(({
+      data
+    }) => {
+      this.ai = data;
+    }).catch(() => {
+      this.ai = null;
+    });
   },
   methods: {
     loadBranches() {
@@ -87,7 +95,39 @@ __webpack_require__.r(__webpack_exports__);
 var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
-  return _c("div", [_vm._m(0), _vm._v(" "), _vm.branches.length ? _c("section", {
+  return _c("div", [_vm._m(0), _vm._v(" "), _vm.ai ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("AI use")]), _vm._v(" "), !_vm.ai.has_limit ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("AI is not included for your company. Ask F16s to set an AI limit.")]) : [_c("div", {
+    staticClass: "fx-tiles"
+  }, [_c("div", {
+    staticClass: "fx-tile"
+  }, [_c("span", {
+    staticClass: "fx-tile__label"
+  }, [_vm._v("This month's AI allowance")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-tile__value"
+  }, [_vm._v(_vm._s(_vm.ai.used_month_percent) + "% used")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-tile__detail"
+  }, [_vm._v(_vm._s(_vm.ai.days_left) + " days left this month")])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-tile"
+  }, [_c("span", {
+    staticClass: "fx-tile__label"
+  }, [_vm._v("Today's AI budget")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-tile__value"
+  }, [_vm._v(_vm._s(_vm.ai.used_today_percent === null ? "—" : _vm.ai.used_today_percent + "% used"))]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-tile__detail"
+  }, [_vm._v("Help and drafts pause at " + _vm._s(_vm.ai.other_uses_share_percent) + "%")])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-tile"
+  }, [_c("span", {
+    staticClass: "fx-tile__label"
+  }, [_vm._v("Read by AI this month")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-tile__value"
+  }, [_vm._v(_vm._s(_vm.ai.month.documents) + " documents")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-tile__detail"
+  }, [_vm._v(_vm._s(_vm.ai.month.help) + " help questions · " + _vm._s(_vm.ai.month.drafts) + " email drafts")])])])]], 2) : _vm._e(), _vm._v(" "), _vm.branches.length ? _c("section", {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"

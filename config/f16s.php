@@ -57,6 +57,17 @@ return [
     'vision_consent_ttl_hours' => 24,
 
     /*
+    | Monthly AI limit per company, in ₹, when superadmin has not set one on the company (user, 2026-09-15).
+    | Spent through a rolling daily budget with extraction first — see App\Services\CompanyAiBudget.
+    | At ~₹0.30 an AI-read document: Tactical ≈ 1,500 documents, Command ≈ 6,000. Core has no AI.
+    */
+    'ai_monthly_limit_inr' => [
+        'core'     => 0,
+        'tactical' => 500,
+        'command'  => 2000,
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Tenant policy defaults
     |--------------------------------------------------------------------------

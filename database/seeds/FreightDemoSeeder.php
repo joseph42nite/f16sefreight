@@ -67,6 +67,15 @@ class FreightDemoSeeder extends Seeder
     private const DESIGNATIONS = ['pricing', 'operations', 'sales', 'accounts', 'boss'];
 
     /**
+     * The roles a tenant on this tier has. Accounts is a Command plan portal (config/f16s.php `min_tier`), so a
+     * Tactical company has no accounts user — one would be a login that works nowhere (user, 2026-09-15).
+     */
+    private function designationsFor(string $tier): array
+    {
+        return $tier === 'command' ? self::DESIGNATIONS : array_values(array_diff(self::DESIGNATIONS, ['accounts']));
+    }
+
+    /**
      * Real lanes, so the codes on screen are ones a freight person recognises.
      *
      * 🔴 EACH MODE USES ITS OWN STANDARD, and that is the point rather than an
@@ -332,7 +341,7 @@ class FreightDemoSeeder extends Seeder
         $prefix = strtolower($code);
         $users = [];
 
-        foreach (self::DESIGNATIONS as $designation) {
+        foreach ($this->designationsFor($company->tier) as $designation) {
             $email = "{$prefix}-{$designation}@demo.test";
 
             $users[$designation] = User::updateOrCreate(
@@ -1257,7 +1266,7 @@ class FreightDemoSeeder extends Seeder
 
         $rows = [];
         foreach (self::TENANTS as $t) {
-            foreach (self::DESIGNATIONS as $d) {
+            foreach ($this->designationsFor($t['tier']) as $d) {
                 $rows[] = [$t['tier'], strtolower($t['code']) . "-{$d}@demo.test", $d];
             }
         }

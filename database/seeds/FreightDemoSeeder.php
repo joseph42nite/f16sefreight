@@ -426,12 +426,19 @@ class FreightDemoSeeder extends Seeder
      */
     private function seedAirlines(): void
     {
+        // `airline_address` prints on the AWB PDF under "Air Waybill", one line per comma, so each is kept to a
+        // few short lines. Head-office style addresses for the demo — check them before relying on one.
         foreach ([
-            ['prefix' => '176', 'code' => 'EK', 'name' => 'Emirates SkyCargo',  'domain' => 'ekcargo.test',  'country' => 'AE'],
-            ['prefix' => '020', 'code' => 'LH', 'name' => 'Lufthansa Cargo',    'domain' => 'lhcargo.test',  'country' => 'DE'],
-            ['prefix' => '098', 'code' => 'AI', 'name' => 'Air India Cargo',    'domain' => 'aicargo.test',  'country' => 'IN'],
-            ['prefix' => '618', 'code' => 'SQ', 'name' => 'Singapore Airlines Cargo', 'domain' => 'sqcargo.test', 'country' => 'SG'],
-            ['prefix' => '157', 'code' => 'QR', 'name' => 'Qatar Airways Cargo', 'domain' => 'qrcargo.test', 'country' => 'QA'],
+            ['prefix' => '176', 'code' => 'EK', 'name' => 'Emirates SkyCargo',  'domain' => 'ekcargo.test',  'country' => 'AE',
+             'airline_address' => 'Emirates SkyCargo, Emirates Group Headquarters, PO Box 686, Dubai, United Arab Emirates'],
+            ['prefix' => '020', 'code' => 'LH', 'name' => 'Lufthansa Cargo',    'domain' => 'lhcargo.test',  'country' => 'DE',
+             'airline_address' => 'Lufthansa Cargo AG, Flughafen-Bereich Ost, Gebaeude 451, 60546 Frankfurt am Main, Germany'],
+            ['prefix' => '098', 'code' => 'AI', 'name' => 'Air India Cargo',    'domain' => 'aicargo.test',  'country' => 'IN',
+             'airline_address' => 'Air India Cargo, Cargo Terminal, Indira Gandhi International Airport, New Delhi 110037, India'],
+            ['prefix' => '618', 'code' => 'SQ', 'name' => 'Singapore Airlines Cargo', 'domain' => 'sqcargo.test', 'country' => 'SG',
+             'airline_address' => 'Singapore Airlines Cargo, Airline House, 25 Airline Road, Singapore 819829'],
+            ['prefix' => '157', 'code' => 'QR', 'name' => 'Qatar Airways Cargo', 'domain' => 'qrcargo.test', 'country' => 'QA',
+             'airline_address' => 'Qatar Airways Cargo, Qatar Airways Tower, PO Box 22550, Doha, Qatar'],
         ] as $a) {
             DB::table('airlines')->updateOrInsert(
                 ['prefix' => $a['prefix']],

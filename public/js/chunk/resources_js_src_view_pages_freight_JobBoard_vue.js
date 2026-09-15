@@ -11,18 +11,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var vuedraggable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuedraggable */ "./node_modules/vuedraggable/dist/vuedraggable.umd.js");
 /* harmony import */ var vuedraggable__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(vuedraggable__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _core_config_cargoMilestones__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/config/cargoMilestones */ "./resources/js/src/core/config/cargoMilestones.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
-/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+/* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
+/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -87,7 +89,8 @@ const FILTER_KEY = "f16s_kanban_filters";
   components: {
     draggable: (vuedraggable__WEBPACK_IMPORTED_MODULE_0___default()),
     Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
-    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_4__["default"]
+    FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_5__["default"]
   },
   data: () => ({
     rows: [],
@@ -105,10 +108,12 @@ const FILTER_KEY = "f16s_kanban_filters";
     filters: {
       stage: ""
     },
+    /** The open tracking drawer: { job, statuses, loading, error, timer } or null. */
+    tracking: null,
     STATUSES,
     PROCESS
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_5__.mapGetters)(["portalLabel", "can", "designation"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_6__.mapGetters)(["portalLabel", "can", "designation"])), {}, {
     canMove() {
       return this.can(["pricing", "operations"], "tactical");
     },
@@ -148,6 +153,16 @@ const FILTER_KEY = "f16s_kanban_filters";
       }
       return out;
     },
+    trackingFeed() {
+      return this.tracking ? (0,_core_config_cargoMilestones__WEBPACK_IMPORTED_MODULE_2__.milestoneFeed)(this.tracking.statuses) : [];
+    },
+    trackingDiscrepancy() {
+      return !!this.tracking && this.tracking.statuses.some(s => s.code === "DIS");
+    },
+    trackingLane() {
+      const e = this.tracking.job.enquiry;
+      return e && e.origin_code ? e.origin_code + " → " + e.dest_code : null;
+    },
     doneHidden() {
       return Math.max(0, (this.grouped.done || []).length - DONE_VISIBLE);
     },
@@ -171,6 +186,9 @@ const FILTER_KEY = "f16s_kanban_filters";
   created() {
     this.restore();
     this.load();
+  },
+  beforeDestroy() {
+    this.closeTracking();
   },
   methods: {
     /* Persisted per user, per §9.3 — a board that forgets its filters on every visit
@@ -239,6 +257,46 @@ const FILTER_KEY = "f16s_kanban_filters";
         }));
       }).catch(e => {
         this.error = this.readable(e);
+      });
+    },
+    openTracking(job) {
+      this.closeTracking();
+      this.tracking = {
+        job,
+        statuses: [],
+        loading: true,
+        error: null,
+        timer: null
+      };
+      this.loadTracking();
+      this.tracking.timer = setInterval(this.loadTracking, 30000);
+    },
+    loadTracking() {
+      const t = this.tracking;
+      if (!t) return;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get(`/jobs/${t.job.id}/tracking`).then(({
+        data
+      }) => {
+        if (this.tracking !== t) return;
+        t.statuses = data.statuses || [];
+        t.error = null;
+      }).catch(e => {
+        if (this.tracking === t) t.error = this.readable(e);
+      }).finally(() => {
+        t.loading = false;
+      });
+    },
+    closeTracking() {
+      if (this.tracking) clearInterval(this.tracking.timer);
+      this.tracking = null;
+    },
+    when(at) {
+      const d = new Date(at);
+      return isNaN(d) ? at : d.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
       });
     },
     progress(job) {
@@ -486,7 +544,7 @@ var render = function render() {
           put: !col.terminal
         },
         "ghost-class": "fx-card--ghost",
-        filter: ".fx-card__link",
+        filter: ".fx-card__link, .fx-card__awb",
         "prevent-on-filter": false,
         disabled: !_vm.canMove
       },
@@ -500,7 +558,18 @@ var render = function render() {
         class: "fx-card--" + _vm.urgency(job)
       }, [_c("div", {
         staticClass: "fx-card__top"
-      }, [_c("span", {
+      }, [job.awb_number && job.transport_mode === "air" ? _c("button", {
+        staticClass: "identifier fx-card__no fx-card__awb",
+        attrs: {
+          type: "button",
+          title: "Track " + job.awb_number
+        },
+        on: {
+          click: function ($event) {
+            return _vm.openTracking(job);
+          }
+        }
+      }, [_vm._v(_vm._s(job.awb_number))]) : _c("span", {
         staticClass: "identifier fx-card__no"
       }, [_vm._v("\n                " + _vm._s(job.awb_number || job.execution_job_no || "—") + "\n              ")]), _vm._v(" "), _c("StatusChip", {
         attrs: {
@@ -527,7 +596,7 @@ var render = function render() {
         attrs: {
           "aria-label": "No clearance date"
         }
-      })]), _vm._v(" "), col.key === "transit" ? _c("div", {
+      })]), _vm._v(" "), col.key === "transit" && job.transport_mode === "air" ? _c("div", {
         staticClass: "fx-track"
       }, [_c("div", {
         staticClass: "fx-track__bar",
@@ -640,7 +709,78 @@ var render = function render() {
     })], 2);
   }), 0)]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted fx-board__note"
-  }, [_vm._v("\n        The cap warns; it never blocks. A manager may have context the index lacks.\n      ")])])]], 2);
+  }, [_vm._v("\n        The cap warns; it never blocks. A manager may have context the index lacks.\n      ")])])], _vm._v(" "), _c("FxDrawer", {
+    attrs: {
+      open: !!_vm.tracking,
+      title: _vm.tracking ? "Tracking · " + _vm.tracking.job.awb_number : "",
+      subtitle: _vm.tracking ? _vm.trackingLane : null
+    },
+    on: {
+      close: _vm.closeTracking
+    },
+    scopedSlots: _vm._u([{
+      key: "footer",
+      fn: function () {
+        return [_vm.tracking ? _c("router-link", {
+          staticClass: "fx-btn",
+          attrs: {
+            to: {
+              path: "/message-log",
+              query: {
+                awb: _vm.tracking.job.awb_number
+              }
+            }
+          }
+        }, [_vm._v("Open the message log")]) : _vm._e()];
+      },
+      proxy: true
+    }])
+  }, [_vm.tracking ? [_vm.tracking.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.tracking.error))]) : _vm.tracking.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : [_c("ol", {
+    staticClass: "fx-feed"
+  }, _vm._l(_vm.trackingFeed, function (m) {
+    return _c("li", {
+      key: m.key,
+      staticClass: "fx-feed__step",
+      class: {
+        "is-done": m.reached
+      }
+    }, [_c("span", {
+      staticClass: "fx-feed__dot",
+      attrs: {
+        "aria-hidden": "true"
+      }
+    }), _vm._v(" "), _c("span", {
+      staticClass: "fx-feed__label"
+    }, [_vm._v(_vm._s(m.label))]), _vm._v(" "), _c("span", {
+      staticClass: "fx-feed__when"
+    }, [m.at ? [_vm._v(_vm._s(_vm.when(m.at)) + " · " + _vm._s(m.code))] : m.reached ? [_vm._v("reached")] : [_vm._v("—")]], 2)]);
+  }), 0), _vm._v(" "), _vm.trackingDiscrepancy ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("⚠ The airline reported a discrepancy on this shipment.")]) : _vm._e(), _vm._v(" "), _c("h3", {
+    staticClass: "fx-feed__h"
+  }, [_vm._v("From the airline")]), _vm._v(" "), !_vm.tracking.statuses.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No status from the airline yet for this AWB.")]) : _c("ul", {
+    staticClass: "fx-feed__log"
+  }, _vm._l(_vm.tracking.statuses, function (s, i) {
+    return _c("li", {
+      key: i
+    }, [_c("span", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(s.code))]), _vm._v(" "), _c("span", [_vm._v(_vm._s(s.description || "—"))]), _vm._v(" "), _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(s.at ? _vm.when(s.at) : ""))])]);
+  }), 0)]] : _vm._e()], 2)], 2);
 };
 var staticRenderFns = [];
 render._withStripped = true;
@@ -658,7 +798,8 @@ render._withStripped = true;
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "MILESTONES": () => (/* binding */ MILESTONES),
-/* harmony export */   "cargoProgress": () => (/* binding */ cargoProgress)
+/* harmony export */   "cargoProgress": () => (/* binding */ cargoProgress),
+/* harmony export */   "milestoneFeed": () => (/* binding */ milestoneFeed)
 /* harmony export */ });
 /**
  * Where an air shipment is, from the airline's Cargo Status messages in the Message Log.
@@ -682,10 +823,12 @@ const MILESTONES = [{
   key: "departed",
   label: "Departed",
   codes: ["DEP"]
-}, {
+},
+// NFD and AWD come before customs clearance on the spine (config/common-data.php), so they are part of arriving.
+{
   key: "arrived",
   label: "Arrived at destination",
-  codes: ["ARR", "RCF", "AWR"]
+  codes: ["ARR", "RCF", "AWR", "NFD", "AWD"]
 }, {
   key: "cleared",
   label: "Customs cleared",
@@ -693,7 +836,7 @@ const MILESTONES = [{
 }, {
   key: "out",
   label: "Out for delivery",
-  codes: ["NFD", "AWD", "FOW"]
+  codes: ["FOW"]
 }, {
   key: "delivered",
   label: "Delivered",
@@ -724,6 +867,31 @@ function cargoProgress(codes) {
     // DIS: the airline reported a handling or documentation discrepancy.
     discrepancy: list.includes("DIS")
   };
+}
+
+/**
+ * The tracking drawer's feed: every step, whether it has been reached, and the first message that reached it.
+ *
+ * ⚠️ A step before the furthest one can be reached without a message of its own (an airline that never sent
+ * MAN still flew the cargo), so `reached` comes from the furthest step and `at` may be null.
+ *
+ * @param {{code: string, at: string|null}[]} statuses oldest first
+ */
+function milestoneFeed(statuses) {
+  const list = statuses || [];
+  const {
+    step
+  } = cargoProgress(list.map(s => s.code));
+  return MILESTONES.map((m, i) => {
+    const first = list.find(s => m.codes.includes(String(s.code || "").toUpperCase()));
+    return {
+      key: m.key,
+      label: m.label,
+      reached: i < step,
+      at: first ? first.at : null,
+      code: first ? first.code : null
+    };
+  });
 }
 
 /***/ }),

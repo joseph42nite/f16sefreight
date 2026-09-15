@@ -87,7 +87,7 @@
             <span class="fx-board__count">{{ (grouped[col.key] || []).length }}</span>
           </h2>
 
-          <!-- The card icons are links, not drag handles: `filter` keeps Sortable from taking their click. -->
+          <!-- The card icons and the AWB number are links, not drag handles: `filter` keeps Sortable from taking their click. -->
           <!-- ⚠️ Bound to `visible`, the SAME array the v-for renders. Binding the full
                list while rendering a subset would put a drop at the wrong index the
                moment anything was hidden. For every uncapped column the two are the same
@@ -97,7 +97,7 @@
             :group="{ name: 'jobs', pull: !col.terminal, put: !col.terminal }"
             class="fx-board__drop"
             ghost-class="fx-card--ghost"
-            filter=".fx-card__link"
+            filter=".fx-card__link, .fx-card__awb"
             :prevent-on-filter="false"
             :disabled="!canMove"
             @change="(e) => onMove(e, col)"
@@ -120,7 +120,15 @@
                   be confirmed before its waybill is raised, and a card with no
                   identifier at all is one nobody can act on or talk about.
                 -->
-                <span class="identifier fx-card__no">
+                <!-- PRD §5.5: the AWB number opens the cargo tracking drawer. -->
+                <button
+                  v-if="job.awb_number && job.transport_mode === 'air'"
+                  type="button"
+                  class="identifier fx-card__no fx-card__awb"
+                  :title="'Track ' + job.awb_number"
+                  @click="openTracking(job)"
+                >{{ job.awb_number }}</button>
+                <span v-else class="identifier fx-card__no">
                   {{ job.awb_number || job.execution_job_no || "—" }}
                 </span>
                 <!-- The stage badge: the fine status the four columns group over. -->
@@ -150,7 +158,7 @@
                 In Transit: where the shipment is, from the airline's Cargo Status messages for this AWB —
                 the same rows the Message Log shows (user, 2026-09-15).
               -->
-              <div v-if="col.key === 'transit'" class="fx-track">
+              <div v-if="col.key === 'transit' && job.transport_mode === 'air'" class="fx-track">
                 <div
                   class="fx-track__bar"
                   role="progressbar"
@@ -256,6 +264,60 @@
         </p>
       </div>
     </template>
+
+    <!--
+      📍 Cargo tracking drawer (PRD §5.5): the seven steps, filled from the airline's Cargo Status messages
+      for the AWB — the rows the Message Log shows. Checked again every 30 s while it is open.
+    -->
+    <FxDrawer
+      :open="!!tracking"
+      :title="tracking ? 'Tracking · ' + tracking.job.awb_number : ''"
+      :subtitle="tracking ? trackingLane : null"
+      @close="closeTracking"
+    >
+      <template v-if="tracking">
+        <p v-if="tracking.error" class="fx-error" role="alert">{{ tracking.error }}</p>
+        <p v-else-if="tracking.loading" class="fx-muted">Loading…</p>
+        <template v-else>
+          <ol class="fx-feed">
+            <li
+              v-for="m in trackingFeed"
+              :key="m.key"
+              class="fx-feed__step"
+              :class="{ 'is-done': m.reached }"
+            >
+              <span class="fx-feed__dot" aria-hidden="true"></span>
+              <span class="fx-feed__label">{{ m.label }}</span>
+              <span class="fx-feed__when">
+                <template v-if="m.at">{{ when(m.at) }} · {{ m.code }}</template>
+                <template v-else-if="m.reached">reached</template>
+                <template v-else>—</template>
+              </span>
+            </li>
+          </ol>
+
+          <p v-if="trackingDiscrepancy" class="fx-warn" role="status">⚠ The airline reported a discrepancy on this shipment.</p>
+
+          <h3 class="fx-feed__h">From the airline</h3>
+          <p v-if="!tracking.statuses.length" class="fx-muted">No status from the airline yet for this AWB.</p>
+          <ul v-else class="fx-feed__log">
+            <li v-for="(s, i) in tracking.statuses" :key="i">
+              <span class="identifier">{{ s.code }}</span>
+              <span>{{ s.description || "—" }}</span>
+              <span class="fx-muted">{{ s.at ? when(s.at) : "" }}</span>
+            </li>
+          </ul>
+        </template>
+      </template>
+
+      <template #footer>
+        <router-link
+          v-if="tracking"
+          :to="{ path: '/message-log', query: { awb: tracking.job.awb_number } }"
+          class="fx-btn"
+        >Open the message log</router-link>
+      </template>
+    </FxDrawer>
   </div>
 </template>
 
@@ -263,8 +325,9 @@
 import { mapGetters } from "vuex";
 import draggable from "vuedraggable";
 import ApiService from "@/core/services/api.service";
-import { cargoProgress } from "@/core/config/cargoMilestones";
+import { cargoProgress, milestoneFeed } from "@/core/config/cargoMilestones";
 import Figure from "@/view/pages/freight/components/Figure.vue";
+import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 
 /* Mirrors App\Enums\JobStatus. 'Lost' is deliberately absent — it is an enquiry state,
@@ -314,7 +377,7 @@ const FILTER_KEY = "f16s_kanban_filters";
 
 export default {
   name: "JobBoard",
-  components: { draggable, Figure, StatusChip },
+  components: { draggable, Figure, FxDrawer, StatusChip },
   data: () => ({
     rows: [], pool: [], staff: [], operators: [],
     view: "process", loading: true, busy: false, error: null,
@@ -323,6 +386,8 @@ export default {
        something up, not changing how the board works for everyone. */
     showAllDone: false,
     filters: { stage: "" },
+    /** The open tracking drawer: { job, statuses, loading, error, timer } or null. */
+    tracking: null,
     STATUSES, PROCESS,
   }),
   computed: {
@@ -362,6 +427,16 @@ export default {
       }
       return out;
     },
+    trackingFeed() {
+      return this.tracking ? milestoneFeed(this.tracking.statuses) : [];
+    },
+    trackingDiscrepancy() {
+      return !!this.tracking && this.tracking.statuses.some((s) => s.code === "DIS");
+    },
+    trackingLane() {
+      const e = this.tracking.job.enquiry;
+      return e && e.origin_code ? e.origin_code + " → " + e.dest_code : null;
+    },
     doneHidden() {
       return Math.max(0, (this.grouped.done || []).length - DONE_VISIBLE);
     },
@@ -380,6 +455,9 @@ export default {
   created() {
     this.restore();
     this.load();
+  },
+  beforeDestroy() {
+    this.closeTracking();
   },
   methods: {
     /* Persisted per user, per §9.3 — a board that forgets its filters on every visit
@@ -445,6 +523,33 @@ export default {
           this.operators = this.staff.map((o) => ({ id: o.id, name: o.name }));
         })
         .catch((e) => { this.error = this.readable(e); });
+    },
+    openTracking(job) {
+      this.closeTracking();
+      this.tracking = { job, statuses: [], loading: true, error: null, timer: null };
+      this.loadTracking();
+      this.tracking.timer = setInterval(this.loadTracking, 30000);
+    },
+    loadTracking() {
+      const t = this.tracking;
+      if (!t) return;
+
+      ApiService.get(`/jobs/${t.job.id}/tracking`)
+        .then(({ data }) => {
+          if (this.tracking !== t) return;
+          t.statuses = data.statuses || [];
+          t.error = null;
+        })
+        .catch((e) => { if (this.tracking === t) t.error = this.readable(e); })
+        .finally(() => { t.loading = false; });
+    },
+    closeTracking() {
+      if (this.tracking) clearInterval(this.tracking.timer);
+      this.tracking = null;
+    },
+    when(at) {
+      const d = new Date(at);
+      return isNaN(d) ? at : d.toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
     },
     progress(job) {
       return cargoProgress(job.cargo_statuses);

@@ -102,6 +102,34 @@ class JobController extends Controller
     }
 
     /**
+     * The AWB tracking drawer (PRD §5.5): every Cargo Status message the airline sent for this job's AWB,
+     * oldest first — the rows the Message Log shows, with the code's description.
+     */
+    public function tracking(Job $job): JsonResponse
+    {
+        // Only a shipment the caller can see on their board.
+        abort_unless($this->scopeToOwner(Job::forActivePortal())->whereKey($job->id)->exists(), 404);
+
+        $descriptions = config('common-data.cargo_status_description', []);
+
+        $statuses = $job->awb_number === null ? collect() : StatusReponse::where('business_status_code', 'Cargo Status')
+            ->where('business_id', $job->awb_number)
+            ->orderBy('id')
+            ->get(['condition_code', 'reason', 'issue_date_time', 'created_at'])
+            ->map(fn ($s) => [
+                'code' => $s->condition_code,
+                'description' => $s->reason ?: ($descriptions[$s->condition_code] ?? null),
+                // When the airline says it happened; when we received it if the message had no time.
+                'at' => $s->issue_date_time ?: optional($s->created_at)->toIso8601String(),
+            ]);
+
+        return response()->json([
+            'awb_number' => $job->awb_number,
+            'statuses' => $statuses->values(),
+        ]);
+    }
+
+    /**
      * What a Kanban card links to (user, 2026-09-15): `thread_id`, the conversation the job came from, and
      * `cargo_statuses`, the airline's Cargo Status codes for its AWB (RCS, MAN, DEP…) oldest first — the
      * same rows the Message Log shows, which the board turns into the In Transit progress bar.

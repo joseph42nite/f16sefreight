@@ -316,6 +316,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // ── Post-conversion ─────────────────────────────────────────────────────
     Route::get('/jobs', [\App\Http\Controllers\Freight\JobController::class, 'index']);
     Route::put('/jobs/{job}/status', [\App\Http\Controllers\Freight\JobController::class, 'updateStatus']);
+    Route::get('/jobs/{job}/tracking', [\App\Http\Controllers\Freight\JobController::class, 'tracking']);
     Route::post('/jobs/{job}/cancel', [\App\Http\Controllers\Freight\JobController::class, 'cancel']);
     Route::post('/jobs/{job}/reinitiate', [\App\Http\Controllers\Freight\JobController::class, 'reinitiate']);
     Route::post('/jobs/{job}/claim', [\App\Http\Controllers\Freight\JobController::class, 'claim']);

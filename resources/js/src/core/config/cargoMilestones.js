@@ -12,9 +12,10 @@ export const MILESTONES = [
   { key: "accepted", label: "Cargo accepted", codes: ["FOH", "RCS", "DPU", "FIW"] },
   { key: "manifested", label: "Manifested", codes: ["PRE", "MAN", "TRM"] },
   { key: "departed", label: "Departed", codes: ["DEP"] },
-  { key: "arrived", label: "Arrived at destination", codes: ["ARR", "RCF", "AWR"] },
+  // NFD and AWD come before customs clearance on the spine (config/common-data.php), so they are part of arriving.
+  { key: "arrived", label: "Arrived at destination", codes: ["ARR", "RCF", "AWR", "NFD", "AWD"] },
   { key: "cleared", label: "Customs cleared", codes: ["CCD"] },
-  { key: "out", label: "Out for delivery", codes: ["NFD", "AWD", "FOW"] },
+  { key: "out", label: "Out for delivery", codes: ["FOW"] },
   { key: "delivered", label: "Delivered", codes: ["DLV", "DDL"] },
 ];
 
@@ -44,4 +45,23 @@ export function cargoProgress(codes) {
     // DIS: the airline reported a handling or documentation discrepancy.
     discrepancy: list.includes("DIS"),
   };
+}
+
+/**
+ * The tracking drawer's feed: every step, whether it has been reached, and the first message that reached it.
+ *
+ * ⚠️ A step before the furthest one can be reached without a message of its own (an airline that never sent
+ * MAN still flew the cargo), so `reached` comes from the furthest step and `at` may be null.
+ *
+ * @param {{code: string, at: string|null}[]} statuses oldest first
+ */
+export function milestoneFeed(statuses) {
+  const list = statuses || [];
+  const { step } = cargoProgress(list.map((s) => s.code));
+
+  return MILESTONES.map((m, i) => {
+    const first = list.find((s) => m.codes.includes(String(s.code || "").toUpperCase()));
+
+    return { key: m.key, label: m.label, reached: i < step, at: first ? first.at : null, code: first ? first.code : null };
+  });
 }

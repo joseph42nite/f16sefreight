@@ -99,6 +99,42 @@ class JobBoardLinksTest extends TestCase
         $this->assertSame([], $card['cargo_statuses']);
     }
 
+    public function test_tracking_lists_the_awbs_cargo_status_messages_with_their_descriptions(): void
+    {
+        [$jobId] = $this->job('Airline Confirmed', '176-90000003');
+        StatusReponse::create(['business_id' => '176-90000003', 'business_status_code' => 'Cargo Status', 'condition_code' => 'RCS', 'issue_date_time' => '2026-09-10T08:00:00']);
+        StatusReponse::create(['business_id' => '176-90000003', 'business_status_code' => 'Cargo Status', 'condition_code' => 'DEP', 'reason' => 'Departed on EK 511']);
+        StatusReponse::create(['business_id' => '176-90000003', 'business_status_code' => 'Rejected', 'condition_code' => 'X']);
+
+        $body = $this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->operator),
+            'Accept' => 'application/json',
+        ])->getJson("http://focusair.localhost/api/jobs/{$jobId}/tracking")->assertOk()->json();
+
+        $this->assertSame('176-90000003', $body['awb_number']);
+        $this->assertSame(['RCS', 'DEP'], array_column($body['statuses'], 'code'));
+        // No reason stored: the code's own description stands in.
+        $this->assertSame('Received from shipper and ready for carriage', $body['statuses'][0]['description']);
+        $this->assertSame('2026-09-10T08:00:00', $body['statuses'][0]['at']);
+        $this->assertSame('Departed on EK 511', $body['statuses'][1]['description']);
+    }
+
+    /** 🔒 Another operator's shipment is not on this operator's board, so it is not trackable from it either. */
+    public function test_tracking_refuses_a_job_that_is_not_on_the_callers_board(): void
+    {
+        [$jobId] = $this->job('Airline Confirmed', '176-90000004');
+        $other = User::create([
+            'name' => 'ops2', 'email' => 'ops2-jbl@test.local', 'password' => Hash::make('x'),
+            'company_name' => $this->operator->company_name, 'branch_name' => $this->branch->id,
+            'designation' => 'operations', 'is_active' => 1,
+        ]);
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($other),
+            'Accept' => 'application/json',
+        ])->getJson("http://focusair.localhost/api/jobs/{$jobId}/tracking")->assertNotFound();
+    }
+
     public function test_a_job_with_no_mail_has_no_thread(): void
     {
         [$jobId] = $this->job('Completed', null);

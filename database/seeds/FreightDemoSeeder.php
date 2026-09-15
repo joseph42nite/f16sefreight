@@ -231,6 +231,11 @@ class FreightDemoSeeder extends Seeder
 
         // The air document layer. `way_bill_addresses` and the rest hang off `awb_id`,
         // which is the waybill's own numeric key, so they go first.
+        // The airline's Cargo Status messages for the demo AWBs. `status_response` has no tenant column; the
+        // AWB number is what ties a row to a job.
+        DB::table('status_response')->whereIn('business_id',
+            Job::withoutGlobalScopes()->whereIn('agent_id', $branchIds)->whereNotNull('awb_number')->pluck('awb_number'))->delete();
+
         $awbIds = DB::table('air_way_bills')->whereIn('agent_id', $branchIds)->pluck('id');
         DB::table('way_bill_addresses')->whereIn('awb_id', $awbIds)->delete();
         DB::table('air_way_bills')->whereIn('agent_id', $branchIds)->delete();
@@ -306,10 +311,13 @@ class FreightDemoSeeder extends Seeder
 
         foreach ($branches as $branch) {
             $this->seedLifecycle($branch, $customers, $users, $tenant['scale']);
+            $this->seedInTransit($branch, $customers, $users, $tenant['scale']);
             $this->seedTrailingHistory($branch, $customers[3], $users, $tenant['scale']);
             $this->seedPartners($company, $branch);
             $this->seedInbox($branch, $customers, $users);
+            $this->seedJobMail($branch);
             $this->seedWaybills($branch);
+            $this->seedCompletedCargoStatuses($branch);
         }
 
         // Only the Command tenant gets financials — below Command there is no ledger.
@@ -575,6 +583,169 @@ class FreightDemoSeeder extends Seeder
                 ]);
 
                 $this->seedShipmentDetails($job, $mode, $origin, $dest, $i, $scale);
+            }
+        }
+    }
+
+    /**
+     * The airline's Cargo Status codes the Kanban reads, and their order along the usual spine.
+     */
+    private const DELIVERED_SPINE = ['RCS', 'MAN', 'DEP', 'ARR', 'RCF', 'NFD', 'AWD', 'CCD', 'DLV'];
+
+    /**
+     * Air shipments in the air — the Kanban's In Transit column (user, 2026-09-15).
+     *
+     * Each is at a different point, so the progress bar and the tracking drawer show their range: sent with
+     * nothing back yet, accepted, departed, arrived with a discrepancy, and cleared by customs.
+     */
+    private function seedInTransit(Agent $branch, $customers, array $users, float $scale = 1.0): void
+    {
+        $agentCode = Company::find($branch->company_id)->code . $branch->branch_code;
+
+        $plan = [
+            ['Sent to Airline', []],
+            ['Airline Confirmed', ['BKD', 'FOH', 'RCS']],
+            ['Airline Confirmed', ['RCS', 'MAN', 'DEP']],
+            ['Airline Confirmed', ['RCS', 'MAN', 'DEP', 'ARR', 'RCF', 'DIS']],
+            ['Airline Confirmed', ['RCS', 'MAN', 'DEP', 'ARR', 'RCF', 'NFD', 'CCD']],
+        ];
+
+        foreach ($plan as $n => [$status, $codes]) {
+            [$origin, $dest] = self::AIR_LANES[$n % count(self::AIR_LANES)];
+            $customer = $customers[$n % $customers->count()];
+            $sent = now()->subDays(4 - min($n, 3))->subHours(6);
+            // A number band of their own (400+), apart from the lifecycle (1–11) and the history (500+).
+            $seq = 401 + $n;
+
+            $enquiry = Enquiry::create([
+                'agent_id' => $branch->id, 'transport_mode' => 'air', 'direction' => 'export',
+                'enquiry_no' => sprintf('ENQA-%s-%s-%04d', $agentCode, now()->format('y'), $seq),
+                'customer_id' => $customer->id,
+                'sales_id' => $users['sales']->id, 'pricing_id' => $users['pricing']->id,
+                'status' => 'converted',
+                'origin_code' => $origin, 'dest_code' => $dest,
+                'extracted_pieces' => 10 + $n,
+                'extracted_weight' => round((510 + ($n * 85)) * $scale, 3),
+                'cargo_description' => ['Machine parts', 'Textiles', 'Pharma (temp-controlled)', 'Auto components'][$n % 4],
+                'cargo_type' => 'general', 'cargo_data_source' => 'regex',
+                'quoted_amount' => round(98000 + ($n * 9500), 2), 'quoted_currency' => 'INR',
+                'created_at' => $sent->copy()->subDays(3), 'updated_at' => $sent->copy()->subDays(3),
+            ]);
+
+            $awb = '176-' . str_pad((string) (30000000 + ($branch->id * 100) + $n), 8, '0', STR_PAD_LEFT);
+
+            $job = Job::create([
+                'agent_id' => $branch->id, 'enquiry_id' => $enquiry->id,
+                'transport_mode' => 'air', 'direction' => 'export',
+                'execution_job_no' => sprintf('JOBA-%s-%s-%04d', $agentCode, now()->format('y'), $seq),
+                'customer_id' => $customer->id,
+                'ops_id' => $users['operations']->id, 'pricing_id' => $users['pricing']->id,
+                'status' => $status,
+                'planned_clearance_date' => $sent->copy()->subDay()->toDateString(),
+                'cargo_type' => 'general',
+                'awb_number' => $awb,
+                'created_at' => $sent->copy()->subDays(2), 'updated_at' => $sent,
+            ]);
+
+            $this->seedShipmentDetails($job, 'air', $origin, $dest, $n, $scale);
+
+            // Hours apart from the moment the waybill went to the airline, and all in the past.
+            foreach ($codes as $k => $code) {
+                $this->cargoStatus($awb, $code, $sent->copy()->addHours(3 + ($k * 4)));
+            }
+        }
+    }
+
+    /**
+     * Every completed air shipment was delivered, so its AWB carries the whole spine of Cargo Status
+     * messages — the tracking drawer on a Completed card shows seven steps done.
+     */
+    private function seedCompletedCargoStatuses(Agent $branch): void
+    {
+        $jobs = DB::table('jobs')->where('agent_id', $branch->id)->where('transport_mode', 'air')
+            ->where('status', 'Completed')->whereNotNull('awb_number')->get(['awb_number', 'created_at']);
+
+        foreach ($jobs as $job) {
+            $at = \Carbon\Carbon::parse($job->created_at)->addDay();
+
+            foreach (self::DELIVERED_SPINE as $k => $code) {
+                $this->cargoStatus($job->awb_number, $code, $at->copy()->addHours($k * 9));
+            }
+        }
+    }
+
+    /** One Cargo Status message, stored the way `GLNResponseController` stores a real one. */
+    private function cargoStatus(string $awb, string $code, $at): void
+    {
+        DB::table('status_response')->insert([
+            'message_id' => 'DEMO-' . substr(md5($awb . $code . $at), 0, 12),
+            'issue_date_time' => $at->format('Y-m-d\TH:i:s'),
+            'business_id' => $awb,
+            'business_name' => 'Air Waybill',
+            'business_status_code' => 'Cargo Status',
+            'condition_code' => $code,
+            'reason' => config('common-data.cargo_status_description.' . $code, ''),
+            'created_at' => $at, 'updated_at' => $at,
+        ]);
+    }
+
+    /**
+     * A mail conversation behind every job that has none (user, 2026-09-15: the ✉ on every Kanban card).
+     *
+     * The inbox fixtures above already hold some jobs' threads; the rest get a short one of their own — the
+     * client's request and our reply — dated to the job, so old shipments sit at the bottom of the inbox.
+     */
+    private function seedJobMail(Agent $branch): void
+    {
+        $connectionId = DB::table('mailbox_connections')->where('agent_id', $branch->id)->value('id');
+        $mailbox = DB::table('mailbox_connections')->where('id', $connectionId)->value('email_address');
+
+        $jobs = DB::table('jobs')
+            ->leftJoin('enquiries', 'enquiries.id', '=', 'jobs.enquiry_id')
+            ->leftJoin('customers', 'customers.id', '=', 'jobs.customer_id')
+            ->where('jobs.agent_id', $branch->id)
+            ->whereNull('jobs.deleted_at')
+            ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('email_threads')
+                ->where(fn ($w) => $w->whereColumn('email_threads.job_id', 'jobs.id')
+                    ->orWhereColumn('email_threads.enquiry_id', 'jobs.enquiry_id')))
+            ->get(['jobs.id', 'jobs.enquiry_id', 'jobs.ops_id', 'jobs.awb_number', 'jobs.execution_job_no',
+                   'jobs.created_at', 'enquiries.origin_code', 'enquiries.dest_code', 'enquiries.extracted_pieces',
+                   'customers.email_domain']);
+
+        foreach ($jobs as $job) {
+            $opened = \Carbon\Carbon::parse($job->created_at)->subDay();
+            $key = 'thr_job_' . $job->id . '_' . substr(md5($job->id . $branch->id), 0, 8);
+            $from = 'shipping@' . ($job->email_domain ?: 'client.test');
+            $subject = sprintf('%s pcs %s to %s — %s', $job->extracted_pieces ?: 'Shipment:', $job->origin_code ?: '—',
+                $job->dest_code ?: '—', $job->awb_number ?: $job->execution_job_no);
+
+            DB::table('email_threads')->insert([
+                'agent_id' => $branch->id, 'assigned_ops_id' => $job->ops_id,
+                'thread_key' => $key, 'provider_thread_id' => 'gmail_' . substr(md5($key), 0, 16),
+                'status' => 'read', 'classification' => 'customer_enquiry',
+                'enquiry_id' => $job->enquiry_id, 'job_id' => $job->id,
+                'latest_message_received_at' => $opened->copy()->addHours(2),
+                'first_triage_at' => $opened->copy()->addMinutes(10),
+                'first_response_at' => $opened->copy()->addMinutes(45),
+                'created_at' => $opened, 'updated_at' => $opened,
+            ]);
+
+            foreach ([
+                [true, $subject, 'Please book this shipment. Packing list and invoice to follow.'],
+                [false, 'RE: ' . $subject, 'Booked — we will share the AWB and flight details shortly.'],
+            ] as $m => [$inbound, $line, $body]) {
+                DB::table('email_messages')->insert([
+                    'agent_id' => $branch->id, 'mailbox_connection_id' => $connectionId,
+                    'thread_key' => $key, 'provider_thread_id' => 'gmail_' . substr(md5($key), 0, 16),
+                    'direction' => $inbound ? 'inbound' : 'outbound',
+                    'message_id' => '<' . substr(md5($key . $m), 0, 20) . '@mail.test>',
+                    'from' => $inbound ? $from : $mailbox, 'to' => $inbound ? $mailbox : $from,
+                    'subject' => $line, 'body_snippet' => $body,
+                    'received_at' => $opened->copy()->addHours($m * 2),
+                    'sent_via_portal' => $inbound ? 0 : 1, 'send_state' => $inbound ? null : 'sent',
+                    'is_historical' => 0,
+                    'created_at' => $opened->copy()->addHours($m * 2), 'updated_at' => $opened->copy()->addHours($m * 2),
+                ]);
             }
         }
     }

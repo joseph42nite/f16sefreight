@@ -701,6 +701,27 @@ body.fx-split .fx-rail__label { display: none; }
                  border-radius: var(--radius-sm); color: var(--text-secondary); text-decoration: none; font-size: 1rem; cursor: pointer; }
 .fx-card__link:hover { background: var(--bg-sunken); color: var(--text-primary); text-decoration: none; }
 
+/* The AWB number is a button that opens tracking; it still reads as the card's identifier. */
+.fx-card__awb { background: none; border: 0; padding: 0; cursor: pointer; text-align: left; text-decoration: underline dotted; text-underline-offset: 3px; }
+.fx-card__awb:hover { color: var(--portal-accent); }
+
+/* The tracking drawer's milestone feed: a vertical line of dots, filled up to the furthest step reached. */
+.fx-feed { list-style: none; margin: 0 0 var(--space-4); padding: 0; }
+.fx-feed__step { position: relative; display: flex; align-items: baseline; gap: var(--space-3);
+                 padding: 0 0 var(--space-3) 1.5rem; color: var(--text-disabled); font-size: .875rem; }
+.fx-feed__step::before { content: ""; position: absolute; left: .4rem; top: .9rem; bottom: 0; width: 2px; background: var(--border); }
+.fx-feed__step:last-child::before { display: none; }
+.fx-feed__dot { position: absolute; left: 0; top: .2rem; width: .9rem; height: .9rem; border-radius: 50%;
+                border: 2px solid var(--border); background: var(--bg-surface); }
+.fx-feed__step.is-done { color: var(--text-primary); }
+.fx-feed__step.is-done .fx-feed__dot { border-color: var(--portal-accent); background: var(--portal-accent); }
+.fx-feed__step.is-done::before { background: var(--portal-accent); }
+.fx-feed__label { flex: 1; font-weight: 600; }
+.fx-feed__when { font-size: .75rem; color: var(--text-secondary); white-space: nowrap; }
+.fx-feed__h { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); margin: var(--space-4) 0 var(--space-2); }
+.fx-feed__log { list-style: none; margin: 0; padding: 0; font-size: .8125rem; }
+.fx-feed__log li { display: grid; grid-template-columns: 3rem 1fr auto; gap: var(--space-2); padding: var(--space-1) 0; border-bottom: 1px solid var(--border); }
+
 /* In Transit: seven milestone segments, filled up to the furthest reached. */
 .fx-track { margin-top: var(--space-2); }
 .fx-track__bar { display: flex; gap: 2px; }

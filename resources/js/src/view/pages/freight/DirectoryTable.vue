@@ -158,6 +158,22 @@
         <input v-model="client.address" class="fx-input" />
       </label>
 
+      <!-- Every address the client has written from on this domain, saved as mail arrives. -->
+      <div v-if="client.id" class="fx-field">
+        <span class="fx-field__label">Mail addresses from this domain</span>
+        <p v-if="!contacts.length" class="fx-muted">None yet — they are saved as mail arrives from the domain.</p>
+        <table v-else class="fx-table">
+          <thead><tr><th scope="col">Address</th><th scope="col" class="fx-num">Mails</th><th scope="col">Last mail</th></tr></thead>
+          <tbody>
+            <tr v-for="c in contacts" :key="c.id">
+              <td>{{ c.email }}</td>
+              <td class="fx-num">{{ c.message_count }}</td>
+              <td><Figure :value="c.last_seen_at" kind="dateTime" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <p v-if="saveError" class="fx-error" role="alert">{{ saveError }}</p>
       <div class="fx-toolbar">
         <button class="fx-btn fx-btn--primary" :disabled="saving || !client.name" @click="saveClient">
@@ -209,6 +225,7 @@ const SHAPES = {
     columns: [
       { key: "name", label: "Name" },
       { key: "email_domain", label: "Domain", mono: true },
+      { key: "contacts_count", label: "Mail addresses", numeric: true, kind: "count" },
       { key: "gst_no", label: "GSTIN", mono: true, accounts: true },
       { key: "payment_terms_days", label: "Terms (days)", numeric: true, kind: "count", accounts: true },
       { key: "credit_limit", label: "Credit limit", numeric: true, kind: "currency", accounts: true },
@@ -237,7 +254,7 @@ export default {
     rows: [], types: [], loading: true, error: null, query: "", type: "", timer: null,
     adding: false, saving: false, saveError: null, copied: false, siblings: [],
     /* The client being added or edited, and whether this company has accounts (Command) — the server says. */
-    client: null, withAccounts: false,
+    client: null, withAccounts: false, contacts: [],
     form: { name: "", partner_type: "customs_broker", email: "", phone: "", address: "", gst_no: "", pan_no: "" },
   }),
   computed: {
@@ -319,6 +336,10 @@ export default {
     },
     editClient(row) {
       this.saveError = null;
+      this.contacts = [];
+      if (row) {
+        ApiService.get("/customers/" + row.id + "/contacts").then(({ data }) => { this.contacts = data.contacts || []; }).catch(() => {});
+      }
       this.client = row
         ? { ...row }
         : { name: "", email_domain: "", email: "", phone: "", address: "", gst_no: "", pan_no: "", payment_terms_days: "", credit_limit: "" };

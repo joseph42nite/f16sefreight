@@ -43,6 +43,8 @@ class CustomerController extends Controller
             // §9.10 — the client book is scoped to the rep on Command. A sales user sees
             // their own accounts; everyone else sees the tenant's whole directory.
             ->when($this->scopeToOwnBook(), fn ($q) => $q->where('sales_id', auth()->id()))
+            // The mail addresses saved from the client's domain.
+            ->withCount('contacts')
             ->orderBy('name')
             ->paginate(50);
 
@@ -60,6 +62,7 @@ class CustomerController extends Controller
         $customer = Customer::create($this->validated($request) + [
             'company_id' => $this->companyId(),
         ]);
+        app(\App\Services\ClientContacts::class)->backfill($customer);
 
         $this->audit->record($this->agentId(), 'customer.created', 'customer', $customer->id, auth()->id());
 
@@ -72,10 +75,23 @@ class CustomerController extends Controller
         $this->authorize('editClients');
 
         $customer->update($this->validated($request));
+        if ($customer->wasChanged('email_domain')) {
+            app(\App\Services\ClientContacts::class)->backfill($customer);
+        }
 
         $this->audit->record($this->agentId(), 'customer.updated', 'customer', $customer->id, auth()->id());
 
         return response()->json($this->shown($customer->fresh()));
+    }
+
+    /** The addresses the client writes from, most used first. */
+    public function contacts(Customer $customer): JsonResponse
+    {
+        $this->authorize('editClients');
+
+        return response()->json(['contacts' => $customer->contacts()
+            ->orderByDesc('message_count')->orderBy('email')
+            ->get(['id', 'email', 'name', 'message_count', 'last_seen_at', 'include_in_cc', 'opted_out_at', 'source'])]);
     }
 
     /** The client fields this tier may write; the accounts figures only on Command. */

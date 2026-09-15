@@ -108,6 +108,11 @@ class FreightDemoSeeder extends Seeder
         $this->syncSequenceCounters();
         // Mail through the real sync, regex and shipment steps, so each automated client update appears.
         $this->call(DemoMailLoopSeeder::class);
+        // Every client's mail addresses, gathered from the demo mail written straight into the tables.
+        foreach (self::TENANTS as $t) {
+            \App\Customer::withoutGlobalScopes()->where('company_id', Company::where('code', $t['code'])->value('id'))
+                ->get()->each(fn ($c) => app(\App\Services\ClientContacts::class)->backfill($c));
+        }
         // The Sales page reads the nightly rollup; run it once so the demo has figures and client emails.
         $this->command->call('sales:compute-snapshots');
         // The files the demo mails say are attached (needs ClamAV: `docker compose up -d clamav`).

@@ -375,6 +375,11 @@ const SHAPES = {
       label: "Domain",
       mono: true
     }, {
+      key: "contacts_count",
+      label: "Mail addresses",
+      numeric: true,
+      kind: "count"
+    }, {
       key: "gst_no",
       label: "GSTIN",
       mono: true,
@@ -444,6 +449,7 @@ const SHAPES = {
     /* The client being added or edited, and whether this company has accounts (Command) — the server says. */
     client: null,
     withAccounts: false,
+    contacts: [],
     form: {
       name: "",
       partner_type: "customs_broker",
@@ -546,6 +552,14 @@ const SHAPES = {
     },
     editClient(row) {
       this.saveError = null;
+      this.contacts = [];
+      if (row) {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/customers/" + row.id + "/contacts").then(({
+          data
+        }) => {
+          this.contacts = data.contacts || [];
+        }).catch(() => {});
+      }
       this.client = row ? _objectSpread({}, row) : {
         name: "",
         email_domain: "",
@@ -2338,7 +2352,26 @@ var render = function render() {
         _vm.$set(_vm.client, "address", $event.target.value);
       }
     }
-  })]), _vm._v(" "), _vm.saveError ? _c("p", {
+  })]), _vm._v(" "), _vm.client.id ? _c("div", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Mail addresses from this domain")]), _vm._v(" "), !_vm.contacts.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("None yet — they are saved as mail arrives from the domain.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.contacts, function (c) {
+    return _c("tr", {
+      key: c.id
+    }, [_c("td", [_vm._v(_vm._s(c.email))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(c.message_count))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: c.last_seen_at,
+        kind: "dateTime"
+      }
+    })], 1)]);
+  }), 0)])]) : _vm._e(), _vm._v(" "), _vm.saveError ? _c("p", {
     staticClass: "fx-error",
     attrs: {
       role: "alert"
@@ -2421,7 +2454,24 @@ var render = function render() {
     }, [_vm._v("Edit")])]) : _vm._e()], 2);
   }), 0)])]);
 };
-var staticRenderFns = [];
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Address")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Mails")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Last mail")])])]);
+}];
 render._withStripped = true;
 
 

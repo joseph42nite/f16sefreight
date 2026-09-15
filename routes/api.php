@@ -350,6 +350,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/customers', [\App\Http\Controllers\Freight\CustomerController::class, 'index']);
     Route::post('/customers', [\App\Http\Controllers\Freight\CustomerController::class, 'store']);
     Route::put('/customers/{customer}', [\App\Http\Controllers\Freight\CustomerController::class, 'update']);
+    Route::get('/customers/{customer}/contacts', [\App\Http\Controllers\Freight\CustomerController::class, 'contacts']);
     Route::get('/customers/{customer}/group', [\App\Http\Controllers\Freight\CustomerController::class, 'group']);
 
     Route::get('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'index']);

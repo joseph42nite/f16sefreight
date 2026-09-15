@@ -101,6 +101,11 @@ class MessageIngestor
 
                 $stats['ingested']++;
 
+                // The client's addresses — sender and copied — saved to its contacts.
+                if ($message->direction === 'inbound') {
+                    app(\App\Services\ClientContacts::class)->record($connection->agent_id, array_merge([$message->from], $message->to, $message->cc), $message->receivedAt);
+                }
+
                 // 🔴 THE CLASSIFIER IS RUN HERE, and until now it was run NOWHERE. The
                 // service, its fallback chain and its cargo patterns all existed and
                 // nothing ever called `classify()` — every thread arrived 'unclassified'

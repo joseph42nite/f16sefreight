@@ -69,4 +69,62 @@ class ClientDirectoryTest extends TestCase
 
         $this->as($company, $branch, 'operations')->putJson("http://focusair.localhost/api/customers/{$customer->id}", ['name' => 'x'])->assertForbidden();
     }
+
+    private function mailbox(Agent $branch): \App\MailboxConnection
+    {
+        $owner = User::create(['name' => 'desk', 'email' => 'desk-' . $branch->id . '-dir@test.local', 'password' => 'x',
+            'company_name' => $branch->company_id, 'branch_name' => $branch->id, 'designation' => 'pricing', 'is_active' => 1]);
+
+        return \App\MailboxConnection::withoutGlobalScopes()->create(['agent_id' => $branch->id, 'user_id' => $owner->id,
+            'email_address' => 'desk-' . $branch->id . '@forwarder.test', 'provider' => 'outlook', 'is_active' => 1, 'auth_state' => 'connected']);
+    }
+
+    private function receive(\App\MailboxConnection $mailbox, string $from, array $cc = []): void
+    {
+        app(\App\Services\Mail\MessageIngestor::class)->ingest($mailbox, [new \App\Services\Mail\NormalisedMessage(
+            messageId: '<' . uniqid('', true) . '@dir.test>', threadId: null, from: $from, to: [$mailbox->email_address], cc: $cc, bcc: [],
+            subject: 'Quote ' . uniqid(), snippet: 'Please quote.', receivedAt: now(), direction: 'inbound',
+        )]);
+    }
+
+    /** 🔴 Every address on the client's domain — sender or copied — is saved to its contacts; others are not. */
+    public function test_mail_addresses_from_a_clients_domain_are_saved(): void
+    {
+        [$company, $branch, $customer] = $this->tenant('tactical');
+        $mailbox = $this->mailbox($branch);
+
+        $this->receive($mailbox, 'shipping@globex.test', ['accounts@globex.test', 'broker@otherco.test']);
+        $this->receive($mailbox, 'Shipping@Globex.test');
+
+        $contacts = \App\CustomerContact::where('customer_id', $customer->id)->orderBy('email')->get();
+        $this->assertSame(['accounts@globex.test', 'shipping@globex.test'], $contacts->pluck('email')->all());
+        $this->assertSame([1, 2], $contacts->pluck('message_count')->all());
+        $this->assertFalse($contacts->contains('include_in_cc', true), 'being copied is a person\'s decision');
+
+        $this->as($company, $branch, 'sales')->getJson("http://focusair.localhost/api/customers/{$customer->id}/contacts")
+            ->assertOk()->assertJsonPath('contacts.0.email', 'shipping@globex.test');
+    }
+
+    /** Writing in a client's domain gathers the mail already received from it. */
+    public function test_adding_a_client_gathers_addresses_from_mail_already_received(): void
+    {
+        [$company, $branch] = $this->tenant('tactical');
+        $this->receive($this->mailbox($branch), 'ops@initech.test', ['finance@initech.test']);
+
+        $id = $this->as($company, $branch, 'pricing')->postJson('http://focusair.localhost/api/customers', ['name' => 'Initech', 'email_domain' => 'initech.test'])
+            ->assertCreated()->json('id');
+
+        $this->assertSame(['finance@initech.test', 'ops@initech.test'], \App\CustomerContact::where('customer_id', $id)->orderBy('email')->pluck('email')->all());
+    }
+
+    /** On Tactical the enquiries list names a client by its domain, for every role. */
+    public function test_tactical_enquiries_show_the_domain_as_the_client(): void
+    {
+        [$company, $branch, $customer] = $this->tenant('tactical');
+        $customer->update(['name' => 'Globex Industries']);
+        \App\Enquiry::create(['agent_id' => $branch->id, 'transport_mode' => 'air', 'status' => 'new', 'customer_id' => $customer->id, 'enquiry_no' => 'ENQA-TACD-26-0001']);
+
+        $this->as($company, $branch, 'pricing')->getJson('http://focusair.localhost/api/enquiries')
+            ->assertOk()->assertJsonPath('data.0.client_label', 'globex.test');
+    }
 }

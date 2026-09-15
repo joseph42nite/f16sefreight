@@ -88,12 +88,10 @@ class EnquiryController extends Controller
         //
         //   Command  — the customer RECORD, so the row reaches invoicing, credit and the
         //              client group. `customer_id` travels with it.
-        //   Tactical — the NAME only. There is no accounts module to reach, so an id is a
-        //              handle to nothing; and where no customer was ever onboarded the
-        //              sending DOMAIN is the honest label rather than a blank.
+        //   Tactical — the DOMAIN (user, 2026-09-16), for every role. There is no accounts module to reach, so an
+        //              id is a handle to nothing, and on Tactical a client is known by the domain it writes from.
         $isCommand = $context->tierAtLeast('command');
-        // Tactical sales see a client by its domain, never its name (PRD §2.3.3).
-        $namesHidden = $context->designation === 'sales' && ! $isCommand;
+        $namesHidden = ! $isCommand;
 
         // One query each for the page's threads and sender domains — not two per row.
         $ids = $enquiries->getCollection()->pluck('id');

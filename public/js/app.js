@@ -10579,7 +10579,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
     children: [{
       path: "inbox",
       name: "Inbox",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_freight_JobInbox_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/JobInbox */ "./resources/js/src/view/pages/freight/JobInbox.vue")),
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_JobInbox_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/JobInbox */ "./resources/js/src/view/pages/freight/JobInbox.vue")),
       meta: {
         userType: 'user',
         designations: ['pricing', 'operations', 'sales'],

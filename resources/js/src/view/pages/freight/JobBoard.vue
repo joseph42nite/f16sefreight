@@ -69,17 +69,44 @@
         -->
         <div v-if="!poolCollapsed" class="fx-pool__scroller">
           <p v-if="!pool.length" class="fx-muted">Nothing waiting. Every enquiry has an owner.</p>
+          <!--
+            Who it is from (the domain on Tactical, the client's name on Command — the server decides), when the mail
+            came and how long it has waited (user, 2026-09-16). No enquiry number or status: nobody has taken it yet.
+          -->
           <article v-for="enq in pool" :key="enq.id" class="fx-card fx-card--pool">
-            <div class="identifier fx-card__no">{{ enq.enquiry_no || "—" }}</div>
-            <StatusChip :value="enq.status" />
-            <div v-if="enq.client_label" class="fx-card__meta">{{ enq.client_label }}</div>
+            <div class="fx-card__client">{{ enq.client_label || "Unknown sender" }}</div>
+            <div class="fx-card__meta">
+              <Figure :value="enq.received_at" kind="dateTime" />
+              · <span :title="'Waiting since ' + enq.received_at">{{ waited(enq.received_at) }}</span>
+            </div>
             <!-- Sales follow the board; taking work on is for pricing and operations. -->
-            <button v-if="designation !== 'sales'" class="fx-btn" :disabled="busy || !enq.thread_id" @click="claim(enq)">
-              Take this enquiry
-            </button>
+            <div v-if="designation !== 'sales'" class="fx-card__actions">
+              <button class="fx-btn fx-btn--primary" :disabled="busy || !enq.thread_id" @click="accept(enq)">Accept</button>
+              <!-- Decline passes on it: it leaves your pool and stays in your colleagues'. -->
+              <button class="fx-btn" :disabled="busy" @click="decline(enq)">Decline</button>
+            </div>
           </article>
         </div>
       </section>
+
+      <!-- Accepting shows the acknowledgement mail first, as Claim does in the inbox. -->
+      <div v-if="claimDraft" class="fx-modal" role="dialog" aria-modal="true" aria-label="Accept this enquiry">
+        <div class="fx-modal__panel">
+          <header class="fx-modal__head"><h2 class="fx-modal__title">Accept and tell the client</h2></header>
+          <div class="fx-modal__body">
+            <ClientUpdateEditor
+              :draft="claimDraft"
+              :busy="busy"
+              send-label="Accept & send"
+              skip-label="Accept without email"
+              @send="claim(accepting, { decision: 'send', ...$event })"
+              @skip="claim(accepting, { decision: 'skip' })"
+            >
+              <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="claimDraft = null">Cancel</button>
+            </ClientUpdateEditor>
+          </div>
+        </div>
+      </div>
 
       <!-- ── Perspective A — Process View, 4 columns exactly (PRD §5.5) ──── -->
       <div v-if="view === 'process'" class="fx-board">
@@ -329,6 +356,7 @@ import { cargoProgress, milestoneFeed } from "@/core/config/cargoMilestones";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import ClientUpdateEditor from "@/view/pages/freight/components/ClientUpdateEditor.vue";
 
 /* Mirrors App\Enums\JobStatus. 'Lost' is deliberately absent — it is an enquiry state,
    never a job one, and the database CHECK refuses it here. */
@@ -374,8 +402,10 @@ const FILTER_KEY = "f16s_kanban_filters";
 
 export default {
   name: "JobBoard",
-  components: { draggable, Figure, FxDrawer, StatusChip },
+  components: { draggable, Figure, FxDrawer, StatusChip, ClientUpdateEditor },
   data: () => ({
+    /* The pool enquiry being accepted, and the acknowledgement shown for it. */
+    accepting: null, claimDraft: null,
     columns: emptyColumns(), pool: [], staff: [], operators: [],
     view: "process", loading: true, busy: false, error: null,
     poolCollapsed: false,
@@ -558,12 +588,42 @@ export default {
      * writes the same column from its own button. Two endpoints writing two columns for
      * "who owns this" is how they end up disagreeing.
      */
-    claim(enq) {
+    /** Accept: show the acknowledgement mail first; with nothing to send, take it straight away. */
+    accept(enq) {
       this.busy = true;
-      ApiService.post(`/inbox/threads/${enq.thread_id}/claim`, {})
-        .then(() => this.load())
+      ApiService.query(`/inbox/threads/${enq.thread_id}/client-update/preview`, { params: { stage: "claimed" } })
+        .then(({ data }) => {
+          this.busy = false;
+          if (data.draft) {
+            this.accepting = enq;
+            this.claimDraft = data.draft;
+          } else {
+            this.claim(enq, null);
+          }
+        })
+        .catch(() => { this.busy = false; this.claim(enq, null); });
+    },
+    /** Decline: pass on it — gone from this person's pool, still in their colleagues'. */
+    decline(enq) {
+      this.busy = true;
+      ApiService.post(`/enquiries/${enq.id}/pass`, {})
+        .then(() => { this.pool = this.pool.filter((p) => p.id !== enq.id); })
+        .catch((e) => { this.error = this.readable(e); })
+        .finally(() => { this.busy = false; });
+    },
+    /** How long an enquiry has waited: "25 min", "3 h", "2 d". */
+    waited(at) {
+      const minutes = Math.max(0, Math.floor((Date.now() - new Date(String(at).replace(" ", "T")).getTime()) / 60000));
+      if (minutes < 60) return minutes + " min";
+      if (minutes < 60 * 24) return Math.floor(minutes / 60) + " h";
+      return Math.floor(minutes / (60 * 24)) + " d";
+    },
+    claim(enq, update) {
+      this.busy = true;
+      ApiService.post(`/inbox/threads/${enq.thread_id}/claim`, update ? { client_update: update } : {})
+        .then(() => { this.claimDraft = null; this.accepting = null; return this.load(); })
         /* 409 is a real outcome, not a failure: someone got there first. */
-        .catch((e) => { this.error = this.readable(e); this.load(); })
+        .catch((e) => { this.claimDraft = null; this.error = this.readable(e); this.load(); })
         .finally(() => { this.busy = false; });
     },
     /**

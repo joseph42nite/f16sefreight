@@ -706,6 +706,9 @@ body.fx-split .fx-rail__label { display: none; }
                      padding: 0 var(--space-3) var(--space-3); align-items: flex-start; }
 .fx-card--pool { flex: 0 0 15rem; display: flex; flex-direction: column; gap: var(--space-2);
                  margin-bottom: 0; cursor: default; }
+.fx-card__client { font-weight: 600; word-break: break-word; }
+.fx-card__actions { display: flex; gap: var(--space-2); }
+.fx-card__actions .fx-btn { flex: 1 1 0; }
 
 /* Four columns, so each is wide enough for the card anatomy §5.5 specifies. */
 .fx-board__col--wide { flex: 1 1 0; min-width: 15rem; }

@@ -315,6 +315,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/enquiries', [\App\Http\Controllers\Freight\EnquiryController::class, 'index']);
     Route::post('/enquiries', [\App\Http\Controllers\Freight\EnquiryController::class, 'store']);
     Route::post('/enquiries/{enquiry}/lost', [\App\Http\Controllers\Freight\EnquiryController::class, 'markLost']);
+    Route::post('/enquiries/{enquiry}/pass', [\App\Http\Controllers\Freight\EnquiryController::class, 'pass']);
     Route::post('/enquiries/{enquiry}/reopen', [\App\Http\Controllers\Freight\EnquiryController::class, 'reopen']);
     // The ONLY path that creates a jobs row.
     Route::post('/enquiries/{enquiry}/convert', [\App\Http\Controllers\Freight\EnquiryController::class, 'convert']);

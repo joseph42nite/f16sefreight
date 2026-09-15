@@ -1213,7 +1213,8 @@ class FreightDemoSeeder extends Seeder
         $threads = [
             ['Quote request — 6 pallets BOM to FRA', 'ops@contoso.test', 'customer_enquiry', 'unread', 0, false, 2, null],
             ['RE: Rates for Chennai–Dubai, 12 cartons', 'shipping@globex.test', 'customer_enquiry', 'triaged', 1, true, 4, 'converted'],
-            ['Urgent: pharma shipment next Tuesday', 'exports@northwind.test', 'customer_enquiry', 'triaged', 0, false, 1, 'quoted'],
+            // ⚠️ `new`, not `quoted`: nobody has claimed or answered it, so nothing can have been quoted — it waits in the pool.
+            ['Urgent: pharma shipment next Tuesday', 'exports@northwind.test', 'customer_enquiry', 'triaged', 0, false, 1, 'new'],
             ['Flight EK511 rescheduled to 04-Sep', 'cargo@emirates.test', 'airline', 'unread', 0, false, 1, null],
             ['MAWB 176-10000004 — space confirmed', 'bookings@lufthansa.test', 'airline', 'read', 1, false, 3, null],
             ['Bill of entry filed — INBOM/2026/0442', 'filings@sharmacha.test', 'clearance', 'unread', 0, false, 2, null],

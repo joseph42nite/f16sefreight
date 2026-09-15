@@ -11,7 +11,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var vuedraggable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuedraggable */ "./node_modules/vuedraggable/dist/vuedraggable.umd.js");
 /* harmony import */ var vuedraggable__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(vuedraggable__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
@@ -19,11 +19,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
 /* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+/* harmony import */ var _view_pages_freight_components_ClientUpdateEditor_vue__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @/view/pages/freight/components/ClientUpdateEditor.vue */ "./resources/js/src/view/pages/freight/components/ClientUpdateEditor.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -91,9 +93,13 @@ const FILTER_KEY = "f16s_kanban_filters";
     draggable: (vuedraggable__WEBPACK_IMPORTED_MODULE_0___default()),
     Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
     FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
-    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_5__["default"]
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_5__["default"],
+    ClientUpdateEditor: _view_pages_freight_components_ClientUpdateEditor_vue__WEBPACK_IMPORTED_MODULE_6__["default"]
   },
   data: () => ({
+    /* The pool enquiry being accepted, and the acknowledgement shown for it. */
+    accepting: null,
+    claimDraft: null,
     columns: emptyColumns(),
     pool: [],
     staff: [],
@@ -112,7 +118,7 @@ const FILTER_KEY = "f16s_kanban_filters";
     PROCESS,
     PAGE_SIZE
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_6__.mapGetters)(["portalLabel", "can", "designation"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_7__.mapGetters)(["portalLabel", "can", "designation"])), {}, {
     canMove() {
       return this.can(["pricing", "operations"], "tactical");
     },
@@ -312,10 +318,57 @@ const FILTER_KEY = "f16s_kanban_filters";
      * writes the same column from its own button. Two endpoints writing two columns for
      * "who owns this" is how they end up disagreeing.
      */
-    claim(enq) {
+    /** Accept: show the acknowledgement mail first; with nothing to send, take it straight away. */
+    accept(enq) {
       this.busy = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post(`/inbox/threads/${enq.thread_id}/claim`, {}).then(() => this.load())
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].query(`/inbox/threads/${enq.thread_id}/client-update/preview`, {
+        params: {
+          stage: "claimed"
+        }
+      }).then(({
+        data
+      }) => {
+        this.busy = false;
+        if (data.draft) {
+          this.accepting = enq;
+          this.claimDraft = data.draft;
+        } else {
+          this.claim(enq, null);
+        }
+      }).catch(() => {
+        this.busy = false;
+        this.claim(enq, null);
+      });
+    },
+    /** Decline: pass on it — gone from this person's pool, still in their colleagues'. */
+    decline(enq) {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post(`/enquiries/${enq.id}/pass`, {}).then(() => {
+        this.pool = this.pool.filter(p => p.id !== enq.id);
+      }).catch(e => {
+        this.error = this.readable(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /** How long an enquiry has waited: "25 min", "3 h", "2 d". */
+    waited(at) {
+      const minutes = Math.max(0, Math.floor((Date.now() - new Date(String(at).replace(" ", "T")).getTime()) / 60000));
+      if (minutes < 60) return minutes + " min";
+      if (minutes < 60 * 24) return Math.floor(minutes / 60) + " h";
+      return Math.floor(minutes / (60 * 24)) + " d";
+    },
+    claim(enq, update) {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post(`/inbox/threads/${enq.thread_id}/claim`, update ? {
+        client_update: update
+      } : {}).then(() => {
+        this.claimDraft = null;
+        this.accepting = null;
+        return this.load();
+      })
       /* 409 is a real outcome, not a failure: someone got there first. */.catch(e => {
+        this.claimDraft = null;
         this.error = this.readable(e);
         this.load();
       }).finally(() => {
@@ -370,6 +423,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "render": () => (/* binding */ render),
 /* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
 /* harmony export */ });
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
@@ -496,25 +554,82 @@ var render = function render() {
       key: enq.id,
       staticClass: "fx-card fx-card--pool"
     }, [_c("div", {
-      staticClass: "identifier fx-card__no"
-    }, [_vm._v(_vm._s(enq.enquiry_no || "—"))]), _vm._v(" "), _c("StatusChip", {
-      attrs: {
-        value: enq.status
-      }
-    }), _vm._v(" "), enq.client_label ? _c("div", {
+      staticClass: "fx-card__client"
+    }, [_vm._v(_vm._s(enq.client_label || "Unknown sender"))]), _vm._v(" "), _c("div", {
       staticClass: "fx-card__meta"
-    }, [_vm._v(_vm._s(enq.client_label))]) : _vm._e(), _vm._v(" "), _vm.designation !== "sales" ? _c("button", {
-      staticClass: "fx-btn",
+    }, [_c("Figure", {
+      attrs: {
+        value: enq.received_at,
+        kind: "dateTime"
+      }
+    }), _vm._v("\n            · "), _c("span", {
+      attrs: {
+        title: "Waiting since " + enq.received_at
+      }
+    }, [_vm._v(_vm._s(_vm.waited(enq.received_at)))])], 1), _vm._v(" "), _vm.designation !== "sales" ? _c("div", {
+      staticClass: "fx-card__actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
       attrs: {
         disabled: _vm.busy || !enq.thread_id
       },
       on: {
         click: function ($event) {
-          return _vm.claim(enq);
+          return _vm.accept(enq);
         }
       }
-    }, [_vm._v("\n            Take this enquiry\n          ")]) : _vm._e()], 1);
-  })], 2) : _vm._e()]), _vm._v(" "), _vm.view === "process" ? _c("div", {
+    }, [_vm._v("Accept")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.decline(enq);
+        }
+      }
+    }, [_vm._v("Decline")])]) : _vm._e()]);
+  })], 2) : _vm._e()]), _vm._v(" "), _vm.claimDraft ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-label": "Accept this enquiry"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_vm._m(0), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body"
+  }, [_c("ClientUpdateEditor", {
+    attrs: {
+      draft: _vm.claimDraft,
+      busy: _vm.busy,
+      "send-label": "Accept & send",
+      "skip-label": "Accept without email"
+    },
+    on: {
+      send: function ($event) {
+        return _vm.claim(_vm.accepting, _objectSpread({
+          decision: "send"
+        }, $event));
+      },
+      skip: function ($event) {
+        return _vm.claim(_vm.accepting, {
+          decision: "skip"
+        });
+      }
+    }
+  }, [_c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.claimDraft = null;
+      }
+    }
+  }, [_vm._v("Cancel")])])], 1)])]) : _vm._e(), _vm._v(" "), _vm.view === "process" ? _c("div", {
     staticClass: "fx-board"
   }, _vm._l(_vm.PROCESS, function (col) {
     return _c("section", {
@@ -775,7 +890,15 @@ var render = function render() {
     }, [_vm._v(_vm._s(s.at ? _vm.when(s.at) : ""))])]);
   }), 0)]] : _vm._e()], 2)], 2);
 };
-var staticRenderFns = [];
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title"
+  }, [_vm._v("Accept and tell the client")])]);
+}];
 render._withStripped = true;
 
 

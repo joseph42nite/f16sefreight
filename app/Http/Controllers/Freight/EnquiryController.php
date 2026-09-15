@@ -71,14 +71,17 @@ class EnquiryController extends Controller
             // it. The claim lives on the THREAD (`email_threads.assigned_ops_id`), which
             // is the one place the inbox already writes it, so the board reads the same
             // fact rather than keeping a second copy that can drift.
+            // Only NEW enquiries (user, 2026-09-16): once someone has quoted or chased one, it has an owner.
             ->when($request->boolean('unclaimed'), fn ($q) => $q
-                ->whereIn('status', Enquiry::OPEN_STATUSES)
+                ->where('status', EnquiryStatus::New->value)
                 ->doesntHave('jobs')
                 ->whereIn('id', function ($sub) {
                     $sub->select('enquiry_id')->from('email_threads')
                         ->whereNotNull('enquiry_id')
                         ->whereNull('assigned_ops_id');
-                }))
+                })
+                // Declined by this person: gone from their pool, still in their colleagues'.
+                ->whereNotIn('id', DB::table('enquiry_passes')->where('user_id', auth()->id())->select('enquiry_id')))
             ->with('customer:id,name,email_domain')
             ->latest()
             // 🔴 50 a page, never the whole branch (user, 2026-09-15: "so our server is not overloaded").
@@ -96,10 +99,12 @@ class EnquiryController extends Controller
         // One query each for the page's threads and sender domains — not two per row.
         $ids = $enquiries->getCollection()->pluck('id');
         $threads = DB::table('email_threads')->whereIn('enquiry_id', $ids)->pluck('id', 'enquiry_id');
-        $domains = $this->senderDomainsFor($ids);
+        $firstMail = $this->firstMailFor($ids);
 
-        $enquiries->getCollection()->transform(function ($enquiry) use ($isCommand, $namesHidden, $threads, $domains) {
-            $domain = $domains[$enquiry->id] ?? null;
+        $enquiries->getCollection()->transform(function ($enquiry) use ($isCommand, $namesHidden, $threads, $firstMail) {
+            $domain = $firstMail[$enquiry->id]['domain'] ?? null;
+            // When the client's mail came in — the pool card shows it and how long it has waited.
+            $enquiry->received_at = $firstMail[$enquiry->id]['received_at'] ?? $enquiry->created_at;
 
             $enquiry->client_domain = $enquiry->customer->email_domain ?? $domain;
             $enquiry->client_label = $namesHidden ? $enquiry->client_domain : ($enquiry->customer->name ?? $domain);
@@ -129,22 +134,36 @@ class EnquiryController extends Controller
      * `enquiries` would be a second place for the same fact to drift — an enquiry created
      * by hand has no thread and therefore, correctly, no domain.
      */
-    private function senderDomainsFor($enquiryIds): array
+    /** @return array<int, array{domain: ?string, received_at: string}> the first inbound mail on each enquiry's conversation */
+    private function firstMailFor($enquiryIds): array
     {
-        // The first inbound sender on each enquiry's conversation.
         return DB::table('email_threads as t')
             ->join('email_messages as m', 'm.thread_key', '=', 't.thread_key')
             ->whereIn('t.enquiry_id', $enquiryIds)
             ->where('m.direction', 'inbound')
             ->orderBy('m.received_at')
-            ->get(['t.enquiry_id', 'm.from'])
+            ->get(['t.enquiry_id', 'm.from', 'm.received_at'])
             ->unique('enquiry_id')
             ->mapWithKeys(function ($r) {
                 $at = strrpos((string) $r->from, '@');
 
-                return [$r->enquiry_id => $at === false ? null : strtolower(rtrim(substr($r->from, $at + 1), '>'))];
+                return [$r->enquiry_id => [
+                    'domain' => $at === false ? null : strtolower(rtrim(substr($r->from, $at + 1), '>')),
+                    'received_at' => $r->received_at,
+                ]];
             })
             ->all();
+    }
+
+    /** Decline an enquiry in the unassigned pool: it leaves this person's pool and stays in their colleagues'. */
+    public function pass(Enquiry $enquiry): JsonResponse
+    {
+        $this->authorize('viewInbox');
+        abort_if(auth()->user()->designation === 'sales', 403);
+
+        DB::table('enquiry_passes')->insertOrIgnore(['enquiry_id' => $enquiry->id, 'user_id' => auth()->id(), 'created_at' => now()]);
+
+        return response()->json(['ok' => true]);
     }
 
     /**

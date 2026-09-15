@@ -206,4 +206,74 @@ class JobBoardLinksTest extends TestCase
 
         $this->assertNull($this->board()[$jobId]['thread_id']);
     }
+
+    /** An unclaimed pool enquiry from Globex, its mail received 3 hours ago, in a company on this tier. */
+    private function poolEnquiry(string $tier): array
+    {
+        $company = Company::create(['name' => "Pool {$tier}", 'code' => strtoupper(substr($tier, 0, 3)) . 'P', 'tier' => $tier]);
+        $branch = Agent::create(['company_id' => $company->id, 'agent_name' => 'BOM', 'branch_code' => 'BOM']);
+        $users = collect(['pricing', 'operations'])->mapWithKeys(fn ($d) => [$d => User::create([
+            'name' => $d, 'email' => "{$d}-{$tier}-pool@test.local", 'password' => Hash::make('x'),
+            'company_name' => $company->id, 'branch_name' => $branch->id, 'designation' => $d, 'is_active' => 1,
+        ])]);
+        $customer = \App\Customer::create(['company_id' => $company->id, 'name' => 'Globex Industries', 'email_domain' => 'globex.test']);
+        $enquiryId = DB::table('enquiries')->insertGetId(['agent_id' => $branch->id, 'transport_mode' => 'air', 'status' => 'new',
+            'customer_id' => $customer->id, 'enquiry_no' => 'ENQA-POOL-26-' . random_int(1000, 9999), 'created_at' => now(), 'updated_at' => now()]);
+        $key = 'pool-' . random_int(1, 999999);
+        DB::table('email_threads')->insert(['agent_id' => $branch->id, 'thread_key' => $key, 'classification' => 'customer_enquiry',
+            'enquiry_id' => $enquiryId, 'latest_message_received_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        $mailbox = DB::table('mailbox_connections')->insertGetId(['agent_id' => $branch->id, 'user_id' => $users['pricing']->id,
+            'email_address' => "desk-{$tier}-pool@test.local", 'provider' => 'outlook', 'is_active' => 1, 'auth_state' => 'connected', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('email_messages')->insert(['agent_id' => $branch->id, 'mailbox_connection_id' => $mailbox, 'thread_key' => $key, 'direction' => 'inbound',
+            'message_id' => '<' . $key . '@globex.test>', 'from' => 'shipping@globex.test', 'to' => 'desk@test.local', 'subject' => 'Quote',
+            'received_at' => now()->subHours(3)->startOfMinute(), 'created_at' => now(), 'updated_at' => now()]);
+
+        return [$users, $enquiryId];
+    }
+
+    private function pool(User $as): array
+    {
+        return $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($as), 'Accept' => 'application/json'])
+            ->getJson('http://focusair.localhost/api/enquiries?unclaimed=1')->assertOk()->json('data');
+    }
+
+    /** Pool card, Tactical: the client's domain and when its mail came in (user, 2026-09-16). */
+    public function test_tactical_pool_cards_show_the_domain_and_when_the_mail_came(): void
+    {
+        [$users] = $this->poolEnquiry('tactical');
+
+        $card = $this->pool($users['operations'])[0];
+
+        $this->assertSame('globex.test', $card['client_label']);
+        $this->assertSame(now()->subHours(3)->startOfMinute()->toDateTimeString(), \Illuminate\Support\Carbon::parse($card['received_at'])->toDateTimeString());
+    }
+
+    /** Pool card, Command: the client's name. */
+    public function test_command_pool_cards_show_the_client_name(): void
+    {
+        [$users] = $this->poolEnquiry('command');
+
+        $this->assertSame('Globex Industries', $this->pool($users['pricing'])[0]['client_label']);
+    }
+
+    /** 🔴 Decline passes on it: gone from the pool of whoever declined, still in their colleague's. */
+    public function test_declining_a_pool_enquiry_removes_it_only_for_that_person(): void
+    {
+        [$users, $enquiryId] = $this->poolEnquiry('tactical');
+
+        $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($users['pricing']), 'Accept' => 'application/json'])
+            ->postJson("http://focusair.localhost/api/enquiries/{$enquiryId}/pass")->assertOk();
+
+        $this->assertSame([], $this->pool($users['pricing']));
+        $this->assertSame([$enquiryId], array_column($this->pool($users['operations']), 'id'));
+    }
+
+    /** The pool holds new enquiries only — a quoted one already has somebody working it. */
+    public function test_the_pool_holds_only_new_enquiries(): void
+    {
+        [$users, $enquiryId] = $this->poolEnquiry('tactical');
+        DB::table('enquiries')->where('id', $enquiryId)->update(['status' => 'quoted']);
+
+        $this->assertSame([], $this->pool($users['pricing']));
+    }
 }

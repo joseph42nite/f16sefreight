@@ -1467,3 +1467,13 @@ to { opacity: 1; transform: translateY(0) scale(1);
   overflow: visible;
   box-sizing: border-box;
 }
+
+.fx-update[data-v-b7a57a7c] { display: grid; gap: 8px;
+}
+.fx-update__field[data-v-b7a57a7c] { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 8px;
+}
+.fx-update__body[data-v-b7a57a7c] { width: 100%; font: inherit; resize: vertical;
+}
+.fx-update__actions[data-v-b7a57a7c] { display: flex; flex-wrap: wrap; gap: 8px;
+}
+

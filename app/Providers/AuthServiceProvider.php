@@ -70,12 +70,14 @@ class AuthServiceProvider extends ServiceProvider
         // ── The Job Cost Sheet — PRD.md §6.7 ─────────────────────────────────
         // Pricing owns the rates; accounts finalizes them. Operations never touches
         // money, and SALES never sees the buy side at all (§2.3.4 / §7.2).
-        $this->define('viewCostSheet', ['pricing', 'accounts', 'boss'], 'tactical');
-        $this->define('editCostSheet', ['pricing', 'accounts'],         'tactical');
+        // 🔴 COMMAND ONLY (user, 2026-09-16): the sheet builds the invoice and the purchase voucher, and
+        // Tactical has no accounts — a Tactical cost sheet would be figures that go nowhere.
+        $this->define('viewCostSheet', ['pricing', 'accounts', 'boss'], 'command');
+        $this->define('editCostSheet', ['pricing', 'accounts'],         'command');
 
         // 🔴 The margin is sell − buy, so seeing it IS seeing the buy rate. Sales is
         // excluded at every tier — PRD.md §7.2 marks that row "❌ never".
-        $this->define('viewMargin',    ['pricing', 'accounts', 'boss'], 'tactical');
+        $this->define('viewMargin',    ['pricing', 'accounts', 'boss'], 'command');
 
         // ── Customs & manifests — guide §5.4 ─────────────────────────────────
         // 🔒 OPERATIONS transmits. `documentation` is a legacy designation VALUE, not

@@ -93,7 +93,7 @@ const LOST_REASONS = [{
   label: "Other"
 }];
 
-/** Mirrors `viewCostSheet` in AuthServiceProvider. The server is still the authority. */
+/** Mirrors `viewCostSheet` in AuthServiceProvider (Command only). The server is still the authority. */
 const COST_SHEET_ROLES = ["pricing", "accounts", "boss"];
 const WORKSPACE_TABS = [{
   key: "extraction",
@@ -199,7 +199,7 @@ const WORKSPACE_TABS = [{
     CLASSIFICATIONS,
     WORKSPACE_TABS
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_9__.mapGetters)(["designation", "currentUser"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_9__.mapGetters)(["designation", "currentUser", "tierAtLeast"])), {}, {
     /* Only pricing owns triage — re-classification mints or strands an enquiry. */
     canTriage() {
       return this.designation === "pricing";
@@ -311,7 +311,8 @@ const WORKSPACE_TABS = [{
       // waybill, which is the whole reason they can open the workspace at all.
       //
       // ⚠️ An ALLOWLIST, so an unknown designation loses the tab rather than gaining it.
-      return WORKSPACE_TABS.filter(t => t.key !== "cost" || COST_SHEET_ROLES.indexOf(this.designation) !== -1);
+      // Command only: the sheet feeds accounts, and Tactical has no accounts (user, 2026-09-16).
+      return WORKSPACE_TABS.filter(t => t.key !== "cost" || COST_SHEET_ROLES.indexOf(this.designation) !== -1 && this.tierAtLeast("command"));
     },
     timing() {
       const a = this.active;

@@ -133,6 +133,17 @@ class JobCostSheetTest extends TestCase
             ->assertForbidden();
     }
 
+    /** 🔒 No cost sheet below Command: it feeds accounts, and Tactical has no accounts (user, 2026-09-16). */
+    public function test_a_tactical_company_has_no_cost_sheet(): void
+    {
+        $this->company->update(['tier' => 'tactical']);
+
+        $this->api($this->pricing)->getJson($this->url("/api/jobs/{$this->job->id}/cost-sheet"))->assertForbidden();
+        $this->api($this->pricing)->postJson($this->url("/api/jobs/{$this->job->id}/cost-sheet/lines"), [
+            'side' => 'sell', 'charge_type' => 'air_freight', 'description' => 'Freight', 'quantity' => 1, 'rate' => 1,
+        ])->assertForbidden();
+    }
+
     /** Pricing owns the rates and sees both sides plus the margin. */
     public function test_pricing_sees_both_sides_and_the_margin(): void
     {

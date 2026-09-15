@@ -624,7 +624,7 @@ const LOST_REASONS = [
   { value: "other", label: "Other" },
 ];
 
-/** Mirrors `viewCostSheet` in AuthServiceProvider. The server is still the authority. */
+/** Mirrors `viewCostSheet` in AuthServiceProvider (Command only). The server is still the authority. */
 const COST_SHEET_ROLES = ["pricing", "accounts", "boss"];
 
 const WORKSPACE_TABS = [
@@ -678,7 +678,7 @@ export default {
     CLASSIFICATIONS, WORKSPACE_TABS,
   }),
   computed: {
-    ...mapGetters(["designation", "currentUser"]),
+    ...mapGetters(["designation", "currentUser", "tierAtLeast"]),
     /* Only pricing owns triage — re-classification mints or strands an enquiry. */
     canTriage() {
       return this.designation === "pricing";
@@ -795,8 +795,9 @@ export default {
       // waybill, which is the whole reason they can open the workspace at all.
       //
       // ⚠️ An ALLOWLIST, so an unknown designation loses the tab rather than gaining it.
+      // Command only: the sheet feeds accounts, and Tactical has no accounts (user, 2026-09-16).
       return WORKSPACE_TABS.filter(
-        (t) => t.key !== "cost" || COST_SHEET_ROLES.indexOf(this.designation) !== -1
+        (t) => t.key !== "cost" || (COST_SHEET_ROLES.indexOf(this.designation) !== -1 && this.tierAtLeast("command"))
       );
     },
     timing() {

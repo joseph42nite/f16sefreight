@@ -193,20 +193,22 @@ class SalesFormulasTest extends TestCase
         $this->assertFalse(DB::table('sales_action_queue')->where('id', $stale)->exists());
     }
 
-    /** A dismissed suggestion rests for 30 days (user, 2026-09-15), then comes back if the figures still say so. */
+    /** A suggestion that was dismissed or sent rests for 30 days, then comes back if the figures still say so. */
     public function test_a_dismissed_suggestion_rests_for_30_days(): void
     {
         // Shipped every 7 days until 70 days ago → DORMANT → a check-in email is suggested.
         for ($week = 10; $week < 30; $week++) {
             $this->shipment($this->daysBefore(7 * $week), 100);
         }
-        $dismissedDaysAgo = function (int $days) {
+        $dismissedDaysAgo = function (int $days, string $status = 'dismissed') {
             DB::table('sales_action_queue')->where('customer_id', $this->client->id)->delete();
             DB::table('sales_action_queue')->insert([
                 'agent_id' => $this->branch->id, 'customer_id' => $this->client->id, 'transport_mode' => 'air',
                 'audience' => 'client', 'action_type' => 'client_reactivation', 'priority_score' => 50,
-                'status' => 'dismissed', 'fact_packet' => '{}', 'dismissed_reason' => 'already_in_touch',
-                'dismissed_at' => Carbon::parse(self::DATE)->subDays($days), 'created_at' => now(), 'updated_at' => now(),
+                'status' => $status, 'fact_packet' => '{}', 'dismissed_reason' => $status === 'dismissed' ? 'already_in_touch' : null,
+                'dismissed_at' => $status === 'dismissed' ? Carbon::parse(self::DATE)->subDays($days) : null,
+                'sent_at' => $status === 'acted' ? Carbon::parse(self::DATE)->subDays($days) : null,
+                'created_at' => now(), 'updated_at' => now(),
             ]);
             $this->roll();
 
@@ -216,5 +218,6 @@ class SalesFormulasTest extends TestCase
 
         $this->assertFalse($dismissedDaysAgo(5), 'dismissed 5 days ago: not suggested again yet');
         $this->assertTrue($dismissedDaysAgo(40), 'dismissed 40 days ago: suggested again');
+        $this->assertFalse($dismissedDaysAgo(9, 'acted'), 'sent 9 days ago: not suggested again yet');
     }
 }

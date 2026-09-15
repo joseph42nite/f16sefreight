@@ -233,6 +233,7 @@ class FreightDemoSeeder extends Seeder
         DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branchIds)->delete();
 
         DB::table('accounts_invoice_items')->whereIn('invoice_id', $invoiceIds)->delete();
+        DB::table('llm_usage_logs')->where('company_id', $company->id)->where('model', 'demo-seed')->delete();
         DB::table('accounts_ledger_entries')->whereIn('agent_id', $branchIds)->delete();
         DB::table('unposted_transactions_queue')->whereIn('agent_id', $branchIds)->delete();
         DB::table('bank_transactions')->whereIn('agent_id', $branchIds)->delete();
@@ -322,10 +323,16 @@ class FreightDemoSeeder extends Seeder
 
         $this->seedPeriod($branches->first());
 
+        // Globex Chennai is managed from Chennai, so the Boss's branch comparison has two branches to compare.
+        DB::table('customers')->where('id', $customers[3]->id)->update(['branch_id' => $branches[1]->id]);
+
         foreach ($branches as $branch) {
             $this->seedLifecycle($branch, $customers, $users, $tenant['scale']);
             $this->seedInTransit($branch, $customers, $users, $tenant['scale']);
             $this->seedTrailingHistory($branch, $customers[3], $users, $tenant['scale']);
+            if ($branch->id === $branches->first()->id) {
+                $this->seedVolumeTrends($branch, $customers, $users, $tenant['scale']);
+            }
             $this->seedPartners($company, $branch);
             $this->seedInbox($branch, $customers, $users);
             $this->seedJobMail($branch);
@@ -336,7 +343,167 @@ class FreightDemoSeeder extends Seeder
         // Only the Command tenant gets financials — below Command there is no ledger.
         if ($tenant['tier'] === 'command') {
             $this->seedFinancials($branches->first(), $customers, $users);
+            $this->seedInvoiceHistory($branches->first(), $customers, $users);
         }
+
+        $this->seedAiUsage($company, $branches->first(), $users, $tenant['scale']);
+        $this->seedOutreachHistory($branches->first(), $customers, $users);
+    }
+
+    /**
+     * Two clients whose volume moved, so the Sales page has a trend to show and an email to suggest
+     * (user, 2026-09-15): Contoso GROWING (220 kg a fortnight, 520 kg in the last 13 weeks) and Northwind
+     * SHRINKING (900 kg every 10 days, 60 kg in the last 13 weeks). Regular rhythms, so neither reads as stopped.
+     */
+    private function seedVolumeTrends(Agent $branch, $customers, array $users, float $scale): void
+    {
+        $agentCode = Company::find($branch->company_id)->code . $branch->branch_code;
+        $seq = 700;
+
+        foreach ([
+            [$customers[1], 14, 220, 520, [['MAA', 'DXB'], ['BOM', 'FRA']]],
+            [$customers[0], 10, 900, 60, [['BOM', 'FRA'], ['DEL', 'LHR']]],
+        ] as [$customer, $every, $before, $recent, $lanes]) {
+            for ($day = 360, $k = 0; $day >= 6; $day -= $every, $k++) {
+                $when = now()->subDays($day)->setTime(11, 0);
+                $kg = round(($day <= 91 ? $recent : $before) * $scale, 1);
+                [$origin, $dest] = $lanes[$k % 2];
+                $seq++;
+
+                $enquiry = Enquiry::create([
+                    'agent_id' => $branch->id, 'transport_mode' => 'air', 'direction' => 'export',
+                    'enquiry_no' => sprintf('ENQA-%s-%s-%04d', $agentCode, $when->format('y'), $seq),
+                    'customer_id' => $customer->id, 'sales_id' => $users['sales']->id, 'pricing_id' => $users['pricing']->id,
+                    'status' => 'converted', 'origin_code' => $origin, 'dest_code' => $dest,
+                    'extracted_pieces' => 8, 'extracted_weight' => $kg, 'cargo_description' => 'Auto components',
+                    'cargo_type' => 'general', 'cargo_data_source' => 'regex',
+                    'quoted_amount' => round($kg * 180, 2), 'quoted_currency' => 'INR',
+                    'created_at' => $when, 'updated_at' => $when,
+                ]);
+
+                $job = Job::create([
+                    'agent_id' => $branch->id, 'enquiry_id' => $enquiry->id, 'transport_mode' => 'air', 'direction' => 'export',
+                    'execution_job_no' => sprintf('JOBA-%s-%s-%04d', $agentCode, $when->format('y'), $seq),
+                    'customer_id' => $customer->id, 'ops_id' => $users['operations']->id, 'pricing_id' => $users['pricing']->id,
+                    'status' => 'Completed', 'cargo_type' => 'general', 'completed_at' => $when->copy()->addDays(3),
+                    'awb_number' => '176-' . str_pad((string) (40000000 + ($branch->id * 1000) + $seq), 8, '0', STR_PAD_LEFT),
+                    'created_at' => $when, 'updated_at' => $when,
+                ]);
+
+                DB::table('air_shipment_details')->insert([
+                    'job_id' => $job->id, 'flight_number' => 'EK511', 'carrier_name' => 'Emirates SkyCargo',
+                    'pol_code' => $origin, 'pod_code' => $dest, 'piece_count' => 8, 'gross_weight' => $kg,
+                    'chargeable_weight' => $kg, 'created_at' => $when, 'updated_at' => $when,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Six months of invoices on each client's shipments, paid through the bank a little after their terms,
+     * plus two left unpaid — Northwind at 40 days and Globex Chennai at 75 — so the Sales page and the Boss
+     * see revenue, days to pay, aging and a collections call.
+     */
+    private function seedInvoiceHistory(Agent $branch, $customers, array $users): void
+    {
+        $agentCode = Company::find($branch->company_id)->code . $branch->branch_code;
+        $n = 100;
+
+        foreach ($customers as $ci => $customer) {
+            $jobs = Job::withoutGlobalScopes()->where('customer_id', $customer->id)->where('status', 'Completed')
+                ->where('created_at', '>=', now()->subDays(190))->orderBy('created_at')->get();
+
+            foreach ([170, 140, 110, 80, 50, 20] as $m => $daysAgo) {
+                $job = $jobs->first(fn ($j) => $j->created_at->lte(now()->subDays($daysAgo))) ?? $jobs->first();
+                if ($job === null) {
+                    continue;
+                }
+
+                $unpaid = ($ci === 0 && $daysAgo === 50) || ($ci === 3 && $daysAgo === 80);
+                $date = now()->subDays($unpaid ? ($ci === 3 ? 75 : 40) : $daysAgo);
+                $amount = 60000.00 + ($ci * 15000) + ($m * 2500);
+                $total = round($amount * 1.18, 2);
+                $n++;
+
+                $id = DB::table('accounts_invoices')->insertGetId([
+                    'agent_id' => $branch->id, 'job_id' => $job->id, 'transport_mode' => 'air',
+                    'customer_id' => $customer->id, 'created_by' => $users['accounts']->id,
+                    'invoice_no' => sprintf('INV-%s-%s-%04d', $agentCode, $date->format('y'), $n),
+                    'type' => 'invoice', 'document_date' => $date->toDateString(),
+                    'status' => $unpaid ? 'sent' : 'paid', 'subtotal' => $amount, 'tax_amount' => round($amount * 0.18, 2),
+                    'grand_total' => $total, 'amount_paid' => $unpaid ? 0 : $total, 'currency' => 'INR',
+                    'created_at' => $date, 'updated_at' => $date,
+                ]);
+
+                if (! $unpaid) {
+                    $paidOn = $date->copy()->addDays((int) ($customer->payment_terms_days ?? 30) + ($ci * 3));
+                    DB::table('bank_transactions')->insert([
+                        'agent_id' => $branch->id, 'plaid_transaction_id' => "demo_paid_{$branch->id}_{$id}",
+                        'amount' => $total, 'matched_invoice_id' => $id, 'reconciliation_status' => 'matched',
+                        'created_at' => $paidOn, 'updated_at' => $paidOn,
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * This month's AI use, so the Boss's "AI use" tiles and superadmin's per-company table have figures.
+     * Marked `demo-seed` so a re-seed removes exactly these rows.
+     */
+    private function seedAiUsage(Company $company, Agent $branch, array $users, float $scale): void
+    {
+        $rows = [];
+        $days = now()->day;
+
+        foreach ([['text', 140, 0.0035, 'pricing'], ['vision', 12, 0.01, 'operations'], ['help', 30, 0.002, 'operations'], ['sales_draft', 9, 0.003, 'sales']] as [$purpose, $count, $usd, $who]) {
+            for ($i = 0; $i < (int) round($count * $scale); $i++) {
+                $at = now()->subDays($i % $days)->setTime(9 + ($i % 8), $i % 60);
+                $rows[] = [
+                    'agent_id' => $branch->id, 'company_id' => $company->id, 'user_id' => $users[$who]->id,
+                    'model' => 'demo-seed', 'purpose' => $purpose, 'provider' => 'CoreWeave', 'tier' => 'economy',
+                    'tokens_in' => 1800, 'tokens_out' => 250, 'cost_usd' => $usd, 'execution_ms' => 3200, 'attempts' => 1,
+                    'created_at' => $at, 'updated_at' => $at,
+                ];
+            }
+        }
+
+        DB::table('llm_usage_logs')->insert($rows);
+    }
+
+    /**
+     * A client email the rep sent and two they dismissed, with reasons — the Sales page's "Dismissed" list and
+     * superadmin's Suggestion feedback have something to show. Dismissed ones rest 30 days, so the rollup
+     * does not suggest them again straight away.
+     */
+    private function seedOutreachHistory(Agent $branch, $customers, array $users): void
+    {
+        $row = fn (Customer $c, string $type, array $facts) => [
+            'agent_id' => $branch->id, 'customer_id' => $c->id, 'transport_mode' => 'air', 'sales_id' => $users['sales']->id,
+            'audience' => 'client', 'action_type' => $type, 'priority_score' => 20, 'fact_packet' => json_encode($facts),
+            'created_at' => now()->subDays(14), 'updated_at' => now()->subDays(2),
+        ];
+
+        DB::table('sales_action_queue')->insert([
+            $row($customers[1], 'client_new_lanes', ['lanes_we_run' => ['BOM → JFK', 'DEL → LHR'], 'usual_lanes' => ['MAA → DXB', 'BOM → FRA']]) + [
+                'status' => 'acted', 'draft_subject' => 'More lanes we can handle for you',
+                'draft_body' => '<p>Dear Contoso team,</p><p>Alongside MAA → DXB and BOM → FRA, we also run BOM → JFK and DEL → LHR. If either would help, I would be glad to share options.</p><p>Kind regards,</p>',
+                'draft_to' => json_encode(['shipping@contoso.test']), 'draft_cc' => json_encode(['accounts@contoso.test']),
+                'draft_generated_at' => now()->subDays(9), 'sent_at' => now()->subDays(9), 'sent_by' => $users['sales']->id,
+                'dismissed_reason' => null, 'dismissed_note' => null, 'dismissed_by' => null, 'dismissed_at' => null,
+            ],
+            $row($customers[0], 'client_new_lanes', ['lanes_we_run' => ['MAA → DXB', 'BOM → JFK'], 'usual_lanes' => ['BOM → FRA', 'DEL → LHR']]) + [
+                'status' => 'dismissed', 'draft_subject' => null, 'draft_body' => null, 'draft_to' => null, 'draft_cc' => null,
+                'draft_generated_at' => null, 'sent_at' => null, 'sent_by' => null,
+                'dismissed_reason' => 'already_in_touch', 'dismissed_note' => null, 'dismissed_by' => $users['sales']->id, 'dismissed_at' => now()->subDays(6),
+            ],
+            $row($customers[2], 'client_new_lanes', ['lanes_we_run' => ['BOM → FRA', 'DEL → LHR', 'MAA → DXB'], 'usual_lanes' => ['BOM → JFK']]) + [
+                'status' => 'dismissed', 'draft_subject' => null, 'draft_body' => null, 'draft_to' => null, 'draft_cc' => null,
+                'draft_generated_at' => null, 'sent_at' => null, 'sent_by' => null,
+                'dismissed_reason' => 'figures_wrong', 'dismissed_note' => 'They book these lanes through their Delhi office',
+                'dismissed_by' => $users['sales']->id, 'dismissed_at' => now()->subDays(12),
+            ],
+        ]);
     }
 
     /** @return array<string, User> */

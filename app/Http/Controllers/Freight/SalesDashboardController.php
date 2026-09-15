@@ -83,7 +83,6 @@ class SalesDashboardController extends Controller
         $mode = app()->bound('active_portal_scope') ? app('active_portal_scope') : null;
 
         $query = DB::table('sales_action_queue')
-            ->where('agent_id', $context->agentId)
             ->where('status', 'open')
             // ⚠️ INTERNAL findings only. A client-audience row carries a drafted email
             // and belongs to the outreach surface, which has its own consent rules.
@@ -94,8 +93,10 @@ class SalesDashboardController extends Controller
         }
 
         if ($context->tier === 'command' && $context->designation === 'sales') {
+            // The rep's own clients, whichever branch manages them (a client's managing branch can be another).
             $query->where('sales_id', $context->userId);
         } else {
+            $query->where('agent_id', $context->agentId);
             // Tactical has no client attribution, so only branch-level actions
             // (customer_id IS NULL) are meaningful — a per-client action would name
             // the client the tier is not entitled to see.

@@ -1,7 +1,6 @@
 <template>
     <b-container fluid class="body-color">
         <div class="d-flex flex-column flex-lg-row">
-            <SideBar></SideBar>
             <div
                 style="
                     background: #ffffff;
@@ -366,13 +365,11 @@
 </template>
 
 <script>
-import SideBar from "@/view/layouts/public/SideBar.vue";
 import ApiService from "@/core/services/api.service";
 
 export default {
     name: "UserSettings",
     components: {
-        SideBar,
     },
     data() {
         return {

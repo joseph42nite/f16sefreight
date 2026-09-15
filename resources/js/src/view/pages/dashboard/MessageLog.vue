@@ -21,7 +21,6 @@
         <!-- Include Header -->
 
         <div class="d-flex flex-column flex-lg-row">
-            <SideBar></SideBar>
             <div
                 style="
                     background: #ffffff;
@@ -33,7 +32,6 @@
                     min-width: 0;
                     overflow: hidden;
                 "
-                class="ml-lg-4 mt-4 mt-lg-0"
             >
                 <div class="container py-8 px-6 px-sm-8 px-md-10">
                     <template>
@@ -202,7 +200,6 @@
 </template>
 <script>
 
-import SideBar from "@/view/layouts/public/SideBar.vue";
 import SkeletonTable from "../../components/SkeletonTable.vue";
 import ApiService from "@/core/services/api.service";
 import { mapGetters } from "vuex";
@@ -506,7 +503,6 @@ export default {
         },
     },
     components: {
-        SideBar,
         SkeletonTable
         // PageLoader
     },

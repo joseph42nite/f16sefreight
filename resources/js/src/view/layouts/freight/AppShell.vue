@@ -58,7 +58,10 @@
       </header>
 
       <main id="fx-main" class="fx-main">
-        <router-view />
+        <!-- The document forms keep what was typed when you step to the message log and back. -->
+        <keep-alive :include="['FocusAir', 'HouseWayBill', 'MessageLog']">
+          <router-view />
+        </keep-alive>
       </main>
     </div>
   </div>

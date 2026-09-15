@@ -11,9 +11,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
-/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -25,7 +23,7 @@ __webpack_require__.r(__webpack_exports__);
   },
   methods: {
     getXML(awb_id) {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get(`/user/get-xml/${awb_id}`).then(response => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/user/get-xml/${awb_id}`).then(response => {
         this.xml_content = response.data;
       }).catch(error => {
         console.error(error);
@@ -36,9 +34,7 @@ __webpack_require__.r(__webpack_exports__);
     this.awb_id = this.$route.params.id;
     this.getXML(this.awb_id);
   },
-  components: {
-    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
-  }
+  components: {}
 });
 
 /***/ }),
@@ -64,8 +60,8 @@ var render = function render() {
     }
   }, [_c("div", {
     staticClass: "d-flex flex-column flex-lg-row"
-  }, [_c("SideBar"), _vm._v(" "), _c("div", {
-    staticClass: "w-100 ml-lg-4 mt-4 mt-lg-0",
+  }, [_c("div", {
+    staticClass: "w-100",
     staticStyle: {
       "background-color": "#fff",
       "box-shadow": "3px 3px 10px #d0d0d0",
@@ -73,7 +69,7 @@ var render = function render() {
       "border-radius": "30px",
       padding: "15px"
     }
-  }, [_c("h3", [_vm._v("XML View: " + _vm._s(_vm.awb_id))]), _vm._v("\n            " + _vm._s(_vm.xml_content) + "\n        ")])], 1)]);
+  }, [_c("h3", [_vm._v("XML View: " + _vm._s(_vm.awb_id))]), _vm._v("\n            " + _vm._s(_vm.xml_content) + "\n        ")])])]);
 };
 var staticRenderFns = [];
 render._withStripped = true;

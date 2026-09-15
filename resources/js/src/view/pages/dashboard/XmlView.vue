@@ -2,8 +2,7 @@
     <b-container fluid class="body-color">
 
         <div class="d-flex flex-column flex-lg-row">
-            <SideBar></SideBar>
-            <div class="w-100 ml-lg-4 mt-4 mt-lg-0" style="background-color: #fff;box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px; padding: 15px;">
+            <div class="w-100" style="background-color: #fff;box-shadow: 3px 3px 10px #d0d0d0;z-index: 1;border-radius: 30px; padding: 15px;">
                 <h3>XML View: {{ awb_id }}</h3>
                 {{xml_content}}
             </div>
@@ -13,7 +12,6 @@
 
 <script>
 
-import SideBar from "@/view/layouts/public/SideBar.vue";
 import ApiService from "@/core/services/api.service";
 import { mapGetters } from "vuex";
 export default {
@@ -41,7 +39,6 @@ export default {
 
     components: {
 
-        SideBar,
     },
 };
 </script>

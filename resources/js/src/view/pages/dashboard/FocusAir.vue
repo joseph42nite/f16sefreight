@@ -7,7 +7,6 @@
             <!-- Include Header -->
 
             <div class="d-flex flex-column flex-lg-row">
-                <SideBar></SideBar>
                 <div style="background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; flex: 1; min-width: 0;">
                     <div class="container py-8 px-6 px-sm-8 px-md-10">
                         <template>
@@ -2514,7 +2513,6 @@ import { checkAll } from "@/core/config/iata";
 import "vue2-datepicker/index.css";
 import debounce from 'lodash.debounce';
 
-import SideBar from "@/view/layouts/public/SideBar.vue";
 import { mapGetters } from "vuex";
 import OcrUploadModal from "@/view/components/OcrUploadModal.vue";
 import DashboardHistoryModal from "@/view/components/DashboardHistoryModal.vue";
@@ -3906,7 +3904,6 @@ export default {
         Datepicker,
         DatePicker,
 
-        SideBar,
         // PageLoader
     },
 };

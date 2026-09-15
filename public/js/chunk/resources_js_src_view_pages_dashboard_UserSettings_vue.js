@@ -11,20 +11,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
-/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
-
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "UserSettings",
-  components: {
-    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
-  },
+  components: {},
   data() {
     return {
       isBusy: false,
@@ -103,7 +99,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         search: this.searchQuery,
         address_type: this.filterType
       };
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].query("/user/saved-addresses", {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query("/user/saved-addresses", {
         params
       }).then(({
         data
@@ -156,7 +152,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         return;
       }
       this.isSaving = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].put(`/user/saved-addresses/${this.editForm.id}`, this.editForm).then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put(`/user/saved-addresses/${this.editForm.id}`, this.editForm).then(({
         data
       }) => {
         this.isSaving = false;
@@ -215,7 +211,7 @@ var render = function render() {
     }
   }, [_c("div", {
     staticClass: "d-flex flex-column flex-lg-row"
-  }, [_c("SideBar"), _vm._v(" "), _c("div", {
+  }, [_c("div", {
     staticClass: "ml-lg-4 mt-4 mt-lg-0",
     staticStyle: {
       background: "#ffffff",
@@ -563,7 +559,7 @@ var render = function render() {
       },
       expression: "pagination.current_page"
     }
-  }) : _vm._e()], 1)], 1)])], 1), _vm._v(" "), _c("b-modal", {
+  }) : _vm._e()], 1)], 1)])]), _vm._v(" "), _c("b-modal", {
     attrs: {
       id: "edit-address-modal",
       "modal-class": "ultra-premium-modal",

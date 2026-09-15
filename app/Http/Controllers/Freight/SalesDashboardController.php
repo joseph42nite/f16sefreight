@@ -272,10 +272,6 @@ class SalesDashboardController extends Controller
                 $b['totals'] = array_map(fn ($v) => round($v, 2), $b['totals']);
                 return $b;
             }, $branches)),
-            // ❓ PRD §2.3 gives the Boss a "target assigner (revenue or tonnage)", but
-            // no targets table exists in the schema doc. Reported as unavailable rather
-            // than faked with a hard-coded goal — see GAPS.md #33.
-            'targets'  => ['available' => false, 'reason' => 'no_targets_table'],
         ]);
     }
 

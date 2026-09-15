@@ -154,20 +154,47 @@ class BossOverviewTest extends TestCase
     }
 
     /**
-     * ❓ PRD §2.3 gives the Boss a "target assigner (revenue or tonnage)" and no
-     * targets table exists. Reported as UNAVAILABLE rather than faked with a
-     * hard-coded goal — a dashboard showing progress against an invented target is
-     * worse than one that admits it has none.
+     * 🔴 The Boss sets a branch's monthly targets per mode, and sees month-to-date against them and the month-end
+     * pace (user, 2026-09-15). Fixed at 10 September: Mumbai air has 12 shipments, 4,000 kg, ₹6,00,000 so far;
+     * pace = so far ÷ 10 days × 30 days.
      */
-    public function test_targets_are_reported_unavailable_not_invented(): void
+    public function test_the_boss_sets_targets_and_sees_progress_and_pace(): void
     {
-        $this->snapshot($this->bom, 'air');
+        \Illuminate\Support\Carbon::setTestNow('2026-09-10 12:00:00');
+        $this->snapshot($this->bom, 'air', ['tonnage_mtd' => 4000, 'shipment_count_mtd' => 12, 'revenue_mtd' => 600000]);
 
-        $this->api($this->boss)
-            ->getJson($this->url('/api/sales/branches'))
-            ->assertOk()
-            ->assertJsonPath('targets.available', false)
-            ->assertJsonPath('targets.reason', 'no_targets_table');
+        $body = $this->api($this->boss)->putJson($this->url('/api/sales/targets'), [
+            'month' => '2026-09',
+            'targets' => [['agent_id' => $this->bom->id, 'mode' => 'air', 'shipments' => 40, 'tonnage' => 10000, 'revenue' => 1500000]],
+        ])->assertOk()->json();
+
+        $row = collect($body['rows'])->first(fn ($r) => $r['agent_id'] === $this->bom->id && $r['mode'] === 'air');
+        $this->assertSame([40, 12, 30, 36], [(int) $row['measures']['shipments']['target'], (int) $row['measures']['shipments']['actual'],
+            (int) $row['measures']['shipments']['percent'], (int) $row['measures']['shipments']['month_end']]);
+        $this->assertSame([40.0, 12000.0], [(float) $row['measures']['tonnage']['percent'], (float) $row['measures']['tonnage']['month_end']]);
+        $this->assertSame(40.0, (float) $row['measures']['revenue']['percent']);
+
+        // Every branch and mode is listed so a target can be set where nothing has shipped yet.
+        $this->assertCount(4, $body['rows']);
+        \Illuminate\Support\Carbon::setTestNow();
+    }
+
+    /** 🔒 Only the Boss sets targets; a Tactical company has no revenue target; another company's branch is refused. */
+    public function test_only_the_boss_sets_targets_for_their_own_branches(): void
+    {
+        $body = ['month' => now()->format('Y-m'), 'targets' => [['agent_id' => $this->bom->id, 'mode' => 'air', 'shipments' => 10, 'revenue' => 5000]]];
+
+        $this->api($this->user('pricing', $this->bom))->putJson($this->url('/api/sales/targets'), $body)->assertForbidden();
+
+        $other = Company::create(['name' => 'Other Co', 'code' => 'OTH', 'tier' => 'command']);
+        $foreign = Agent::create(['company_id' => $other->id, 'agent_name' => 'Delhi', 'branch_code' => 'DEL']);
+        $this->api($this->boss)->putJson($this->url('/api/sales/targets'), ['month' => $body['month'], 'targets' => [['agent_id' => $foreign->id, 'mode' => 'air', 'shipments' => 1]]])
+            ->assertStatus(422);
+
+        $this->company->update(['tier' => 'tactical']);
+        $saved = $this->api($this->boss)->putJson($this->url('/api/sales/targets'), $body)->assertOk()->json();
+        $this->assertFalse($saved['with_revenue']);
+        $this->assertNull(DB::table('sales_targets')->where('agent_id', $this->bom->id)->value('revenue_inr'));
     }
 
     /** Overdue receivables roll up per branch — the number a Boss chases. */

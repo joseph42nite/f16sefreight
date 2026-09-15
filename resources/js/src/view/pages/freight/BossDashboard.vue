@@ -73,15 +73,73 @@
         </table>
       </div>
 
-      <!--
-        ❓ PRD §2.3 gives the Boss a target assigner (revenue or tonnage), and no
-        targets table exists in the schema. Said plainly rather than shown as progress
-        against an invented goal — a dashboard measuring against a fabricated target is
-        worse than one that admits it has none. GAPS #33.
-      -->
-      <p v-if="targets && !targets.available" class="fx-muted fx-board__note">
-        Target assignment is not available — the schema has no targets table (GAPS #33).
+    </section>
+
+    <!--
+      🎯 Targets (PRD §2.3; user, 2026-09-15): each branch, each month, each mode — shipments, tonnage and, on
+      Command, revenue. Month to date against target, and the month-end pace while the month runs.
+    -->
+    <section v-if="targets" class="fx-section">
+      <h2 class="fx-section__title">Targets</h2>
+      <div class="fx-toolbar">
+        <label class="fx-field">
+          <span class="fx-field__label">Month</span>
+          <input v-model="targetMonth" type="month" class="fx-input" @change="loadTargets" />
+        </label>
+        <button v-if="!editingTargets" class="fx-btn" @click="editTargets">Set targets</button>
+        <template v-else>
+          <button class="fx-btn fx-btn--primary" :disabled="savingTargets" @click="saveTargets">{{ savingTargets ? "Saving…" : "Save targets" }}</button>
+          <button class="fx-btn fx-btn--ghost" @click="editingTargets = false">Cancel</button>
+        </template>
+      </div>
+      <p class="fx-muted fx-board__note">
+        <template v-if="targets.as_of">So far as of <Figure :value="targets.as_of" kind="date" />.</template>
+        <template v-else>No figures for this month yet.</template>
+        "Month end" is the pace so far carried to the end of the month.
       </p>
+      <p v-if="targetsError" class="fx-error" role="alert">{{ targetsError }}</p>
+
+      <div class="fx-matrix-wrap">
+        <table class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Branch</th>
+              <th scope="col">Mode</th>
+              <th v-for="m in measures" :key="m.key" scope="col">{{ m.label }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in targets.rows" :key="r.agent_id + r.mode">
+              <th scope="row">{{ r.branch }} <span class="fx-muted identifier">{{ r.code }}</span></th>
+              <td>{{ r.mode }}</td>
+              <td v-for="m in measures" :key="m.key">
+                <input
+                  v-if="editingTargets"
+                  v-model="targetForm[r.agent_id + '|' + r.mode][m.key]"
+                  type="number" min="0" class="fx-input fx-target__input" :placeholder="'No target'"
+                />
+                <template v-else>
+                  <div>
+                    <Figure :value="r.measures[m.key].actual" :kind="m.kind" :currency-code="m.kind === 'currency' ? 'INR' : null" />
+                    <span class="fx-muted"> of </span>
+                    <Figure v-if="r.measures[m.key].target !== null" :value="r.measures[m.key].target" :kind="m.kind" :currency-code="m.kind === 'currency' ? 'INR' : null" />
+                    <span v-else class="fx-muted">no target</span>
+                  </div>
+                  <div v-if="r.measures[m.key].percent !== null" class="fx-target__bar" :aria-label="r.measures[m.key].percent + '% of target'">
+                    <span :style="{ width: Math.min(r.measures[m.key].percent, 100) + '%' }" :class="{ 'is-met': r.measures[m.key].percent >= 100 }"></span>
+                  </div>
+                  <div v-if="r.measures[m.key].percent !== null" class="fx-muted fx-target__meta">
+                    {{ r.measures[m.key].percent }}%
+                    <template v-if="r.measures[m.key].month_end !== null"> · month end
+                      <Figure :value="r.measures[m.key].month_end" :kind="m.kind" :currency-code="m.kind === 'currency' ? 'INR' : null" />
+                    </template>
+                  </div>
+                </template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <p v-else-if="branchesReason === 'never_computed'" class="fx-warn" role="status">
@@ -169,20 +227,62 @@ export default {
     periods: [], loading: true, error: null, grain: "month", basis: "fiscal",
     branches: [], modes: [], asOf: null, targets: null, branchesReason: null,
     ai: null,
+    targetMonth: new Date().toISOString().slice(0, 7), editingTargets: false, savingTargets: false,
+    targetForm: {}, targetsError: null,
   }),
+  computed: {
+    /** Revenue is a Command figure; Tactical has no invoicing. */
+    measures() {
+      const all = [
+        { key: "shipments", label: "Shipments", kind: "count" },
+        { key: "tonnage", label: "Tonnage", kind: "weight" },
+        { key: "revenue", label: "Revenue", kind: "currency" },
+      ];
+      return this.targets && this.targets.with_revenue ? all : all.slice(0, 2);
+    },
+  },
   created() {
     this.load();
     this.loadBranches();
     ApiService.get("/ai-usage/company").then(({ data }) => { this.ai = data; }).catch(() => { this.ai = null; });
+    this.loadTargets();
   },
   methods: {
+    loadTargets() {
+      this.editingTargets = false;
+      ApiService.get("/sales/targets?month=" + this.targetMonth)
+        .then(({ data }) => { this.targets = data; this.targetsError = null; })
+        .catch(() => { this.targets = null; });
+    },
+    editTargets() {
+      this.targetForm = Object.fromEntries(this.targets.rows.map((r) => [
+        r.agent_id + "|" + r.mode,
+        Object.fromEntries(this.measures.map((m) => [m.key, r.measures[m.key].target === null ? "" : r.measures[m.key].target])),
+      ]));
+      this.editingTargets = true;
+    },
+    saveTargets() {
+      this.savingTargets = true;
+      const blank = (v) => (v === "" || v === null ? null : Number(v));
+      const targets = this.targets.rows.map((r) => {
+        const f = this.targetForm[r.agent_id + "|" + r.mode];
+        return { agent_id: r.agent_id, mode: r.mode, shipments: blank(f.shipments), tonnage: blank(f.tonnage), revenue: blank(f.revenue) };
+      });
+
+      ApiService.put("/sales/targets", { month: this.targetMonth, targets })
+        .then(({ data }) => { this.targets = data; this.editingTargets = false; this.targetsError = null; })
+        .catch((e) => {
+          const d = (e.response && e.response.data) || {};
+          this.targetsError = d.message || d.error || "Targets were not saved.";
+        })
+        .finally(() => { this.savingTargets = false; });
+    },
     loadBranches() {
       ApiService.get("/sales/branches")
         .then(({ data }) => {
           this.branches = data.branches || [];
           this.modes = data.modes || [];
           this.asOf = data.as_of;
-          this.targets = data.targets;
           this.branchesReason = data.reason || null;
         })
         /* The funnel below is the rest of the page — a failing comparison must not

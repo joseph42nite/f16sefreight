@@ -31,8 +31,32 @@ __webpack_require__.r(__webpack_exports__);
     asOf: null,
     targets: null,
     branchesReason: null,
-    ai: null
+    ai: null,
+    targetMonth: new Date().toISOString().slice(0, 7),
+    editingTargets: false,
+    savingTargets: false,
+    targetForm: {},
+    targetsError: null
   }),
+  computed: {
+    /** Revenue is a Command figure; Tactical has no invoicing. */
+    measures() {
+      const all = [{
+        key: "shipments",
+        label: "Shipments",
+        kind: "count"
+      }, {
+        key: "tonnage",
+        label: "Tonnage",
+        kind: "weight"
+      }, {
+        key: "revenue",
+        label: "Revenue",
+        kind: "currency"
+      }];
+      return this.targets && this.targets.with_revenue ? all : all.slice(0, 2);
+    }
+  },
   created() {
     this.load();
     this.loadBranches();
@@ -43,8 +67,53 @@ __webpack_require__.r(__webpack_exports__);
     }).catch(() => {
       this.ai = null;
     });
+    this.loadTargets();
   },
   methods: {
+    loadTargets() {
+      this.editingTargets = false;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/targets?month=" + this.targetMonth).then(({
+        data
+      }) => {
+        this.targets = data;
+        this.targetsError = null;
+      }).catch(() => {
+        this.targets = null;
+      });
+    },
+    editTargets() {
+      this.targetForm = Object.fromEntries(this.targets.rows.map(r => [r.agent_id + "|" + r.mode, Object.fromEntries(this.measures.map(m => [m.key, r.measures[m.key].target === null ? "" : r.measures[m.key].target]))]));
+      this.editingTargets = true;
+    },
+    saveTargets() {
+      this.savingTargets = true;
+      const blank = v => v === "" || v === null ? null : Number(v);
+      const targets = this.targets.rows.map(r => {
+        const f = this.targetForm[r.agent_id + "|" + r.mode];
+        return {
+          agent_id: r.agent_id,
+          mode: r.mode,
+          shipments: blank(f.shipments),
+          tonnage: blank(f.tonnage),
+          revenue: blank(f.revenue)
+        };
+      });
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put("/sales/targets", {
+        month: this.targetMonth,
+        targets
+      }).then(({
+        data
+      }) => {
+        this.targets = data;
+        this.editingTargets = false;
+        this.targetsError = null;
+      }).catch(e => {
+        const d = e.response && e.response.data || {};
+        this.targetsError = d.message || d.error || "Targets were not saved.";
+      }).finally(() => {
+        this.savingTargets = false;
+      });
+    },
     loadBranches() {
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/branches").then(({
         data
@@ -52,7 +121,6 @@ __webpack_require__.r(__webpack_exports__);
         this.branches = data.branches || [];
         this.modes = data.modes || [];
         this.asOf = data.as_of;
-        this.targets = data.targets;
         this.branchesReason = data.reason || null;
       })
       /* The funnel below is the rest of the page — a failing comparison must not
@@ -206,9 +274,161 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)], 2);
-  }), 0)])]), _vm._v(" "), _vm.targets && !_vm.targets.available ? _c("p", {
+  }), 0)])])]) : _vm._e(), _vm._v(" "), _vm.targets ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Targets")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Month")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.targetMonth,
+      expression: "targetMonth"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "month"
+    },
+    domProps: {
+      value: _vm.targetMonth
+    },
+    on: {
+      change: _vm.loadTargets,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.targetMonth = $event.target.value;
+      }
+    }
+  })]), _vm._v(" "), !_vm.editingTargets ? _c("button", {
+    staticClass: "fx-btn",
+    on: {
+      click: _vm.editTargets
+    }
+  }, [_vm._v("Set targets")]) : [_c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.savingTargets
+    },
+    on: {
+      click: _vm.saveTargets
+    }
+  }, [_vm._v(_vm._s(_vm.savingTargets ? "Saving…" : "Save targets"))]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    on: {
+      click: function ($event) {
+        _vm.editingTargets = false;
+      }
+    }
+  }, [_vm._v("Cancel")])]], 2), _vm._v(" "), _c("p", {
     staticClass: "fx-muted fx-board__note"
-  }, [_vm._v("\n      Target assignment is not available — the schema has no targets table (GAPS #33).\n    ")]) : _vm._e()]) : _vm.branchesReason === "never_computed" ? _c("p", {
+  }, [_vm.targets.as_of ? [_vm._v("So far as of "), _c("Figure", {
+    attrs: {
+      value: _vm.targets.as_of,
+      kind: "date"
+    }
+  }), _vm._v(".")] : [_vm._v("No figures for this month yet.")], _vm._v('\n      "Month end" is the pace so far carried to the end of the month.\n    ')], 2), _vm._v(" "), _vm.targetsError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.targetsError))]) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-matrix-wrap"
+  }, [_c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Mode")]), _vm._v(" "), _vm._l(_vm.measures, function (m) {
+    return _c("th", {
+      key: m.key,
+      attrs: {
+        scope: "col"
+      }
+    }, [_vm._v(_vm._s(m.label))]);
+  })], 2)]), _vm._v(" "), _c("tbody", _vm._l(_vm.targets.rows, function (r) {
+    return _c("tr", {
+      key: r.agent_id + r.mode
+    }, [_c("th", {
+      attrs: {
+        scope: "row"
+      }
+    }, [_vm._v(_vm._s(r.branch) + " "), _c("span", {
+      staticClass: "fx-muted identifier"
+    }, [_vm._v(_vm._s(r.code))])]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.mode))]), _vm._v(" "), _vm._l(_vm.measures, function (m) {
+      return _c("td", {
+        key: m.key
+      }, [_vm.editingTargets ? _c("input", {
+        directives: [{
+          name: "model",
+          rawName: "v-model",
+          value: _vm.targetForm[r.agent_id + "|" + r.mode][m.key],
+          expression: "targetForm[r.agent_id + '|' + r.mode][m.key]"
+        }],
+        staticClass: "fx-input fx-target__input",
+        attrs: {
+          type: "number",
+          min: "0",
+          placeholder: "No target"
+        },
+        domProps: {
+          value: _vm.targetForm[r.agent_id + "|" + r.mode][m.key]
+        },
+        on: {
+          input: function ($event) {
+            if ($event.target.composing) return;
+            _vm.$set(_vm.targetForm[r.agent_id + "|" + r.mode], m.key, $event.target.value);
+          }
+        }
+      }) : [_c("div", [_c("Figure", {
+        attrs: {
+          value: r.measures[m.key].actual,
+          kind: m.kind,
+          "currency-code": m.kind === "currency" ? "INR" : null
+        }
+      }), _vm._v(" "), _c("span", {
+        staticClass: "fx-muted"
+      }, [_vm._v(" of ")]), _vm._v(" "), r.measures[m.key].target !== null ? _c("Figure", {
+        attrs: {
+          value: r.measures[m.key].target,
+          kind: m.kind,
+          "currency-code": m.kind === "currency" ? "INR" : null
+        }
+      }) : _c("span", {
+        staticClass: "fx-muted"
+      }, [_vm._v("no target")])], 1), _vm._v(" "), r.measures[m.key].percent !== null ? _c("div", {
+        staticClass: "fx-target__bar",
+        attrs: {
+          "aria-label": r.measures[m.key].percent + "% of target"
+        }
+      }, [_c("span", {
+        class: {
+          "is-met": r.measures[m.key].percent >= 100
+        },
+        style: {
+          width: Math.min(r.measures[m.key].percent, 100) + "%"
+        }
+      })]) : _vm._e(), _vm._v(" "), r.measures[m.key].percent !== null ? _c("div", {
+        staticClass: "fx-muted fx-target__meta"
+      }, [_vm._v("\n                  " + _vm._s(r.measures[m.key].percent) + "%\n                  "), r.measures[m.key].month_end !== null ? [_vm._v(" · month end\n                    "), _c("Figure", {
+        attrs: {
+          value: r.measures[m.key].month_end,
+          kind: m.kind,
+          "currency-code": m.kind === "currency" ? "INR" : null
+        }
+      })] : _vm._e()], 2) : _vm._e()]], 2);
+    })], 2);
+  }), 0)])])]) : _vm.branchesReason === "never_computed" ? _c("p", {
     staticClass: "fx-warn",
     attrs: {
       role: "status"

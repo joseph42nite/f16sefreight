@@ -234,6 +234,7 @@ class FreightDemoSeeder extends Seeder
 
         DB::table('accounts_invoice_items')->whereIn('invoice_id', $invoiceIds)->delete();
         DB::table('llm_usage_logs')->where('company_id', $company->id)->where('model', 'demo-seed')->delete();
+        DB::table('sales_targets')->where('company_id', $company->id)->delete();
         DB::table('accounts_ledger_entries')->whereIn('agent_id', $branchIds)->delete();
         DB::table('unposted_transactions_queue')->whereIn('agent_id', $branchIds)->delete();
         DB::table('bank_transactions')->whereIn('agent_id', $branchIds)->delete();
@@ -347,6 +348,7 @@ class FreightDemoSeeder extends Seeder
         }
 
         $this->seedAiUsage($company, $branches->first(), $users, $tenant['scale']);
+        $this->seedTargets($company, $branches, $users, $tenant);
         $this->seedOutreachHistory($branches->first(), $customers, $users);
     }
 
@@ -444,6 +446,30 @@ class FreightDemoSeeder extends Seeder
                     ]);
                 }
             }
+        }
+    }
+
+    /**
+     * This month's targets for each branch and mode, so the Boss's Targets section shows progress: Mumbai air a
+     * little behind pace, Chennai air well behind (its client stopped shipping). Revenue only on Command.
+     */
+    private function seedTargets(Company $company, $branches, array $users, array $tenant): void
+    {
+        [$mumbai, $chennai] = [$branches[0], $branches[1]];
+        $command = $tenant['tier'] === 'command';
+
+        foreach ([
+            [$mumbai, 'air', 45, 22000, 180000],
+            [$mumbai, 'sea', 10, 9000, 60000],
+            [$chennai, 'air', 12, 6000, 120000],
+        ] as [$branch, $mode, $shipments, $kg, $revenue]) {
+            DB::table('sales_targets')->insert([
+                'company_id' => $company->id, 'agent_id' => $branch->id, 'transport_mode' => $mode,
+                'period_month' => now()->startOfMonth()->toDateString(),
+                'shipments' => (int) round($shipments * max($tenant['scale'], 0.5)), 'tonnage_kg' => round($kg * $tenant['scale'], 3),
+                'revenue_inr' => $command ? $revenue : null, 'set_by' => $users['boss']->id,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
         }
     }
 

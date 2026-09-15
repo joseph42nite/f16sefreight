@@ -386,6 +386,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // Cross-branch, cross-mode — the Boss view. Crosses both partitions the rest of
     // the product maintains, and is still tenant-bound.
     Route::get('/sales/branches', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'branches']);
+    // Monthly targets per branch and mode, set by the Boss (user, 2026-09-15).
+    Route::get('/sales/targets', [\App\Http\Controllers\Freight\SalesTargetController::class, 'index']);
+    Route::put('/sales/targets', [\App\Http\Controllers\Freight\SalesTargetController::class, 'update']);
     Route::get('/sales/charts', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'charts']);
     Route::get('/sales/actions', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'actions']);
     Route::get('/sales/accounts', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'accounts']);

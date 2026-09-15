@@ -8689,11 +8689,13 @@ const NAV_ITEMS = [
   icon: "envelope",
   designations: ["pricing", "operations", "sales"],
   minTier: "tactical"
-}, {
+},
+// Sales see the whole branch's board, read-only (user, 2026-09-15).
+{
   path: "/kanban",
   label: "Kanban",
   icon: "columns",
-  designations: ["pricing", "operations"],
+  designations: ["pricing", "operations", "sales"],
   minTier: "tactical"
 },
 // Sales follow the branch's enquiries read-only (user, 2026-09-15).
@@ -10610,7 +10612,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_JobBoard_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/JobBoard */ "./resources/js/src/view/pages/freight/JobBoard.vue")),
       meta: {
         userType: 'user',
-        designations: ['pricing', 'operations'],
+        designations: ['pricing', 'operations', 'sales'],
         minTier: 'tactical'
       }
     }, {

@@ -4,6 +4,7 @@
       <h1 class="fx-page-title">Kanban</h1>
       <p class="fx-page-sub">
         Confirmed shipments on <strong>{{ portalLabel || "all modes" }}</strong>.
+        <template v-if="designation === 'sales'">Every shipment in the branch, to follow — not to move.</template>
       </p>
     </header>
 
@@ -72,7 +73,8 @@
             <div class="identifier fx-card__no">{{ enq.enquiry_no || "—" }}</div>
             <StatusChip :value="enq.status" />
             <div v-if="enq.client_label" class="fx-card__meta">{{ enq.client_label }}</div>
-            <button class="fx-btn" :disabled="busy || !enq.thread_id" @click="claim(enq)">
+            <!-- Sales follow the board; taking work on is for pricing and operations. -->
+            <button v-if="designation !== 'sales'" class="fx-btn" :disabled="busy || !enq.thread_id" @click="claim(enq)">
               Take this enquiry
             </button>
           </article>

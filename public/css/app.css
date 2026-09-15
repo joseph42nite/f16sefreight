@@ -5764,6 +5764,13 @@ body {
 .fx-outreach__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
 .fx-outreach__why { margin: 0; font-size: .8125rem; color: var(--text-secondary); flex: 1; }
 .fx-outreach__actions { display: flex; gap: var(--space-2); }
+/* Boss targets: progress toward a branch's monthly target. */
+.fx-target__input { width: 8rem; }
+.fx-target__bar { height: 6px; margin-top: 4px; border-radius: 3px; background: var(--bg-sunken); overflow: hidden; max-width: 12rem; }
+.fx-target__bar span { display: block; height: 100%; background: var(--portal-accent); }
+.fx-target__bar span.is-met { background: var(--status-success); }
+.fx-target__meta { font-size: .75rem; margin-top: 2px; }
+
 /* Previous / next under a paged list. */
 .fx-pager { display: flex; align-items: center; justify-content: center; gap: var(--space-3); margin-top: var(--space-3); flex-wrap: wrap; }
 

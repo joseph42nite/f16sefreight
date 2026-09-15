@@ -26,7 +26,8 @@ export const NAV_ITEMS = [
   // ── Shared operational surface ────────────────────────────────────────────
   // Sales see only the mail they are on (user, 2026-09-15).
   { path: "/inbox", label: "Inbox", icon: "envelope", designations: ["pricing", "operations", "sales"], minTier: "tactical" },
-  { path: "/kanban", label: "Kanban", icon: "columns", designations: ["pricing", "operations"], minTier: "tactical" },
+  // Sales see the whole branch's board, read-only (user, 2026-09-15).
+  { path: "/kanban", label: "Kanban", icon: "columns", designations: ["pricing", "operations", "sales"], minTier: "tactical" },
   // Sales follow the branch's enquiries read-only (user, 2026-09-15).
   { path: "/enquiries", label: "Enquiries", icon: "list-ul", designations: ["pricing", "sales"], minTier: "tactical" },
 

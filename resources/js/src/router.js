@@ -369,7 +369,7 @@ const router = new Router({
           path: "kanban",
           name: "Kanban",
           component: () => import("@/view/pages/freight/JobBoard"),
-          meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
+          meta: { userType: 'user', designations: ['pricing', 'operations', 'sales'], minTier: 'tactical' }
         },
         {
           // Clients and partners are two sides of one ledger — who you invoice and who you

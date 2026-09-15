@@ -379,7 +379,7 @@ var render = function render() {
     staticClass: "fx-page-title"
   }, [_vm._v("Kanban")]), _vm._v(" "), _c("p", {
     staticClass: "fx-page-sub"
-  }, [_vm._v("\n      Confirmed shipments on "), _c("strong", [_vm._v(_vm._s(_vm.portalLabel || "all modes"))]), _vm._v(".\n    ")])]), _vm._v(" "), _c("div", {
+  }, [_vm._v("\n      Confirmed shipments on "), _c("strong", [_vm._v(_vm._s(_vm.portalLabel || "all modes"))]), _vm._v(".\n      "), _vm.designation === "sales" ? [_vm._v("Every shipment in the branch, to follow — not to move.")] : _vm._e()], 2)]), _vm._v(" "), _c("div", {
     staticClass: "fx-toolbar"
   }, [_c("div", {
     staticClass: "fx-segment",
@@ -503,7 +503,7 @@ var render = function render() {
       }
     }), _vm._v(" "), enq.client_label ? _c("div", {
       staticClass: "fx-card__meta"
-    }, [_vm._v(_vm._s(enq.client_label))]) : _vm._e(), _vm._v(" "), _c("button", {
+    }, [_vm._v(_vm._s(enq.client_label))]) : _vm._e(), _vm._v(" "), _vm.designation !== "sales" ? _c("button", {
       staticClass: "fx-btn",
       attrs: {
         disabled: _vm.busy || !enq.thread_id
@@ -513,7 +513,7 @@ var render = function render() {
           return _vm.claim(enq);
         }
       }
-    }, [_vm._v("\n            Take this enquiry\n          ")])], 1);
+    }, [_vm._v("\n            Take this enquiry\n          ")]) : _vm._e()], 1);
   })], 2) : _vm._e()]), _vm._v(" "), _vm.view === "process" ? _c("div", {
     staticClass: "fx-board"
   }, _vm._l(_vm.PROCESS, function (col) {

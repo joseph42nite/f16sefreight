@@ -184,6 +184,22 @@ class JobBoardLinksTest extends TestCase
         $this->assertCount(3, $api->getJson('http://focusair.localhost/api/jobs?page=2&statuses=Completed,Cancelled')->json('data'));
     }
 
+    /** Sales follow the whole branch's board — every operator's shipments (user, 2026-09-15). */
+    public function test_sales_see_every_shipment_in_the_branch(): void
+    {
+        [$mine] = $this->job('Intake', null);
+        $sales = User::create([
+            'name' => 'sales', 'email' => 'sales-jbl@test.local', 'password' => Hash::make('x'),
+            'company_name' => $this->operator->company_name, 'branch_name' => $this->branch->id,
+            'designation' => 'sales', 'is_active' => 1,
+        ]);
+
+        $ids = array_column($this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($sales), 'Accept' => 'application/json'])
+            ->getJson('http://focusair.localhost/api/jobs')->assertOk()->json('data'), 'id');
+
+        $this->assertContains($mine, $ids, "an operator's shipment is on the sales view of the board");
+    }
+
     public function test_a_job_with_no_mail_has_no_thread(): void
     {
         [$jobId] = $this->job('Completed', null);

@@ -11,14 +11,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../components/SkeletonTable.vue */ "./resources/js/src/view/components/SkeletonTable.vue");
-/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
+/* harmony import */ var _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../components/SkeletonTable.vue */ "./resources/js/src/view/components/SkeletonTable.vue");
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -63,7 +65,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       }]
     };
   },
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)({
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)({
     current_user: "currentUser"
   })), {}, {
     normalizedItems() {
@@ -155,7 +157,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       }
     },
     getHouseWayBill(id) {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get(`/user/houseway-bill/${id}`).then(response => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/houseway-bill/${id}`).then(response => {
         this.existingData = response.data;
         this.openForm("update", this.existingData.id);
         if (this.existingData && this.existingData.consignment_data) {
@@ -182,7 +184,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     },
     allAirwayBill(page = 1) {
       this.isLoading = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/all-airway-bill", {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/all-airway-bill", {
         params: {
           page: page,
           perPage: this.perPage
@@ -207,7 +209,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     getAirWayBill(id) {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get(`/user/airway-bill/${id}`).then(response => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/airway-bill/${id}`).then(response => {
         if (response.data && response.data.id == id) {
           this.existingData = response.data;
         } else {}
@@ -217,7 +219,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     },
     handleDeleteHouseBill(id) {
       if (confirm("Are you sure you want to delete this house way bill?")) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"]["delete"](`/user/house-way-bills/${id}`).then(() => {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"]["delete"](`/user/house-way-bills/${id}`).then(() => {
           // Clear the cached house way bills
           this.house_way_bills = {};
           // Refresh the data
@@ -293,7 +295,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     }
   },
   components: {
-    SkeletonTable: _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
+    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"],
+    SkeletonTable: _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
     // PageLoader
   }
 });
@@ -321,7 +324,8 @@ var render = function render() {
     }
   }, [_c("div", {
     staticClass: "d-flex flex-column flex-lg-row"
-  }, [_c("div", {
+  }, [_c("SideBar"), _vm._v(" "), _c("div", {
+    staticClass: "ml-lg-4 mt-4 mt-lg-0",
     staticStyle: {
       background: "#ffffff",
       border: "1px solid rgba(255, 255, 255, 0.4)",
@@ -724,7 +728,7 @@ var render = function render() {
       },
       expression: "currentPage"
     }
-  })], 2)])])])]);
+  })], 2)])])], 1)]);
 };
 var staticRenderFns = [];
 render._withStripped = true;

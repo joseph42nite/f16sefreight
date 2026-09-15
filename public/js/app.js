@@ -10314,6 +10314,69 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       meta: {
         logo: 'blue'
       }
+    },
+    // User Dashboard Pages
+    {
+      // The MASTER air waybill form. `focus-air` stays as an alias because eight
+      // legacy files link to it (header, footer, sidebar, the auth landing
+      // fallback) — renaming the path would break every one of them for a label
+      // change. New links use the canonical path.
+      name: "Master Airway Bill",
+      path: "master-airway-bill",
+      alias: "focus-air",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_FocusAir_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/FocusAir */ "./resources/js/src/view/pages/dashboard/FocusAir.vue")),
+      meta: {
+        userType: 'user'
+      }
+    }, {
+      path: 'edit-airway-bill/:id?',
+      name: 'EditAirwayBill',
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_FocusAir_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/FocusAir */ "./resources/js/src/view/pages/dashboard/FocusAir.vue")),
+      meta: {
+        userType: 'user'
+      }
+    }, {
+      name: "House Way Bill",
+      path: "house-way-bill",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_HouseWayBill_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/HouseWayBill */ "./resources/js/src/view/pages/dashboard/HouseWayBill.vue")),
+      meta: {
+        userType: 'user'
+      }
+    }, {
+      name: "Consolidation",
+      path: "consolidation",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_Consolidation_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/Consolidation */ "./resources/js/src/view/pages/dashboard/Consolidation.vue")),
+      meta: {
+        userType: 'user'
+      }
+    }, {
+      path: 'edit-houseway-bill/:id?',
+      name: 'EditHousewayBill',
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_HouseWayBill_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/HouseWayBill */ "./resources/js/src/view/pages/dashboard/HouseWayBill.vue")),
+      meta: {
+        userType: 'user'
+      }
+    }, {
+      name: "Message Log",
+      path: "message-log",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_MessageLog_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/MessageLog */ "./resources/js/src/view/pages/dashboard/MessageLog.vue")),
+      meta: {
+        userType: 'user'
+      }
+    }, {
+      name: "XML View",
+      path: "xml-view/:id?",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_dashboard_XmlView_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/XmlView */ "./resources/js/src/view/pages/dashboard/XmlView.vue")),
+      meta: {
+        userType: 'user'
+      }
+    }, {
+      name: "Settings",
+      path: "settings",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_UserSettings_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/UserSettings */ "./resources/js/src/view/pages/dashboard/UserSettings.vue")),
+      meta: {
+        userType: 'user'
+      }
     }]
   },
   //-----------superadmin route-------------------
@@ -10500,72 +10563,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
   {
     path: "/",
     component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_layouts_freight_AppShell_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/layouts/freight/AppShell */ "./resources/js/src/view/layouts/freight/AppShell.vue")),
-    children: [
-    // The FocusAir document screens (Master AWB, House AWB, consolidation, message log, XML, settings),
-    // moved here from the website layout (user, 2026-09-15): they are app screens, so they sit in the
-    // app's rail and header rather than the marketing header and footer.
-    {
-      // The MASTER air waybill form. `focus-air` stays as an alias because eight
-      // legacy files link to it (header, footer, sidebar, the auth landing
-      // fallback) — renaming the path would break every one of them for a label
-      // change. New links use the canonical path.
-      name: "Master Airway Bill",
-      path: "master-airway-bill",
-      alias: "focus-air",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_FocusAir_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/FocusAir */ "./resources/js/src/view/pages/dashboard/FocusAir.vue")),
-      meta: {
-        userType: 'user'
-      }
-    }, {
-      path: 'edit-airway-bill/:id?',
-      name: 'EditAirwayBill',
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_FocusAir_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/FocusAir */ "./resources/js/src/view/pages/dashboard/FocusAir.vue")),
-      meta: {
-        userType: 'user'
-      }
-    }, {
-      name: "House Way Bill",
-      path: "house-way-bill",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_HouseWayBill_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/HouseWayBill */ "./resources/js/src/view/pages/dashboard/HouseWayBill.vue")),
-      meta: {
-        userType: 'user'
-      }
-    }, {
-      name: "Consolidation",
-      path: "consolidation",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_Consolidation_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/Consolidation */ "./resources/js/src/view/pages/dashboard/Consolidation.vue")),
-      meta: {
-        userType: 'user'
-      }
-    }, {
-      path: 'edit-houseway-bill/:id?',
-      name: 'EditHousewayBill',
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_HouseWayBill_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/HouseWayBill */ "./resources/js/src/view/pages/dashboard/HouseWayBill.vue")),
-      meta: {
-        userType: 'user'
-      }
-    }, {
-      name: "Message Log",
-      path: "message-log",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_MessageLog_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/MessageLog */ "./resources/js/src/view/pages/dashboard/MessageLog.vue")),
-      meta: {
-        userType: 'user'
-      }
-    }, {
-      name: "XML View",
-      path: "xml-view/:id?",
-      component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_dashboard_XmlView_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/XmlView */ "./resources/js/src/view/pages/dashboard/XmlView.vue")),
-      meta: {
-        userType: 'user'
-      }
-    }, {
-      name: "Settings",
-      path: "settings",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_dashboard_UserSettings_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/dashboard/UserSettings */ "./resources/js/src/view/pages/dashboard/UserSettings.vue")),
-      meta: {
-        userType: 'user'
-      }
-    }, {
+    children: [{
       path: "inbox",
       name: "Inbox",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_JobInbox_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/JobInbox */ "./resources/js/src/view/pages/freight/JobInbox.vue")),

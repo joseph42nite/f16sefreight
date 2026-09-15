@@ -773,11 +773,7 @@ var render = function render() {
     attrs: {
       id: "fx-main"
     }
-  }, [_c("keep-alive", {
-    attrs: {
-      include: ["FocusAir", "HouseWayBill", "MessageLog"]
-    }
-  }, [_c("router-view")], 1)], 1)])]);
+  }, [_c("router-view")], 1)])]);
 };
 var staticRenderFns = [];
 render._withStripped = true;

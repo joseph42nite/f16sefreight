@@ -92,32 +92,6 @@ class UserController extends Controller
     }
 
 
-    public function personal_update(Request $request)
-    {
-        $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-        ]);
-
-        $id = auth()->guard('user-api')->user()->id;
-        $user = User::find($id);
-        $user->name = $request->name;
-        $user->save();
-        if ($user) {
-            return response()->json(['status' => true]);
-        } else {
-            return response()->json(['status' => false]);
-        }
-    }
-    public function update_password(Request $request)
-    {
-        $request->validate([
-            'password' => ['required', 'confirmed', 'min:4'],
-        ]);
-
-        $id = auth()->guard('user-api')->user()->id;
-        User::where('id', $id)->update(['password' => Hash::make($request->password)]);
-        return json_encode(['status' => true, 'message' => "Password updated successful"]);
-    }
     public function me(Request $request)
     {
         $user_data = auth()->guard('user-api')->user();

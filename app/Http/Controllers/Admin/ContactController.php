@@ -47,28 +47,4 @@ class ContactController extends Controller
 
 
 
-    public function submitQuery(Request $request)
-    {
-        $validated = $request->validate([
-            'queryName' => 'required|string|max:255',
-            'queryEmailId' => 'required|email',
-            'queryCompanyName' => 'required|string|max:255',
-            'queryUserId' => 'required|string|max:255',
-            'queryTicketNumber' => 'required|string|max:255',
-            'queryQueryDescription' => 'required|string',
-        ]);
-        $query = new Contacts();
-        $query->name = $validated['queryName'];
-        $query->email = $validated['queryEmailId'];
-        $query->company_name = $validated['queryCompanyName'];
-        $query->user_id = $validated['queryUserId'];
-        $query->ticket_number = $validated['queryTicketNumber'];
-        $query->description = $validated['queryQueryDescription'];
-        $query->save();
-
-        // Send an email to the admin
-        // Mail::to('admin@example.com')->send(new QuerySubmitted($query));
-
-        return response()->json(['message' => 'Query submitted successfully'], 200);
-    }
 }

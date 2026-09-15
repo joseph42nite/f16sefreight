@@ -106,8 +106,8 @@ class ConsolidationController extends Controller
             'special_handling_info' => 'nullable|string',
             'other_service_information' => 'nullable|string'
         ]);
+        $this->abortUnlessOwnWaybill(HousewayBills::class, $id);
         $wayBill = HousewayBills::find($id);
-        // dd($wayBill);die;
         if (!$wayBill) {
             return response()->json(['message' => 'Waybill not found'], 404);
         }
@@ -208,6 +208,7 @@ class ConsolidationController extends Controller
     }
     public function manifestSend($awb_id)
     {
+        $this->abortUnlessOwnWaybill(AirwayBills::class, $awb_id);
         $send_response = [];
         $send_response = $this->conversionController->HouseManifestMessage($awb_id);
         AirwayBills::where('id', $awb_id)->update(['manifest_status' => 'send']);

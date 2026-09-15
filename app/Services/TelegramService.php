@@ -17,7 +17,7 @@ class TelegramService
      */
     public static function sendMessage($chatId, $text, $replyMarkup = null)
     {
-        $botToken = env('TELEGRAM_BOT_TOKEN');
+        $botToken = config('services.telegram.bot_token');
         if (!$botToken) {
             Log::warning('[TELEGRAM] Bot token not configured.');
             return null;
@@ -53,7 +53,7 @@ class TelegramService
      */
     public static function editMessageText($chatId, $messageId, $text)
     {
-        $botToken = env('TELEGRAM_BOT_TOKEN');
+        $botToken = config('services.telegram.bot_token');
         if (!$botToken) return false;
 
         try {
@@ -81,7 +81,7 @@ class TelegramService
      */
     public static function answerCallbackQuery($callbackQueryId, $text)
     {
-        $botToken = env('TELEGRAM_BOT_TOKEN');
+        $botToken = config('services.telegram.bot_token');
         if (!$botToken) return false;
 
         try {

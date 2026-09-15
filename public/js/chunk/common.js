@@ -11,6 +11,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _core_services_pdfLink__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/pdfLink */ "./resources/js/src/core/services/pdfLink.js");
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "DashboardHistoryModal",
   props: {
@@ -42,6 +44,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   methods: {
+    openPdf: _core_services_pdfLink__WEBPACK_IMPORTED_MODULE_0__.openPdf,
     getAirport(val) {
       if (!val) return "-";
       return val.split(',')[0].trim();
@@ -1167,8 +1170,13 @@ var render = function render() {
     }, [_vm._v("Generate:")]), _vm._v(" "), _vm.docType === "consolidation" ? [_c("a", {
       staticClass: "download-link",
       attrs: {
-        href: `/download-consolidation-pdf/${String(item.awb_code)}/${String(item.awb_no)}`,
-        target: "_blank"
+        href: "#"
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          _vm.openPdf(`/download-consolidation-pdf/${String(item.awb_code)}/${String(item.awb_no)}`);
+        }
       }
     }, [_c("b-icon", {
       staticClass: "mr-2",
@@ -1178,8 +1186,13 @@ var render = function render() {
     }), _vm._v(" Consolidation PDF\n                        ")], 1), _vm._v(" "), _c("a", {
       staticClass: "download-link",
       attrs: {
-        href: `/download-multiple-consolidation-pdf/${String(item.awb_code)}/${String(item.awb_no)}`,
-        target: "_blank"
+        href: "#"
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          _vm.openPdf(`/download-multiple-consolidation-pdf/${String(item.awb_code)}/${String(item.awb_no)}`);
+        }
       }
     }, [_c("b-icon", {
       staticClass: "mr-2",
@@ -1189,8 +1202,13 @@ var render = function render() {
     }), _vm._v(" Multipage PDF\n                        ")], 1)] : _vm.docType === "house" ? [_c("a", {
       staticClass: "download-link",
       attrs: {
-        href: `/download-hawb-pdf/${item.id}`,
-        target: "_blank"
+        href: "#"
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          return _vm.openPdf(`/download-hawb-pdf/${item.id}`);
+        }
       }
     }, [_c("b-icon", {
       staticClass: "mr-2",
@@ -1200,8 +1218,13 @@ var render = function render() {
     }), _vm._v(" PDF\n                        ")], 1), _vm._v(" "), _c("a", {
       staticClass: "download-link",
       attrs: {
-        href: `/download-multiple-hawb-pdf/${item.id}`,
-        target: "_blank"
+        href: "#"
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          return _vm.openPdf(`/download-multiple-hawb-pdf/${item.id}`);
+        }
       }
     }, [_c("b-icon", {
       staticClass: "mr-2",
@@ -1211,8 +1234,13 @@ var render = function render() {
     }), _vm._v(" Multi-PDF\n                        ")], 1), _vm._v(" "), _c("a", {
       staticClass: "download-link",
       attrs: {
-        href: `/download-multiple-both-page-hawb-pdf/${item.id}`,
-        target: "_blank"
+        href: "#"
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          return _vm.openPdf(`/download-multiple-both-page-hawb-pdf/${item.id}`);
+        }
       }
     }, [_c("b-icon", {
       staticClass: "mr-2",
@@ -1222,8 +1250,13 @@ var render = function render() {
     }), _vm._v(" Multi-PDF (Back)\n                        ")], 1)] : [_c("a", {
       staticClass: "download-link",
       attrs: {
-        href: `/download-awb-pdf/${item.id}`,
-        target: "_blank"
+        href: "#"
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          return _vm.openPdf(`/download-awb-pdf/${item.id}`);
+        }
       }
     }, [_c("b-icon", {
       staticClass: "mr-2",
@@ -1233,8 +1266,13 @@ var render = function render() {
     }), _vm._v(" PDF\n                        ")], 1), _vm._v(" "), _c("a", {
       staticClass: "download-link",
       attrs: {
-        href: `/download-multiple-awb-pdf/${item.id}`,
-        target: "_blank"
+        href: "#"
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          return _vm.openPdf(`/download-multiple-awb-pdf/${item.id}`);
+        }
       }
     }, [_c("b-icon", {
       staticClass: "mr-2",
@@ -1244,8 +1282,13 @@ var render = function render() {
     }), _vm._v(" Multi-PDF\n                        ")], 1), _vm._v(" "), _c("a", {
       staticClass: "download-link",
       attrs: {
-        href: `/download-multiple-both-page-awb-pdf/${item.id}`,
-        target: "_blank"
+        href: "#"
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          return _vm.openPdf(`/download-multiple-both-page-awb-pdf/${item.id}`);
+        }
       }
     }, [_c("b-icon", {
       staticClass: "mr-2",
@@ -4131,6 +4174,42 @@ function loadLocations() {
     throw err;
   });
   return inFlight;
+}
+
+/***/ }),
+
+/***/ "./resources/js/src/core/services/pdfLink.js":
+/*!***************************************************!*\
+  !*** ./resources/js/src/core/services/pdfLink.js ***!
+  \***************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "openPdf": () => (/* binding */ openPdf)
+/* harmony export */ });
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+
+
+/**
+ * Open a waybill PDF in a new tab (2026-09-16 audit). The download routes need a signed link, which the server
+ * gives only for the caller's own waybills. The tab is opened first, while the click still counts, so the
+ * browser does not block it as a pop-up.
+ *
+ * @param {string} path e.g. "/download-awb-pdf/17610000008"
+ */
+function openPdf(path) {
+  const tab = window.open("", "_blank");
+  return _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/pdf-link", {
+    path
+  }).then(({
+    data
+  }) => {
+    if (tab) tab.location = data.url;else window.location = data.url;
+  }).catch(() => {
+    if (tab) tab.close();
+  });
 }
 
 /***/ }),

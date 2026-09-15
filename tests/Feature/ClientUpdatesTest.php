@@ -239,6 +239,10 @@ class ClientUpdatesTest extends TestCase
         $status('DLV');
         $this->assertSame('delivered', $this->pending($thread)['stage']);
 
+        // 🔒 With a token configured, a post without it changes nothing.
+        config(['services.gln.token' => 'gln-secret']);
+        $this->call('POST', 'http://localhost/api/gln-response', [], [], [], ['CONTENT_TYPE' => 'application/xml'], '<x/>')->assertForbidden();
+
         $other = $this->thread();
         $this->jobFor($other)->update(['status' => JobStatus::Completed]);
         $this->assertSame('confirmed', $this->pending($other)['stage'], 'no AWB, so no delivered mail');

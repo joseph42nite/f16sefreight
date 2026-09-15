@@ -19,9 +19,12 @@ class OpenClawWebhookTest extends TestCase
 
         // Configure env values dynamically for test execution
         config(['app.url' => 'http://localhost']);
-        putenv("OPENCLAW_HMAC_SECRET={$this->secret}");
-        putenv("TELEGRAM_ADMIN_CHAT_ID={$this->adminChatId}");
-        putenv("TELEGRAM_BOT_TOKEN=dummy-bot-token");
+        config([
+            'services.openclaw.hmac_secret' => $this->secret,
+            'services.telegram.admin_chat_id' => $this->adminChatId,
+            'services.telegram.bot_token' => 'dummy-bot-token',
+            'services.telegram.webhook_secret' => 'tg-secret',
+        ]);
 
         // Clear tables
         DB::table('openclaw_nonces')->truncate();
@@ -167,9 +170,23 @@ class OpenClawWebhookTest extends TestCase
                     'message_id' => 555
                 ]
             ]
-        ]);
+        ], ['X-Telegram-Bot-Api-Secret-Token' => 'tg-secret']);
 
         $response->assertStatus(200);
+    }
+
+    /** 🔒 A callback without Telegram's webhook secret is refused, whatever `from.id` it claims. */
+    public function test_telegram_callback_without_the_webhook_secret_is_refused()
+    {
+        DB::table('openclaw_pending_actions')->insert(['action_id' => 'forged', 'event_type' => 'create_blog_post',
+            'payload' => json_encode(['title' => 'Forged', 'content' => 'x']), 'status' => 'pending', 'created_at' => now()]);
+
+        $this->postJson('/api/openclaw/telegram-callback', ['callback_query' => [
+            'id' => 'cb-x', 'from' => ['id' => (int) $this->adminChatId], 'data' => 'openclaw_accept:forged',
+            'message' => ['chat' => ['id' => 1], 'message_id' => 1],
+        ]])->assertStatus(403);
+
+        $this->assertSame('pending', DB::table('openclaw_pending_actions')->where('action_id', 'forged')->value('status'));
     }
 
     public function test_telegram_callback_accepts_and_executes_pending_blog_creation()
@@ -206,7 +223,7 @@ class OpenClawWebhookTest extends TestCase
                     'message_id' => 999
                 ]
             ]
-        ]);
+        ], ['X-Telegram-Bot-Api-Secret-Token' => 'tg-secret']);
 
         $response->assertStatus(200);
 
@@ -256,7 +273,7 @@ class OpenClawWebhookTest extends TestCase
                     'message_id' => 999
                 ]
             ]
-        ]);
+        ], ['X-Telegram-Bot-Api-Secret-Token' => 'tg-secret']);
 
         $response->assertStatus(200);
 

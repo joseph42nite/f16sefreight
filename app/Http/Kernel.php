@@ -69,6 +69,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'openclaw.verify' => \App\Http\Middleware\VerifyOpenClawSignature::class,
+        'gln.token' => \App\Http\Middleware\VerifyGlnToken::class,
 
         // Multi-portal access control — guide §3.4 / §3.5.
         // 'portal' gates whether THIS user may enter THIS subdomain (tier before role).

@@ -467,7 +467,7 @@
             listens for no such event, so the button did nothing at all — and did it
             silently, which is worse than being absent.
           -->
-          <a class="fx-btn" :href="pdfUrl" target="_blank" rel="noopener">Generate PDF</a>
+          <button type="button" class="fx-btn" @click="openPdf(pdfUrl)">Generate PDF</button>
 
           <!--
             Saving again after an edit. The draft already exists, so this is an update to
@@ -494,6 +494,7 @@
 </template>
 
 <script>
+import { openPdf } from "@/core/services/pdfLink";
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import {
@@ -1010,6 +1011,7 @@ export default {
     this.loadCountries();
   },
   methods: {
+    openPdf,
     /**
      * The branch's saved parties, for the pickers.
      *

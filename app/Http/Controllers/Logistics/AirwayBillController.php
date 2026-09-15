@@ -688,6 +688,8 @@ class AirwayBillController extends Controller
      */
     public function store(Request $request)
     {
+        $this->abortUnlessOwnWaybill(AirwayBills::class, ($request->first_box['awb_code'] ?? '') . ($request->first_box['awb_no'] ?? ''));
+
         try {
             $main_return_data = DB::transaction(fn () => $this->storeSections($request));
         } catch (ValidationFailed $e) {
@@ -856,6 +858,9 @@ class AirwayBillController extends Controller
      */
     public function update(Request $request, $id, $awb_no = null)
     {
+        $this->abortUnlessOwnWaybill(AirwayBills::class, $id);
+        $this->abortUnlessOwnWaybill(AirwayBills::class, ($request->first_box['awb_code'] ?? '') . ($request->first_box['awb_no'] ?? ''));
+
         try {
             $main_return_data = DB::transaction(fn () => $this->updateSections($request, $id));
         } catch (ValidationFailed $e) {
@@ -979,6 +984,7 @@ class AirwayBillController extends Controller
     }
     public function show($id)
     {
+        $this->abortUnlessOwnWaybill(AirwayBills::class, $id);
         $airwayBill = AirwayBills::with(['paymentInfo', 'wayBillAddress', 'savedAddress', 'consignmentData', 'otherCharge', 'otherCustomInformation'])->find($id);
         if (!$airwayBill) {
             return response()->json(['message' => 'Record not found'], 404);
@@ -1095,47 +1101,6 @@ class AirwayBillController extends Controller
         } else {
             return response()->json(null, 404);
         }
-    }
-    public function sendFileToServerFTP($local_file_path, $remote_file_name)
-    {
-        // FTP Credentials
-        $ftp_host = '65.0.228.88';
-        $ftp_username = 'ubuntu';
-        $ftp_password = '';
-        $ftp_port = 22;
-        $remote_folder = '/var/www/html/f16sefreight.com/public/xml-conversion-files/';
-
-        // file exists locally
-        if (!file_exists($local_file_path)) {
-            throw new \Exception('Local XML file does not exist');
-        }
-
-        // Connect to FTP Server
-        $ftp_conn = ftp_connect($ftp_host, $ftp_port);
-        if (!$ftp_conn) {
-            throw new \Exception('Could not connect to FTP server');
-        }
-
-        // Login to FTP
-        if (!ftp_login($ftp_conn, $ftp_username, $ftp_password)) {
-            ftp_close($ftp_conn);
-            throw new \Exception('FTP Login Failed - Check credentials');
-        }
-
-        // Set Passive Mode
-        ftp_pasv($ftp_conn, true);
-
-        // Upload File to FTP
-        $remote_file_path = $remote_folder . $remote_file_name;
-        if (!ftp_put($ftp_conn, $remote_file_path, $local_file_path, FTP_BINARY)) {
-            ftp_close($ftp_conn);
-            throw new \Exception('FTP File Upload Failed');
-        }
-
-        // Close FTP Connection
-        ftp_close($ftp_conn);
-
-        return true;
     }
 
     public function get_airport_by_airport_code(Request $request)

@@ -75,11 +75,11 @@
     },
     methods: {
       delete_contacts(id){
-        this.confirmRemove(`/delete-contact/${id}`, "Are you sure you want to delete this contact?")
+        this.confirmRemove(`/superadmin/delete-contact/${id}`, "Are you sure you want to delete this contact?")
           .then(removed => { if (removed) this.get_contacts(); });
       },
       get_contacts(){
-        return this.loadItems(`/all-contacts/`);
+        return this.loadItems(`/superadmin/all-contacts`);
       },
     },
     mounted(){

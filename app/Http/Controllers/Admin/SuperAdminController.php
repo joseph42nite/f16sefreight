@@ -14,20 +14,6 @@ use Illuminate\Support\Facades\Storage;
 
 class SuperAdminController extends Controller
 {
-    public function register(Request $request){
-        $superadmin=new SuperAdmin();
-        $superadmin->name=$request->name;
-        $superadmin->email=$request->email;
-        $superadmin->password=Hash::make($request->password);
-        $superadmin->save();
-        if($superadmin){
-            return response()->json(['user'=>$superadmin,'status'=>true]);
-        }
-        else{
-           return response()->json(['status'=>false]);
-        }
-    }
-
     public function me()
     {
         return response()->json(auth()->guard('superAdmin-api')->user());

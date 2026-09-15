@@ -103,15 +103,10 @@ class GLNResponseController extends Controller
         }
     }
 
-    public function check()
-    {
-        Mail::raw('Test Mail Body', function ($message) {
-            $message->to('dhiraj.thakur@zed.pe')
-                ->subject('Test Subject');
-        });
-    }
     public function get_awb($awb_id)
     {
+        abort_unless(ctype_digit((string) $awb_id), 404);
+        $this->abortUnlessOwnWaybill(AirwayBills::class, $awb_id);
         $content = Storage::get("xml-conversion-files/xml_airway_bill_$awb_id.xml");
         return $content;
     }

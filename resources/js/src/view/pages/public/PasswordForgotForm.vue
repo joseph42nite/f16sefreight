@@ -44,7 +44,7 @@ export default {
     },
     methods: {
         ResetPassword() {
-            axios.post("/ForgotpasswordActual", this.forget_password).then(res => {
+            axios.post("/ForgotpasswordActual", { ...this.forget_password, token: this.token }).then(res => {
                this.password_changed=true;
             })
             .catch(err=>{

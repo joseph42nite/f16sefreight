@@ -22,7 +22,7 @@ class VerifyOpenClawSignature
         $timestamp = $request->header('x-openclaw-timestamp');
         $nonce = $request->header('x-openclaw-nonce');
 
-        $secret = env('OPENCLAW_HMAC_SECRET');
+        $secret = config('services.openclaw.hmac_secret');
 
         if (!$secret) {
             Log::error('[OPENCLAW] HMAC Secret is not configured in .env');

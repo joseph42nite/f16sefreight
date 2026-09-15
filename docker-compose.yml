@@ -77,7 +77,8 @@ services:
       MYSQL_PASSWORD: secret
       MYSQL_ROOT_PASSWORD: secret
     ports:
-      - "3307:3306"          # 3307 on the host, so a local MySQL install is not disturbed
+      # 🔒 127.0.0.1 only: published on all interfaces, anyone on the same network could reach the database.
+      - "127.0.0.1:3307:3306"          # 3307 on the host, so a local MySQL install is not disturbed
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -92,7 +93,7 @@ services:
     container_name: f16s-redis
     command: redis-server --appendonly yes
     ports:
-      - "6380:6379"          # 6380 on the host, same reason as above
+      - "127.0.0.1:6380:6379"          # 6380 on the host, same reason as above
     volumes:
       - redis_data:/data
     networks: [f16s-network]
@@ -106,8 +107,8 @@ services:
       SOKETI_DEFAULT_APP_KEY: f16s-key
       SOKETI_DEFAULT_APP_SECRET: f16s-secret
     ports:
-      - "6001:6001"
-      - "9601:9601"
+      - "127.0.0.1:6001:6001"
+      - "127.0.0.1:9601:9601"
     networks: [f16s-network]
 
   # The parsing service, source in ./python: FastAPI, pdfplumber coordinates for an AWB, PyMuPDF
@@ -118,7 +119,8 @@ services:
       dockerfile: Dockerfile.fastapi
     container_name: f16s-ai
     ports:
-      - "8000:8000"
+      # 🔒 127.0.0.1 only: the parser has no sign-in and spends the OpenRouter key.
+      - "127.0.0.1:8000:8000"
     environment:
       # 🔐 From the project's .env, never written here. Without it the parser reads by labels
       # only and says "the model is not configured".

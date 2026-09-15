@@ -106,6 +106,8 @@ class FreightDemoSeeder extends Seeder
 
         $this->seedPlatformStaff();
         $this->syncSequenceCounters();
+        // Mail through the real sync, regex and shipment steps, so each automated client update appears.
+        $this->call(DemoMailLoopSeeder::class);
         // The Sales page reads the nightly rollup; run it once so the demo has figures and client emails.
         $this->command->call('sales:compute-snapshots');
         // The files the demo mails say are attached (needs ClamAV: `docker compose up -d clamav`).

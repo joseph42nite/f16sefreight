@@ -13,9 +13,6 @@ use App\Http\Controllers\Logistics\HousewayBillController;
 use App\Http\Controllers\Logistics\MessageLogController;
 use App\Http\Controllers\Logistics\ConsolidationController;
 use App\Http\Controllers\Logistics\GLNResponseController;
-use App\Http\Controllers\Logistics\ConversionController;
-use App\Http\Controllers\Logistics\IMPConversionController;
-use App\Http\Controllers\Logistics\OcrController;
 use App\Http\Controllers\Data\RateController;
 use App\Http\Controllers\Data\LocationController;
 use App\Http\Controllers\Data\AmsController;
@@ -28,27 +25,22 @@ use App\Http\Controllers\Generators\GenerateConsolidationPdfController;
 
 use Illuminate\Support\Facades\Route;
 
-// Route::get('test-route', [ConversionController::class, 'WayBillConversion']);
-Route::get('air-waybill', [ConversionController::class, 'WayBillConversion']);
-Route::get('test-route1', [IMPConversionController::class, 'ConsolidationConversion']);
-Route::get('message-response', [ConversionController::class, 'ResponseMessage']);
-Route::get('generic-message', [ConversionController::class, 'GenericRequestMessage']);
-Route::get('house-message', [ConversionController::class, 'HouseManifestMessage']);
-Route::get('direct-data', [ConversionController::class, 'DirectDataMessage']);
-Route::get('create-partner', [ConversionController::class, 'CreatePartner']);
-Route::get('/test-route', function () {
-    return view('email/awb_reject_status');
+// 🔒 2026-09-16 audit: the public test and conversion routes (air-waybill, message-response, generic-message,
+// house-message, direct-data, create-partner, test-route, test-route1) and the public /ocr upload tool are gone —
+// they ran customs conversions and paid OCR for anyone. The same work runs behind sign-in under /api/user.
+
+// Waybill PDFs open in a new tab, which carries no sign-in token, so each link is a short-lived signed URL issued
+// by POST /api/pdf-link after checking the waybill is the caller's (PdfLinkController).
+Route::middleware('signed')->group(function () {
+    Route::get('download-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadPdf'])->name('pdf.awb');
+    Route::get('download-multiple-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleAwbPdf'])->name('pdf.awb-multiple');
+    Route::get('download-multiple-both-page-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleWithBackAwbPdf'])->name('pdf.awb-multiple-both');
+    Route::get('download-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadHawbPdf'])->name('pdf.hawb');
+    Route::get('download-multiple-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleHawbPdf'])->name('pdf.hawb-multiple');
+    Route::get('download-multiple-both-page-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleWithBackHawbPdf'])->name('pdf.hawb-multiple-both');
+    Route::get('download-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf'])->name('pdf.consolidation');
+    Route::get('download-multiple-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadMultipleConsolidationPdf'])->name('pdf.consolidation-multiple');
 });
-Route::get('download-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadPdf']);
-Route::get('download-multiple-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleAwbPdf']);
-Route::get('download-multiple-both-page-awb-pdf/{id}', [GenerateAwbPdfController::class, 'downloadMultipleWithBackAwbPdf']);
-Route::get('download-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadHawbPdf']);
-Route::get('download-multiple-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleHawbPdf']);
-Route::get('download-multiple-both-page-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleWithBackHawbPdf']);
-Route::get('download-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf']);
-Route::get('download-multiple-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadMultipleConsolidationPdf']);
-Route::get('/ocr', fn() => view('tools.ocr.upload'));
-Route::post('/ocr-extract', [OcrController::class, 'extract'])->name('ocr.extract');
 use App\Blog;
 
 Route::get('blog/{slug}', function ($slug) {
@@ -62,4 +54,4 @@ Route::get('/login', function () {
 
 Route::get('{any}', function () {
     return view('welcome');
-})->where('any', '(?!ocr)(?!ocr-extract)(?!generate-pdf)(?!test-route)(?!test-route1)(?!generic-message)(?!message-response)(?!house-message)(?!direct-data).*$');
+})->where('any', '(?!api/)(?!download-).*$');

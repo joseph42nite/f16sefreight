@@ -83,12 +83,20 @@ class OpenClawController extends Controller
                 return response()->json(['ok' => true]);
             }
 
-            // Authorization check
+            // Authorization check.
+            // 🔒 Anyone can POST this URL and write any `from.id` into the JSON, so the admin list alone proves
+            // nothing: the callback must carry the webhook secret Telegram was registered with, and an empty admin
+            // list authorises nobody (it used to authorise everybody).
             $fromId = (string)($callbackQuery['from']['id'] ?? '');
-            $adminChatId = env('TELEGRAM_ADMIN_CHAT_ID');
+            $adminChatId = config('services.telegram.admin_chat_id');
             $authorizedAdminIds = $adminChatId ? array_map('trim', explode(',', $adminChatId)) : [];
+            $secret = (string) config('services.telegram.webhook_secret');
 
-            if (!empty($authorizedAdminIds) && !in_array($fromId, $authorizedAdminIds)) {
+            if ($secret === '' || ! hash_equals($secret, (string) $request->header('X-Telegram-Bot-Api-Secret-Token'))) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+
+            if (!in_array($fromId, $authorizedAdminIds, true)) {
                 TelegramService::answerCallbackQuery($callbackQuery['id'], '❌ You are not authorized.');
                 return response()->json(['ok' => true]);
             }

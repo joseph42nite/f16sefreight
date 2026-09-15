@@ -156,17 +156,17 @@ class HawbPdfGenerationTest extends TestCase
         // Rebaselined again when the duplicate rule above the bottom band was removed.
         // Rebaselined again when the Currency Conversion spacer was extended so its
         // divider reaches the rule below it.
-        $single = $this->get("/download-hawb-pdf/{$hawbId}");
+        $single = $this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.hawb', ['id' => $hawbId]));
         $single->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $single->headers->get('Content-Type'));
         fwrite(STDERR, "\nH:" . strlen($single->getContent()) . "\n");
 
-        $multiple = $this->get("/download-multiple-hawb-pdf/{$hawbId}");
+        $multiple = $this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.hawb-multiple', ['id' => $hawbId]));
         $multiple->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $multiple->headers->get('Content-Type'));
         fwrite(STDERR, "\nH:" . strlen($multiple->getContent()) . "\n");
 
-        $multipleWithBack = $this->get("/download-multiple-both-page-hawb-pdf/{$hawbId}");
+        $multipleWithBack = $this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.hawb-multiple-both', ['id' => $hawbId]));
         $multipleWithBack->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $multipleWithBack->headers->get('Content-Type'));
         fwrite(STDERR, "\nH:" . strlen($multipleWithBack->getContent()) . "\n");
@@ -185,7 +185,7 @@ class HawbPdfGenerationTest extends TestCase
             ]),
         ]);
 
-        $response = $this->get("/download-hawb-pdf/{$hawbId}");
+        $response = $this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.hawb', ['id' => $hawbId]));
 
         $response->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
@@ -199,10 +199,10 @@ class HawbPdfGenerationTest extends TestCase
 
         ConsignmentData::where('awb_id', $hawbId)->update(['pieces_info' => null]);
 
-        $withoutPiecesInfo = strlen($this->get("/download-hawb-pdf/{$hawbId}")->getContent());
+        $withoutPiecesInfo = strlen($this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.hawb', ['id' => $hawbId]))->getContent());
 
         ConsignmentData::where('awb_id', $hawbId)->update(['hs_code' => null]);
-        $withoutEither = strlen($this->get("/download-hawb-pdf/{$hawbId}")->getContent());
+        $withoutEither = strlen($this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.hawb', ['id' => $hawbId]))->getContent());
 
         $this->assertGreaterThan($withoutEither, $withoutPiecesInfo);
     }
@@ -219,7 +219,7 @@ class HawbPdfGenerationTest extends TestCase
             'flight_3' => '300', 'date_3' => '2026-08-02 06:40:00',
         ]);
 
-        $text = $this->pdfText($this->get("/download-hawb-pdf/{$hawbId}")->getContent());
+        $text = $this->pdfText($this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.hawb', ['id' => $hawbId]))->getContent());
 
         $this->assertStringContainsString('AA100 / 15JUL', $text);
         $this->assertStringContainsString('BA200 / 01AUG', $text);
@@ -232,7 +232,7 @@ class HawbPdfGenerationTest extends TestCase
     {
         $hawbId = $this->seedHawb();
 
-        $text = $this->pdfText($this->get("/download-hawb-pdf/{$hawbId}")->getContent());
+        $text = $this->pdfText($this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.hawb', ['id' => $hawbId]))->getContent());
 
         $this->assertStringContainsString('AA100 / 15JUL', $text);
         $this->assertStringNotContainsString('BA /', $text);

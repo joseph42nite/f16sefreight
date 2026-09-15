@@ -2368,6 +2368,7 @@
         </b-container>
 </template> 
 <script>
+import { openPdf } from "@/core/services/pdfLink";
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
@@ -2978,7 +2979,7 @@ export default {
                 return;
             }
             const pdfUrl = `/${pdf_generate_type}/${this.existingData.id}`;
-            window.open(pdfUrl, '_blank');
+            openPdf(pdfUrl);
         },
         validateFormFields() {
             const requiredFields = {

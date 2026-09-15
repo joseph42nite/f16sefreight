@@ -127,7 +127,8 @@ class EmailInboxController extends Controller
             ->orderByDesc('latest_message_received_at')
             ->paginate(50);
 
-        $threads->getCollection()->transform(fn ($t) => $this->shape($t));
+        $mail = $this->mailSummaries($threads->getCollection()->pluck('thread_key'));
+        $threads->getCollection()->transform(fn ($t) => $this->shape($t, $mail[$t->thread_key] ?? null));
 
         // ⚠️ Merged onto the paginator rather than nesting it, so the existing
         // `data`/`total` shape the list already reads is untouched.
@@ -615,29 +616,47 @@ class EmailInboxController extends Controller
         return $at === false ? null : strtolower(substr($email, $at + 1));
     }
 
-    private function shape(EmailThread $thread): array
+    /**
+     * The list's mail facts for many conversations in four queries, not five per row (2026-09-16 speed pass):
+     * the latest message (subject, snippet, the mailbox it came on), the first INBOUND sender, and the count.
+     *
+     * @return array<string, array{subject: ?string, from: ?string, snippet: ?string, mailbox_address: ?string, message_count: int}>
+     */
+    private function mailSummaries(\Illuminate\Support\Collection $keys): array
     {
-        $latest = EmailMessage::where('thread_key', $thread->thread_key)
-            ->orderByDesc('received_at')
-            ->first(['subject', 'from', 'body_snippet', 'received_at']);
+        if ($keys->isEmpty()) {
+            return [];
+        }
 
-        // ⚠️ The list shows the CORRESPONDENT, taken from the first INBOUND message —
-        // not the sender of the latest one. On any thread we have replied to, the
-        // latest sender is us, and a mail list showing your own address in every row
-        // is unreadable: the column exists to tell you who you are talking to.
-        $correspondent = EmailMessage::where('thread_key', $thread->thread_key)
-            ->where('direction', 'inbound')
-            ->orderBy('received_at')
-            ->value('from');
+        // One row per conversation: the first by received_at in the given order.
+        $first = fn (string $order, ?string $direction = null) => DB::query()->fromSub(
+            EmailMessage::whereIn('thread_key', $keys)
+                ->when($direction, fn ($q) => $q->where('direction', $direction))
+                ->select('thread_key', 'subject', 'from', 'body_snippet', 'received_at', 'mailbox_connection_id')
+                ->selectRaw("ROW_NUMBER() OVER (PARTITION BY thread_key ORDER BY received_at {$order}) AS rn"),
+            'm'
+        )->where('rn', 1)->get()->keyBy('thread_key');
 
-        // 🔴 The mailbox this conversation arrived on. Reply-all needs it to REMOVE us
-        // from the copy list: every message on the thread has our own address on it, so
-        // without this the desk copies itself on every reply it sends.
-        $mailboxAddress = MailboxConnection::whereKey(
-            EmailMessage::where('thread_key', $thread->thread_key)
-                ->orderByDesc('received_at')
-                ->value('mailbox_connection_id')
-        )->value('email_address');
+        $latest = $first('DESC');
+        $correspondent = $first('ASC', 'inbound');
+        $counts = EmailMessage::whereIn('thread_key', $keys)->groupBy('thread_key')->selectRaw('thread_key, COUNT(*) AS n')->pluck('n', 'thread_key');
+        $mailboxes = MailboxConnection::whereIn('id', $latest->pluck('mailbox_connection_id')->filter())->pluck('email_address', 'id');
+
+        return $keys->mapWithKeys(fn ($key) => [$key => [
+            'subject' => $latest[$key]->subject ?? null,
+            // ⚠️ The list shows the CORRESPONDENT — the first INBOUND sender, not the latest one, which on any
+            // answered conversation is us.
+            'from' => $correspondent[$key]->from ?? ($latest[$key]->from ?? null),
+            'snippet' => $latest[$key]->body_snippet ?? null,
+            // 🔴 The mailbox the conversation arrived on: reply-all removes it, or the desk copies itself.
+            'mailbox_address' => $mailboxes[$latest[$key]->mailbox_connection_id ?? 0] ?? null,
+            'message_count' => (int) ($counts[$key] ?? 0),
+        ]])->all();
+    }
+
+    private function shape(EmailThread $thread, ?array $mail = null): array
+    {
+        $mail ??= $this->mailSummaries(collect([$thread->thread_key]))[$thread->thread_key];
 
         // ONE enquiry may split into several jobs (a consol with house shipments).
         $jobs = $thread->enquiry ? $thread->enquiry->jobs->sortByDesc('id')->values() : collect();
@@ -648,16 +667,16 @@ class EmailInboxController extends Controller
             'thread_key'     => $thread->thread_key,
             'status'         => $thread->status,
             'classification' => $thread->classification,
-            'mailbox_address' => $mailboxAddress,
+            'mailbox_address' => $mail['mailbox_address'],
             // What the parser read out of the mail, for the operator to check. A
             // suggestion with a confidence per field — never a value anything downstream
             // reads on its own.
             'staged_cargo'   => $thread->staged_cargo
                 ? json_decode($thread->staged_cargo, true)
                 : null,
-            'subject'        => $latest->subject ?? null,
-            'from'           => $correspondent ?? ($latest->from ?? null),
-            'snippet'        => $latest->body_snippet ?? null,
+            'subject'        => $mail['subject'],
+            'from'           => $mail['from'],
+            'snippet'        => $mail['snippet'],
             'latest_message_received_at' => $thread->latest_message_received_at,
             'first_response_at' => $thread->first_response_at,
             'first_triage_at'   => $thread->first_triage_at,
@@ -668,7 +687,7 @@ class EmailInboxController extends Controller
             // `latest()`, so both surfaces name the same job out of a consol split.
             'job'            => $job ? $job->only(['id', 'execution_job_no', 'awb_number', 'status']) : null,
             'job_count'      => $jobs->count(),
-            'message_count'  => EmailMessage::where('thread_key', $thread->thread_key)->count(),
+            'message_count'  => $mail['message_count'],
             // The client update waiting for someone to send or skip it — the card on the conversation.
             'client_update'  => $thread->pending_client_notification,
         ];

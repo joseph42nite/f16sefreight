@@ -65,36 +65,36 @@
                         
                         <!-- Consolidation Downloads -->
                         <template v-if="docType === 'consolidation'">
-                            <a :href="`/download-consolidation-pdf/${String(item.awb_code)}/${String(item.awb_no)}`" target="_blank" class="download-link">
+                            <a href="#" class="download-link" @click.prevent="openPdf(`/download-consolidation-pdf/${String(item.awb_code)}/${String(item.awb_no)}`)">
                                 <b-icon icon="file-earmark-pdf" class="mr-2"></b-icon> Consolidation PDF
                             </a>
-                            <a :href="`/download-multiple-consolidation-pdf/${String(item.awb_code)}/${String(item.awb_no)}`" target="_blank" class="download-link">
+                            <a href="#" class="download-link" @click.prevent="openPdf(`/download-multiple-consolidation-pdf/${String(item.awb_code)}/${String(item.awb_no)}`)">
                                 <b-icon icon="files" class="mr-2"></b-icon> Multipage PDF
                             </a>
                         </template>
 
                         <!-- House WayBill Downloads -->
                         <template v-else-if="docType === 'house'">
-                            <a :href="`/download-hawb-pdf/${item.id}`" target="_blank" class="download-link">
+                            <a href="#" class="download-link" @click.prevent="openPdf(`/download-hawb-pdf/${item.id}`)">
                                 <b-icon icon="file-earmark-pdf" class="mr-2"></b-icon> PDF
                             </a>
-                            <a :href="`/download-multiple-hawb-pdf/${item.id}`" target="_blank" class="download-link">
+                            <a href="#" class="download-link" @click.prevent="openPdf(`/download-multiple-hawb-pdf/${item.id}`)">
                                 <b-icon icon="files" class="mr-2"></b-icon> Multi-PDF
                             </a>
-                            <a :href="`/download-multiple-both-page-hawb-pdf/${item.id}`" target="_blank" class="download-link">
+                            <a href="#" class="download-link" @click.prevent="openPdf(`/download-multiple-both-page-hawb-pdf/${item.id}`)">
                                 <b-icon icon="book" class="mr-2"></b-icon> Multi-PDF (Back)
                             </a>
                         </template>
 
                         <!-- Master Airway Bill (FocusAir) Downloads -->
                         <template v-else>
-                            <a :href="`/download-awb-pdf/${item.id}`" target="_blank" class="download-link">
+                            <a href="#" class="download-link" @click.prevent="openPdf(`/download-awb-pdf/${item.id}`)">
                                 <b-icon icon="file-earmark-pdf" class="mr-2"></b-icon> PDF
                             </a>
-                            <a :href="`/download-multiple-awb-pdf/${item.id}`" target="_blank" class="download-link">
+                            <a href="#" class="download-link" @click.prevent="openPdf(`/download-multiple-awb-pdf/${item.id}`)">
                                 <b-icon icon="files" class="mr-2"></b-icon> Multi-PDF
                             </a>
-                            <a :href="`/download-multiple-both-page-awb-pdf/${item.id}`" target="_blank" class="download-link">
+                            <a href="#" class="download-link" @click.prevent="openPdf(`/download-multiple-both-page-awb-pdf/${item.id}`)">
                                 <b-icon icon="book" class="mr-2"></b-icon> Multi-PDF (Back)
                             </a>
                         </template>
@@ -106,6 +106,7 @@
 </template>
 
 <script>
+import { openPdf } from "@/core/services/pdfLink";
 export default {
     name: "DashboardHistoryModal",
     props: {
@@ -117,6 +118,7 @@ export default {
         isFetching: { type: Boolean, default: false }
     },
     methods: {
+    openPdf,
         getAirport(val) {
             if (!val) return "-";
             return val.split(',')[0].trim();

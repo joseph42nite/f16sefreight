@@ -128,7 +128,7 @@ class AwbPdfGenerationTest extends TestCase
             'precondition: the address row must be gone'
         );
 
-        $response = $this->get("/download-awb-pdf/{$awbId}");
+        $response = $this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.awb', ['id' => $awbId]));
 
         $response->assertOk();
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
@@ -167,19 +167,40 @@ class AwbPdfGenerationTest extends TestCase
         // Conversion spacer and the column foot were both drawing one).
         // (11) the Currency Conversion spacer was extended by the column's fixed
         // 9.95pt shortfall so its divider reaches the rule below it.
-        $single = $this->get("/download-awb-pdf/{$awbId}");
+        $single = $this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.awb', ['id' => $awbId]));
         $single->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $single->headers->get('Content-Type'));
         fwrite(STDERR, "\nA:" . strlen($single->getContent()) . "\n");
 
-        $multiple = $this->get("/download-multiple-awb-pdf/{$awbId}");
+        $multiple = $this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.awb-multiple', ['id' => $awbId]));
         $multiple->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $multiple->headers->get('Content-Type'));
         fwrite(STDERR, "\nA:" . strlen($multiple->getContent()) . "\n");
 
-        $multipleWithBack = $this->get("/download-multiple-both-page-awb-pdf/{$awbId}");
+        $multipleWithBack = $this->get(\Illuminate\Support\Facades\URL::signedRoute('pdf.awb-multiple-both', ['id' => $awbId]));
         $multipleWithBack->assertStatus(200);
         $this->assertStringContainsString('application/pdf', $multipleWithBack->headers->get('Content-Type'));
         fwrite(STDERR, "\nA:" . strlen($multipleWithBack->getContent()) . "\n");
+    }
+
+    /** 🔒 The download needs a signed link, and the link is only given for the caller's own branch's waybill. */
+    public function test_a_pdf_needs_a_signed_link_given_only_to_its_own_branch(): void
+    {
+        $this->get('/download-awb-pdf/17610000008')->assertForbidden();
+
+        $company = \App\Company::create(['name' => 'Pdf Co', 'code' => 'PDF', 'tier' => 'tactical']);
+        $mine = \App\Agent::create(['company_id' => $company->id, 'agent_name' => 'BOM', 'branch_code' => 'BOM']);
+        $other = \App\Agent::create(['company_id' => $company->id, 'agent_name' => 'MAA', 'branch_code' => 'MAA']);
+        $user = \App\User::create(['name' => 'p', 'email' => 'pdf-link@test.local', 'password' => 'x', 'company_name' => $company->id,
+            'branch_name' => $mine->id, 'designation' => 'pricing', 'is_active' => 1]);
+        \Illuminate\Support\Facades\DB::table('air_way_bills')->insert([
+            ['id' => 17699990001, 'agent_id' => $mine->id, 'awb_code' => '176', 'awb_no' => '99990001', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 17699990002, 'agent_id' => $other->id, 'awb_code' => '176', 'awb_no' => '99990002', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $link = fn (string $path) => $this->actingAs($user, 'user-api')->postJson('/api/user/pdf-link', ['path' => $path]);
+
+        $this->assertStringContainsString('signature=', $link('/download-awb-pdf/17699990001')->assertOk()->json('url'));
+        $link('/download-awb-pdf/17699990002')->assertNotFound();
+        $link('/api/user/verify')->assertStatus(422);
     }
 }

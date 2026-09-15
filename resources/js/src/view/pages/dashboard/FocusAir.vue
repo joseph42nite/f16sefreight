@@ -2506,6 +2506,7 @@
     </div> -->
 </template>
 <script>
+import { openPdf } from "@/core/services/pdfLink";
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
@@ -3147,7 +3148,7 @@ export default {
         //     const itemId =  this.existingData.id
         //     console.log("sdfnjbf",itemId);
         //     const pdfUrl = `/download-awb-pdf/${itemId}`; // Construct the URL for the PDF
-        //     window.open(pdfUrl, '_blank'); // Open the PDF in a new tab
+        //     openPdf(pdfUrl); // Open the PDF in a new tab
         // },
         // generateAwbPDF() {
         //     if (!this.validateFormFields()) {
@@ -3157,7 +3158,7 @@ export default {
         //     console.log("dknfehjf", itemId);
         //     const pdfUrl = `/download-awb-pdf/${itemId}`;
         //     console.log("skfnjfer",pdfUrl);
-        //     window.open(pdfUrl, '_blank');
+        //     openPdf(pdfUrl);
         // },
         generateAwbPDF(pdf_generate_type) {
             this.generatePDFAfterSave='';
@@ -3166,7 +3167,7 @@ export default {
                 return;
             }
             const pdfUrl = `/${pdf_generate_type}/${this.existingData.id}`;
-            window.open(pdfUrl, '_blank');
+            openPdf(pdfUrl);
         },
         handleSaveAndGeneratePDF(pdf_generate_type) {
             // onSubmit() opens the PDF on a successful save (see generatePDFAfterSave).

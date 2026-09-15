@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Logistics;
 
-use App\Agent;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\WaybillTrait;
 use App\PaymentInfo;
@@ -38,13 +37,6 @@ class HousewayBillController extends Controller
     public function __construct(ConversionController $conversionController)
     {
         $this->conversionController = $conversionController;
-    }
-    public function get_agent()
-    {
-        $user = auth()->guard('user-api')->user();
-        $branch_name = $user->branch_name;
-        $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference']);
-        return json_encode($data);
     }
     public function getCountry()
     {
@@ -718,6 +710,7 @@ class HousewayBillController extends Controller
 
     public function store(Request $request)
     {
+        $this->abortUnlessOwnWaybill(HousewayBills::class, $request->first_box['hawb_no'] ?? null);
         $main_return_data = [];
         $hawb_id = $request->first_box['hawb_no'];
         $error_data = '';
@@ -855,6 +848,8 @@ class HousewayBillController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->abortUnlessOwnWaybill(HousewayBills::class, $id);
+        $this->abortUnlessOwnWaybill(HousewayBills::class, $request->first_box['hawb_no'] ?? null);
         $main_return_data = [];
         $error_data = '';
         if (!empty($id)) {
@@ -960,6 +955,7 @@ class HousewayBillController extends Controller
 
     public function show($id)
     {
+        $this->abortUnlessOwnWaybill(HousewayBills::class, $id);
         $housewayBill = HousewayBills::with([
             'paymentInfo',
             'wayBillAddress',
@@ -993,34 +989,4 @@ class HousewayBillController extends Controller
         return response()->json($housewayBill, 200);
     }
 
-    public function getShippers(Request $request)
-    {
-        $user = auth()->guard('user-api')->user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-        $agentId = $user->branch_name;
-        $shippers = SavedAddress::where(function ($q) use ($agentId) {
-            if ($agentId) {
-                $q->where('agent_id', $agentId)->orWhereNull('agent_id');
-            }
-        })->get();
-
-        if ($shippers->isEmpty()) {
-            $shippers = SavedAddress::all();
-        }
-        return response()->json($shippers);
-    }
-    public function getShipperAddress(Request $request)
-    {
-        return $this->getAddressByType($request, $request->address_type ?? 'shipper_address', 'ship');
-    }
-    public function getConsigneeAddress(Request $request)
-    {
-        return $this->getAddressByType($request, $request->query('address_type', 'consignee_address'), 'cons');
-    }
-    public function getAlsoNotifyAddress(Request $request)
-    {
-        return $this->getAddressByType($request, $request->query('address_type', 'also_notify_address'), 'also');
-    }
 }

@@ -11,19 +11,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuejs_datepicker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuejs-datepicker */ "./node_modules/vuejs-datepicker/dist/vuejs-datepicker.esm.js");
-/* harmony import */ var vue2_datepicker__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue2-datepicker */ "./node_modules/vue2-datepicker/index.esm.js");
-/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var _core_config_iata__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/core/config/iata */ "./resources/js/src/core/config/iata.js");
-/* harmony import */ var _core_services_location_cache__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/core/services/location.cache */ "./resources/js/src/core/services/location.cache.js");
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! lodash.debounce */ "./node_modules/lodash.debounce/index.js");
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
-/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
-/* harmony import */ var _view_components_OcrUploadModal_vue__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @/view/components/OcrUploadModal.vue */ "./resources/js/src/view/components/OcrUploadModal.vue");
-/* harmony import */ var _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @/view/components/DashboardHistoryModal.vue */ "./resources/js/src/view/components/DashboardHistoryModal.vue");
-/* harmony import */ var _core_mixins_airWayBillMixin__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @/core/mixins/airWayBillMixin */ "./resources/js/src/core/mixins/airWayBillMixin.js");
+/* harmony import */ var _core_services_pdfLink__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/pdfLink */ "./resources/js/src/core/services/pdfLink.js");
+/* harmony import */ var vuejs_datepicker__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vuejs-datepicker */ "./node_modules/vuejs-datepicker/dist/vuejs-datepicker.esm.js");
+/* harmony import */ var vue2_datepicker__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue2-datepicker */ "./node_modules/vue2-datepicker/index.esm.js");
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _core_config_iata__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/core/config/iata */ "./resources/js/src/core/config/iata.js");
+/* harmony import */ var _core_services_location_cache__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/core/services/location.cache */ "./resources/js/src/core/services/location.cache.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! lodash.debounce */ "./node_modules/lodash.debounce/index.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_6__);
+/* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
+/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var _view_components_OcrUploadModal_vue__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @/view/components/OcrUploadModal.vue */ "./resources/js/src/view/components/OcrUploadModal.vue");
+/* harmony import */ var _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @/view/components/DashboardHistoryModal.vue */ "./resources/js/src/view/components/DashboardHistoryModal.vue");
+/* harmony import */ var _core_mixins_airWayBillMixin__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! @/core/mixins/airWayBillMixin */ "./resources/js/src/core/mixins/airWayBillMixin.js");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -40,10 +41,11 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 
 
+
 // import PageLoader from "../../components/PageLoader.vue";
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  mixins: [_core_mixins_airWayBillMixin__WEBPACK_IMPORTED_MODULE_10__["default"]],
+  mixins: [_core_mixins_airWayBillMixin__WEBPACK_IMPORTED_MODULE_11__["default"]],
   data() {
     return {
       mode: 'add',
@@ -584,7 +586,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       }
       if (departure && destination && transit) {
         var all_airport_short_code = [departure, destination, transit.transit_airports?.[0], transit.transit_airports?.[1], transit.transit_airports?.[2]];
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].post(`/user/get-airport-by-airport-code`, {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].post(`/user/get-airport-by-airport-code`, {
           "airport_code": all_airport_short_code
         }).then(response2 => {
           response2 = response2.data?.data || [];
@@ -761,7 +763,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       const values = Object.assign({}, this.form.shipper_address || {}, this.form.consignee_address || {}, {
         hawb_number: (this.form.first_box || {}).hawb_no || ''
       });
-      return (0,_core_config_iata__WEBPACK_IMPORTED_MODULE_3__.checkAll)(values).map(v => `${v.field.replace(/_/g, ' ')} — ${v.message}`);
+      return (0,_core_config_iata__WEBPACK_IMPORTED_MODULE_4__.checkAll)(values).map(v => `${v.field.replace(/_/g, ' ')} — ${v.message}`);
     },
     isGeneratePdf(generateButton) {
       // alert("generateButton " + generateButton + "isGeneratePdf "+ this.is_generate_pdf);
@@ -814,7 +816,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         return;
       }
       const pdfUrl = `/${pdf_generate_type}/${this.existingData.id}`;
-      window.open(pdfUrl, '_blank');
+      (0,_core_services_pdfLink__WEBPACK_IMPORTED_MODULE_0__.openPdf)(pdfUrl);
     },
     validateFormFields() {
       const requiredFields = {
@@ -858,7 +860,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       this.isOpen = false;
     },
     converXml(awb_no) {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/waybill/${awb_no}`).then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get(`/user/waybill/${awb_no}`).then(({
         data
       }) => {
         // console.log(data);
@@ -1017,7 +1019,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       // Open the correct modal immediately (spinner shows while fetching)
       const modalId = status === 'draft' ? 'modal-draft-house' : 'modal-s-house';
       this.$bvModal.show(modalId);
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/get-houseway-bills/${status}`).then(response => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get(`/user/get-houseway-bills/${status}`).then(response => {
         this.data_items = response.data;
       }).catch(error => {
         console.error("Failed to fetch items:", error);
@@ -1026,7 +1028,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     getHouseWayBill(id) {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/houseway-bill/${id}`).then(response => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get(`/user/houseway-bill/${id}`).then(response => {
         this.existingData = response.data;
         this.existingData.payment_info = _objectSpread(_objectSpread({}, this.defaultPaymentInfo), this.existingData.payment_info || {});
         this.openForm('update', this.existingData.id);
@@ -1097,7 +1099,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       }
     },
     getCountry() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/get-country').then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get('/user/get-country').then(({
         data
       }) => {
         this.countries = Object.keys(data).map(key => ({
@@ -1109,12 +1111,12 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     getLocation() {
-      (0,_core_services_location_cache__WEBPACK_IMPORTED_MODULE_4__.loadLocations)().then(data => {
+      (0,_core_services_location_cache__WEBPACK_IMPORTED_MODULE_5__.loadLocations)().then(data => {
         this.location = data;
       });
     },
     getOtherChargesCode() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/other-charges').then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get('/user/other-charges').then(({
         data
       }) => {
         this.other_charges_code = Object.keys(data).map(key => ({
@@ -1126,7 +1128,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     getAgent() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/agent-info/`).then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get(`/user/agent-info/`).then(({
         data
       }) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -1156,7 +1158,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     fetchAllAddressBook() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/get-shippers').then(response => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get('/user/get-shippers').then(response => {
         const all = response.data;
         this.shippers = all.filter(s => s.address_type === 'shipper_address');
         this.consignees = all.filter(s => s.address_type === 'consignee_address');
@@ -1168,7 +1170,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     },
     fillShipperDetails() {
       if (this.selectedShipper) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/get-shipper-address?id=${this.selectedShipper}`).then(response => {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get(`/user/get-shipper-address?id=${this.selectedShipper}`).then(response => {
           this.form.shipper_address = response.data;
           // console.log('Shipper', response.data);
         }).catch(error => {
@@ -1185,7 +1187,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     },
     fillConsigneeDetails() {
       if (this.selectedConsignee) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/get-consignee-address?id=${this.selectedConsignee}`).then(response => {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get(`/user/get-consignee-address?id=${this.selectedConsignee}`).then(response => {
           this.form.consignee_address = response.data;
           // console.log('Consignee', response.data);
         }).catch(error => {
@@ -1202,7 +1204,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     },
     fillAlsoNotifyDetails() {
       if (this.selectAlsoNotify) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/get-alsonotify-address?id=${this.selectAlsoNotify}`).then(response => {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get(`/user/get-alsonotify-address?id=${this.selectAlsoNotify}`).then(response => {
           this.form.also_notify_address = response.data;
           // console.log('Also Notify address', response.data);
         }).catch(error => {
@@ -1225,7 +1227,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
      * the form on a convenience list would be the worse trade.
      */
     loadMasterOptions() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/get-airway-bills/all').then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get('/user/get-airway-bills/all').then(({
         data
       }) => {
         const rows = data && (data.data || data) || [];
@@ -1235,7 +1237,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     getOCIData() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get('/user/get-oci-data').then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get('/user/get-oci-data').then(({
         data
       }) => {
         if (data && data.oci_custom_info_identifier) {
@@ -1315,7 +1317,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         evt.preventDefault();
       }
     },
-    onAWBInput: lodash_debounce__WEBPACK_IMPORTED_MODULE_5___default()(function () {
+    onAWBInput: lodash_debounce__WEBPACK_IMPORTED_MODULE_6___default()(function () {
       const {
         awb_code
       } = this.form.first_box;
@@ -1323,7 +1325,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         awb_no
       } = this.form.first_box;
       if (awb_code && awb_code.length === 3) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/user/get-awbcode-prefix/${awb_code}`).then(response => {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_3__["default"].get(`/user/get-awbcode-prefix/${awb_code}`).then(response => {
           if (response.data) {
             const {
               name,
@@ -1395,7 +1397,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     // console.log("Current User:", this.current_user);
     if (this.current_user) this.getAgent(this.current_user.company_name, this.current_user.branch_name);
   },
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_11__.mapGetters)({
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_12__.mapGetters)({
     current_user: "currentUser"
   })), {}, {
     /* The serial is what the field holds, but the operator recognises the pair —
@@ -1412,11 +1414,11 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
   }),
   name: "HouseWayBill",
   components: {
-    DashboardHistoryModal: _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_9__["default"],
-    Datepicker: vuejs_datepicker__WEBPACK_IMPORTED_MODULE_0__["default"],
-    DatePicker: vue2_datepicker__WEBPACK_IMPORTED_MODULE_1__["default"],
-    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_7__["default"],
-    OcrUploadModal: _view_components_OcrUploadModal_vue__WEBPACK_IMPORTED_MODULE_8__["default"]
+    DashboardHistoryModal: _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_10__["default"],
+    Datepicker: vuejs_datepicker__WEBPACK_IMPORTED_MODULE_1__["default"],
+    DatePicker: vue2_datepicker__WEBPACK_IMPORTED_MODULE_2__["default"],
+    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_8__["default"],
+    OcrUploadModal: _view_components_OcrUploadModal_vue__WEBPACK_IMPORTED_MODULE_9__["default"]
     // PageLoader
   }
 });

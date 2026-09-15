@@ -60,6 +60,19 @@ return [
      * and Entra expires it on a schedule — a mailbox that stops syncing with 401s months
      * from now is usually this, not a token bug.
      */
+    // Read through config(), never env() in app code: once `config:cache` runs, env() returns null and a
+    // secret check silently fails open or shut.
+    'openclaw' => ['hmac_secret' => env('OPENCLAW_HMAC_SECRET')],
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'admin_chat_id' => env('TELEGRAM_ADMIN_CHAT_ID'),
+        // Set as `secret_token` when registering the bot's webhook; Telegram sends it back on every callback.
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+    ],
+    // The GLN/IATA status feed posts to /api/gln-response?token=… (or the X-GLN-Token header).
+    'gln' => ['token' => env('GLN_WEBHOOK_TOKEN')],
+    'currency_rate' => ['token' => env('RATE_TOKEN')],
+
     // Gemma 4 on OpenRouter, called from Laravel for the help copilot (the parser calls it itself).
     // The key is the same one the ai-server container reads.
     'openrouter' => [

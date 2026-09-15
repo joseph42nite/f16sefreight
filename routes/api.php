@@ -15,7 +15,6 @@ use App\Http\Controllers\Logistics\MessageLogController;
 use App\Http\Controllers\Logistics\ConsolidationController;
 use App\Http\Controllers\Logistics\GLNResponseController;
 use App\Http\Controllers\Logistics\ConversionController;
-use App\Http\Controllers\Logistics\IMPConversionController;
 use App\Http\Controllers\Logistics\OcrController;
 use App\Http\Controllers\Logistics\AddressBookController;
 use App\Http\Controllers\Data\RateController;
@@ -48,8 +47,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 // =================user section==========================
-//user register
-Route::post('/register', [UserController::class, 'register']);
+// 🔒 No public sign-up: users are created by superadmin (/superadmin/create-user).
 Route::get('/get-location', [LocationController::class, 'getLocation']);
 
 Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () {
@@ -104,6 +102,8 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::post('/search-airway-bills', [MessageLogController::class, 'searchBills']);
     //========end of the  airway bill operation=====
     Route::get('/get-xml/{awb_id}', [GLNResponseController::class, 'get_awb']);
+    // A short-lived signed link for a waybill PDF opened in a new tab (web routes `pdf.*`).
+    Route::post('/pdf-link', \App\Http\Controllers\Logistics\PdfLinkController::class);
 
     //File Upload API
     Route::post('/upload-awb-file', [OcrController::class, 'extract'])->middleware('throttle:60,1');
@@ -160,8 +160,7 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'admin'], funct
 });
 
 // =================superAdmin section==========================
-//superAdmin login and register
-Route::post('superadmin/register', [SuperAdminController::class, 'register']);
+// 🔒 No public superadmin sign-up — it created platform staff for anyone who asked.
 Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], function () {
 
     // ── The platform's shared domain directory (guide §5.6) ──────────────────
@@ -240,8 +239,16 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::get('/mawb-hawbs/{awb_code}/{awb_no}', [SuperAdminController::class, 'getMawbHawbs']);
     Route::get('/hawb-xml/{hawb_id}', [SuperAdminController::class, 'getHawbXml']);
     Route::get('/get-location', [LocationController::class, 'getLocation']);
+
+    // The website's contact form submissions — read and deleted by F16s staff only.
+    Route::get('/all-contacts', [ContactController::class, 'index']);
+    Route::delete('/delete-contact/{id}', [ContactController::class, 'delete']);
+    // OpenClaw blog actions waiting for approval.
+    Route::get('/openclaw/pending', [\App\Http\Controllers\OpenClawController::class, 'getPendingActions']);
 });
 
+// 🔒 Sign-in and password reset are rate limited: they are where a stranger guesses.
+Route::middleware('throttle:10,1')->group(function () {
 Route::post('/Forgotpassword', [PasswordResetRequestController::class, 'sendEmail']);
 Route::post('/check-forgot-token', [PasswordResetRequestController::class, 'check_token']);
 Route::post('ForgotpasswordActual', [PasswordResetRequestController::class, 'forgot_password_actual']);
@@ -250,12 +257,10 @@ Route::post('ForgotpasswordActual', [PasswordResetRequestController::class, 'for
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/auth/login', [LoginController::class, 'login']);
 Route::post('/contact', [ContactController::class, 'store']);
-Route::get('/all-contacts', [ContactController::class, 'index']);
-Route::delete('/delete-contact/{id?}', [ContactController::class, 'delete']);
+});
 
 //gln response url
-Route::post('/gln-response', [GLNResponseController::class, 'store']);
-Route::get('/check', [GLNResponseController::class, 'check']);
+Route::post('/gln-response', [GLNResponseController::class, 'store'])->middleware('gln.token');
 
 // Public Blog Feed
 Route::get('/get-public-blogs', [BlogController::class, 'index']);
@@ -279,7 +284,6 @@ Route::middleware('throttle:30,1')->group(function () {
     Route::post('/d/{token}/respond', [\App\Http\Controllers\Freight\DocumentShareController::class, 'respond']);
 });
 Route::post('/openclaw/telegram-callback', [\App\Http\Controllers\OpenClawController::class, 'telegramCallback']);
-Route::get('/openclaw/pending', [\App\Http\Controllers\OpenClawController::class, 'getPendingActions']);
 /*
 |--------------------------------------------------------------------------
 | Freight OS — lifecycle (guide §5.2)

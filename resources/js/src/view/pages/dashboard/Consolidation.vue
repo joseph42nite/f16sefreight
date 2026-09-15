@@ -485,6 +485,7 @@
     </div>
 </template>
 <script>
+import { openPdf } from "@/core/services/pdfLink";
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import SideBar from "@/view/layouts/public/SideBar.vue";
@@ -667,7 +668,7 @@ export default {
             const awb_code = this.form.awb_code;
             const awb_no = this.form.awb_no;
             const pdfUrl = `/download-consolidation-pdf/${String(awb_code)}/${String(awb_no)}`;
-            window.open(pdfUrl, '_blank');
+            openPdf(pdfUrl);
         },
         mouseover: function () {
             this.isOpen = true;

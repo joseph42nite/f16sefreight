@@ -3,116 +3,88 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
-use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
-use App\User;
-use App\Role;
-use App\SuperAdmin;
 use App\Mail\ResetPasswordMailable;
-use Illuminate\Support\Facades\Mail;
-use Carbon\Carbon;
+use App\Role;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;  // this is for make a Random token in that time User wanna send special Token to his Gmail
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
+/**
+ * Forgot password: a mailed link carries a one-time token; the new password is accepted only with that token.
+ *
+ * 🔴 Security (2026-09-16 audit): the reset used to change ANY account's password — superadmin included — from an
+ * email address alone, with the table name taken from the request. Now the token is required, it is stored hashed,
+ * it expires after 30 minutes and is used once, and the account table comes from `roles`, never the request.
+ * The request for a link answers the same whether or not the address exists, so it cannot be used to find accounts.
+ */
 class PasswordResetRequestController extends Controller
 {
-    
-    public function sendEmail(Request $request)  // this is most important function to send mail and inside of that there are another function
+    private const VALID_MINUTES = 30;
+
+    public function sendEmail(Request $request)
     {
-        $userTypeDemo=Role::where([['email',$request->email]])->select('role')->first()->toArray()['role'];
-        // 'admin' is intentionally absent: the App\Admin model and `admins` table never
-        // existed, so this branch always failed. The tenant Boss is an ordinary `users`
-        // row (designation = 'boss'), and platform staff are super_admins.
-        if ($userTypeDemo == 'user')
-            $userType = 'users';
-        else
-            $userType = 'super_admins';
-        if (!$this->validateEmail($request->email,$userType)) {  // this is validate to fail send mail or true
-            return $this->failedResponse();
+        $request->validate(['email' => ['required', 'email']]);
+
+        $table = $this->accountTable($request->email);
+
+        if ($table !== null && DB::table($table)->where('email', $request->email)->exists()) {
+            $token = Str::random(40);
+            DB::table('password_resets')->where('email', $request->email)->delete();
+            DB::table('password_resets')->insert(['email' => $request->email, 'token' => hash('sha256', $token), 'created_at' => now()]);
+
+            Mail::to($request->email)->send(new ResetPasswordMailable($token, $request->email, $table));
         }
-        $this->send($request->email,$userType);  //this is a function to send mail 
-        return $this->successResponse();
+
+        return response()->json(['data' => 'If that address has an account, a reset link is on its way.']);
     }
 
-    public function send($email,$userType)  //this is a function to send mail 
+    public function check_token(Request $request)
     {
-        $token = $this->createToken($email);
-        Mail::to($email)->send(new ResetPasswordMailable($token, $email, $userType));  // token is important in send mail 
+        return $this->validToken($request->email, $request->token)
+            ? response()->json(['status' => true])
+            : response()->json(['status' => false], 401);
     }
 
-    public function createToken($email)  // this is a function to get your request email that there are or not to send mail
+    public function forgot_password_actual(Request $request)
     {
-        DB::table('password_resets')->where('email', $email)->delete();
-
-        $token = Str::random(40);     // create a random to send 
-        $this->saveToken($token, $email);   // Save token and email 
-        return $token;
-    }
-
-
-    public function saveToken($token, $email)  // this function save new password in password_resets of table
-    {
-        date_default_timezone_set("Asia/Calcutta");
-        DB::table('password_resets')->insert([
-            'email' => $email,
-            'token' => $token,
-            'created_at' => Carbon::now()
+        $request->validate([
+            'email' => ['required', 'email'],
+            'token' => ['required', 'string'],
+            'password' => ['required', 'min:6', 'max:25', 'confirmed'],
         ]);
+
+        $table = $this->accountTable($request->email);
+
+        if ($table === null || ! $this->validToken($request->email, $request->token)) {
+            return response()->json(['status' => false, 'error' => 'This reset link is invalid or has expired.'], 401);
+        }
+
+        DB::table($table)->where('email', $request->email)->update(['password' => Hash::make($request->password)]);
+        DB::table('password_resets')->where('email', $request->email)->delete();
+
+        return response()->json(['status' => true]);
     }
 
-
-
-    public function validateEmail($email,$userType)  //this is a function to get your email from database
+    /** `users` or `super_admins`, from the address's role; NULL for an address with no account. */
+    private function accountTable(?string $email): ?string
     {
-        $checkUserValid = DB::table($userType)->where('email', $email)->first();
+        $role = Role::where('email', $email)->value('role');
 
-        if ($checkUserValid) {
-            return true;
-        }
-        else{
-            return false;
-        }
+        return match ($role) {
+            'user' => 'users',
+            'superAdmin' => 'super_admins',
+            default => null,
+        };
     }
-	
-// frome here two Function to Success or Failed send Request 	
 
-    public function failedResponse()
+    private function validToken(?string $email, ?string $token): bool
     {
-        return response()->json([
-            'error' => 'Email does\'t found on our database'
-        ], Response::HTTP_NOT_FOUND);
-    }
-
-    public function successResponse()
-    {
-        return response()->json([
-            'data' => 'Reset Email is send successfully, please check your inbox.'
-        ], Response::HTTP_OK);
-    }
-    public function check_token(Request $request){
-        $email=$request->email;
-        $token=$request->token;
-        $count = DB::select( DB::raw("SELECT * FROM password_resets WHERE email = :email and token=:token and created_at > (NOW() - INTERVAL 30 MINUTE) limit 1"), array('email' => $email,'token'=>$token));
-        if(!empty($count)){
-            return response(['status'=>true,'data'=>$count],200);
-        }
-        else{
-            return response(['status'=>false],401);
-        }
-    }
-    public function forgot_password_actual(Request $request){
-        $validator = Validator::make($request->all(), [
-            "email" => 'required|email',
-            "userType" => 'required|string',
-            'password' => 'required|min:6|max:25|confirmed',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-        DB::table($request->userType)->where('email', $request->email)->update(['password'=>Hash::make($request->password)]);
-        return response(['status'=>true],200);
+        return filled($email) && filled($token) && DB::table('password_resets')
+            ->where('email', $email)
+            ->where('token', hash('sha256', $token))
+            ->where('created_at', '>', now()->subMinutes(self::VALID_MINUTES))
+            ->exists();
     }
 }

@@ -11,18 +11,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuejs_datepicker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuejs-datepicker */ "./node_modules/vuejs-datepicker/dist/vuejs-datepicker.esm.js");
-/* harmony import */ var vue2_datepicker__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue2-datepicker */ "./node_modules/vue2-datepicker/index.esm.js");
-/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
-/* harmony import */ var _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/components/DashboardHistoryModal.vue */ "./resources/js/src/view/components/DashboardHistoryModal.vue");
-/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var _core_services_location_cache__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/core/services/location.cache */ "./resources/js/src/core/services/location.cache.js");
-/* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
+/* harmony import */ var _core_services_pdfLink__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/pdfLink */ "./resources/js/src/core/services/pdfLink.js");
+/* harmony import */ var vuejs_datepicker__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vuejs-datepicker */ "./node_modules/vuejs-datepicker/dist/vuejs-datepicker.esm.js");
+/* harmony import */ var vue2_datepicker__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue2-datepicker */ "./node_modules/vue2-datepicker/index.esm.js");
+/* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
+/* harmony import */ var _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/components/DashboardHistoryModal.vue */ "./resources/js/src/view/components/DashboardHistoryModal.vue");
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _core_services_location_cache__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @/core/services/location.cache */ "./resources/js/src/core/services/location.cache.js");
+/* harmony import */ var vue2_datepicker_index_css__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! vue2-datepicker/index.css */ "./node_modules/vue2-datepicker/index.css");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -404,7 +406,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       const awb_code = this.form.awb_code;
       const awb_no = this.form.awb_no;
       const pdfUrl = `/download-consolidation-pdf/${String(awb_code)}/${String(awb_no)}`;
-      window.open(pdfUrl, '_blank');
+      (0,_core_services_pdfLink__WEBPACK_IMPORTED_MODULE_0__.openPdf)(pdfUrl);
     },
     mouseover: function () {
       this.isOpen = true;
@@ -413,7 +415,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       this.isOpen = false;
     },
     manifest_send() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get(`/user/manifest-send/${this.form.awb_code}${this.form.awb_no}`).then(response => {});
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_5__["default"].get(`/user/manifest-send/${this.form.awb_code}${this.form.awb_no}`).then(response => {});
     },
     showModal() {
       this.$refs["my-modal"].show();
@@ -429,14 +431,14 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     },
     // location
     getLocation() {
-      (0,_core_services_location_cache__WEBPACK_IMPORTED_MODULE_5__.loadLocations)().then(data => {
+      (0,_core_services_location_cache__WEBPACK_IMPORTED_MODULE_6__.loadLocations)().then(data => {
         this.location = data;
       });
     },
     getHousewayBills(status) {
       this.isFetching = true;
       this.data_items = [];
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get(`/user/get-master-awbs-with-housewaybills`).then(response => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_5__["default"].get(`/user/get-master-awbs-with-housewaybills`).then(response => {
         this.data_items = response.data;
       }).catch(error => {
         console.error("Failed to fetch items:", error);
@@ -445,7 +447,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     allHousewayBill() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-master-awbs-with-housewaybills').then(response => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_5__["default"].get('/user/get-master-awbs-with-housewaybills').then(response => {
         this.data_items = response.data;
       }).catch(error => {
         console.error("Failed to fetch master AWBs with house waybills:", error);
@@ -474,7 +476,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     getAirWayBill(id) {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get(`/user/airway-bill/${id}`).then(response => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_5__["default"].get(`/user/airway-bill/${id}`).then(response => {
         if (response.data && response.data.id == id) {
           this.existingData = response.data;
         }
@@ -626,7 +628,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       }
     },
     getCountry() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-country').then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_5__["default"].get('/user/get-country').then(({
         data
       }) => {
         this.countries = Object.keys(data).map(key => ({
@@ -638,7 +640,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     getAgent() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get(`/user/agent-info/`).then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_5__["default"].get(`/user/agent-info/`).then(({
         data
       }) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -655,7 +657,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     getOCIData() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get('/user/get-oci-data').then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_5__["default"].get('/user/get-oci-data').then(({
         data
       }) => {
         if (data && data.oci_custom_info_identifier) {
@@ -678,7 +680,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
     },
     getHouseWayBill(id) {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_4__["default"].get(`/user/houseway-bill/${id}`).then(response => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_5__["default"].get(`/user/houseway-bill/${id}`).then(response => {
         this.existingData = response.data;
         this.openForm('update', String(this.existingData.id));
         if (this.existingData && this.existingData.consignment_data) {
@@ -863,10 +865,10 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     }
   },
   components: {
-    DashboardHistoryModal: _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
-    Datepicker: vuejs_datepicker__WEBPACK_IMPORTED_MODULE_0__["default"],
-    DatePicker: vue2_datepicker__WEBPACK_IMPORTED_MODULE_1__["default"],
-    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+    DashboardHistoryModal: _view_components_DashboardHistoryModal_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
+    Datepicker: vuejs_datepicker__WEBPACK_IMPORTED_MODULE_1__["default"],
+    DatePicker: vue2_datepicker__WEBPACK_IMPORTED_MODULE_2__["default"],
+    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
   }
 });
 

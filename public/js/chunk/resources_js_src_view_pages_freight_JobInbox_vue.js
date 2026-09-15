@@ -1178,15 +1178,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
-/* harmony import */ var _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/config/awbMapping */ "./resources/js/src/core/config/awbMapping.js");
-/* harmony import */ var _core_config_awbFieldRules__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/core/config/awbFieldRules */ "./resources/js/src/core/config/awbFieldRules.js");
+/* harmony import */ var _core_services_pdfLink__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/pdfLink */ "./resources/js/src/core/services/pdfLink.js");
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+/* harmony import */ var _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/core/config/awbMapping */ "./resources/js/src/core/config/awbMapping.js");
+/* harmony import */ var _core_config_awbFieldRules__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/core/config/awbFieldRules */ "./resources/js/src/core/config/awbFieldRules.js");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -1409,7 +1411,7 @@ const PARTY_REQUIRED = {
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "ExtractionPanel",
   components: {
-    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
   },
   props: {
     /**
@@ -1431,7 +1433,7 @@ const PARTY_REQUIRED = {
   },
   data: () => ({
     GROUPS,
-    TARGETS: _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.TARGETS,
+    TARGETS: _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.TARGETS,
     PASTE_EXAMPLE,
     RESULT_FIELDS,
     PARTY_PARTS,
@@ -1516,7 +1518,7 @@ const PARTY_REQUIRED = {
     },
     /** Where what will be used disagrees with what the mail said. */
     mailDeviations() {
-      return (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.mailDeviations)(this.mailCargo, {
+      return (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.mailDeviations)(this.mailCargo, {
         pieces: raw(this.sourceField("pieces", "cargo")),
         gross_weight: raw(this.sourceField("gross_weight", "weights"))
       });
@@ -1528,7 +1530,7 @@ const PARTY_REQUIRED = {
         route_origin: d.fields.route_origin,
         route_destination: d.fields.route_destination
       }));
-      return (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.routeDeviations)(this.mailCargo, read);
+      return (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.routeDeviations)(this.mailCargo, read);
     },
     anyResolved() {
       return GROUPS.some(g => this.resolved[g.key].source !== null);
@@ -1546,7 +1548,7 @@ const PARTY_REQUIRED = {
       // counted as present here and was then silently left out of the draft: the warning said
       // the consignee lacked "state, post code" while its low-confidence "JO" was dropped too,
       // and the shipper got no warning at all.
-      const f = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.withoutWorkedOutParts)(this.withCountryCodes(this.flatFields));
+      const f = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.withoutWorkedOutParts)(this.withCountryCodes(this.flatFields));
       Object.keys(PARTY_REQUIRED).forEach(party => {
         if (!f[party]) return;
 
@@ -1663,7 +1665,7 @@ const PARTY_REQUIRED = {
         const doc = this.documents.find(d => d.uid === this.assignment[f.group]);
 
         // ⚠️ A sea port is shown as written and said to be left out: the waybill stores an airport.
-        const note = ROUTE_KEYS[f.key] && !(0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.airportCode)(node) ? "not an airport — not saved" : null;
+        const note = ROUTE_KEYS[f.key] && !(0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.airportCode)(node) ? "not an airport — not saved" : null;
         return _objectSpread(_objectSpread({}, f), {}, {
           source: doc ? doc.name : null,
           value: node && node.written ? node.written : value,
@@ -1678,11 +1680,11 @@ const PARTY_REQUIRED = {
      * routes/web.php and carries no `/api` prefix. Building it with one 404s.
      */
     pdfUrl() {
-      const key = this.target === "mawb" ? (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.masterKey)(this.awbCode, this.awbNo) : this.hawbNo;
+      const key = this.target === "mawb" ? (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.masterKey)(this.awbCode, this.awbNo) : this.hawbNo;
       return (this.target === "mawb" ? "/download-awb-pdf/" : "/download-hawb-pdf/") + key;
     },
     targetLabel() {
-      const t = _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.TARGETS.find(x => x.key === this.target);
+      const t = _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.TARGETS.find(x => x.key === this.target);
       return t ? t.label : this.target;
     },
     /* A draft needs a NUMBER before anything else — it is the document's identity and,
@@ -1772,6 +1774,7 @@ const PARTY_REQUIRED = {
     this.loadCountries();
   },
   methods: {
+    openPdf: _core_services_pdfLink__WEBPACK_IMPORTED_MODULE_0__.openPdf,
     /**
      * The branch's saved parties, for the pickers.
      *
@@ -1780,7 +1783,7 @@ const PARTY_REQUIRED = {
      */
     loadAddressBook() {
       Object.keys(ADDRESS_TYPES).forEach(party => {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/saved-addresses?address_type=" + ADDRESS_TYPES[party]).then(({
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/saved-addresses?address_type=" + ADDRESS_TYPES[party]).then(({
           data
         }) => {
           const rows = data && (data.data || data.addresses || data) || [];
@@ -1792,7 +1795,7 @@ const PARTY_REQUIRED = {
     },
     /** The form stores a country as its 2-letter code; this is the list that turns "India" into IN. */
     loadCountries() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/get-country").then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/get-country").then(({
         data
       }) => {
         this.countries = data || {};
@@ -1805,7 +1808,7 @@ const PARTY_REQUIRED = {
       const out = _objectSpread({}, fields);
       PARTY_BLOCKS.forEach(party => {
         const key = party + "_country";
-        const code = out[key] === undefined ? null : (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.countryCode)(raw(out[key]), this.countries);
+        const code = out[key] === undefined ? null : (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.countryCode)(raw(out[key]), this.countries);
         if (code) out[key] = {
           value: code,
           confidence: out[key] && out[key].confidence || "high"
@@ -1827,7 +1830,7 @@ const PARTY_REQUIRED = {
       const type = ADDRESS_TYPES[party];
       const prefix = party === "notify" ? "also" : party === "shipper" ? "ship" : "cons";
       const route = party === "notify" ? "alsonotify" : party;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/get-" + route + "-address?id=" + id + "&address_type=" + type).then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/get-" + route + "-address?id=" + id + "&address_type=" + type).then(({
         data
       }) => {
         const map = {
@@ -1863,7 +1866,7 @@ const PARTY_REQUIRED = {
         const node = this.sourceField(key, "parties");
         if (node !== undefined) source[key] = node;
       });
-      const result = (0,_core_config_awbFieldRules__WEBPACK_IMPORTED_MODULE_3__.cleanParty)(this.target, party, source);
+      const result = (0,_core_config_awbFieldRules__WEBPACK_IMPORTED_MODULE_4__.cleanParty)(this.target, party, source);
 
       // 🔴 Only what actually changed, and at the confidence it already had: a state or country the
       // model only worked out stays a suggestion, so cleaning it does not get it saved.
@@ -2114,7 +2117,7 @@ const PARTY_REQUIRED = {
       // `ksr` for everything, so an invoice was cropped at an airway bill's coordinates
       // and returned whatever text happened to sit at those boxes.
       form.append("type", doc.kind === "awb" ? "ksr" : "unstructured");
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/upload-awb-file", form).then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post("/user/upload-awb-file", form).then(({
         data
       }) => {
         const d = this.documents.find(x => x.uid === uid);
@@ -2136,12 +2139,12 @@ const PARTY_REQUIRED = {
       // there, and a 2 s poll added up to 2 s to each — then every 2 s.
 
       const check = () => {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/ocr-status/" + doc.jobId).then(({
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/ocr-status/" + doc.jobId).then(({
           data
         }) => {
           if (data.job_status === "completed") {
             clearTimeout(doc.timer);
-            doc.fields = this.withCountryCodes((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenRoute)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenCargo)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.flattenParties)(data.fields || {}, this.countries)), this.countries));
+            doc.fields = this.withCountryCodes((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.flattenRoute)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.flattenCargo)((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.flattenParties)(data.fields || {}, this.countries)), this.countries));
             // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
             doc.piecesNote = data.data && data.data.pieces_note || null;
             doc.credits = typeof data.credits_used === "number" ? data.credits_used : null;
@@ -2250,7 +2253,7 @@ const PARTY_REQUIRED = {
       let block = null;
       const finish = () => {
         if (!block) return;
-        const parts = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.parsePartyBlock)(block.lines.join("\n"), this.countries);
+        const parts = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.parsePartyBlock)(block.lines.join("\n"), this.countries);
         const suffix = {
           name: "",
           address: "_address",
@@ -2354,7 +2357,7 @@ const PARTY_REQUIRED = {
       // the rest in the draft, and a send still requires every part.
       // 🔴 A state or country the MODEL worked out is shown, never saved on its own: it
       // answered "Iraq" for an Indian shipper on the real invoice. The draft saves without it.
-      const fields = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.withoutWorkedOutParts)(this.withCountryCodes(_objectSpread({}, this.flatFields)));
+      const fields = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.withoutWorkedOutParts)(this.withCountryCodes(_objectSpread({}, this.flatFields)));
 
       // ⚠️ Only a 2-letter code is accepted even in a draft, so a country the list did not
       // recognise is left off rather than failing the whole save.
@@ -2373,7 +2376,7 @@ const PARTY_REQUIRED = {
           confidence: "high"
         };
       }
-      const payload = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.buildPayload)(this.target, fields, {
+      const payload = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.buildPayload)(this.target, fields, {
         awbCode: this.awbCode,
         awbNo: this.awbNo,
         hawbNo: this.hawbNo
@@ -2381,9 +2384,9 @@ const PARTY_REQUIRED = {
 
       // The form's own draft button sends this, and the endpoint keeps a partial party for it.
       payload.status = "draft";
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.createEndpoint)(this.target), payload).then(() => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post((0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.createEndpoint)(this.target), payload).then(() => {
         // Straight to the draft that was just written, not to a blank form.
-        this.draftUrl = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.formRoute)(this.target, this.target === "mawb" ? (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_2__.masterKey)(this.awbCode, this.awbNo) : this.hawbNo);
+        this.draftUrl = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.formRoute)(this.target, this.target === "mawb" ? (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.masterKey)(this.awbCode, this.awbNo) : this.hawbNo);
         this.$emit("apply", {
           fields: this.flatFields,
           identity: this.draftIdentity
@@ -4625,12 +4628,15 @@ var render = function render() {
     attrs: {
       href: _vm.draftUrl
     }
-  }, [_vm._v("Open in " + _vm._s(_vm.targetLabel) + " →")]), _vm._v(" "), _c("a", {
+  }, [_vm._v("Open in " + _vm._s(_vm.targetLabel) + " →")]), _vm._v(" "), _c("button", {
     staticClass: "fx-btn",
     attrs: {
-      href: _vm.pdfUrl,
-      target: "_blank",
-      rel: "noopener"
+      type: "button"
+    },
+    on: {
+      click: function ($event) {
+        return _vm.openPdf(_vm.pdfUrl);
+      }
     }
   }, [_vm._v("Generate PDF")]), _vm._v(" "), _c("button", {
     staticClass: "fx-btn",

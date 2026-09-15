@@ -32,6 +32,31 @@
                     <div class="form-scroll-container">
                         <form @submit.prevent="login" class="ultra-form">
                             <h3 class="form-section-title mb-6">Sign In</h3>
+
+                            <!--
+                              Which portal (user, 2026-09-15). Each portal is its own subdomain, so picking another
+                              one moves there with this box open — the password is only sent to the portal picked.
+                              Not shown on the superadmin address: F16s staff sign in there directly.
+                            -->
+                            <fieldset v-if="currentPortal !== 'superadmin'" class="portal-choice mb-6">
+                                <legend class="portal-choice__legend">Portal</legend>
+                                <div class="portal-choice__options">
+                                    <button
+                                        v-for="p in portals"
+                                        :key="p.key"
+                                        type="button"
+                                        class="portal-choice__option"
+                                        :class="{ 'is-active': p.key === currentPortal }"
+                                        :aria-pressed="String(p.key === currentPortal)"
+                                        @click="choosePortal(p.key)"
+                                    >
+                                        <span class="portal-choice__label">{{ p.label }}</span>
+                                        <span class="portal-choice__note">{{ p.note }}</span>
+                                    </button>
+                                </div>
+                                <p v-if="switchingTo" class="portal-choice__hint" role="status">Opening {{ switchingTo }}…</p>
+                                <p v-else-if="!currentPortal" class="portal-choice__hint">Choose the portal you work in.</p>
+                            </fieldset>
                             
                             <!-- Error Messages -->
                             <div v-if="errors && typeof errors === 'string'" class="error-alert mb-5">
@@ -137,6 +162,7 @@
 <script>
 import { mapState } from "vuex";
 import { LOGIN } from "@/core/services/store/auth.module";
+import { portalFromHost, portalSignInUrl, SIGN_IN_PORTALS } from "@/core/config/portalHosts";
 
 export default {
     name: "AuthModals",
@@ -153,6 +179,9 @@ export default {
             },
             showPass: true,
             loading: false,
+            portals: SIGN_IN_PORTALS,
+            currentPortal: portalFromHost(window.location.hostname),
+            switchingTo: null,
         };
     },
     computed: {
@@ -169,6 +198,13 @@ export default {
         }
     },
     methods: {
+        /** Another portal is another address: go there, with the sign-in box open. */
+        choosePortal(key) {
+            if (key === this.currentPortal) return;
+
+            this.switchingTo = SIGN_IN_PORTALS.find((p) => p.key === key).label;
+            window.location.href = portalSignInUrl(key, window.location);
+        },
         login() {
             this.loading = true;
             const { email, password, otp } = this.user_form;
@@ -219,6 +255,16 @@ export default {
 .ultra-submit-btn span { color: white; font-weight: 500; margin-right: 14px; }
 .ultra-submit-btn .btn-icon { background: white; color: #355594; border-radius: 50%; width: 32px !important; height: 32px !important; padding: 6px; margin-left: 0 !important; }
 .form-note { font-size: 0.9rem; color: #64748b; }
+.portal-choice { border: 0; padding: 0; margin: 0; min-width: 0; }
+.portal-choice__legend { font-size: 0.75rem; font-weight: 600; color: #355594; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+.portal-choice__options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.portal-choice__option { display: flex; flex-direction: column; align-items: flex-start; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; text-align: left; transition: all 0.2s ease; }
+.portal-choice__option:hover { border-color: #355594; background: #f0f7ff; }
+.portal-choice__option.is-active { border-color: #355594; background: #355594; }
+.portal-choice__label { font-size: 0.95rem; font-weight: 700; color: #1e3a6e; }
+.portal-choice__note { font-size: 0.75rem; color: #64748b; }
+.portal-choice__option.is-active .portal-choice__label, .portal-choice__option.is-active .portal-choice__note { color: white; }
+.portal-choice__hint { font-size: 0.8rem; color: #64748b; margin: 8px 0 0; }
 .error-alert { background: rgba(239, 68, 68, 0.08); color: #dc2626; padding: 12px; border-radius: 8px; font-size: 0.9rem; text-align: center; border: 1px solid rgba(239, 68, 68, 0.15); font-weight: 500; }
 
 @media (max-width: 991px) {

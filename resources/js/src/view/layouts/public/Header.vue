@@ -150,6 +150,10 @@ export default {
             avatarLogoSrc: "/media/assets/ui/user-avatar.png",
         };
     },
+    /* Arriving from another portal's sign-in (?signin=1): open the box straight away. */
+    mounted() {
+        if (this.$route.query.signin && !this.isAuthenticated) this.show_login_modal = true;
+    },
     methods: {
         hasActiveChildren(match) {
             return this.$route["path"].indexOf(match) !== -1;

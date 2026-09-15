@@ -11,13 +11,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_services_store_auth_module__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/store/auth.module */ "./resources/js/src/core/services/store/auth.module.js");
+/* harmony import */ var _core_config_portalHosts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/config/portalHosts */ "./resources/js/src/core/config/portalHosts.js");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -40,10 +42,13 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         otp: ""
       },
       showPass: true,
-      loading: false
+      loading: false,
+      portals: _core_config_portalHosts__WEBPACK_IMPORTED_MODULE_1__.SIGN_IN_PORTALS,
+      currentPortal: (0,_core_config_portalHosts__WEBPACK_IMPORTED_MODULE_1__.portalFromHost)(window.location.hostname),
+      switchingTo: null
     };
   },
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_1__.mapState)({
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapState)({
     errors: state => state.auth.errors
   })), {}, {
     internal_show_login: {
@@ -64,6 +69,12 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     }
   }),
   methods: {
+    /** Another portal is another address: go there, with the sign-in box open. */
+    choosePortal(key) {
+      if (key === this.currentPortal) return;
+      this.switchingTo = _core_config_portalHosts__WEBPACK_IMPORTED_MODULE_1__.SIGN_IN_PORTALS.find(p => p.key === key).label;
+      window.location.href = (0,_core_config_portalHosts__WEBPACK_IMPORTED_MODULE_1__.portalSignInUrl)(key, window.location);
+    },
     login() {
       this.loading = true;
       const {
@@ -145,6 +156,10 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       otp_verification_modal: false,
       avatarLogoSrc: "/media/assets/ui/user-avatar.png"
     };
+  },
+  /* Arriving from another portal's sign-in (?signin=1): open the box straight away. */
+  mounted() {
+    if (this.$route.query.signin && !this.isAuthenticated) this.show_login_modal = true;
   },
   methods: {
     hasActiveChildren(match) {
@@ -306,7 +321,41 @@ var render = function render() {
     }
   }, [_c("h3", {
     staticClass: "form-section-title mb-6"
-  }, [_vm._v("Sign In")]), _vm._v(" "), _vm.errors && typeof _vm.errors === "string" ? _c("div", {
+  }, [_vm._v("Sign In")]), _vm._v(" "), _vm.currentPortal !== "superadmin" ? _c("fieldset", {
+    staticClass: "portal-choice mb-6"
+  }, [_c("legend", {
+    staticClass: "portal-choice__legend"
+  }, [_vm._v("Portal")]), _vm._v(" "), _c("div", {
+    staticClass: "portal-choice__options"
+  }, _vm._l(_vm.portals, function (p) {
+    return _c("button", {
+      key: p.key,
+      staticClass: "portal-choice__option",
+      class: {
+        "is-active": p.key === _vm.currentPortal
+      },
+      attrs: {
+        type: "button",
+        "aria-pressed": String(p.key === _vm.currentPortal)
+      },
+      on: {
+        click: function ($event) {
+          return _vm.choosePortal(p.key);
+        }
+      }
+    }, [_c("span", {
+      staticClass: "portal-choice__label"
+    }, [_vm._v(_vm._s(p.label))]), _vm._v(" "), _c("span", {
+      staticClass: "portal-choice__note"
+    }, [_vm._v(_vm._s(p.note))])]);
+  }), 0), _vm._v(" "), _vm.switchingTo ? _c("p", {
+    staticClass: "portal-choice__hint",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("Opening " + _vm._s(_vm.switchingTo) + "…")]) : !_vm.currentPortal ? _c("p", {
+    staticClass: "portal-choice__hint"
+  }, [_vm._v("Choose the portal you work in.")]) : _vm._e()]) : _vm._e(), _vm._v(" "), _vm.errors && typeof _vm.errors === "string" ? _c("div", {
     staticClass: "error-alert mb-5"
   }, [_vm.errors === "Unauthorized" ? _c("span", [_vm._v("Invalid email or password")]) : _vm.errors === "Blocked" ? _c("span", [_vm._v("Account blocked. Contact admin.")]) : _vm.errors === "Daily_Limit" ? _c("span", [_vm._v("Daily login limit exceeded.")]) : _vm.errors === "Expired" ? _c("span", [_vm._v("Plan expired. Please renew.")]) : _c("span", [_vm._v(_vm._s(_vm.errors))])]) : _vm._e(), _vm._v(" "), _c("b-row", [_c("b-col", {
     staticClass: "mb-6",
@@ -1042,6 +1091,71 @@ var render = function render() {
 var staticRenderFns = [];
 render._withStripped = true;
 
+
+/***/ }),
+
+/***/ "./resources/js/src/core/config/portalHosts.js":
+/*!*****************************************************!*\
+  !*** ./resources/js/src/core/config/portalHosts.js ***!
+  \*****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "SIGN_IN_PORTALS": () => (/* binding */ SIGN_IN_PORTALS),
+/* harmony export */   "portalFromHost": () => (/* binding */ portalFromHost),
+/* harmony export */   "portalSignInUrl": () => (/* binding */ portalSignInUrl)
+/* harmony export */ });
+/**
+ * Which portal a sign-in is for, and where that portal lives.
+ *
+ * 🔴 Each portal is its own subdomain (config/f16s.php `portals`): the server decides the portal from the
+ * HOST, and the sign-in token is stored per subdomain. So choosing a portal means signing in ON its
+ * subdomain — the password is only ever sent to the portal that was picked.
+ *
+ * Superadmin is deliberately not offered (user, 2026-09-15): F16s staff sign in at superadmin.<domain>.
+ * FocusRoad has no screens yet (PRD §11), so it is not offered either.
+ */
+const SIGN_IN_PORTALS = [{
+  key: "focusair",
+  label: "FocusAir",
+  note: "Air freight"
+}, {
+  key: "focussea",
+  label: "FocusSea",
+  note: "Sea freight"
+},
+// The ledger is a Command plan feature: a Tactical company has no Accounts portal (config/f16s.php min_tier).
+{
+  key: "accounts",
+  label: "Accounts",
+  note: "Command plan only"
+}, {
+  key: "admin",
+  label: "Tenant Admin",
+  note: "For the director"
+}];
+const ALL_PORTALS = ["focusair", "focussea", "focusroad", "accounts", "admin", "superadmin"];
+
+/** The portal a hostname names ("focussea.localhost" → "focussea"), or null for a bare host. */
+function portalFromHost(hostname) {
+  const first = String(hostname || "").split(".")[0].toLowerCase();
+  return ALL_PORTALS.includes(first) ? first : null;
+}
+
+/**
+ * The sign-in address on another portal: same protocol, domain and port, that portal's subdomain,
+ * and `?signin=1` so the sign-in box opens there.
+ *
+ * @param {string} key a portal key
+ * @param {{protocol: string, hostname: string, port: string}} location window.location
+ */
+function portalSignInUrl(key, location) {
+  const labels = String(location.hostname).split(".");
+  const domain = portalFromHost(location.hostname) ? labels.slice(1).join(".") : labels.join(".");
+  const port = location.port ? ":" + location.port : "";
+  return `${location.protocol}//${key}.${domain}${port}/?signin=1`;
+}
 
 /***/ }),
 

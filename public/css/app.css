@@ -80018,6 +80018,26 @@ label {
 }
 .form-note[data-v-340f6ecd] { font-size: 0.9rem; color: #64748b;
 }
+.portal-choice[data-v-340f6ecd] { border: 0; padding: 0; margin: 0; min-width: 0;
+}
+.portal-choice__legend[data-v-340f6ecd] { font-size: 0.75rem; font-weight: 600; color: #355594; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;
+}
+.portal-choice__options[data-v-340f6ecd] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+}
+.portal-choice__option[data-v-340f6ecd] { display: flex; flex-direction: column; align-items: flex-start; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; cursor: pointer; text-align: left; transition: all 0.2s ease;
+}
+.portal-choice__option[data-v-340f6ecd]:hover { border-color: #355594; background: #f0f7ff;
+}
+.portal-choice__option.is-active[data-v-340f6ecd] { border-color: #355594; background: #355594;
+}
+.portal-choice__label[data-v-340f6ecd] { font-size: 0.95rem; font-weight: 700; color: #1e3a6e;
+}
+.portal-choice__note[data-v-340f6ecd] { font-size: 0.75rem; color: #64748b;
+}
+.portal-choice__option.is-active .portal-choice__label[data-v-340f6ecd], .portal-choice__option.is-active .portal-choice__note[data-v-340f6ecd] { color: white;
+}
+.portal-choice__hint[data-v-340f6ecd] { font-size: 0.8rem; color: #64748b; margin: 8px 0 0;
+}
 .error-alert[data-v-340f6ecd] { background: rgba(239, 68, 68, 0.08); color: #dc2626; padding: 12px; border-radius: 8px; font-size: 0.9rem; text-align: center; border: 1px solid rgba(239, 68, 68, 0.15); font-weight: 500;
 }
 @media (max-width: 991px) {

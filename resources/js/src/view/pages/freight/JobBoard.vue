@@ -562,6 +562,8 @@ export default {
     /* SLA colouring, from the same urgency bands the OLI multiplier uses — one rule,
        so the board and the load index cannot disagree about what "urgent" means. */
     urgency(job) {
+      // Already with the airline: the deadline is met, so not urgent — the same list OperatorLoadService uses.
+      if (["Sent to Airline", "Airline Confirmed"].includes(job.status)) return "later";
       if (!job.planned_clearance_date) return "later";
       const d = new Date(job.planned_clearance_date);
       d.setHours(0, 0, 0, 0);

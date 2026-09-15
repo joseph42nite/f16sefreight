@@ -98,6 +98,15 @@ class OperatorLoadTest extends TestCase
         $this->assertSame(7.5, $this->oli());
     }
 
+    /** 🔴 A job already sent to the airline has met its deadline: it still counts, but not as urgent. */
+    public function test_a_job_sent_to_the_airline_is_not_urgent(): void
+    {
+        $this->job(['status' => 'Sent to Airline', 'planned_clearance_date' => now()->toDateString()]);
+        $this->job(['status' => 'Airline Confirmed', 'planned_clearance_date' => now()->subDay()->toDateString()]);
+
+        $this->assertSame(2.0, $this->oli());
+    }
+
     /** Overdue is treated as today — a job past its date is not less urgent. */
     public function test_an_overdue_job_carries_the_today_multiplier(): void
     {

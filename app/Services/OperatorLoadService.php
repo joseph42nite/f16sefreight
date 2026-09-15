@@ -39,6 +39,13 @@ class OperatorLoadService
     private const INACTIVE = ['Completed', 'Cancelled'];
 
     /**
+     * Already with the airline: still the operator's work, but the clearance deadline has been met, so the
+     * date no longer makes it urgent (user, 2026-09-15; PRD §5.5 "green — already sent"). The board's
+     * `JobBoard.urgency()` uses the same list.
+     */
+    private const SENT = ['Sent to Airline', 'Airline Confirmed'];
+
+    /**
      * OLI for every operator in a branch, keyed by user id.
      *
      * @return array<int, array{oli: float, cap: float, overloaded: bool, jobs: int}>
@@ -52,7 +59,7 @@ class OperatorLoadService
             ->whereNull('deleted_at')
             ->whereNotNull('ops_id')
             ->whereNotIn('status', self::INACTIVE)
-            ->get(['id', 'ops_id', 'transport_mode', 'direction', 'planned_clearance_date', 'is_consolidation']);
+            ->get(['id', 'ops_id', 'status', 'transport_mode', 'direction', 'planned_clearance_date', 'is_consolidation']);
 
         // One query for house counts rather than one per job — a branch with 400 open
         // jobs would otherwise make the Staff View 400 round trips.
@@ -97,7 +104,9 @@ class OperatorLoadService
             + ($policy['dimension_factor'] * $dimensions)
             + ($policy['house_factor'] * $houses);
 
-        return $base * $this->urgency($job->planned_clearance_date, $policy);
+        $sent = in_array($job->status ?? null, self::SENT, true);
+
+        return $base * ($sent ? $policy['urgency']['later'] : $this->urgency($job->planned_clearance_date, $policy));
     }
 
     private function complexity(object $job, array $policy): float

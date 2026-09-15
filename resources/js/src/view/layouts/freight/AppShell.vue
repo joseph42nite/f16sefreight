@@ -52,9 +52,7 @@
 
         <BellPanel />
 
-        <span class="fx-header__who">
-          {{ designation }}<template v-if="tier"> · {{ tier }}</template>
-        </span>
+        <ProfileMenu />
       </header>
 
       <main id="fx-main" class="fx-main">
@@ -71,10 +69,11 @@ import { LOAD_CONTEXT } from "@/core/services/store/context.module";
 import BellPanel from "@/view/pages/freight/components/BellPanel.vue";
 import VisualReporter from "@/view/pages/freight/components/VisualReporter.vue";
 import HelpAssistant from "@/view/pages/freight/components/HelpAssistant.vue";
+import ProfileMenu from "@/view/layouts/freight/ProfileMenu.vue";
 
 export default {
   name: "AppShell",
-  components: { BellPanel, HelpAssistant, VisualReporter },
+  components: { BellPanel, HelpAssistant, VisualReporter, ProfileMenu },
   data: () => ({ collapsed: false }),
   /* The shell is the first thing that needs to know who is looking at it, so a session
      that arrived without a stored context recovers here rather than drawing a rail with
@@ -156,7 +155,6 @@ export default {
   border-bottom: 1px solid var(--border);
 }
 .fx-header__spacer { flex: 1 1 auto; }
-.fx-header__who { color: var(--text-secondary); font-size: .8125rem; text-transform: capitalize; }
 
 .fx-portal-chip {
   display: inline-flex; align-items: center; gap: var(--space-1);

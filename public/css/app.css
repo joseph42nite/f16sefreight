@@ -88457,6 +88457,42 @@ to { transform: rotate(360deg);
 }
 
 
+.fx-profile { position: relative;
+}
+.fx-profile__trigger {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: 2px var(--space-2); background: none; border: 1px solid transparent; border-radius: var(--radius-sm);
+  color: var(--text-secondary); font-size: .8125rem; cursor: pointer;
+}
+.fx-profile__trigger:hover, .fx-profile__trigger[aria-expanded="true"] { border-color: var(--border);
+}
+.fx-profile__avatar {
+  display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--portal-accent, #355594); color: #fff; font-size: .6875rem; font-weight: 600;
+}
+.fx-profile__role { text-transform: capitalize;
+}
+.fx-profile__panel {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: 260px;
+  padding: var(--space-3); background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); box-shadow: 0 6px 20px rgba(0, 0, 0, .12);
+}
+.fx-profile__name { margin: 0; font-weight: 600;
+}
+.fx-profile__email { margin: 2px 0 var(--space-3); font-size: .75rem; word-break: break-all;
+}
+.fx-profile__facts { display: grid; grid-template-columns: auto 1fr; gap: 4px var(--space-3); margin: 0 0 var(--space-3); font-size: .8125rem;
+}
+.fx-profile__facts dt { color: var(--text-secondary);
+}
+.fx-profile__facts dd { margin: 0; text-transform: capitalize;
+}
+.fx-profile__plan { font-weight: 600;
+}
+.fx-profile__signout { width: 100%;
+}
+
+
 /* Structure only — no visual design. Everything reads from the tokens in
    resources/css/app.css, so restyling later is changing token values, not markup. */
 .fx-shell { display: flex; min-height: 100vh; background: var(--bg-canvas);
@@ -88517,8 +88553,6 @@ to { transform: rotate(360deg);
   border-bottom: 1px solid var(--border);
 }
 .fx-header__spacer { flex: 1 1 auto;
-}
-.fx-header__who { color: var(--text-secondary); font-size: .8125rem; text-transform: capitalize;
 }
 .fx-portal-chip {
   display: inline-flex; align-items: center; gap: var(--space-1);

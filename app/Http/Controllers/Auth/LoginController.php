@@ -115,9 +115,20 @@ class LoginController extends Controller
         $user = $request->user();
         $portal = Portal::fromHost($request->getHost());
 
+        $context = UserContext::for($user);
+
         return response()->json([
             'user'    => $user,
-            'context' => UserContext::for($user)->toArray(),
+            'context' => $context->toArray(),
+            // The header's profile menu: who, which company and branch, on which plan.
+            'profile' => [
+                'name'        => $user->name,
+                'email'       => $user->email,
+                'designation' => $context->designation,
+                'company'     => \Illuminate\Support\Facades\DB::table('companies')->where('id', $context->companyId)->value('name'),
+                'branch'      => \Illuminate\Support\Facades\DB::table('agents_info')->where('id', $context->agentId)->value('agent_name'),
+                'tier'        => $context->tier,
+            ],
             'portal'  => $portal->exists() ? [
                 'key'   => $portal->key,
                 'label' => $portal->label(),

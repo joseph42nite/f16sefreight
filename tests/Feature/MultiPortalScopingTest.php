@@ -88,7 +88,12 @@ class MultiPortalScopingTest extends TestCase
             // ⚠️ The portal comes from the HOST, not from anything the caller sends, so
             // this cannot report a portal the user is not actually on.
             ->assertJsonPath('portal.key', 'focusair')
-            ->assertJsonPath('portal.scope', 'air');
+            ->assertJsonPath('portal.scope', 'air')
+            // The header's profile menu (user, 2026-09-16).
+            ->assertJsonPath('profile.email', $this->operator->email)
+            ->assertJsonPath('profile.tier', 'command')
+            ->assertJsonPath('profile.company', \App\Company::find($this->operator->company_name)->name)
+            ->assertJsonPath('profile.branch', \App\Agent::find($this->operator->branch_name)->agent_name);
     }
 
     private function job(Agent $branch, string $mode, ?User $owner = null): int

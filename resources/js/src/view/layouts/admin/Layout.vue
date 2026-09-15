@@ -17,16 +17,6 @@
           id="kt_content"
           class="content d-flex flex-column flex-column-fluid"
         >
-          <!-- begin:: Content Head -->
-
-          <!-- begin:: Content Head -->
-          <!-- <KTSubheader
-            v-if="subheaderDisplay"
-            v-bind:breadcrumbs="breadcrumbs"
-            v-bind:title="pageTitle"
-          /> -->
-          <!-- end:: Content Head -->
-
           <!-- begin:: Content Body -->
           <div class="d-flex flex-column-fluid">
             <div
@@ -44,7 +34,6 @@
         <KTFooter></KTFooter>
       </div>
     </div>
-    <!-- <KTStickyToolbar v-if="toolbarDisplay"></KTStickyToolbar> -->
     <KTScrollTop></KTScrollTop>
   </div>
 </template>
@@ -78,10 +67,7 @@ import KTAside from "@/view/layouts/admin/aside/Aside.vue";
 import KTHeaderMobile from "@/view/layouts/admin/header/HeaderMobile.vue";
 import KTFooter from "@/view/layouts/admin/footer/Footer.vue";
 import HtmlClass from "@/core/services/htmlclass.service";
-// import KTSubheader from "@/view/layouts/admin/subheader/Subheader.vue";
-import KTStickyToolbar from "@/view/layouts/admin/extras/StickyToolbar.vue";
 import KTScrollTop from "@/view/layouts/admin/extras/ScrollTop";
-import Loader from "@/view/content/Loader.vue";
 import {
   ADD_BODY_CLASSNAME,
   REMOVE_BODY_CLASSNAME
@@ -93,10 +79,7 @@ export default {
     KTAside,
     KTHeaderMobile,
     KTFooter,
-    // KTSubheader,
-    KTStickyToolbar,
-    KTScrollTop,
-    Loader
+    KTScrollTop
   },
   beforeMount() {
     // show page loading
@@ -123,18 +106,8 @@ export default {
   computed: {
     ...mapGetters([
       "isAuthenticated",
-      "breadcrumbs",
-      "pageTitle",
       "layoutConfig"
     ]),
-
-    /**
-     * Check if the page loader is enabled
-     * @returns {boolean}
-     */
-    loaderEnabled() {
-      return !/false/.test(this.layoutConfig("loader.type"));
-    },
 
     /**
      * Check if container width is fluid
@@ -145,33 +118,11 @@ export default {
     },
 
     /**
-     * Page loader logo image using require() function
-     * @returns {string}
-     */
-
-    /**
      * Check if the left aside menu is enabled
      * @returns {boolean}
      */
     asideEnabled() {
       return !!this.layoutConfig("aside.self.display");
-    },
-
-    /**
-     * Set the right toolbar display
-     * @returns {boolean}
-     */
-    toolbarDisplay() {
-      // return !!this.layoutConfig("toolbar.display");
-      return true;
-    },
-
-    /**
-     * Set the subheader display
-     * @returns {boolean}
-     */
-    subheaderDisplay() {
-      return !!this.layoutConfig("subheader.display");
     }
   }
 };

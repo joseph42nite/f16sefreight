@@ -22,7 +22,7 @@
 /** Per-target limits, taken from the controllers' own validators. */
 const LIMITS = {
   mawb: {
-    name: 70, address: 255, address_line_2: 255, city: 70,
+    name: 70, address: 255, address_line_2: 30, city: 70,
     state: 35, post_code: 15, country: 2, airport_code: 3, phone: 20,
   },
   hawb: {
@@ -101,11 +101,47 @@ export function clean(target, field, raw) {
   return { value, changes, overLimit };
 }
 
+/**
+ * Split an address that is too long for line 1 at the last word break that fits.
+ *
+ * Nothing is dropped: what does not fit goes to line 2 (before anything already there). No break
+ * inside the limit — one very long word — returns null, and the length is reported instead.
+ */
+export function spillAddress(address, lineTwo, limit) {
+  const text = String(address || "");
+  if (text.length <= limit) return null;
+
+  const cut = text.slice(0, limit + 1).lastIndexOf(" ");
+  if (cut <= 0) return null;
+
+  const first = text.slice(0, cut).replace(/[\s,]+$/, "");
+  const rest = text.slice(cut).replace(/^[\s,]+/, "");
+
+  return { first, second: [rest, lineTwo].filter(Boolean).join(", ") };
+}
+
 /** Clean a whole party block, returning the fields that changed and why. */
 export function cleanParty(target, party, fields) {
   const out = { values: {}, changes: [], overLimit: false };
 
-  ["", "_address", "_city", "_state", "_post_code", "_country"].forEach((suffix) => {
+  // 🔴 A long first address line spills into line 2 (user, 2026-09-14) — cleaned first, so the
+  // lengths are the lengths that will be saved.
+  const addressKey = party + "_address";
+  const lineTwoKey = party + "_address_line_2";
+  const text = (key) => {
+    const node = fields[key];
+    return node && typeof node === "object" ? node.value : node;
+  };
+  const address = text(addressKey) ? clean(target, "address", text(addressKey)).value : "";
+  const lineTwo = text(lineTwoKey) ? clean(target, "address_line_2", text(lineTwoKey)).value : "";
+  const split = spillAddress(address, lineTwo, limitFor(target, "address"));
+
+  if (split) {
+    fields = { ...fields, [addressKey]: split.first, [lineTwoKey]: split.second };
+    out.changes.push(`address: moved "${split.second}" to address line 2`);
+  }
+
+  ["", "_address", "_address_line_2", "_city", "_state", "_post_code", "_country"].forEach((suffix) => {
     const key = party + suffix;
     const raw = fields[key];
 

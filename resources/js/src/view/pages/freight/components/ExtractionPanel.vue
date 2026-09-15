@@ -287,7 +287,7 @@
             <th scope="col">Field</th>
             <th scope="col">Source</th>
             <th scope="col">Value</th>
-            <th scope="col"><span class="fx-sr-only">Edit or clean for the waybill</span></th>
+            <th scope="col" class="fx-num">Edit or clean for the waybill</th>
           </tr>
         </thead>
         <tbody>
@@ -573,6 +573,7 @@ const RESULT_FIELDS = [
 /** A party's parts, as the edit boxes list them. */
 const PARTY_PARTS = [
   { suffix: "", label: "Name" }, { suffix: "_address", label: "Address" },
+  { suffix: "_address_line_2", label: "Address line 2" },
   { suffix: "_city", label: "City" }, { suffix: "_state", label: "State" },
   { suffix: "_post_code", label: "Post code" }, { suffix: "_country", label: "Country" },
 ];
@@ -1085,7 +1086,7 @@ export default {
     fit(party) {
       const source = {};
 
-      ["", "_address", "_city", "_state", "_post_code", "_country"].forEach((suffix) => {
+      ["", "_address", "_address_line_2", "_city", "_state", "_post_code", "_country"].forEach((suffix) => {
         const key = party + suffix;
         const node = this.sourceField(key, "parties");
 
@@ -1097,8 +1098,9 @@ export default {
       // 🔴 Only what actually changed, and at the confidence it already had: a state or country the
       // model only worked out stays a suggestion, so cleaning it does not get it saved.
       Object.keys(result.values).forEach((key) => {
-        const node = source[key];
-        if (raw(node) === result.values[key]) return;
+        // Line 2 is new when the address spilled into it; it is as sure as the address it came from.
+        const node = source[key] !== undefined ? source[key] : source[party + "_address"];
+        if (source[key] !== undefined && raw(node) === result.values[key]) return;
 
         const confidence = (node && typeof node === "object" && node.confidence) || "high";
         this.$set(this.manual, key, { value: result.values[key], confidence });
@@ -1446,7 +1448,7 @@ export default {
         part("_country") && "Country: " + part("_country") + suggested("_country"),
       ].filter(Boolean).join(" · ");
 
-      return [part(""), part("_address"), place].filter(Boolean).join("\n") || null;
+      return [part(""), part("_address"), part("_address_line_2"), place].filter(Boolean).join("\n") || null;
     },
     /** "cartons" → "carton", "boxes" → "box", for "each carton counted as one piece". */
     singular(unit) {

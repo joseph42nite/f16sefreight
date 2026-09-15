@@ -16,19 +16,19 @@
 const PARTY_KEYS = {
   shipper: {
     payloadKey: "shipper_address",
-    name: "ship_name", address: "ship_address", city: "ship_city",
+    name: "ship_name", address: "ship_address", addressLine2: "ship_address_line_2", city: "ship_city",
     state: "ship_state", country: "ship_country", postcode: "ship_post_code",
     airport: "ship_airport_code", phone: "ship_phone",
   },
   consignee: {
     payloadKey: "consignee_address",
-    name: "cons_name", address: "cons_address", city: "cons_city",
+    name: "cons_name", address: "cons_address", addressLine2: "cons_address_line_2", city: "cons_city",
     state: "cons_state", country: "cons_country", postcode: "cons_post_code",
     airport: "cons_airport_code", phone: "cons_phone",
   },
   notify: {
     payloadKey: "also_notify_address",
-    name: "also_name", address: "also_address", city: "also_city",
+    name: "also_name", address: "also_address", addressLine2: "also_address_line_2", city: "also_city",
     state: "also_state", country: "also_country", postcode: "also_post_code",
     airport: "also_airport_code", phone: "also_phone",
   },
@@ -88,7 +88,7 @@ export function buildPayload(target, fields, identity) {
     const block = {};
     block[keys.name] = name;
 
-    [["address", "_address"], ["city", "_city"], ["state", "_state"],
+    [["address", "_address"], ["addressLine2", "_address_line_2"], ["city", "_city"], ["state", "_state"],
      ["country", "_country"], ["postcode", "_post_code"], ["airport", "_airport_code"],
      ["phone", "_phone"]].forEach(([slot, suffix]) => {
       const value = raw(fields[party + suffix]);

@@ -1141,6 +1141,9 @@ const PARTY_PARTS = [{
   suffix: "_address",
   label: "Address"
 }, {
+  suffix: "_address_line_2",
+  label: "Address line 2"
+}, {
   suffix: "_city",
   label: "City"
 }, {
@@ -1671,7 +1674,7 @@ const PARTY_REQUIRED = {
      */
     fit(party) {
       const source = {};
-      ["", "_address", "_city", "_state", "_post_code", "_country"].forEach(suffix => {
+      ["", "_address", "_address_line_2", "_city", "_state", "_post_code", "_country"].forEach(suffix => {
         const key = party + suffix;
         const node = this.sourceField(key, "parties");
         if (node !== undefined) source[key] = node;
@@ -1681,8 +1684,9 @@ const PARTY_REQUIRED = {
       // 🔴 Only what actually changed, and at the confidence it already had: a state or country the
       // model only worked out stays a suggestion, so cleaning it does not get it saved.
       Object.keys(result.values).forEach(key => {
-        const node = source[key];
-        if (raw(node) === result.values[key]) return;
+        // Line 2 is new when the address spilled into it; it is as sure as the address it came from.
+        const node = source[key] !== undefined ? source[key] : source[party + "_address"];
+        if (source[key] !== undefined && raw(node) === result.values[key]) return;
         const confidence = node && typeof node === "object" && node.confidence || "high";
         this.$set(this.manual, key, {
           value: result.values[key],
@@ -2019,7 +2023,7 @@ const PARTY_REQUIRED = {
         return node && node.confidence === "low" ? " (suggested, not saved)" : "";
       };
       const place = [part("_city") && "City: " + part("_city"), part("_state") && "State: " + part("_state") + suggested("_state"), part("_post_code") && "Post code: " + part("_post_code"), part("_country") && "Country: " + part("_country") + suggested("_country")].filter(Boolean).join(" · ");
-      return [part(""), part("_address"), place].filter(Boolean).join("\n") || null;
+      return [part(""), part("_address"), part("_address_line_2"), place].filter(Boolean).join("\n") || null;
     },
     /** "cartons" → "carton", "boxes" → "box", for "each carton counted as one piece". */
     singular(unit) {
@@ -4279,12 +4283,11 @@ var staticRenderFns = [function () {
       scope: "col"
     }
   }, [_vm._v("Value")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
     attrs: {
       scope: "col"
     }
-  }, [_c("span", {
-    staticClass: "fx-sr-only"
-  }, [_vm._v("Edit or clean for the waybill")])])])]);
+  }, [_vm._v("Edit or clean for the waybill")])])]);
 }];
 render._withStripped = true;
 
@@ -4301,8 +4304,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "clean": () => (/* binding */ clean),
 /* harmony export */   "cleanParty": () => (/* binding */ cleanParty),
-/* harmony export */   "limitFor": () => (/* binding */ limitFor)
+/* harmony export */   "limitFor": () => (/* binding */ limitFor),
+/* harmony export */   "spillAddress": () => (/* binding */ spillAddress)
 /* harmony export */ });
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * What a waybill field will actually accept, and how to make a value fit it.
  *
@@ -4329,7 +4338,7 @@ const LIMITS = {
   mawb: {
     name: 70,
     address: 255,
-    address_line_2: 255,
+    address_line_2: 30,
     city: 70,
     state: 35,
     post_code: 15,
@@ -4416,6 +4425,25 @@ function clean(target, field, raw) {
   };
 }
 
+/**
+ * Split an address that is too long for line 1 at the last word break that fits.
+ *
+ * Nothing is dropped: what does not fit goes to line 2 (before anything already there). No break
+ * inside the limit — one very long word — returns null, and the length is reported instead.
+ */
+function spillAddress(address, lineTwo, limit) {
+  const text = String(address || "");
+  if (text.length <= limit) return null;
+  const cut = text.slice(0, limit + 1).lastIndexOf(" ");
+  if (cut <= 0) return null;
+  const first = text.slice(0, cut).replace(/[\s,]+$/, "");
+  const rest = text.slice(cut).replace(/^[\s,]+/, "");
+  return {
+    first,
+    second: [rest, lineTwo].filter(Boolean).join(", ")
+  };
+}
+
 /** Clean a whole party block, returning the fields that changed and why. */
 function cleanParty(target, party, fields) {
   const out = {
@@ -4423,7 +4451,26 @@ function cleanParty(target, party, fields) {
     changes: [],
     overLimit: false
   };
-  ["", "_address", "_city", "_state", "_post_code", "_country"].forEach(suffix => {
+
+  // 🔴 A long first address line spills into line 2 (user, 2026-09-14) — cleaned first, so the
+  // lengths are the lengths that will be saved.
+  const addressKey = party + "_address";
+  const lineTwoKey = party + "_address_line_2";
+  const text = key => {
+    const node = fields[key];
+    return node && typeof node === "object" ? node.value : node;
+  };
+  const address = text(addressKey) ? clean(target, "address", text(addressKey)).value : "";
+  const lineTwo = text(lineTwoKey) ? clean(target, "address_line_2", text(lineTwoKey)).value : "";
+  const split = spillAddress(address, lineTwo, limitFor(target, "address"));
+  if (split) {
+    fields = _objectSpread(_objectSpread({}, fields), {}, {
+      [addressKey]: split.first,
+      [lineTwoKey]: split.second
+    });
+    out.changes.push(`address: moved "${split.second}" to address line 2`);
+  }
+  ["", "_address", "_address_line_2", "_city", "_state", "_post_code", "_country"].forEach(suffix => {
     const key = party + suffix;
     const raw = fields[key];
     if (raw === undefined || raw === null || raw === "") {
@@ -4488,6 +4535,7 @@ const PARTY_KEYS = {
     payloadKey: "shipper_address",
     name: "ship_name",
     address: "ship_address",
+    addressLine2: "ship_address_line_2",
     city: "ship_city",
     state: "ship_state",
     country: "ship_country",
@@ -4499,6 +4547,7 @@ const PARTY_KEYS = {
     payloadKey: "consignee_address",
     name: "cons_name",
     address: "cons_address",
+    addressLine2: "cons_address_line_2",
     city: "cons_city",
     state: "cons_state",
     country: "cons_country",
@@ -4510,6 +4559,7 @@ const PARTY_KEYS = {
     payloadKey: "also_notify_address",
     name: "also_name",
     address: "also_address",
+    addressLine2: "also_address_line_2",
     city: "also_city",
     state: "also_state",
     country: "also_country",
@@ -4571,7 +4621,7 @@ function buildPayload(target, fields, identity) {
     if (!name) return;
     const block = {};
     block[keys.name] = name;
-    [["address", "_address"], ["city", "_city"], ["state", "_state"], ["country", "_country"], ["postcode", "_post_code"], ["airport", "_airport_code"], ["phone", "_phone"]].forEach(([slot, suffix]) => {
+    [["address", "_address"], ["addressLine2", "_address_line_2"], ["city", "_city"], ["state", "_state"], ["country", "_country"], ["postcode", "_post_code"], ["airport", "_airport_code"], ["phone", "_phone"]].forEach(([slot, suffix]) => {
       const value = raw(fields[party + suffix]);
       if (value) block[keys[slot]] = value;
     });

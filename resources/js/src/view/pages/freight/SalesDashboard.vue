@@ -68,12 +68,64 @@
               <span class="fx-chip">{{ typeLabel(e.type) }}</span>
             </div>
             <p class="fx-outreach__why">{{ summary(e) }}</p>
-            <div class="fx-outreach__actions">
+
+            <!-- Why it was dismissed is kept, so F16s can improve the suggestions (user, 2026-09-15). -->
+            <form v-if="dismissing && dismissing.id === e.id" class="fx-outreach__dismiss" @submit.prevent="dismiss(e)">
+              <label class="fx-field">
+                <span class="fx-field__label">Why dismiss?</span>
+                <select v-model="dismissing.reason" class="fx-input" required>
+                  <option value="" disabled>Choose a reason</option>
+                  <option v-for="(label, key) in dismissReasons" :key="key" :value="key">{{ label }}</option>
+                </select>
+              </label>
+              <input
+                v-if="dismissing.reason"
+                v-model="dismissing.note"
+                class="fx-input"
+                maxlength="500"
+                :required="dismissing.reason === 'other'"
+                :placeholder="dismissing.reason === 'other' ? 'What was wrong with this suggestion?' : 'Anything to add (optional)'"
+              />
+              <p v-if="dismissing.error" class="fx-error" role="alert">{{ dismissing.error }}</p>
+              <div class="fx-outreach__actions">
+                <button class="fx-btn" :disabled="!dismissing.reason">Dismiss</button>
+                <button type="button" class="fx-btn fx-btn--ghost" @click="dismissing = null">Cancel</button>
+              </div>
+            </form>
+            <div v-else class="fx-outreach__actions">
               <button class="fx-btn fx-btn--primary" @click="openEmail(e)">{{ e.subject ? "Open draft" : "✉ Draft email" }}</button>
-              <button class="fx-btn fx-btn--ghost" @click="dismiss(e)">Dismiss</button>
+              <button class="fx-btn fx-btn--ghost" @click="dismissing = { id: e.id, reason: '', note: '', error: null }">Dismiss</button>
             </div>
           </li>
         </ul>
+
+        <!-- A rep sees their own dismissals; the Boss sees every rep's, with totals by reason. -->
+        <details v-if="dismissed.length" class="fx-outreach__history">
+          <summary>Dismissed in the last 90 days ({{ dismissed.length }})</summary>
+          <p class="fx-muted fx-outreach__note">
+            <span v-for="(n, key) in dismissedByReason" :key="key">{{ dismissReasons[key] || key }}: {{ n }} · </span>
+          </p>
+          <table class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Client</th>
+                <th scope="col">Suggestion</th>
+                <th scope="col">Why</th>
+                <th v-if="dismissed.some((d) => d.rep)" scope="col">By</th>
+                <th scope="col">When</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="d in dismissed" :key="d.id">
+                <td>{{ d.client || d.domain }}</td>
+                <td>{{ typeLabel(d.type) }}</td>
+                <td>{{ dismissReasons[d.reason] || d.reason }}<template v-if="d.note"> — {{ d.note }}</template></td>
+                <td v-if="dismissed.some((x) => x.rep)">{{ d.rep }}</td>
+                <td><Figure :value="d.dismissed_at" kind="date" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </details>
       </section>
 
       <!-- §7.4 Today's Actions sits ABOVE the charts. It is the worklist; the charts
@@ -253,6 +305,7 @@ export default {
   components: { Figure, StatusChip, FxChart, FxDrawer, MailEditor },
   data: () => ({
     emails: [], hasMailbox: true, showsClientNames: false, outreachLoaded: false,
+    dismissReasons: {}, dismissing: null, dismissed: [], dismissedByReason: {},
     composing: null, form: { to: "", cc: "", subject: "", body: "" },
     drafting: false, draftSeconds: 0, writtenBy: null, sending: false, sendError: null,
     loading: true, error: null,
@@ -343,6 +396,7 @@ export default {
   created() {
     this.loadCharts();
     this.loadOutreach();
+    this.loadDismissed();
     Promise.all([
       ApiService.get("/sales/dashboard"),
       // The actions call is allowed to fail without taking the page down — a ranked
@@ -370,6 +424,7 @@ export default {
           this.emails = data.emails || [];
           this.hasMailbox = data.has_mailbox;
           this.showsClientNames = data.shows_client_names;
+          this.dismissReasons = data.dismiss_reasons || {};
         })
         // Suggestions failing must not take the dashboard down with them.
         .catch(() => { this.emails = []; })
@@ -442,9 +497,24 @@ export default {
         .finally(() => { this.sending = false; });
     },
     dismiss(e) {
-      ApiService.post(`/sales/outreach/${e.id}/dismiss`, {})
-        .then(() => { this.emails = this.emails.filter((x) => x.id !== e.id); })
-        .catch(() => {});
+      const d = this.dismissing;
+
+      ApiService.post(`/sales/outreach/${e.id}/dismiss`, { reason: d.reason, note: d.note || null })
+        .then(() => {
+          this.emails = this.emails.filter((x) => x.id !== e.id);
+          this.dismissing = null;
+          this.loadDismissed();
+        })
+        .catch((err) => { d.error = this.readable(err, "Not dismissed. Try again."); });
+    },
+    loadDismissed() {
+      ApiService.get("/sales/outreach/dismissed")
+        .then(({ data }) => {
+          this.dismissed = data.dismissed || [];
+          this.dismissedByReason = data.by_reason || {};
+          this.dismissReasons = Object.keys(this.dismissReasons).length ? this.dismissReasons : data.reasons;
+        })
+        .catch(() => { this.dismissed = []; });
     },
     readable(err, fallback) {
       const d = (err.response && err.response.data) || {};

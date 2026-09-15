@@ -204,9 +204,63 @@ class SalesOutreachTest extends TestCase
         $colleague = $this->user('sales', '2');
         $id = $this->clientEmail($this->customer($colleague->id), 'client_reactivation', $colleague->id);
 
-        $this->api($this->rep)->postJson($this->url("/api/sales/outreach/{$id}/dismiss"))->assertNotFound();
-        $this->api($colleague)->postJson($this->url("/api/sales/outreach/{$id}/dismiss"))->assertOk();
+        $this->api($this->rep)->postJson($this->url("/api/sales/outreach/{$id}/dismiss"), ['reason' => 'already_in_touch'])->assertNotFound();
+        $this->api($colleague)->postJson($this->url("/api/sales/outreach/{$id}/dismiss"), ['reason' => 'already_in_touch'])->assertOk();
         $this->assertSame('dismissed', DB::table('sales_action_queue')->where('id', $id)->value('status'));
+    }
+
+    /** 🔴 Every dismissal keeps why, and who, so F16s can improve the suggestions. "Other" needs a note. */
+    public function test_a_dismissal_records_its_reason(): void
+    {
+        $id = $this->clientEmail($this->customer($this->rep->id));
+        $dismiss = fn (array $body) => $this->api($this->rep)->postJson($this->url("/api/sales/outreach/{$id}/dismiss"), $body);
+
+        $dismiss([])->assertStatus(422);
+        $dismiss(['reason' => 'other'])->assertStatus(422);
+        $dismiss(['reason' => 'other', 'note' => 'They moved this lane to sea freight'])->assertOk();
+
+        $row = DB::table('sales_action_queue')->find($id);
+        $this->assertSame(['other', 'They moved this lane to sea freight', $this->rep->id],
+            [$row->dismissed_reason, $row->dismissed_note, (int) $row->dismissed_by]);
+        $this->assertNotNull($row->dismissed_at);
+    }
+
+    /** A rep sees their own dismissals; the Boss sees every rep's in the company. */
+    public function test_a_rep_sees_their_own_dismissals_and_the_boss_sees_all(): void
+    {
+        $colleague = $this->user('sales', '2');
+        foreach ([[$this->rep, 'Globex'], [$colleague, 'Contoso']] as [$who, $name]) {
+            $id = $this->clientEmail($this->customer($who->id, $name), 'client_reactivation', $who->id);
+            $this->api($who)->postJson($this->url("/api/sales/outreach/{$id}/dismiss"), ['reason' => 'figures_wrong'])->assertOk();
+        }
+
+        $mine = $this->api($this->rep)->getJson($this->url('/api/sales/outreach/dismissed'))->assertOk()->json();
+        $this->assertCount(1, $mine['dismissed']);
+        $this->assertSame('figures_wrong', $mine['dismissed'][0]['reason']);
+
+        // The Boss works from the admin portal.
+        $boss = $this->api($this->user('boss'))->getJson('http://admin.localhost/api/sales/outreach/dismissed')->assertOk()->json();
+        $this->assertCount(2, $boss['dismissed']);
+        $this->assertSame(2, $boss['by_reason']['figures_wrong']);
+    }
+
+    /** 🔒 Superadmin sees sent vs dismissed and why, with the figures — never the client's name or domain. */
+    public function test_superadmin_sees_the_feedback_without_client_names(): void
+    {
+        $c = $this->customer($this->rep->id);
+        $sent = $this->clientEmail($c);
+        DB::table('sales_action_queue')->where('id', $sent)->update(['status' => 'acted', 'sent_at' => now()]);
+        $dismissed = $this->clientEmail($c);
+        $this->api($this->rep)->postJson($this->url("/api/sales/outreach/{$dismissed}/dismiss"), ['reason' => 'not_a_good_time'])->assertOk();
+
+        $staff = \App\SuperAdmin::create(['name' => 'Staff', 'email' => 'staff-out@test.local', 'password' => Hash::make('x')]);
+        $response = $this->actingAs($staff, 'superAdmin-api')->getJson('/api/superadmin/suggestion-feedback')->assertOk();
+
+        $type = collect($response->json('by_type'))->firstWhere('type', 'client_reactivation');
+        $this->assertSame([1, 1, 50], [$type['sent'], $type['dismissed'], $type['dismissed_percent']]);
+        $this->assertSame(1, $response->json('reasons_by_type.client_reactivation.not_a_good_time'));
+        $this->assertSame('Outreach Co', collect($response->json('recent'))->firstWhere('id', $dismissed)['company']);
+        $this->assertStringNotContainsString('globex', strtolower($response->getContent()));
     }
 
     // ─── The sales inbox ─────────────────────────────────────────────────────

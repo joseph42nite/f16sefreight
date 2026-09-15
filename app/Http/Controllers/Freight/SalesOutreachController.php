@@ -23,6 +23,18 @@ use Illuminate\Support\Facades\DB;
  */
 class SalesOutreachController extends Controller
 {
+    /**
+     * Why a suggestion was dismissed (user, 2026-09-15) — kept so F16s can see in superadmin which suggestions
+     * miss, and improve them.
+     */
+    public const DISMISS_REASONS = [
+        'already_in_touch' => 'Already in touch with the client',
+        'figures_wrong' => 'The figures look wrong',
+        'not_a_good_time' => 'Not a good time for this client',
+        'client_opted_out' => 'Client does not want these emails',
+        'other' => 'Other',
+    ];
+
     public function __construct(private readonly AuditLogger $audit) {}
 
     public function index(): JsonResponse
@@ -43,6 +55,7 @@ class SalesOutreachController extends Controller
             'emails' => $rows->map(fn ($r) => $this->shape($r))->values(),
             // Tactical shows the client's domain and the rep writes the name in (PRD §2.3.3).
             'shows_client_names' => $this->showsClientNames(),
+            'dismiss_reasons' => self::DISMISS_REASONS,
             // Sending needs the rep's own mailbox; the page says so before they draft.
             'has_mailbox' => $this->mailbox() !== null,
         ]);
@@ -119,14 +132,56 @@ class SalesOutreachController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    public function dismiss(int $id): JsonResponse
+    public function dismiss(Request $request, int $id): JsonResponse
     {
         $action = $this->ownOpen($id);
 
-        DB::table('sales_action_queue')->where('id', $id)->update(['status' => 'dismissed', 'updated_at' => now()]);
+        $data = $request->validate([
+            'reason' => ['required', 'in:' . implode(',', array_keys(self::DISMISS_REASONS))],
+            'note' => ['nullable', 'string', 'max:500', 'required_if:reason,other'],
+        ]);
+
+        DB::table('sales_action_queue')->where('id', $id)->update([
+            'status' => 'dismissed', 'dismissed_reason' => $data['reason'], 'dismissed_note' => $data['note'] ?? null,
+            'dismissed_by' => auth()->id(), 'dismissed_at' => now(), 'updated_at' => now(),
+        ]);
         $this->audit->record($action->agent_id, 'sales.outreach_dismissed', 'sales_action_queue', $id, auth()->id());
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Dismissed suggestions and why: a rep sees their own, the Boss every rep's in the company, with totals by
+     * reason. The last 90 days.
+     */
+    public function dismissed(): JsonResponse
+    {
+        $this->authorize('viewSales');
+
+        $context = UserContext::for(auth()->user());
+        $rows = DB::table('sales_action_queue as q')
+            ->join('customers as c', 'c.id', '=', 'q.customer_id')
+            ->leftJoin('users as u', 'u.id', '=', 'q.dismissed_by')
+            ->where('q.audience', 'client')->where('q.status', 'dismissed')
+            ->where('q.dismissed_at', '>=', now()->subDays(90))
+            ->when($context->designation === 'boss',
+                fn ($q) => $q->where('c.company_id', $context->companyId),
+                fn ($q) => $q->where('q.dismissed_by', auth()->id()))
+            ->orderByDesc('q.dismissed_at')
+            ->limit(200)
+            ->get(['q.id', 'q.action_type', 'q.fact_packet', 'q.dismissed_reason', 'q.dismissed_note', 'q.dismissed_at', 'c.name as client', 'c.email_domain', 'u.name as rep']);
+
+        return response()->json([
+            'reasons' => self::DISMISS_REASONS,
+            'by_reason' => $rows->countBy('dismissed_reason'),
+            'dismissed' => $rows->map(fn ($r) => [
+                'id' => $r->id, 'type' => $r->action_type,
+                'client' => $this->showsClientNames() ? $r->client : null, 'domain' => $r->email_domain,
+                'facts' => json_decode($r->fact_packet, true),
+                'reason' => $r->dismissed_reason, 'note' => $r->dismissed_note,
+                'rep' => $r->rep, 'dismissed_at' => $r->dismissed_at,
+            ])->values(),
+        ]);
     }
 
     /** An open client email belonging to the signed-in rep, or 404. */

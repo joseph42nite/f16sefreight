@@ -110,7 +110,7 @@
             <!-- ⚠️ Hidden, not disabled, on a non-enquiry thread. A greyed button invites
                  a click and then explains nothing; the workspace already says which
                  classification unlocks the work, for anyone who opens it. -->
-            <button v-if="workspaceTabs.length" class="fx-btn" data-help="analyze-pdf" @click="openExtraction">Analyze PDF</button>
+            <button v-if="isEnquiryWork" class="fx-btn" data-help="analyze-pdf" @click="openExtraction">Analyze PDF</button>
 
             <button v-if="designation !== 'sales'" class="fx-btn fx-btn--primary" data-help="open-workspace" @click="openWorkspace">Open workspace</button>
           </div>
@@ -383,7 +383,7 @@
           classification unlocks the work turns it into an instruction the operator can act
           on — reclassify, or this is not that kind of conversation.
         -->
-        <section v-if="!workspaceTabs.length" class="fx-muted">
+        <section v-if="tab !== 'credits' && !isEnquiryWork" class="fx-muted">
           <p>
             Extraction and the cost sheet are for <strong>customer enquiries</strong>. This
             conversation is filed as
@@ -722,13 +722,18 @@ export default {
     },
     /** The Extraction panel exists only once the enquiry has a job (see the drawer's chain). */
     canExtractAttachments() {
-      return this.workspaceTabs.length > 0 && !!(this.active && this.active.enquiry && this.active.job);
+      return this.isEnquiryWork && !!(this.active && this.active.enquiry && this.active.job);
+    },
+    /** Extraction and the cost sheet are shipment work: a customer enquiry, and not for sales. */
+    isEnquiryWork() {
+      return !!this.active && this.active.classification === "customer_enquiry" && this.designation !== "sales";
     },
     workspaceTabs() {
-      const isEnquiry = this.active && this.active.classification === "customer_enquiry";
+      if (this.designation === "sales") return [];
 
-      // Extraction and the cost sheet are shipment work; sales has neither.
-      if (!isEnquiry || this.designation === "sales") return [];
+      // Credits are on every conversation (user, 2026-09-15): an operator working airline or clearance mail
+      // still needs to see what extraction has used. On anything but an enquiry, Extraction explains itself.
+      if (!this.isEnquiryWork) return WORKSPACE_TABS.filter((t) => t.key !== "cost");
 
       // 🔴 Mirrors the server's `viewCostSheet` — "operations never touches money"
       // (PRD §2.3.4). The tab was shown to them anyway and answered 403 on click: a

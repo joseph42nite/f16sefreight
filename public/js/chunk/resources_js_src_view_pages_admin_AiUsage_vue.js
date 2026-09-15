@@ -337,7 +337,7 @@ var render = function render() {
     staticClass: "fx-table"
   }, [_vm._m(3), _vm._v(" "), _c("tbody", _vm._l(_vm.data.by_provider, function (p) {
     return _c("tr", {
-      key: (p.provider || "-") + p.purpose
+      key: (p.provider || "-") + p.tier + p.purpose
     }, [_c("td", [_vm._v(_vm._s(p.provider || "—"))]), _c("td", [_vm._v(_vm._s(p.tier || "—"))]), _c("td", [_vm._v(_vm._s(p.purpose))]), _c("td", {
       staticClass: "fx-num"
     }, [_vm._v(_vm._s(p.calls))]), _vm._v(" "), _c("td", {

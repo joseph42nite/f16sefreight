@@ -273,13 +273,18 @@ const WORKSPACE_TABS = [{
     },
     /** The Extraction panel exists only once the enquiry has a job (see the drawer's chain). */
     canExtractAttachments() {
-      return this.workspaceTabs.length > 0 && !!(this.active && this.active.enquiry && this.active.job);
+      return this.isEnquiryWork && !!(this.active && this.active.enquiry && this.active.job);
+    },
+    /** Extraction and the cost sheet are shipment work: a customer enquiry, and not for sales. */
+    isEnquiryWork() {
+      return !!this.active && this.active.classification === "customer_enquiry" && this.designation !== "sales";
     },
     workspaceTabs() {
-      const isEnquiry = this.active && this.active.classification === "customer_enquiry";
+      if (this.designation === "sales") return [];
 
-      // Extraction and the cost sheet are shipment work; sales has neither.
-      if (!isEnquiry || this.designation === "sales") return [];
+      // Credits are on every conversation (user, 2026-09-15): an operator working airline or clearance mail
+      // still needs to see what extraction has used. On anything but an enquiry, Extraction explains itself.
+      if (!this.isEnquiryWork) return WORKSPACE_TABS.filter(t => t.key !== "cost");
 
       // 🔴 Mirrors the server's `viewCostSheet` — "operations never touches money"
       // (PRD §2.3.4). The tab was shown to them anyway and answered 403 on click: a
@@ -2419,7 +2424,7 @@ var render = function render() {
         value: c
       }
     }, [_vm._v(_vm._s(c.replace(/_/g, " ")))]);
-  }), 0) : _vm._e(), _vm._v(" "), _vm.workspaceTabs.length ? _c("button", {
+  }), 0) : _vm._e(), _vm._v(" "), _vm.isEnquiryWork ? _c("button", {
     staticClass: "fx-btn",
     attrs: {
       "data-help": "analyze-pdf"
@@ -2880,7 +2885,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("Saved to the enquiry.")]) : _vm._e()]) : _vm._e(), _vm._v(" "), _vm.cargoError ? _c("p", {
     staticClass: "fx-error"
-  }, [_vm._v(_vm._s(_vm.cargoError))]) : _vm._e()]) : _vm._e(), _vm._v(" "), !_vm.workspaceTabs.length ? _c("section", {
+  }, [_vm._v(_vm._s(_vm.cargoError))]) : _vm._e()]) : _vm._e(), _vm._v(" "), _vm.tab !== "credits" && !_vm.isEnquiryWork ? _c("section", {
     staticClass: "fx-muted"
   }, [_c("p", [_vm._v("\n          Extraction and the cost sheet are for "), _c("strong", [_vm._v("customer enquiries")]), _vm._v(". This\n          conversation is filed as\n          "), _c("StatusChip", {
     attrs: {

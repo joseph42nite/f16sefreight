@@ -47,6 +47,10 @@ const list = text => String(text || "").split(",").map(s => s.trim()).filter(Boo
     hasMailbox: true,
     showsClientNames: false,
     outreachLoaded: false,
+    dismissReasons: {},
+    dismissing: null,
+    dismissed: [],
+    dismissedByReason: {},
     composing: null,
     form: {
       to: "",
@@ -195,6 +199,7 @@ const list = text => String(text || "").split(",").map(s => s.trim()).filter(Boo
   created() {
     this.loadCharts();
     this.loadOutreach();
+    this.loadDismissed();
     Promise.all([_core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/dashboard"),
     // The actions call is allowed to fail without taking the page down — a ranked
     // worklist is valuable, but it is not the reason the page exists.
@@ -224,6 +229,7 @@ const list = text => String(text || "").split(",").map(s => s.trim()).filter(Boo
         this.emails = data.emails || [];
         this.hasMailbox = data.has_mailbox;
         this.showsClientNames = data.shows_client_names;
+        this.dismissReasons = data.dismiss_reasons || {};
       })
       // Suggestions failing must not take the dashboard down with them.
       .catch(() => {
@@ -310,9 +316,28 @@ const list = text => String(text || "").split(",").map(s => s.trim()).filter(Boo
       });
     },
     dismiss(e) {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/sales/outreach/${e.id}/dismiss`, {}).then(() => {
+      const d = this.dismissing;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/sales/outreach/${e.id}/dismiss`, {
+        reason: d.reason,
+        note: d.note || null
+      }).then(() => {
         this.emails = this.emails.filter(x => x.id !== e.id);
-      }).catch(() => {});
+        this.dismissing = null;
+        this.loadDismissed();
+      }).catch(err => {
+        d.error = this.readable(err, "Not dismissed. Try again.");
+      });
+    },
+    loadDismissed() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/outreach/dismissed").then(({
+        data
+      }) => {
+        this.dismissed = data.dismissed || [];
+        this.dismissedByReason = data.by_reason || {};
+        this.dismissReasons = Object.keys(this.dismissReasons).length ? this.dismissReasons : data.reasons;
+      }).catch(() => {
+        this.dismissed = [];
+      });
     },
     readable(err, fallback) {
       const d = err.response && err.response.data || {};
@@ -589,7 +614,97 @@ var render = function render() {
       staticClass: "fx-chip"
     }, [_vm._v(_vm._s(_vm.typeLabel(e.type)))])]), _vm._v(" "), _c("p", {
       staticClass: "fx-outreach__why"
-    }, [_vm._v(_vm._s(_vm.summary(e)))]), _vm._v(" "), _c("div", {
+    }, [_vm._v(_vm._s(_vm.summary(e)))]), _vm._v(" "), _vm.dismissing && _vm.dismissing.id === e.id ? _c("form", {
+      staticClass: "fx-outreach__dismiss",
+      on: {
+        submit: function ($event) {
+          $event.preventDefault();
+          return _vm.dismiss(e);
+        }
+      }
+    }, [_c("label", {
+      staticClass: "fx-field"
+    }, [_c("span", {
+      staticClass: "fx-field__label"
+    }, [_vm._v("Why dismiss?")]), _vm._v(" "), _c("select", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.dismissing.reason,
+        expression: "dismissing.reason"
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        required: ""
+      },
+      on: {
+        change: function ($event) {
+          var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+            return o.selected;
+          }).map(function (o) {
+            var val = "_value" in o ? o._value : o.value;
+            return val;
+          });
+          _vm.$set(_vm.dismissing, "reason", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+        }
+      }
+    }, [_c("option", {
+      attrs: {
+        value: "",
+        disabled: ""
+      }
+    }, [_vm._v("Choose a reason")]), _vm._v(" "), _vm._l(_vm.dismissReasons, function (label, key) {
+      return _c("option", {
+        key: key,
+        domProps: {
+          value: key
+        }
+      }, [_vm._v(_vm._s(label))]);
+    })], 2)]), _vm._v(" "), _vm.dismissing.reason ? _c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.dismissing.note,
+        expression: "dismissing.note"
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        maxlength: "500",
+        required: _vm.dismissing.reason === "other",
+        placeholder: _vm.dismissing.reason === "other" ? "What was wrong with this suggestion?" : "Anything to add (optional)"
+      },
+      domProps: {
+        value: _vm.dismissing.note
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.dismissing, "note", $event.target.value);
+        }
+      }
+    }) : _vm._e(), _vm._v(" "), _vm.dismissing.error ? _c("p", {
+      staticClass: "fx-error",
+      attrs: {
+        role: "alert"
+      }
+    }, [_vm._v(_vm._s(_vm.dismissing.error))]) : _vm._e(), _vm._v(" "), _c("div", {
+      staticClass: "fx-outreach__actions"
+    }, [_c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: !_vm.dismissing.reason
+      }
+    }, [_vm._v("Dismiss")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        type: "button"
+      },
+      on: {
+        click: function ($event) {
+          _vm.dismissing = null;
+        }
+      }
+    }, [_vm._v("Cancel")])])]) : _c("div", {
       staticClass: "fx-outreach__actions"
     }, [_c("button", {
       staticClass: "fx-btn fx-btn--primary",
@@ -602,11 +717,55 @@ var render = function render() {
       staticClass: "fx-btn fx-btn--ghost",
       on: {
         click: function ($event) {
-          return _vm.dismiss(e);
+          _vm.dismissing = {
+            id: e.id,
+            reason: "",
+            note: "",
+            error: null
+          };
         }
       }
     }, [_vm._v("Dismiss")])])]);
-  }), 0)]), _vm._v(" "), _c("section", {
+  }), 0), _vm._v(" "), _vm.dismissed.length ? _c("details", {
+    staticClass: "fx-outreach__history"
+  }, [_c("summary", [_vm._v("Dismissed in the last 90 days (" + _vm._s(_vm.dismissed.length) + ")")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-outreach__note"
+  }, _vm._l(_vm.dismissedByReason, function (n, key) {
+    return _c("span", {
+      key: key
+    }, [_vm._v(_vm._s(_vm.dismissReasons[key] || key) + ": " + _vm._s(n) + " · ")]);
+  }), 0), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Client")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Suggestion")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Why")]), _vm._v(" "), _vm.dismissed.some(d => d.rep) ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("By")]) : _vm._e(), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("When")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.dismissed, function (d) {
+    return _c("tr", {
+      key: d.id
+    }, [_c("td", [_vm._v(_vm._s(d.client || d.domain))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.typeLabel(d.type)))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.dismissReasons[d.reason] || d.reason)), d.note ? [_vm._v(" — " + _vm._s(d.note))] : _vm._e()], 2), _vm._v(" "), _vm.dismissed.some(x => x.rep) ? _c("td", [_vm._v(_vm._s(d.rep))]) : _vm._e(), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: d.dismissed_at,
+        kind: "date"
+      }
+    })], 1)]);
+  }), 0)])]) : _vm._e()]), _vm._v(" "), _c("section", {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"

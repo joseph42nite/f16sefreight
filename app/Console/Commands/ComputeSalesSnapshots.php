@@ -58,6 +58,9 @@ class ComputeSalesSnapshots extends Command
     /** Invoices still owed. */
     private const OUTSTANDING = ['finalized', 'sent', 'partially_paid'];
 
+    /** A dismissed client email of the same kind is not suggested again for this long. */
+    private const DISMISSAL_REST_DAYS = 30;
+
     /** When a client has no payment terms on file. */
     private const DEFAULT_TERMS_DAYS = 30;
 
@@ -411,7 +414,7 @@ class ComputeSalesSnapshots extends Command
 
     /**
      * Client emails (PRD §7.3.7) — CLIENT findings the rep drafts and sends. Re-derived each run like the
-     * internal list, except a finding the rep has already drafted.
+     * internal list, except one the rep has drafted, or dismissed in the last 30 days.
      */
     private function clientEmails(int $agentId, int $customerId, string $mode, object $customer, object $profile, ?float $momentum, array $funnel, Collection $shipments, Collection $branchShipments, Collection $enquiries, Carbon $date): void
     {
@@ -420,13 +423,15 @@ class ComputeSalesSnapshots extends Command
             ->where('audience', 'client')->where('status', 'open')->whereNull('draft_generated_at')
             ->delete();
 
-        $drafted = DB::table('sales_action_queue')
-            ->where('customer_id', $customerId)->where('transport_mode', $mode)
-            ->where('audience', 'client')->where('status', 'open')
+        // A drafted one is the rep's; a dismissed one rests for 30 days (user, 2026-09-15).
+        $held = DB::table('sales_action_queue')
+            ->where('customer_id', $customerId)->where('transport_mode', $mode)->where('audience', 'client')
+            ->where(fn ($q) => $q->where('status', 'open')
+                ->orWhere(fn ($d) => $d->where('status', 'dismissed')->where('dismissed_at', '>=', $date->copy()->subDays(self::DISMISSAL_REST_DAYS))))
             ->pluck('action_type')->all();
 
         foreach ($this->findings->for($profile, $momentum, $funnel, $shipments, $branchShipments, $enquiries, $date) as $f) {
-            if (! in_array($f['action_type'], $drafted, true)) {
+            if (! in_array($f['action_type'], $held, true)) {
                 $this->queue($agentId, $customerId, $mode, $customer, 'client', $f['action_type'], $f['priority_score'], null, $f['facts']);
             }
         }

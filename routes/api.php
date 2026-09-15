@@ -184,6 +184,8 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     // ── What the hosted model costs (Gemma 4 on OpenRouter) ─────────────────
     // The month's spend against the budget, per customer and per user, and the per-user limit.
     Route::get('/ai-usage', [\App\Http\Controllers\Platform\AiUsageController::class, 'index']);
+    // How reps respond to suggested client emails — sent, dismissed and why — to improve the suggestions.
+    Route::get('/suggestion-feedback', [\App\Http\Controllers\Platform\SuggestionFeedbackController::class, 'index']);
     Route::put('/ai-usage/settings', [\App\Http\Controllers\Platform\AiUsageController::class, 'updateSettings']);
 
     // ── The help library the copilot answers from: one .md or .docx per page ──
@@ -387,6 +389,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/sales/accounts', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'accounts']);
     // Client emails: findings from the client's own trends, drafted by Gemma, sent by the rep (PRD §7.3.7).
     Route::get('/sales/outreach', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'index']);
+    Route::get('/sales/outreach/dismissed', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'dismissed']);
     Route::post('/sales/outreach/{id}/draft', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'draft'])->whereNumber('id');
     Route::post('/sales/outreach/{id}/send', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'send'])->whereNumber('id');
     Route::post('/sales/outreach/{id}/dismiss', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'dismiss'])->whereNumber('id');

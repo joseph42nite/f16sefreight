@@ -10429,6 +10429,14 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
         userType: 'superadmin'
       }
     }, {
+      // How reps answered the suggested client emails: sent, dismissed and why (user, 2026-09-15).
+      path: "suggestion-feedback",
+      name: "superadmin-suggestion-feedback",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_admin_SuggestionFeedback_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/SuggestionFeedback.vue */ "./resources/js/src/view/pages/admin/SuggestionFeedback.vue")),
+      meta: {
+        userType: 'superadmin'
+      }
+    }, {
       path: "airlines",
       name: "superadmin-airlines",
       component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_admin_AirlineDirectory_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/AirlineDirectory.vue */ "./resources/js/src/view/pages/admin/AirlineDirectory.vue")),

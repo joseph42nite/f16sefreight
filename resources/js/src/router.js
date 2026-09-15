@@ -220,6 +220,13 @@ const router = new Router({
           meta: { userType: 'superadmin' }
         },
         {
+          // How reps answered the suggested client emails: sent, dismissed and why (user, 2026-09-15).
+          path: "suggestion-feedback",
+          name: "superadmin-suggestion-feedback",
+          component: () => import("@/view/pages/admin/SuggestionFeedback.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "airlines",
           name: "superadmin-airlines",
           component: () => import("@/view/pages/admin/AirlineDirectory.vue"),

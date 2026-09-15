@@ -5555,6 +5555,9 @@ body {
   z-index: 30;
 }
 .fx-drawer:focus { outline: none; }
+/* Only the body scrolls. Without this a tall body squeezes the header rows, and the tab
+   strip (overflow-x: auto, so it may shrink to nothing) had its labels cut in half. */
+.fx-drawer__head, .fx-drawer__meta, .fx-drawer__tabs { flex-shrink: 0; }
 
 .fx-drawer__head { display: flex; align-items: flex-start; gap: var(--space-3);
                    padding: var(--space-4); border-bottom: 1px solid var(--border); }

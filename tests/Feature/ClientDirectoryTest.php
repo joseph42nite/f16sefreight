@@ -117,14 +117,32 @@ class ClientDirectoryTest extends TestCase
         $this->assertSame(['finance@initech.test', 'ops@initech.test'], \App\CustomerContact::where('customer_id', $id)->orderBy('email')->pluck('email')->all());
     }
 
-    /** On Tactical the enquiries list names a client by its domain, for every role. */
+    /** Enquiries, Tactical: the client is its domain for pricing and sales (the roles with this page), with no key to a client record. */
     public function test_tactical_enquiries_show_the_domain_as_the_client(): void
     {
         [$company, $branch, $customer] = $this->tenant('tactical');
         $customer->update(['name' => 'Globex Industries']);
         \App\Enquiry::create(['agent_id' => $branch->id, 'transport_mode' => 'air', 'status' => 'new', 'customer_id' => $customer->id, 'enquiry_no' => 'ENQA-TACD-26-0001']);
 
-        $this->as($company, $branch, 'pricing')->getJson('http://focusair.localhost/api/enquiries')
-            ->assertOk()->assertJsonPath('data.0.client_label', 'globex.test');
+        foreach (['pricing', 'sales'] as $role) {
+            $row = $this->as($company, $branch, $role)->getJson('http://focusair.localhost/api/enquiries')->assertOk()->json('data.0');
+
+            $this->assertSame(['globex.test', null], [$row['client_label'], $row['customer_id']], $role);
+            $this->assertArrayNotHasKey('customer', $row, $role);
+        }
+    }
+
+    /** Enquiries, Command: the client's name, with the client record it links to. */
+    public function test_command_enquiries_show_the_client_name(): void
+    {
+        [$company, $branch, $customer] = $this->tenant('command');
+        $customer->update(['name' => 'Globex Industries']);
+        \App\Enquiry::create(['agent_id' => $branch->id, 'transport_mode' => 'air', 'status' => 'new', 'customer_id' => $customer->id, 'enquiry_no' => 'ENQA-COMD-26-0001']);
+
+        foreach (['pricing', 'sales'] as $role) {
+            $row = $this->as($company, $branch, $role)->getJson('http://focusair.localhost/api/enquiries')->assertOk()->json('data.0');
+
+            $this->assertSame(['Globex Industries', $customer->id, 'globex.test'], [$row['client_label'], $row['customer_id'], $row['client_domain']], $role);
+        }
     }
 }

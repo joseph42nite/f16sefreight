@@ -249,6 +249,7 @@ class FreightDemoSeeder extends Seeder
 
         $awbIds = DB::table('air_way_bills')->whereIn('agent_id', $branchIds)->pluck('id');
         DB::table('way_bill_addresses')->whereIn('awb_id', $awbIds)->delete();
+        DB::table('way_bill_consignment_data')->whereIn('awb_id', $awbIds)->delete();
         DB::table('air_way_bills')->whereIn('agent_id', $branchIds)->delete();
 
         DB::table('mailbox_connections')->whereIn('agent_id', $branchIds)->delete();
@@ -1157,11 +1158,15 @@ class FreightDemoSeeder extends Seeder
      */
     private function seedWaybills(Agent $branch): void
     {
-        $jobs = DB::table('jobs')
-            ->where('agent_id', $branch->id)
-            ->where('transport_mode', 'air')
-            ->whereNotNull('awb_number')
-            ->get(['id', 'awb_number']);
+        // The waybill carries the shipment's own lane and weight: once it has gone to the airline, the sales
+        // figures read the AWB, so a demo waybill that said BOM → DXB for every job would skew every lane.
+        $jobs = DB::table('jobs as j')
+            ->leftJoin('enquiries as e', 'e.id', '=', 'j.enquiry_id')
+            ->leftJoin('air_shipment_details as d', 'd.job_id', '=', 'j.id')
+            ->where('j.agent_id', $branch->id)
+            ->where('j.transport_mode', 'air')
+            ->whereNotNull('j.awb_number')
+            ->get(['j.id', 'j.awb_number', 'e.origin_code', 'e.dest_code', 'e.extracted_weight', 'e.extracted_pieces', 'e.cargo_description', 'd.gross_weight', 'd.piece_count']);
 
         foreach ($jobs as $job) {
             $key = AwbNumber::key($job->awb_number);
@@ -1177,8 +1182,8 @@ class FreightDemoSeeder extends Seeder
                 'id' => $key, 'awb_code' => $code, 'awb_no' => $serial,
                 'agent_id' => $branch->id, 'status' => 'generate_pdf',
                 'consolidated_mawb' => 'false', 'awb' => 'true',
-                'departure_airport' => 'BOM', 'destination_airport' => 'DXB',
-                'from' => 'BOM', 'to' => 'DXB', 'by' => 'EK', 'flight' => '0511',
+                'departure_airport' => $job->origin_code ?: 'BOM', 'destination_airport' => $job->dest_code ?: 'DXB',
+                'from' => $job->origin_code ?: 'BOM', 'to' => $job->dest_code ?: 'DXB', 'by' => 'EK', 'flight' => '0511',
                 'date' => now()->addDays(3),
                 'created_at' => now(), 'updated_at' => now(),
             ]);
@@ -1201,6 +1206,16 @@ class FreightDemoSeeder extends Seeder
             ]);
 
             // 🔗 The link is MADE, not seeded — through the same path production uses.
+            // The cargo line — the weight the airline was given, a little off the mail's estimate as in real life.
+            DB::table('way_bill_consignment_data')->insert([
+                'awb_id' => (string) $key, 'agent_id' => $branch->id,
+                'pieces' => $job->piece_count ?: $job->extracted_pieces,
+                'description' => $job->cargo_description ?: 'General cargo',
+                'gross_weight' => (string) round((float) ($job->gross_weight ?: $job->extracted_weight), 1),
+                'weight_code' => 'K',
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+
             app(AwbJobLinker::class)->link($key);
         }
     }

@@ -158,11 +158,11 @@ class OutreachDrafter
                 "If anything is planned on {$lanes}, or there is something we could do better for you, I would be glad to help. Could we have a quick call this week?",
             ]],
             'client_volume_drop' => ['Supporting your shipments in the coming weeks', [
-                'Your recent volumes with us have been lower than usual (' . abs($facts['volume_change_percent']) . "% below your yearly average).",
+                'Your recent volumes with us have been lower than usual (' . abs($facts['volume_change_percent']) . "% below your usual weekly average).",
                 'If your plans have changed, I would welcome a short call to understand how we can best support you.',
             ]],
             'client_volume_growth' => ['Securing space for your growing volumes', [
-                "Thank you — your volumes with us are up {$facts['volume_change_percent']}% on your yearly average.",
+                "Thank you — your volumes with us are up {$facts['volume_change_percent']}% on your usual weekly average.",
                 "To keep things running smoothly on {$lanes}, I would be happy to secure space and a rate for the coming weeks. Shall we discuss?",
             ]],
             'client_rate_review' => ["Reviewing our rates on {$facts['lane']}", [

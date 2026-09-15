@@ -1832,22 +1832,22 @@ Yields: *"Globex normally ships air every 9 days; it has been 26. Last contact 3
 
 **B. Volume momentum**
 
-```
-buckets     = tonnage summed per ISO week      -- fixed bucket; α is per-bucket, not per-shipment
-EWMA_recent = EWMA(last 13 weeks  ≈ 90d),  α = 0.3
-EWMA_base   = EWMA(last 52 weeks  ≈ 365d), α = 0.3
+> ⚠️ *Changed 2026-09-15 (owner's decision).* This used EWMA with α = 0.3. That remembers only about the last six weeks, so the "13-week" and "52-week" values were nearly identical and a client who had stopped shipping read ~0 %. It is now plain weekly averages.
 
-if EWMA_base <= 0  → momentum NULL, stop        -- no baseline to compare against
-momentum    = clamp((EWMA_recent − EWMA_base) / EWMA_base, −1.0, 999.999)
+```
+window      = the 12 months before the snapshot = 52 weeks; weeks with no shipment count as zero
+if distinct shipment days < 5  → momentum NULL, stop     -- min sample
+yearly_avg  = total kg in the window ÷ 52
+if yearly_avg <= 0             → momentum NULL, stop     -- no baseline
+recent_avg  = kg in the last 13 weeks ÷ 13
+momentum    = clamp((recent_avg − yearly_avg) / yearly_avg, −1.0, 999.999)
 
 momentum_norm = clamp((momentum + 1) / 2, 0, 1)   -- −1 ⇒ 0.0, 0 ⇒ 0.5, +1 ⇒ 1.0
 ```
 
-EWMA rather than a plain slope, so recent months dominate without a hard cutoff discarding history. Flag `|momentum| > 0.25`.
+Checkable by hand. Flag `|momentum| ≥ 0.25`. **The baseline contains the recent 13 weeks** — the comparison is *recent vs the 12-month average*, not two separate periods.
 
-**Bucket by ISO week before smoothing.** α is a per-observation decay, so it is only meaningful against a fixed cadence; applying it per-shipment would make a client's momentum depend on how often they happen to ship rather than on how much.
-
-**The baseline window contains the recent window** (52 weeks includes the last 13). That is intentional — the comparison is *recent vs. long-run average*, not two disjoint periods — but it damps the ratio, so the `0.25` flag threshold is calibrated for that and must not be reused on a disjoint-window variant.
+> **Rules every sales figure follows (2026-09-15):** one window — the last 12 months before the snapshot, for rhythm, trend, win rate, lost reasons and lanes; year to date from **1 April**; cancelled shipments are not shipments; and **which figures are the truth** — once an air shipment's AWB has gone to the airline, the AWB's route and cargo-line gross weight (lb converted to kg); before that, and for every lost enquiry, the client's mail (`enquiries`); sea uses its shipment details, else the mail. One reader: `App\Services\Sales\ClientHistory`.
 
 **C. Loss-reason attribution split**
 

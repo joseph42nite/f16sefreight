@@ -87,26 +87,27 @@ class SalesOutreachTest extends TestCase
     /** 🔴 A client who stopped shipping gets a check-in, built only from their own figures. */
     public function test_a_dormant_client_gets_a_reactivation_email_from_their_own_figures(): void
     {
-        $c = $this->customer($this->rep->id);
-        $profile = (object) ['is_irregular' => false, 'risk_band' => 'DORMANT', 'overdue_ratio' => 2.9,
-            'expected_gap_days' => 9, 'last_shipment_at' => now()->subDays(26)->toDateString()];
+        $profile = (object) ['risk_band' => 'DORMANT', 'overdue_ratio' => 2.9, 'expected_gap_days' => 9,
+            'last_shipment_at' => now()->subDays(26)->startOfDay()];
+        $shipment = (object) ['day' => now()->subDays(26)->startOfDay(), 'lane' => 'BOM → FRA', 'weight' => 400.0];
 
-        $findings = app(ClientFindings::class)->for([$this->branch->id], $c->id, 'air', $profile, -0.4,
-            ['price_loss_rate' => null, 'service_loss_rate' => 80.0]);
+        $findings = app(ClientFindings::class)->for($profile, -0.4, ['price_loss_rate' => null, 'service_loss_rate' => 80.0],
+            collect([$shipment]), collect(), collect(), now()->startOfDay());
 
         $this->assertSame(['client_reactivation'], array_column($findings, 'action_type'),
             'a falling volume email is not sent on top of a check-in, and a service problem is never a client email');
-        $this->assertSame(['usually_ships_every_days' => 9, 'days_since_last_shipment' => 26, 'usual_lanes' => []], $findings[0]['facts']);
+        $this->assertSame(['usually_ships_every_days' => 9, 'days_since_last_shipment' => 26, 'usual_lanes' => ['BOM → FRA']], $findings[0]['facts']);
     }
 
     public function test_falling_and_growing_volume_are_findings_of_their_own(): void
     {
-        $c = $this->customer($this->rep->id);
+        $steady = (object) ['risk_band' => 'LOW'];
         $none = ['price_loss_rate' => null, 'service_loss_rate' => null];
+        $find = fn (float $trend) => app(ClientFindings::class)->for($steady, $trend, $none, collect(), collect(), collect(), now());
 
-        $this->assertSame('client_volume_drop', app(ClientFindings::class)->for([$this->branch->id], $c->id, 'air', null, -0.31, $none)[0]['action_type']);
-        $this->assertSame('client_volume_growth', app(ClientFindings::class)->for([$this->branch->id], $c->id, 'air', null, 0.4, $none)[0]['action_type']);
-        $this->assertSame([], app(ClientFindings::class)->for([$this->branch->id], $c->id, 'air', null, 0.1, $none));
+        $this->assertSame('client_volume_drop', $find(-0.31)[0]['action_type']);
+        $this->assertSame('client_volume_growth', $find(0.4)[0]['action_type']);
+        $this->assertSame([], $find(0.1));
     }
 
     // ─── The Sales page ──────────────────────────────────────────────────────

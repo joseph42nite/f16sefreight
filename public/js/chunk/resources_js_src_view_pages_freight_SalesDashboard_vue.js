@@ -243,11 +243,11 @@ const list = text => String(text || "").split(",").map(s => s.trim()).filter(Boo
         case "client_reactivation":
           return `Usually ships every ${f.usually_ships_every_days} days — ${f.days_since_last_shipment} days since the last shipment.`;
         case "client_volume_drop":
-          return `Volume ${Math.abs(f.volume_change_percent)}% below their yearly average over the last 13 weeks.`;
+          return `Last 13 weeks: ${Math.abs(f.volume_change_percent)}% below their 12-month weekly average.`;
         case "client_volume_growth":
-          return `Volume up ${f.volume_change_percent}% on their yearly average over the last 13 weeks.`;
+          return `Last 13 weeks: ${f.volume_change_percent}% above their 12-month weekly average.`;
         case "client_rate_review":
-          return `${f.quotes_lost_on_price_last_year} quotes on ${f.lane} lost on price in the last year.`;
+          return `${f.quotes_lost_on_price_last_12_months} quotes on ${f.lane} lost on price in the last 12 months.`;
         case "client_new_lanes":
           return `Ships ${lanes(f.usual_lanes)} with us; we also run ${lanes(f.lanes_we_run)}.`;
         default:

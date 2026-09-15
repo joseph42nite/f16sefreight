@@ -39,10 +39,10 @@ use Illuminate\Support\Facades\Hash;
  * product and are not this seeder's to remove.
  *
  * ═══ WHAT YOU CAN WALK THROUGH ═════════════════════════════════════════════
- *   focusair.localhost:8000   pricing / operations / sales — air only
- *   focussea.localhost:8000   the same people, sea only, and the data DIFFERS
- *   accounts.localhost:8000   the AR register, the credit gate, the ledger
- *   admin.localhost:8000      the Boss: read-only financials, cross-mode
+ *   focusair.localhost:8099   pricing / operations / sales — air only
+ *   focussea.localhost:8099   the same people, sea only, and the data DIFFERS
+ *   accounts.localhost:8099   the AR register, the credit gate, the ledger
+ *   admin.localhost:8099      the Boss: read-only financials, cross-mode
  *
  * Password for every account below: **demo1234**
  */
@@ -1268,7 +1268,7 @@ class FreightDemoSeeder extends Seeder
         $this->command->newLine();
         $this->command->line('  Hosts (macOS maps *.localhost to 127.0.0.1 — no /etc/hosts edit needed):');
         foreach (['focusair', 'focussea', 'accounts', 'admin', 'superadmin'] as $host) {
-            $this->command->line("    http://{$host}.localhost:8000");
+            $this->command->line("    http://{$host}.localhost:8099");
         }
         $this->command->newLine();
     }

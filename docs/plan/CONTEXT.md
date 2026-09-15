@@ -338,7 +338,7 @@ inbox).
 
 🎮 **A walkable demo exists.** `php artisan db:seed --class='\FreightDemoSeeder'` then
 `php artisan sales:compute-snapshots`. Two tenants, five designations each, password
-`demo1234` — e.g. `demo-pricing@demo.test` at `focusair.localhost:8000`. Idempotent, and
+`demo1234` — e.g. `demo-pricing@demo.test` at `focusair.localhost:8099`. Idempotent, and
 identity rows plus `audit_logs` survive a re-run (the append-only trigger refuses to let
 a seeder erase an audit trail — it caught an earlier version of the purge doing exactly
 that).

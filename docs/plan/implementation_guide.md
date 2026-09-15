@@ -1057,7 +1057,7 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 >
 > **Verified live, not asserted:** pricing sees Enquiries + Customers and a `[Confirm shipment]` action; operations sees neither and is redirected from `/enquiries` to `/kanban`; a **tactical** boss sees `Financials 🔒` and the teaser explaining it; a boss is **refused at FocusAir** with `reason: designation`; the air portal lists 3 air enquiries and **excludes the sea one**.
 >
-> 💡 **Local hosts need no `/etc/hosts` edit.** `Portal::fromHost` matches the first label, so `http://focusair.localhost:8000` and `http://admin.localhost:8000` resolve — macOS maps `*.localhost` to 127.0.0.1.
+> 💡 **Local hosts need no `/etc/hosts` edit.** `Portal::fromHost` matches the first label, so `http://focusair.localhost:8099` and `http://admin.localhost:8099` resolve — macOS maps `*.localhost` to 127.0.0.1.
 >
 > 🐞 **Found while building:** dates rendered as raw ISO (`2026-09-03T18:30:00.000000Z`) and weights at one decimal. §4.4 is not cosmetic — a weight shown to one decimal in one table and three in another reads as two different measurements of the same shipment. Centralised in `format.js`.
 >

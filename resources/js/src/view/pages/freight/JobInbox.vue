@@ -776,6 +776,8 @@ export default {
   },
   created() {
     this.load();
+    // From a Kanban card: /inbox?thread=12 opens that conversation.
+    if (this.$route.query.thread) this.open({ id: this.$route.query.thread });
   },
   mounted() {
     document.addEventListener("mousedown", this.closeThreadFiles);

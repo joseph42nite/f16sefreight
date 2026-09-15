@@ -319,6 +319,17 @@ export default {
         },
     },
     mounted() {
+        // From a Kanban card: /message-log?awb=176-10000008 fills the search and runs it.
+        const awb = String(this.$route.query.awb || "");
+        const at = awb.indexOf("-");
+        if (at > 0) {
+            this.validateAwbCode(awb.slice(0, at));
+            this.validateAwbNo(awb.slice(at + 1));
+            if (this.isSearchValid) {
+                this.searchAWB();
+                return;
+            }
+        }
         this.allAirwayBill(1);
     },
     methods: {

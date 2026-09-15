@@ -87,6 +87,7 @@
             <span class="fx-board__count">{{ (grouped[col.key] || []).length }}</span>
           </h2>
 
+          <!-- The card icons are links, not drag handles: `filter` keeps Sortable from taking their click. -->
           <!-- ⚠️ Bound to `visible`, the SAME array the v-for renders. Binding the full
                list while rendering a subset would put a drop at the wrong index the
                moment anything was hidden. For every uncapped column the two are the same
@@ -96,6 +97,8 @@
             :group="{ name: 'jobs', pull: !col.terminal, put: !col.terminal }"
             class="fx-board__drop"
             ghost-class="fx-card--ghost"
+            filter=".fx-card__link"
+            :prevent-on-filter="false"
             :disabled="!canMove"
             @change="(e) => onMove(e, col)"
           >
@@ -143,10 +146,55 @@
                 <span v-else class="is-empty" aria-label="No clearance date"></span>
               </div>
 
-              <!-- BOTH names — §5.5: "so collaborators share context". -->
-              <div class="fx-card__owners">
-                <span>ops {{ job.ops_user ? job.ops_user.name : "—" }}</span>
-                <span>pricing {{ job.pricing_owner ? job.pricing_owner.name : "—" }}</span>
+              <!--
+                In Transit: where the shipment is, from the airline's Cargo Status messages for this AWB —
+                the same rows the Message Log shows (user, 2026-09-15).
+              -->
+              <div v-if="col.key === 'transit'" class="fx-track">
+                <div
+                  class="fx-track__bar"
+                  role="progressbar"
+                  :aria-valuenow="progress(job).step"
+                  aria-valuemin="0"
+                  :aria-valuemax="progress(job).total"
+                  :aria-label="'Shipment progress: ' + progress(job).label"
+                >
+                  <span
+                    v-for="n in progress(job).total"
+                    :key="n"
+                    class="fx-track__step"
+                    :class="{ 'is-done': n <= progress(job).step }"
+                  ></span>
+                </div>
+                <div class="fx-track__label">
+                  <span>{{ progress(job).label }}<template v-if="progress(job).code"> · {{ progress(job).code }}</template></span>
+                  <span v-if="progress(job).step">{{ progress(job).step }} of {{ progress(job).total }}</span>
+                </div>
+                <div v-if="progress(job).discrepancy" class="fx-track__warn">⚠ The airline reported a discrepancy</div>
+              </div>
+
+              <!-- BOTH names — §5.5: "so collaborators share context". The links sit bottom right. -->
+              <div class="fx-card__foot">
+                <div class="fx-card__owners">
+                  <span>ops {{ job.ops_user ? job.ops_user.name : "—" }}</span>
+                  <span>pricing {{ job.pricing_owner ? job.pricing_owner.name : "—" }}</span>
+                </div>
+                <div class="fx-card__links">
+                  <router-link
+                    v-if="col.key === 'transit' && job.awb_number"
+                    :to="{ path: '/message-log', query: { awb: job.awb_number } }"
+                    class="fx-card__link"
+                    :title="'Message log for ' + job.awb_number"
+                    :aria-label="'Open the message log for ' + job.awb_number"
+                  >⌸</router-link>
+                  <router-link
+                    v-if="job.thread_id"
+                    :to="{ path: '/inbox', query: { thread: job.thread_id } }"
+                    class="fx-card__link"
+                    title="Go to the mail"
+                    aria-label="Go to the mail for this shipment"
+                  >✉</router-link>
+                </div>
               </div>
             </article>
           </draggable>
@@ -215,6 +263,7 @@
 import { mapGetters } from "vuex";
 import draggable from "vuedraggable";
 import ApiService from "@/core/services/api.service";
+import { cargoProgress } from "@/core/config/cargoMilestones";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 
@@ -396,6 +445,9 @@ export default {
           this.operators = this.staff.map((o) => ({ id: o.id, name: o.name }));
         })
         .catch((e) => { this.error = this.readable(e); });
+    },
+    progress(job) {
+      return cargoProgress(job.cargo_statuses);
     },
     matrixCell(day, opsId) {
       return this.rows.filter(

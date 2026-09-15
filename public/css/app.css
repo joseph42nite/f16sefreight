@@ -5972,6 +5972,22 @@ body.fx-split .fx-rail__label { display: none; }
                  font-size: .6875rem; color: var(--text-secondary); margin-top: var(--space-1); }
 .fx-card__owners { display: flex; justify-content: space-between; gap: var(--space-2);
                    font-size: .6875rem; color: var(--text-disabled); margin-top: var(--space-1); }
+.fx-card__foot { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-2); }
+.fx-card__foot .fx-card__owners { flex: 1 1 auto; min-width: 0; }
+.fx-card__links { display: flex; gap: var(--space-1); flex-shrink: 0; }
+/* 32 px targets (ui_ux_guide §5.5), and a pointer rather than the card's grab cursor. */
+.fx-card__link { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+                 border-radius: var(--radius-sm); color: var(--text-secondary); text-decoration: none; font-size: 1rem; cursor: pointer; }
+.fx-card__link:hover { background: var(--bg-sunken); color: var(--text-primary); text-decoration: none; }
+
+/* In Transit: seven milestone segments, filled up to the furthest reached. */
+.fx-track { margin-top: var(--space-2); }
+.fx-track__bar { display: flex; gap: 2px; }
+.fx-track__step { flex: 1; height: 6px; border-radius: 2px; background: var(--bg-sunken); }
+.fx-track__step.is-done { background: var(--portal-accent); }
+.fx-track__label { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: 4px;
+                   font-size: .6875rem; color: var(--text-secondary); }
+.fx-track__warn { margin-top: 2px; font-size: .6875rem; color: var(--status-warning); font-weight: 600; }
 
 /* 🔴 SLA COLOURING USES THE SAME URGENCY BANDS AS THE OLI MULTIPLIER — one rule, so
    the board and the load index can never disagree about what "urgent" means. A card

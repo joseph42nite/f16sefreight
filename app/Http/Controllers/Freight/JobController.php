@@ -6,9 +6,11 @@ use App\AccountsInvoice;
 use App\AccountsPurchaseVoucher;
 use App\Enquiry;
 use App\Enums\JobStatus;
+use App\EmailThread;
 use App\Enums\TransportMode;
 use App\Http\Controllers\Controller;
 use App\Job;
+use App\StatusReponse;
 use App\Services\AuditLogger;
 use App\Services\OperatorLoadService;
 use App\Services\BellNotificationService;
@@ -94,7 +96,41 @@ class JobController extends Controller
             ->latest()
             ->paginate(50);
 
+        $this->addCardLinks($jobs->getCollection());
+
         return response()->json($jobs);
+    }
+
+    /**
+     * What a Kanban card links to (user, 2026-09-15): `thread_id`, the conversation the job came from, and
+     * `cargo_statuses`, the airline's Cargo Status codes for its AWB (RCS, MAN, DEP…) oldest first — the
+     * same rows the Message Log shows, which the board turns into the In Transit progress bar.
+     *
+     * Two queries for the whole page, not two per card.
+     */
+    private function addCardLinks($jobs): void
+    {
+        $threads = EmailThread::where(fn ($q) => $q->whereIn('job_id', $jobs->pluck('id'))
+                ->orWhereIn('enquiry_id', $jobs->pluck('enquiry_id')->filter()))
+            ->orderByDesc('latest_message_received_at')
+            ->get(['id', 'job_id', 'enquiry_id']);
+
+        $statuses = StatusReponse::where('business_status_code', 'Cargo Status')
+            ->whereIn('business_id', $jobs->pluck('awb_number')->filter())
+            ->orderBy('id')
+            ->get(['business_id', 'condition_code'])
+            ->groupBy('business_id');
+
+        $jobs->each(function (Job $job) use ($threads, $statuses) {
+            // The job's own thread first; the enquiry's when the job was never linked to one.
+            $thread = $threads->firstWhere('job_id', $job->id)
+                ?? ($job->enquiry_id ? $threads->firstWhere('enquiry_id', $job->enquiry_id) : null);
+
+            $job->setAttribute('thread_id', $thread ? $thread->id : null);
+            $job->setAttribute('cargo_statuses', $job->awb_number
+                ? $statuses->get($job->awb_number, collect())->pluck('condition_code')->values()->all()
+                : []);
+        });
     }
 
     /** Milestone transitions. Every one writes an SLA row via JobObserver. */

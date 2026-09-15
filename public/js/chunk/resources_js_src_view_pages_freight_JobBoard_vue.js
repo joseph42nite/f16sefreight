@@ -11,17 +11,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var vuedraggable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vuedraggable */ "./node_modules/vuedraggable/dist/vuedraggable.umd.js");
 /* harmony import */ var vuedraggable__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(vuedraggable__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
-/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+/* harmony import */ var _core_config_cargoMilestones__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/config/cargoMilestones */ "./resources/js/src/core/config/cargoMilestones.js");
+/* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -84,8 +86,8 @@ const FILTER_KEY = "f16s_kanban_filters";
   name: "JobBoard",
   components: {
     draggable: (vuedraggable__WEBPACK_IMPORTED_MODULE_0___default()),
-    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
-    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
+    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_4__["default"]
   },
   data: () => ({
     rows: [],
@@ -106,7 +108,7 @@ const FILTER_KEY = "f16s_kanban_filters";
     STATUSES,
     PROCESS
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_4__.mapGetters)(["portalLabel", "can", "designation"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_5__.mapGetters)(["portalLabel", "can", "designation"])), {}, {
     canMove() {
       return this.can(["pricing", "operations"], "tactical");
     },
@@ -238,6 +240,9 @@ const FILTER_KEY = "f16s_kanban_filters";
       }).catch(e => {
         this.error = this.readable(e);
       });
+    },
+    progress(job) {
+      return (0,_core_config_cargoMilestones__WEBPACK_IMPORTED_MODULE_2__.cargoProgress)(job.cargo_statuses);
     },
     matrixCell(day, opsId) {
       return this.rows.filter(j => j.ops_id === opsId && (j.planned_clearance_date || "").slice(0, 10) === day);
@@ -481,6 +486,8 @@ var render = function render() {
           put: !col.terminal
         },
         "ghost-class": "fx-card--ghost",
+        filter: ".fx-card__link",
+        "prevent-on-filter": false,
         disabled: !_vm.canMove
       },
       on: {
@@ -520,9 +527,60 @@ var render = function render() {
         attrs: {
           "aria-label": "No clearance date"
         }
-      })]), _vm._v(" "), _c("div", {
+      })]), _vm._v(" "), col.key === "transit" ? _c("div", {
+        staticClass: "fx-track"
+      }, [_c("div", {
+        staticClass: "fx-track__bar",
+        attrs: {
+          role: "progressbar",
+          "aria-valuenow": _vm.progress(job).step,
+          "aria-valuemin": "0",
+          "aria-valuemax": _vm.progress(job).total,
+          "aria-label": "Shipment progress: " + _vm.progress(job).label
+        }
+      }, _vm._l(_vm.progress(job).total, function (n) {
+        return _c("span", {
+          key: n,
+          staticClass: "fx-track__step",
+          class: {
+            "is-done": n <= _vm.progress(job).step
+          }
+        });
+      }), 0), _vm._v(" "), _c("div", {
+        staticClass: "fx-track__label"
+      }, [_c("span", [_vm._v(_vm._s(_vm.progress(job).label)), _vm.progress(job).code ? [_vm._v(" · " + _vm._s(_vm.progress(job).code))] : _vm._e()], 2), _vm._v(" "), _vm.progress(job).step ? _c("span", [_vm._v(_vm._s(_vm.progress(job).step) + " of " + _vm._s(_vm.progress(job).total))]) : _vm._e()]), _vm._v(" "), _vm.progress(job).discrepancy ? _c("div", {
+        staticClass: "fx-track__warn"
+      }, [_vm._v("⚠ The airline reported a discrepancy")]) : _vm._e()]) : _vm._e(), _vm._v(" "), _c("div", {
+        staticClass: "fx-card__foot"
+      }, [_c("div", {
         staticClass: "fx-card__owners"
-      }, [_c("span", [_vm._v("ops " + _vm._s(job.ops_user ? job.ops_user.name : "—"))]), _vm._v(" "), _c("span", [_vm._v("pricing " + _vm._s(job.pricing_owner ? job.pricing_owner.name : "—"))])])]);
+      }, [_c("span", [_vm._v("ops " + _vm._s(job.ops_user ? job.ops_user.name : "—"))]), _vm._v(" "), _c("span", [_vm._v("pricing " + _vm._s(job.pricing_owner ? job.pricing_owner.name : "—"))])]), _vm._v(" "), _c("div", {
+        staticClass: "fx-card__links"
+      }, [col.key === "transit" && job.awb_number ? _c("router-link", {
+        staticClass: "fx-card__link",
+        attrs: {
+          to: {
+            path: "/message-log",
+            query: {
+              awb: job.awb_number
+            }
+          },
+          title: "Message log for " + job.awb_number,
+          "aria-label": "Open the message log for " + job.awb_number
+        }
+      }, [_vm._v("⌸")]) : _vm._e(), _vm._v(" "), job.thread_id ? _c("router-link", {
+        staticClass: "fx-card__link",
+        attrs: {
+          to: {
+            path: "/inbox",
+            query: {
+              thread: job.thread_id
+            }
+          },
+          title: "Go to the mail",
+          "aria-label": "Go to the mail for this shipment"
+        }
+      }, [_vm._v("✉")]) : _vm._e()], 1)])]);
     }), 0), _vm._v(" "), col.terminal && _vm.doneHidden ? _c("button", {
       staticClass: "fx-board__more",
       on: {
@@ -587,6 +645,86 @@ var render = function render() {
 var staticRenderFns = [];
 render._withStripped = true;
 
+
+/***/ }),
+
+/***/ "./resources/js/src/core/config/cargoMilestones.js":
+/*!*********************************************************!*\
+  !*** ./resources/js/src/core/config/cargoMilestones.js ***!
+  \*********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "MILESTONES": () => (/* binding */ MILESTONES),
+/* harmony export */   "cargoProgress": () => (/* binding */ cargoProgress)
+/* harmony export */ });
+/**
+ * Where an air shipment is, from the airline's Cargo Status messages in the Message Log.
+ *
+ * 🔴 The seven steps are PRD §5.5's cargo tracking feed. The codes under each are the IATA status codes
+ * `config/common-data.php` describes (user, 2026-09-15: "get the details from the message log for every awb").
+ * Which code counts as which step is our reading of those descriptions — GAPS #280.
+ *
+ * ⚠️ The step shown is the FURTHEST one reached, not the latest message: status messages can arrive out of
+ * order, and a shipment does not go backwards.
+ */
+const MILESTONES = [{
+  key: "accepted",
+  label: "Cargo accepted",
+  codes: ["FOH", "RCS", "DPU", "FIW"]
+}, {
+  key: "manifested",
+  label: "Manifested",
+  codes: ["PRE", "MAN", "TRM"]
+}, {
+  key: "departed",
+  label: "Departed",
+  codes: ["DEP"]
+}, {
+  key: "arrived",
+  label: "Arrived at destination",
+  codes: ["ARR", "RCF", "AWR"]
+}, {
+  key: "cleared",
+  label: "Customs cleared",
+  codes: ["CCD"]
+}, {
+  key: "out",
+  label: "Out for delivery",
+  codes: ["NFD", "AWD", "FOW"]
+}, {
+  key: "delivered",
+  label: "Delivered",
+  codes: ["DLV", "DDL"]
+}];
+
+/**
+ * @param {string[]} codes the AWB's Cargo Status codes, oldest first
+ * @returns {{step: number, total: number, label: string, code: string|null, discrepancy: boolean}}
+ *          step 0 means no status has arrived yet
+ */
+function cargoProgress(codes) {
+  const list = (codes || []).map(c => String(c || "").toUpperCase());
+  let step = 0;
+  let code = null;
+  list.forEach(c => {
+    const at = MILESTONES.findIndex(m => m.codes.includes(c)) + 1;
+    if (at >= step && at > 0) {
+      step = at;
+      code = c;
+    }
+  });
+  return {
+    step,
+    total: MILESTONES.length,
+    label: step ? MILESTONES[step - 1].label : "No airline status yet",
+    code,
+    // DIS: the airline reported a handling or documentation discrepancy.
+    discrepancy: list.includes("DIS")
+  };
+}
 
 /***/ }),
 

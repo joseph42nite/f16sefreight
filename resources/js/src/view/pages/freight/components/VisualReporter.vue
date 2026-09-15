@@ -5,7 +5,7 @@
       Element-selection mode. §5.10 — the cursor changes and the hovered element is
       outlined, so the operator can see exactly what they are about to attach.
     -->
-    <div v-if="picking" class="fx-reporter__banner" role="status">
+    <div v-if="picking" ref="banner" class="fx-reporter__banner" role="status">
       Click the thing that is wrong.
       <button class="fx-btn fx-btn--ghost" @click="cancel">Cancel</button>
     </div>
@@ -118,7 +118,7 @@ function selectorFor(el) {
 export default {
   name: "VisualReporter",
   data: () => ({
-    picking: false, form: false, busy: false, sent: false,
+    picking: false, form: false, busy: false, sent: false, capturing: false,
     description: "", error: null, shot: null, shotError: null,
     captured: { route: "", element_selector: "", console_logs: [] },
     /** The help assistant's conversation, when the ticket was raised from it (PRD §5.10). */
@@ -153,12 +153,20 @@ export default {
         this.highlighted = null;
       }
     },
+    /** The picking bar itself (its Cancel button) is not part of the page being reported. */
+    onBanner(e) {
+      return !!this.$refs.banner && this.$refs.banner.contains(e.target);
+    },
     onHover(e) {
+      if (this.onBanner(e)) return;
       if (this.highlighted) this.highlighted.classList.remove("fx-picked");
       this.highlighted = e.target;
       if (this.highlighted && this.highlighted.classList) this.highlighted.classList.add("fx-picked");
     },
     onPick(e) {
+      // 🔴 The listener runs before any button, so without this Cancel was "picked" and took the screenshot.
+      if (this.onBanner(e)) return;
+
       /* Stop the click reaching the app: the operator is pointing at a control, not
          pressing it, and firing it would change the very state being reported. */
       e.preventDefault();
@@ -175,7 +183,11 @@ export default {
       };
 
       // The page is captured BEFORE the form opens, or the screenshot shows the form over it.
-      this.capture().finally(() => { this.form = true; });
+      this.capturing = true;
+      this.capture().finally(() => {
+        if (this.capturing) this.form = true;
+        this.capturing = false;
+      });
     },
     /**
      * html2canvas, loaded ON DEMAND.
@@ -192,7 +204,7 @@ export default {
           scale: 0.5,               // half scale: legible, and a fraction of the bytes
           useCORS: true,
         }))
-        .then((canvas) => { this.shot = canvas.toDataURL("image/jpeg", 0.7); })
+        .then((canvas) => { if (this.capturing) this.shot = canvas.toDataURL("image/jpeg", 0.7); })
         .catch((e) => { this.shotError = "could not capture (" + (e.message || "unknown") + ")"; });
     },
     send() {
@@ -223,6 +235,7 @@ export default {
     cancel() {
       this.teardown();
       this.picking = false;
+      this.capturing = false;
       this.form = false;
       this.sent = false;
       this.description = "";

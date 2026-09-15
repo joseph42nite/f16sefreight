@@ -545,6 +545,7 @@ function selectorFor(el) {
     form: false,
     busy: false,
     sent: false,
+    capturing: false,
     description: "",
     error: null,
     shot: null,
@@ -586,12 +587,20 @@ function selectorFor(el) {
         this.highlighted = null;
       }
     },
+    /** The picking bar itself (its Cancel button) is not part of the page being reported. */
+    onBanner(e) {
+      return !!this.$refs.banner && this.$refs.banner.contains(e.target);
+    },
     onHover(e) {
+      if (this.onBanner(e)) return;
       if (this.highlighted) this.highlighted.classList.remove("fx-picked");
       this.highlighted = e.target;
       if (this.highlighted && this.highlighted.classList) this.highlighted.classList.add("fx-picked");
     },
     onPick(e) {
+      // 🔴 The listener runs before any button, so without this Cancel was "picked" and took the screenshot.
+      if (this.onBanner(e)) return;
+
       /* Stop the click reaching the app: the operator is pointing at a control, not
          pressing it, and firing it would change the very state being reported. */
       e.preventDefault();
@@ -606,8 +615,10 @@ function selectorFor(el) {
       };
 
       // The page is captured BEFORE the form opens, or the screenshot shows the form over it.
+      this.capturing = true;
       this.capture().finally(() => {
-        this.form = true;
+        if (this.capturing) this.form = true;
+        this.capturing = false;
       });
     },
     /**
@@ -625,7 +636,7 @@ function selectorFor(el) {
         // half scale: legible, and a fraction of the bytes
         useCORS: true
       })).then(canvas => {
-        this.shot = canvas.toDataURL("image/jpeg", 0.7);
+        if (this.capturing) this.shot = canvas.toDataURL("image/jpeg", 0.7);
       }).catch(e => {
         this.shotError = "could not capture (" + (e.message || "unknown") + ")";
       });
@@ -656,6 +667,7 @@ function selectorFor(el) {
     cancel() {
       this.teardown();
       this.picking = false;
+      this.capturing = false;
       this.form = false;
       this.sent = false;
       this.description = "";
@@ -1229,6 +1241,7 @@ var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
   return _c("div", [_vm.picking ? _c("div", {
+    ref: "banner",
     staticClass: "fx-reporter__banner",
     attrs: {
       role: "status"

@@ -89,20 +89,21 @@
         </div>
       </section>
 
-      <!-- Accepting shows the acknowledgement mail first, as Claim does in the inbox. -->
-      <div v-if="claimDraft" class="fx-modal" role="dialog" aria-modal="true" aria-label="Accept this enquiry">
+      <!-- A client mail shown before it goes: accepting a pool enquiry, or a completed shipment's "Delivered" update. -->
+      <div v-if="mail" class="fx-modal" role="dialog" aria-modal="true" :aria-label="mail.title">
         <div class="fx-modal__panel">
-          <header class="fx-modal__head"><h2 class="fx-modal__title">Accept and tell the client</h2></header>
+          <header class="fx-modal__head"><h2 class="fx-modal__title">{{ mail.title }}</h2></header>
           <div class="fx-modal__body">
             <ClientUpdateEditor
-              :draft="claimDraft"
+              :draft="mail.draft"
               :busy="busy"
-              send-label="Accept & send"
-              skip-label="Accept without email"
-              @send="claim(accepting, { decision: 'send', ...$event })"
-              @skip="claim(accepting, { decision: 'skip' })"
+              :error="mail.error"
+              :send-label="mail.sendLabel"
+              :skip-label="mail.skipLabel"
+              @send="mail.send($event)"
+              @skip="mail.skip()"
             >
-              <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="claimDraft = null">Cancel</button>
+              <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="mail = null">Cancel</button>
             </ClientUpdateEditor>
           </div>
         </div>
@@ -222,8 +223,17 @@
                     :title="'Message log for ' + job.awb_number"
                     :aria-label="'Open the message log for ' + job.awb_number"
                   >⌸</router-link>
+                  <!-- Completed: the mail opens the waiting "Delivered" update to send or skip, here on the board. -->
+                  <button
+                    v-if="job.thread_id && col.key === 'done' && designation !== 'sales'"
+                    type="button"
+                    class="fx-card__link"
+                    title="Send the delivered mail"
+                    aria-label="Send the delivered mail for this shipment"
+                    @click="openDeliveredMail(job, col)"
+                  >✉</button>
                   <router-link
-                    v-if="job.thread_id"
+                    v-else-if="job.thread_id"
                     :to="{ path: '/inbox', query: { thread: job.thread_id } }"
                     class="fx-card__link"
                     title="Go to the mail"
@@ -385,8 +395,9 @@ const PROCESS = [
     statuses: ["PDF Generated"] },
   { key: "transit", label: "In Transit", entry: "Sent to Airline",
     statuses: ["Sent to Airline", "Airline Confirmed"] },
+  // Only shipments whose "Delivered" mail still waits to be sent or skipped (user, 2026-09-16).
   { key: "done", label: "Completed", entry: "Completed", terminal: true,
-    statuses: ["Completed", "Cancelled"] },
+    statuses: ["Completed", "Cancelled"], params: "&delivered_mail_waiting=1" },
 ];
 
 /**
@@ -404,8 +415,8 @@ export default {
   name: "JobBoard",
   components: { draggable, Figure, FxDrawer, StatusChip, ClientUpdateEditor },
   data: () => ({
-    /* The pool enquiry being accepted, and the acknowledgement shown for it. */
-    accepting: null, claimDraft: null,
+    /* The client mail shown in the pop-up: { title, draft, sendLabel, skipLabel, send(values), skip(), error }. */
+    mail: null,
     columns: emptyColumns(), pool: [], staff: [], operators: [],
     view: "process", loading: true, busy: false, error: null,
     poolCollapsed: false,
@@ -511,7 +522,7 @@ export default {
       const column = this.columns[col.key];
       column.loading = true;
 
-      return ApiService.get(`/jobs?page=${page}&statuses=` + encodeURIComponent((stage ? [stage] : col.statuses).join(",")))
+      return ApiService.get(`/jobs?page=${page}&statuses=` + encodeURIComponent((stage ? [stage] : col.statuses).join(",")) + (col.params || ""))
         .then(({ data }) => {
           column.rows.push(...(data.data || []).filter((j) => !column.rows.some((r) => r.id === j.id)));
           column.page = data.current_page || page;
@@ -595,8 +606,12 @@ export default {
         .then(({ data }) => {
           this.busy = false;
           if (data.draft) {
-            this.accepting = enq;
-            this.claimDraft = data.draft;
+            this.mail = {
+              title: "Accept and tell the client", draft: data.draft, error: null,
+              sendLabel: "Accept & send", skipLabel: "Accept without email",
+              send: (values) => this.claim(enq, { decision: "send", ...values }),
+              skip: () => this.claim(enq, { decision: "skip" }),
+            };
           } else {
             this.claim(enq, null);
           }
@@ -611,6 +626,39 @@ export default {
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.busy = false; });
     },
+    /**
+     * A completed shipment's "Delivered" mail: shown to send as written, edit, or skip. Either way the card leaves the
+     * Completed column. With no mail waiting, the conversation opens instead.
+     */
+    openDeliveredMail(job, col) {
+      this.busy = true;
+      ApiService.get(`/inbox/threads/${job.thread_id}`)
+        .then(({ data }) => {
+          const update = data.thread && data.thread.client_update;
+          if (!update) {
+            this.$router.push({ path: "/inbox", query: { thread: job.thread_id } }).catch(() => {});
+            return;
+          }
+          const decide = (decision, values) => {
+            this.busy = true;
+            ApiService.post(`/inbox/threads/${job.thread_id}/client-update`, { stage: update.stage, decision, ...(values || {}) })
+              .then(() => {
+                this.mail = null;
+                const column = this.columns[col.key];
+                column.rows = column.rows.filter((r) => r.id !== job.id);
+                column.total -= 1;
+              })
+              .catch((e) => { this.mail.error = this.readable(e); })
+              .finally(() => { this.busy = false; });
+          };
+          this.mail = {
+            title: update.title, draft: update, error: null, sendLabel: "Send to client", skipLabel: "Skip",
+            send: (values) => decide("send", values), skip: () => decide("skip"),
+          };
+        })
+        .catch((e) => { this.error = this.readable(e); })
+        .finally(() => { this.busy = false; });
+    },
     /** How long an enquiry has waited: "25 min", "3 h", "2 d". */
     waited(at) {
       const minutes = Math.max(0, Math.floor((Date.now() - new Date(String(at).replace(" ", "T")).getTime()) / 60000));
@@ -621,9 +669,9 @@ export default {
     claim(enq, update) {
       this.busy = true;
       ApiService.post(`/inbox/threads/${enq.thread_id}/claim`, update ? { client_update: update } : {})
-        .then(() => { this.claimDraft = null; this.accepting = null; return this.load(); })
+        .then(() => { this.mail = null; return this.load(); })
         /* 409 is a real outcome, not a failure: someone got there first. */
-        .catch((e) => { this.claimDraft = null; this.error = this.readable(e); this.load(); })
+        .catch((e) => { this.mail = null; this.error = this.readable(e); this.load(); })
         .finally(() => { this.busy = false; });
     },
     /**

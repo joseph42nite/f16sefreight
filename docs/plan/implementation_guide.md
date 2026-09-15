@@ -863,7 +863,7 @@ Also ship the **`destination_keyword`** rule class so lanes are captured at enqu
 
 ### 4.6 `ClientNotificationService`
 
-Prepares consent-gated client updates — claimed, shipment confirmed, draft AWB ready, booked with the airline, departed, delivered (PRD §5.7, user 2026-09-16) — storing the waiting draft on `email_threads.pending_client_notification` and what was sent or skipped on `email_threads.client_updates`. Sent only through `POST /api/inbox/threads/{thread}/client-update` (or the claim pop-up), by the person approving it.
+Prepares consent-gated client updates — claimed, shipment confirmed, draft AWB ready, booked with the airline, departed, arrived with all pieces, delivered (PRD §5.7, user 2026-09-16) — storing the waiting draft on `email_threads.pending_client_notification` and what was sent or skipped on `email_threads.client_updates`. Sent only through `POST /api/inbox/threads/{thread}/client-update` (or the claim pop-up), by the person approving it.
 
 > [!WARNING]
 > **Enforce consent in the service, not the UI.** No email or attachment may leave the system without explicit operator acceptance. Sending the wrong document to a client is unrecoverable.

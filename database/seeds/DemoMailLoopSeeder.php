@@ -30,14 +30,18 @@ class DemoMailLoopSeeder extends Seeder
 {
     /**
      * Client conversations: [client domain, subject, first mail, where it stops, days ago it started].
-     * Stops: new · quoted · lost_price · lost_cancelled · confirmed · draft_awb · booked · departed · delivered
+     * Stops: new · quoted · lost_price · lost_cancelled · confirmed · draft_awb · booked · departed · arrived ·
+     * delivered (completed, the "Delivered" mail still waiting — it shows in the Kanban's Completed column) ·
+     * closed (completed and the mail sent — it does not)
      */
     private const LOOPS = [
         ['contoso.test',   'Rate request: 5 pallets BOM to FRA',   "Hello team,\nPlease quote air freight for 5 pallets, gross weight 820 kg, chargeable 910 kg, BOM to FRA. Cargo ready Thursday.", 'confirmed', 2],
         ['globex.test',    'Air quote 12 cartons MAA to DXB',      "Hi,\nWe have 12 cartons, 240 kgs, MAA - DXB. Please share your best rate and transit time.", 'draft_awb', 4],
         ['northwind.test', 'Pharma shipment 6 pcs BOM to JFK',     "Dear team,\n6 pcs temperature controlled pharma, gross 310 kg, BOM to JFK. Need 2-8 degrees handling.", 'booked', 5],
         ['contoso.test',   'Urgent: 3 pallets DEL to LHR',         "Hello,\nUrgent shipment, 3 pallets, gross 450 kg, DEL to LHR. Can you fly it this week?", 'departed', 6],
+        ['northwind.test', 'Garments 11 cartons BOM to DXB',       "Hello,\n11 cartons garments, gross 260 kg, BOM to DXB. Please quote.", 'arrived', 3],
         ['globex.test',    'Machine parts 9 pcs BOM to SIN',       "Hi,\n9 pcs machine parts, gross 600 kg, chargeable 640 kg, BOM to SIN. Please quote.", 'delivered', 9],
+        ['contoso.test',   'Auto parts 8 pcs BOM to FRA',          "Hello,\n8 pcs auto parts, gross 520 kg, BOM to FRA. Please quote.", 'closed', 12],
         ['northwind.test', 'Quote for 20 cartons BOM to FRA',      "Hello,\n20 cartons textiles, 380 kgs, BOM to FRA. Looking for a rate by tomorrow.", 'lost_price', 7],
         ['contoso.test',   'Rates for 2 pallets BOM to DXB',       "Hi,\nPlease quote 2 pallets, gross 300 kg, BOM to DXB.", 'lost_cancelled', 8],
         ['globex.test',    '4 pcs spare parts BOM to HAM',         "Hello,\n4 pcs spare parts, 95 kg, BOM to HAM. What is your rate?", 'quoted', 9],
@@ -166,18 +170,22 @@ class DemoMailLoopSeeder extends Seeder
             'draft_awb' => fn () => $job->update(['status' => 'PDF Generated']),
             'booked'    => fn () => $job->update(['status' => 'Sent to Airline']),
             'departed'  => fn () => $this->cargoStatus($job->awb_number, 'DEP'),
+            'arrived'   => fn () => $this->cargoStatus($job->awb_number, 'RCF'),
             'delivered' => fn () => $this->cargoStatus($job->awb_number, 'DLV'),
         ];
-        $order = ['confirmed', 'draft_awb', 'booked', 'departed', 'delivered'];
+        $order = ['confirmed', 'draft_awb', 'booked', 'departed', 'arrived', 'delivered'];
+        $last = $stop === 'closed' ? 'delivered' : $stop;
 
-        foreach (array_slice($order, 1, array_search($stop, $order, true)) as $k => $moment) {
+        foreach (array_slice($order, 1, array_search($last, $order, true)) as $k => $moment) {
             $this->sendWaitingUpdate($thread->fresh(), $step(8 + $k * 20), $first['message_id']);
             $moments[$moment]();
         }
 
-        if ($stop === 'delivered') {
-            $this->sendWaitingUpdate($thread->fresh(), $step(100), $first['message_id']);
+        if ($last === 'delivered') {
             $job->update(['status' => 'Completed']);
+            if ($stop === 'closed') {
+                $this->sendWaitingUpdate($thread->fresh(), $step(130), $first['message_id']);
+            }
         }
     }
 

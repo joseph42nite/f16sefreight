@@ -236,6 +236,11 @@ class ClientUpdatesTest extends TestCase
         $this->assertSame('departed', $this->pending($thread)['stage']);
         $this->assertStringContainsString('AWB 176-10000008 has departed from BOM', $this->pending($thread)['body']);
 
+        // Received at the hub with no discrepancy: "arrived with all pieces" (user, 2026-09-16).
+        $status('RCF');
+        $this->assertSame('arrived', $this->pending($thread)['stage']);
+        $this->assertStringContainsString('has reached the hub at FRA and all 4 pieces have been received', $this->pending($thread)['body']);
+
         $status('DLV');
         $this->assertSame('delivered', $this->pending($thread)['stage']);
 
@@ -246,6 +251,23 @@ class ClientUpdatesTest extends TestCase
         $other = $this->thread();
         $this->jobFor($other)->update(['status' => JobStatus::Completed]);
         $this->assertSame('confirmed', $this->pending($other)['stage'], 'no AWB, so no delivered mail');
+    }
+
+    /** ⚠️ A discrepancy (DIS) on the AWB means not all pieces arrived: no "arrived with all pieces" mail. */
+    public function test_a_discrepancy_holds_back_the_arrived_mail(): void
+    {
+        $thread = $this->thread(['assigned_ops_id' => $this->pricing->id]);
+        $this->jobFor($thread, ['awb_number' => '176-10000009']);
+        DB::table('email_threads')->where('id', $thread->id)->update(['pending_client_notification' => null]);
+
+        foreach (['DIS', 'RCF'] as $code) {
+            $this->call('POST', 'http://localhost/api/gln-response', [], [], [], ['CONTENT_TYPE' => 'application/xml'],
+                '<rsm:Response xmlns:rsm="iata:response:3" xmlns:ram="iata:datamodel:3"><rsm:MessageHeaderDocument><ram:ID>m1</ram:ID>'
+                . '<ram:Name>Cargo Status</ram:Name></rsm:MessageHeaderDocument><rsm:BusinessHeaderDocument><ram:ID>17610000009' . $code
+                . '</ram:ID></rsm:BusinessHeaderDocument></rsm:Response>')->assertOk();
+        }
+
+        $this->assertNull($this->pending($thread));
     }
 
     /** 🔴 A first reply typed in Outlook claims the conversation for the pricing member who sent it. */

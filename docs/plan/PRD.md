@@ -1258,6 +1258,7 @@ The moments (user, 2026-09-16 — replaces the earlier Intake / AI Extraction / 
 | Draft AWB ready | Job status `PDF Generated` | Please check and approve, or tell us what to change | **A secure review link, not a file** (made when sent, needs the client's approval, 14 days) |
 | Booked with the airline | Job status `Sent to Airline` (or `Airline Confirmed`) | AWB number, flight and date | The AWB PDF |
 | Departed | The airline's Cargo Status `DEP` | AWB number, from, flight | — |
+| Arrived with all pieces | Cargo Status `RCF` (received from the flight at the hub), unless the airline reported a discrepancy (`DIS`) on the AWB | AWB number, hub, all pieces received | — |
 | Delivered | Cargo Status `DLV` / `DDL`, or job status `Completed` | AWB number, at destination | — |
 
 The job number is internal and is never in these mails. Wording is a fixed template the person can edit. Each moment is prepared once per conversation; a newer moment replaces a draft nobody acted on. A waiting update shows as a card on the conversation (**Send to client** / **Skip**) and a pinned bell for the conversation's owner. Endpoints: `GET /api/inbox/threads/{thread}/client-update/preview?stage=`, `POST /api/inbox/threads/{thread}/client-update`, and `client_update` on `POST …/claim`.

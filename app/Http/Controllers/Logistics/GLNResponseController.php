@@ -82,15 +82,23 @@ class GLNResponseController extends Controller
     }
 
     /**
-     * The airline says the cargo departed or was delivered: prepare that update for the client, to be approved on the
-     * conversation (user, 2026-09-16). Delivered can also come from the job being completed; it is prepared once.
+     * The airline says the cargo departed, reached the hub or was delivered: prepare that update for the client, to be
+     * approved on the conversation (user, 2026-09-16). Delivered can also come from the job being completed; each is
+     * prepared once.
      */
     private function prepareClientUpdate(string $awbNumber, string $code): void
     {
-        $stage = ['DEP' => 'departed', 'DLV' => 'delivered', 'DDL' => 'delivered'][$code] ?? null;
+        // RCF — received from the flight at the hub (user, 2026-09-16: "reached hub with all the pieces").
+        $stage = ['DEP' => 'departed', 'RCF' => 'arrived', 'DLV' => 'delivered', 'DDL' => 'delivered'][$code] ?? null;
         $number = \App\Support\AwbNumber::normalise($awbNumber);
 
         if ($stage === null || $number === null) {
+            return;
+        }
+
+        // ⚠️ "All pieces" is only true without a discrepancy: a DIS on the AWB (short-landed, damaged) holds it back.
+        if ($stage === 'arrived' && StatusReponse::where('condition_code', 'DIS')
+            ->whereRaw("REPLACE(REPLACE(business_id, '-', ''), ' ', '') = ?", [str_replace('-', '', $number)])->exists()) {
             return;
         }
 

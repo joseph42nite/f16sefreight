@@ -33,6 +33,7 @@ class ClientNotificationService
         'draft_awb' => 'Draft AWB ready',
         'booked'    => 'Booked with the airline',
         'departed'  => 'Departed',
+        'arrived'   => 'Arrived with all pieces',
         'delivered' => 'Delivered',
     ];
 
@@ -54,8 +55,8 @@ class ClientNotificationService
         $subject = (string) EmailMessage::where('thread_key', $thread->thread_key)->orderBy('received_at')->value('subject');
         $f = $this->facts($thread);
 
-        // Booked, departed and delivered are told by AWB number; without one there is nothing true to say.
-        if ($f['awb'] === '' && in_array($stage, ['booked', 'departed', 'delivered'], true)) {
+        // Booked, departed, arrived and delivered are told by AWB number; without one there is nothing true to say.
+        if ($f['awb'] === '' && in_array($stage, ['booked', 'departed', 'arrived', 'delivered'], true)) {
             return null;
         }
 
@@ -65,6 +66,7 @@ class ClientNotificationService
             'draft_awb' => "The draft air waybill for your shipment{$f['lane']} is ready. Please check it and approve it, or tell us what to change, here:\n" . self::REVIEW_LINK . "\n\nThe link stays open for 14 days.",
             'booked'    => "Your shipment{$f['lane']} is booked with the airline under AWB {$f['awb']}{$f['flight']}." . ($f['pdf'] ? ' The air waybill is attached.' : ''),
             'departed'  => "Your shipment under AWB {$f['awb']} has departed{$f['from']}{$f['flight']}. We will let you know when it is delivered.",
+            'arrived'   => "Your shipment under AWB {$f['awb']} has reached the hub{$f['to']} and all {$f['pieces']}pieces have been received. We will let you know when it is delivered.",
             'delivered' => "Your shipment under AWB {$f['awb']} has been delivered{$f['to']}. Thank you for shipping with us.",
         };
 
@@ -254,6 +256,7 @@ class ClientNotificationService
             'lane' => $origin && $destination ? " from {$origin} to {$destination}" : '',
             'cargo' => $pieces && $weight ? ' (' . $pieces . ' pcs, ' . rtrim(rtrim(number_format((float) $weight, 2, '.', ''), '0'), '.') . ' kg)' : '',
             'awb' => $job?->awb_number ?? '',
+            'pieces' => $pieces ? $pieces . ' ' : '',
             'flight' => filled($waybill->flight ?? null) ? ' on flight ' . $waybill->flight . ($date ? ' on ' . $date : '') : '',
             // The AWB PDF can be attached: it is filed, or there is a waybill to make it from when the mail is sent.
             'pdf' => $waybill !== null || ($job && JobDocument::where('job_id', $job->id)->where('document_type', 'awb')->exists()),

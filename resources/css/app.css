@@ -723,7 +723,7 @@ body.fx-split .fx-rail__label { display: none; }
 .fx-card__foot .fx-card__owners { flex: 1 1 auto; min-width: 0; }
 .fx-card__links { display: flex; gap: var(--space-1); flex-shrink: 0; }
 /* 32 px targets (ui_ux_guide §5.5), and a pointer rather than the card's grab cursor. */
-.fx-card__link { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+.fx-card__link { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: none; border: 0;
                  border-radius: var(--radius-sm); color: var(--text-secondary); text-decoration: none; font-size: 1rem; cursor: pointer; }
 .fx-card__link:hover { background: var(--bg-sunken); color: var(--text-primary); text-decoration: none; }
 

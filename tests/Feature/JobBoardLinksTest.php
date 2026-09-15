@@ -276,4 +276,21 @@ class JobBoardLinksTest extends TestCase
 
         $this->assertSame([], $this->pool($users['pricing']));
     }
+
+    /** 🔴 The Completed column lists only shipments whose "Delivered" mail still waits (user, 2026-09-16). */
+    public function test_the_completed_column_lists_only_shipments_with_the_delivered_mail_waiting(): void
+    {
+        [$waiting, $waitingEnquiry] = $this->job('Completed', '176-20000001');
+        [$sent, $sentEnquiry] = $this->job('Completed', '176-20000002');
+        $this->thread(['job_id' => $waiting, 'enquiry_id' => $waitingEnquiry, 'classification' => 'customer_enquiry',
+            'pending_client_notification' => json_encode(['stage' => 'delivered', 'title' => 'Delivered'])]);
+        $this->thread(['job_id' => $sent, 'enquiry_id' => $sentEnquiry, 'classification' => 'customer_enquiry',
+            'client_updates' => json_encode(['delivered' => ['decision' => 'sent']])]);
+
+        $ids = collect($this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->operator), 'Accept' => 'application/json',
+        ])->getJson('http://focusair.localhost/api/jobs?statuses=Completed,Cancelled&delivered_mail_waiting=1')->assertOk()->json('data'))->pluck('id')->all();
+
+        $this->assertSame([$waiting], $ids);
+    }
 }

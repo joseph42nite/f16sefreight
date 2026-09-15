@@ -66,12 +66,15 @@ const PROCESS = [{
   label: "In Transit",
   entry: "Sent to Airline",
   statuses: ["Sent to Airline", "Airline Confirmed"]
-}, {
+},
+// Only shipments whose "Delivered" mail still waits to be sent or skipped (user, 2026-09-16).
+{
   key: "done",
   label: "Completed",
   entry: "Completed",
   terminal: true,
-  statuses: ["Completed", "Cancelled"]
+  statuses: ["Completed", "Cancelled"],
+  params: "&delivered_mail_waiting=1"
 }];
 
 /**
@@ -97,9 +100,8 @@ const FILTER_KEY = "f16s_kanban_filters";
     ClientUpdateEditor: _view_pages_freight_components_ClientUpdateEditor_vue__WEBPACK_IMPORTED_MODULE_6__["default"]
   },
   data: () => ({
-    /* The pool enquiry being accepted, and the acknowledgement shown for it. */
-    accepting: null,
-    claimDraft: null,
+    /* The client mail shown in the pop-up: { title, draft, sendLabel, skipLabel, send(values), skip(), error }. */
+    mail: null,
     columns: emptyColumns(),
     pool: [],
     staff: [],
@@ -223,7 +225,7 @@ const FILTER_KEY = "f16s_kanban_filters";
       if (stage && col.statuses.indexOf(stage) === -1) return Promise.resolve();
       const column = this.columns[col.key];
       column.loading = true;
-      return _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get(`/jobs?page=${page}&statuses=` + encodeURIComponent((stage ? [stage] : col.statuses).join(","))).then(({
+      return _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get(`/jobs?page=${page}&statuses=` + encodeURIComponent((stage ? [stage] : col.statuses).join(",")) + (col.params || "")).then(({
         data
       }) => {
         column.rows.push(...(data.data || []).filter(j => !column.rows.some(r => r.id === j.id)));
@@ -330,8 +332,19 @@ const FILTER_KEY = "f16s_kanban_filters";
       }) => {
         this.busy = false;
         if (data.draft) {
-          this.accepting = enq;
-          this.claimDraft = data.draft;
+          this.mail = {
+            title: "Accept and tell the client",
+            draft: data.draft,
+            error: null,
+            sendLabel: "Accept & send",
+            skipLabel: "Accept without email",
+            send: values => this.claim(enq, _objectSpread({
+              decision: "send"
+            }, values)),
+            skip: () => this.claim(enq, {
+              decision: "skip"
+            })
+          };
         } else {
           this.claim(enq, null);
         }
@@ -351,6 +364,56 @@ const FILTER_KEY = "f16s_kanban_filters";
         this.busy = false;
       });
     },
+    /**
+     * A completed shipment's "Delivered" mail: shown to send as written, edit, or skip. Either way the card leaves the
+     * Completed column. With no mail waiting, the conversation opens instead.
+     */
+    openDeliveredMail(job, col) {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get(`/inbox/threads/${job.thread_id}`).then(({
+        data
+      }) => {
+        const update = data.thread && data.thread.client_update;
+        if (!update) {
+          this.$router.push({
+            path: "/inbox",
+            query: {
+              thread: job.thread_id
+            }
+          }).catch(() => {});
+          return;
+        }
+        const decide = (decision, values) => {
+          this.busy = true;
+          _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post(`/inbox/threads/${job.thread_id}/client-update`, _objectSpread({
+            stage: update.stage,
+            decision
+          }, values || {})).then(() => {
+            this.mail = null;
+            const column = this.columns[col.key];
+            column.rows = column.rows.filter(r => r.id !== job.id);
+            column.total -= 1;
+          }).catch(e => {
+            this.mail.error = this.readable(e);
+          }).finally(() => {
+            this.busy = false;
+          });
+        };
+        this.mail = {
+          title: update.title,
+          draft: update,
+          error: null,
+          sendLabel: "Send to client",
+          skipLabel: "Skip",
+          send: values => decide("send", values),
+          skip: () => decide("skip")
+        };
+      }).catch(e => {
+        this.error = this.readable(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
     /** How long an enquiry has waited: "25 min", "3 h", "2 d". */
     waited(at) {
       const minutes = Math.max(0, Math.floor((Date.now() - new Date(String(at).replace(" ", "T")).getTime()) / 60000));
@@ -363,12 +426,11 @@ const FILTER_KEY = "f16s_kanban_filters";
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post(`/inbox/threads/${enq.thread_id}/claim`, update ? {
         client_update: update
       } : {}).then(() => {
-        this.claimDraft = null;
-        this.accepting = null;
+        this.mail = null;
         return this.load();
       })
       /* 409 is a real outcome, not a failure: someone got there first. */.catch(e => {
-        this.claimDraft = null;
+        this.mail = null;
         this.error = this.readable(e);
         this.load();
       }).finally(() => {
@@ -423,11 +485,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "render": () => (/* binding */ render),
 /* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
 /* harmony export */ });
-function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
@@ -589,34 +646,35 @@ var render = function render() {
         }
       }
     }, [_vm._v("Decline")])]) : _vm._e()]);
-  })], 2) : _vm._e()]), _vm._v(" "), _vm.claimDraft ? _c("div", {
+  })], 2) : _vm._e()]), _vm._v(" "), _vm.mail ? _c("div", {
     staticClass: "fx-modal",
     attrs: {
       role: "dialog",
       "aria-modal": "true",
-      "aria-label": "Accept this enquiry"
+      "aria-label": _vm.mail.title
     }
   }, [_c("div", {
     staticClass: "fx-modal__panel"
-  }, [_vm._m(0), _vm._v(" "), _c("div", {
+  }, [_c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title"
+  }, [_vm._v(_vm._s(_vm.mail.title))])]), _vm._v(" "), _c("div", {
     staticClass: "fx-modal__body"
   }, [_c("ClientUpdateEditor", {
     attrs: {
-      draft: _vm.claimDraft,
+      draft: _vm.mail.draft,
       busy: _vm.busy,
-      "send-label": "Accept & send",
-      "skip-label": "Accept without email"
+      error: _vm.mail.error,
+      "send-label": _vm.mail.sendLabel,
+      "skip-label": _vm.mail.skipLabel
     },
     on: {
       send: function ($event) {
-        return _vm.claim(_vm.accepting, _objectSpread({
-          decision: "send"
-        }, $event));
+        return _vm.mail.send($event);
       },
       skip: function ($event) {
-        return _vm.claim(_vm.accepting, {
-          decision: "skip"
-        });
+        return _vm.mail.skip();
       }
     }
   }, [_c("button", {
@@ -626,7 +684,7 @@ var render = function render() {
     },
     on: {
       click: function ($event) {
-        _vm.claimDraft = null;
+        _vm.mail = null;
       }
     }
   }, [_vm._v("Cancel")])])], 1)])]) : _vm._e(), _vm._v(" "), _vm.view === "process" ? _c("div", {
@@ -742,7 +800,19 @@ var render = function render() {
           title: "Message log for " + job.awb_number,
           "aria-label": "Open the message log for " + job.awb_number
         }
-      }, [_vm._v("⌸")]) : _vm._e(), _vm._v(" "), job.thread_id ? _c("router-link", {
+      }, [_vm._v("⌸")]) : _vm._e(), _vm._v(" "), job.thread_id && col.key === "done" && _vm.designation !== "sales" ? _c("button", {
+        staticClass: "fx-card__link",
+        attrs: {
+          type: "button",
+          title: "Send the delivered mail",
+          "aria-label": "Send the delivered mail for this shipment"
+        },
+        on: {
+          click: function ($event) {
+            return _vm.openDeliveredMail(job, col);
+          }
+        }
+      }, [_vm._v("✉")]) : job.thread_id ? _c("router-link", {
         staticClass: "fx-card__link",
         attrs: {
           to: {
@@ -890,15 +960,7 @@ var render = function render() {
     }, [_vm._v(_vm._s(s.at ? _vm.when(s.at) : ""))])]);
   }), 0)]] : _vm._e()], 2)], 2);
 };
-var staticRenderFns = [function () {
-  var _vm = this,
-    _c = _vm._self._c;
-  return _c("header", {
-    staticClass: "fx-modal__head"
-  }, [_c("h2", {
-    staticClass: "fx-modal__title"
-  }, [_vm._v("Accept and tell the client")])]);
-}];
+var staticRenderFns = [];
 render._withStripped = true;
 
 

@@ -77,6 +77,8 @@ return [
         'fast_providers'         => env('OPENROUTER_FAST_PROVIDERS', 'ModelRun'),
         // Seconds per try for a help answer: economy, fast, economy by throughput.
         'help_timeouts'          => env('OPENROUTER_HELP_TIMEOUTS', '6,6,8'),
+        // A client email is a longer answer than a help reply, so each try gets longer.
+        'draft_timeouts'         => env('OPENROUTER_DRAFT_TIMEOUTS', '12,12,20'),
         'embedding_timeout'      => (int) env('OPENROUTER_EMBEDDING_TIMEOUT', 8),
     ],
 

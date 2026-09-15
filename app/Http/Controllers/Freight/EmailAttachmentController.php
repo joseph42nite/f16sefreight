@@ -26,6 +26,10 @@ class EmailAttachmentController extends Controller
     {
         $this->authorize('viewInbox');
 
+        // A file is as private as the conversation it came on.
+        $thread = \App\EmailThread::where('thread_key', \App\EmailMessage::whereKey($attachment->email_message_id)->value('thread_key'))->first();
+        abort_unless($thread && $thread->isVisibleTo(auth()->user()), 404);
+
         try {
             $bytes = $store->bytes($attachment);
         } catch (AttachmentException $e) {

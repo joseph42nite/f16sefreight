@@ -385,6 +385,11 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/sales/charts', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'charts']);
     Route::get('/sales/actions', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'actions']);
     Route::get('/sales/accounts', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'accounts']);
+    // Client emails: findings from the client's own trends, drafted by Gemma, sent by the rep (PRD §7.3.7).
+    Route::get('/sales/outreach', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'index']);
+    Route::post('/sales/outreach/{id}/draft', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'draft'])->whereNumber('id');
+    Route::post('/sales/outreach/{id}/send', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'send'])->whereNumber('id');
+    Route::post('/sales/outreach/{id}/dismiss', [\App\Http\Controllers\Freight\SalesOutreachController::class, 'dismiss'])->whereNumber('id');
 
     // ── The Job Cost Sheet (§6.7). Tactical, because a cost sheet is operational
     // pricing work — the LEDGER it eventually feeds is what needs Command.

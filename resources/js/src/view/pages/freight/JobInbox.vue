@@ -75,8 +75,9 @@
           </div>
 
           <div class="fx-convo__actions">
+            <!-- Sales read and answer; they do not take shipments on. -->
             <button
-              v-if="!active.assigned_ops"
+              v-if="!active.assigned_ops && designation !== 'sales'"
               class="fx-btn"
               :disabled="busy"
               data-help="claim-thread"
@@ -111,7 +112,7 @@
                  classification unlocks the work, for anyone who opens it. -->
             <button v-if="workspaceTabs.length" class="fx-btn" data-help="analyze-pdf" @click="openExtraction">Analyze PDF</button>
 
-            <button class="fx-btn fx-btn--primary" data-help="open-workspace" @click="openWorkspace">Open workspace</button>
+            <button v-if="designation !== 'sales'" class="fx-btn fx-btn--primary" data-help="open-workspace" @click="openWorkspace">Open workspace</button>
           </div>
         </header>
 
@@ -726,7 +727,8 @@ export default {
     workspaceTabs() {
       const isEnquiry = this.active && this.active.classification === "customer_enquiry";
 
-      if (!isEnquiry) return [];
+      // Extraction and the cost sheet are shipment work; sales has neither.
+      if (!isEnquiry || this.designation === "sales") return [];
 
       // 🔴 Mirrors the server's `viewCostSheet` — "operations never touches money"
       // (PRD §2.3.4). The tab was shown to them anyway and answered 403 on click: a

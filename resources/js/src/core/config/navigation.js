@@ -24,7 +24,8 @@ export const LANDING_ROUTE = {
 
 export const NAV_ITEMS = [
   // ── Shared operational surface ────────────────────────────────────────────
-  { path: "/inbox", label: "Inbox", icon: "envelope", designations: ["pricing", "operations"], minTier: "tactical" },
+  // Sales see only the mail they are on (user, 2026-09-15).
+  { path: "/inbox", label: "Inbox", icon: "envelope", designations: ["pricing", "operations", "sales"], minTier: "tactical" },
   { path: "/kanban", label: "Kanban", icon: "columns", designations: ["pricing", "operations"], minTier: "tactical" },
   { path: "/enquiries", label: "Enquiries", icon: "list-ul", designations: ["pricing"], minTier: "tactical" },
 

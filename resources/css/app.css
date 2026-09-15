@@ -477,6 +477,15 @@ body {
 /* The ranked worklist. Numbered, because rank IS the information — an unordered
    list of "actions" is a to-do list, and the whole point is which one comes first. */
 .fx-actions { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+
+/* Client emails on the Sales page: one card per suggestion. */
+.fx-outreach__intro { margin: 0 0 var(--space-3); font-size: .8125rem; }
+.fx-outreach { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+.fx-outreach__card { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.fx-outreach__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.fx-outreach__why { margin: 0; font-size: .8125rem; color: var(--text-secondary); flex: 1; }
+.fx-outreach__actions { display: flex; gap: var(--space-2); }
+.fx-outreach__note { font-size: .75rem; margin: 0 0 var(--space-2); }
 .fx-action { background: var(--bg-surface); border: 1px solid var(--border);
              border-left: 3px solid var(--portal-accent);
              border-radius: var(--radius-sm); padding: var(--space-3); }

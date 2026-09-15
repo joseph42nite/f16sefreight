@@ -106,6 +106,8 @@ class FreightDemoSeeder extends Seeder
 
         $this->seedPlatformStaff();
         $this->syncSequenceCounters();
+        // The Sales page reads the nightly rollup; run it once so the demo has figures and client emails.
+        $this->command->call('sales:compute-snapshots');
         // The files the demo mails say are attached (needs ClamAV: `docker compose up -d clamav`).
         $this->call(DemoMailAttachmentsSeeder::class);
         $this->summary();
@@ -314,6 +316,7 @@ class FreightDemoSeeder extends Seeder
 
         $users = $this->seedUsers($company, $branches->first(), $tenant['code']);
         $customers = $this->seedCustomers($company, $branches->first(), $users['sales']);
+        $this->seedContacts($customers);
 
 
         $this->seedPeriod($branches->first());
@@ -597,6 +600,24 @@ class FreightDemoSeeder extends Seeder
     }
 
     /**
+     * Who a client email goes to: a primary contact, and one address someone chose to copy (PRD §7.3.7 —
+     * being copied is always a human decision, so only the seeder's "accounts" contact is marked for it).
+     */
+    private function seedContacts($customers): void
+    {
+        foreach ($customers as $customer) {
+            foreach ([['shipping', 'Shipping desk', true, false], ['accounts', 'Accounts team', false, true]] as [$box, $name, $primary, $cc]) {
+                DB::table('customer_contacts')->insert([
+                    'company_id' => $customer->company_id, 'customer_id' => $customer->id,
+                    'email' => "{$box}@{$customer->email_domain}", 'name' => $name,
+                    'source' => 'manual', 'is_primary' => $primary, 'include_in_cc' => $cc,
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
+    /**
      * The airline's Cargo Status codes the Kanban reads, and their order along the usual spine.
      */
     private const DELIVERED_SPINE = ['RCS', 'MAN', 'DEP', 'ARR', 'RCF', 'NFD', 'AWD', 'CCD', 'DLV'];
@@ -621,7 +642,8 @@ class FreightDemoSeeder extends Seeder
 
         foreach ($plan as $n => [$status, $codes]) {
             [$origin, $dest] = self::AIR_LANES[$n % count(self::AIR_LANES)];
-            $customer = $customers[$n % $customers->count()];
+            // ⚠️ Never $customers[3]: that client's 26-day silence is the churn example (seedTrailingHistory).
+            $customer = $customers[$n % 3];
             $sent = now()->subDays(4 - min($n, 3))->subHours(6);
             // A number band of their own (400+), apart from the lifecycle (1–11) and the history (500+).
             $seq = 401 + $n;
@@ -1089,7 +1111,9 @@ class FreightDemoSeeder extends Seeder
                     'to' => $inbound ? $mailboxAddress : $from,
                     // A real freight thread carries more than two parties. This is what
                     // makes Reply All meaningfully different from Reply on the demo data.
-                    'cc' => $inbound ? 'broker@' . explode('@', $from)[1] : null,
+                    // The client copies their account manager on enquiries — that is the mail sales sees.
+                'cc' => $inbound ? 'broker@' . explode('@', $from)[1]
+                    . ($classification === 'customer_enquiry' ? ', ' . $users['sales']->email : '') : null,
                     'subject' => $m === 0 ? $subject : 'RE: ' . $subject,
                     'body_snippet' => $inbound
                         ? 'Please quote for the shipment described below. Dimensions and packing list attached.'

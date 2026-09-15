@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Sales\ClientFindings;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -151,6 +152,7 @@ class ComputeSalesSnapshots extends Command
             ->get();
 
         $tonnage = $this->tonnage($branchIds, $customerId, $mode);
+        $momentum = $this->momentum($branchIds, $customerId, $mode);
         $funnel = $this->funnel($enquiries);
         $money = $this->money($invoices, $customer, $date);
 
@@ -164,7 +166,7 @@ class ComputeSalesSnapshots extends Command
                 'enquiry_count_mtd' => $enquiries->filter(
                     fn ($e) => Carbon::parse($e->created_at)->greaterThanOrEqualTo($date->copy()->startOfMonth())
                 )->count(),
-                'momentum' => $this->momentum($branchIds, $customerId, $mode),
+                'momentum' => $momentum,
                 'lane_hhi' => $this->laneHhi($branchIds, $customerId, $mode),
                 'last_computed_at' => now(),
                 'updated_at' => now(),
@@ -175,6 +177,43 @@ class ComputeSalesSnapshots extends Command
         $this->cadence($agentId, $branchIds, $customerId, $mode, $shipmentDays);
         $this->laneStats($agentId, $branchIds, $customerId, $mode, $date);
         $this->rankActions($agentId, $customerId, $mode, $customer, $funnel, $money);
+        $this->clientOutreach($agentId, $branchIds, $customerId, $mode, $customer, $momentum, $funnel);
+    }
+
+    /**
+     * Client emails worth writing (user, 2026-09-15; PRD §7.3.7) — `audience = 'client'` rows the rep drafts
+     * and sends from the Sales page. Re-derived each run like the internal worklist, EXCEPT a finding the rep
+     * has already drafted: that draft is theirs and is kept until they send or dismiss it.
+     */
+    private function clientOutreach(int $agentId, array $branchIds, int $customerId, string $mode, object $customer, ?float $momentum, array $funnel): void
+    {
+        DB::table('sales_action_queue')
+            ->where('customer_id', $customerId)->where('transport_mode', $mode)
+            ->where('audience', 'client')->where('status', 'open')->whereNull('draft_generated_at')
+            ->delete();
+
+        $drafted = DB::table('sales_action_queue')
+            ->where('customer_id', $customerId)->where('transport_mode', $mode)
+            ->where('audience', 'client')->where('status', 'open')
+            ->pluck('action_type')->all();
+
+        $profile = DB::table('customer_cadence_profiles')
+            ->where('customer_id', $customerId)->where('transport_mode', $mode)->first();
+
+        foreach (app(ClientFindings::class)->for($branchIds, $customerId, $mode, $profile, $momentum, $funnel) as $finding) {
+            if (in_array($finding['action_type'], $drafted, true)) {
+                continue;
+            }
+
+            DB::table('sales_action_queue')->insert([
+                'agent_id' => $agentId, 'customer_id' => $customerId, 'transport_mode' => $mode,
+                'sales_id' => $customer->sales_id, 'audience' => 'client',
+                'action_type' => $finding['action_type'], 'priority_score' => $finding['priority_score'],
+                'impact_value' => null, 'fact_packet' => json_encode($finding['facts']),
+                'status' => 'open', 'expires_at' => now()->addDays(14),
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
     }
 
     /**

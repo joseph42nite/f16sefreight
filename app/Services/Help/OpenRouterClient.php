@@ -71,11 +71,11 @@ class OpenRouterClient
      *
      * @return array{data: array, usage: array}
      */
-    public function json(array $messages, array $schema, string $name): array
+    public function json(array $messages, array $schema, string $name, string $timeouts = 'help_timeouts'): array
     {
         $reason = 'the model is not reachable';
         $started = microtime(true);
-        $timeouts = array_map('intval', explode(',', (string) config('services.openrouter.help_timeouts')));
+        $timeouts = array_map('intval', explode(',', (string) config('services.openrouter.' . $timeouts)));
 
         foreach (self::TIERS as $i => [$tier, $sort]) {
             $provider = ['require_parameters' => true, 'data_collection' => 'deny'];

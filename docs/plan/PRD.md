@@ -2089,6 +2089,8 @@ Cc:  customer_contacts WHERE customer_id = ?
 
 > Tactical says *the branch's* FRA lane is softening. Command says *which three accounts* caused it and what to say to them.
 
+> **Client emails on both tiers (owner's decision, 2026-09-15).** Every tier saves the client's domain (`customers.email_domain`), so the rep's client emails (§7.3.7) are suggested on Tactical too. Tactical still never shows the client's name: the card shows the domain and the draft says `[Company name]`, which the rep writes in — the email cannot be sent until they do. Sales also get an **Inbox** of the mail they are on (from, to, cc or bcc them); they read and reply, and do not classify-to-convert, claim or open the workspace.
+
 #### 7.3.9 Build sequence
 
 1. **Close the recording gaps first** (§7.3.3) — trailing history cannot be reconstructed later.

@@ -341,7 +341,7 @@ const router = new Router({
           path: "inbox",
           name: "Inbox",
           component: () => import("@/view/pages/freight/JobInbox"),
-          meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
+          meta: { userType: 'user', designations: ['pricing', 'operations', 'sales'], minTier: 'tactical' }
         },
         {
           // §4.2 — connecting the mailbox the Inbox reads from. Same tier gate as the
@@ -350,7 +350,7 @@ const router = new Router({
           path: "mailboxes",
           name: "Mailboxes",
           component: () => import("@/view/pages/freight/MailboxSettings"),
-          meta: { userType: 'user', designations: ['pricing', 'operations'], minTier: 'tactical' }
+          meta: { userType: 'user', designations: ['pricing', 'operations', 'sales'], minTier: 'tactical' }
         },
         {
           path: "enquiries",

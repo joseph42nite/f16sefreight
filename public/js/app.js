@@ -8682,11 +8682,12 @@ const LANDING_ROUTE = {
 };
 const NAV_ITEMS = [
 // ── Shared operational surface ────────────────────────────────────────────
+// Sales see only the mail they are on (user, 2026-09-15).
 {
   path: "/inbox",
   label: "Inbox",
   icon: "envelope",
-  designations: ["pricing", "operations"],
+  designations: ["pricing", "operations", "sales"],
   minTier: "tactical"
 }, {
   path: "/kanban",
@@ -10569,7 +10570,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_JobInbox_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/JobInbox */ "./resources/js/src/view/pages/freight/JobInbox.vue")),
       meta: {
         userType: 'user',
-        designations: ['pricing', 'operations'],
+        designations: ['pricing', 'operations', 'sales'],
         minTier: 'tactical'
       }
     }, {
@@ -10581,7 +10582,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_MailboxSettings_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/MailboxSettings */ "./resources/js/src/view/pages/freight/MailboxSettings.vue")),
       meta: {
         userType: 'user',
-        designations: ['pricing', 'operations'],
+        designations: ['pricing', 'operations', 'sales'],
         minTier: 'tactical'
       }
     }, {

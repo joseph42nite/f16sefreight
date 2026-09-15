@@ -15,18 +15,50 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
 /* harmony import */ var _view_pages_freight_components_FxChart_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/FxChart.vue */ "./resources/js/src/view/pages/freight/components/FxChart.vue");
+/* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
+/* harmony import */ var _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/view/pages/freight/components/MailEditor.vue */ "./resources/js/src/view/pages/freight/components/MailEditor.vue");
 
 
 
 
+
+
+
+/** What each suggested email is about, in the rep's words. */
+const TYPE_LABELS = {
+  client_reactivation: "Stopped shipping",
+  client_volume_drop: "Volume down",
+  client_volume_growth: "Volume up",
+  client_rate_review: "Lost on price",
+  client_new_lanes: "New lanes to offer"
+};
+const list = text => String(text || "").split(",").map(s => s.trim()).filter(Boolean);
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "SalesDashboard",
   components: {
     Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
     StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
-    FxChart: _view_pages_freight_components_FxChart_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
+    FxChart: _view_pages_freight_components_FxChart_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
+    FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
+    MailEditor: _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_5__["default"]
   },
   data: () => ({
+    emails: [],
+    hasMailbox: true,
+    showsClientNames: false,
+    outreachLoaded: false,
+    composing: null,
+    form: {
+      to: "",
+      cc: "",
+      subject: "",
+      body: ""
+    },
+    drafting: false,
+    draftSeconds: 0,
+    writtenBy: null,
+    sending: false,
+    sendError: null,
     loading: true,
     error: null,
     scope: null,
@@ -162,6 +194,7 @@ __webpack_require__.r(__webpack_exports__);
   },
   created() {
     this.loadCharts();
+    this.loadOutreach();
     Promise.all([_core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/dashboard"),
     // The actions call is allowed to fail without taking the page down — a ranked
     // worklist is valuable, but it is not the reason the page exists.
@@ -184,6 +217,108 @@ __webpack_require__.r(__webpack_exports__);
     });
   },
   methods: {
+    loadOutreach() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/outreach").then(({
+        data
+      }) => {
+        this.emails = data.emails || [];
+        this.hasMailbox = data.has_mailbox;
+        this.showsClientNames = data.shows_client_names;
+      })
+      // Suggestions failing must not take the dashboard down with them.
+      .catch(() => {
+        this.emails = [];
+      }).finally(() => {
+        this.outreachLoaded = true;
+      });
+    },
+    typeLabel(type) {
+      return TYPE_LABELS[type] || type;
+    },
+    /** Why this email is suggested, from the finding's own figures. */
+    summary(e) {
+      const f = e.facts || {};
+      const lanes = xs => (xs || []).join(", ");
+      switch (e.type) {
+        case "client_reactivation":
+          return `Usually ships every ${f.usually_ships_every_days} days — ${f.days_since_last_shipment} days since the last shipment.`;
+        case "client_volume_drop":
+          return `Volume ${Math.abs(f.volume_change_percent)}% below their yearly average over the last 13 weeks.`;
+        case "client_volume_growth":
+          return `Volume up ${f.volume_change_percent}% on their yearly average over the last 13 weeks.`;
+        case "client_rate_review":
+          return `${f.quotes_lost_on_price_last_year} quotes on ${f.lane} lost on price in the last year.`;
+        case "client_new_lanes":
+          return `Ships ${lanes(f.usual_lanes)} with us; we also run ${lanes(f.lanes_we_run)}.`;
+        default:
+          return "";
+      }
+    },
+    openEmail(e) {
+      this.composing = e;
+      this.sendError = null;
+      if (e.subject) {
+        this.fill(e);
+      } else {
+        this.draftEmail(e);
+      }
+    },
+    fill(e) {
+      this.form = {
+        to: e.to.join(", "),
+        cc: e.cc.join(", "),
+        subject: e.subject || "",
+        body: e.body || ""
+      };
+    },
+    draftEmail(e) {
+      this.drafting = true;
+      this.draftSeconds = 0;
+      this.sendError = null;
+      const ticker = setInterval(() => {
+        this.draftSeconds += 1;
+      }, 1000);
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/sales/outreach/${e.id}/draft`, {}).then(({
+        data
+      }) => {
+        Object.assign(e, data);
+        this.writtenBy = data.written_by;
+        if (this.composing === e) this.fill(e);
+      }).catch(err => {
+        this.sendError = this.readable(err, "Could not write the draft. Try again.");
+      }).finally(() => {
+        clearInterval(ticker);
+        this.drafting = false;
+      });
+    },
+    send() {
+      const e = this.composing;
+      this.sending = true;
+      this.sendError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/sales/outreach/${e.id}/send`, {
+        to: list(this.form.to),
+        cc: list(this.form.cc),
+        subject: this.form.subject,
+        body: this.form.body
+      }).then(() => {
+        this.emails = this.emails.filter(x => x.id !== e.id);
+        this.composing = null;
+      }).catch(err => {
+        this.sendError = this.readable(err, "Not sent. Try again.");
+      }).finally(() => {
+        this.sending = false;
+      });
+    },
+    dismiss(e) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/sales/outreach/${e.id}/dismiss`, {}).then(() => {
+        this.emails = this.emails.filter(x => x.id !== e.id);
+      }).catch(() => {});
+    },
+    readable(err, fallback) {
+      const d = err.response && err.response.data || {};
+      if (d.errors) return Object.values(d.errors).flat()[0];
+      return d.error || d.message || fallback;
+    },
     loadCharts() {
       let url = "/sales/charts?grain=" + this.grain;
       if (this.grain === "year") url += "&basis=" + this.basis;
@@ -423,6 +558,55 @@ var render = function render() {
       role: "alert"
     }
   }, [_vm._v(_vm._s(_vm.error))]) : [_c("section", {
+    staticClass: "fx-section",
+    attrs: {
+      "data-help": "client-emails"
+    }
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Client emails")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-outreach__intro"
+  }, [_vm._v("Suggested from each client's shipping trends. You read, edit and send every email yourself.")]), _vm._v(" "), _vm.outreachLoaded && !_vm.hasMailbox ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n        Emails go from your own mailbox. "), _c("router-link", {
+    attrs: {
+      to: "/mailboxes"
+    }
+  }, [_vm._v("Connect your mailbox")]), _vm._v(" before sending.\n      ")], 1) : _vm._e(), _vm._v(" "), _vm.outreachLoaded && !_vm.emails.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No client emails suggested right now.")]) : _c("ul", {
+    staticClass: "fx-outreach"
+  }, _vm._l(_vm.emails, function (e) {
+    return _c("li", {
+      key: e.id,
+      staticClass: "fx-outreach__card"
+    }, [_c("div", {
+      staticClass: "fx-outreach__head"
+    }, [_c("strong", [_vm._v(_vm._s(e.client || e.domain))]), _vm._v(" "), _c("span", {
+      staticClass: "fx-chip"
+    }, [_vm._v(_vm._s(_vm.typeLabel(e.type)))])]), _vm._v(" "), _c("p", {
+      staticClass: "fx-outreach__why"
+    }, [_vm._v(_vm._s(_vm.summary(e)))]), _vm._v(" "), _c("div", {
+      staticClass: "fx-outreach__actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      on: {
+        click: function ($event) {
+          return _vm.openEmail(e);
+        }
+      }
+    }, [_vm._v(_vm._s(e.subject ? "Open draft" : "✉ Draft email"))]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.dismiss(e);
+        }
+      }
+    }, [_vm._v("Dismiss")])])]);
+  }), 0)]), _vm._v(" "), _c("section", {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"
@@ -554,7 +738,139 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), 0)])]) : _vm._e()]], 2);
+  }), 0)])]) : _vm._e()], _vm._v(" "), _c("FxDrawer", {
+    attrs: {
+      open: !!_vm.composing,
+      title: _vm.composing ? "Email to " + (_vm.composing.client || _vm.composing.domain) : "",
+      subtitle: _vm.composing ? _vm.summary(_vm.composing) : null
+    },
+    on: {
+      close: function ($event) {
+        _vm.composing = null;
+      }
+    },
+    scopedSlots: _vm._u([{
+      key: "footer",
+      fn: function () {
+        return [_c("button", {
+          staticClass: "fx-btn",
+          attrs: {
+            disabled: _vm.drafting || _vm.sending
+          },
+          on: {
+            click: function ($event) {
+              return _vm.draftEmail(_vm.composing);
+            }
+          }
+        }, [_vm._v("Redraft")]), _vm._v(" "), _c("button", {
+          staticClass: "fx-btn fx-btn--primary",
+          attrs: {
+            disabled: _vm.drafting || _vm.sending || !_vm.form.to.trim()
+          },
+          on: {
+            click: _vm.send
+          }
+        }, [_vm._v("\n        " + _vm._s(_vm.sending ? "Sending…" : "Send") + "\n      ")])];
+      },
+      proxy: true
+    }])
+  }, [_vm.composing ? [_vm.drafting ? _c("p", {
+    staticClass: "fx-muted",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("Writing the draft… " + _vm._s(_vm.draftSeconds) + " s")]) : [_c("p", {
+    staticClass: "fx-muted fx-outreach__note"
+  }, [_vm._v("\n          " + _vm._s(_vm.writtenBy === "ai" ? "Drafted by AI from the figures above." : "A starting draft from the figures above.") + "\n          Read it and change anything before you send.\n        ")]), _vm._v(" "), !_vm.showsClientNames ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("Write the client's company name where it says [Company name].")]) : _vm._e(), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.to,
+      expression: "form.to"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "name@client.com, …"
+    },
+    domProps: {
+      value: _vm.form.to
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "to", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Cc")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.cc,
+      expression: "form.cc"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "Optional"
+    },
+    domProps: {
+      value: _vm.form.cc
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "cc", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Subject")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.subject,
+      expression: "form.subject"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.form.subject
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "subject", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("MailEditor", {
+    model: {
+      value: _vm.form.body,
+      callback: function ($$v) {
+        _vm.$set(_vm.form, "body", $$v);
+      },
+      expression: "form.body"
+    }
+  }), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-outreach__note"
+  }, [_vm._v("Your mailbox signature is added when it is sent.")]), _vm._v(" "), _vm.sendError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.sendError))]) : _vm._e()]] : _vm._e()], 2)], 2);
 };
 var staticRenderFns = [function () {
   var _vm = this,

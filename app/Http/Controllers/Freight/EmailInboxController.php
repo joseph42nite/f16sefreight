@@ -104,7 +104,7 @@ class EmailInboxController extends Controller
     {
         $this->authorize('viewInbox');
 
-        $threads = EmailThread::query()
+        $threads = EmailThread::query()->visibleTo(auth()->user())
             ->when($request->filled('classification'), fn ($q) => $q->where('classification', $request->string('classification')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             // The Unassigned Pool: what nobody has claimed yet.
@@ -140,6 +140,7 @@ class EmailInboxController extends Controller
     public function show(EmailThread $thread): JsonResponse
     {
         $this->authorize('viewInbox');
+        abort_unless($thread->isVisibleTo(auth()->user()), 404);
 
         $messages = EmailMessage::where('thread_key', $thread->thread_key)
             ->orderBy('received_at')
@@ -175,6 +176,7 @@ class EmailInboxController extends Controller
     public function classify(Request $request, EmailThread $thread): JsonResponse
     {
         $this->authorize('classifyThread');
+        abort_unless($thread->isVisibleTo(auth()->user()), 404);
 
         // 🔴 Validated against THIS PORTAL's set. The union would let an air operator file
         // a thread as `shipping_line` — a value their own folder list cannot show, so the
@@ -291,6 +293,8 @@ class EmailInboxController extends Controller
     public function claim(EmailThread $thread): JsonResponse
     {
         $this->authorize('viewInbox');
+        // Claiming takes on the work; sales read and answer, they do not take shipments on.
+        abort_if(auth()->user()->designation === 'sales', 403);
 
         $claimed = EmailThread::withoutTenantScope()
             ->whereKey($thread->id)
@@ -329,6 +333,7 @@ class EmailInboxController extends Controller
     public function reply(Request $request, EmailThread $thread): JsonResponse
     {
         $this->authorize('viewInbox');
+        abort_unless($thread->isVisibleTo(auth()->user()), 404);
 
         $data = $request->validate([
             'to'      => ['required', 'array', 'min:1'],

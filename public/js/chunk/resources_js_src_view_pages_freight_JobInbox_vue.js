@@ -277,7 +277,9 @@ const WORKSPACE_TABS = [{
     },
     workspaceTabs() {
       const isEnquiry = this.active && this.active.classification === "customer_enquiry";
-      if (!isEnquiry) return [];
+
+      // Extraction and the cost sheet are shipment work; sales has neither.
+      if (!isEnquiry || this.designation === "sales") return [];
 
       // 🔴 Mirrors the server's `viewCostSheet` — "operations never touches money"
       // (PRD §2.3.4). The tab was shown to them anyway and answered 403 on click: a
@@ -2378,7 +2380,7 @@ var render = function render() {
     staticClass: "identifier"
   }, [_vm._v(_vm._s(_vm.active.enquiry.enquiry_no))])] : _vm._e()], 2)]), _vm._v(" "), _c("div", {
     staticClass: "fx-convo__actions"
-  }, [!_vm.active.assigned_ops ? _c("button", {
+  }, [!_vm.active.assigned_ops && _vm.designation !== "sales" ? _c("button", {
     staticClass: "fx-btn",
     attrs: {
       disabled: _vm.busy,
@@ -2425,7 +2427,7 @@ var render = function render() {
     on: {
       click: _vm.openExtraction
     }
-  }, [_vm._v("Analyze PDF")]) : _vm._e(), _vm._v(" "), _c("button", {
+  }, [_vm._v("Analyze PDF")]) : _vm._e(), _vm._v(" "), _vm.designation !== "sales" ? _c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
       "data-help": "open-workspace"
@@ -2433,7 +2435,7 @@ var render = function render() {
     on: {
       click: _vm.openWorkspace
     }
-  }, [_vm._v("Open workspace")])])]), _vm._v(" "), _vm.actionError ? _c("p", {
+  }, [_vm._v("Open workspace")]) : _vm._e()])]), _vm._v(" "), _vm.actionError ? _c("p", {
     staticClass: "fx-error fx-inbox__pad",
     attrs: {
       role: "alert"

@@ -46,6 +46,36 @@
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
 
     <template v-else>
+      <!--
+        ✉ Client emails (PRD §7.3.7; user, 2026-09-15): suggestions from each client's own shipping trends.
+        Gemma drafts, the rep reads, edits and sends from their own mailbox — nothing goes out on its own.
+      -->
+      <section class="fx-section" data-help="client-emails">
+        <h2 class="fx-section__title">Client emails</h2>
+        <p class="fx-muted fx-outreach__intro">Suggested from each client's shipping trends. You read, edit and send every email yourself.</p>
+
+        <p v-if="outreachLoaded && !hasMailbox" class="fx-warn" role="status">
+          Emails go from your own mailbox. <router-link to="/mailboxes">Connect your mailbox</router-link> before sending.
+        </p>
+
+        <p v-if="outreachLoaded && !emails.length" class="fx-muted">No client emails suggested right now.</p>
+
+        <ul v-else class="fx-outreach">
+          <li v-for="e in emails" :key="e.id" class="fx-outreach__card">
+            <div class="fx-outreach__head">
+              <!-- Tactical shows the client's domain; the name is a Command view (PRD §2.3.3). -->
+              <strong>{{ e.client || e.domain }}</strong>
+              <span class="fx-chip">{{ typeLabel(e.type) }}</span>
+            </div>
+            <p class="fx-outreach__why">{{ summary(e) }}</p>
+            <div class="fx-outreach__actions">
+              <button class="fx-btn fx-btn--primary" @click="openEmail(e)">{{ e.subject ? "Open draft" : "✉ Draft email" }}</button>
+              <button class="fx-btn fx-btn--ghost" @click="dismiss(e)">Dismiss</button>
+            </div>
+          </li>
+        </ul>
+      </section>
+
       <!-- §7.4 Today's Actions sits ABOVE the charts. It is the worklist; the charts
            are the explanation. -->
       <section class="fx-section">
@@ -154,6 +184,48 @@
         </table>
       </section>
     </template>
+
+    <FxDrawer
+      :open="!!composing"
+      :title="composing ? 'Email to ' + (composing.client || composing.domain) : ''"
+      :subtitle="composing ? summary(composing) : null"
+      @close="composing = null"
+    >
+      <template v-if="composing">
+        <p v-if="drafting" class="fx-muted" role="status">Writing the draft… {{ draftSeconds }} s</p>
+        <template v-else>
+          <p class="fx-muted fx-outreach__note">
+            {{ writtenBy === "ai" ? "Drafted by AI from the figures above." : "A starting draft from the figures above." }}
+            Read it and change anything before you send.
+          </p>
+          <p v-if="!showsClientNames" class="fx-warn" role="status">Write the client's company name where it says [Company name].</p>
+
+          <label class="fx-field">
+            <span class="fx-field__label">To</span>
+            <input v-model="form.to" class="fx-input" placeholder="name@client.com, …" />
+          </label>
+          <label class="fx-field">
+            <span class="fx-field__label">Cc</span>
+            <input v-model="form.cc" class="fx-input" placeholder="Optional" />
+          </label>
+          <label class="fx-field">
+            <span class="fx-field__label">Subject</span>
+            <input v-model="form.subject" class="fx-input" />
+          </label>
+          <MailEditor v-model="form.body" />
+          <p class="fx-muted fx-outreach__note">Your mailbox signature is added when it is sent.</p>
+
+          <p v-if="sendError" class="fx-error" role="alert">{{ sendError }}</p>
+        </template>
+      </template>
+
+      <template #footer>
+        <button class="fx-btn" :disabled="drafting || sending" @click="draftEmail(composing)">Redraft</button>
+        <button class="fx-btn fx-btn--primary" :disabled="drafting || sending || !form.to.trim()" @click="send">
+          {{ sending ? "Sending…" : "Send" }}
+        </button>
+      </template>
+    </FxDrawer>
   </div>
 </template>
 
@@ -162,11 +234,27 @@ import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxChart from "@/view/pages/freight/components/FxChart.vue";
+import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
+import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
+
+/** What each suggested email is about, in the rep's words. */
+const TYPE_LABELS = {
+  client_reactivation: "Stopped shipping",
+  client_volume_drop: "Volume down",
+  client_volume_growth: "Volume up",
+  client_rate_review: "Lost on price",
+  client_new_lanes: "New lanes to offer",
+};
+
+const list = (text) => String(text || "").split(",").map((s) => s.trim()).filter(Boolean);
 
 export default {
   name: "SalesDashboard",
-  components: { Figure, StatusChip, FxChart },
+  components: { Figure, StatusChip, FxChart, FxDrawer, MailEditor },
   data: () => ({
+    emails: [], hasMailbox: true, showsClientNames: false, outreachLoaded: false,
+    composing: null, form: { to: "", cc: "", subject: "", body: "" },
+    drafting: false, draftSeconds: 0, writtenBy: null, sending: false, sendError: null,
     loading: true, error: null,
     scope: null, mode: null, branch: {}, book: [], staleness: null, actions: [],
     charts: null, grain: "month", basis: "fiscal",
@@ -254,6 +342,7 @@ export default {
   },
   created() {
     this.loadCharts();
+    this.loadOutreach();
     Promise.all([
       ApiService.get("/sales/dashboard"),
       // The actions call is allowed to fail without taking the page down — a ranked
@@ -275,6 +364,93 @@ export default {
       .finally(() => { this.loading = false; });
   },
   methods: {
+    loadOutreach() {
+      ApiService.get("/sales/outreach")
+        .then(({ data }) => {
+          this.emails = data.emails || [];
+          this.hasMailbox = data.has_mailbox;
+          this.showsClientNames = data.shows_client_names;
+        })
+        // Suggestions failing must not take the dashboard down with them.
+        .catch(() => { this.emails = []; })
+        .finally(() => { this.outreachLoaded = true; });
+    },
+    typeLabel(type) {
+      return TYPE_LABELS[type] || type;
+    },
+    /** Why this email is suggested, from the finding's own figures. */
+    summary(e) {
+      const f = e.facts || {};
+      const lanes = (xs) => (xs || []).join(", ");
+
+      switch (e.type) {
+        case "client_reactivation":
+          return `Usually ships every ${f.usually_ships_every_days} days — ${f.days_since_last_shipment} days since the last shipment.`;
+        case "client_volume_drop":
+          return `Volume ${Math.abs(f.volume_change_percent)}% below their yearly average over the last 13 weeks.`;
+        case "client_volume_growth":
+          return `Volume up ${f.volume_change_percent}% on their yearly average over the last 13 weeks.`;
+        case "client_rate_review":
+          return `${f.quotes_lost_on_price_last_year} quotes on ${f.lane} lost on price in the last year.`;
+        case "client_new_lanes":
+          return `Ships ${lanes(f.usual_lanes)} with us; we also run ${lanes(f.lanes_we_run)}.`;
+        default:
+          return "";
+      }
+    },
+    openEmail(e) {
+      this.composing = e;
+      this.sendError = null;
+
+      if (e.subject) {
+        this.fill(e);
+      } else {
+        this.draftEmail(e);
+      }
+    },
+    fill(e) {
+      this.form = { to: e.to.join(", "), cc: e.cc.join(", "), subject: e.subject || "", body: e.body || "" };
+    },
+    draftEmail(e) {
+      this.drafting = true;
+      this.draftSeconds = 0;
+      this.sendError = null;
+      const ticker = setInterval(() => { this.draftSeconds += 1; }, 1000);
+
+      ApiService.post(`/sales/outreach/${e.id}/draft`, {})
+        .then(({ data }) => {
+          Object.assign(e, data);
+          this.writtenBy = data.written_by;
+          if (this.composing === e) this.fill(e);
+        })
+        .catch((err) => { this.sendError = this.readable(err, "Could not write the draft. Try again."); })
+        .finally(() => { clearInterval(ticker); this.drafting = false; });
+    },
+    send() {
+      const e = this.composing;
+      this.sending = true;
+      this.sendError = null;
+
+      ApiService.post(`/sales/outreach/${e.id}/send`, {
+        to: list(this.form.to), cc: list(this.form.cc), subject: this.form.subject, body: this.form.body,
+      })
+        .then(() => {
+          this.emails = this.emails.filter((x) => x.id !== e.id);
+          this.composing = null;
+        })
+        .catch((err) => { this.sendError = this.readable(err, "Not sent. Try again."); })
+        .finally(() => { this.sending = false; });
+    },
+    dismiss(e) {
+      ApiService.post(`/sales/outreach/${e.id}/dismiss`, {})
+        .then(() => { this.emails = this.emails.filter((x) => x.id !== e.id); })
+        .catch(() => {});
+    },
+    readable(err, fallback) {
+      const d = (err.response && err.response.data) || {};
+      if (d.errors) return Object.values(d.errors).flat()[0];
+      return d.error || d.message || fallback;
+    },
     loadCharts() {
       let url = "/sales/charts?grain=" + this.grain;
       if (this.grain === "year") url += "&basis=" + this.basis;

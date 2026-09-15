@@ -46,6 +46,30 @@ class EmailThread extends Model
         return $this->belongsTo(User::class, 'assigned_ops_id');
     }
 
+    /**
+     * The conversations this user may open.
+     *
+     * Sales see only mail they are on — sent by them, or to, cc or bcc them (user, 2026-09-15). Pricing and
+     * operations work the branch inbox, so everything is theirs.
+     */
+    public function scopeVisibleTo($query, User $user)
+    {
+        if ($user->designation !== 'sales') {
+            return $query;
+        }
+
+        $address = '%' . $user->email . '%';
+
+        return $query->whereIn('thread_key', EmailMessage::query()->select('thread_key')
+            ->where(fn ($q) => $q->where('from', 'like', $address)->orWhere('to', 'like', $address)
+                ->orWhere('cc', 'like', $address)->orWhere('bcc', 'like', $address)));
+    }
+
+    public function isVisibleTo(User $user): bool
+    {
+        return static::whereKey($this->id)->visibleTo($user)->exists();
+    }
+
     public function messages()
     {
         return $this->hasMany(EmailMessage::class, 'thread_key', 'thread_key');

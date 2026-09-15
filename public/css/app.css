@@ -70050,14 +70050,6 @@ to {
 .toggle-on .toggle-on-item {
   display: none !important;
 }
-.fv-plugins-message-container {
-  margin-top: 0.25rem;
-}
-.fv-plugins-message-container .fv-help-block {
-  color: #F64E60;
-  font-size: 0.9rem;
-  font-weight: 400;
-}
 .blockui {
   background: #ffffff;
   box-shadow: 0px 0px 50px 0px rgba(82, 63, 105, 0.15);
@@ -79963,7 +79955,6 @@ label {
     border-bottom: none !important;
 }
 }
-/*@import "assets/css/style.vue.rtl";*/
 
 .main-hide[data-v-7201f370]{
   overflow-x: hidden;

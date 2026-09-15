@@ -20,11 +20,12 @@ class EmailThread extends Model
         'agent_id', 'assigned_ops_id', 'enquiry_id', 'job_id',
         'thread_key', 'provider_thread_id', 'read_state_synced_at',
         'status', 'classification', 'latest_message_received_at',
-        'first_response_at', 'first_triage_at', 'pending_client_notification',
+        'first_response_at', 'first_triage_at', 'pending_client_notification', 'client_updates',
     ];
 
     protected $casts = [
         'pending_client_notification' => 'array',
+        'client_updates'              => 'array',
         'latest_message_received_at'  => 'datetime',
         'first_response_at'           => 'datetime',
         'first_triage_at'             => 'datetime',

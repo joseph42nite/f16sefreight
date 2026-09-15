@@ -6,7 +6,6 @@ use App\Agent;
 use App\Company;
 use App\PdfProcessingJob;
 use App\Services\CircuitBreaker;
-use App\Services\ClientNotificationService;
 use App\Services\OcrCreditService;
 use App\Services\OcrRoutingService;
 use App\User;
@@ -255,59 +254,5 @@ class OcrCreditGateTest extends TestCase
 
         $this->expectException(\App\Services\CircuitOpenException::class);
         $breaker->call(fn () => 'never runs');
-    }
-
-    // ─── Client notification consent ─────────────────────────────────────────
-
-    /**
-     * 🔴 Consent is enforced in the SERVICE, not the UI. A gate living in a Vue component
-     * is bypassed by every other caller.
-     */
-    public function test_a_notification_cannot_be_released_without_an_operator(): void
-    {
-        $job = $this->makeJob();
-
-        app(ClientNotificationService::class)->stage($job, ClientNotificationService::STAGE_INTAKE, [
-            'subject' => 'Your shipment', 'body' => 'Booked.', 'to' => ['ops@globex.test'],
-        ]);
-
-        $this->expectException(\RuntimeException::class);
-        app(ClientNotificationService::class)->release($job, 0); // no real operator
-    }
-
-    public function test_releasing_clears_the_draft_so_it_cannot_be_sent_twice(): void
-    {
-        $job = $this->makeJob();
-        $service = app(ClientNotificationService::class);
-
-        $service->stage($job, ClientNotificationService::STAGE_INTAKE, ['subject' => 'Your shipment']);
-
-        $draft = $service->release($job, 42);
-        $this->assertSame('Your shipment', $draft['subject']);
-        $this->assertSame(42, $draft['approved_by']);
-
-        $this->expectException(\RuntimeException::class);
-        $service->release($job, 42); // second confirm must find nothing staged
-    }
-
-    private function makeJob(): \App\Job
-    {
-        ['branch' => $branch] = $this->tenant('command');
-
-        $enquiry = \App\Enquiry::create([
-            'agent_id' => $branch->id, 'transport_mode' => 'air', 'enquiry_no' => 'ENQA-COMBOM-26-0001',
-        ]);
-
-        $job = \App\Job::create([
-            'agent_id' => $branch->id, 'enquiry_id' => $enquiry->id, 'transport_mode' => 'air',
-        ]);
-
-        \App\EmailThread::create([
-            'agent_id' => $branch->id, 'job_id' => $job->id,
-            'thread_key' => 'thr-notify-' . random_int(1, 999999),
-            'latest_message_received_at' => now(),
-        ]);
-
-        return $job;
     }
 }

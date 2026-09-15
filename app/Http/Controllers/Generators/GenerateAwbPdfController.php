@@ -103,8 +103,25 @@ class GenerateAwbPdfController extends Controller
             ], 422);
         }
 
+        $document = $this->storeDocument($waybill, auth()->id());
+
+        $audit->record((int) $waybill->agent_id, 'document.published', 'job_document',
+            $document->id, auth()->id());
+
+        return response()->json([
+            'document_id' => $document->id,
+            'file_name'   => $document->file_name,
+        ], 201);
+    }
+
+    /**
+     * Render the waybill as a PDF and file it as the job's `awb` document — the publish button, and a client update
+     * that needs the document before anyone pressed it. The waybill must already be linked to a job.
+     */
+    public function storeDocument(\App\AirwayBills $waybill, ?int $userId): \App\JobDocument
+    {
         ['airWayBill' => $airWayBill, 'specialHandlingInfo' => $specialHandlingInfo,
-         'hsCode' => $hsCode, 'airlineAddress' => $airlineAddress] = $this->loadAwbPdfData($id);
+         'hsCode' => $hsCode, 'airlineAddress' => $airlineAddress] = $this->loadAwbPdfData($waybill->id);
 
         $showBothPage = true;
 
@@ -114,7 +131,7 @@ class GenerateAwbPdfController extends Controller
             ->set_option('isHtml5ParserEnabled', true);
 
         $fileName = 'AWB-' . \App\Support\AwbNumber::normalise((string) $waybill->awb_code . $waybill->awb_no) . '.pdf';
-        $path = 'documents/awb/' . $id . '.pdf';
+        $path = 'documents/awb/' . $waybill->id . '.pdf';
 
         \Illuminate\Support\Facades\Storage::put($path, $pdf->output());
 
@@ -126,17 +143,11 @@ class GenerateAwbPdfController extends Controller
                 'file_path'   => $path,
                 'mime_type'   => 'application/pdf',
                 'file_size'   => \Illuminate\Support\Facades\Storage::size($path),
-                'uploaded_by' => auth()->id(),
+                'uploaded_by' => $userId,
             ]
         );
 
-        $audit->record((int) $waybill->agent_id, 'document.published', 'job_document',
-            $document->id, auth()->id());
-
-        return response()->json([
-            'document_id' => $document->id,
-            'file_name'   => $document->file_name,
-        ], 201);
+        return $document;
     }
 
     // This Function will work when user click on generate PDF file

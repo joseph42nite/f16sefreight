@@ -83,7 +83,7 @@
               class="fx-btn"
               :disabled="busy"
               data-help="claim-thread"
-              @click="claim"
+              @click="startClaim"
             >Claim</button>
 
             <!--
@@ -103,18 +103,18 @@
               consignee is a rejected filing.
             -->
             <!--
-              Hand the conversation to a colleague, or take it yourself (user, 2026-09-15). Pricing assigns
+              Hand the conversation to another pricing colleague in the branch (user, 2026-09-16). Pricing assigns
               directly; the new owner is told in their bell.
             -->
             <select
-              v-if="canAssign && operators.length"
+              v-if="canAssign && assignees.length"
               class="fx-input fx-convo__assign"
               :value="active.assigned_ops ? active.assigned_ops.id : ''"
               aria-label="Assign this conversation"
               @change="assignThread($event.target.value)"
             >
               <option value="" disabled>Assign to…</option>
-              <option v-for="o in operators" :key="o.id" :value="o.id">{{ o.name }}{{ isMe(o) ? " (you)" : "" }} · {{ o.designation }}</option>
+              <option v-for="o in assignees" :key="o.id" :value="o.id">{{ o.name }}</option>
             </select>
 
 
@@ -124,6 +124,41 @@
 
         <p v-if="actionError" class="fx-error fx-inbox__pad" role="alert">{{ actionError }}</p>
         <p v-if="attachmentError" class="fx-error fx-inbox__pad" role="alert">{{ attachmentError }}</p>
+
+        <!-- The client update waiting on this conversation: send it as it is, edit it, or skip it. -->
+        <section v-if="active.client_update && designation !== 'sales'" class="fx-update-card" aria-label="Client update">
+          <h3 class="fx-update-card__title">Client update ready — {{ active.client_update.title }}</h3>
+          <ClientUpdateEditor
+            :key="active.id + '-' + active.client_update.stage"
+            :draft="active.client_update"
+            :busy="updateBusy"
+            :error="updateError"
+            @send="decideUpdate('send', $event)"
+            @skip="decideUpdate('skip')"
+          />
+        </section>
+
+        <!-- Claiming shows the acknowledgement mail first (user, 2026-09-16). -->
+        <div v-if="claimDraft" class="fx-modal" role="dialog" aria-modal="true" aria-label="Claim this conversation">
+          <div class="fx-modal__panel">
+            <header class="fx-modal__head">
+              <h2 class="fx-modal__title">Claim and tell the client</h2>
+            </header>
+            <div class="fx-modal__body">
+              <ClientUpdateEditor
+                :draft="claimDraft"
+                :busy="busy"
+                :error="updateError"
+                send-label="Claim & send"
+                skip-label="Claim without email"
+                @send="claim({ decision: 'send', ...$event })"
+                @skip="claim({ decision: 'skip' })"
+              >
+                <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="claimDraft = null">Cancel</button>
+              </ClientUpdateEditor>
+            </div>
+          </div>
+        </div>
 
         <!--
           §4.2 the SLA pair, side by side and never conflated. first_triage_at is
@@ -541,6 +576,7 @@ import ExtractionPanel from "@/view/pages/freight/components/ExtractionPanel.vue
 import CostSheet from "@/view/pages/freight/components/CostSheet.vue";
 import CreditsPanel from "@/view/pages/freight/components/CreditsPanel.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
+import ClientUpdateEditor from "@/view/pages/freight/components/ClientUpdateEditor.vue";
 
 /** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
 const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
@@ -600,7 +636,7 @@ const WORKSPACE_TABS = [
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, CreditsPanel, MailEditor },
+  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor },
   data: () => ({
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
        has no use for a shipping-line folder and a sea operator none for an airline one;
@@ -636,6 +672,8 @@ export default {
     /** The attachment being fetched, and why the last one could not be. */
     attachmentBusy: null, attachmentError: null,
     outcomeBusy: false, outcomeError: null,
+    /** The acknowledgement shown when claiming, and the state of sending a client update. */
+    claimDraft: null, updateBusy: false, updateError: null,
     LOST_REASONS,
     CLASSIFICATIONS, WORKSPACE_TABS,
   }),
@@ -648,6 +686,10 @@ export default {
     /** Mirrors the server's `assignOperator`. */
     canAssign() {
       return this.designation === "pricing" || this.designation === "boss";
+    },
+    /** Who a conversation can be handed to: the other pricing staff in the branch. */
+    assignees() {
+      return this.operators.filter((o) => o.designation === "pricing" && !this.isMe(o));
     },
     /**
      * 🔴 TIMING AS A STATE, NOT FOUR TIMESTAMPS. The value in `first_triage_at` and
@@ -1285,13 +1327,42 @@ export default {
         })
         .catch((e) => { this.actionError = this.messageFor(e); });
     },
-    claim() {
+    /** Show the acknowledgement mail first; a conversation with nothing to send is claimed straight away. */
+    startClaim() {
       this.busy = true;
-      ApiService.post("/inbox/threads/" + this.active.id + "/claim", {})
-        .then(({ data }) => { this.active = data; this.load(); })
+      this.actionError = null;
+      this.updateError = null;
+      ApiService.query("/inbox/threads/" + this.active.id + "/client-update/preview", { params: { stage: "claimed" } })
+        .then(({ data }) => {
+          this.busy = false;
+          if (data.draft) this.claimDraft = data.draft;
+          else this.claim(null);
+        })
+        .catch(() => { this.busy = false; this.claim(null); });
+    },
+    claim(update) {
+      this.busy = true;
+      ApiService.post("/inbox/threads/" + this.active.id + "/claim", update ? { client_update: update } : {})
+        .then(({ data }) => {
+          this.claimDraft = null;
+          this.active = data;
+          this.load();
+          const r = data.client_update_result;
+          if (r && !r.ok) this.actionError = "Claimed, but the mail did not go: " + r.error;
+        })
         /* 409 is a real outcome, not a failure: someone got there first. */
-        .catch((e) => { this.actionError = this.messageFor(e); this.load(); })
+        .catch((e) => { this.claimDraft = null; this.actionError = this.messageFor(e); this.load(); })
         .finally(() => { this.busy = false; });
+    },
+    decideUpdate(decision, values) {
+      this.updateBusy = true;
+      this.updateError = null;
+      ApiService.post("/inbox/threads/" + this.active.id + "/client-update", {
+        stage: this.active.client_update.stage, decision, ...(values || {}),
+      })
+        .then(({ data }) => { this.active = Object.assign({}, this.active, data); })
+        .catch((e) => { this.updateError = this.messageFor(e); })
+        .finally(() => { this.updateBusy = false; });
     },
     classify() {
       this.busy = true;

@@ -52,6 +52,9 @@ class GLNResponseController extends Controller
             'reason' => $reason,
         ];
         StatusReponse::create($data);
+        if ($message_type == 'Cargo Status') {
+            $this->prepareClientUpdate($business_id, $condition_code);
+        }
         try {
             if ($business_status_code == 'Rejected' && $data['business_name'] == 'Air Waybill') {
                 $business_id_arr = explode('-', $business_id);
@@ -76,6 +79,28 @@ class GLNResponseController extends Controller
         // $filePath = storage_path('logs/gln_responses.txt');
         // file_put_contents($filePath, "=================\n" . $xmlContent, FILE_APPEND);
         return response()->json(['status' => true], 200);
+    }
+
+    /**
+     * The airline says the cargo departed or was delivered: prepare that update for the client, to be approved on the
+     * conversation (user, 2026-09-16). Delivered can also come from the job being completed; it is prepared once.
+     */
+    private function prepareClientUpdate(string $awbNumber, string $code): void
+    {
+        $stage = ['DEP' => 'departed', 'DLV' => 'delivered', 'DDL' => 'delivered'][$code] ?? null;
+        $number = \App\Support\AwbNumber::normalise($awbNumber);
+
+        if ($stage === null || $number === null) {
+            return;
+        }
+
+        // Stored as typed, so compared on the digits: 176-10000008 and 17610000008 are one waybill.
+        $jobs = \App\Job::withoutGlobalScopes()->where('transport_mode', 'air')
+            ->whereRaw("REPLACE(REPLACE(awb_number, '-', ''), ' ', '') = ?", [str_replace('-', '', $number)])->get();
+
+        foreach ($jobs as $job) {
+            app(\App\Services\ClientNotificationService::class)->prepareForJob($job, $stage);
+        }
     }
 
     public function check()

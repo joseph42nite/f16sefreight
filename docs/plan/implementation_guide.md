@@ -863,7 +863,7 @@ Also ship the **`destination_keyword`** rule class so lanes are captured at enqu
 
 ### 4.6 `ClientNotificationService`
 
-Stages consent-gated automated emails at `Intake`, `AI Extraction`, `Sent to Airline` and re-initiation, storing the draft on `email_threads.pending_client_notification`. Released only through `POST /api/jobs/{id}/confirm-notification`.
+Prepares consent-gated client updates — claimed, shipment confirmed, draft AWB ready, booked with the airline, departed, delivered (PRD §5.7, user 2026-09-16) — storing the waiting draft on `email_threads.pending_client_notification` and what was sent or skipped on `email_threads.client_updates`. Sent only through `POST /api/inbox/threads/{thread}/client-update` (or the claim pop-up), by the person approving it.
 
 > [!WARNING]
 > **Enforce consent in the service, not the UI.** No email or attachment may leave the system without explicit operator acceptance. Sending the wrong document to a client is unrecoverable.
@@ -952,7 +952,7 @@ php artisan tinker
 | `POST /api/inbox/threads/{thread_key}/classify` | Manual operator override (airline / clearance / trucking / enquiry). **Promotion** mints an `enquiries` row; **demotion** sets the orphaned enquiry to `lost` and returns **`422`** if it already has a child `jobs` row |
 | `POST /api/inbox/threads/{id}/claim` | Atomic claim — `UPDATE … WHERE ops_id IS NULL`; **`409 Conflict`** if zero rows affected |
 | `POST /api/jobs/{id}/reply` | Policy-checked (`$this->authorize('reply', $job)`), sends through the connected mailbox as a threaded reply |
-| `POST /api/jobs/{id}/confirm-notification` | Releases a staged consent-gated draft |
+| `POST /api/inbox/threads/{thread}/client-update` | Sends or skips the client update waiting on a conversation |
 | **`POST /api/user/ocr-consent/{jobId}`** ⚠️ | *(This guide originally named it `POST /api/pdf-jobs/{id}/authorize-vision`. Built at the path shown, alongside the three existing `/api/user/ocr-*` routes, and taking `decision: accept\|decline` — the flow needs a DECLINE as much as an authorise, and `authorize-vision` has no room for one. Flagged rather than silently renamed.)* Operator accepts the credit cost on a job parked at `awaiting_vision_consent`. Reserves 1 credit under `SELECT … FOR UPDATE`, then re-calls FastAPI with `allow_vision = true`. **`422` with `credits_exhausted` if the balance is at or below the overdraft floor — and no FastAPI call is made.** Rejects unless the job is in that exact state, so a double-click cannot charge twice |
 | **`POST /api/pdf-jobs/{id}/decline-vision`** | Operator declines. Sets `cancelled`, deletes the temp PDF. Nothing was ever spent |
 | `POST /api/documents/{id}/share` | Creates a `document_share_links` row. Body: `requires_approval`, `expires_in_days` (default 14, **max 90**). Returns the raw token **once** — only its SHA-256 is stored |

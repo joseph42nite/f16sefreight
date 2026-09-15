@@ -1039,7 +1039,7 @@ New mail sits in the `Unassigned / Inbox` queue. The regex engine pre-selects a 
 | **`[Clearance Mail]`** | Customs clearance instruction — bypasses enquiry creation |
 | **`[Escalation Mail]`** | Flags for supervisor attention |
 
-**Responder-based auto-assignment.** There is **no default operator mapping per client**. `ops_id` and `assigned_ops_id` start NULL; the system assigns the first staff member who *replies* to the thread. Until someone does, the card sits in the public **Unassigned Pool** tab for anyone to claim.
+**Responder-based auto-assignment.** There is **no default operator mapping per client**. `ops_id` and `assigned_ops_id` start NULL; the system assigns the first **pricing** member who *replies* to the thread — from the portal or from their own mail client (user, 2026-09-16). Until someone does, the card sits in the public **Unassigned Pool** tab for anyone to claim.
 
 **Atomic claim (race-safe):** `UPDATE jobs SET ops_id = ? WHERE id = ? AND ops_id IS NULL`. Zero affected rows → `409 Conflict` for the second claimant.
 
@@ -1249,15 +1249,18 @@ When filtered to one staff member, a summary banner shows **Active Jobs**, **Pen
 
 Pre-defined milestone emails keep clients informed without adding manual workload. The system **fully prepares** each email; the operator gets a simple **Accept / Reject** box in the conversation feed. All operator details (name, greeting phrases, signature) come from the user's Profile Settings (`users.signature_text`). The staged draft, attachment list and type live on `email_threads.pending_client_notification`.
 
-| Trigger status | Message | Attachments |
-|---|---|---|
-| `Intake` | *"Hi [Client Contact], I am [User Name], I will be servicing you today to fetch you quick rates."* | — |
-| `AI Extraction` | *"Your extraction is under process powered by f16s."* | — |
-| **`Generation`** *(draft saved)* | *"Your draft [MAWB / HBL] is ready for review. Please confirm the details or tell us what to change."* | **A secure link, not a file** — see below |
-| `Sent to Airline` | *"Please find attached the compiled Master Air Waybill along with all associated House Air Waybills for your shipment."* | Compiled MAWB PDF + every HAWB PDF under the job *(may also be sent as links)* |
-| Re-initiation | Fresh re-quoted rate after a cancelled shipment | — |
+The moments (user, 2026-09-16 — replaces the earlier Intake / AI Extraction / Generation / Sent to Airline / Re-initiation table; see GAPS #301):
 
-Each renders as a prompt in the conversation feed with **`[Accept & Send]`** / **`[Reject]`**. Endpoint: `POST /api/jobs/{id}/confirm-notification`.
+| Moment | Prepared when | Message | Attachments |
+|---|---|---|---|
+| We have your enquiry | **Claim** — shown as a pop-up: *Claim & send* / *Claim without email* | *"Thank you for your enquiry. We have received it and [owner] is looking after it…"* — not offered when the conversation was first answered by hand | — |
+| Shipment confirmed | The enquiry is converted to a job | Lane and cargo; the paperwork has started | — |
+| Draft AWB ready | Job status `PDF Generated` | Please check and approve, or tell us what to change | **A secure review link, not a file** (made when sent, needs the client's approval, 14 days) |
+| Booked with the airline | Job status `Sent to Airline` (or `Airline Confirmed`) | AWB number, flight and date | The AWB PDF |
+| Departed | The airline's Cargo Status `DEP` | AWB number, from, flight | — |
+| Delivered | Cargo Status `DLV` / `DDL`, or job status `Completed` | AWB number, at destination | — |
+
+The job number is internal and is never in these mails. Wording is a fixed template the person can edit. Each moment is prepared once per conversation; a newer moment replaces a draft nobody acted on. A waiting update shows as a card on the conversation (**Send to client** / **Skip**) and a pinned bell for the conversation's owner. Endpoints: `GET /api/inbox/threads/{thread}/client-update/preview?stage=`, `POST /api/inbox/threads/{thread}/client-update`, and `client_update` on `POST …/claim`.
 
 ##### Document links instead of attachments
 

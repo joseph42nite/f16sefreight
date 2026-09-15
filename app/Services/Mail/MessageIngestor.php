@@ -67,7 +67,7 @@ class MessageIngestor
                     $this->createThread($connection, $message, $match['thread_key']);
                     $stats['threads_created']++;
                 } else {
-                    $this->touchThread($match['thread_key'], $message);
+                    $this->touchThread($connection, $match['thread_key'], $message);
                 }
 
                 $id = DB::table('email_messages')->insertGetId([
@@ -214,10 +214,10 @@ class MessageIngestor
         ]);
     }
 
-    private function touchThread(string $threadKey, NormalisedMessage $message): void
+    private function touchThread(MailboxConnection $connection, string $threadKey, NormalisedMessage $message): void
     {
         $thread = DB::table('email_threads')->where('thread_key', $threadKey)
-            ->first(['latest_message_received_at', 'first_response_at', 'enquiry_id']);
+            ->first(['agent_id', 'latest_message_received_at', 'first_response_at', 'enquiry_id', 'assigned_ops_id', 'client_updates']);
 
         if ($thread === null) {
             return;
@@ -242,11 +242,30 @@ class MessageIngestor
             $update['first_response_at'] = $message->receivedAt;
         }
 
+        // 🔴 A first reply typed in Outlook claims the conversation too (user, 2026-09-16): the pricing member who sent
+        // it has taken it on, and has already written the acknowledgement, so none is offered.
+        if ($message->direction === 'outbound' && $thread->assigned_ops_id === null
+            && ($sender = $this->pricingSender($connection, (int) $thread->agent_id, $message->from))) {
+            $update['assigned_ops_id'] = $sender;
+            $updates = json_decode((string) $thread->client_updates, true) ?: [];
+            $updates['claimed'] ??= ['decision' => 'replied', 'by' => $sender, 'at' => now()->toIso8601String()];
+            $update['client_updates'] = json_encode($updates);
+        }
+
         DB::table('email_threads')->where('thread_key', $threadKey)->update($update);
 
         if ($message->direction === 'inbound' && $thread->enquiry_id !== null) {
             $this->restartStaleClock((int) $thread->enquiry_id);
         }
+    }
+
+    /** The branch's pricing member who sent this: by their own address, or sent as the mailbox they connected. */
+    private function pricingSender(MailboxConnection $connection, int $agentId, string $from): ?int
+    {
+        $pricing = DB::table('users')->where('branch_name', $agentId)->where('designation', 'pricing')->where('is_active', 1);
+
+        return (clone $pricing)->whereRaw('LOWER(email) = ?', [strtolower($from)])->value('id')
+            ?? (strcasecmp($from, (string) $connection->email_address) === 0 ? (clone $pricing)->where('id', $connection->user_id)->value('id') : null);
     }
 
     /**

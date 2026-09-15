@@ -373,6 +373,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/inbox/threads/{thread}/classify', [\App\Http\Controllers\Freight\EmailInboxController::class, 'classify']);
     Route::post('/inbox/threads/{thread}/claim', [\App\Http\Controllers\Freight\EmailInboxController::class, 'claim']);
     Route::post('/inbox/threads/{thread}/assign', [\App\Http\Controllers\Freight\EmailInboxController::class, 'assign']);
+    Route::get('/inbox/threads/{thread}/client-update/preview', [\App\Http\Controllers\Freight\EmailInboxController::class, 'previewClientUpdate']);
+    Route::post('/inbox/threads/{thread}/client-update', [\App\Http\Controllers\Freight\EmailInboxController::class, 'decideClientUpdate']);
     // Reply, reply-all and forward are one endpoint — they differ only in the recipient
     // list the caller sends, which is the operator's decision and not the server's.
     Route::post('/inbox/threads/{thread}/reply', [\App\Http\Controllers\Freight\EmailInboxController::class, 'reply']);

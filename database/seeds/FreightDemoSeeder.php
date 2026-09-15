@@ -234,6 +234,8 @@ class FreightDemoSeeder extends Seeder
 
         DB::table('accounts_invoice_items')->whereIn('invoice_id', $invoiceIds)->delete();
         DB::table('llm_usage_logs')->where('company_id', $company->id)->where('model', 'demo-seed')->delete();
+        // Bells point at threads and jobs that are about to be re-made.
+        DB::table('notifications')->whereIn('agent_id', $branchIds)->delete();
         DB::table('sales_targets')->where('company_id', $company->id)->delete();
         DB::table('accounts_ledger_entries')->whereIn('agent_id', $branchIds)->delete();
         DB::table('unposted_transactions_queue')->whereIn('agent_id', $branchIds)->delete();
@@ -339,6 +341,9 @@ class FreightDemoSeeder extends Seeder
             $this->seedJobMail($branch);
             $this->seedWaybills($branch);
             $this->seedCompletedCargoStatuses($branch);
+            if ($branch->id === $branches->first()->id) {
+                $this->seedClaimFlow($branch, $users, $customers);
+            }
         }
 
         // Only the Command tenant gets financials — below Command there is no ledger.
@@ -561,6 +566,13 @@ class FreightDemoSeeder extends Seeder
                 ['role' => 'user', 'updated_at' => now(), 'created_at' => now()]
             );
         }
+
+        // A second pricing member, so a conversation can be handed from one to the other.
+        $users['pricing2'] = User::updateOrCreate(['email' => "{$prefix}-pricing2@demo.test"], [
+            'name' => "Pricing 2 ({$code})", 'password' => Hash::make(self::PASSWORD), 'company_name' => $company->id,
+            'branch_name' => $branch->id, 'designation' => 'pricing', 'is_active' => 1,
+        ]);
+        DB::table('roles')->updateOrInsert(['email' => "{$prefix}-pricing2@demo.test"], ['role' => 'user', 'updated_at' => now(), 'created_at' => now()]);
 
         return $users;
     }
@@ -1334,6 +1346,107 @@ class FreightDemoSeeder extends Seeder
     }
 
     /**
+     * The claim, assign and client-update flow (user, 2026-09-16), in the Mumbai inbox:
+     *   - a conversation claimed by pricing's first reply — no acknowledgement is offered
+     *   - one pricing acknowledged and then handed to Pricing 2, who has the bell
+     *   - one nobody has claimed — Claim shows the acknowledgement pop-up
+     *   - one the client confirmed: the "Shipment confirmed" update waits on the conversation and in pricing's bell
+     *   - "Booked with the airline" and "Departed" waiting for operations on two shipments in transit
+     */
+    private function seedClaimFlow(Agent $branch, array $users, $customers): void
+    {
+        $connection = DB::table('mailbox_connections')->where('agent_id', $branch->id)->first(['id', 'email_address']);
+        $agentCode = Company::find($branch->company_id)->code . $branch->branch_code;
+        $pricing = $users['pricing'];
+        $at = now()->subHours(5);
+
+        $conversation = function (int $n, string $subject, $customer, array $origin, array $mail, array $thread) use ($branch, $connection, $agentCode, $users, $at) {
+            $enquiry = Enquiry::create([
+                'agent_id' => $branch->id, 'transport_mode' => 'air', 'direction' => 'export',
+                'enquiry_no' => sprintf('ENQA-%s-%s-%04d', $agentCode, now()->format('y'), 600 + $n),
+                'customer_id' => $customer->id, 'sales_id' => $users['sales']->id, 'pricing_id' => $thread['pricing_id'] ?? null,
+                'status' => 'new', 'origin_code' => $origin[0], 'dest_code' => $origin[1],
+                'extracted_pieces' => $origin[2], 'extracted_weight' => $origin[3], 'cargo_type' => 'general', 'cargo_data_source' => 'regex',
+                'created_at' => $at, 'updated_at' => $at,
+            ]);
+            $key = 'thr_claim_' . $branch->id . '_' . $n;
+            $client = 'shipping@' . $customer->email_domain;
+
+            $id = DB::table('email_threads')->insertGetId([
+                'agent_id' => $branch->id, 'assigned_ops_id' => $thread['owner'] ?? null, 'thread_key' => $key,
+                'provider_thread_id' => 'gmail_' . substr(md5($key), 0, 16), 'status' => $thread['status'] ?? 'triaged',
+                'classification' => 'customer_enquiry', 'enquiry_id' => $enquiry->id,
+                'client_updates' => isset($thread['updates']) ? json_encode($thread['updates']) : null,
+                'latest_message_received_at' => $at->copy()->addMinutes(count($mail) * 20),
+                'first_triage_at' => ($thread['status'] ?? '') === 'unread' ? null : $at->copy()->addMinutes(10),
+                'first_response_at' => count($mail) > 1 ? $at->copy()->addMinutes(20) : null,
+                'created_at' => $at, 'updated_at' => $at,
+            ]);
+
+            foreach ($mail as $m => $body) {
+                $inbound = $m % 2 === 0;
+                DB::table('email_messages')->insert([
+                    'agent_id' => $branch->id, 'mailbox_connection_id' => $connection->id, 'thread_key' => $key,
+                    'provider_thread_id' => 'gmail_' . substr(md5($key), 0, 16), 'direction' => $inbound ? 'inbound' : 'outbound',
+                    'message_id' => '<' . substr(md5($key . $m), 0, 20) . '@mail.test>',
+                    'from' => $inbound ? $client : $connection->email_address, 'to' => $inbound ? $connection->email_address : $client,
+                    'cc' => $inbound ? $users['sales']->email : null,
+                    'subject' => $m === 0 ? $subject : 'RE: ' . $subject, 'body_snippet' => $body,
+                    'received_at' => $at->copy()->addMinutes($m * 20), 'sent_via_portal' => $inbound ? 0 : 1,
+                    'send_state' => $inbound ? null : 'sent', 'is_historical' => 0,
+                    'created_at' => $at->copy()->addMinutes($m * 20), 'updated_at' => $at->copy()->addMinutes($m * 20),
+                ]);
+            }
+
+            return [$id, $enquiry];
+        };
+        $done = fn (string $decision, User $by) => ['claimed' => ['decision' => $decision, 'by' => $by->id, 'at' => $at->toIso8601String()]];
+
+        // Claimed by the first reply.
+        $conversation(1, 'Rates please — 2 pallets BOM to DXB', $customers[0], ['BOM', 'DXB', 2, 380], [
+            'Hi, please share your best rate for 2 pallets, 380 kg, BOM to DXB, ready Friday.',
+            'Received with thanks — our rate follows by 4 pm today.',
+        ], ['owner' => $pricing->id, 'pricing_id' => $pricing->id, 'updates' => $done('replied', $pricing)]);
+
+        // Acknowledged by pricing, then handed to Pricing 2.
+        [$handedId] = $conversation(2, 'Quote — 450 kg pharma BOM to JFK', $customers[2], ['BOM', 'JFK', 9, 450], [
+            'Please quote 9 boxes, 450 kg, temperature controlled, BOM to JFK.',
+            "Hello,\n\nThank you for your enquiry. We have received it and our team is looking after it. We will come back to you with our rates shortly.",
+        ], ['owner' => $users['pricing2']->id, 'pricing_id' => $users['pricing2']->id, 'updates' => $done('sent', $pricing)]);
+        app(\App\Services\BellNotificationService::class)->notify($branch->id, $users['pricing2']->id, 'ThreadAssigned', [
+            'thread_id' => $handedId, 'subject' => 'Quote — 450 kg pharma BOM to JFK', 'by' => $pricing->name,
+        ]);
+
+        // Nobody has claimed it yet.
+        $conversation(3, 'New enquiry — 8 cartons BOM to SIN', $customers[1], ['BOM', 'SIN', 8, 210], [
+            'Good morning, we have 8 cartons, 210 kg, BOM to SIN. Could you quote air freight?',
+        ], ['status' => 'unread']);
+
+        // The client confirmed: converting prepares "Shipment confirmed" for pricing to approve.
+        [, $confirmed] = $conversation(4, 'Go ahead — 6 cartons BOM to FRA', $customers[0], ['BOM', 'FRA', 6, 240], [
+            'Please quote 6 cartons, 240 kg, BOM to FRA.',
+            "Hello,\n\nThank you for your enquiry. We have received it and our team is looking after it.",
+            'Rate accepted — please go ahead and book.',
+        ], ['owner' => $pricing->id, 'pricing_id' => $pricing->id, 'updates' => $done('sent', $pricing)]);
+        Job::create([
+            'agent_id' => $branch->id, 'enquiry_id' => $confirmed->id, 'transport_mode' => 'air', 'direction' => 'export',
+            'execution_job_no' => sprintf('JOBA-%s-%s-%04d', $agentCode, now()->format('y'), 604),
+            'customer_id' => $confirmed->customer_id, 'pricing_id' => $pricing->id, 'status' => 'Intake', 'cargo_type' => 'general',
+        ]);
+
+        // Two shipments in transit with their update waiting for operations.
+        $updates = app(\App\Services\ClientNotificationService::class);
+        $inTransit = Job::withoutGlobalScopes()->where('agent_id', $branch->id)->whereNotNull('awb_number')
+            ->where('execution_job_no', 'like', 'JOBA-%-04%')->orderBy('execution_job_no')->get();
+        if ($job = $inTransit->firstWhere('status', \App\Enums\JobStatus::SentToAirline)) {
+            $updates->prepareForJob($job, 'booked');
+        }
+        if ($job = $inTransit->get(2)) {
+            $updates->prepareForJob($job, 'departed');
+        }
+    }
+
+    /**
      * Invoices in every status, including one that puts a client AT its limit.
      *
      * That last one is the whole point: open /financials, hit [Finalize] on the Globex
@@ -1508,6 +1621,7 @@ class FreightDemoSeeder extends Seeder
             foreach ($this->designationsFor($t['tier']) as $d) {
                 $rows[] = [$t['tier'], strtolower($t['code']) . "-{$d}@demo.test", $d];
             }
+            $rows[] = [$t['tier'], strtolower($t['code']) . '-pricing2@demo.test', 'pricing'];
         }
 
         $this->command->table(['Tier', 'Email', 'Designation'], $rows);

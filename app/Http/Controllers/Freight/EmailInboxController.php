@@ -9,12 +9,12 @@ use App\MailboxConnection;
 use App\EmailAttachment;
 use App\Services\Mail\AttachmentException;
 use App\Services\Mail\AttachmentStore;
-use App\Services\Mail\MailBody;
-use App\Services\Mail\MailProviderRegistry;
+use App\Services\Mail\ThreadMailer;
 use App\Enquiry;
 use App\Http\Controllers\Controller;
 use App\Job;
 use App\Services\AuditLogger;
+use App\Services\ClientNotificationService;
 use App\Services\EnquirySequenceService;
 use App\Services\RegexClassificationService;
 use Illuminate\Http\JsonResponse;
@@ -92,6 +92,7 @@ class EmailInboxController extends Controller
         private readonly EnquirySequenceService $sequences,
         private readonly AuditLogger $audit,
         private readonly RegexClassificationService $classifier,
+        private readonly ClientNotificationService $clientUpdates,
     ) {}
 
     /**
@@ -290,11 +291,14 @@ class EmailInboxController extends Controller
      * both see NULL and both claim it, and the second would silently take over the
      * first one's conversation.
      */
-    public function claim(EmailThread $thread): JsonResponse
+    public function claim(Request $request, EmailThread $thread): JsonResponse
     {
         $this->authorize('viewInbox');
         // Claiming takes on the work; sales read and answer, they do not take shipments on.
         abort_if(auth()->user()->designation === 'sales', 403);
+
+        // The claim pop-up's answer: send the "we have your enquiry" mail as edited, or claim without it.
+        $update = $request->filled('client_update.decision') ? $this->clientUpdateInput($request, 'client_update.') : null;
 
         $claimed = EmailThread::withoutTenantScope()
             ->whereKey($thread->id)
@@ -310,14 +314,67 @@ class EmailInboxController extends Controller
 
         $this->audit->record($thread->agent_id, 'thread.claimed', 'email_thread', $thread->id, auth()->id());
 
+        if ($update !== null) {
+            $update = $this->clientUpdates->decide($thread->fresh(), auth()->user(), 'claimed', ...$update);
+        }
+
+        return response()->json($this->shape($thread->fresh(['assignedOps', 'enquiry'])) + ['client_update_result' => $update]);
+    }
+
+    /** The mail a moment would send, for the claim pop-up. Nothing is stored. */
+    public function previewClientUpdate(Request $request, EmailThread $thread): JsonResponse
+    {
+        $this->authorizeClientUpdate($thread);
+        $stage = $request->validate(['stage' => ['required', 'in:' . implode(',', array_keys(ClientNotificationService::STAGES))]])['stage'];
+
+        $draft = $thread->classification === 'customer_enquiry' && ! $this->clientUpdates->handled($thread, $stage)
+            ? $this->clientUpdates->draft($thread, $stage) : null;
+
+        return response()->json(['draft' => $draft]);
+    }
+
+    /** Send or skip the update waiting on this conversation. */
+    public function decideClientUpdate(Request $request, EmailThread $thread): JsonResponse
+    {
+        $this->authorizeClientUpdate($thread);
+
+        $result = $this->clientUpdates->decide($thread, auth()->user(), (string) $request->input('stage'), ...$this->clientUpdateInput($request));
+
+        if (! $result['ok']) {
+            return response()->json(['error' => $result['error'], 'reason' => $result['reason']], $result['status']);
+        }
+
         return response()->json($this->shape($thread->fresh(['assignedOps', 'enquiry'])));
     }
 
+    private function authorizeClientUpdate(EmailThread $thread): void
+    {
+        $this->authorize('viewInbox');
+        abort_if(auth()->user()->designation === 'sales', 403);
+        abort_unless($thread->isVisibleTo(auth()->user()), 404);
+    }
+
+    /** @return array{0: string, 1: array} the decision and the person's edits */
+    private function clientUpdateInput(Request $request, string $prefix = ''): array
+    {
+        $data = $request->validate([
+            $prefix . 'decision' => ['required', 'in:send,skip'],
+            $prefix . 'to'       => ['nullable', 'array', 'min:1'],
+            $prefix . 'to.*'     => ['email'],
+            $prefix . 'cc'       => ['nullable', 'array'],
+            $prefix . 'cc.*'     => ['email'],
+            $prefix . 'subject'  => ['nullable', 'string', 'max:255'],
+            $prefix . 'body'     => ['nullable', 'string', 'max:10000'],
+        ]);
+        $data = $prefix === '' ? $data : $data[rtrim($prefix, '.')];
+
+        return [$data['decision'], array_intersect_key($data, array_flip(['to', 'cc', 'subject', 'body']))];
+    }
+
     /**
-     * Hand a conversation to a colleague — or to yourself (user, 2026-09-15: "if he wants to assign the mail to some
-     * other pricing staff to handle"). Pricing (and the Boss) assign directly, as they already do for operators
-     * (PRD §5.6); the new owner is told in their bell. While the enquiry is still open, a pricing colleague also
-     * becomes its pricing owner, so the quote and the confirmed shipment follow the person now handling it.
+     * Hand a conversation to another pricing colleague in the branch (user, 2026-09-15/16). Pricing (and the Boss)
+     * assign directly; the new owner is told in their bell. While the enquiry is still open they also become its
+     * pricing owner, so the quote and the confirmed shipment follow the person now handling it.
      */
     public function assign(Request $request, EmailThread $thread): JsonResponse
     {
@@ -326,28 +383,27 @@ class EmailInboxController extends Controller
 
         $data = $request->validate(['user_id' => ['required', 'integer']]);
 
+        // Another pricing colleague in this branch (user, 2026-09-16) — operators are chosen when the shipment is confirmed.
         $to = \App\User::whereKey($data['user_id'])->where('branch_name', $thread->agent_id)
-            ->whereIn('designation', ['pricing', 'operations'])->where('is_active', 1)->first();
+            ->where('designation', 'pricing')->where('is_active', 1)->whereKeyNot(auth()->id())->first();
 
         if ($to === null) {
-            return response()->json(['error' => 'Choose a pricing or operations colleague in this branch.', 'reason' => 'not_assignable'], 422);
+            return response()->json(['error' => 'Choose another pricing colleague in this branch.', 'reason' => 'not_assignable'], 422);
         }
 
         $thread->forceFill(['assigned_ops_id' => $to->id])->save();
 
         $enquiry = $thread->enquiry;
-        if ($to->designation === 'pricing' && $enquiry && ! $enquiry->jobs()->exists()) {
+        if ($enquiry && ! $enquiry->jobs()->exists()) {
             $enquiry->forceFill(['pricing_id' => $to->id])->save();
         }
 
         $this->audit->record($thread->agent_id, 'thread.assigned', 'email_thread', $thread->id, auth()->id());
 
-        if ($to->id !== auth()->id()) {
-            $subject = EmailMessage::where('thread_key', $thread->thread_key)->orderBy('received_at')->value('subject');
-            app(\App\Services\BellNotificationService::class)->notify($thread->agent_id, $to->id, 'ThreadAssigned', [
-                'thread_id' => $thread->id, 'subject' => $subject, 'by' => auth()->user()->name,
-            ]);
-        }
+        $subject = EmailMessage::where('thread_key', $thread->thread_key)->orderBy('received_at')->value('subject');
+        app(\App\Services\BellNotificationService::class)->notify($thread->agent_id, $to->id, 'ThreadAssigned', [
+            'thread_id' => $thread->id, 'subject' => $subject, 'by' => auth()->user()->name,
+        ]);
 
         return response()->json($this->shape($thread->fresh(['assignedOps', 'enquiry'])));
     }
@@ -394,80 +450,39 @@ class EmailInboxController extends Controller
             'attachment_ids.*' => ['integer'],
         ]);
 
-        $last = DB::table('email_messages')
-            ->where('thread_key', $thread->thread_key)
-            ->when(isset($data['in_reply_to']), fn ($q) => $q->where('id', $data['in_reply_to']))
-            ->orderByDesc('received_at')
-            ->first(['mailbox_connection_id', 'provider_message_id']);
-
-        if ($last === null || $last->mailbox_connection_id === null) {
-            return response()->json([
-                'error'  => 'This conversation has no connected mailbox to send from.',
-                'reason' => 'no_mailbox',
-            ], 422);
-        }
-
-        $connection = MailboxConnection::find($last->mailbox_connection_id);
-
-        if ($connection === null || ! $connection->is_active) {
-            return response()->json([
-                'error'  => 'The mailbox this conversation arrived on is no longer connected.',
-                'reason' => 'mailbox_disconnected',
-            ], 422);
-        }
-
-        $mailBody = app(MailBody::class);
-
-        if (trim(strip_tags($mailBody->clean($data['body']))) === '') {
-            return response()->json(['error' => 'The message is empty.', 'reason' => 'empty_body'], 422);
-        }
-
-        // 🔴 The signature is added HERE, from settings, never typed into the body: it is edited in
-        // one place so it cannot be mangled per message (ui_ux_guide §composer).
-        $signature = ($data['include_signature'] ?? true) ? $this->signatureFor($connection) : null;
-
         try {
             $attachments = $this->outgoingAttachments($request, $thread, $data['attachment_ids'] ?? []);
         } catch (AttachmentException $e) {
             return response()->json(['error' => $e->getMessage(), 'reason' => $e->reason], $e->status);
         }
 
-        $result = app(MailProviderRegistry::class)->for($connection->provider)->send(
-            $connection,
-            $data['to'],
-            $data['cc'] ?? [],
-            $data['subject'],
-            $mailBody->forEmail($data['body'], $signature),
-            // ⚠️ NULL for a historical message that predates provider_message_id. The
-            // send still goes out; it simply starts a new thread on the client's side
-            // rather than silently failing.
-            $last->provider_message_id,
-            $attachments,
-            $data['mode'] ?? 'reply'
+        $result = app(ThreadMailer::class)->send(
+            $thread, auth()->user(), $data['to'], $data['cc'] ?? [], $data['subject'], $data['body'], $attachments,
+            $data['in_reply_to'] ?? null, $data['include_signature'] ?? true, $data['mode'] ?? 'reply'
         );
 
         if (! $result['ok']) {
-            return response()->json([
-                'error'  => $result['error'] ?? 'The mail provider refused the message.',
-                'reason' => 'send_failed',
-            ], 502);
+            return response()->json(['error' => $result['error'], 'reason' => $result['reason']], $result['status']);
         }
 
         $this->audit->record($thread->agent_id, 'thread.replied', 'email_thread', $thread->id, auth()->id());
 
-        // 🔴 Whoever answers an unclaimed conversation first has taken it on (user, 2026-09-15; PRD §5.4
-        // "the system assigns the first staff member who replies") — the Claim button goes. Sales do not take work on.
-        $claimed = auth()->user()->designation !== 'sales' && EmailThread::withoutTenantScope()
+        // 🔴 The pricing member who answers an unclaimed conversation first has taken it on (user, 2026-09-15/16; PRD
+        // §5.4 "the system assigns the first staff member who replies") — the Claim button goes.
+        $claimed = auth()->user()->designation === 'pricing' && EmailThread::withoutTenantScope()
             ->whereKey($thread->id)->whereNull('assigned_ops_id')
             ->update(['assigned_ops_id' => auth()->id(), 'updated_at' => now()]) > 0;
 
         if ($claimed) {
             $this->audit->record($thread->agent_id, 'thread.claimed', 'email_thread', $thread->id, auth()->id());
         }
+        if (auth()->user()->designation !== 'sales') {
+            $this->clientUpdates->markReplied($thread->fresh());
+        }
 
         return response()->json([
             'ok' => true,
-            'threaded' => $last->provider_message_id !== null,
+            'threaded' => $result['threaded'],
             'assigned_ops' => $this->shape($thread->fresh(['assignedOps', 'enquiry']))['assigned_ops'],
         ]);
     }
@@ -524,12 +539,6 @@ class EmailInboxController extends Controller
         return $files;
     }
 
-    /**
-     * The signature a mail from this mailbox carries: the mailbox's own, else the sender's.
-     *
-     * PRD §5.2.4: `mailbox_connections.signature_html` overrides `users.signature_text`, because a
-     * user with two connected accounts usually needs two.
-     */
     /** The signature a reply on this thread would carry, or null. */
     private function threadSignature(EmailThread $thread): ?string
     {
@@ -537,18 +546,7 @@ class EmailInboxController extends Controller
             EmailMessage::where('thread_key', $thread->thread_key)->orderByDesc('received_at')->value('mailbox_connection_id')
         );
 
-        return $connection ? $this->signatureFor($connection) : null;
-    }
-
-    private function signatureFor(MailboxConnection $connection): ?string
-    {
-        $mailBody = app(MailBody::class);
-
-        if (! blank($connection->signature_html)) {
-            return $mailBody->clean($connection->signature_html);
-        }
-
-        return $mailBody->fromText(auth()->user()->signature_text ?? null);
+        return $connection ? app(ThreadMailer::class)->signatureFor($connection, auth()->user()) : null;
     }
 
     /**
@@ -671,6 +669,8 @@ class EmailInboxController extends Controller
             'job'            => $job ? $job->only(['id', 'execution_job_no', 'awb_number', 'status']) : null,
             'job_count'      => $jobs->count(),
             'message_count'  => EmailMessage::where('thread_key', $thread->thread_key)->count(),
+            // The client update waiting for someone to send or skip it — the card on the conversation.
+            'client_update'  => $thread->pending_client_notification,
         ];
     }
 

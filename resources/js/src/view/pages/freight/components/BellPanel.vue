@@ -39,49 +39,24 @@
               class="fx-bell__row fx-bell__row--pinned"
               :class="{ 'is-unread': !n.read_at }"
             >
-              <!-- 🔴 Two different pinned kinds now share this section. Before this the
-                   row said "Handover requested" for anything at approval priority, so a
-                   completed shipment announced itself as somebody else's reassignment. -->
-              <p v-if="isCompletion(n)" class="fx-bell__text">
-                Shipment complete —
-                <span class="identifier">{{ n.data.awb_number }}</span>
-                on <span class="identifier">{{ n.data.job_no }}</span>. The client has not
-                been told.
-              </p>
-              <p v-else class="fx-bell__text">
-                Handover requested on
-                <span class="identifier">{{ n.data.job_no || "a job" }}</span>
-              </p>
-              <p class="fx-bell__when"><Figure :value="n.created_at" kind="dateTime" /></p>
-
-              <!--
-                ⚠️ The message is SHOWN before it can be sent. "Completed" is a status a
-                person set, and a status set by mistake would otherwise become a wrong
-                message to a customer — which is not something the desk can take back.
-                The button approves a specific text, not an action in the abstract.
-              -->
-              <template v-if="isCompletion(n)">
-                <div v-if="drafting === n.id" class="fx-bell__draft">
-                  <p class="fx-bell__to">To {{ n.data.client }}</p>
-                  <textarea v-model="draftBody" class="fx-input" rows="5"></textarea>
-                  <div class="fx-bell__actions">
-                    <button class="fx-btn" :disabled="busy" @click="sendCompletion(n)">Send to client</button>
-                    <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="drafting = null">Cancel</button>
-                  </div>
-                  <p v-if="draftError" class="fx-error">{{ draftError }}</p>
-                </div>
-
-                <div v-else class="fx-bell__actions">
-                  <button
-                    class="fx-btn"
-                    :disabled="busy || !n.data.thread_id"
-                    :title="n.data.thread_id ? '' : 'No conversation to reply on'"
-                    @click="draftCompletion(n)"
-                  >Tell the client</button>
+              <!-- Two pinned kinds share this section: a client update waiting for approval, and a handover. -->
+              <template v-if="isClientUpdate(n)">
+                <p class="fx-bell__text">Client update ready — {{ n.data.title }}: {{ n.data.subject || "(no subject)" }}</p>
+                <p class="fx-bell__when"><Figure :value="n.created_at" kind="dateTime" /></p>
+                <!-- The mail is read, edited and sent on the conversation, never from the bell. -->
+                <div class="fx-bell__actions">
+                  <button class="fx-btn" @click="goTo(n)">Open conversation</button>
                 </div>
               </template>
+              <template v-else>
+                <p class="fx-bell__text">
+                  Handover requested on
+                  <span class="identifier">{{ n.data.job_no || "a job" }}</span>
+                </p>
+                <p class="fx-bell__when"><Figure :value="n.created_at" kind="dateTime" /></p>
+              </template>
 
-              <div v-else-if="canDecide" class="fx-bell__actions">
+              <div v-if="!isClientUpdate(n) && canDecide" class="fx-bell__actions">
                 <button class="fx-btn" :disabled="busy" @click="decide(n, 'accept')">Accept</button>
                 <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="decide(n, 'reject')">Reject</button>
               </div>
@@ -118,8 +93,6 @@ export default {
   components: { Figure },
   data: () => ({
     rows: [], unread: 0, open: false, loading: false, busy: false,
-    /* The completion message, held while the operator reads it. */
-    drafting: null, draftBody: "", draftError: null,
   }),
   computed: {
     ...mapGetters(["designation"]),
@@ -150,52 +123,8 @@ export default {
     this.load();
   },
   methods: {
-    /** The type is a morph key, so compare on the tail rather than the full class. */
-    isCompletion(n) {
-      return String(n.type || "").endsWith("ShipmentCompleted");
-    },
-    /**
-     * Compose the message, and show it.
-     *
-     * ⚠️ Written client-side rather than fetched: it is a fixed sentence with two
-     * identifiers in it, and a round trip to build that would be a round trip to
-     * maintain. The operator can edit every word before it goes.
-     */
-    draftCompletion(n) {
-      this.draftError = null;
-      this.draftBody =
-        "Dear team,\n\n" +
-        "Your shipment under AWB " + n.data.awb_number + " (our reference " + n.data.job_no +
-        ") has been completed.\n\n" +
-        "Please confirm receipt so we can close the file.\n\n" +
-        "Kind regards";
-      this.drafting = n.id;
-    },
-    sendCompletion(n) {
-      this.busy = true;
-      this.draftError = null;
-
-      /* Sent on the CONVERSATION the shipment came from, so the client's reply lands
-         back on the same thread instead of opening a new one. */
-      ApiService.post("/inbox/threads/" + n.data.thread_id + "/reply", {
-        to: [n.data.client],
-        cc: [],
-        subject: "Shipment complete — AWB " + n.data.awb_number,
-        body: this.draftBody,
-      })
-        .then(() => {
-          this.drafting = null;
-          // The message is owed no longer, so the card goes — a bell is a list of things
-          // still needing a decision.
-          return this.markRead(n);
-        })
-        /* ⚠️ The server's own words. A mail that did not go needs to say why — a rejected
-           address and a disconnected mailbox need different things from the operator. */
-        .catch((e) => {
-          const r = e && e.response && e.response.data;
-          this.draftError = (r && r.error) || "The message could not be sent.";
-        })
-        .finally(() => { this.busy = false; });
+    isClientUpdate(n) {
+      return n.type === "ClientUpdateReady";
     },
     toggle() {
       this.open = !this.open;
@@ -223,7 +152,7 @@ export default {
     },
     /** A notice about a conversation opens it. */
     goTo(n) {
-      if (n.type === "ThreadAssigned" && n.data.thread_id) {
+      if ((n.type === "ThreadAssigned" || n.type === "ClientUpdateReady") && n.data.thread_id) {
         this.open = false;
         this.$router.push({ path: "/inbox", query: { thread: n.data.thread_id } }).catch(() => {});
       }

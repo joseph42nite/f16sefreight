@@ -96,11 +96,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     unread: 0,
     open: false,
     loading: false,
-    busy: false,
-    /* The completion message, held while the operator reads it. */
-    drafting: null,
-    draftBody: "",
-    draftError: null
+    busy: false
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["designation"])), {}, {
     /* Only the owner grants a handover — operations may ask. The buttons are HIDDEN
@@ -134,46 +130,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     this.load();
   },
   methods: {
-    /** The type is a morph key, so compare on the tail rather than the full class. */
-    isCompletion(n) {
-      return String(n.type || "").endsWith("ShipmentCompleted");
-    },
-    /**
-     * Compose the message, and show it.
-     *
-     * ⚠️ Written client-side rather than fetched: it is a fixed sentence with two
-     * identifiers in it, and a round trip to build that would be a round trip to
-     * maintain. The operator can edit every word before it goes.
-     */
-    draftCompletion(n) {
-      this.draftError = null;
-      this.draftBody = "Dear team,\n\n" + "Your shipment under AWB " + n.data.awb_number + " (our reference " + n.data.job_no + ") has been completed.\n\n" + "Please confirm receipt so we can close the file.\n\n" + "Kind regards";
-      this.drafting = n.id;
-    },
-    sendCompletion(n) {
-      this.busy = true;
-      this.draftError = null;
-
-      /* Sent on the CONVERSATION the shipment came from, so the client's reply lands
-         back on the same thread instead of opening a new one. */
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/inbox/threads/" + n.data.thread_id + "/reply", {
-        to: [n.data.client],
-        cc: [],
-        subject: "Shipment complete — AWB " + n.data.awb_number,
-        body: this.draftBody
-      }).then(() => {
-        this.drafting = null;
-        // The message is owed no longer, so the card goes — a bell is a list of things
-        // still needing a decision.
-        return this.markRead(n);
-      })
-      /* ⚠️ The server's own words. A mail that did not go needs to say why — a rejected
-         address and a disconnected mailbox need different things from the operator. */.catch(e => {
-        const r = e && e.response && e.response.data;
-        this.draftError = r && r.error || "The message could not be sent.";
-      }).finally(() => {
-        this.busy = false;
-      });
+    isClientUpdate(n) {
+      return n.type === "ClientUpdateReady";
     },
     toggle() {
       this.open = !this.open;
@@ -202,7 +160,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     },
     /** A notice about a conversation opens it. */
     goTo(n) {
-      if (n.type === "ThreadAssigned" && n.data.thread_id) {
+      if ((n.type === "ThreadAssigned" || n.type === "ClientUpdateReady") && n.data.thread_id) {
         this.open = false;
         this.$router.push({
           path: "/inbox",
@@ -861,15 +819,27 @@ var render = function render() {
       class: {
         "is-unread": !n.read_at
       }
-    }, [_vm.isCompletion(n) ? _c("p", {
+    }, [_vm.isClientUpdate(n) ? [_c("p", {
       staticClass: "fx-bell__text"
-    }, [_vm._v("\n              Shipment complete —\n              "), _c("span", {
-      staticClass: "identifier"
-    }, [_vm._v(_vm._s(n.data.awb_number))]), _vm._v("\n              on "), _c("span", {
-      staticClass: "identifier"
-    }, [_vm._v(_vm._s(n.data.job_no))]), _vm._v(". The client has not\n              been told.\n            ")]) : _c("p", {
+    }, [_vm._v("Client update ready — " + _vm._s(n.data.title) + ": " + _vm._s(n.data.subject || "(no subject)"))]), _vm._v(" "), _c("p", {
+      staticClass: "fx-bell__when"
+    }, [_c("Figure", {
+      attrs: {
+        value: n.created_at,
+        kind: "dateTime"
+      }
+    })], 1), _vm._v(" "), _c("div", {
+      staticClass: "fx-bell__actions"
+    }, [_c("button", {
+      staticClass: "fx-btn",
+      on: {
+        click: function ($event) {
+          return _vm.goTo(n);
+        }
+      }
+    }, [_vm._v("Open conversation")])])] : [_c("p", {
       staticClass: "fx-bell__text"
-    }, [_vm._v("\n              Handover requested on\n              "), _c("span", {
+    }, [_vm._v("\n                Handover requested on\n                "), _c("span", {
       staticClass: "identifier"
     }, [_vm._v(_vm._s(n.data.job_no || "a job"))])]), _vm._v(" "), _c("p", {
       staticClass: "fx-bell__when"
@@ -878,68 +848,7 @@ var render = function render() {
         value: n.created_at,
         kind: "dateTime"
       }
-    })], 1), _vm._v(" "), _vm.isCompletion(n) ? [_vm.drafting === n.id ? _c("div", {
-      staticClass: "fx-bell__draft"
-    }, [_c("p", {
-      staticClass: "fx-bell__to"
-    }, [_vm._v("To " + _vm._s(n.data.client))]), _vm._v(" "), _c("textarea", {
-      directives: [{
-        name: "model",
-        rawName: "v-model",
-        value: _vm.draftBody,
-        expression: "draftBody"
-      }],
-      staticClass: "fx-input",
-      attrs: {
-        rows: "5"
-      },
-      domProps: {
-        value: _vm.draftBody
-      },
-      on: {
-        input: function ($event) {
-          if ($event.target.composing) return;
-          _vm.draftBody = $event.target.value;
-        }
-      }
-    }), _vm._v(" "), _c("div", {
-      staticClass: "fx-bell__actions"
-    }, [_c("button", {
-      staticClass: "fx-btn",
-      attrs: {
-        disabled: _vm.busy
-      },
-      on: {
-        click: function ($event) {
-          return _vm.sendCompletion(n);
-        }
-      }
-    }, [_vm._v("Send to client")]), _vm._v(" "), _c("button", {
-      staticClass: "fx-btn fx-btn--ghost",
-      attrs: {
-        disabled: _vm.busy
-      },
-      on: {
-        click: function ($event) {
-          _vm.drafting = null;
-        }
-      }
-    }, [_vm._v("Cancel")])]), _vm._v(" "), _vm.draftError ? _c("p", {
-      staticClass: "fx-error"
-    }, [_vm._v(_vm._s(_vm.draftError))]) : _vm._e()]) : _c("div", {
-      staticClass: "fx-bell__actions"
-    }, [_c("button", {
-      staticClass: "fx-btn",
-      attrs: {
-        disabled: _vm.busy || !n.data.thread_id,
-        title: n.data.thread_id ? "" : "No conversation to reply on"
-      },
-      on: {
-        click: function ($event) {
-          return _vm.draftCompletion(n);
-        }
-      }
-    }, [_vm._v("Tell the client")])])] : _vm.canDecide ? _c("div", {
+    })], 1)], _vm._v(" "), !_vm.isClientUpdate(n) && _vm.canDecide ? _c("div", {
       staticClass: "fx-bell__actions"
     }, [_c("button", {
       staticClass: "fx-btn",

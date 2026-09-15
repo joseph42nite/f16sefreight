@@ -601,11 +601,16 @@ class InboxTriageTest extends TestCase
         // A colleague answering afterwards does not take it over.
         $this->api($this->user('pricing', '2'))->postJson($this->url("/api/inbox/threads/{$id}/reply"), $reply)->assertOk();
         $this->assertSame($this->pricing->id, (int) DB::table('email_threads')->where('id', $id)->value('assigned_ops_id'));
+
+        // Only a pricing member's answer claims (user, 2026-09-16).
+        $other = $this->thread();
+        $this->api($this->user('operations'))->postJson($this->url("/api/inbox/threads/{$other}/reply"), $reply)->assertOk();
+        $this->assertNull(DB::table('email_threads')->where('id', $other)->value('assigned_ops_id'));
     }
 
     /**
-     * 🔴 Pricing hands a conversation to a colleague — or takes it — and the colleague is told; on an open
-     * enquiry a pricing colleague also becomes its pricing owner (user, 2026-09-15).
+     * 🔴 Pricing hands a conversation to another pricing colleague, who is told; on an open enquiry the colleague also
+     * becomes its pricing owner (user, 2026-09-15).
      */
     public function test_pricing_assigns_a_conversation_to_a_colleague(): void
     {
@@ -623,20 +628,20 @@ class InboxTriageTest extends TestCase
         $notice = DB::table('notifications')->where('notifiable_id', $colleague->id)->where('type', 'ThreadAssigned')->first();
         $this->assertSame($id, json_decode($notice->data, true)['thread_id']);
 
-        // Taking it back yourself needs no notice.
-        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$id}/assign"), ['user_id' => $this->pricing->id])->assertOk();
-        $this->assertSame(1, DB::table('notifications')->where('type', 'ThreadAssigned')->whereIn('notifiable_id', [$colleague->id, $this->pricing->id])->count());
     }
 
-    /** 🔒 Operations cannot reassign; nobody can hand a conversation to someone outside the branch, or to sales. */
+    /** 🔒 Operations cannot reassign; a conversation goes only to another pricing member of the same branch. */
     public function test_only_pricing_assigns_and_only_to_branch_colleagues(): void
     {
         $id = $this->thread();
 
         $this->api($this->user('operations'))->postJson($this->url("/api/inbox/threads/{$id}/assign"), ['user_id' => $this->pricing->id])->assertForbidden();
 
-        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$id}/assign"), ['user_id' => $this->user('sales')->id])
-            ->assertStatus(422)->assertJsonPath('reason', 'not_assignable');
+        // Only another pricing member of the branch (user, 2026-09-16): not sales, not operations, not yourself.
+        foreach ([$this->user('sales')->id, $this->user('operations', '2')->id, $this->pricing->id] as $userId) {
+            $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$id}/assign"), ['user_id' => $userId])
+                ->assertStatus(422)->assertJsonPath('reason', 'not_assignable');
+        }
 
         $otherBranch = Agent::create(['company_id' => $this->company->id, 'agent_name' => 'MAA', 'branch_code' => 'MAA']);
         $far = User::create(['name' => 'far', 'email' => 'far-ibx@test.local', 'password' => Hash::make('x'), 'company_name' => $this->company->id,

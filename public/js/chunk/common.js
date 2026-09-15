@@ -2819,10 +2819,6 @@ const HELP_TARGETS = [
   page: "/inbox",
   label: "Claim button"
 }, {
-  name: "analyze-pdf",
-  page: "/inbox",
-  label: "Analyze PDF button"
-}, {
   name: "open-workspace",
   page: "/inbox",
   label: "Open workspace button"

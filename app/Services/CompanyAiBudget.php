@@ -6,8 +6,8 @@ use App\Company;
 use Illuminate\Support\Facades\DB;
 
 /**
- * A company's AI budget (user, 2026-09-15): a monthly limit in ₹, spent through a rolling daily budget, with
- * document extraction first.
+ * A company's AI budget (user, 2026-09-15): a monthly limit in ₹ that grows with the team (the larger of the plan
+ * minimum and AI users × ₹150), spent through a rolling daily budget, with document extraction first.
  *
  *     today's budget = (monthly limit − spent before today) ÷ days left in the month, today included
  *
@@ -31,7 +31,26 @@ class CompanyAiBudget
 
     public function limitInr(Company $company): float
     {
-        return (float) ($company->ai_monthly_limit_inr ?? config("f16s.ai_monthly_limit_inr.{$company->tier}", 0));
+        return (float) ($company->ai_monthly_limit_inr ?? $this->planLimit($company));
+    }
+
+    /** The plan's limit for this team: the larger of the plan minimum and AI users × the per-user amount. */
+    public function planLimit(Company $company): float
+    {
+        return max(
+            (float) config("f16s.ai_monthly_limit_inr.{$company->tier}", 0),
+            $this->aiUsers($company) * (float) config("f16s.ai_per_user_inr.{$company->tier}", 0)
+        );
+    }
+
+    /** Active staff who use AI — pricing, operations and sales — across the company's branches. */
+    public function aiUsers(Company $company): int
+    {
+        return DB::table('users')
+            ->whereIn('branch_name', DB::table('agents_info')->where('company_id', $company->id)->select('id'))
+            ->whereIn('designation', config('f16s.ai_user_designations'))
+            ->where('is_active', 1)
+            ->count();
     }
 
     /**
@@ -59,6 +78,11 @@ class CompanyAiBudget
             'used_month_percent' => $limit > 0 ? round($spentMonth * 100 / $limit, 1) : null,
             'used_today_percent' => $todayBudget > 0 ? round($spentToday * 100 / $todayBudget, 1) : null,
             'overridden' => $company->ai_monthly_limit_inr !== null,
+            // How the plan limit is reached, for superadmin: the larger of the minimum and users × per user.
+            'ai_users' => $this->aiUsers($company),
+            'per_user' => (float) config("f16s.ai_per_user_inr.{$company->tier}", 0),
+            'plan_minimum' => (float) config("f16s.ai_monthly_limit_inr.{$company->tier}", 0),
+            'plan_limit' => $this->planLimit($company),
         ];
     }
 

@@ -5771,6 +5771,8 @@ body {
 .fx-target__bar span.is-met { background: var(--status-success); }
 .fx-target__meta { font-size: .75rem; margin-top: 2px; }
 
+.fx-convo__assign { width: auto; max-width: 16rem; }
+
 /* Previous / next under a paged list. */
 .fx-pager { display: flex; align-items: center; justify-content: center; gap: var(--space-3); margin-top: var(--space-3); flex-wrap: wrap; }
 
@@ -84888,6 +84890,8 @@ hr{
 
 
 .fx-ai-limit[data-v-5a712bcd] { width: 9rem;
+}
+.fx-ai-users[data-v-5a712bcd] { font-size: .75rem;
 }
 .fx-ai-night[data-v-5a712bcd] { border: 0; padding: 0; margin: var(--space-3) 0; display: flex; flex-direction: column; gap: var(--space-1);
 }

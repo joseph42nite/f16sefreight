@@ -195,7 +195,22 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       if (n.type.indexOf("Reassignment") !== -1) {
         return "Handover requested on " + (n.data.job_no || "a job");
       }
+      if (n.type === "ThreadAssigned") {
+        return (n.data.by || "A colleague") + " assigned you a conversation: " + (n.data.subject || "(no subject)");
+      }
       return n.type.split("\\").pop().replace(/([a-z])([A-Z])/g, "$1 $2");
+    },
+    /** A notice about a conversation opens it. */
+    goTo(n) {
+      if (n.type === "ThreadAssigned" && n.data.thread_id) {
+        this.open = false;
+        this.$router.push({
+          path: "/inbox",
+          query: {
+            thread: n.data.thread_id
+          }
+        }).catch(() => {});
+      }
     },
     markRead(n) {
       if (n.read_at) return;
@@ -960,7 +975,8 @@ var render = function render() {
         },
         on: {
           click: function ($event) {
-            return _vm.markRead(n);
+            _vm.markRead(n);
+            _vm.goTo(n);
           }
         }
       }, [_c("p", {

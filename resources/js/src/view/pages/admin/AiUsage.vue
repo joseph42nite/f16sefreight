@@ -98,7 +98,8 @@
       <section class="fx-section">
         <h2 class="fx-section__title">By customer</h2>
         <p class="fx-muted">
-          Monthly AI limit per customer — empty follows the plan (Tactical ₹500, Command ₹2,000, Core none).
+          Monthly AI limit per customer — empty follows the plan: the larger of the plan minimum (Tactical ₹500,
+          Command ₹2,000) and AI users (pricing, operations, sales) × ₹150. Core has no AI.
           Help questions and email drafts pause at 70% of today's budget so documents keep being read.
         </p>
         <div class="fx-table-wrap">
@@ -116,7 +117,13 @@
             </thead>
             <tbody>
               <tr v-for="c in data.by_company" :key="c.id">
-                <td>{{ c.company }} <span class="fx-muted">· {{ c.tier }}</span></td>
+                <td>
+                  {{ c.company }} <span class="fx-muted">· {{ c.tier }}</span>
+                  <div class="fx-muted fx-ai-users">
+                    {{ c.budget.ai_users }} AI users × ₹{{ inr(c.budget.per_user) }} = ₹{{ inr(c.budget.ai_users * c.budget.per_user) }}
+                    <template v-if="c.budget.plan_minimum > c.budget.ai_users * c.budget.per_user"> · plan minimum ₹{{ inr(c.budget.plan_minimum) }}</template>
+                  </div>
+                </td>
                 <td class="fx-num">{{ c.documents }}</td>
                 <td class="fx-num">{{ c.help }}</td>
                 <td class="fx-num">{{ c.drafts }}</td>
@@ -131,7 +138,7 @@
                   <input
                     v-model="limits[c.id]"
                     type="number" min="0" step="100" class="fx-input fx-ai-limit"
-                    :placeholder="'Plan: ' + inr(c.budget.limit)"
+                    :placeholder="'Plan: ' + inr(c.budget.plan_limit)"
                     @change="saveLimit(c)"
                   />
                 </td>
@@ -225,6 +232,7 @@ export default {
 
 <style scoped>
 .fx-ai-limit { width: 9rem; }
+.fx-ai-users { font-size: .75rem; }
 .fx-ai-night { border: 0; padding: 0; margin: var(--space-3) 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .fx-table-wrap { overflow-x: auto; }
 </style>

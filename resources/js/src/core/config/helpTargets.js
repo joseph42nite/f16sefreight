@@ -14,7 +14,6 @@ export const HELP_TARGETS = [
   { name: "inbox-folders", page: "/inbox", label: "Folder tabs (All, Enquiries, Airline…)" },
   { name: "thread-classification", page: "/inbox", label: "Classification dropdown on a conversation" },
   { name: "claim-thread", page: "/inbox", label: "Claim button" },
-  { name: "analyze-pdf", page: "/inbox", label: "Analyze PDF button" },
   { name: "open-workspace", page: "/inbox", label: "Open workspace button" },
   { name: "mail-attachments", page: "/inbox", label: "Attachment chips under an email" },
   { name: "reply", page: "/inbox", label: "Reply button" },

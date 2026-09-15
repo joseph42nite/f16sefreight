@@ -197,6 +197,10 @@ const WORKSPACE_TABS = [{
     canTriage() {
       return this.designation === "pricing";
     },
+    /** Mirrors the server's `assignOperator`. */
+    canAssign() {
+      return this.designation === "pricing" || this.designation === "boss";
+    },
     /**
      * 🔴 TIMING AS A STATE, NOT FOUR TIMESTAMPS. The value in `first_triage_at` and
      * `first_response_at` is the CONTRAST between them — a time against triaged with a
@@ -329,10 +333,19 @@ const WORKSPACE_TABS = [{
   }),
   created() {
     this.load();
-    // From a Kanban card: /inbox?thread=12 opens that conversation.
+    // From a Kanban card or a bell notice: /inbox?thread=12 opens that conversation.
     if (this.$route.query.thread) this.open({
       id: this.$route.query.thread
     });
+    // The people a conversation can be handed to.
+    if (this.canAssign) this.loadOperators();
+  },
+  watch: {
+    "$route.query.thread"(id) {
+      if (id) this.open({
+        id
+      });
+    }
   },
   mounted() {
     document.addEventListener("mousedown", this.closeThreadFiles);
@@ -470,9 +483,13 @@ const WORKSPACE_TABS = [{
       if (this.draft.inReplyTo) form.append("in_reply_to", this.draft.inReplyTo);
       this.draft.attachmentIds.forEach(id => form.append("attachment_ids[]", id));
       this.draft.files.forEach(f => form.append("files[]", f));
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/inbox/threads/" + this.active.id + "/reply", form).then(() => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/inbox/threads/" + this.active.id + "/reply", form).then(({
+        data
+      }) => {
         this.composing = false;
         this.sentOk = true;
+        // Answering an unclaimed conversation takes it on, so the Claim button goes (user, 2026-09-15).
+        if (data && data.assigned_ops) this.setOwner(data.assigned_ops);
         /* No optimistic row. The sent mail returns on the next mailbox sync as an echo,
            and inventing one here would show a message that might never have left. */
       }).catch(e => {
@@ -626,7 +643,28 @@ const WORKSPACE_TABS = [{
     },
     operatorLabel(o) {
       const load = "OLI " + Number(o.oli).toFixed(1) + (o.overloaded ? " ● OVERLOADED" : "");
-      return o.name + " — " + load + " · " + o.on_date + " that day";
+      return o.name + (this.isMe(o) ? " (you)" : "") + " — " + load + " · " + o.on_date + " that day";
+    },
+    isMe(o) {
+      return !!this.currentUser && Number(this.currentUser.id) === Number(o.id);
+    },
+    /** The conversation's owner, on the open conversation and on its row in the list. */
+    setOwner(owner) {
+      this.active.assigned_ops = owner;
+      const row = this.threads.find(t => t.id === this.active.id);
+      if (row) row.assigned_ops = owner;
+    },
+    assignThread(userId) {
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/inbox/threads/" + this.active.id + "/assign", {
+        user_id: Number(userId)
+      }).then(({
+        data
+      }) => {
+        this.setOwner(data.assigned_ops);
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      });
     },
     confirmShipment() {
       this.outcomeBusy = true;
@@ -2455,15 +2493,32 @@ var render = function render() {
         value: c
       }
     }, [_vm._v(_vm._s(c.replace(/_/g, " ")))]);
-  }), 0) : _vm._e(), _vm._v(" "), _vm.isEnquiryWork ? _c("button", {
-    staticClass: "fx-btn",
+  }), 0) : _vm._e(), _vm._v(" "), _vm.canAssign && _vm.operators.length ? _c("select", {
+    staticClass: "fx-input fx-convo__assign",
     attrs: {
-      "data-help": "analyze-pdf"
+      "aria-label": "Assign this conversation"
+    },
+    domProps: {
+      value: _vm.active.assigned_ops ? _vm.active.assigned_ops.id : ""
     },
     on: {
-      click: _vm.openExtraction
+      change: function ($event) {
+        return _vm.assignThread($event.target.value);
+      }
     }
-  }, [_vm._v("Analyze PDF")]) : _vm._e(), _vm._v(" "), _vm.designation !== "sales" ? _c("button", {
+  }, [_c("option", {
+    attrs: {
+      value: "",
+      disabled: ""
+    }
+  }, [_vm._v("Assign to…")]), _vm._v(" "), _vm._l(_vm.operators, function (o) {
+    return _c("option", {
+      key: o.id,
+      domProps: {
+        value: o.id
+      }
+    }, [_vm._v(_vm._s(o.name) + _vm._s(_vm.isMe(o) ? " (you)" : "") + " · " + _vm._s(o.designation))]);
+  })], 2) : _vm._e(), _vm._v(" "), _vm.designation !== "sales" ? _c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
       "data-help": "open-workspace"

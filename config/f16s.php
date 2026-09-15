@@ -57,15 +57,28 @@ return [
     'vision_consent_ttl_hours' => 24,
 
     /*
-    | Monthly AI limit per company, in ₹, when superadmin has not set one on the company (user, 2026-09-15).
-    | Spent through a rolling daily budget with extraction first — see App\Services\CompanyAiBudget.
-    | At ~₹0.30 an AI-read document: Tactical ≈ 1,500 documents, Command ≈ 6,000. Core has no AI.
+    | Monthly AI limit per company, in ₹, when superadmin has not set one (user, 2026-09-15): it grows with the
+    | team — the larger of the plan minimum and (AI users × ai_per_user_inr). AI users are active pricing,
+    | operations and sales staff. Spent through a rolling daily budget with extraction first (CompanyAiBudget).
+    |
+    | Measured from llm_usage_logs (2026-09-15): a document ₹0.025 on the economy tier, ₹0.13 on the fast
+    | fallback; a help question ₹0.01; an email draft ₹0.006. A busy user — 40 documents a day with 30% on the
+    | fallback, 5 scans, help and drafts, 22 working days — costs about ₹70 a month; ₹150 is 2× headroom.
     */
     'ai_monthly_limit_inr' => [
         'core'     => 0,
         'tactical' => 500,
         'command'  => 2000,
     ],
+
+    'ai_per_user_inr' => [
+        'core'     => 0,
+        'tactical' => 150,
+        'command'  => 150,
+    ],
+
+    /** Who uses AI in the product: extraction, help questions, email drafts. */
+    'ai_user_designations' => ['pricing', 'operations', 'sales'],
 
     /*
     |--------------------------------------------------------------------------

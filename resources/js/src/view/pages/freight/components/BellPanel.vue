@@ -97,7 +97,7 @@
             :key="n.id"
             class="fx-bell__row"
             :class="{ 'is-unread': !n.read_at }"
-            @click="markRead(n)"
+            @click="markRead(n); goTo(n)"
           >
             <p class="fx-bell__text">{{ describe(n) }}</p>
             <p class="fx-bell__when"><Figure :value="n.created_at" kind="dateTime" /></p>
@@ -216,7 +216,17 @@ export default {
       if (n.type.indexOf("Reassignment") !== -1) {
         return "Handover requested on " + (n.data.job_no || "a job");
       }
+      if (n.type === "ThreadAssigned") {
+        return (n.data.by || "A colleague") + " assigned you a conversation: " + (n.data.subject || "(no subject)");
+      }
       return n.type.split("\\").pop().replace(/([a-z])([A-Z])/g, "$1 $2");
+    },
+    /** A notice about a conversation opens it. */
+    goTo(n) {
+      if (n.type === "ThreadAssigned" && n.data.thread_id) {
+        this.open = false;
+        this.$router.push({ path: "/inbox", query: { thread: n.data.thread_id } }).catch(() => {});
+      }
     },
     markRead(n) {
       if (n.read_at) return;

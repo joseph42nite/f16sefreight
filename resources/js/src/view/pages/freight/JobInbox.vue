@@ -102,17 +102,21 @@
               memorise a consignee name instead of checking it, and a mis-keyed
               consignee is a rejected filing.
             -->
-            <!-- PRD §2.3 puts the [Analyze PDF] dropzone on /inbox: the attachment
-                 that needs extracting arrived on this thread.
-                 🔴 It opens the WORKSPACE, not a modal. Extraction is sustained work
-                 against several documents while reading the mail that carried them —
-                 §5.5's own test for a drawer over a modal. A modal would also cover the
-                 conversation, making the operator memorise a consignee instead of
-                 checking it, and a mis-keyed consignee is a rejected filing. -->
-            <!-- ⚠️ Hidden, not disabled, on a non-enquiry thread. A greyed button invites
-                 a click and then explains nothing; the workspace already says which
-                 classification unlocks the work, for anyone who opens it. -->
-            <button v-if="isEnquiryWork" class="fx-btn" data-help="analyze-pdf" @click="openExtraction">Analyze PDF</button>
+            <!--
+              Hand the conversation to a colleague, or take it yourself (user, 2026-09-15). Pricing assigns
+              directly; the new owner is told in their bell.
+            -->
+            <select
+              v-if="canAssign && operators.length"
+              class="fx-input fx-convo__assign"
+              :value="active.assigned_ops ? active.assigned_ops.id : ''"
+              aria-label="Assign this conversation"
+              @change="assignThread($event.target.value)"
+            >
+              <option value="" disabled>Assign to…</option>
+              <option v-for="o in operators" :key="o.id" :value="o.id">{{ o.name }}{{ isMe(o) ? " (you)" : "" }} · {{ o.designation }}</option>
+            </select>
+
 
             <button v-if="designation !== 'sales'" class="fx-btn fx-btn--primary" data-help="open-workspace" @click="openWorkspace">Open workspace</button>
           </div>
@@ -641,6 +645,10 @@ export default {
     canTriage() {
       return this.designation === "pricing";
     },
+    /** Mirrors the server's `assignOperator`. */
+    canAssign() {
+      return this.designation === "pricing" || this.designation === "boss";
+    },
     /**
      * 🔴 TIMING AS A STATE, NOT FOUR TIMESTAMPS. The value in `first_triage_at` and
      * `first_response_at` is the CONTRAST between them — a time against triaged with a
@@ -786,8 +794,15 @@ export default {
   },
   created() {
     this.load();
-    // From a Kanban card: /inbox?thread=12 opens that conversation.
+    // From a Kanban card or a bell notice: /inbox?thread=12 opens that conversation.
     if (this.$route.query.thread) this.open({ id: this.$route.query.thread });
+    // The people a conversation can be handed to.
+    if (this.canAssign) this.loadOperators();
+  },
+  watch: {
+    "$route.query.thread"(id) {
+      if (id) this.open({ id });
+    },
   },
   mounted() {
     document.addEventListener("mousedown", this.closeThreadFiles);
@@ -933,9 +948,11 @@ export default {
       this.draft.files.forEach((f) => form.append("files[]", f));
 
       ApiService.post("/inbox/threads/" + this.active.id + "/reply", form)
-        .then(() => {
+        .then(({ data }) => {
           this.composing = false;
           this.sentOk = true;
+          // Answering an unclaimed conversation takes it on, so the Claim button goes (user, 2026-09-15).
+          if (data && data.assigned_ops) this.setOwner(data.assigned_ops);
           /* No optimistic row. The sent mail returns on the next mailbox sync as an echo,
              and inventing one here would show a message that might never have left. */
         })
@@ -1081,7 +1098,22 @@ export default {
     },
     operatorLabel(o) {
       const load = "OLI " + Number(o.oli).toFixed(1) + (o.overloaded ? " ● OVERLOADED" : "");
-      return o.name + " — " + load + " · " + o.on_date + " that day";
+      return o.name + (this.isMe(o) ? " (you)" : "") + " — " + load + " · " + o.on_date + " that day";
+    },
+    isMe(o) {
+      return !!this.currentUser && Number(this.currentUser.id) === Number(o.id);
+    },
+    /** The conversation's owner, on the open conversation and on its row in the list. */
+    setOwner(owner) {
+      this.active.assigned_ops = owner;
+      const row = this.threads.find((t) => t.id === this.active.id);
+      if (row) row.assigned_ops = owner;
+    },
+    assignThread(userId) {
+      this.actionError = null;
+      ApiService.post("/inbox/threads/" + this.active.id + "/assign", { user_id: Number(userId) })
+        .then(({ data }) => { this.setOwner(data.assigned_ops); })
+        .catch((e) => { this.actionError = this.messageFor(e); });
     },
     confirmShipment() {
       this.outcomeBusy = true;

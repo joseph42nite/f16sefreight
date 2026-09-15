@@ -76,6 +76,26 @@ class CompanyAiBudgetTest extends TestCase
     }
 
     /**
+     * 🔴 The limit grows with the team: the larger of the plan minimum (Command ₹2,000) and AI users × ₹150.
+     * 20 pricing / operations / sales staff → ₹3,000. The Boss, accounts and inactive staff do not count.
+     */
+    public function test_the_plan_limit_grows_with_the_number_of_ai_users(): void
+    {
+        foreach (range(1, 20) as $i) {
+            User::create(['name' => "u{$i}", 'email' => "u{$i}-bgt@test.local", 'password' => 'x', 'company_name' => $this->company->id,
+                'branch_name' => $this->branch->id, 'designation' => ['pricing', 'operations', 'sales'][$i % 3], 'is_active' => 1]);
+        }
+        $this->user('boss');
+        $this->user('accounts');
+        User::create(['name' => 'gone', 'email' => 'gone-bgt@test.local', 'password' => 'x', 'company_name' => $this->company->id,
+            'branch_name' => $this->branch->id, 'designation' => 'pricing', 'is_active' => 0]);
+
+        $status = $this->budget()->status($this->company);
+
+        $this->assertSame([20, 3000.0, 3000.0], [$status['ai_users'], $status['plan_limit'], $status['limit']]);
+    }
+
+    /**
      * 🔴 Today's budget rolls: (limit − spent before today) ÷ days left, today included.
      * Limit ₹3,000 · ₹1,600 spent before the 15th · 16 days left → (3,000 − 1,600) ÷ 16 = ₹87.50.
      */

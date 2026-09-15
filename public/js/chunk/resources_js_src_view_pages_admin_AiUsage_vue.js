@@ -390,16 +390,18 @@ var render = function render() {
     staticClass: "fx-section__title"
   }, [_vm._v("By customer")]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("\n        Monthly AI limit per customer — empty follows the plan (Tactical ₹500, Command ₹2,000, Core none).\n        Help questions and email drafts pause at 70% of today's budget so documents keep being read.\n      ")]), _vm._v(" "), _c("div", {
+  }, [_vm._v("\n        Monthly AI limit per customer — empty follows the plan: the larger of the plan minimum (Tactical ₹500,\n        Command ₹2,000) and AI users (pricing, operations, sales) × ₹150. Core has no AI.\n        Help questions and email drafts pause at 70% of today's budget so documents keep being read.\n      ")]), _vm._v(" "), _c("div", {
     staticClass: "fx-table-wrap"
   }, [_c("table", {
     staticClass: "fx-table"
   }, [_vm._m(1), _vm._v(" "), _c("tbody", _vm._l(_vm.data.by_company, function (c) {
     return _c("tr", {
       key: c.id
-    }, [_c("td", [_vm._v(_vm._s(c.company) + " "), _c("span", {
+    }, [_c("td", [_vm._v("\n                " + _vm._s(c.company) + " "), _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("· " + _vm._s(c.tier))])]), _vm._v(" "), _c("td", {
+    }, [_vm._v("· " + _vm._s(c.tier))]), _vm._v(" "), _c("div", {
+      staticClass: "fx-muted fx-ai-users"
+    }, [_vm._v("\n                  " + _vm._s(c.budget.ai_users) + " AI users × ₹" + _vm._s(_vm.inr(c.budget.per_user)) + " = ₹" + _vm._s(_vm.inr(c.budget.ai_users * c.budget.per_user)) + "\n                  "), c.budget.plan_minimum > c.budget.ai_users * c.budget.per_user ? [_vm._v(" · plan minimum ₹" + _vm._s(_vm.inr(c.budget.plan_minimum)))] : _vm._e()], 2)]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
     }, [_vm._v(_vm._s(c.documents))]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
@@ -426,7 +428,7 @@ var render = function render() {
         type: "number",
         min: "0",
         step: "100",
-        placeholder: "Plan: " + _vm.inr(c.budget.limit)
+        placeholder: "Plan: " + _vm.inr(c.budget.plan_limit)
       },
       domProps: {
         value: _vm.limits[c.id]

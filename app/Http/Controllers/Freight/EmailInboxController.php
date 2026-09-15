@@ -314,6 +314,45 @@ class EmailInboxController extends Controller
     }
 
     /**
+     * Hand a conversation to a colleague — or to yourself (user, 2026-09-15: "if he wants to assign the mail to some
+     * other pricing staff to handle"). Pricing (and the Boss) assign directly, as they already do for operators
+     * (PRD §5.6); the new owner is told in their bell. While the enquiry is still open, a pricing colleague also
+     * becomes its pricing owner, so the quote and the confirmed shipment follow the person now handling it.
+     */
+    public function assign(Request $request, EmailThread $thread): JsonResponse
+    {
+        $this->authorize('assignOperator');
+        abort_unless($thread->isVisibleTo(auth()->user()), 404);
+
+        $data = $request->validate(['user_id' => ['required', 'integer']]);
+
+        $to = \App\User::whereKey($data['user_id'])->where('branch_name', $thread->agent_id)
+            ->whereIn('designation', ['pricing', 'operations'])->where('is_active', 1)->first();
+
+        if ($to === null) {
+            return response()->json(['error' => 'Choose a pricing or operations colleague in this branch.', 'reason' => 'not_assignable'], 422);
+        }
+
+        $thread->forceFill(['assigned_ops_id' => $to->id])->save();
+
+        $enquiry = $thread->enquiry;
+        if ($to->designation === 'pricing' && $enquiry && ! $enquiry->jobs()->exists()) {
+            $enquiry->forceFill(['pricing_id' => $to->id])->save();
+        }
+
+        $this->audit->record($thread->agent_id, 'thread.assigned', 'email_thread', $thread->id, auth()->id());
+
+        if ($to->id !== auth()->id()) {
+            $subject = EmailMessage::where('thread_key', $thread->thread_key)->orderBy('received_at')->value('subject');
+            app(\App\Services\BellNotificationService::class)->notify($thread->agent_id, $to->id, 'ThreadAssigned', [
+                'thread_id' => $thread->id, 'subject' => $subject, 'by' => auth()->user()->name,
+            ]);
+        }
+
+        return response()->json($this->shape($thread->fresh(['assignedOps', 'enquiry'])));
+    }
+
+    /**
      * Reply, reply-all or forward — one endpoint, because they differ only in who the
      * caller puts in `to` and `cc`.
      *
@@ -416,7 +455,21 @@ class EmailInboxController extends Controller
 
         $this->audit->record($thread->agent_id, 'thread.replied', 'email_thread', $thread->id, auth()->id());
 
-        return response()->json(['ok' => true, 'threaded' => $last->provider_message_id !== null]);
+        // 🔴 Whoever answers an unclaimed conversation first has taken it on (user, 2026-09-15; PRD §5.4
+        // "the system assigns the first staff member who replies") — the Claim button goes. Sales do not take work on.
+        $claimed = auth()->user()->designation !== 'sales' && EmailThread::withoutTenantScope()
+            ->whereKey($thread->id)->whereNull('assigned_ops_id')
+            ->update(['assigned_ops_id' => auth()->id(), 'updated_at' => now()]) > 0;
+
+        if ($claimed) {
+            $this->audit->record($thread->agent_id, 'thread.claimed', 'email_thread', $thread->id, auth()->id());
+        }
+
+        return response()->json([
+            'ok' => true,
+            'threaded' => $last->provider_message_id !== null,
+            'assigned_ops' => $this->shape($thread->fresh(['assignedOps', 'enquiry']))['assigned_ops'],
+        ]);
     }
 
     // ─── Internals ───────────────────────────────────────────────────────────

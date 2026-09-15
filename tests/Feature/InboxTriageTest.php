@@ -587,6 +587,63 @@ class InboxTriageTest extends TestCase
         });
     }
 
+    /** 🔴 Answering an unclaimed conversation takes it on — the first to reply owns it (user, 2026-09-15). */
+    public function test_the_first_reply_claims_an_unclaimed_conversation(): void
+    {
+        \Illuminate\Support\Facades\Http::fake(['*/reply' => \Illuminate\Support\Facades\Http::response('', 202)]);
+        $id = $this->thread();
+        $reply = ['to' => ['ops@client.test'], 'subject' => 'Re: Quote request', 'body' => 'Rate attached.'];
+
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$id}/reply"), $reply)
+            ->assertOk()->assertJsonPath('assigned_ops.id', $this->pricing->id);
+        $this->assertSame($this->pricing->id, (int) DB::table('email_threads')->where('id', $id)->value('assigned_ops_id'));
+
+        // A colleague answering afterwards does not take it over.
+        $this->api($this->user('pricing', '2'))->postJson($this->url("/api/inbox/threads/{$id}/reply"), $reply)->assertOk();
+        $this->assertSame($this->pricing->id, (int) DB::table('email_threads')->where('id', $id)->value('assigned_ops_id'));
+    }
+
+    /**
+     * 🔴 Pricing hands a conversation to a colleague — or takes it — and the colleague is told; on an open
+     * enquiry a pricing colleague also becomes its pricing owner (user, 2026-09-15).
+     */
+    public function test_pricing_assigns_a_conversation_to_a_colleague(): void
+    {
+        $colleague = $this->user('pricing', '2');
+        $enquiryId = DB::table('enquiries')->insertGetId([
+            'agent_id' => $this->branch->id, 'transport_mode' => 'air', 'status' => 'new', 'pricing_id' => $this->pricing->id,
+            'enquiry_no' => 'ENQA-IBX-26-' . random_int(1000, 9999), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $id = $this->thread(['classification' => 'customer_enquiry', 'enquiry_id' => $enquiryId, 'assigned_ops_id' => $this->pricing->id]);
+
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$id}/assign"), ['user_id' => $colleague->id])
+            ->assertOk()->assertJsonPath('assigned_ops.id', $colleague->id);
+
+        $this->assertSame($colleague->id, (int) DB::table('enquiries')->where('id', $enquiryId)->value('pricing_id'));
+        $notice = DB::table('notifications')->where('notifiable_id', $colleague->id)->where('type', 'ThreadAssigned')->first();
+        $this->assertSame($id, json_decode($notice->data, true)['thread_id']);
+
+        // Taking it back yourself needs no notice.
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$id}/assign"), ['user_id' => $this->pricing->id])->assertOk();
+        $this->assertSame(1, DB::table('notifications')->where('type', 'ThreadAssigned')->whereIn('notifiable_id', [$colleague->id, $this->pricing->id])->count());
+    }
+
+    /** 🔒 Operations cannot reassign; nobody can hand a conversation to someone outside the branch, or to sales. */
+    public function test_only_pricing_assigns_and_only_to_branch_colleagues(): void
+    {
+        $id = $this->thread();
+
+        $this->api($this->user('operations'))->postJson($this->url("/api/inbox/threads/{$id}/assign"), ['user_id' => $this->pricing->id])->assertForbidden();
+
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$id}/assign"), ['user_id' => $this->user('sales')->id])
+            ->assertStatus(422)->assertJsonPath('reason', 'not_assignable');
+
+        $otherBranch = Agent::create(['company_id' => $this->company->id, 'agent_name' => 'MAA', 'branch_code' => 'MAA']);
+        $far = User::create(['name' => 'far', 'email' => 'far-ibx@test.local', 'password' => Hash::make('x'), 'company_name' => $this->company->id,
+            'branch_name' => $otherBranch->id, 'designation' => 'pricing', 'is_active' => 1]);
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$id}/assign"), ['user_id' => $far->id])->assertStatus(422);
+    }
+
     // ─── The composer: formatting and the signature (PRD §5.2.4) ─────────────
 
     /** Sends a reply and returns the HTML Graph received. */

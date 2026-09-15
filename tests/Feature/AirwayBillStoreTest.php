@@ -168,6 +168,35 @@ class AirwayBillStoreTest extends TestCase
         $this->assertSame($address, $stored, 'The address was altered on the way in.');
     }
 
+    /**
+     * 🔴 Address line 2 takes the same characters as line 1 (user, 2026-09-15). "Clean for" spills a
+     * long line 1 into line 2, so a "/" or "&" that was fine on line 1 must not be refused on line 2.
+     */
+    public function test_address_line_2_accepts_the_same_characters_as_line_1(): void
+    {
+        $this->create([
+            'first_box' => $this->firstBox('20000400'),
+            'shipper_address' => [
+                'ship_name' => 'Test', 'ship_address' => 'Plot 42/A',
+                'ship_address_line_2' => 'MIDC (East) & Co. #3',
+                'ship_city' => 'Mumbai', 'ship_state' => 'MH',
+                'ship_country' => 'IN', 'ship_post_code' => '400093',
+            ],
+            'consignee_address' => [
+                'cons_name' => 'Test', 'cons_address' => 'Gardens St.',
+                'cons_address_line_2' => "P.O Box 9192/B, O'Neil",
+                'cons_city' => 'Amman', 'cons_state' => 'Amman',
+                'cons_country' => 'JO', 'cons_post_code' => '11191',
+            ],
+        ])->assertOk();
+
+        $row = DB::table('way_bill_addresses')->where('awb_id', '17620000400')
+            ->first(['ship_address_line_2', 'cons_address_line_2']);
+
+        $this->assertSame('MIDC (East) & Co. #3', $row->ship_address_line_2);
+        $this->assertSame("P.O Box 9192/B, O'Neil", $row->cons_address_line_2);
+    }
+
     /** ⚠️ Control characters are still refused — the rule was widened, not removed. */
     public function test_control_characters_are_still_rejected(): void
     {

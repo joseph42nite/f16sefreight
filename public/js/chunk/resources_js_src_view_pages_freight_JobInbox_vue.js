@@ -4834,6 +4834,14 @@ function countryCode(value, countries) {
   return Object.keys(list).find(code => String(list[code]).toUpperCase() === upper) || null;
 }
 
+/**
+ * India's states and union territories, as an address writes them.
+ *
+ * Used only to tell "KALAMASEERY, KERALA 683503" (a state beside the PIN) from "Mumbai 400093" (a city).
+ * Kept in step with python/geo_constants.py by hand.
+ */
+const STATE_NAMES = ["ANDHRA PRADESH", "ARUNACHAL PRADESH", "ASSAM", "BIHAR", "CHHATTISGARH", "GOA", "GUJARAT", "HARYANA", "HIMACHAL PRADESH", "JHARKHAND", "KARNATAKA", "KERALA", "MADHYA PRADESH", "MAHARASHTRA", "MANIPUR", "MEGHALAYA", "MIZORAM", "NAGALAND", "ODISHA", "ORISSA", "PUNJAB", "RAJASTHAN", "SIKKIM", "TAMIL NADU", "TELANGANA", "TRIPURA", "UTTAR PRADESH", "UTTARAKHAND", "WEST BENGAL", "ANDAMAN AND NICOBAR ISLANDS", "CHANDIGARH", "DADRA AND NAGAR HAVELI AND DAMAN AND DIU", "DELHI", "NEW DELHI", "JAMMU AND KASHMIR", "LADAKH", "LAKSHADWEEP", "PUDUCHERRY", "PONDICHERRY"];
+
 /** "Amman 11191 Jordan": a country written at the end of a line rather than on its own. */
 function trailingCountry(text, countries) {
   const names = Object.keys(countries || {}).map(code => [code, String(countries[code])]).concat(Object.keys(COUNTRY_ALIASES).map(name => [COUNTRY_ALIASES[name], name]));
@@ -4896,10 +4904,16 @@ function parsePartyBlock(text, countries) {
     if (i + 1 < parts.length) out.state = parts.slice(i + 1).join(", ");
     const before = start ? "" : end[1].trim();
     // "P.O Box 9192 Amman": the city is the words after the last number.
-    const city = start ? start[2].trim() : before.replace(/^.*\d\S*\s*/, "").trim();
+    let city = start ? start[2].trim() : before.replace(/^.*\d\S*\s*/, "").trim();
     const lead = before.slice(0, before.length - city.length).replace(/[\s,–-]+$/, "").trim();
     parts.splice(i);
     if (lead) parts.push(lead);
+
+    // "KALAMASEERY, KERALA 683503": the words beside the post code are the state, so the town is the part before.
+    if (!out.state && STATE_NAMES.includes(city.toUpperCase())) {
+      out.state = city;
+      city = "";
+    }
     if (city) out.city = city;else if (parts.length > 1) out.city = parts.pop();
     break;
   }

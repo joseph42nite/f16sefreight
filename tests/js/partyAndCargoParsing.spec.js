@@ -27,6 +27,26 @@ describe("parsePartyBlock", () => {
     });
   });
 
+  it("reads a state written beside the PIN, and takes the town before it as the city", () => {
+    expect(parsePartyBlock([
+      "KERALA SPICES EXPORTS PVT LTD",
+      "22/702/01 - CEE PEE BUILDING, MASJID ROAD, HMT P.O",
+      "KALAMASEERY, KERALA 683503, INDIA",
+    ].join("\n"), C)).toEqual({
+      name: "KERALA SPICES EXPORTS PVT LTD",
+      address: "22/702/01 - CEE PEE BUILDING, MASJID ROAD, HMT P.O",
+      city: "KALAMASEERY", state: "KERALA", post_code: "683503", country: "IN",
+    });
+  });
+
+  it("does the same on one line, with a dash before the PIN", () => {
+    expect(parsePartyBlock("Globex Exports Pvt Ltd, Plot 42/A, MIDC Andheri East, Mumbai, Maharashtra - 400093, India", C))
+      .toEqual({
+        name: "Globex Exports Pvt Ltd", address: "Plot 42/A, MIDC Andheri East",
+        city: "Mumbai", state: "Maharashtra", post_code: "400093", country: "IN",
+      });
+  });
+
   it("splits the real consignee, dropping the copied 'Address :' label and keeping the P.O Box", () => {
     expect(parsePartyBlock([
       "SILVER MOON COMMERCIAL BROKERAG CO",

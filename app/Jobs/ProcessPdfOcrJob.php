@@ -124,6 +124,8 @@ class ProcessPdfOcrJob implements ShouldQueue
                 // A consented scan already reserved its credits and is not limited.
                 $skip = $this->allowVision ? null : $this->reasonNotToUseAi($job);
                 $params['use_model'] = $skip === null ? 'true' : 'false';
+                // 🌙 Free Gemma first at night, when superadmin allows it for extraction. Scans (vision) stay paid.
+                $params['free_first'] = ! $this->allowVision && app(AiUsageService::class)->freeFirst('extraction') ? 'true' : 'false';
                 if ($skip !== null) {
                     $params['skip_reason'] = $skip;
                 }

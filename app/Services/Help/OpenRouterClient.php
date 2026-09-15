@@ -71,10 +71,14 @@ class OpenRouterClient
      *
      * @return array{data: array, usage: array}
      */
-    public function json(array $messages, array $schema, string $name, string $timeouts = 'help_timeouts'): array
+    public function json(array $messages, array $schema, string $name, string $timeouts = 'help_timeouts', bool $freeFirst = false): array
     {
         $reason = 'the model is not reachable';
         $started = microtime(true);
+
+        if ($freeFirst && ($free = $this->free($messages, $schema, $started)) !== null) {
+            return $free;
+        }
         $timeouts = array_map('intval', explode(',', (string) config('services.openrouter.' . $timeouts)));
 
         foreach (self::TIERS as $i => [$tier, $sort]) {
@@ -132,6 +136,41 @@ class OpenRouterClient
         }
 
         throw new RuntimeException($reason);
+    }
+
+    /**
+     * 🌙 The free Gemma's one try (see config services.openrouter.free_*). It takes a plain JSON object, not a strict
+     * schema, so the schema goes in the instructions and an answer missing a required key is not used. NULL = the
+     * paid tiers take over.
+     */
+    private function free(array $messages, array $schema, float $started): ?array
+    {
+        $messages[0]['content'] .= "\nAnswer with ONLY a JSON object matching this JSON schema: " . json_encode($schema);
+
+        try {
+            $body = $this->post('/chat/completions', [
+                'model' => config('services.openrouter.free_model'),
+                'messages' => $messages, 'temperature' => 0, 'max_tokens' => 700,
+                'response_format' => ['type' => 'json_object'],
+                'provider' => ['data_collection' => 'deny'],
+                'usage' => ['include' => true],
+            ], (int) config('services.openrouter.free_timeout'));
+        } catch (RuntimeException $e) {
+            return null;
+        }
+
+        $data = json_decode((string) ($body['choices'][0]['message']['content'] ?? ''), true);
+
+        if (! is_array($data) || array_diff($schema['required'] ?? [], array_keys($data)) !== []) {
+            return null;
+        }
+
+        return ['data' => $data, 'usage' => [
+            'model' => $body['model'] ?? config('services.openrouter.free_model'), 'provider' => $body['provider'] ?? null,
+            'tokens_in' => (int) ($body['usage']['prompt_tokens'] ?? 0), 'tokens_out' => (int) ($body['usage']['completion_tokens'] ?? 0),
+            'cost_usd' => (float) ($body['usage']['cost'] ?? 0), 'execution_ms' => (int) ((microtime(true) - $started) * 1000),
+            'attempts' => 1, 'tier' => 'free',
+        ]];
     }
 
     /** @throws RuntimeException with a reason fit to show an operator */

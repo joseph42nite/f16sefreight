@@ -54,6 +54,19 @@ class AiUsageService
         return $userId === null || $this->questionsToday($userId) < (int) $this->settings()->per_user_daily_questions;
     }
 
+    /**
+     * Whether the free Gemma should be tried first now (user, 2026-09-15): between 9pm and 11am India time, and only
+     * for the kinds of work superadmin has switched on. `$use` is 'extraction', or 'help' / 'draft'.
+     */
+    public function freeFirst(string $use): bool
+    {
+        $settings = $this->settings();
+        $on = $use === 'extraction' ? $settings->night_free_extraction : $settings->night_free_help_drafts;
+        $hour = now('Asia/Kolkata')->hour;
+
+        return (bool) $on && ($hour >= (int) config('services.openrouter.free_from_hour') || $hour < (int) config('services.openrouter.free_until_hour'));
+    }
+
     /** Whether this user may call the model now. A job with no user is never limited. */
     public function allowed(?int $userId): bool
     {
@@ -98,7 +111,7 @@ class AiUsageService
             'cost_usd'              => round((float) ($usage['cost_usd'] ?? 0), 6),
             'execution_ms'          => (int) ($usage['execution_ms'] ?? 0),
             'attempts'              => (int) ($usage['attempts'] ?? 1),
-            'tier'                  => in_array($usage['tier'] ?? null, ['economy', 'fast'], true) ? $usage['tier'] : null,
+            'tier'                  => in_array($usage['tier'] ?? null, ['free', 'economy', 'fast'], true) ? $usage['tier'] : null,
             'created_at'            => now(),
             'updated_at'            => now(),
         ]);

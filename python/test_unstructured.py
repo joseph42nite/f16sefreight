@@ -209,7 +209,7 @@ def _with_model(payload, available=True, error=None):
     """Swap the model out for a known answer, or a known failure."""
     calls = {"n": 0}
 
-    def _stub(text):
+    def _stub(text, free_first=False):
         calls["n"] += 1
         return (None, error, None) if error else (payload, None, {"model": "stub", "cost_usd": 0.0003})
 
@@ -752,6 +752,60 @@ def _with_openrouter(answers, timeout=1):
         server.shutdown()
 
     return seen, restore
+
+
+def _free_night(answers):
+    """The stand-in server, with the free model's try shortened to 1 s."""
+    seen, restore = _with_openrouter(answers)
+    saved = model_extract.FREE_TIMEOUT
+    model_extract.FREE_TIMEOUT = 1
+
+    def undo():
+        restore()
+        model_extract.FREE_TIMEOUT = saved
+
+    return seen, undo
+
+
+def _complete(**values):
+    return {**{k: None for k in model_extract._strict_schema()["properties"]}, **values}
+
+
+def test_at_night_the_free_model_answers_first_when_its_answer_is_complete():
+    """🌙 Free first (user, 2026-09-15): a plain JSON object, still no provider that keeps prompts, cost 0."""
+    seen, undo = _free_night([_answer(_complete(shipper_name="TRAILSPEC"), cost=0, provider="Google AI Studio")])
+    try:
+        fields, error, usage = _REAL_EXTRACT("TRAILSPEC GEARS", True)
+    finally:
+        undo()
+
+    assert len(seen) == 1
+    assert seen[0]["model"] == model_extract.FREE_MODEL
+    assert seen[0]["response_format"] == {"type": "json_object"}
+    assert seen[0]["provider"] == {"data_collection": "deny"}
+    assert error is None and fields["shipper_name"] == "TRAILSPEC"
+    assert usage["tier"] == "free" and usage["cost_usd"] == 0
+
+
+def test_a_free_answer_missing_keys_goes_to_the_paid_model():
+    seen, undo = _free_night([_answer({"shipper_name": "HALF"}), _answer(_complete(shipper_name="TRAILSPEC"))])
+    try:
+        fields, error, usage = _REAL_EXTRACT("TRAILSPEC GEARS", True)
+    finally:
+        undo()
+
+    assert [r["model"] for r in seen] == [model_extract.FREE_MODEL, "google/gemma-4-31b-it"]
+    assert fields["shipper_name"] == "TRAILSPEC" and usage["tier"] == "economy" and usage["attempts"] == 2
+
+
+def test_a_free_model_that_does_not_answer_in_time_goes_to_the_paid_model():
+    seen, undo = _free_night(["hang", _answer(_complete(shipper_name="TRAILSPEC"))])
+    try:
+        fields, error, usage = _REAL_EXTRACT("TRAILSPEC GEARS", True)
+    finally:
+        undo()
+
+    assert len(seen) == 2 and fields["shipper_name"] == "TRAILSPEC" and usage["tier"] == "economy"
 
 
 def test_without_a_key_the_model_is_not_configured():

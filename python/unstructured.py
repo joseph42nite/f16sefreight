@@ -287,7 +287,7 @@ def _read_piece_weight(text: str) -> Dict[str, Any]:
     }
 
 
-def extract_from_text(pdf_path: str, use_model: bool = True, skip_reason: str = "the daily AI limit has been reached") -> Dict[str, Any]:
+def extract_from_text(pdf_path: str, use_model: bool = True, skip_reason: str = "the daily AI limit has been reached", free_first: bool = False) -> Dict[str, Any]:
     """
     Read the document's text layer and map what can be found onto the AWB regions.
 
@@ -338,7 +338,7 @@ def extract_from_text(pdf_path: str, use_model: bool = True, skip_reason: str = 
     # ⚠️ `use_model=False` when the user's daily AI limit is reached (Laravel decides): the label
     # reading stands and the panel says why.
     if use_model:
-        _apply_model(result, text)
+        _apply_model(result, text, free_first)
     else:
         result["model_error"] = skip_reason
 
@@ -502,13 +502,13 @@ def _airport_code(place: Optional[str]) -> Optional[str]:
     return code if code in AIRPORT_CODES else None
 
 
-def _apply_model(result: Dict[str, Any], text: str) -> None:
+def _apply_model(result: Dict[str, Any], text: str, free_first: bool = False) -> None:
     """Read the document with the model, if one answers. Otherwise record why not."""
     if not model_extract.available():
         result["model_error"] = "the model is not reachable"
         return
 
-    parsed, error, usage = model_extract.extract(text)
+    parsed, error, usage = model_extract.extract(text, free_first)
     # What the call cost, whatever it answered — Laravel logs it against the user and branch.
     result["model_usage"] = usage
 

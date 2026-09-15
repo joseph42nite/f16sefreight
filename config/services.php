@@ -77,6 +77,12 @@ return [
         'fast_providers'         => env('OPENROUTER_FAST_PROVIDERS', 'ModelRun'),
         // Seconds per try for a help answer: economy, fast, economy by throughput.
         'help_timeouts'          => env('OPENROUTER_HELP_TIMEOUTS', '6,6,8'),
+        // 🌙 The free Gemma, tried first from 9pm to 11am India time (user, 2026-09-15); the paid tiers when it
+        // does not answer. Superadmin switches it per kind of work (ai_budget_settings.night_free_*).
+        'free_model'             => env('OPENROUTER_FREE_MODEL', 'google/gemma-4-31b-it:free'),
+        'free_timeout'           => (int) env('OPENROUTER_FREE_TIMEOUT', 8),
+        'free_from_hour'         => (int) env('OPENROUTER_FREE_FROM_HOUR', 21),
+        'free_until_hour'        => (int) env('OPENROUTER_FREE_UNTIL_HOUR', 11),
         // A client email is a longer answer than a help reply, so each try gets longer.
         'draft_timeouts'         => env('OPENROUTER_DRAFT_TIMEOUTS', '12,12,20'),
         'embedding_timeout'      => (int) env('OPENROUTER_EMBEDDING_TIMEOUT', 8),

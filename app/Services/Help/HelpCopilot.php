@@ -55,7 +55,7 @@ class HelpCopilot
             ], [], $sections[0]['score'] ?? null);
         }
 
-        $answer = $this->client->json($this->messages($question, $route, $history, $relevant), self::schema(), 'help_answer');
+        $answer = $this->client->json($this->messages($question, $route, $history, $relevant), self::schema(), 'help_answer', 'help_timeouts', $this->usage->freeFirst('help'));
         $this->usage->log($answer['usage'], 'help', $user);
 
         return $this->store($user, $question, $route, $this->checked($answer['data'], $relevant), array_column($relevant, 'id'), $relevant[0]['score']);

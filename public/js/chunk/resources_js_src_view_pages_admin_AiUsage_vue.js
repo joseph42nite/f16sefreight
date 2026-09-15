@@ -144,6 +144,14 @@ var render = function render() {
     staticClass: "fx-tile"
   }, [_c("span", {
     staticClass: "fx-tile__label"
+  }, [_vm._v("Answered free at night")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-tile__value"
+  }, [_vm._v(_vm._s(_vm.data.tiers.free.share_percent) + "%")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-tile__detail"
+  }, [_vm._v(_vm._s(_vm.data.tiers.free.calls) + " calls · avg " + _vm._s(_vm.data.tiers.free.avg_seconds) + " s · ₹0")])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-tile"
+  }, [_c("span", {
+    staticClass: "fx-tile__label"
   }, [_vm._v("Answered by economy")]), _vm._v(" "), _c("span", {
     staticClass: "fx-tile__value"
   }, [_vm._v(_vm._s(_vm.data.tiers.economy.share_percent) + "%")]), _vm._v(" "), _c("p", {
@@ -296,7 +304,77 @@ var render = function render() {
         return _vm.$forceUpdate();
       }
     }
-  })])]), _vm._v(" "), _c("button", {
+  })])]), _vm._v(" "), _c("fieldset", {
+    staticClass: "fx-ai-night"
+  }, [_c("legend", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Free Gemma at night (9pm–11am), paid if it does not answer")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-checkbox"
+  }, [_c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.night_free_help_drafts,
+      expression: "form.night_free_help_drafts"
+    }],
+    attrs: {
+      type: "checkbox"
+    },
+    domProps: {
+      checked: Array.isArray(_vm.form.night_free_help_drafts) ? _vm._i(_vm.form.night_free_help_drafts, null) > -1 : _vm.form.night_free_help_drafts
+    },
+    on: {
+      change: function ($event) {
+        var $$a = _vm.form.night_free_help_drafts,
+          $$el = $event.target,
+          $$c = $$el.checked ? true : false;
+        if (Array.isArray($$a)) {
+          var $$v = null,
+            $$i = _vm._i($$a, $$v);
+          if ($$el.checked) {
+            $$i < 0 && _vm.$set(_vm.form, "night_free_help_drafts", $$a.concat([$$v]));
+          } else {
+            $$i > -1 && _vm.$set(_vm.form, "night_free_help_drafts", $$a.slice(0, $$i).concat($$a.slice($$i + 1)));
+          }
+        } else {
+          _vm.$set(_vm.form, "night_free_help_drafts", $$c);
+        }
+      }
+    }
+  }), _vm._v(" Help questions and email drafts")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-checkbox"
+  }, [_c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.night_free_extraction,
+      expression: "form.night_free_extraction"
+    }],
+    attrs: {
+      type: "checkbox"
+    },
+    domProps: {
+      checked: Array.isArray(_vm.form.night_free_extraction) ? _vm._i(_vm.form.night_free_extraction, null) > -1 : _vm.form.night_free_extraction
+    },
+    on: {
+      change: function ($event) {
+        var $$a = _vm.form.night_free_extraction,
+          $$el = $event.target,
+          $$c = $$el.checked ? true : false;
+        if (Array.isArray($$a)) {
+          var $$v = null,
+            $$i = _vm._i($$a, $$v);
+          if ($$el.checked) {
+            $$i < 0 && _vm.$set(_vm.form, "night_free_extraction", $$a.concat([$$v]));
+          } else {
+            $$i > -1 && _vm.$set(_vm.form, "night_free_extraction", $$a.slice(0, $$i).concat($$a.slice($$i + 1)));
+          }
+        } else {
+          _vm.$set(_vm.form, "night_free_extraction", $$c);
+        }
+      }
+    }
+  }), _vm._v(" Reading invoices and packing lists (scans always use the paid model)")])]), _vm._v(" "), _c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
       disabled: _vm.saving

@@ -105,6 +105,7 @@ async def extract_unstructured(
     allow_vision: str = Form("false"),
     use_model: str = Form("true"),
     skip_reason: str = Form("the daily AI limit has been reached"),
+    free_first: str = Form("false"),
 ):
     """
     Read a document that has no fixed layout — a commercial invoice, a packing list.
@@ -139,7 +140,9 @@ async def extract_unstructured(
 
         # 🔴 In a worker thread, not on the event loop. A model call takes seconds, and run inline it
         # would block every other request, /health included, for the whole reading.
-        result = await run_in_threadpool(extract_from_text, tmp_path, model_allowed, skip_reason[:120])
+        # 🌙 Laravel says when the free model may be tried first (at night, when superadmin allows it).
+        free = str(free_first).lower() in ("1", "true", "yes")
+        result = await run_in_threadpool(extract_from_text, tmp_path, model_allowed, skip_reason[:120], free)
 
         if result["extraction_path"] == "none" and wants_vision:
             # Consent was given: read the scan's pages as images.

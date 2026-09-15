@@ -46,6 +46,12 @@ OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 # One model for text and for scans (user, 2026-09-14): Gemma 4 31B reads images too.
 MODEL = os.environ.get("OPENROUTER_MODEL", "google/gemma-4-31b-it")
 
+# 🌙 The free Gemma, tried first at night when Laravel asks (user, 2026-09-15: 9pm–11am, paid if it does not
+# answer). It takes no strict schema — only a JSON object — so the keys are listed in the prompt and an answer
+# missing any key goes to the paid tiers. Free capacity is shared and often busy, so its try is short.
+FREE_MODEL = os.environ.get("OPENROUTER_FREE_MODEL", "google/gemma-4-31b-it:free")
+FREE_TIMEOUT = int(os.environ.get("OPENROUTER_FREE_TIMEOUT", "8"))
+
 # 🔴 CHEAP FIRST, FAST FALLBACK ALWAYS (user, 2026-09-14), with the providers NAMED, not left to
 # OpenRouter's "latency" sort — which, measured on the real invoice, picked 10-18 s providers while
 # CoreWeave answered in 3.0-3.4 s at the economy price. Pinned, two runs each: CoreWeave 3.0/3.4 s,
@@ -147,7 +153,7 @@ def available() -> bool:
     return bool(OPENROUTER_API_KEY)
 
 
-def extract(text: str) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
+def extract(text: str, free_first: bool = False) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
     """
     Read a document's text.
 
@@ -161,7 +167,7 @@ def extract(text: str) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optiona
         logger.warning(f"document is {len(text)} chars; the model reads the first {MAX_DOCUMENT_CHARS}")
 
     content = PROMPT.format(text=compact(text)[:MAX_DOCUMENT_CHARS])
-    fields, error, usage = _ask(content, TEXT_TIMEOUTS)
+    fields, error, usage = _ask(content, TEXT_TIMEOUTS, free_first)
 
     return (_grounded(fields, text) if fields is not None else None), error, usage
 
@@ -186,15 +192,20 @@ def extract_images(pages: List[bytes]) -> Tuple[Optional[Dict[str, Any]], Option
     return (_grounded(fields, "", check_presence=False) if fields is not None else None), error, usage
 
 
-def _ask(content, timeouts: Tuple[int, int, int]) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
-    """One question: economy, then the fast fallback, then economy by throughput (see TIERS)."""
+def _ask(content, timeouts: Tuple[int, int, int], free_first: bool = False) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
+    """One question: the free model when asked (text only), then economy, the fast fallback, economy by throughput."""
     if not available():
         return None, "the model is not configured (no OPENROUTER_API_KEY)", None
 
     reason = "the model is not reachable"
     started_all = time.monotonic()
 
-    for attempt, ((tier, sort), timeout) in enumerate(zip(TIERS, timeouts), start=1):
+    if free_first:
+        parsed, usage = _ask_free(content, started_all)
+        if parsed is not None:
+            return parsed, None, usage
+
+    for attempt, ((tier, sort), timeout) in enumerate(zip(TIERS, timeouts), start=2 if free_first else 1):
         body, reason = _post(content, tier, sort, timeout)
 
         if body is None:
@@ -218,6 +229,28 @@ def _ask(content, timeouts: Tuple[int, int, int]) -> Tuple[Optional[Dict[str, An
     return None, reason, None
 
 
+def _ask_free(content: str, started: float) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """The free model's one try. A usable answer, or (None, None) and the paid tiers take over."""
+    keys = list(_strict_schema()["properties"])
+    body, reason = _post(content + "\n\nAnswer with ONLY a JSON object with exactly these keys, null for anything absent: "
+                         + ", ".join(keys), "free", "", FREE_TIMEOUT)
+
+    if body is None:
+        logger.info(f"free model did not answer ({reason}); using the paid model")
+        return None, None
+
+    raw = ((body.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+
+    try:
+        answer = json.loads(raw)
+        if not isinstance(answer, dict) or set(keys) - set(answer):
+            raise ValueError("keys missing")
+        return ExtractedDocument.model_validate(answer).model_dump(exclude_none=True), _usage(body, 1, started, "free")
+    except Exception as e:
+        logger.info(f"free model answer not usable ({e}); using the paid model")
+        return None, None
+
+
 def _post(content, tier: str, sort: str, timeout: int) -> Tuple[Optional[Dict[str, Any]], str]:
     """One HTTP call. Returns the body, or None and the reason."""
     payload = {
@@ -233,6 +266,10 @@ def _post(content, tier: str, sort: str, timeout: int) -> Tuple[Optional[Dict[st
         # The cost of THIS call, in the response, for llm_usage_logs.
         "usage": {"include": True},
     }
+
+    if tier == "free":
+        # Free takes a plain JSON object, not a strict schema; still only providers that do not keep prompts.
+        payload.update({"model": FREE_MODEL, "response_format": {"type": "json_object"}, "provider": {"data_collection": "deny"}})
 
     request = urllib.request.Request(
         OPENROUTER_URL,
@@ -341,7 +378,7 @@ def _usage(body: Dict[str, Any], attempt: int, started: float, tier: str) -> Dic
         "cost_usd": float(usage.get("cost") or 0),
         "execution_ms": int((time.monotonic() - started) * 1000),
         "attempts": attempt,
-        # economy or fast — how often the ₹0.16 fallback was needed.
+        # free, economy or fast — how often the free model answered, and the ₹0.16 fallback was needed.
         "tier": tier,
         # Which prompt read it, so a change to prompts/extract_document.txt can be compared.
         "prompt_version": PROMPT_VERSION,

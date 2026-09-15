@@ -65,12 +65,14 @@ class AiUsageController extends Controller
                 'usd_to_inr'           => $rate,
                 'per_user_daily_limit' => (int) $settings->per_user_daily_limit,
                 'per_user_daily_questions' => (int) $settings->per_user_daily_questions,
+                'night_free_help_drafts' => (bool) $settings->night_free_help_drafts,
+                'night_free_extraction'  => (bool) $settings->night_free_extraction,
             ],
             'month'       => $this->usage->month(),
             'by_company'  => $byCompany,
             'by_user'     => $byUser,
             'by_provider' => $byProvider,
-            'tiers'       => ['economy' => $tierShape('economy'), 'fast' => $tierShape('fast')],
+            'tiers'       => ['free' => $tierShape('free'), 'economy' => $tierShape('economy'), 'fast' => $tierShape('fast')],
         ]);
     }
 
@@ -114,6 +116,8 @@ class AiUsageController extends Controller
             'usd_to_inr'           => ['required', 'numeric', 'min:1', 'max:1000'],
             'per_user_daily_limit' => ['required', 'integer', 'min:0', 'max:100000'],
             'per_user_daily_questions' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'night_free_help_drafts' => ['nullable', 'boolean'],
+            'night_free_extraction'  => ['nullable', 'boolean'],
         ]);
 
         $data = array_filter($data, fn ($v) => $v !== null);

@@ -44,6 +44,9 @@
              cannot take a lock, none of which name Redis in their own error. -->
         <server name="REDIS_CLIENT" value="predis"/>
         <server name="DB_DATABASE" value="f16s_test"/>
+        <!-- No free night model during tests: a suite run after 9pm must not change which calls are made. NightFreeModelTest turns it on. -->
+        <server name="OPENROUTER_FREE_FROM_HOUR" value="24"/>
+        <server name="OPENROUTER_FREE_UNTIL_HOUR" value="0"/>
         <server name="DB_USERNAME" value="f16s"/>
         <server name="DB_PASSWORD" value="secret"/>
         <!--

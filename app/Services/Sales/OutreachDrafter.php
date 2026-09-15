@@ -127,7 +127,7 @@ class OutreachDrafter
                 ],
                 'required' => ['subject', 'paragraphs'],
                 'additionalProperties' => false,
-            ], 'client_email', 'draft_timeouts');
+            ], 'client_email', 'draft_timeouts', $this->usage->freeFirst('draft'));
         } catch (RuntimeException $e) {
             return null;
         }

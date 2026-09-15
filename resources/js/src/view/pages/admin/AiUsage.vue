@@ -32,6 +32,12 @@
             <span class="fx-tile__value">{{ data.month.used_percent }}%</span>
             <p class="fx-muted fx-tile__detail">of ₹{{ inr(data.month.budget_inr) }}</p>
           </div>
+          <!-- 🌙 How often the free Gemma answered at night (user, 2026-09-15). -->
+          <div class="fx-tile">
+            <span class="fx-tile__label">Answered free at night</span>
+            <span class="fx-tile__value">{{ data.tiers.free.share_percent }}%</span>
+            <p class="fx-muted fx-tile__detail">{{ data.tiers.free.calls }} calls · avg {{ data.tiers.free.avg_seconds }} s · ₹0</p>
+          </div>
           <!-- 🔴 Cheap first, fast fallback always: how often the ≈6× dearer fallback answered. -->
           <div class="fx-tile">
             <span class="fx-tile__label">Answered by economy</span>
@@ -71,6 +77,15 @@
             <input v-model.number="form.usd_to_inr" type="number" min="1" step="0.5" class="fx-input" />
           </label>
         </div>
+        <!--
+          🌙 Free Gemma from 9pm to 11am India time, the paid model when it does not answer (user, 2026-09-15). It is
+          shared free capacity (often busy) and gives looser JSON, so extraction starts off.
+        -->
+        <fieldset class="fx-ai-night">
+          <legend class="fx-field__label">Free Gemma at night (9pm–11am), paid if it does not answer</legend>
+          <label class="fx-checkbox"><input v-model="form.night_free_help_drafts" type="checkbox" /> Help questions and email drafts</label>
+          <label class="fx-checkbox"><input v-model="form.night_free_extraction" type="checkbox" /> Reading invoices and packing lists (scans always use the paid model)</label>
+        </fieldset>
         <button class="fx-btn fx-btn--primary" :disabled="saving" @click="save">{{ saving ? "Saving…" : "Save limits" }}</button>
         <span v-if="saved" class="fx-muted"> Saved.</span>
       </section>
@@ -210,5 +225,6 @@ export default {
 
 <style scoped>
 .fx-ai-limit { width: 9rem; }
+.fx-ai-night { border: 0; padding: 0; margin: var(--space-3) 0; display: flex; flex-direction: column; gap: var(--space-1); }
 .fx-table-wrap { overflow-x: auto; }
 </style>

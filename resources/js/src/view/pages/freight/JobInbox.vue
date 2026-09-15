@@ -28,7 +28,8 @@
       <p v-else-if="error" class="fx-error fx-inbox__pad" role="alert">{{ error }}</p>
       <p v-else-if="!threads.length" class="fx-muted fx-inbox__pad">Nothing here.</p>
 
-      <ul v-else class="fx-threads">
+      <!-- Like Gmail: 50 conversations, and the next 50 as you scroll near the end (user, 2026-09-15). -->
+      <ul v-else class="fx-threads" @scroll="onThreadsScroll">
         <li
           v-for="t in threads"
           :key="t.id"
@@ -51,6 +52,7 @@
             <span v-else class="fx-thread__owner fx-thread__owner--free">Unassigned</span>
           </div>
         </li>
+        <li v-if="loadingMore" class="fx-muted fx-inbox__pad" role="status">Loading more…</li>
       </ul>
     </section>
 
@@ -606,6 +608,7 @@ export default {
     ],
     folder: "all",
     threads: [], counts: {}, messages: [],
+    threadsPage: 1, threadsLastPage: 1, loadingMore: false,
     active: null, pending: null,
     loading: true, busy: false, error: null, actionError: null,
     query: "", timer: null,
@@ -1165,6 +1168,8 @@ export default {
       ApiService.get("/inbox/threads" + this.params())
         .then(({ data }) => {
           this.threads = data.data || [];
+          this.threadsPage = data.current_page || 1;
+          this.threadsLastPage = data.last_page || 1;
 
           /* The portal's own vocabulary — see EmailInboxController::classificationsForMode. */
           if (data.classifications) {
@@ -1179,6 +1184,25 @@ export default {
         })
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.loading = false; });
+    },
+    /** The next 50 when the list is scrolled to within a few rows of its end. */
+    onThreadsScroll(e) {
+      const list = e.target;
+      const nearEnd = list.scrollTop + list.clientHeight >= list.scrollHeight - 200;
+
+      if (!nearEnd || this.loadingMore || this.threadsPage >= this.threadsLastPage) return;
+
+      this.loadingMore = true;
+      const page = this.threadsPage + 1;
+      ApiService.get("/inbox/threads" + this.params() + (this.params() ? "&" : "?") + "page=" + page)
+        .then(({ data }) => {
+          this.threads.push(...(data.data || []).filter((t) => !this.threads.some((x) => x.id === t.id)));
+          this.threadsPage = data.current_page || page;
+          this.threadsLastPage = data.last_page || this.threadsLastPage;
+          this.tally();
+        })
+        .catch(() => {})
+        .finally(() => { this.loadingMore = false; });
     },
     /* Counts come from the loaded page, so they describe what is on screen rather than
        claiming a total the list does not show. */

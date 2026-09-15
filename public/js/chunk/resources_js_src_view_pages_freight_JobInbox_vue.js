@@ -132,6 +132,9 @@ const WORKSPACE_TABS = [{
     threads: [],
     counts: {},
     messages: [],
+    threadsPage: 1,
+    threadsLastPage: 1,
+    loadingMore: false,
     active: null,
     pending: null,
     loading: true,
@@ -717,6 +720,8 @@ const WORKSPACE_TABS = [{
         data
       }) => {
         this.threads = data.data || [];
+        this.threadsPage = data.current_page || 1;
+        this.threadsLastPage = data.last_page || 1;
 
         /* The portal's own vocabulary — see EmailInboxController::classificationsForMode. */
         if (data.classifications) {
@@ -737,6 +742,24 @@ const WORKSPACE_TABS = [{
         this.error = this.messageFor(e);
       }).finally(() => {
         this.loading = false;
+      });
+    },
+    /** The next 50 when the list is scrolled to within a few rows of its end. */
+    onThreadsScroll(e) {
+      const list = e.target;
+      const nearEnd = list.scrollTop + list.clientHeight >= list.scrollHeight - 200;
+      if (!nearEnd || this.loadingMore || this.threadsPage >= this.threadsLastPage) return;
+      this.loadingMore = true;
+      const page = this.threadsPage + 1;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/inbox/threads" + this.params() + (this.params() ? "&" : "?") + "page=" + page).then(({
+        data
+      }) => {
+        this.threads.push(...(data.data || []).filter(t => !this.threads.some(x => x.id === t.id)));
+        this.threadsPage = data.current_page || page;
+        this.threadsLastPage = data.last_page || this.threadsLastPage;
+        this.tally();
+      }).catch(() => {}).finally(() => {
+        this.loadingMore = false;
       });
     },
     /* Counts come from the loaded page, so they describe what is on screen rather than
@@ -2320,8 +2343,11 @@ var render = function render() {
   }, [_vm._v(_vm._s(_vm.error))]) : !_vm.threads.length ? _c("p", {
     staticClass: "fx-muted fx-inbox__pad"
   }, [_vm._v("Nothing here.")]) : _c("ul", {
-    staticClass: "fx-threads"
-  }, _vm._l(_vm.threads, function (t) {
+    staticClass: "fx-threads",
+    on: {
+      scroll: _vm.onThreadsScroll
+    }
+  }, [_vm._l(_vm.threads, function (t) {
     return _c("li", {
       key: t.id,
       staticClass: "fx-thread",
@@ -2365,7 +2391,12 @@ var render = function render() {
     }, [_vm._v(_vm._s(t.assigned_ops.name))]) : _c("span", {
       staticClass: "fx-thread__owner fx-thread__owner--free"
     }, [_vm._v("Unassigned")])], 1)]);
-  }), 0)]), _vm._v(" "), _c("section", {
+  }), _vm._v(" "), _vm.loadingMore ? _c("li", {
+    staticClass: "fx-muted fx-inbox__pad",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("Loading more…")]) : _vm._e()], 2)]), _vm._v(" "), _c("section", {
     ref: "convo",
     staticClass: "fx-inbox__convo",
     attrs: {

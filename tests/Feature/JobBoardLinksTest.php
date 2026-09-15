@@ -168,6 +168,22 @@ class JobBoardLinksTest extends TestCase
         $api->getJson('http://focusair.localhost/api/enquiries')->assertForbidden();
     }
 
+    /** 🔴 A Kanban column loads only its own statuses, 50 a page, with the true total (user, 2026-09-15). */
+    public function test_a_kanban_column_loads_its_statuses_fifty_a_page(): void
+    {
+        for ($i = 0; $i < 53; $i++) {
+            $this->job('Completed', null);
+        }
+        $this->job('Intake', null);
+
+        $api = $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->operator), 'Accept' => 'application/json']);
+        $done = $api->getJson('http://focusair.localhost/api/jobs?statuses=' . urlencode('Completed,Cancelled'))->assertOk()->json();
+
+        $this->assertSame([50, 53, 2], [count($done['data']), $done['total'], $done['last_page']]);
+        $this->assertSame(['Completed'], array_values(array_unique(array_column($done['data'], 'status'))));
+        $this->assertCount(3, $api->getJson('http://focusair.localhost/api/jobs?page=2&statuses=Completed,Cancelled')->json('data'));
+    }
+
     public function test_a_job_with_no_mail_has_no_thread(): void
     {
         [$jobId] = $this->job('Completed', null);

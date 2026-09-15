@@ -77,6 +77,8 @@ class JobController extends Controller
         // owner, who is the person who would assign it.
         $jobs = $this->scopeToOwner(Job::forActivePortal())
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            // One Kanban column at a time (user, 2026-09-15): its statuses, 50 a page.
+            ->when($request->filled('statuses'), fn ($q) => $q->whereIn('status', explode(',', (string) $request->string('statuses'))))
             // The inbox drawer resolves a thread's enquiry to its job for the cost sheet.
             ->when($request->filled('enquiry_id'), fn ($q) => $q->where('enquiry_id', $request->integer('enquiry_id')))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('planned_clearance_date', '>=', $request->date('from')))

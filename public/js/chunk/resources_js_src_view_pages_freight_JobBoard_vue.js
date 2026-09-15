@@ -73,15 +73,16 @@ const PROCESS = [{
 }];
 
 /**
- * How many finished shipments the Completed column keeps on screen.
- *
- * 🔴 A DISPLAY cap, never a delete. Terminal cards accumulate forever — every shipment a
- * branch has ever run ends up in one column — and a board that grows without bound stops
- * being a board. But a completed job is still the record of a shipment that happened, so
- * the older ones are hidden behind a disclosure, not dropped: the count in the header
- * always states the true total, and one click brings the rest back.
+ * Cards each column loads at a time, matching the server's page (user, 2026-09-15: never load a whole branch
+ * at once). Completed grows forever, so it matters most there; the header always shows the true total.
  */
-const DONE_VISIBLE = 10;
+const PAGE_SIZE = 50;
+const emptyColumns = () => Object.fromEntries(PROCESS.map(c => [c.key, {
+  rows: [],
+  page: 0,
+  total: 0,
+  loading: false
+}]));
 const POOL_KEY = "f16s_kanban_pool_collapsed";
 const FILTER_KEY = "f16s_kanban_filters";
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -93,7 +94,7 @@ const FILTER_KEY = "f16s_kanban_filters";
     StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_5__["default"]
   },
   data: () => ({
-    rows: [],
+    columns: emptyColumns(),
     pool: [],
     staff: [],
     operators: [],
@@ -102,16 +103,14 @@ const FILTER_KEY = "f16s_kanban_filters";
     busy: false,
     error: null,
     poolCollapsed: false,
-    /* Per-viewer, per-session: an operator who expands the finished pile is looking
-       something up, not changing how the board works for everyone. */
-    showAllDone: false,
     filters: {
       stage: ""
     },
     /** The open tracking drawer: { job, statuses, loading, error, timer } or null. */
     tracking: null,
     STATUSES,
-    PROCESS
+    PROCESS,
+    PAGE_SIZE
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_6__.mapGetters)(["portalLabel", "can", "designation"])), {}, {
     canMove() {
@@ -121,37 +120,9 @@ const FILTER_KEY = "f16s_kanban_filters";
     canBalance() {
       return this.designation === "pricing" || this.designation === "boss";
     },
-    grouped() {
-      const out = {};
-      PROCESS.forEach(c => {
-        out[c.key] = [];
-      });
-      this.rows.forEach(job => {
-        const col = PROCESS.find(c => c.statuses.indexOf(job.status) !== -1);
-        if (col) out[col.key].push(job);
-      });
-      // Most recently finished first, so the cap trims the OLDEST off the bottom rather
-      // than whatever order the API happened to return.
-      out.done.sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
-      return out;
-    },
-    /**
-     * What each column actually renders. Only the terminal column is capped — the working
-     * columns are a to-do list and hiding part of one would hide work.
-     *
-     * ⚠️ `grouped` stays uncapped and is what `draggable` binds to, so a drag still
-     * reorders the real list. Capping in the bound array would make a drop land at the
-     * wrong index the moment anything was hidden.
-     */
-    visible() {
-      const out = {};
-      PROCESS.forEach(c => {
-        out[c.key] = this.grouped[c.key] || [];
-      });
-      if (!this.showAllDone && out.done.length > DONE_VISIBLE) {
-        out.done = out.done.slice(0, DONE_VISIBLE);
-      }
-      return out;
+    /** Every card loaded so far, across the columns — the Staff matrix reads these. */
+    rows() {
+      return PROCESS.flatMap(c => this.columns[c.key].rows);
     },
     trackingFeed() {
       return this.tracking ? (0,_core_config_cargoMilestones__WEBPACK_IMPORTED_MODULE_2__.milestoneFeed)(this.tracking.statuses) : [];
@@ -162,9 +133,6 @@ const FILTER_KEY = "f16s_kanban_filters";
     trackingLane() {
       const e = this.tracking.job.enquiry;
       return e && e.origin_code ? e.origin_code + " → " + e.dest_code : null;
-    },
-    doneHidden() {
-      return Math.max(0, (this.grouped.done || []).length - DONE_VISIBLE);
     },
     activeChips() {
       const chips = [];
@@ -220,13 +188,6 @@ const FILTER_KEY = "f16s_kanban_filters";
       };
       this.load();
     },
-    query() {
-      const p = [];
-      // No owner parameter: ownership is the server's decision now, not a filter the
-      // client asks for. Sending one would only suggest it could be overridden.
-      if (this.filters.stage) p.push("status=" + encodeURIComponent(this.filters.stage));
-      return p.length ? "?" + p.join("&") : "";
-    },
     load() {
       this.loading = true;
       this.persist();
@@ -241,16 +202,31 @@ const FILTER_KEY = "f16s_kanban_filters";
       }).catch(() => {
         this.pool = [];
       });
-      const board = _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/jobs" + this.query()).then(({
+      this.columns = emptyColumns();
+      this.error = null;
+      Promise.all([pool, ...PROCESS.map(c => this.loadColumn(c, 1))]).finally(() => {
+        this.loading = false;
+      });
+    },
+    /**
+     * One column's page of cards, appended to what it already shows. With a stage filter only the column
+     * holding that stage loads anything.
+     */
+    loadColumn(col, page) {
+      const stage = this.filters.stage;
+      if (stage && col.statuses.indexOf(stage) === -1) return Promise.resolve();
+      const column = this.columns[col.key];
+      column.loading = true;
+      return _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get(`/jobs?page=${page}&statuses=` + encodeURIComponent((stage ? [stage] : col.statuses).join(","))).then(({
         data
       }) => {
-        this.rows = data.data || [];
-        this.error = null;
+        column.rows.push(...(data.data || []).filter(j => !column.rows.some(r => r.id === j.id)));
+        column.page = data.current_page || page;
+        column.total = data.total || column.rows.length;
       }).catch(e => {
         this.error = this.readable(e);
-      });
-      Promise.all([pool, board]).finally(() => {
-        this.loading = false;
+      }).finally(() => {
+        column.loading = false;
       });
     },
     switchToStaff() {
@@ -354,7 +330,10 @@ const FILTER_KEY = "f16s_kanban_filters";
      * operator looking at a status the shipment does not have.
      */
     onMove(event, column) {
+      // Keep the header totals true as a card leaves one column and joins another.
+      if (event.removed) this.columns[column.key].total -= 1;
       if (!event.added) return;
+      this.columns[column.key].total += 1;
       const job = event.added.element;
       const previous = job.status;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].put(`/jobs/${job.id}/status`, {
@@ -545,10 +524,10 @@ var render = function render() {
       staticClass: "fx-board__head"
     }, [_vm._v("\n          " + _vm._s(col.label) + "\n          "), _c("span", {
       staticClass: "fx-board__count"
-    }, [_vm._v(_vm._s((_vm.grouped[col.key] || []).length))])]), _vm._v(" "), _c("draggable", {
+    }, [_vm._v(_vm._s(_vm.columns[col.key].total))])]), _vm._v(" "), _c("draggable", {
       staticClass: "fx-board__drop",
       attrs: {
-        list: _vm.visible[col.key] || [],
+        list: _vm.columns[col.key].rows,
         group: {
           name: "jobs",
           pull: !col.terminal,
@@ -562,7 +541,7 @@ var render = function render() {
       on: {
         change: e => _vm.onMove(e, col)
       }
-    }, _vm._l(_vm.visible[col.key] || [], function (job) {
+    }, _vm._l(_vm.columns[col.key].rows, function (job) {
       return _c("article", {
         key: job.id,
         staticClass: "fx-card",
@@ -661,14 +640,17 @@ var render = function render() {
           "aria-label": "Go to the mail for this shipment"
         }
       }, [_vm._v("✉")]) : _vm._e()], 1)])]);
-    }), 0), _vm._v(" "), col.terminal && _vm.doneHidden ? _c("button", {
+    }), 0), _vm._v(" "), _vm.columns[col.key].rows.length < _vm.columns[col.key].total ? _c("button", {
       staticClass: "fx-board__more",
+      attrs: {
+        disabled: _vm.columns[col.key].loading
+      },
       on: {
         click: function ($event) {
-          _vm.showAllDone = !_vm.showAllDone;
+          return _vm.loadColumn(col, _vm.columns[col.key].page + 1);
         }
       }
-    }, [_vm._v("\n          " + _vm._s(_vm.showAllDone ? "Show fewer" : _vm.doneHidden + " older completed — show all") + "\n        ")]) : _vm._e(), _vm._v(" "), col.terminal ? _c("p", {
+    }, [_vm._v("\n          " + _vm._s(_vm.columns[col.key].loading ? "Loading…" : "Load " + Math.min(_vm.PAGE_SIZE, _vm.columns[col.key].total - _vm.columns[col.key].rows.length) + " more") + "\n        ")]) : _vm._e(), _vm._v(" "), col.terminal ? _c("p", {
       staticClass: "fx-board__note"
     }, [_vm._v("Set from the job, not by dragging")]) : _vm._e()], 1);
   }), 0) : _c("div", {

@@ -32,7 +32,9 @@ class EnquiryController extends Controller
     /** The pricing board: the pre-conversion pool, mode-scoped to the active portal. */
     public function index(Request $request): JsonResponse
     {
-        $this->authorize('triage');
+        // The Kanban's unassigned pool is for whoever claims work, and claiming is `viewInbox` (pricing and
+        // operations — PRD §5.5 "anyone to claim"). Every other enquiry list stays pricing's.
+        $this->authorize($request->boolean('unclaimed') ? 'viewInbox' : 'triage');
 
         $context = UserContext::for(auth()->user());
 

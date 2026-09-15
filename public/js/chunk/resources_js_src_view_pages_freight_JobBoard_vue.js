@@ -230,17 +230,26 @@ const FILTER_KEY = "f16s_kanban_filters";
     load() {
       this.loading = true;
       this.persist();
-      Promise.all([_core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/jobs" + this.query()),
-      /* The pool is a SEPARATE query on purpose: it must not disappear because a
-         stage filter excluded it. An operator filters to find work, and the pool is
-         where unclaimed work lives — as ENQUIRIES, before any job exists. */
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/enquiries?unclaimed=1")]).then(([board, pool]) => {
-        this.rows = board.data.data || [];
-        this.pool = pool.data.data || [];
+
+      /* The pool is a SEPARATE query on purpose: it must not disappear because a stage filter excluded it.
+         An operator filters to find work, and the pool is where unclaimed work lives — as ENQUIRIES, before
+         any job exists. ⚠️ And a pool that fails to load must not take the board down with it. */
+      const pool = _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/enquiries?unclaimed=1").then(({
+        data
+      }) => {
+        this.pool = data.data || [];
+      }).catch(() => {
+        this.pool = [];
+      });
+      const board = _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/jobs" + this.query()).then(({
+        data
+      }) => {
+        this.rows = data.data || [];
         this.error = null;
       }).catch(e => {
         this.error = this.readable(e);
-      }).finally(() => {
+      });
+      Promise.all([pool, board]).finally(() => {
         this.loading = false;
       });
     },

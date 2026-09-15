@@ -498,20 +498,18 @@ export default {
       this.loading = true;
       this.persist();
 
-      Promise.all([
-        ApiService.get("/jobs" + this.query()),
-        /* The pool is a SEPARATE query on purpose: it must not disappear because a
-           stage filter excluded it. An operator filters to find work, and the pool is
-           where unclaimed work lives — as ENQUIRIES, before any job exists. */
-        ApiService.get("/enquiries?unclaimed=1"),
-      ])
-        .then(([board, pool]) => {
-          this.rows = board.data.data || [];
-          this.pool = pool.data.data || [];
-          this.error = null;
-        })
-        .catch((e) => { this.error = this.readable(e); })
-        .finally(() => { this.loading = false; });
+      /* The pool is a SEPARATE query on purpose: it must not disappear because a stage filter excluded it.
+         An operator filters to find work, and the pool is where unclaimed work lives — as ENQUIRIES, before
+         any job exists. ⚠️ And a pool that fails to load must not take the board down with it. */
+      const pool = ApiService.get("/enquiries?unclaimed=1")
+        .then(({ data }) => { this.pool = data.data || []; })
+        .catch(() => { this.pool = []; });
+
+      const board = ApiService.get("/jobs" + this.query())
+        .then(({ data }) => { this.rows = data.data || []; this.error = null; })
+        .catch((e) => { this.error = this.readable(e); });
+
+      Promise.all([pool, board]).finally(() => { this.loading = false; });
     },
     switchToStaff() {
       this.view = "staff";

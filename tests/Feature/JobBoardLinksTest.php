@@ -135,6 +135,39 @@ class JobBoardLinksTest extends TestCase
         ])->getJson("http://focusair.localhost/api/jobs/{$jobId}/tracking")->assertNotFound();
     }
 
+    /** 🔴 The Kanban for operations: only the shipments assigned to this operator, never a colleague's. */
+    public function test_an_operations_board_shows_only_their_own_shipments(): void
+    {
+        [$mine] = $this->job('Airline Confirmed', '176-90000005');
+        [$theirs] = $this->job('Airline Confirmed', '176-90000006');
+        $colleague = User::create([
+            'name' => 'ops3', 'email' => 'ops3-jbl@test.local', 'password' => Hash::make('x'),
+            'company_name' => $this->operator->company_name, 'branch_name' => $this->branch->id,
+            'designation' => 'operations', 'is_active' => 1,
+        ]);
+        DB::table('jobs')->where('id', $theirs)->update(['ops_id' => $colleague->id]);
+
+        $board = $this->board();
+
+        $this->assertArrayHasKey($mine, $board);
+        $this->assertArrayNotHasKey($theirs, $board);
+    }
+
+    /**
+     * 🔴 Operations claim from the unassigned pool (PRD §5.5), so they can list it — the board failed with
+     * "Something went wrong" when this was pricing-only. The full enquiry list stays pricing's.
+     */
+    public function test_operations_can_list_the_unassigned_pool_but_not_every_enquiry(): void
+    {
+        $api = $this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->operator),
+            'Accept' => 'application/json',
+        ]);
+
+        $api->getJson('http://focusair.localhost/api/enquiries?unclaimed=1')->assertOk();
+        $api->getJson('http://focusair.localhost/api/enquiries')->assertForbidden();
+    }
+
     public function test_a_job_with_no_mail_has_no_thread(): void
     {
         [$jobId] = $this->job('Completed', null);

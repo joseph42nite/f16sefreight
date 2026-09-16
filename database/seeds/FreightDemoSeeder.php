@@ -78,6 +78,15 @@ class FreightDemoSeeder extends Seeder
     ];
 
     /**
+     * The Chennai team (user, 2026-09-16: "I don't think anyone is added"). Without them Chennai's figures had nobody
+     * to answer for them — the Boss's mails to that branch had no one to go to, and By staff showed Mumbai alone.
+     */
+    private const CHENNAI_STAFF = [
+        'DEMO' => ['pricing' => 'Karthik Raman', 'operations' => 'Lakshmi Iyer', 'sales' => 'Vivek Menon'],
+        'TACT' => ['pricing' => 'Deepa Krishnan', 'operations' => 'Suresh Babu', 'sales' => 'Anand Pillai'],
+    ];
+
+    /**
      * The roles a tenant on this tier has. Accounts is a Command plan portal (config/f16s.php `min_tier`), so a
      * Tactical company has no accounts user — one would be a login that works nowhere (user, 2026-09-15).
      */
@@ -339,6 +348,7 @@ class FreightDemoSeeder extends Seeder
         SystemActor::forBranch($branches->first()->id);
 
         $users = $this->seedUsers($company, $branches->first(), $tenant['code']);
+        $this->seedChennaiStaff($company, $branches[1], $tenant['code']);
         $customers = $this->seedCustomers($company, $branches->first(), $users['sales']);
         $this->seedContacts($customers);
 
@@ -594,6 +604,20 @@ class FreightDemoSeeder extends Seeder
         DB::table('roles')->updateOrInsert(['email' => "{$prefix}-pricing2@demo.test"], ['role' => 'user', 'updated_at' => now(), 'created_at' => now()]);
 
         return $users;
+    }
+
+    /** The Chennai branch's pricing, operations and sales — `demo-maa-pricing@demo.test` and so on. */
+    private function seedChennaiStaff(Company $company, Agent $branch, string $code): void
+    {
+        foreach (self::CHENNAI_STAFF[$code] as $designation => $name) {
+            $email = strtolower($code) . "-maa-{$designation}@demo.test";
+
+            User::updateOrCreate(['email' => $email], [
+                'name' => $name, 'password' => Hash::make(self::PASSWORD), 'company_name' => $company->id,
+                'branch_name' => $branch->id, 'designation' => $designation, 'is_active' => 1,
+            ]);
+            DB::table('roles')->updateOrInsert(['email' => $email], ['role' => 'user', 'updated_at' => now(), 'created_at' => now()]);
+        }
     }
 
     /**
@@ -1640,7 +1664,10 @@ class FreightDemoSeeder extends Seeder
         foreach (self::TENANTS as $t) {
             foreach (array_merge($this->designationsFor($t['tier']), ['pricing2']) as $d) {
                 $rows[] = [$t['tier'], strtolower($t['code']) . "-{$d}@demo.test",
-                    $d === 'pricing2' ? 'pricing' : $d, self::NAMES[$t['code']][$d] ?? ''];
+                    ($d === 'pricing2' ? 'pricing' : $d) . ' · Mumbai', self::NAMES[$t['code']][$d] ?? ''];
+            }
+            foreach (self::CHENNAI_STAFF[$t['code']] as $d => $name) {
+                $rows[] = [$t['tier'], strtolower($t['code']) . "-maa-{$d}@demo.test", "{$d} · Chennai", $name];
             }
         }
 

@@ -74,11 +74,49 @@ class DemoMailLoopSeeder extends Seeder
         "PO 44820 will be shown in the handling information on the waybill. We will point it out on the draft so you can confirm the placement.",
     ];
 
+    /**
+     * Mail the Boss is on (user, 2026-09-16: "some pricing staff, some sales staff, and the Boss cc'd, so we can test
+     * the mails"). [branch, days ago, subject, [[from, to, cc[], body], …]] — people by role: client:<address>, desk
+     * (the branch's shared mailbox, i.e. pricing replying), boss, pricing, sales. Mumbai's staff for BOM, Chennai's
+     * for MAA. The Boss is copied on some and writes in himself on others.
+     */
+    private const BOSS_CONVERSATIONS = [
+        ['BOM', 1, 'Escalation: 6 pallets held at the BOM cargo terminal', [
+            ['client:ops@contoso.test', 'desk', ['boss', 'sales'], "Our 6 pallets have been at the BOM cargo terminal since Monday and our buyer in Frankfurt is chasing. Please give us a clear update and a new flight today. I have copied your management as this is now urgent."],
+            ['desk', 'client:ops@contoso.test', ['boss', 'sales'], "We are sorry for the delay. The pallets were held for a screening re-check; they are cleared and booked on tomorrow's early flight to FRA. I will confirm departure as soon as the airline releases the manifest."],
+            ['client:ops@contoso.test', 'desk', ['boss', 'sales'], "Thank you. Please make sure it goes tomorrow — we cannot miss another day."],
+            ['boss', 'desk', ['sales'], "Please call Contoso this afternoon and keep me posted until it flies. Let's also check why the screening re-check took three days."],
+        ]],
+        ['BOM', 3, 'Annual contract rates for 2027', [
+            ['client:procurement@globex.test', 'sales', ['boss', 'desk'], "We are reviewing our forwarders for 2027. Please send your best annual rates for BOM–DXB, MAA–SIN and DEL–LHR — around 40 tonnes a month in total — by the 30th."],
+            ['sales', 'desk', ['boss'], "Can we put these together by Friday? Globex is one of our top three accounts, and I would like to hold this year's BOM–DXB rate if the margin allows."],
+            ['desk', 'sales', ['boss'], "Yes. BOM–DXB we can hold. MAA–SIN is up 6% from the airlines this quarter, so I will show two options there. Draft by Thursday."],
+            ['boss', 'desk', ['sales'], "Good — keep BOM–DXB flat, it is worth it for the volume. Send me the draft before it goes out."],
+        ]],
+        ['BOM', 2, 'Northwind volumes down — a sharper BOM–FRA rate?', [
+            ['sales', 'desk', ['boss'], "Northwind has dropped to about a fifth of their usual volume. Their buyer says another forwarder is 8% cheaper on BOM–FRA. Can we look at a sharper rate for next quarter?"],
+            ['desk', 'sales', ['boss'], "I can go 5% below our current BOM–FRA rate if they commit to at least 2 shipments a month. Anything lower eats the margin."],
+            ['boss', 'sales', ['desk'], "Approved at 5% with the 2-shipment commitment. Please meet them this week and tell me how it goes."],
+        ]],
+        ['MAA', 1, 'Space for 20 pallets MAA to DXB next Wednesday', [
+            ['client:logistics@globex.test', 'desk', ['boss'], "We need space for 20 pallets, about 4,800 kg, MAA to DXB next Wednesday. As this is a large lot I have copied your director. Please confirm availability and the rate."],
+            ['desk', 'client:logistics@globex.test', ['boss', 'sales'], "Space is available on Wednesday night's flight. The rate for 20 pallets follows within the hour, and we can split across two flights if you prefer."],
+            ['sales', 'desk', ['boss'], "Globex Chennai is paying slowly at the moment — please check with me before we confirm credit terms on this one."],
+        ]],
+        ['MAA', 4, 'Globex Chennai — invoices overdue beyond 60 days', [
+            ['sales', 'desk', ['boss'], "Globex Chennai owes ₹1,32,750 beyond 60 days. Their accounts team says two invoices are disputed on weight. Can pricing check the chargeable weights on those two jobs?"],
+            ['desk', 'sales', ['boss'], "Checked: both invoices used the chargeable weight the airline confirmed on the AWB. I will send the weight slips so they can release the payment."],
+            ['boss', 'sales', ['desk'], "Please get a payment date from them by Friday. If it slips again, we hold credit on new bookings until it is cleared."],
+        ]],
+    ];
+
     /** A few rules a branch would write, so each step of the classifier is visible. */
     private const RULES = [
         ['Customs filings',    'subject_keyword',     'bill of entry',  'clearance',     10],
         ['BlueDart trucking',  'sender_domain_match', 'bluedart.test',  'trucking_road', 10],
         ['Newsletters',        'body_keyword',        'unsubscribe',    'other',         20],
+        // Our own people writing to the desk: team mail, not a client enquiry.
+        ['Internal team',      'sender_domain_match', 'demo.test',      'other',         5],
     ];
 
     private MailboxConnection $mailbox;
@@ -112,7 +150,39 @@ class DemoMailLoopSeeder extends Seeder
                 $this->loop($n, ...$loop);
             }
 
-            $this->command?->info("  {$code}: " . count(self::LOOPS) . ' client conversations and ' . count(self::NOTICES) . ' notices through the mail pipeline');
+            $this->bossConversations($company, $prefix);
+
+            $this->command?->info("  {$code}: " . count(self::LOOPS) . ' client conversations, ' . count(self::NOTICES) . ' notices and '
+                . count(self::BOSS_CONVERSATIONS) . ' conversations the Boss is on, through the mail pipeline');
+        }
+    }
+
+    /** The conversations the Boss is on, each in its own branch's mailbox with that branch's people. */
+    private function bossConversations(object $company, string $prefix): void
+    {
+        $boss = "{$prefix}-boss@demo.test";
+
+        foreach (self::BOSS_CONVERSATIONS as $n => [$code, $daysAgo, $subject, $messages]) {
+            $this->branch = Agent::where('company_id', $company->id)->where('branch_code', $code)->firstOrFail();
+            $this->mailbox = MailboxConnection::withoutGlobalScopes()->where('agent_id', $this->branch->id)->firstOrFail();
+            $this->seedRules();
+            $staff = $code === 'BOM' ? "{$prefix}-" : "{$prefix}-maa-";
+
+            $address = fn (string $who) => match (true) {
+                str_starts_with($who, 'client:') => substr($who, 7),
+                $who === 'desk' => $this->mailbox->email_address,
+                $who === 'boss' => $boss,
+                default => "{$staff}{$who}@demo.test",
+            };
+
+            $at = now()->subDays($daysAgo)->setTime(10, 0)->addMinutes($n * 7);
+            $first = null;
+
+            foreach ($messages as $i => [$from, $to, $cc, $body]) {
+                $sent = $this->mail($address($from), $address($to), $i === 0 ? $subject : "RE: {$subject}", $body,
+                    $at->copy()->addMinutes($i * 50), $first, array_map($address, $cc));
+                $first ??= $sent['message_id'];
+            }
         }
     }
 
@@ -282,12 +352,12 @@ class DemoMailLoopSeeder extends Seeder
     }
 
     /** One message through MessageIngestor. Outbound when it is from the desk mailbox. */
-    private function mail(string $from, string $to, string $subject, string $body, Carbon $at, ?string $replyTo = null): array
+    private function mail(string $from, string $to, string $subject, string $body, Carbon $at, ?string $replyTo = null, array $cc = []): array
     {
         $messageId = '<loop-' . $this->branch->id . '-' . (++$this->messageNo) . '@demo.test>';
 
         app(MessageIngestor::class)->ingest($this->mailbox, [new NormalisedMessage(
-            messageId: $messageId, threadId: null, from: $from, to: [$to], cc: [], bcc: [], subject: $subject, snippet: $body,
+            messageId: $messageId, threadId: null, from: $from, to: [$to], cc: $cc, bcc: [], subject: $subject, snippet: $body,
             receivedAt: $at, direction: $from === $this->mailbox->email_address ? 'outbound' : 'inbound',
             references: $replyTo ? [$replyTo] : [],
         )]);

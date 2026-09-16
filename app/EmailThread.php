@@ -50,12 +50,12 @@ class EmailThread extends Model
     /**
      * The conversations this user may open.
      *
-     * Sales see only mail they are on — sent by them, or to, cc or bcc them (user, 2026-09-15). Pricing and
-     * operations work the branch inbox, so everything is theirs.
+     * Sales and the Boss see only mail they are on — sent by them, or to, cc or bcc them (user, 2026-09-15/16).
+     * Pricing and operations work the branch inbox, so everything is theirs.
      */
     public function scopeVisibleTo($query, User $user)
     {
-        if ($user->designation !== 'sales') {
+        if (! in_array($user->designation, ['sales', 'boss'], true)) {
             return $query;
         }
 

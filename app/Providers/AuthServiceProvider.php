@@ -42,7 +42,8 @@ class AuthServiceProvider extends ServiceProvider
         // works. `triage` (below) is what actually gates re-classification, so reading
         // the inbox is deliberately wider than changing what a thread IS.
         // Sales read and answer only the mail they are on (EmailThread::scopeVisibleTo).
-        $this->define('viewInbox', ['pricing', 'operations', 'sales'], 'tactical');
+        // The Boss reads the mail he is on (user, 2026-09-16) — EmailThread::scopeVisibleTo narrows it.
+        $this->define('viewInbox', ['pricing', 'operations', 'sales', 'boss'], 'tactical');
 
         // ── Enquiry lifecycle — pricing owns triage and conversion ───────────
         $this->define('triage',     ['pricing'], 'tactical');

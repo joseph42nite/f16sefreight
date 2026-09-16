@@ -8683,11 +8683,12 @@ const LANDING_ROUTE = {
 const NAV_ITEMS = [
 // ── Shared operational surface ────────────────────────────────────────────
 // Sales see only the mail they are on (user, 2026-09-15).
+// The Boss reads the mail he is on too — to, cc or bcc (user, 2026-09-16).
 {
   path: "/inbox",
   label: "Inbox",
   icon: "envelope",
-  designations: ["pricing", "operations", "sales"],
+  designations: ["pricing", "operations", "sales", "boss"],
   minTier: "tactical"
 },
 // Sales see the whole branch's board, read-only (user, 2026-09-15).
@@ -8766,15 +8767,13 @@ const NAV_ITEMS = [
   minTier: "tactical"
 },
 // ── Command-tier surfaces. VISIBLE AND LOCKED below Command — §8.1. ──────
-// 🔴 For a SALES login this is the day's work, so it leads the rail and is called what it is to them — their
-// dashboard (user, 2026-09-16). The Boss keeps it below their own Overview, named Sales.
+// For a SALES login this is their dashboard (user, 2026-09-16); the Boss reads it as Sales.
 {
   path: "/sales",
   label: "Sales",
   labelFor: {
     sales: "Dashboard"
   },
-  leadFor: ["sales"],
   icon: "graph-up",
   designations: ["sales", "boss"],
   minTier: "tactical"
@@ -8802,8 +8801,19 @@ const NAV_ITEMS = [
   designations: null
 }];
 
-/** 1 when this item leads the rail for this login, 0 otherwise. */
-const leads = (item, designation) => item.leadFor && item.leadFor.indexOf(designation) !== -1 ? 1 : 0;
+/**
+ * The rail's order for a login whose day starts somewhere other than the list above (user, 2026-09-16).
+ * Paths not named keep their place after the named ones.
+ */
+const RAIL_ORDER = {
+  sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
+  boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"]
+};
+const railRank = (item, designation) => {
+  const order = RAIL_ORDER[designation] || [];
+  const at = order.indexOf(item.path);
+  return at === -1 ? order.length : at;
+};
 
 /**
  * What the rail should show this user.
@@ -8842,8 +8852,8 @@ function visibleNavFor({
     // Tier forbids -> visible but locked. This is the upsell moment.
     locked: !tierAtLeast(item.minTier)
   }))
-  // A login's own landing page leads the rail; the rest keep the order above.
-  .sort((a, b) => leads(b, designation) - leads(a, designation));
+  // A login with its own order gets it; everyone else keeps the list's order (the sort is stable).
+  .sort((a, b) => railRank(a, designation) - railRank(b, designation));
 }
 
 /***/ }),
@@ -10595,7 +10605,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_JobInbox_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/JobInbox */ "./resources/js/src/view/pages/freight/JobInbox.vue")),
       meta: {
         userType: 'user',
-        designations: ['pricing', 'operations', 'sales'],
+        designations: ['pricing', 'operations', 'sales', 'boss'],
         minTier: 'tactical'
       }
     }, {
@@ -10607,7 +10617,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_MailboxSettings_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/MailboxSettings */ "./resources/js/src/view/pages/freight/MailboxSettings.vue")),
       meta: {
         userType: 'user',
-        designations: ['pricing', 'operations', 'sales'],
+        designations: ['pricing', 'operations', 'sales', 'boss'],
         minTier: 'tactical'
       }
     }, {

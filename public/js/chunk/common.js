@@ -375,6 +375,10 @@ const SHAPES = {
       label: "Domain",
       mono: true
     }, {
+      key: "branch",
+      label: "Branch",
+      bossOnly: true
+    }, {
       key: "contacts_count",
       label: "Mail addresses",
       numeric: true,
@@ -408,6 +412,10 @@ const SHAPES = {
     }, {
       key: "partner_type",
       label: "Type"
+    }, {
+      key: "branch",
+      label: "Branch",
+      bossOnly: true
     }, {
       key: "email",
       label: "Email"
@@ -475,7 +483,9 @@ const SHAPES = {
       return this.shape.subtitle;
     },
     columns() {
-      return this.shape.columns.filter(c => !c.accounts || this.withAccounts);
+      return this.shape.columns.filter(c => !c.accounts || this.withAccounts)
+      // The Boss reads every branch's clients and partners, so he needs to see whose they are.
+      .filter(c => !c.bossOnly || this.designation === "boss");
     },
     searchPlaceholder() {
       return this.shape.searchPlaceholder;

@@ -58,9 +58,10 @@ describe("the navigation rail", () => {
 
     expect(sales[0]).toBe("Dashboard");
     expect(sales.indexOf("Dashboard")).toBeLessThan(sales.indexOf("Inbox"));
-    // The Boss reads the same page as Sales, under their own Overview.
-    const boss = labels({ designation: "boss", tier: "command", portalKey: "focusair" });
-    expect(boss).toContain("Sales");
-    expect(boss).not.toContain("Dashboard");
+  });
+
+  it("gives the Boss Overview, Inbox, Sales, Financials, Clients & Partners, Settings — in that order", () => {
+    const boss = labels({ designation: "boss", tier: "command", portalKey: "admin" });
+    expect(boss).toEqual(["Overview", "Inbox", "Sales", "Financials", "Clients & Partners", "Settings"]);
   });
 });

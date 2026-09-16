@@ -206,6 +206,13 @@ const WORKSPACE_TABS = [{
     canTriage() {
       return this.designation === "pricing";
     },
+    /**
+     * Pricing and operations work the inbox: claim, the workspace, client updates. Sales and the Boss read the mail
+     * they are on and reply — and the Boss hands a conversation to pricing (user, 2026-09-16).
+     */
+    worksTheInbox() {
+      return ["pricing", "operations"].indexOf(this.designation) !== -1;
+    },
     /** The workspace's operator dropdown: pricing and the Boss set it, operations ask for it. */
     canSeeOperator() {
       return !!(this.active && this.active.job) && ["pricing", "boss", "operations"].indexOf(this.designation) !== -1;
@@ -301,10 +308,10 @@ const WORKSPACE_TABS = [{
     },
     /** Extraction and the cost sheet are shipment work: a customer enquiry, and not for sales. */
     isEnquiryWork() {
-      return !!this.active && this.active.classification === "customer_enquiry" && this.designation !== "sales";
+      return !!this.active && this.active.classification === "customer_enquiry" && this.worksTheInbox;
     },
     workspaceTabs() {
-      if (this.designation === "sales") return [];
+      if (!this.worksTheInbox) return [];
 
       // Credits are on every conversation (user, 2026-09-15): an operator working airline or clearance mail
       // still needs to see what extraction has used. On anything but an enquiry, Extraction explains itself.
@@ -2593,7 +2600,7 @@ var render = function render() {
     staticClass: "identifier"
   }, [_vm._v(_vm._s(_vm.active.enquiry.enquiry_no))])] : _vm._e()], 2)]), _vm._v(" "), _c("div", {
     staticClass: "fx-convo__actions"
-  }, [!_vm.active.assigned_ops && _vm.designation !== "sales" ? _c("button", {
+  }, [!_vm.active.assigned_ops && _vm.worksTheInbox ? _c("button", {
     staticClass: "fx-btn",
     attrs: {
       disabled: _vm.busy,
@@ -2657,7 +2664,7 @@ var render = function render() {
         value: o.id
       }
     }, [_vm._v(_vm._s(o.name))]);
-  })], 2) : _vm._e(), _vm._v(" "), _vm.designation !== "sales" ? _c("button", {
+  })], 2) : _vm._e(), _vm._v(" "), _vm.worksTheInbox ? _c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
       "data-help": "open-workspace"
@@ -2675,7 +2682,7 @@ var render = function render() {
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.attachmentError))]) : _vm._e(), _vm._v(" "), _vm.active.client_update && _vm.designation !== "sales" ? _c("section", {
+  }, [_vm._v(_vm._s(_vm.attachmentError))]) : _vm._e(), _vm._v(" "), _vm.active.client_update && _vm.worksTheInbox ? _c("section", {
     staticClass: "fx-update-card",
     attrs: {
       "aria-label": "Client update"

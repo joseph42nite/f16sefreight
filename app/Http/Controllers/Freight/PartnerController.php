@@ -30,6 +30,11 @@ class PartnerController extends Controller
             ->orderBy('name')
             ->paginate(50);
 
+        // Which branch each partner belongs to — the Boss sees every branch's (user, 2026-09-16).
+        $branches = \Illuminate\Support\Facades\DB::table('agents_info')
+            ->whereIn('id', $partners->getCollection()->pluck('agent_id')->unique())->pluck('agent_name', 'id');
+        $partners->getCollection()->each(fn ($p) => $p->setAttribute('branch', $branches[$p->agent_id] ?? null));
+
         return response()->json($partners);
     }
 

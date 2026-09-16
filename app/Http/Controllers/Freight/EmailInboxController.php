@@ -299,7 +299,8 @@ class EmailInboxController extends Controller
     {
         $this->authorize('viewInbox');
         // Claiming takes on the work; sales read and answer, they do not take shipments on.
-        abort_if(auth()->user()->designation === 'sales', 403);
+        // Sales and the Boss read, reply and (the Boss) assign; they do not take the work on themselves.
+        abort_if(in_array(auth()->user()->designation, ['sales', 'boss'], true), 403);
 
         // The claim pop-up's answer: send the "we have your enquiry" mail as edited, or claim without it.
         $update = $request->filled('client_update.decision') ? $this->clientUpdateInput($request, 'client_update.') : null;
@@ -354,7 +355,8 @@ class EmailInboxController extends Controller
     private function authorizeClientUpdate(EmailThread $thread): void
     {
         $this->authorize('viewInbox');
-        abort_if(auth()->user()->designation === 'sales', 403);
+        // Client updates are the conversation owner's to send, not the Boss's or a rep's.
+        abort_if(in_array(auth()->user()->designation, ['sales', 'boss'], true), 403);
         abort_unless($thread->isVisibleTo(auth()->user()), 404);
     }
 

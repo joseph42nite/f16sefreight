@@ -52,6 +52,11 @@ class CustomerController extends Controller
             $customers->getCollection()->each->makeHidden(self::ACCOUNTS_FIELDS);
         }
 
+        // The branch that manages each client, for the Boss reading every branch's clients (user, 2026-09-16).
+        $branches = \Illuminate\Support\Facades\DB::table('agents_info')
+            ->whereIn('id', $customers->getCollection()->pluck('branch_id')->filter()->unique())->pluck('agent_name', 'id');
+        $customers->getCollection()->each(fn ($c) => $c->setAttribute('branch', $branches[$c->branch_id] ?? null));
+
         return response()->json($customers->toArray() + ['with_accounts' => $this->withAccounts()]);
     }
 

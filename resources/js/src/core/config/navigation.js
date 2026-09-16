@@ -25,7 +25,8 @@ export const LANDING_ROUTE = {
 export const NAV_ITEMS = [
   // ── Shared operational surface ────────────────────────────────────────────
   // Sales see only the mail they are on (user, 2026-09-15).
-  { path: "/inbox", label: "Inbox", icon: "envelope", designations: ["pricing", "operations", "sales"], minTier: "tactical" },
+  // The Boss reads the mail he is on too — to, cc or bcc (user, 2026-09-16).
+  { path: "/inbox", label: "Inbox", icon: "envelope", designations: ["pricing", "operations", "sales", "boss"], minTier: "tactical" },
   // Sales see the whole branch's board, read-only (user, 2026-09-15).
   { path: "/kanban", label: "Kanban", icon: "columns", designations: ["pricing", "operations", "sales"], minTier: "tactical" },
   // Sales follow the branch's enquiries read-only (user, 2026-09-15).
@@ -65,9 +66,8 @@ export const NAV_ITEMS = [
   { path: "/clients-partners", label: "Clients & Partners", icon: "people", designations: ["pricing", "operations", "sales", "accounts", "boss"], minTier: "tactical" },
 
   // ── Command-tier surfaces. VISIBLE AND LOCKED below Command — §8.1. ──────
-  // 🔴 For a SALES login this is the day's work, so it leads the rail and is called what it is to them — their
-  // dashboard (user, 2026-09-16). The Boss keeps it below their own Overview, named Sales.
-  { path: "/sales", label: "Sales", labelFor: { sales: "Dashboard" }, leadFor: ["sales"],
+  // For a SALES login this is their dashboard (user, 2026-09-16); the Boss reads it as Sales.
+  { path: "/sales", label: "Sales", labelFor: { sales: "Dashboard" },
     icon: "graph-up", designations: ["sales", "boss"], minTier: "tactical" },
   { path: "/financials", label: "Financials", icon: "cash", designations: ["accounts", "boss"], minTier: "command" },
   { path: "/boss", label: "Overview", icon: "speedometer", designations: ["boss"], minTier: "tactical" },
@@ -79,8 +79,20 @@ export const NAV_ITEMS = [
   { path: "/settings", label: "Settings", icon: "gear", designations: null },
 ];
 
-/** 1 when this item leads the rail for this login, 0 otherwise. */
-const leads = (item, designation) => (item.leadFor && item.leadFor.indexOf(designation) !== -1 ? 1 : 0);
+/**
+ * The rail's order for a login whose day starts somewhere other than the list above (user, 2026-09-16).
+ * Paths not named keep their place after the named ones.
+ */
+const RAIL_ORDER = {
+  sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
+  boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
+};
+
+const railRank = (item, designation) => {
+  const order = RAIL_ORDER[designation] || [];
+  const at = order.indexOf(item.path);
+  return at === -1 ? order.length : at;
+};
 
 /**
  * What the rail should show this user.
@@ -116,6 +128,6 @@ export function visibleNavFor({ designation, tier, portalKey, tierAtLeast }) {
     // Tier forbids -> visible but locked. This is the upsell moment.
     locked: !tierAtLeast(item.minTier),
   }))
-    // A login's own landing page leads the rail; the rest keep the order above.
-    .sort((a, b) => leads(b, designation) - leads(a, designation));
+    // A login with its own order gets it; everyone else keeps the list's order (the sort is stable).
+    .sort((a, b) => railRank(a, designation) - railRank(b, designation));
 }

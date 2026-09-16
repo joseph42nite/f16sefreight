@@ -79,7 +79,7 @@
           <div class="fx-convo__actions">
             <!-- Sales read and answer; they do not take shipments on. -->
             <button
-              v-if="!active.assigned_ops && designation !== 'sales'"
+              v-if="!active.assigned_ops && worksTheInbox"
               class="fx-btn"
               :disabled="busy"
               data-help="claim-thread"
@@ -118,7 +118,7 @@
             </select>
 
 
-            <button v-if="designation !== 'sales'" class="fx-btn fx-btn--primary" data-help="open-workspace" @click="openWorkspace">Open workspace</button>
+            <button v-if="worksTheInbox" class="fx-btn fx-btn--primary" data-help="open-workspace" @click="openWorkspace">Open workspace</button>
           </div>
         </header>
 
@@ -126,7 +126,7 @@
         <p v-if="attachmentError" class="fx-error fx-inbox__pad" role="alert">{{ attachmentError }}</p>
 
         <!-- The client update waiting on this conversation: send it as it is, edit it, or skip it. -->
-        <section v-if="active.client_update && designation !== 'sales'" class="fx-update-card" aria-label="Client update">
+        <section v-if="active.client_update && worksTheInbox" class="fx-update-card" aria-label="Client update">
           <h3 class="fx-update-card__title">Client update ready — {{ active.client_update.title }}</h3>
           <ClientUpdateEditor
             :key="active.id + '-' + active.client_update.stage"
@@ -731,6 +731,13 @@ export default {
     canTriage() {
       return this.designation === "pricing";
     },
+    /**
+     * Pricing and operations work the inbox: claim, the workspace, client updates. Sales and the Boss read the mail
+     * they are on and reply — and the Boss hands a conversation to pricing (user, 2026-09-16).
+     */
+    worksTheInbox() {
+      return ["pricing", "operations"].indexOf(this.designation) !== -1;
+    },
     /** The workspace's operator dropdown: pricing and the Boss set it, operations ask for it. */
     canSeeOperator() {
       return !!(this.active && this.active.job) && ["pricing", "boss", "operations"].indexOf(this.designation) !== -1;
@@ -831,10 +838,10 @@ export default {
     },
     /** Extraction and the cost sheet are shipment work: a customer enquiry, and not for sales. */
     isEnquiryWork() {
-      return !!this.active && this.active.classification === "customer_enquiry" && this.designation !== "sales";
+      return !!this.active && this.active.classification === "customer_enquiry" && this.worksTheInbox;
     },
     workspaceTabs() {
-      if (this.designation === "sales") return [];
+      if (!this.worksTheInbox) return [];
 
       // Credits are on every conversation (user, 2026-09-15): an operator working airline or clearance mail
       // still needs to see what extraction has used. On anything but an enquiry, Extraction explains itself.

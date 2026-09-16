@@ -225,6 +225,7 @@ const SHAPES = {
     columns: [
       { key: "name", label: "Name" },
       { key: "email_domain", label: "Domain", mono: true },
+      { key: "branch", label: "Branch", bossOnly: true },
       { key: "contacts_count", label: "Mail addresses", numeric: true, kind: "count" },
       { key: "gst_no", label: "GSTIN", mono: true, accounts: true },
       { key: "payment_terms_days", label: "Terms (days)", numeric: true, kind: "count", accounts: true },
@@ -239,6 +240,7 @@ const SHAPES = {
     columns: [
       { key: "name", label: "Name" },
       { key: "partner_type", label: "Type" },
+      { key: "branch", label: "Branch", bossOnly: true },
       { key: "email", label: "Email" },
       { key: "phone", label: "Phone", mono: true },
       { key: "gst_no", label: "GSTIN", mono: true },
@@ -268,7 +270,12 @@ export default {
     },
     title() { return this.shape.title; },
     subtitle() { return this.shape.subtitle; },
-    columns() { return this.shape.columns.filter((c) => !c.accounts || this.withAccounts); },
+    columns() {
+      return this.shape.columns
+        .filter((c) => !c.accounts || this.withAccounts)
+        // The Boss reads every branch's clients and partners, so he needs to see whose they are.
+        .filter((c) => !c.bossOnly || this.designation === "boss");
+    },
     searchPlaceholder() { return this.shape.searchPlaceholder; },
   },
   created() {

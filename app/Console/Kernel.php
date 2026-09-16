@@ -43,6 +43,12 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer();
 
+        // Mail is kept three months after a conversation's last message; the figures stay (user, 2026-09-16).
+        $schedule->command('mail:prune')
+            ->dailyAt('02:30')
+            ->withoutOverlapping()
+            ->onOneServer();
+
         // Debounced via stale_nudged_at, cleared on any new client reply.
         $schedule->command('enquiries:nudge-stale')
             ->hourly()

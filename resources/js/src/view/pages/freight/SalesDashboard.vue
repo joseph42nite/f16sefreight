@@ -23,6 +23,27 @@
       Figures are {{ staleness.age_minutes }} minutes old. The rollup is overdue.
     </p>
 
+    <!-- The period every chart on this page is drawn over (user, 2026-09-16). -->
+    <div class="fx-toolbar">
+      <label class="fx-field">
+        <span class="fx-field__label">Period</span>
+        <select v-model="grain" class="fx-input" @change="loadCharts">
+          <option value="day">Last 30 days</option>
+          <option value="month">Last 12 months</option>
+          <option value="year">Last 2 years</option>
+        </select>
+      </label>
+      <!-- 🔴 The yearly funnel is a UNION over two bases; asking without one counts
+           every enquiry twice. So the control only exists where the choice does. -->
+      <label v-if="grain === 'year'" class="fx-field">
+        <span class="fx-field__label">Year basis</span>
+        <select v-model="basis" class="fx-input" @change="loadCharts">
+          <option value="fiscal">Fiscal (Apr–Mar)</option>
+          <option value="calendar">Calendar</option>
+        </select>
+      </label>
+    </div>
+
     <p v-if="loading" class="fx-muted">Loading…</p>
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
 
@@ -152,7 +173,7 @@
       -->
       <section v-if="charts" class="fx-section fx-charts">
         <FxChart
-          title="Tonnage & shipments"
+          :title="'Tonnage & shipments · ' + windowLabel"
           type="line"
           :series="tonnageSeries"
           :options="tonnageOptions"
@@ -160,51 +181,29 @@
         />
 
         <FxChart
-          title="Top lanes by tonnage"
+          :title="'Top lanes by tonnage · ' + windowLabel"
           type="bar"
           :series="laneSeries"
           :options="laneOptions"
           empty-message="No lanes recorded yet."
         />
 
-        <!--
-          ⚠️ The period belongs HERE, not at the top of the page (user, 2026-09-16: "does it make any difference?").
-          It changes the win/loss window and nothing else — tonnage is the last 36 months and the lanes are the last
-          12 — so as a page-wide control it read as a filter over figures it never touched.
-        -->
-        <div class="fx-funnel">
-          <div class="fx-toolbar">
-            <label class="fx-field">
-              <span class="fx-field__label">Win / loss over</span>
-              <select v-model="grain" class="fx-input" @change="loadCharts">
-                <option value="day">The last 24 days</option>
-                <option value="month">The last 24 months</option>
-                <option value="year">The last 2 years</option>
-              </select>
-            </label>
-            <!-- 🔴 The yearly funnel is a UNION over two bases; asking without one counts
-                 every enquiry twice. So the control only exists where the choice does. -->
-            <label v-if="grain === 'year'" class="fx-field">
-              <span class="fx-field__label">Year basis</span>
-              <select v-model="basis" class="fx-input" @change="loadCharts">
-                <option value="fiscal">Fiscal (Apr–Mar)</option>
-                <option value="calendar">Calendar</option>
-              </select>
-            </label>
-          </div>
-
-          <FxChart
-            title="Win / loss"
-            type="donut"
-            :series="funnelSeries"
-            :options="funnelOptions"
-            empty-message="No closed enquiries in this window."
-          />
-        </div>
+        <FxChart
+          :title="'Win / loss · ' + windowLabel"
+          type="donut"
+          :series="funnelSeries"
+          :options="funnelOptions"
+          empty-message="No closed enquiries in this window."
+        />
       </section>
 
       <section class="fx-section">
-        <h2 class="fx-section__title">{{ scope === "my_book" ? "My book" : "Branch" }}</h2>
+        <!-- ⚠️ Month to date and year to date, from the rollup — these do NOT follow the period above, because
+             "this month so far" is a fixed window by definition. -->
+        <h2 class="fx-section__title">
+          {{ scope === "my_book" ? "My book" : "Branch" }}
+          <span class="fx-muted">· month and year to date</span>
+        </h2>
         <div class="fx-tiles">
           <div v-for="t in tiles" :key="t.label" class="fx-tile">
             <span class="fx-tile__label">{{ t.label }}</span>
@@ -323,6 +322,10 @@ export default {
   }),
   computed: {
     ...mapGetters(["designation"]),
+    /** What the charts are drawn over, in the server's words. */
+    windowLabel() {
+      return (this.charts && this.charts.window && this.charts.window.label) || "the last 12 months";
+    },
     /* ⚠️ Months with no shipments are ABSENT from the payload, not zero-filled — a gap
        means "no data", a zero means "we moved nothing", and on a tonnage chart those
        read as opposite commercial stories. */

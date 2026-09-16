@@ -83,6 +83,10 @@ const list = text => String(text || "").split(",").map(s => s.trim()).filter(Boo
     basis: "fiscal"
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_6__.mapGetters)(["designation"])), {}, {
+    /** What the charts are drawn over, in the server's words. */
+    windowLabel() {
+      return this.charts && this.charts.window && this.charts.window.label || "the last 12 months";
+    },
     /* ⚠️ Months with no shipments are ABSENT from the payload, not zero-filled — a gap
        means "no data", a zero means "we moved nothing", and on a tonnage chart those
        read as opposite commercial stories. */
@@ -514,7 +518,75 @@ var render = function render() {
     attrs: {
       role: "status"
     }
-  }, [_vm._v("\n    Figures are " + _vm._s(_vm.staleness.age_minutes) + " minutes old. The rollup is overdue.\n  ")]) : _vm._e(), _vm._v(" "), _vm.loading ? _c("p", {
+  }, [_vm._v("\n    Figures are " + _vm._s(_vm.staleness.age_minutes) + " minutes old. The rollup is overdue.\n  ")]) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Period")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.grain,
+      expression: "grain"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.grain = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, _vm.loadCharts]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "day"
+    }
+  }, [_vm._v("Last 30 days")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "month"
+    }
+  }, [_vm._v("Last 12 months")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "year"
+    }
+  }, [_vm._v("Last 2 years")])])]), _vm._v(" "), _vm.grain === "year" ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Year basis")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.basis,
+      expression: "basis"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.basis = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, _vm.loadCharts]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "fiscal"
+    }
+  }, [_vm._v("Fiscal (Apr–Mar)")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "calendar"
+    }
+  }, [_vm._v("Calendar")])])]) : _vm._e()]), _vm._v(" "), _vm.loading ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
     staticClass: "fx-error",
@@ -749,7 +821,7 @@ var render = function render() {
     staticClass: "fx-section fx-charts"
   }, [_c("FxChart", {
     attrs: {
-      title: "Tonnage & shipments",
+      title: "Tonnage & shipments · " + _vm.windowLabel,
       type: "line",
       series: _vm.tonnageSeries,
       options: _vm.tonnageOptions,
@@ -757,95 +829,27 @@ var render = function render() {
     }
   }), _vm._v(" "), _c("FxChart", {
     attrs: {
-      title: "Top lanes by tonnage",
+      title: "Top lanes by tonnage · " + _vm.windowLabel,
       type: "bar",
       series: _vm.laneSeries,
       options: _vm.laneOptions,
       "empty-message": "No lanes recorded yet."
     }
-  }), _vm._v(" "), _c("div", {
-    staticClass: "fx-funnel"
-  }, [_c("div", {
-    staticClass: "fx-toolbar"
-  }, [_c("label", {
-    staticClass: "fx-field"
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("Win / loss over")]), _vm._v(" "), _c("select", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.grain,
-      expression: "grain"
-    }],
-    staticClass: "fx-input",
-    on: {
-      change: [function ($event) {
-        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
-          return o.selected;
-        }).map(function (o) {
-          var val = "_value" in o ? o._value : o.value;
-          return val;
-        });
-        _vm.grain = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
-      }, _vm.loadCharts]
-    }
-  }, [_c("option", {
+  }), _vm._v(" "), _c("FxChart", {
     attrs: {
-      value: "day"
-    }
-  }, [_vm._v("The last 24 days")]), _vm._v(" "), _c("option", {
-    attrs: {
-      value: "month"
-    }
-  }, [_vm._v("The last 24 months")]), _vm._v(" "), _c("option", {
-    attrs: {
-      value: "year"
-    }
-  }, [_vm._v("The last 2 years")])])]), _vm._v(" "), _vm.grain === "year" ? _c("label", {
-    staticClass: "fx-field"
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("Year basis")]), _vm._v(" "), _c("select", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.basis,
-      expression: "basis"
-    }],
-    staticClass: "fx-input",
-    on: {
-      change: [function ($event) {
-        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
-          return o.selected;
-        }).map(function (o) {
-          var val = "_value" in o ? o._value : o.value;
-          return val;
-        });
-        _vm.basis = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
-      }, _vm.loadCharts]
-    }
-  }, [_c("option", {
-    attrs: {
-      value: "fiscal"
-    }
-  }, [_vm._v("Fiscal (Apr–Mar)")]), _vm._v(" "), _c("option", {
-    attrs: {
-      value: "calendar"
-    }
-  }, [_vm._v("Calendar")])])]) : _vm._e()]), _vm._v(" "), _c("FxChart", {
-    attrs: {
-      title: "Win / loss",
+      title: "Win / loss · " + _vm.windowLabel,
       type: "donut",
       series: _vm.funnelSeries,
       options: _vm.funnelOptions,
       "empty-message": "No closed enquiries in this window."
     }
-  })], 1)], 1) : _vm._e(), _vm._v(" "), _c("section", {
+  })], 1) : _vm._e(), _vm._v(" "), _c("section", {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"
-  }, [_vm._v(_vm._s(_vm.scope === "my_book" ? "My book" : "Branch"))]), _vm._v(" "), _c("div", {
+  }, [_vm._v("\n        " + _vm._s(_vm.scope === "my_book" ? "My book" : "Branch") + "\n        "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("· month and year to date")])]), _vm._v(" "), _c("div", {
     staticClass: "fx-tiles"
   }, _vm._l(_vm.tiles, function (t) {
     return _c("div", {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -34,6 +35,9 @@ class SalesDashboardController extends Controller
 {
     /** Past this, the dashboard must say so rather than present stale numbers as live. */
     private const STALE_AFTER_MINUTES = 60;
+
+    /** What each period covers, in the reader's words — one window for every chart on the page. */
+    private const WINDOWS = ['day' => 'the last 30 days', 'month' => 'the last 12 months', 'year' => 'the last 2 years'];
 
     /**
      * The cockpit.
@@ -177,12 +181,19 @@ class SalesDashboardController extends Controller
         $grain = $request->string('grain', 'month')->toString();
         $grain = in_array($grain, ['day', 'month', 'year'], true) ? $grain : 'month';
 
+        // 🔴 ONE WINDOW FOR EVERY CHART (user, 2026-09-16). The period says how far back to look, so tonnage, lanes
+        // and win/loss all describe the same stretch of time rather than three different ones.
+        // ⚠️ Lane statistics are monthly, so a 30-day window reads from the start of the month it began in — a month
+        // cannot be cut in half after the fact.
+        $from = ['day' => now()->subDays(30), 'month' => now()->subMonths(12), 'year' => now()->subYears(2)][$grain];
+
         return response()->json([
             'grain'   => $grain,
+            'window'  => ['grain' => $grain, 'from' => $from->toDateString(), 'label' => self::WINDOWS[$grain]],
             'scope'   => $context->tier === 'command' ? 'my_book' : 'branch',
-            'tonnage' => $this->tonnageSeries($context, $mode),
-            'lanes'   => $this->laneSeries($context, $mode),
-            'funnel'  => $this->funnelSeries($context, $mode, $grain, $request),
+            'tonnage' => $this->tonnageSeries($context, $mode, $from),
+            'lanes'   => $this->laneSeries($context, $mode, $from),
+            'funnel'  => $this->funnelSeries($context, $mode, $grain, $from, $request),
         ]);
     }
 
@@ -389,11 +400,12 @@ class SalesDashboardController extends Controller
      * "we have no data for that month"; a zero is "we moved nothing", and on a lane
      * chart those read as opposite commercial stories. The client draws the gap.
      */
-    private function tonnageSeries(UserContext $context, ?string $mode): array
+    private function tonnageSeries(UserContext $context, ?string $mode, Carbon $from): array
     {
         return DB::table('customer_lane_stats as l')
             ->join('customers as c', 'c.id', '=', 'l.customer_id')
             ->where('l.agent_id', $context->agentId)
+            ->where('l.period_month', '>=', $from->copy()->startOfMonth()->toDateString())
             ->when($mode !== null, fn ($q) => $q->where('l.transport_mode', $mode))
             ->when($this->scopedToRep($context), fn ($q) => $q->where('c.sales_id', $context->userId))
             ->selectRaw('l.period_month, SUM(l.tonnage) AS tonnage, SUM(l.shipment_count) AS shipments')
@@ -416,11 +428,12 @@ class SalesDashboardController extends Controller
      * full container on another, and this chart is read as exposure. Ranking by count
      * would put the busiest lane first rather than the biggest one.
      */
-    private function laneSeries(UserContext $context, ?string $mode): array
+    private function laneSeries(UserContext $context, ?string $mode, Carbon $from): array
     {
         return DB::table('customer_lane_stats as l')
             ->join('customers as c', 'c.id', '=', 'l.customer_id')
             ->where('l.agent_id', $context->agentId)
+            ->where('l.period_month', '>=', $from->copy()->startOfMonth()->toDateString())
             ->when($mode !== null, fn ($q) => $q->where('l.transport_mode', $mode))
             ->when($this->scopedToRep($context), fn ($q) => $q->where('c.sales_id', $context->userId))
             ->selectRaw("CONCAT(l.origin_code, ' → ', l.dest_code) AS lane,
@@ -443,12 +456,13 @@ class SalesDashboardController extends Controller
      * 🔴 The yearly view REQUIRES a basis — it is a UNION over fiscal and calendar, and
      * querying it without one counts every enquiry twice.
      */
-    private function funnelSeries(UserContext $context, ?string $mode, string $grain, Request $request): array
+    private function funnelSeries(UserContext $context, ?string $mode, string $grain, Carbon $from, Request $request): array
     {
         $view = ['day' => 'dsr_funnel_view', 'month' => 'msr_funnel_view', 'year' => 'ysr_funnel_view'][$grain];
 
         $rows = DB::table($view)
             ->where('agent_id', $context->agentId)
+            ->where('period_start', '>=', $from->toDateString())
             ->when($mode !== null, fn ($q) => $q->where('transport_mode', $mode))
             ->when($grain === 'year', fn ($q) => $q->where('period_basis', $request->string('basis', 'fiscal')))
             ->orderByDesc('period_start')

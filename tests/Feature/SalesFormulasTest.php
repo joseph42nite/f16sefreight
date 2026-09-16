@@ -220,4 +220,36 @@ class SalesFormulasTest extends TestCase
         $this->assertTrue($dismissedDaysAgo(40), 'dismissed 40 days ago: suggested again');
         $this->assertFalse($dismissedDaysAgo(9, 'acted'), 'sent 9 days ago: not suggested again yet');
     }
+
+    /**
+     * 🔴 ONE PERIOD FOR EVERY CHART (user, 2026-09-16). Tonnage, lanes and win/loss are all drawn over the window
+     * the dropdown names — before this, only win/loss followed it while tonnage showed 36 months regardless.
+     */
+    public function test_the_period_drives_every_chart(): void
+    {
+        Carbon::setTestNow(Carbon::parse(self::DATE)->setTime(12, 0));
+        $this->shipment($this->daysBefore(10), 500, lane: 'BOM-FRA');   // inside every window
+        $this->shipment($this->daysBefore(200), 900, lane: 'MAA-DXB');  // only the longer ones
+        $this->roll();
+
+        $sales = \App\User::create(['name' => 'Rep', 'email' => 'rep-frm@test.local', 'password' => 'x',
+            'company_name' => $this->branch->company_id, 'branch_name' => $this->branch->id, 'designation' => 'sales', 'is_active' => 1]);
+        DB::table('customers')->where('id', $this->client->id)->update(['sales_id' => $sales->id]);
+
+        $charts = fn (string $grain) => $this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($sales), 'Accept' => 'application/json',
+        ])->getJson("http://focusair.localhost/api/sales/charts?grain={$grain}&basis=fiscal")->assertOk()->json();
+
+        $month = $charts('month');
+        $day = $charts('day');
+
+        $this->assertSame('the last 12 months', $month['window']['label']);
+        $this->assertSame('the last 30 days', $day['window']['label']);
+        // A lane from 200 days ago is in the 12-month charts and out of the 30-day ones.
+        $this->assertContains('MAA → DXB', collect($month['lanes'])->pluck('lane')->all());
+        $this->assertNotContains('MAA → DXB', collect($day['lanes'])->pluck('lane')->all());
+        $this->assertGreaterThan(count($day['tonnage']), count($month['tonnage']));
+
+        Carbon::setTestNow();
+    }
 }

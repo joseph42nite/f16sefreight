@@ -870,9 +870,6 @@ body.fx-split .fx-rail__label { display: none; }
 /* ═══ §7.4 Charts — chart-first, tables as drill-down ══════════════════════ */
 .fx-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
              gap: var(--space-3); }
-/* The win/loss chart with the period it covers, so the control is read as belonging to that chart. */
-.fx-funnel { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
-.fx-funnel .fx-toolbar { margin: 0; }
 .fx-chart { background: var(--bg-surface); border: 1px solid var(--border);
             border-radius: var(--radius-md); padding: var(--space-3); min-width: 0; }
 /* §4.1 an empty series is not a chart of zeroes — the message occupies the same box

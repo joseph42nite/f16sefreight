@@ -52,4 +52,15 @@ describe("the navigation rail", () => {
     // and crucially it no longer leaks another portal's forms into the gap
     expect(none).not.toContain("Master Bill of Lading");
   });
+
+  it("opens a sales login on their dashboard, above the inbox", () => {
+    const sales = labels({ designation: "sales", tier: "command", portalKey: "focusair" });
+
+    expect(sales[0]).toBe("Dashboard");
+    expect(sales.indexOf("Dashboard")).toBeLessThan(sales.indexOf("Inbox"));
+    // The Boss reads the same page as Sales, under their own Overview.
+    const boss = labels({ designation: "boss", tier: "command", portalKey: "focusair" });
+    expect(boss).toContain("Sales");
+    expect(boss).not.toContain("Dashboard");
+  });
 });

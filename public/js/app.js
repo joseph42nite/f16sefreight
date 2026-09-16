@@ -8766,9 +8766,15 @@ const NAV_ITEMS = [
   minTier: "tactical"
 },
 // ── Command-tier surfaces. VISIBLE AND LOCKED below Command — §8.1. ──────
+// 🔴 For a SALES login this is the day's work, so it leads the rail and is called what it is to them — their
+// dashboard (user, 2026-09-16). The Boss keeps it below their own Overview, named Sales.
 {
   path: "/sales",
   label: "Sales",
+  labelFor: {
+    sales: "Dashboard"
+  },
+  leadFor: ["sales"],
   icon: "graph-up",
   designations: ["sales", "boss"],
   minTier: "tactical"
@@ -8795,6 +8801,9 @@ const NAV_ITEMS = [
   icon: "gear",
   designations: null
 }];
+
+/** 1 when this item leads the rail for this login, 0 otherwise. */
+const leads = (item, designation) => item.leadFor && item.leadFor.indexOf(designation) !== -1 ? 1 : 0;
 
 /**
  * What the rail should show this user.
@@ -8828,9 +8837,13 @@ function visibleNavFor({
     if (item.designations && item.designations.indexOf(designation) === -1) return false;
     return true;
   }).map(item => _objectSpread(_objectSpread({}, item), {}, {
+    // What this login calls it: sales open on their dashboard, everyone else sees the shared label.
+    label: item.labelFor && item.labelFor[designation] || item.label,
     // Tier forbids -> visible but locked. This is the upsell moment.
     locked: !tierAtLeast(item.minTier)
-  }));
+  }))
+  // A login's own landing page leads the rail; the rest keep the order above.
+  .sort((a, b) => leads(b, designation) - leads(a, designation));
 }
 
 /***/ }),

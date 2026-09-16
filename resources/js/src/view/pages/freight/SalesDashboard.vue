@@ -1,7 +1,8 @@
 <template>
   <div>
     <header class="fx-page-head">
-      <h1 class="fx-page-title">Sales</h1>
+      <!-- Their own dashboard to a sales login; the Sales page to the Boss (user, 2026-09-16). -->
+      <h1 class="fx-page-title">{{ designation === "sales" ? "Dashboard" : "Sales" }}</h1>
       <p class="fx-page-sub">
         <template v-if="scope === 'my_book'">Your client book, {{ modeLabel }}.</template>
         <template v-else>Branch performance, {{ modeLabel }}. Client attribution needs Command.</template>
@@ -282,6 +283,7 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
@@ -313,6 +315,7 @@ export default {
     charts: null, grain: "month", basis: "fiscal",
   }),
   computed: {
+    ...mapGetters(["designation"]),
     /* ⚠️ Months with no shipments are ABSENT from the payload, not zero-filled — a gap
        means "no data", a zero means "we moved nothing", and on a tonnage chart those
        read as opposite commercial stories. */

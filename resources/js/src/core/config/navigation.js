@@ -65,7 +65,10 @@ export const NAV_ITEMS = [
   { path: "/clients-partners", label: "Clients & Partners", icon: "people", designations: ["pricing", "operations", "sales", "accounts", "boss"], minTier: "tactical" },
 
   // ── Command-tier surfaces. VISIBLE AND LOCKED below Command — §8.1. ──────
-  { path: "/sales", label: "Sales", icon: "graph-up", designations: ["sales", "boss"], minTier: "tactical" },
+  // 🔴 For a SALES login this is the day's work, so it leads the rail and is called what it is to them — their
+  // dashboard (user, 2026-09-16). The Boss keeps it below their own Overview, named Sales.
+  { path: "/sales", label: "Sales", labelFor: { sales: "Dashboard" }, leadFor: ["sales"],
+    icon: "graph-up", designations: ["sales", "boss"], minTier: "tactical" },
   { path: "/financials", label: "Financials", icon: "cash", designations: ["accounts", "boss"], minTier: "command" },
   { path: "/boss", label: "Overview", icon: "speedometer", designations: ["boss"], minTier: "tactical" },
 
@@ -75,6 +78,9 @@ export const NAV_ITEMS = [
   // with the surfaces an operator uses every hour. The route still exists for deep links.
   { path: "/settings", label: "Settings", icon: "gear", designations: null },
 ];
+
+/** 1 when this item leads the rail for this login, 0 otherwise. */
+const leads = (item, designation) => (item.leadFor && item.leadFor.indexOf(designation) !== -1 ? 1 : 0);
 
 /**
  * What the rail should show this user.
@@ -105,7 +111,11 @@ export function visibleNavFor({ designation, tier, portalKey, tierAtLeast }) {
     return true;
   }).map((item) => ({
     ...item,
+    // What this login calls it: sales open on their dashboard, everyone else sees the shared label.
+    label: (item.labelFor && item.labelFor[designation]) || item.label,
     // Tier forbids -> visible but locked. This is the upsell moment.
     locked: !tierAtLeast(item.minTier),
-  }));
+  }))
+    // A login's own landing page leads the rail; the rest keep the order above.
+    .sort((a, b) => leads(b, designation) - leads(a, designation));
 }

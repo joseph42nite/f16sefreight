@@ -66,19 +66,27 @@ class SalesDashboardController extends Controller
         $mode = app()->bound('active_portal_scope') ? app('active_portal_scope') : null;
 
         $isCommand = $context->tier === 'command';
+        $ids = $this->branchIds($request, $context);
 
         $payload = [
             'tier'      => $context->tier,
             'mode'      => $mode,
             'scope'     => $isCommand ? 'my_book' : 'branch',
-            'branch'    => $this->branchScoreboard($context->agentId, $mode, $isCommand),
-            'staleness' => $this->staleness($context->agentId, $mode),
+            'branch'    => $this->branchScoreboard($ids, $mode, $isCommand),
+            'staleness' => $this->staleness($ids, $mode),
         ];
+
+        // The Boss sees every branch, and may narrow to one (user, 2026-09-16: "the boss sees everything").
+        if ($context->designation === 'boss') {
+            $payload['branch_options'] = DB::table('agents_info')->where('company_id', $context->companyId)
+                ->orderBy('agent_name')->get(['id', 'agent_name as name']);
+            $payload['branch_picked'] = count($ids) === 1 && $request->filled('branch') ? $ids[0] : null;
+        }
 
         if ($isCommand) {
             // 🔒 Command scoping is `customers.sales_id = me` — a rep sees THEIR book,
-            // not the branch's. A boss is not sales-scoped and sees the whole branch.
-            $payload['book'] = $this->clientBook($context, $mode);
+            // not the branch's. A boss is not sales-scoped and sees every branch in view.
+            $payload['book'] = $this->clientBook($context, $mode, $ids);
         }
 
         return response()->json($payload);
@@ -113,7 +121,7 @@ class SalesDashboardController extends Controller
             // The rep's own clients, whichever branch manages them (a client's managing branch can be another).
             $query->where('sales_id', $context->userId);
         } else {
-            $query->where('agent_id', $context->agentId);
+            $query->whereIn('agent_id', $this->branchIds($request, $context));
             // Tactical has no client attribution, so only branch-level actions
             // (customer_id IS NULL) are meaningful — a per-client action would name
             // the client the tier is not entitled to see.
@@ -170,7 +178,7 @@ class SalesDashboardController extends Controller
 
         $mode = app()->bound('active_portal_scope') ? app('active_portal_scope') : null;
 
-        return response()->json(['accounts' => $this->clientBook($context, $mode, 200)]);
+        return response()->json(['accounts' => $this->clientBook($context, $mode, $this->branchIds($request, $context), 200)]);
     }
 
     /**
@@ -198,20 +206,16 @@ class SalesDashboardController extends Controller
         // and win/loss all describe the same stretch of time rather than three different ones.
         // ⚠️ Lane statistics are monthly, so a 30-day window reads from the start of the month it began in — a month
         // cannot be cut in half after the fact.
-        $from = [
-            'this_month' => now()->startOfMonth(),
-            'day' => now()->subDays(30),
-            'month' => now()->subMonths(12),
-            'year' => now()->subYears(2),
-        ][$grain];
+        $from = $this->windowStart($grain);
+        $ids = $this->branchIds($request, $context);
 
         return response()->json([
             'grain'   => $grain,
             'window'  => ['grain' => $grain, 'from' => $from->toDateString(), 'label' => self::WINDOWS[$grain]],
             'scope'   => $context->tier === 'command' ? 'my_book' : 'branch',
-            'tonnage' => $this->tonnageSeries($context, $mode, $from),
-            'lanes'   => $this->laneSeries($context, $mode, $from),
-            'funnel'  => $this->funnelSeries($context, $mode, $grain, $from, $request),
+            'tonnage' => $this->tonnageSeries($context, $mode, $from, $ids),
+            'lanes'   => $this->laneSeries($context, $mode, $from, $ids),
+            'funnel'  => $this->funnelSeries($mode, $grain, $from, $ids, $request),
         ]);
     }
 
@@ -304,6 +308,140 @@ class SalesDashboardController extends Controller
         ]);
     }
 
+    /**
+     * How each person is doing — the Boss's staff view (user, 2026-09-16: "how each staff is performing").
+     *
+     * Over the same period window as the charts, for the branches in view:
+     *   - pricing:    enquiries they own — raised, converted, lost, still open, and conversion (converted ÷ raised,
+     *                 the funnel's own formula)
+     *   - operations: shipments assigned to them — completed, still in progress
+     *   - sales:      their book — clients, tonnage and shipments (and invoiced revenue on Command), how many of their
+     *                 clients are at risk (gone quiet or shipping 25% less), and their branch's progress on this
+     *                 month's targets
+     */
+    public function staff(Request $request): JsonResponse
+    {
+        $this->authorize('viewSales');
+
+        $context = UserContext::for(auth()->user());
+        abort_unless($context->designation === 'boss', 403, 'Staff performance is the Boss view.');
+
+        $grain = isset(self::WINDOWS[$request->string('grain')->toString()]) ? $request->string('grain')->toString() : 'month';
+        $from = $this->windowStart($grain);
+        $ids = $this->branchIds($request, $context);
+        $withMoney = $context->tier === 'command';
+
+        $people = DB::table('users as u')->join('agents_info as a', 'a.id', '=', 'u.branch_name')
+            ->whereIn('u.branch_name', $ids)->where('u.is_active', 1)
+            ->whereIn('u.designation', ['pricing', 'operations', 'sales'])
+            ->orderBy('u.name')
+            ->get(['u.id', 'u.name', 'u.designation', 'u.branch_name as agent_id', 'a.agent_name as branch']);
+        $of = fn (string $role) => $people->where('designation', $role)->keyBy('id');
+
+        // ── Pricing ────────────────────────────────────────────────────────
+        $pricing = $of('pricing');
+        $enquiries = DB::table('enquiries')->whereIn('pricing_id', $pricing->keys())
+            ->where('created_at', '>=', $from)->whereNull('deleted_at')
+            ->groupBy('pricing_id')
+            ->selectRaw("pricing_id, COUNT(*) AS raised, SUM(status = 'converted') AS converted, SUM(status = 'lost') AS lost,
+                         SUM(status IN ('new', 'quoted', 'awaiting_client')) AS open")
+            ->get()->keyBy('pricing_id');
+
+        // ── Operations ─────────────────────────────────────────────────────
+        $operations = $of('operations');
+        $jobs = DB::table('jobs')->whereIn('ops_id', $operations->keys())
+            ->where('created_at', '>=', $from)->whereNull('deleted_at')
+            ->groupBy('ops_id')
+            ->selectRaw("ops_id, COUNT(*) AS assigned, SUM(status = 'Completed') AS completed,
+                         SUM(status NOT IN ('Completed', 'Cancelled')) AS in_progress")
+            ->get()->keyBy('ops_id');
+
+        // ── Sales ──────────────────────────────────────────────────────────
+        $sales = $of('sales');
+        $clients = DB::table('customers')->whereIn('sales_id', $sales->keys())
+            ->groupBy('sales_id')->selectRaw('sales_id, COUNT(*) AS clients')->pluck('clients', 'sales_id');
+        $volume = DB::table('customer_lane_stats as l')->join('customers as c', 'c.id', '=', 'l.customer_id')
+            ->whereIn('c.sales_id', $sales->keys())
+            ->where('l.period_month', '>=', $from->copy()->startOfMonth()->toDateString())
+            ->groupBy('c.sales_id')
+            ->selectRaw('c.sales_id, SUM(l.tonnage) AS tonnage, SUM(l.shipment_count) AS shipments')
+            ->get()->keyBy('sales_id');
+        $revenue = $withMoney ? DB::table('accounts_invoices as i')->join('customers as c', 'c.id', '=', 'i.customer_id')
+            ->whereIn('c.sales_id', $sales->keys())->where('i.type', 'invoice')->where('i.status', '!=', 'draft')
+            ->where('i.document_date', '>=', $from->toDateString())
+            ->groupBy('c.sales_id')->selectRaw('c.sales_id, SUM(i.grand_total) AS revenue')->pluck('revenue', 'sales_id') : collect();
+        // At risk: the rhythm says they have gone quiet, or the latest snapshot shows volume down by a quarter or more.
+        $latest = DB::table('customer_performance_snapshots')->max('snapshot_date');
+        $atRisk = DB::table('customers as c')
+            ->whereIn('c.sales_id', $sales->keys())
+            ->where(fn ($q) => $q
+                ->whereExists(fn ($e) => $e->select(DB::raw(1))->from('customer_cadence_profiles as p')
+                    ->whereColumn('p.customer_id', 'c.id')->whereIn('p.risk_band', ['AT_RISK', 'DORMANT']))
+                ->orWhereExists(fn ($e) => $e->select(DB::raw(1))->from('customer_performance_snapshots as s')
+                    ->whereColumn('s.customer_id', 'c.id')->where('s.snapshot_date', $latest)->where('s.momentum', '<=', -0.25)))
+            ->groupBy('c.sales_id')->selectRaw('c.sales_id, COUNT(*) AS at_risk')->pluck('at_risk', 'sales_id');
+        $targets = $this->targetProgress($sales->pluck('agent_id')->unique()->all(), $withMoney);
+
+        return response()->json([
+            'window' => ['grain' => $grain, 'from' => $from->toDateString(), 'label' => self::WINDOWS[$grain]],
+            'with_money' => $withMoney,
+            'pricing' => $pricing->values()->map(fn ($u) => [
+                'id' => $u->id, 'name' => $u->name, 'branch' => $u->branch,
+                'raised' => (int) ($enquiries[$u->id]->raised ?? 0),
+                'converted' => (int) ($enquiries[$u->id]->converted ?? 0),
+                'lost' => (int) ($enquiries[$u->id]->lost ?? 0),
+                'open' => (int) ($enquiries[$u->id]->open ?? 0),
+                // NULL, never 0%, when they raised nothing in the window.
+                'conversion_pct' => empty($enquiries[$u->id]->raised) ? null
+                    : round($enquiries[$u->id]->converted * 100 / $enquiries[$u->id]->raised, 1),
+            ]),
+            'operations' => $operations->values()->map(fn ($u) => [
+                'id' => $u->id, 'name' => $u->name, 'branch' => $u->branch,
+                'assigned' => (int) ($jobs[$u->id]->assigned ?? 0),
+                'completed' => (int) ($jobs[$u->id]->completed ?? 0),
+                'in_progress' => (int) ($jobs[$u->id]->in_progress ?? 0),
+            ]),
+            'sales' => $sales->values()->map(fn ($u) => [
+                'id' => $u->id, 'name' => $u->name, 'branch' => $u->branch,
+                'clients' => (int) ($clients[$u->id] ?? 0),
+                'tonnage' => round((float) ($volume[$u->id]->tonnage ?? 0), 1),
+                'shipments' => (int) ($volume[$u->id]->shipments ?? 0),
+                'revenue' => $withMoney ? round((float) ($revenue[$u->id] ?? 0), 2) : null,
+                'at_risk' => (int) ($atRisk[$u->id] ?? 0),
+                'target' => $targets[$u->agent_id] ?? null,
+            ]),
+        ]);
+    }
+
+    /**
+     * This month's target progress per branch: so far ÷ target, all modes together, per measure.
+     * NULL for a measure with no target set — never 0%, which would read as "nothing done".
+     *
+     * @return array<int, array<string, ?float>>
+     */
+    private function targetProgress(array $branchIds, bool $withMoney): array
+    {
+        $month = now()->startOfMonth();
+        $targets = DB::table('sales_targets')->whereIn('agent_id', $branchIds)->where('period_month', $month->toDateString())
+            ->groupBy('agent_id')
+            ->selectRaw('agent_id, SUM(shipments) AS shipments, SUM(tonnage_kg) AS tonnage, SUM(revenue_inr) AS revenue')
+            ->get()->keyBy('agent_id');
+        $asOf = DB::table('customer_performance_snapshots')->whereIn('agent_id', $branchIds)
+            ->whereBetween('snapshot_date', [$month->toDateString(), $month->copy()->endOfMonth()->toDateString()])->max('snapshot_date');
+        $actual = $asOf === null ? collect() : DB::table('customer_performance_snapshots')->whereIn('agent_id', $branchIds)
+            ->where('snapshot_date', $asOf)->groupBy('agent_id')
+            ->selectRaw('agent_id, SUM(shipment_count_mtd) AS shipments, SUM(tonnage_mtd) AS tonnage, SUM(revenue_mtd) AS revenue')
+            ->get()->keyBy('agent_id');
+
+        $pct = fn ($done, $target) => $target > 0 ? round((float) $done * 100 / (float) $target, 1) : null;
+
+        return collect($branchIds)->mapWithKeys(fn ($id) => [$id => [
+            'shipments_pct' => $pct($actual[$id]->shipments ?? 0, $targets[$id]->shipments ?? 0),
+            'tonnage_pct' => $pct($actual[$id]->tonnage ?? 0, $targets[$id]->tonnage ?? 0),
+            'revenue_pct' => $withMoney ? $pct($actual[$id]->revenue ?? 0, $targets[$id]->revenue ?? 0) : null,
+        ]])->all();
+    }
+
     // ─── Internals ───────────────────────────────────────────────────────────
 
     /**
@@ -313,10 +451,10 @@ class SalesDashboardController extends Controller
      * engine tables is that this query touches four small rows per customer per mode
      * instead of every job the branch has ever run.
      */
-    private function branchScoreboard(?int $agentId, ?string $mode, bool $withMoney = true): array
+    private function branchScoreboard(array $ids, ?string $mode, bool $withMoney = true): array
     {
         $latest = DB::table('customer_performance_snapshots')
-            ->where('agent_id', $agentId)
+            ->whereIn('agent_id', $ids)
             ->when($mode !== null, fn ($q) => $q->where('transport_mode', $mode))
             ->max('snapshot_date');
 
@@ -330,7 +468,7 @@ class SalesDashboardController extends Controller
         }
 
         $row = DB::table('customer_performance_snapshots')
-            ->where('agent_id', $agentId)
+            ->whereIn('agent_id', $ids)
             ->where('snapshot_date', $latest)
             ->when($mode !== null, fn ($q) => $q->where('transport_mode', $mode))
             ->selectRaw('SUM(tonnage_mtd) AS tonnage_mtd, SUM(tonnage_ytd) AS tonnage_ytd,
@@ -368,10 +506,10 @@ class SalesDashboardController extends Controller
      * surface by default. That is the whole defence against a margin column appearing
      * in this response the day someone adds one.
      */
-    private function clientBook(UserContext $context, ?string $mode, int $limit = 50): array
+    private function clientBook(UserContext $context, ?string $mode, array $ids, int $limit = 50): array
     {
         $latest = DB::table('customer_performance_snapshots')
-            ->where('agent_id', $context->agentId)
+            ->whereIn('agent_id', $ids)
             ->when($mode !== null, fn ($q) => $q->where('transport_mode', $mode))
             ->max('snapshot_date');
 
@@ -385,7 +523,7 @@ class SalesDashboardController extends Controller
                 $join->on('p.customer_id', '=', 's.customer_id')
                      ->on('p.transport_mode', '=', 's.transport_mode');
             })
-            ->where('s.agent_id', $context->agentId)
+            ->whereIn('s.agent_id', $ids)
             ->where('s.snapshot_date', $latest)
             ->when($mode !== null, fn ($q) => $q->where('s.transport_mode', $mode))
             // 🔒 A SALES rep sees their own clients. A boss is not sales-scoped.
@@ -418,11 +556,11 @@ class SalesDashboardController extends Controller
      * "we have no data for that month"; a zero is "we moved nothing", and on a lane
      * chart those read as opposite commercial stories. The client draws the gap.
      */
-    private function tonnageSeries(UserContext $context, ?string $mode, Carbon $from): array
+    private function tonnageSeries(UserContext $context, ?string $mode, Carbon $from, array $ids): array
     {
         return DB::table('customer_lane_stats as l')
             ->join('customers as c', 'c.id', '=', 'l.customer_id')
-            ->where('l.agent_id', $context->agentId)
+            ->whereIn('l.agent_id', $ids)
             ->where('l.period_month', '>=', $from->copy()->startOfMonth()->toDateString())
             ->when($mode !== null, fn ($q) => $q->where('l.transport_mode', $mode))
             ->when($this->scopedToRep($context), fn ($q) => $q->where('c.sales_id', $context->userId))
@@ -446,11 +584,11 @@ class SalesDashboardController extends Controller
      * full container on another, and this chart is read as exposure. Ranking by count
      * would put the busiest lane first rather than the biggest one.
      */
-    private function laneSeries(UserContext $context, ?string $mode, Carbon $from): array
+    private function laneSeries(UserContext $context, ?string $mode, Carbon $from, array $ids): array
     {
         return DB::table('customer_lane_stats as l')
             ->join('customers as c', 'c.id', '=', 'l.customer_id')
-            ->where('l.agent_id', $context->agentId)
+            ->whereIn('l.agent_id', $ids)
             ->where('l.period_month', '>=', $from->copy()->startOfMonth()->toDateString())
             ->when($mode !== null, fn ($q) => $q->where('l.transport_mode', $mode))
             ->when($this->scopedToRep($context), fn ($q) => $q->where('c.sales_id', $context->userId))
@@ -474,15 +612,20 @@ class SalesDashboardController extends Controller
      * 🔴 The yearly view REQUIRES a basis — it is a UNION over fiscal and calendar, and
      * querying it without one counts every enquiry twice.
      */
-    private function funnelSeries(UserContext $context, ?string $mode, string $grain, Carbon $from, Request $request): array
+    private function funnelSeries(?string $mode, string $grain, Carbon $from, array $ids, Request $request): array
     {
         $view = self::FUNNEL_VIEWS[$grain];
 
+        // 🔴 One row per PERIOD. The view holds a row per branch and per mode, so several branches (or air and sea
+        // together) would otherwise repeat each period — summed here, and the rate worked out again from the sums.
         $rows = DB::table($view)
-            ->where('agent_id', $context->agentId)
+            ->whereIn('agent_id', $ids)
             ->where('period_start', '>=', $from->toDateString())
             ->when($mode !== null, fn ($q) => $q->where('transport_mode', $mode))
             ->when($grain === 'year', fn ($q) => $q->where('period_basis', $request->string('basis', 'fiscal')))
+            ->groupBy('period_start')
+            ->selectRaw('period_start, SUM(enquiries_raised) AS enquiries_raised, SUM(enquiries_converted) AS enquiries_converted,
+                         SUM(enquiries_lost) AS enquiries_lost, SUM(enquiries_pending) AS enquiries_pending')
             ->orderByDesc('period_start')
             ->limit(24)
             ->get();
@@ -494,8 +637,9 @@ class SalesDashboardController extends Controller
                 'converted' => (int) $r->enquiries_converted,
                 'lost'      => (int) $r->enquiries_lost,
                 'pending'   => (int) $r->enquiries_pending,
-                // §7.1 NULL, never 0% — carried to the wire so the chart can show a gap.
-                'conversion_rate_pct' => $r->conversion_rate_pct === null ? null : (float) $r->conversion_rate_pct,
+                // §7.1 NULL, never 0% — the same formula as the view: converted ÷ raised.
+                'conversion_rate_pct' => (int) $r->enquiries_raised === 0 ? null
+                    : round($r->enquiries_converted * 100 / $r->enquiries_raised, 2),
             ])->all(),
             // The donut totals across the window.
             'totals' => [
@@ -504,6 +648,35 @@ class SalesDashboardController extends Controller
                 'pending'   => (int) $rows->sum('enquiries_pending'),
             ],
         ];
+    }
+
+    /**
+     * The branches these figures cover (user, 2026-09-16: "the boss sees everything").
+     * The Boss: every branch of the company, or the one they picked. Everyone else: their own branch.
+     *
+     * @return int[]
+     */
+    private function branchIds(Request $request, UserContext $context): array
+    {
+        if ($context->designation !== 'boss') {
+            return [(int) $context->agentId];
+        }
+
+        $all = DB::table('agents_info')->where('company_id', $context->companyId)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $picked = $request->integer('branch');
+
+        return $picked && in_array($picked, $all, true) ? [$picked] : $all;
+    }
+
+    /** Where a period's window starts. Lane statistics are monthly, so they read from that month's first day. */
+    private function windowStart(string $grain): Carbon
+    {
+        return [
+            'this_month' => now()->startOfMonth(),
+            'day' => now()->subDays(30),
+            'month' => now()->subMonths(12),
+            'year' => now()->subYears(2),
+        ][$grain];
     }
 
     /** A sales REP is scoped to their own book; a boss is not. */
@@ -519,10 +692,10 @@ class SalesDashboardController extends Controller
      * how fresh it is invites the reader to assume "live", which is the one thing these
      * numbers are deliberately not.
      */
-    private function staleness(?int $agentId, ?string $mode): array
+    private function staleness(array $ids, ?string $mode): array
     {
         $computed = DB::table('customer_performance_snapshots')
-            ->where('agent_id', $agentId)
+            ->whereIn('agent_id', $ids)
             ->when($mode !== null, fn ($q) => $q->where('transport_mode', $mode))
             ->max('last_computed_at');
 

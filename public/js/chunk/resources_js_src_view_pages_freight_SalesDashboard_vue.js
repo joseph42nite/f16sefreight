@@ -80,9 +80,23 @@ const list = text => String(text || "").split(",").map(s => s.trim()).filter(Boo
     actions: [],
     charts: null,
     grain: "month",
-    basis: "fiscal"
+    basis: "fiscal",
+    /* The Boss sees every branch (user, 2026-09-16): which one is picked ("" = all), the choices,
+       the branch comparison and each person's figures. */
+    branchPick: "",
+    branchOptions: [],
+    branchRows: [],
+    staff: null,
+    tier: null
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_6__.mapGetters)(["designation"])), {}, {
+    isBoss() {
+      return this.designation === "boss";
+    },
+    /** Revenue and overdue are Command figures; Tactical has no invoicing. */
+    branchMoney() {
+      return this.tier === "command";
+    },
     /** What the charts are drawn over, in the server's words. */
     windowLabel() {
       return this.charts && this.charts.window && this.charts.window.label || "the last 12 months";
@@ -208,29 +222,9 @@ const list = text => String(text || "").split(",").map(s => s.trim()).filter(Boo
     }
   }),
   created() {
-    this.loadCharts();
     this.loadOutreach();
     this.loadDismissed();
-    Promise.all([_core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/dashboard"),
-    // The actions call is allowed to fail without taking the page down — a ranked
-    // worklist is valuable, but it is not the reason the page exists.
-    _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/actions").catch(() => ({
-      data: {
-        actions: []
-      }
-    }))]).then(([dash, act]) => {
-      this.scope = dash.data.scope;
-      this.mode = dash.data.mode;
-      this.branch = dash.data.branch || {};
-      this.book = dash.data.book || [];
-      this.staleness = dash.data.staleness;
-      this.actions = act.data.actions || [];
-    }).catch(e => {
-      const d = e.response && e.response.data || {};
-      this.error = d.error || d.message || "Something went wrong.";
-    }).finally(() => {
-      this.loading = false;
-    });
+    this.loadFigures();
   },
   methods: {
     loadOutreach() {
@@ -355,9 +349,72 @@ const list = text => String(text || "").split(",").map(s => s.trim()).filter(Boo
       if (d.errors) return Object.values(d.errors).flat()[0];
       return d.error || d.message || fallback;
     },
+    /** A branch's figure summed across air and sea. */
+    branchSum(b, key) {
+      return Object.values(b.modes || {}).reduce((sum, m) => sum + (Number(m[key]) || 0), 0);
+    },
+    /** "Shipments 58% · tonnage 56% · revenue 31%", leaving out a measure with no target set. */
+    targetText(t, withMoney) {
+      if (!t) return "No target set";
+      const parts = [["Shipments", t.shipments_pct], ["tonnage", t.tonnage_pct]].concat(withMoney ? [["revenue", t.revenue_pct]] : []).filter(([, v]) => v !== null).map(([label, v]) => label + " " + Math.round(v) + "%");
+      return parts.length ? parts.join(" · ") : "No target set";
+    },
+    /** The Boss's branch choice, as a query parameter; empty means every branch. */
+    branchQuery() {
+      return this.isBoss && this.branchPick ? "branch=" + this.branchPick : "";
+    },
+    /** Everything on the page that depends on the period and, for the Boss, the branch. */
+    loadFigures() {
+      const q = this.branchQuery();
+      this.loadCharts();
+      if (this.isBoss) this.loadStaff();
+      Promise.all([_core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/dashboard" + (q ? "?" + q : "")),
+      // The actions call is allowed to fail without taking the page down — a ranked
+      // worklist is valuable, but it is not the reason the page exists.
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/actions" + (q ? "?" + q : "")).catch(() => ({
+        data: {
+          actions: []
+        }
+      })), this.isBoss ? _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/branches").catch(() => ({
+        data: {
+          branches: []
+        }
+      })) : Promise.resolve(null)]).then(([dash, act, branches]) => {
+        this.scope = dash.data.scope;
+        this.tier = dash.data.tier;
+        this.mode = dash.data.mode;
+        this.branch = dash.data.branch || {};
+        this.book = dash.data.book || [];
+        this.staleness = dash.data.staleness;
+        this.branchOptions = dash.data.branch_options || [];
+        this.actions = act.data.actions || [];
+        if (branches) this.branchRows = branches.data.branches || [];
+      }).catch(e => {
+        const d = e.response && e.response.data || {};
+        this.error = d.error || d.message || "Something went wrong.";
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    loadStaff() {
+      const q = this.branchQuery();
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/staff?grain=" + this.grain + (q ? "&" + q : "")).then(({
+        data
+      }) => {
+        this.staff = data;
+      }).catch(() => {
+        this.staff = null;
+      });
+    },
+    onPeriod() {
+      this.loadCharts();
+      if (this.isBoss) this.loadStaff();
+    },
     loadCharts() {
+      const q = this.branchQuery();
       let url = "/sales/charts?grain=" + this.grain;
       if (this.grain === "year") url += "&basis=" + this.basis;
+      if (q) url += "&" + q;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(url).then(({
         data
       }) => {
@@ -520,7 +577,41 @@ var render = function render() {
     }
   }, [_vm._v("\n    Figures are " + _vm._s(_vm.staleness.age_minutes) + " minutes old. The rollup is overdue.\n  ")]) : _vm._e(), _vm._v(" "), _c("div", {
     staticClass: "fx-toolbar"
-  }, [_c("label", {
+  }, [_vm.isBoss ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.branchPick,
+      expression: "branchPick"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.branchPick = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, _vm.loadFigures]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("All branches")]), _vm._v(" "), _vm._l(_vm.branchOptions, function (b) {
+    return _c("option", {
+      key: b.id,
+      domProps: {
+        value: String(b.id)
+      }
+    }, [_vm._v(_vm._s(b.name))]);
+  })], 2)]) : _vm._e(), _vm._v(" "), _c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
@@ -541,7 +632,7 @@ var render = function render() {
           return val;
         });
         _vm.grain = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
-      }, _vm.loadCharts]
+      }, _vm.onPeriod]
     }
   }, [_c("option", {
     attrs: {
@@ -870,13 +961,204 @@ var render = function render() {
         "currency-code": t.kind === "currency" ? "INR" : null
       }
     })], 1)]);
-  }), 0)]), _vm._v(" "), _vm.book.length ? _c("section", {
+  }), 0)]), _vm._v(" "), _vm.isBoss && _vm.branchRows.length ? _c("section", {
+    staticClass: "fx-section"
+  }, [_vm._m(0), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Clients")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipments MTD")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Tonnage MTD")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Tonnage YTD")]), _vm._v(" "), _vm.branchMoney ? _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Revenue MTD")]) : _vm._e(), _vm._v(" "), _vm.branchMoney ? _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Overdue 60+")]) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.branchRows, function (b) {
+    return _c("tr", {
+      key: b.agent_id
+    }, [_c("td", [_vm._v(_vm._s(b.name))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.branchSum(b, "clients")))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.branchSum(b, "shipments_mtd")))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: _vm.branchSum(b, "tonnage_mtd"),
+        kind: "weight"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: b.totals.tonnage_ytd,
+        kind: "weight"
+      }
+    })], 1), _vm._v(" "), _vm.branchMoney ? _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: b.totals.revenue_mtd,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1) : _vm._e(), _vm._v(" "), _vm.branchMoney ? _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: b.totals.overdue_60_plus,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1) : _vm._e()]);
+  }), 0)])]) : _vm._e(), _vm._v(" "), _vm.isBoss && _vm.staff ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("By staff "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("· " + _vm._s(_vm.staff.window.label))])]), _vm._v(" "), _c("h3", {
+    staticClass: "fx-staff__role"
+  }, [_vm._v("Pricing")]), _vm._v(" "), !_vm.staff.pricing.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No pricing staff in view.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(1), _vm._v(" "), _c("tbody", _vm._l(_vm.staff.pricing, function (p) {
+    return _c("tr", {
+      key: p.id
+    }, [_c("td", [_vm._v(_vm._s(p.name))]), _c("td", [_vm._v(_vm._s(p.branch))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(p.raised))]), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(p.converted))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(p.lost))]), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(p.open))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [p.conversion_pct !== null ? [_vm._v(_vm._s(p.conversion_pct) + "%")] : _c("span", {
+      staticClass: "is-empty",
+      attrs: {
+        "aria-label": "No enquiries in this period"
+      }
+    })], 2)]);
+  }), 0)]), _vm._v(" "), _c("h3", {
+    staticClass: "fx-staff__role"
+  }, [_vm._v("Operations")]), _vm._v(" "), !_vm.staff.operations.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No operations staff in view.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.staff.operations, function (o) {
+    return _c("tr", {
+      key: o.id
+    }, [_c("td", [_vm._v(_vm._s(o.name))]), _c("td", [_vm._v(_vm._s(o.branch))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(o.assigned))]), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(o.completed))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(o.in_progress))])]);
+  }), 0)]), _vm._v(" "), _c("h3", {
+    staticClass: "fx-staff__role"
+  }, [_vm._v("Sales")]), _vm._v(" "), !_vm.staff.sales.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No sales staff in view.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Name")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Clients")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipments")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Tonnage")]), _vm._v(" "), _vm.staff.with_money ? _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Revenue")]) : _vm._e(), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("At risk")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch target this month")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.staff.sales, function (r) {
+    return _c("tr", {
+      key: r.id
+    }, [_c("td", [_vm._v(_vm._s(r.name))]), _c("td", [_vm._v(_vm._s(r.branch))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(r.clients))]), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(r.shipments))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.tonnage,
+        kind: "weight"
+      }
+    })], 1), _vm._v(" "), _vm.staff.with_money ? _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.revenue,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1) : _vm._e(), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(r.at_risk))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.targetText(r.target, _vm.staff.with_money)))])]);
+  }), 0)])]) : _vm._e(), _vm._v(" "), _vm.book.length ? _c("section", {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"
   }, [_vm._v("Accounts")]), _vm._v(" "), _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.book, function (c) {
+  }, [_vm._m(3), _vm._v(" "), _c("tbody", _vm._l(_vm.book, function (c) {
     return _c("tr", {
       key: c.customer_id + "-" + c.transport_mode
     }, [_c("td", [_vm._v(_vm._s(c.name))]), _vm._v(" "), _c("td", [_c("StatusChip", {
@@ -1049,6 +1331,78 @@ var render = function render() {
   }, [_vm._v(_vm._s(_vm.sendError))]) : _vm._e()]] : _vm._e()], 2)], 2);
 };
 var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("By branch "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("· month and year to date")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Name")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Enquiries")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Converted")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Lost")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Open")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Conversion")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Name")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipments")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Completed")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("In progress")])])]);
+}, function () {
   var _vm = this,
     _c = _vm._self._c;
   return _c("thead", [_c("tr", [_c("th", {

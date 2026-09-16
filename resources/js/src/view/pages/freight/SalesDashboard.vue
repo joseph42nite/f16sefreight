@@ -25,9 +25,17 @@
 
     <!-- The period every chart on this page is drawn over (user, 2026-09-16). -->
     <div class="fx-toolbar">
+      <!-- The Boss sees every branch, or narrows to one. Everyone else is on their own branch. -->
+      <label v-if="isBoss" class="fx-field">
+        <span class="fx-field__label">Branch</span>
+        <select v-model="branchPick" class="fx-input" @change="loadFigures">
+          <option value="">All branches</option>
+          <option v-for="b in branchOptions" :key="b.id" :value="String(b.id)">{{ b.name }}</option>
+        </select>
+      </label>
       <label class="fx-field">
         <span class="fx-field__label">Period</span>
-        <select v-model="grain" class="fx-input" @change="loadCharts">
+        <select v-model="grain" class="fx-input" @change="onPeriod">
           <option value="this_month">This month</option>
           <option value="day">Last 30 days</option>
           <option value="month">Last 12 months</option>
@@ -215,6 +223,110 @@
         </div>
       </section>
 
+      <!--
+        The Boss sees everything (user, 2026-09-16): how each branch is doing, and how each person is doing.
+        Branches: month and year to date, from the rollup. People: over the period above.
+      -->
+      <section v-if="isBoss && branchRows.length" class="fx-section">
+        <h2 class="fx-section__title">By branch <span class="fx-muted">· month and year to date</span></h2>
+        <table class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Branch</th>
+              <th class="fx-num" scope="col">Clients</th>
+              <th class="fx-num" scope="col">Shipments MTD</th>
+              <th class="fx-num" scope="col">Tonnage MTD</th>
+              <th class="fx-num" scope="col">Tonnage YTD</th>
+              <th v-if="branchMoney" class="fx-num" scope="col">Revenue MTD</th>
+              <th v-if="branchMoney" class="fx-num" scope="col">Overdue 60+</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in branchRows" :key="b.agent_id">
+              <td>{{ b.name }}</td>
+              <td class="fx-num">{{ branchSum(b, "clients") }}</td>
+              <td class="fx-num">{{ branchSum(b, "shipments_mtd") }}</td>
+              <td class="fx-num"><Figure :value="branchSum(b, 'tonnage_mtd')" kind="weight" /></td>
+              <td class="fx-num"><Figure :value="b.totals.tonnage_ytd" kind="weight" /></td>
+              <td v-if="branchMoney" class="fx-num"><Figure :value="b.totals.revenue_mtd" kind="currency" currency-code="INR" /></td>
+              <td v-if="branchMoney" class="fx-num"><Figure :value="b.totals.overdue_60_plus" kind="currency" currency-code="INR" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section v-if="isBoss && staff" class="fx-section">
+        <h2 class="fx-section__title">By staff <span class="fx-muted">· {{ staff.window.label }}</span></h2>
+
+        <h3 class="fx-staff__role">Pricing</h3>
+        <p v-if="!staff.pricing.length" class="fx-muted">No pricing staff in view.</p>
+        <table v-else class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th><th scope="col">Branch</th>
+              <th class="fx-num" scope="col">Enquiries</th><th class="fx-num" scope="col">Converted</th>
+              <th class="fx-num" scope="col">Lost</th><th class="fx-num" scope="col">Open</th>
+              <th class="fx-num" scope="col">Conversion</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="p in staff.pricing" :key="p.id">
+              <td>{{ p.name }}</td><td>{{ p.branch }}</td>
+              <td class="fx-num">{{ p.raised }}</td><td class="fx-num">{{ p.converted }}</td>
+              <td class="fx-num">{{ p.lost }}</td><td class="fx-num">{{ p.open }}</td>
+              <td class="fx-num">
+                <template v-if="p.conversion_pct !== null">{{ p.conversion_pct }}%</template>
+                <span v-else class="is-empty" aria-label="No enquiries in this period"></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 class="fx-staff__role">Operations</h3>
+        <p v-if="!staff.operations.length" class="fx-muted">No operations staff in view.</p>
+        <table v-else class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th><th scope="col">Branch</th>
+              <th class="fx-num" scope="col">Shipments</th><th class="fx-num" scope="col">Completed</th>
+              <th class="fx-num" scope="col">In progress</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="o in staff.operations" :key="o.id">
+              <td>{{ o.name }}</td><td>{{ o.branch }}</td>
+              <td class="fx-num">{{ o.assigned }}</td><td class="fx-num">{{ o.completed }}</td>
+              <td class="fx-num">{{ o.in_progress }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 class="fx-staff__role">Sales</h3>
+        <p v-if="!staff.sales.length" class="fx-muted">No sales staff in view.</p>
+        <table v-else class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th><th scope="col">Branch</th>
+              <th class="fx-num" scope="col">Clients</th><th class="fx-num" scope="col">Shipments</th>
+              <th class="fx-num" scope="col">Tonnage</th>
+              <th v-if="staff.with_money" class="fx-num" scope="col">Revenue</th>
+              <th class="fx-num" scope="col">At risk</th>
+              <th scope="col">Branch target this month</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in staff.sales" :key="r.id">
+              <td>{{ r.name }}</td><td>{{ r.branch }}</td>
+              <td class="fx-num">{{ r.clients }}</td><td class="fx-num">{{ r.shipments }}</td>
+              <td class="fx-num"><Figure :value="r.tonnage" kind="weight" /></td>
+              <td v-if="staff.with_money" class="fx-num"><Figure :value="r.revenue" kind="currency" currency-code="INR" /></td>
+              <td class="fx-num">{{ r.at_risk }}</td>
+              <td>{{ targetText(r.target, staff.with_money) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
       <!-- Command only. Below Command the endpoint 403s and this section never renders —
            §8.1: the locked nav item is what explains the gap, not an empty grid here. -->
       <section v-if="book.length" class="fx-section">
@@ -320,9 +432,19 @@ export default {
     loading: true, error: null,
     scope: null, mode: null, branch: {}, book: [], staleness: null, actions: [],
     charts: null, grain: "month", basis: "fiscal",
+    /* The Boss sees every branch (user, 2026-09-16): which one is picked ("" = all), the choices,
+       the branch comparison and each person's figures. */
+    branchPick: "", branchOptions: [], branchRows: [], staff: null, tier: null,
   }),
   computed: {
     ...mapGetters(["designation"]),
+    isBoss() {
+      return this.designation === "boss";
+    },
+    /** Revenue and overdue are Command figures; Tactical has no invoicing. */
+    branchMoney() {
+      return this.tier === "command";
+    },
     /** What the charts are drawn over, in the server's words. */
     windowLabel() {
       return (this.charts && this.charts.window && this.charts.window.label) || "the last 12 months";
@@ -408,28 +530,9 @@ export default {
     },
   },
   created() {
-    this.loadCharts();
     this.loadOutreach();
     this.loadDismissed();
-    Promise.all([
-      ApiService.get("/sales/dashboard"),
-      // The actions call is allowed to fail without taking the page down — a ranked
-      // worklist is valuable, but it is not the reason the page exists.
-      ApiService.get("/sales/actions").catch(() => ({ data: { actions: [] } })),
-    ])
-      .then(([dash, act]) => {
-        this.scope = dash.data.scope;
-        this.mode = dash.data.mode;
-        this.branch = dash.data.branch || {};
-        this.book = dash.data.book || [];
-        this.staleness = dash.data.staleness;
-        this.actions = act.data.actions || [];
-      })
-      .catch((e) => {
-        const d = (e.response && e.response.data) || {};
-        this.error = d.error || d.message || "Something went wrong.";
-      })
-      .finally(() => { this.loading = false; });
+    this.loadFigures();
   },
   methods: {
     loadOutreach() {
@@ -535,9 +638,68 @@ export default {
       if (d.errors) return Object.values(d.errors).flat()[0];
       return d.error || d.message || fallback;
     },
+    /** A branch's figure summed across air and sea. */
+    branchSum(b, key) {
+      return Object.values(b.modes || {}).reduce((sum, m) => sum + (Number(m[key]) || 0), 0);
+    },
+    /** "Shipments 58% · tonnage 56% · revenue 31%", leaving out a measure with no target set. */
+    targetText(t, withMoney) {
+      if (!t) return "No target set";
+      const parts = [["Shipments", t.shipments_pct], ["tonnage", t.tonnage_pct]]
+        .concat(withMoney ? [["revenue", t.revenue_pct]] : [])
+        .filter(([, v]) => v !== null)
+        .map(([label, v]) => label + " " + Math.round(v) + "%");
+      return parts.length ? parts.join(" · ") : "No target set";
+    },
+    /** The Boss's branch choice, as a query parameter; empty means every branch. */
+    branchQuery() {
+      return this.isBoss && this.branchPick ? "branch=" + this.branchPick : "";
+    },
+    /** Everything on the page that depends on the period and, for the Boss, the branch. */
+    loadFigures() {
+      const q = this.branchQuery();
+      this.loadCharts();
+      if (this.isBoss) this.loadStaff();
+
+      Promise.all([
+        ApiService.get("/sales/dashboard" + (q ? "?" + q : "")),
+        // The actions call is allowed to fail without taking the page down — a ranked
+        // worklist is valuable, but it is not the reason the page exists.
+        ApiService.get("/sales/actions" + (q ? "?" + q : "")).catch(() => ({ data: { actions: [] } })),
+        this.isBoss ? ApiService.get("/sales/branches").catch(() => ({ data: { branches: [] } })) : Promise.resolve(null),
+      ])
+        .then(([dash, act, branches]) => {
+          this.scope = dash.data.scope;
+          this.tier = dash.data.tier;
+          this.mode = dash.data.mode;
+          this.branch = dash.data.branch || {};
+          this.book = dash.data.book || [];
+          this.staleness = dash.data.staleness;
+          this.branchOptions = dash.data.branch_options || [];
+          this.actions = act.data.actions || [];
+          if (branches) this.branchRows = branches.data.branches || [];
+        })
+        .catch((e) => {
+          const d = (e.response && e.response.data) || {};
+          this.error = d.error || d.message || "Something went wrong.";
+        })
+        .finally(() => { this.loading = false; });
+    },
+    loadStaff() {
+      const q = this.branchQuery();
+      ApiService.get("/sales/staff?grain=" + this.grain + (q ? "&" + q : ""))
+        .then(({ data }) => { this.staff = data; })
+        .catch(() => { this.staff = null; });
+    },
+    onPeriod() {
+      this.loadCharts();
+      if (this.isBoss) this.loadStaff();
+    },
     loadCharts() {
+      const q = this.branchQuery();
       let url = "/sales/charts?grain=" + this.grain;
       if (this.grain === "year") url += "&basis=" + this.basis;
+      if (q) url += "&" + q;
 
       ApiService.get(url)
         .then(({ data }) => { this.charts = data; })

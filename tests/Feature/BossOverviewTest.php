@@ -212,4 +212,64 @@ class BossOverviewTest extends TestCase
         $this->assertSame(200000.0, (float) $byCode['BOM']['totals']['overdue_60_plus']);
         $this->assertSame(0.0, (float) $byCode['MAA']['totals']['overdue_60_plus']);
     }
+
+    // ─── The Boss sees everything on the Sales page (user, 2026-09-16) ───────
+
+    /** 🔴 The Boss's Sales page covers every branch, and narrows to one when picked; a rep stays on their own. */
+    public function test_the_boss_sales_page_covers_every_branch_and_a_rep_stays_on_theirs(): void
+    {
+        $this->snapshot($this->bom, 'air', ['tonnage_mtd' => 10]);
+        $this->snapshot($this->maa, 'air', ['tonnage_mtd' => 30]);
+
+        $all = $this->api($this->boss)->getJson($this->url('/api/sales/dashboard'))->assertOk()->json();
+        $this->assertEquals(40, $all['branch']['tonnage_mtd']);
+        $this->assertSame(['Chennai', 'Mumbai'], collect($all['branch_options'])->pluck('name')->all());
+
+        $chennai = $this->api($this->boss)->getJson($this->url("/api/sales/dashboard?branch={$this->maa->id}"))->assertOk()->json();
+        $this->assertEquals(30, $chennai['branch']['tonnage_mtd']);
+
+        // A branch from another company is ignored — the Boss is still bound to their own.
+        $other = Agent::create(['company_id' => Company::create(['name' => 'X', 'code' => 'XBS', 'tier' => 'command'])->id, 'agent_name' => 'X', 'branch_code' => 'XXX']);
+        $this->assertEquals(40, $this->api($this->boss)->getJson($this->url("/api/sales/dashboard?branch={$other->id}"))->json('branch.tonnage_mtd'));
+
+        // A rep asking for the other branch still gets their own.
+        $rep = $this->user('sales', $this->bom, '-rep');
+        $mine = $this->api($rep)->getJson($this->url("/api/sales/dashboard?branch={$this->maa->id}", 'focusair.f16sefreight.com'))->assertOk()->json();
+        $this->assertEquals(10, $mine['branch']['tonnage_mtd']);
+        $this->assertArrayNotHasKey('branch_options', $mine);
+    }
+
+    /** 🔴 How each person is doing: pricing conversion, shipments handled, a rep's book — the Boss's alone. */
+    public function test_the_boss_sees_how_each_person_is_doing(): void
+    {
+        $pricing = $this->user('pricing', $this->maa, '-p');
+        $ops = $this->user('operations', $this->bom, '-o');
+        $rep = $this->user('sales', $this->bom, '-s');
+
+        foreach (['converted', 'converted', 'lost', 'new'] as $n => $status) {
+            DB::table('enquiries')->insert(['agent_id' => $this->maa->id, 'transport_mode' => 'air', 'status' => $status,
+                'pricing_id' => $pricing->id, 'enquiry_no' => 'ENQA-BSS-26-' . (100 + $n), 'created_at' => now(), 'updated_at' => now()]);
+        }
+        foreach (['Completed', 'Verification', 'Cancelled'] as $n => $status) {
+            $enquiryId = DB::table('enquiries')->insertGetId(['agent_id' => $this->bom->id, 'transport_mode' => 'air', 'status' => 'converted',
+                'enquiry_no' => 'ENQA-BSS-26-' . (200 + $n), 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('jobs')->insert(['agent_id' => $this->bom->id, 'enquiry_id' => $enquiryId, 'transport_mode' => 'air', 'status' => $status,
+                'ops_id' => $ops->id, 'execution_job_no' => 'JOBA-BSS-26-' . (100 + $n), 'created_at' => now(), 'updated_at' => now()]);
+        }
+        Customer::create(['company_id' => $this->company->id, 'name' => 'Globex', 'email_domain' => 'globex.test', 'sales_id' => $rep->id]);
+
+        $staff = $this->api($this->boss)->getJson($this->url('/api/sales/staff?grain=month'))->assertOk()->json();
+
+        $p = collect($staff['pricing'])->firstWhere('id', $pricing->id);
+        $this->assertSame([4, 2, 1, 1, 50], [$p['raised'], $p['converted'], $p['lost'], $p['open'], (int) $p['conversion_pct']]);
+        $o = collect($staff['operations'])->firstWhere('id', $ops->id);
+        $this->assertSame([3, 1, 1], [$o['assigned'], $o['completed'], $o['in_progress']]);
+        $this->assertSame(1, collect($staff['sales'])->firstWhere('id', $rep->id)['clients']);
+
+        // Narrowed to Mumbai, the Chennai pricing member is out of view.
+        $mumbai = $this->api($this->boss)->getJson($this->url("/api/sales/staff?grain=month&branch={$this->bom->id}"))->json();
+        $this->assertSame([], $mumbai['pricing']);
+
+        $this->api($rep)->getJson($this->url('/api/sales/staff', 'focusair.f16sefreight.com'))->assertForbidden();
+    }
 }

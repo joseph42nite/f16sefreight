@@ -102,6 +102,9 @@ class JobController extends Controller
                 'enquiry:id,enquiry_no,extracted_pieces,extracted_weight,origin_code,dest_code',
             ])
             ->latest()
+            // A tie-breaker, so jobs created in the same second keep one order across pages instead of repeating or
+            // going missing between page 1 and page 2.
+            ->orderByDesc('id')
             ->paginate(50);
 
         $this->addCardLinks($jobs->getCollection());

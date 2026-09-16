@@ -21,6 +21,7 @@ class JobBoardLinksTest extends TestCase
 
     private User $operator;
     private Agent $branch;
+    private int $sequence = 0;
 
     protected function setUp(): void
     {
@@ -39,7 +40,9 @@ class JobBoardLinksTest extends TestCase
     {
         $enquiryId = DB::table('enquiries')->insertGetId([
             'agent_id' => $this->branch->id, 'transport_mode' => 'air',
-            'enquiry_no' => 'ENQA-JBL-26-' . random_int(1000, 9999),
+            // ⚠️ In sequence, never random: 54 random 4-digit numbers collide about one run in six on the unique
+            // enquiry number, which made the paging test fail now and then for no reason of its own.
+            'enquiry_no' => 'ENQA-JBL-26-' . str_pad((string) ++$this->sequence, 4, '0', STR_PAD_LEFT),
             'status' => 'converted', 'created_at' => now(), 'updated_at' => now(),
         ]);
 

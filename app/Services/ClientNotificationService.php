@@ -117,7 +117,8 @@ class ClientNotificationService
 
         $updates = $thread->client_updates ?? [];
         if (isset($pending['stage'])) {
-            $updates[$pending['stage']] = ['decision' => 'superseded', 'by' => null, 'at' => now()->toIso8601String()];
+            $updates[$pending['stage']] = ['decision' => 'superseded', 'by' => null, 'at' => now()->toIso8601String(),
+                'subject' => $pending['subject'] ?? null, 'body' => $pending['body'] ?? null];
         }
 
         $thread->forceFill(['pending_client_notification' => $draft + ['staged_at' => now()->toIso8601String()], 'client_updates' => $updates ?: null])->save();
@@ -161,7 +162,9 @@ class ClientNotificationService
         }
 
         $updates = $thread->client_updates ?? [];
-        $updates[$stage] = ['decision' => $decision === 'send' ? 'sent' : 'skipped', 'by' => $by->id, 'at' => now()->toIso8601String()];
+        $updates[$stage] = ['decision' => $decision === 'send' ? 'sent' : 'skipped', 'by' => $by->id, 'at' => now()->toIso8601String()]
+            // A skipped mail is kept in full: the conversation should still show what was suggested and not sent.
+            + ($decision === 'send' ? [] : ['subject' => $pending['subject'] ?? null, 'body' => $pending['body'] ?? null]);
 
         $thread->forceFill([
             'client_updates' => $updates,
@@ -173,6 +176,30 @@ class ClientNotificationService
         }
 
         return ['ok' => true];
+    }
+
+    /**
+     * The suggested mails that never went — skipped, or replaced by a later moment — in the order they were decided,
+     * so the conversation can show them alongside the mail that did go out.
+     *
+     * @return array<int, array{stage: string, title: string, decision: string, at: string, by: ?string, subject: ?string, body: string}>
+     */
+    public function notSent(EmailThread $thread): array
+    {
+        $names = User::whereIn('id', collect($thread->client_updates ?? [])->pluck('by')->filter())->pluck('name', 'id');
+
+        return collect($thread->client_updates ?? [])
+            ->filter(fn ($u) => filled($u['body'] ?? null) && in_array($u['decision'] ?? '', ['skipped', 'superseded'], true))
+            ->map(fn ($u, $stage) => [
+                'stage' => $stage,
+                'title' => self::STAGES[$stage] ?? $stage,
+                'decision' => $u['decision'],
+                'at' => $u['at'],
+                'by' => $names[$u['by']] ?? null,
+                'subject' => $u['subject'] ?? null,
+                'body' => $u['body'],
+            ])
+            ->sortBy('at')->values()->all();
     }
 
     /** A moment somebody already sent, skipped or answered in their own words. */

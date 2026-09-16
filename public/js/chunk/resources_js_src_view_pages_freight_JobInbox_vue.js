@@ -167,6 +167,8 @@ const WORKSPACE_TABS = [{
     sending: false,
     sendError: null,
     sentOk: false,
+    /** Suggested client mails that were skipped or replaced — kept in the conversation. */
+    notSent: [],
     cargoBusy: false,
     cargoError: null,
     cargoSaved: false,
@@ -721,6 +723,13 @@ const WORKSPACE_TABS = [{
      * A conversation opens at its NEWEST mail (user, 2026-09-16), the way a mail client does: the last thing said is
      * what the operator needs, and on a long thread the top of the list is weeks old.
      */
+    /**
+     * Where an entry sits in the conversation: by time, so a skipped suggestion stays in its place among the mails
+     * rather than bunched at one end. (CSS `order` on the grid — the two lists stay separate loops.)
+     */
+    feedOrder(at) {
+      return Math.floor(new Date(String(at).replace(" ", "T")).getTime() / 1000) || 0;
+    },
     showLatestMessage() {
       this.$nextTick(() => {
         const list = this.$refs.messages;
@@ -918,6 +927,7 @@ const WORKSPACE_TABS = [{
         this.active = data.thread;
         this.pending = data.thread.classification;
         this.messages = data.messages || [];
+        this.notSent = data.not_sent || [];
         this.signature = data.signature || null;
         /* The cost sheet hangs off the JOB, not the thread, and extraction wants the
            AWB the shipment already carries rather than an empty box — that is what
@@ -2743,11 +2753,37 @@ var render = function render() {
   })], 1)]), _vm._v(" "), _c("ol", {
     ref: "messages",
     staticClass: "fx-messages"
-  }, _vm._l(_vm.messages, function (m) {
+  }, [_vm._l(_vm.notSent, function (u) {
+    return _c("li", {
+      key: "u-" + u.stage,
+      staticClass: "fx-message fx-message--notsent",
+      style: {
+        order: _vm.feedOrder(u.at)
+      }
+    }, [_c("div", {
+      staticClass: "fx-message__head"
+    }, [_c("span", {
+      staticClass: "fx-message__from"
+    }, [_vm._v("\n              Suggested: " + _vm._s(u.title) + " · " + _vm._s(u.decision === "skipped" ? "skipped" : "replaced by a later update") + "\n              "), u.by ? [_vm._v(" by " + _vm._s(u.by))] : _vm._e()], 2), _vm._v(" "), _c("span", {
+      staticClass: "fx-message__when"
+    }, [_c("Figure", {
+      attrs: {
+        value: u.at,
+        kind: "dateTime"
+      }
+    })], 1)]), _vm._v(" "), _c("div", {
+      staticClass: "fx-message__to"
+    }, [_vm._v(_vm._s(u.subject))]), _vm._v(" "), _c("p", {
+      staticClass: "fx-message__body"
+    }, [_vm._v(_vm._s(u.body))])]);
+  }), _vm._v(" "), _vm._l(_vm.messages, function (m) {
     return _c("li", {
       key: m.id,
       staticClass: "fx-message",
-      class: "fx-message--" + m.direction
+      class: "fx-message--" + m.direction,
+      style: {
+        order: _vm.feedOrder(m.received_at)
+      }
     }, [_c("div", {
       staticClass: "fx-message__head"
     }, [_c("span", {
@@ -2803,7 +2839,7 @@ var render = function render() {
         }
       }, [_vm._v("Extract")]) : _vm._e()]);
     }), 0) : _vm._e()]);
-  }), 0), _vm._v(" "), _vm.messages.length ? _c("section", {
+  })], 2), _vm._v(" "), _vm.messages.length ? _c("section", {
     staticClass: "fx-compose"
   }, [!_vm.composing ? _c("div", {
     staticClass: "fx-compose__actions"

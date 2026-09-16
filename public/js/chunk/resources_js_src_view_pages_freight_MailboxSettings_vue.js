@@ -35,7 +35,10 @@ __webpack_require__.r(__webpack_exports__);
     /** mailbox id -> true once something was pasted into its editor. */
     pastedInto: {},
     mySignature: "",
-    saved: null
+    saved: null,
+    /** Your own name, as clients read it on the automated updates. */
+    myName: "",
+    nameSaved: false
   }),
   computed: {
     activeConnections() {
@@ -44,6 +47,11 @@ __webpack_require__.r(__webpack_exports__);
   },
   created() {
     this.load();
+    _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/me").then(({
+      data
+    }) => {
+      this.myName = data.profile && data.profile.name || "";
+    }).catch(() => {});
   },
   methods: {
     load() {
@@ -71,6 +79,22 @@ __webpack_require__.r(__webpack_exports__);
         c.signature_source = data.signature_source;
         this.$set(this.signatures, c.id, data.signature_html || "");
         this.saved = "sig-" + c.id;
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
+    saveName() {
+      this.busy = "name";
+      this.nameSaved = false;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put("/user/profile", {
+        name: this.myName
+      }).then(({
+        data
+      }) => {
+        this.myName = data.name;
+        this.nameSaved = true;
       }).catch(e => {
         this.connectError = this.messageFor(e);
       }).finally(() => {
@@ -175,6 +199,47 @@ var render = function render() {
       role: "alert"
     }
   }, [_vm._v(_vm._s(_vm.error))]) : [_c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Your name")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Clients see this on the automated updates — “" + _vm._s(_vm.myName || "your name") + " from our operations team will be\n        taking care of it”.\n      ")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Name")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.myName,
+      expression: "myName"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "text",
+      maxlength: "100"
+    },
+    domProps: {
+      value: _vm.myName
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.myName = $event.target.value;
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy === "name" || !_vm.myName.trim()
+    },
+    on: {
+      click: _vm.saveName
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.busy === "name" ? "Saving…" : "Save name") + "\n      ")]), _vm._v(" "), _vm.nameSaved ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Saved.")]) : _vm._e()]), _vm._v(" "), _c("section", {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"

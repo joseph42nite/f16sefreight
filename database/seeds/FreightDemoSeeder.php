@@ -67,6 +67,17 @@ class FreightDemoSeeder extends Seeder
     private const DESIGNATIONS = ['pricing', 'operations', 'sales', 'accounts', 'boss'];
 
     /**
+     * Real names, because CLIENTS read them: the automated updates say "Priya Nair from our operations team will be
+     * taking care of it" (user, 2026-09-16). The email is still what identifies the login.
+     */
+    private const NAMES = [
+        'DEMO' => ['pricing' => 'Priya Nair', 'pricing2' => 'Arjun Mehta', 'operations' => 'Rahul Iyer',
+                   'sales' => 'Neha Kapoor', 'accounts' => 'Vikram Shah', 'boss' => 'Anita Desai'],
+        'TACT' => ['pricing' => 'Sana Qureshi', 'pricing2' => 'Rohit Verma', 'operations' => 'Imran Sheikh',
+                   'sales' => 'Divya Rao', 'accounts' => 'Kabir Menon', 'boss' => 'Farhan Ali'],
+    ];
+
+    /**
      * The roles a tenant on this tier has. Accounts is a Command plan portal (config/f16s.php `min_tier`), so a
      * Tactical company has no accounts user — one would be a login that works nowhere (user, 2026-09-15).
      */
@@ -556,7 +567,7 @@ class FreightDemoSeeder extends Seeder
             $users[$designation] = User::updateOrCreate(
                 ['email' => $email],
                 [
-                    'name' => ucfirst($designation) . " ({$code})",
+                    'name' => self::NAMES[$code][$designation] ?? ucfirst($designation),
                     'password' => Hash::make(self::PASSWORD),
                     'company_name' => $company->id, // stores the company ID — see LoginController
                     'branch_name' => $branch->id,
@@ -576,7 +587,7 @@ class FreightDemoSeeder extends Seeder
 
         // A second pricing member, so a conversation can be handed from one to the other.
         $users['pricing2'] = User::updateOrCreate(['email' => "{$prefix}-pricing2@demo.test"], [
-            'name' => "Pricing 2 ({$code})", 'password' => Hash::make(self::PASSWORD), 'company_name' => $company->id,
+            'name' => self::NAMES[$code]['pricing2'], 'password' => Hash::make(self::PASSWORD), 'company_name' => $company->id,
             'branch_name' => $branch->id, 'designation' => 'pricing', 'is_active' => 1,
         ]);
         DB::table('roles')->updateOrInsert(['email' => "{$prefix}-pricing2@demo.test"], ['role' => 'user', 'updated_at' => now(), 'created_at' => now()]);
@@ -1626,13 +1637,13 @@ class FreightDemoSeeder extends Seeder
 
         $rows = [];
         foreach (self::TENANTS as $t) {
-            foreach ($this->designationsFor($t['tier']) as $d) {
-                $rows[] = [$t['tier'], strtolower($t['code']) . "-{$d}@demo.test", $d];
+            foreach (array_merge($this->designationsFor($t['tier']), ['pricing2']) as $d) {
+                $rows[] = [$t['tier'], strtolower($t['code']) . "-{$d}@demo.test",
+                    $d === 'pricing2' ? 'pricing' : $d, self::NAMES[$t['code']][$d] ?? ''];
             }
-            $rows[] = [$t['tier'], strtolower($t['code']) . '-pricing2@demo.test', 'pricing'];
         }
 
-        $this->command->table(['Tier', 'Email', 'Designation'], $rows);
+        $this->command->table(['Tier', 'Email', 'Designation', 'Name'], $rows);
 
         $this->command->line('  Platform staff (superadmin. portal, separate guard): staff@f16s.test');
         $this->command->newLine();

@@ -161,6 +161,8 @@ class EmailInboxController extends Controller
                 'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status,ops_id,pricing_id,pending_ops_id,pending_ops_requested_by',
             ])),
             'messages' => $messages,
+            // The suggested mails nobody sent — shown in the conversation so the history is whole (user, 2026-09-16).
+            'not_sent' => $this->clientUpdates->notSent($thread),
             // What "Add signature" will put under a reply, shown greyed in the composer.
             'signature' => $this->threadSignature($thread),
         ]);

@@ -12,6 +12,26 @@
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
 
     <template v-else>
+      <!--
+        Your name as CLIENTS read it: the automated updates say who is looking after a shipment, and accounts are
+        created by F16s with whatever was typed then (user, 2026-09-16).
+      -->
+      <section class="fx-section">
+        <h2 class="fx-section__title">Your name</h2>
+        <p class="fx-muted">
+          Clients see this on the automated updates — “{{ myName || "your name" }} from our operations team will be
+          taking care of it”.
+        </p>
+        <label class="fx-field">
+          <span class="fx-field__label">Name</span>
+          <input v-model="myName" class="fx-input" type="text" maxlength="100" />
+        </label>
+        <button class="fx-btn" :disabled="busy === 'name' || !myName.trim()" @click="saveName">
+          {{ busy === "name" ? "Saving…" : "Save name" }}
+        </button>
+        <p v-if="nameSaved" class="fx-muted">Saved.</p>
+      </section>
+
       <section class="fx-section">
         <h2 class="fx-section__title">Connected</h2>
 
@@ -150,6 +170,8 @@ export default {
     pastedInto: {},
     mySignature: "",
     saved: null,
+    /** Your own name, as clients read it on the automated updates. */
+    myName: "", nameSaved: false,
   }),
   computed: {
     activeConnections() {
@@ -158,6 +180,7 @@ export default {
   },
   created() {
     this.load();
+    ApiService.get("/me").then(({ data }) => { this.myName = (data.profile && data.profile.name) || ""; }).catch(() => {});
   },
   methods: {
     load() {
@@ -183,6 +206,15 @@ export default {
           this.$set(this.signatures, c.id, data.signature_html || "");
           this.saved = "sig-" + c.id;
         })
+        .catch((e) => { this.connectError = this.messageFor(e); })
+        .finally(() => { this.busy = null; });
+    },
+    saveName() {
+      this.busy = "name";
+      this.nameSaved = false;
+
+      ApiService.put("/user/profile", { name: this.myName })
+        .then(({ data }) => { this.myName = data.name; this.nameSaved = true; })
         .catch((e) => { this.connectError = this.messageFor(e); })
         .finally(() => { this.busy = null; });
     },

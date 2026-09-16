@@ -122,6 +122,8 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::post('/mailboxes/{mailbox}/sync', [\App\Http\Controllers\Freight\MailboxController::class, 'syncNow']);
     Route::put('/mailboxes/{mailbox}/signature', [\App\Http\Controllers\Freight\MailboxController::class, 'updateSignature']);
     Route::put('/signature', [\App\Http\Controllers\Freight\MailboxController::class, 'updateMySignature']);
+    // Your own name, as clients read it on the automated updates.
+    Route::put('/profile', [\App\Http\Controllers\Freight\ProfileController::class, 'update']);
 
     // ── Document share links ─────────────────────────────────────────────────
     // Render the waybill, store it, and file it as a job document — the step that makes

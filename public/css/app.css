@@ -5853,9 +5853,11 @@ body {
                   flex-shrink: 0; max-height: 45%; overflow-y: auto; }
 .fx-update-card__title { font-size: .875rem; font-weight: 600; margin: 0 0 var(--space-2); }
 
-/* The scrolling part, kept at the newest message so the latest mail is the one in view. */
+/* The scrolling part, kept at the newest message so the latest mail is the one in view.
+   ⚠️ `align-content: start` — a grid that fills the pane stretches its rows, and three mails then stood a
+   third of the screen apart. Each mail is as tall as its text and no taller. */
 .fx-messages { list-style: none; margin: 0; padding: var(--space-4); display: grid;
-               gap: var(--space-3); flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+               gap: var(--space-3); align-content: start; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .fx-message { border: 1px solid var(--border); border-radius: var(--radius-sm);
               padding: var(--space-3); background: var(--bg-surface); }
 /* Ours vs theirs, distinguished by position and border as well as fill. */
@@ -5864,6 +5866,8 @@ body {
 .fx-message__head { display: flex; justify-content: space-between; gap: var(--space-2);
                     font-size: .75rem; color: var(--text-secondary); }
 .fx-message__body { margin: var(--space-2) 0 0; font-size: .875rem; }
+/* A suggested mail that was skipped: part of the history, plainly not something that was sent. */
+.fx-message--notsent { background: var(--bg-sunken); border-style: dashed; color: var(--text-secondary); }
 
 /* §7.1 below --bp-md the three columns cannot all be useful — stack them. */
 @media (max-width: 1199px) {

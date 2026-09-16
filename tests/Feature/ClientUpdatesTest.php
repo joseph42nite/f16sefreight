@@ -264,6 +264,28 @@ class ClientUpdatesTest extends TestCase
         $this->assertSame('confirmed', $this->pending($other)['stage'], 'no AWB, so no delivered mail');
     }
 
+    /**
+     * 🔴 A skipped suggestion stays in the conversation: what was offered and not sent is part of the history
+     * (user, 2026-09-16). And the name a person puts in Settings is what the client reads.
+     */
+    public function test_a_skipped_suggestion_stays_in_the_conversation(): void
+    {
+        $thread = $this->thread(['assigned_ops_id' => $this->pricing->id]);
+        $operator = $this->user('operations');
+        $this->api($operator)->putJson($this->url('/api/user/profile'), ['name' => 'Rahul Iyer'])->assertOk();
+        $this->jobFor($thread, ['ops_id' => $operator->id]);
+
+        $this->assertStringContainsString('Rahul Iyer from our operations team', $this->pending($thread)['body']);
+
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$thread->id}/client-update"), ['stage' => 'confirmed', 'decision' => 'skip'])
+            ->assertOk();
+
+        $entry = $this->api($this->pricing)->getJson($this->url("/api/inbox/threads/{$thread->id}"))->assertOk()->json('not_sent.0');
+
+        $this->assertSame(['confirmed', 'Shipment confirmed', 'skipped', $this->pricing->name], [$entry['stage'], $entry['title'], $entry['decision'], $entry['by']]);
+        $this->assertStringContainsString('Thank you for confirming', $entry['body']);
+    }
+
     /** ⚠️ A discrepancy (DIS) on the AWB means not all pieces arrived: no "arrived with all pieces" mail. */
     public function test_a_discrepancy_holds_back_the_arrived_mail(): void
     {

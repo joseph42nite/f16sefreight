@@ -173,11 +173,28 @@
         </dl>
 
         <ol ref="messages" class="fx-messages">
+          <!--
+            A suggested mail that was skipped (or replaced by a later moment) stays in the conversation, in its place
+            in time (user, 2026-09-16) — the history should show what was offered and not sent, not a silent gap.
+          -->
+          <li v-for="u in notSent" :key="'u-' + u.stage" class="fx-message fx-message--notsent" :style="{ order: feedOrder(u.at) }">
+            <div class="fx-message__head">
+              <span class="fx-message__from">
+                Suggested: {{ u.title }} · {{ u.decision === "skipped" ? "skipped" : "replaced by a later update" }}
+                <template v-if="u.by"> by {{ u.by }}</template>
+              </span>
+              <span class="fx-message__when"><Figure :value="u.at" kind="dateTime" /></span>
+            </div>
+            <div class="fx-message__to">{{ u.subject }}</div>
+            <p class="fx-message__body">{{ u.body }}</p>
+          </li>
+
           <li
             v-for="m in messages"
             :key="m.id"
             class="fx-message"
             :class="'fx-message--' + m.direction"
+            :style="{ order: feedOrder(m.received_at) }"
           >
             <div class="fx-message__head">
               <span class="fx-message__from">{{ m.from }}</span>
@@ -691,6 +708,8 @@ export default {
     /* The composer. `draft` holds comma-separated strings because that is what the
        operator edits; splitting happens once, at send. */
     composing: false, sending: false, sendError: null, sentOk: false,
+    /** Suggested client mails that were skipped or replaced — kept in the conversation. */
+    notSent: [],
     cargoBusy: false, cargoError: null, cargoSaved: false,
     draft: { to: "", cc: "", subject: "", body: "", includeSignature: true, mode: "reply", inReplyTo: null, files: [], attachmentIds: [] },
     ATTACHMENT_CAP_BYTES,
@@ -1222,6 +1241,13 @@ export default {
      * A conversation opens at its NEWEST mail (user, 2026-09-16), the way a mail client does: the last thing said is
      * what the operator needs, and on a long thread the top of the list is weeks old.
      */
+    /**
+     * Where an entry sits in the conversation: by time, so a skipped suggestion stays in its place among the mails
+     * rather than bunched at one end. (CSS `order` on the grid — the two lists stay separate loops.)
+     */
+    feedOrder(at) {
+      return Math.floor(new Date(String(at).replace(" ", "T")).getTime() / 1000) || 0;
+    },
     showLatestMessage() {
       this.$nextTick(() => {
         const list = this.$refs.messages;
@@ -1397,6 +1423,7 @@ export default {
           this.active = data.thread;
           this.pending = data.thread.classification;
           this.messages = data.messages || [];
+          this.notSent = data.not_sent || [];
           this.signature = data.signature || null;
           /* The cost sheet hangs off the JOB, not the thread, and extraction wants the
              AWB the shipment already carries rather than an empty box — that is what

@@ -255,6 +255,7 @@ class FreightDemoSeeder extends Seeder
         // Bells point at threads and jobs that are about to be re-made.
         DB::table('notifications')->whereIn('agent_id', $branchIds)->delete();
         DB::table('sales_targets')->where('company_id', $company->id)->delete();
+        DB::table('boss_mail_suggestions')->where('company_id', $company->id)->delete();
         DB::table('accounts_ledger_entries')->whereIn('agent_id', $branchIds)->delete();
         DB::table('unposted_transactions_queue')->whereIn('agent_id', $branchIds)->delete();
         DB::table('bank_transactions')->whereIn('agent_id', $branchIds)->delete();

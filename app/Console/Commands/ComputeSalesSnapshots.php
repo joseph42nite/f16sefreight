@@ -76,6 +76,8 @@ class ComputeSalesSnapshots extends Command
 
         foreach (DB::table('companies')->pluck('id') as $companyId) {
             $written += $this->rollCompany((int) $companyId, $date);
+            // The Boss's mails to his team, from the figures just rolled (user, 2026-09-16).
+            app(\App\Services\Sales\BossMails::class)->refresh((int) $companyId, $date);
         }
 
         $this->info("  {$written} snapshot rows written for " . $date->toDateString() . '.');

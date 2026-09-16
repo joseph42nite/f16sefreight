@@ -13,12 +13,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+/* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
+/* harmony import */ var _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/MailEditor.vue */ "./resources/js/src/view/pages/freight/components/MailEditor.vue");
 
 
+
+
+const list = text => String(text || "").split(",").map(x => x.trim()).filter(Boolean);
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "BossDashboard",
   components: {
-    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
+    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
+    FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    MailEditor: _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
   },
   data: () => ({
     periods: [],
@@ -36,7 +43,25 @@ __webpack_require__.r(__webpack_exports__);
     editingTargets: false,
     savingTargets: false,
     targetForm: {},
-    targetsError: null
+    targetsError: null,
+    /* Mails to the team: the suggestions, the one open in the drawer, and what is being typed. */
+    mails: [],
+    mailsLoaded: false,
+    hasMailbox: true,
+    dismissReasons: {},
+    dismissing: null,
+    composing: null,
+    form: {
+      to: "",
+      cc: "",
+      subject: "",
+      body: ""
+    },
+    drafting: false,
+    draftSeconds: 0,
+    writtenBy: null,
+    sending: false,
+    sendError: null
   }),
   computed: {
     /** Revenue is a Command figure; Tactical has no invoicing. */
@@ -58,6 +83,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   created() {
+    this.loadMails();
     this.load();
     this.loadBranches();
     _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/ai-usage/company").then(({
@@ -70,6 +96,109 @@ __webpack_require__.r(__webpack_exports__);
     this.loadTargets();
   },
   methods: {
+    loadMails() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/boss/mails").then(({
+        data
+      }) => {
+        this.mails = data.mails || [];
+        this.hasMailbox = data.has_mailbox;
+        this.dismissReasons = data.dismiss_reasons || {};
+      }).catch(() => {
+        this.mails = [];
+      }).finally(() => {
+        this.mailsLoaded = true;
+      });
+    },
+    /** One line saying what the mail is about, from its figures. */
+    mailSummary(m) {
+      const f = m.facts || {};
+      switch (m.kind) {
+        case "next_month_targets":
+          return "Targets proposed for " + f.month + " from the last 3 months and the trend.";
+        case "volume_drop":
+          return "Tonnage " + f.change_percent + "% over the last 3 months: " + f.monthly_tonnage_kg_last_3_months + " kg a month against " + f.monthly_tonnage_kg_before + " kg before.";
+        case "top_clients_quiet":
+          return (f.clients || []).map(c => c.client + " (" + c.last_3_months_kg + " kg of a usual " + c.usual_quarter_kg + " kg a quarter)").join(", ") + ".";
+        case "behind_target":
+          return (f.behind || []).map(b => b.mode.toUpperCase() + " " + b.measure + " at " + b.month_end_pace_percent + "% pace").join(", ") + " · " + f.days_left + " days left.";
+        case "losing_on_price":
+          return (f.lanes || []).map(l => l.lane + ": " + l.lost_on_price + " of " + l.closed + " lost on price").join(", ") + ".";
+        case "slow_replies":
+          return "First replies take " + f.median_hours_last_30_days + " h (was " + f.median_hours_60_days_before + " h).";
+        case "money_overdue":
+          return "₹" + Number(f.overdue_60_plus_inr).toLocaleString("en-IN") + " overdue beyond 60 days.";
+        default:
+          return "";
+      }
+    },
+    openMail(m) {
+      this.composing = m;
+      this.sendError = null;
+      if (m.subject) this.fillMail(m);else this.draftMail(m);
+    },
+    fillMail(m) {
+      this.form = {
+        to: m.to.join(", "),
+        cc: m.cc.join(", "),
+        subject: m.subject || "",
+        body: m.body || ""
+      };
+    },
+    draftMail(m) {
+      this.drafting = true;
+      this.draftSeconds = 0;
+      this.sendError = null;
+      const ticker = setInterval(() => {
+        this.draftSeconds += 1;
+      }, 1000);
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/boss/mails/${m.id}/draft`, {}).then(({
+        data
+      }) => {
+        Object.assign(m, data);
+        this.writtenBy = data.written_by;
+        if (this.composing === m) this.fillMail(m);
+      }).catch(err => {
+        this.sendError = this.mailError(err, "Could not write the draft. Try again.");
+      }).finally(() => {
+        clearInterval(ticker);
+        this.drafting = false;
+      });
+    },
+    sendMail() {
+      const m = this.composing;
+      this.sending = true;
+      this.sendError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/boss/mails/${m.id}/send`, {
+        to: list(this.form.to),
+        cc: list(this.form.cc),
+        subject: this.form.subject,
+        body: this.form.body
+      }).then(() => {
+        this.mails = this.mails.filter(x => x.id !== m.id);
+        this.composing = null;
+      }).catch(err => {
+        this.sendError = this.mailError(err, "Not sent. Try again.");
+      }).finally(() => {
+        this.sending = false;
+      });
+    },
+    dismissMail(m) {
+      const d = this.dismissing;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/boss/mails/${m.id}/dismiss`, {
+        reason: d.reason,
+        note: d.note || null
+      }).then(() => {
+        this.mails = this.mails.filter(x => x.id !== m.id);
+        this.dismissing = null;
+      }).catch(err => {
+        d.error = this.mailError(err, "Not dismissed. Try again.");
+      });
+    },
+    mailError(err, fallback) {
+      const d = err.response && err.response.data || {};
+      if (d.errors) return Object.values(d.errors).flat()[0];
+      return d.error || d.message || fallback;
+    },
     loadTargets() {
       this.editingTargets = false;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sales/targets?month=" + this.targetMonth).then(({
@@ -163,7 +292,276 @@ __webpack_require__.r(__webpack_exports__);
 var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
-  return _c("div", [_vm._m(0), _vm._v(" "), _vm.ai ? _c("section", {
+  return _c("div", [_vm._m(0), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Mails to your team")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-outreach__intro"
+  }, [_vm._v("Suggested from the figures. Open one to read the draft, change anything, and send it yourself.")]), _vm._v(" "), _vm.mailsLoaded && !_vm.hasMailbox ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n      Mails go from your own mailbox. "), _c("router-link", {
+    attrs: {
+      to: "/mailboxes"
+    }
+  }, [_vm._v("Connect your mailbox")]), _vm._v(" before sending.\n    ")], 1) : _vm._e(), _vm._v(" "), _vm.mailsLoaded && !_vm.mails.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing to raise with the team right now.")]) : _c("ul", {
+    staticClass: "fx-outreach"
+  }, _vm._l(_vm.mails, function (m) {
+    return _c("li", {
+      key: m.id,
+      staticClass: "fx-outreach__card"
+    }, [_c("div", {
+      staticClass: "fx-outreach__head"
+    }, [_c("strong", [_vm._v(_vm._s(m.branch))]), _vm._v(" "), _c("span", {
+      staticClass: "fx-chip"
+    }, [_vm._v(_vm._s(m.title))])]), _vm._v(" "), _c("p", {
+      staticClass: "fx-outreach__why"
+    }, [_vm._v(_vm._s(_vm.mailSummary(m)))]), _vm._v(" "), _c("p", {
+      staticClass: "fx-muted fx-outreach__note"
+    }, [_vm._v("\n          To: " + _vm._s(m.suggested_to.length ? m.suggested_to.map(p => p.name).join(", ") : "nobody in this branch yet — add who should get it") + "\n        ")]), _vm._v(" "), _vm.dismissing && _vm.dismissing.id === m.id ? _c("form", {
+      staticClass: "fx-outreach__dismiss",
+      on: {
+        submit: function ($event) {
+          $event.preventDefault();
+          return _vm.dismissMail(m);
+        }
+      }
+    }, [_c("label", {
+      staticClass: "fx-field"
+    }, [_c("span", {
+      staticClass: "fx-field__label"
+    }, [_vm._v("Why dismiss?")]), _vm._v(" "), _c("select", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.dismissing.reason,
+        expression: "dismissing.reason"
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        required: ""
+      },
+      on: {
+        change: function ($event) {
+          var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+            return o.selected;
+          }).map(function (o) {
+            var val = "_value" in o ? o._value : o.value;
+            return val;
+          });
+          _vm.$set(_vm.dismissing, "reason", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+        }
+      }
+    }, [_c("option", {
+      attrs: {
+        value: "",
+        disabled: ""
+      }
+    }, [_vm._v("Choose a reason")]), _vm._v(" "), _vm._l(_vm.dismissReasons, function (label, key) {
+      return _c("option", {
+        key: key,
+        domProps: {
+          value: key
+        }
+      }, [_vm._v(_vm._s(label))]);
+    })], 2)]), _vm._v(" "), _vm.dismissing.reason ? _c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.dismissing.note,
+        expression: "dismissing.note"
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        maxlength: "500",
+        required: _vm.dismissing.reason === "other",
+        placeholder: "Anything to add"
+      },
+      domProps: {
+        value: _vm.dismissing.note
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.dismissing, "note", $event.target.value);
+        }
+      }
+    }) : _vm._e(), _vm._v(" "), _vm.dismissing.error ? _c("p", {
+      staticClass: "fx-error",
+      attrs: {
+        role: "alert"
+      }
+    }, [_vm._v(_vm._s(_vm.dismissing.error))]) : _vm._e(), _vm._v(" "), _c("div", {
+      staticClass: "fx-outreach__actions"
+    }, [_c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: !_vm.dismissing.reason
+      }
+    }, [_vm._v("Dismiss")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        type: "button"
+      },
+      on: {
+        click: function ($event) {
+          _vm.dismissing = null;
+        }
+      }
+    }, [_vm._v("Cancel")])])]) : _c("div", {
+      staticClass: "fx-outreach__actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      on: {
+        click: function ($event) {
+          return _vm.openMail(m);
+        }
+      }
+    }, [_vm._v(_vm._s(m.subject ? "Open draft" : "✉ Draft mail"))]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          _vm.dismissing = {
+            id: m.id,
+            reason: "",
+            note: "",
+            error: null
+          };
+        }
+      }
+    }, [_vm._v("Dismiss")])])]);
+  }), 0)]), _vm._v(" "), _c("FxDrawer", {
+    attrs: {
+      open: !!_vm.composing,
+      title: _vm.composing ? _vm.composing.title + " · " + _vm.composing.branch : ""
+    },
+    on: {
+      close: function ($event) {
+        _vm.composing = null;
+      }
+    },
+    scopedSlots: _vm._u([{
+      key: "footer",
+      fn: function () {
+        return [_c("button", {
+          staticClass: "fx-btn",
+          attrs: {
+            disabled: _vm.drafting || _vm.sending
+          },
+          on: {
+            click: function ($event) {
+              return _vm.draftMail(_vm.composing);
+            }
+          }
+        }, [_vm._v("Redraft")]), _vm._v(" "), _c("button", {
+          staticClass: "fx-btn fx-btn--primary",
+          attrs: {
+            disabled: _vm.drafting || _vm.sending || !_vm.form.to.trim()
+          },
+          on: {
+            click: _vm.sendMail
+          }
+        }, [_vm._v("\n        " + _vm._s(_vm.sending ? "Sending…" : "Send") + "\n      ")])];
+      },
+      proxy: true
+    }])
+  }, [_vm.composing ? [_vm.drafting ? _c("p", {
+    staticClass: "fx-muted",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("Writing the draft… " + _vm._s(_vm.draftSeconds) + " s")]) : [_c("p", {
+    staticClass: "fx-muted fx-outreach__note"
+  }, [_vm._v("\n          " + _vm._s(_vm.writtenBy === "ai" ? "Drafted by AI from the figures." : "A starting draft from the figures.") + "\n          Read it and change anything before you send.\n        ")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.to,
+      expression: "form.to"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "name@company.com, …"
+    },
+    domProps: {
+      value: _vm.form.to
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "to", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Cc")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.cc,
+      expression: "form.cc"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "Optional"
+    },
+    domProps: {
+      value: _vm.form.cc
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "cc", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Subject")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.subject,
+      expression: "form.subject"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.form.subject
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "subject", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("MailEditor", {
+    model: {
+      value: _vm.form.body,
+      callback: function ($$v) {
+        _vm.$set(_vm.form, "body", $$v);
+      },
+      expression: "form.body"
+    }
+  }), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted fx-outreach__note"
+  }, [_vm._v("Your mailbox signature is added when it is sent.")]), _vm._v(" "), _vm.sendError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.sendError))]) : _vm._e()]] : _vm._e()], 2), _vm._v(" "), _vm.ai ? _c("section", {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"
@@ -563,7 +961,7 @@ var render = function render() {
         "aria-label": "No enquiries in this period"
       }
     }) : _c("span", [_vm._v(_vm._s(Number(p.conversion_rate_pct).toFixed(2)) + "%")])])]);
-  }), 0)])]);
+  }), 0)])], 1);
 };
 var staticRenderFns = [function () {
   var _vm = this,

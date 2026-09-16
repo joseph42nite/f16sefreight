@@ -172,7 +172,7 @@
           <dd><Figure :value="active.first_response_at" kind="dateTime" /></dd>
         </dl>
 
-        <ol class="fx-messages">
+        <ol ref="messages" class="fx-messages">
           <li
             v-for="m in messages"
             :key="m.id"
@@ -1218,6 +1218,16 @@ export default {
     isMe(o) {
       return !!this.currentUser && Number(this.currentUser.id) === Number(o.id);
     },
+    /**
+     * A conversation opens at its NEWEST mail (user, 2026-09-16), the way a mail client does: the last thing said is
+     * what the operator needs, and on a long thread the top of the list is weeks old.
+     */
+    showLatestMessage() {
+      this.$nextTick(() => {
+        const list = this.$refs.messages;
+        if (list) list.scrollTop = list.scrollHeight;
+      });
+    },
     /** The conversation's owner, on the open conversation and on its row in the list. */
     setOwner(owner) {
       this.active.assigned_ops = owner;
@@ -1397,6 +1407,7 @@ export default {
              drawer showed one a beat late. The shape now carries it. */
           this.jobId = data.thread.job ? data.thread.job.id : null;
           this.jobAwb = (data.thread.job && data.thread.job.awb_number) || null;
+          this.showLatestMessage();
         })
         .catch((e) => { this.actionError = this.messageFor(e); });
     },

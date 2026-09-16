@@ -40,6 +40,12 @@ class ClientNotificationService
     /** Written in the draft where the secure review link goes; the link is made only when the mail is sent. */
     public const REVIEW_LINK = '[review link]';
 
+    /**
+     * Blanks the person fills in before sending (user, 2026-09-16: the booking date and airline are entered by hand).
+     * A mail still carrying one is refused rather than sent with "[date]" in it.
+     */
+    public const BLANKS = '/\[(date|airline)\]/';
+
     public const BELL_TYPE = 'ClientUpdateReady';
 
     /** The draft for one moment, from its template. NULL when there is no client address to write to. */
@@ -62,7 +68,8 @@ class ClientNotificationService
 
         $body = match ($stage) {
             'claimed'   => "Thank you for your enquiry. We have received it and {$f['owner']} is looking after it. We will come back to you with our rates shortly.",
-            'confirmed' => "Thank you for confirming. Your shipment{$f['lane']}{$f['cargo']} is booked in with us and we have started the paperwork. We will send you the draft air waybill to check next.",
+            'confirmed' => "Thank you for confirming. Your shipment{$f['lane']}{$f['cargo']} is booked in with us and we have started the paperwork.{$f['operator']}\n\n"
+                . "Your shipment is booked on [date] with [airline].\n\nWe will send you the draft air waybill to check next.",
             'draft_awb' => "The draft air waybill for your shipment{$f['lane']} is ready. Please check it and approve it, or tell us what to change, here:\n" . self::REVIEW_LINK . "\n\nThe link stays open for 14 days.",
             'booked'    => "Your shipment{$f['lane']} is booked with the airline under AWB {$f['awb']}{$f['flight']}." . ($f['pdf'] ? ' The air waybill is attached.' : ''),
             'departed'  => "Your shipment under AWB {$f['awb']} has departed{$f['from']}{$f['flight']}. We will let you know when it is delivered.",
@@ -189,6 +196,12 @@ class ClientNotificationService
         $body = (string) ($draft['body'] ?? '');
         $attachments = [];
 
+        // 🔴 Never send a blank the person was meant to fill in.
+        if (preg_match(self::BLANKS, $body, $blank)) {
+            return ['ok' => false, 'error' => "Fill in the {$blank[1]} before sending — the mail still says {$blank[0]}.",
+                    'reason' => 'blank_left', 'status' => 422];
+        }
+
         if ($stage === 'draft_awb' && str_contains($body, self::REVIEW_LINK)) {
             $document = $this->awbDocument($thread, $by->id);
             if ($document === null) {
@@ -257,6 +270,10 @@ class ClientNotificationService
             'cargo' => $pieces && $weight ? ' (' . $pieces . ' pcs, ' . rtrim(rtrim(number_format((float) $weight, 2, '.', ''), '0'), '.') . ' kg)' : '',
             'awb' => $job?->awb_number ?? '',
             'pieces' => $pieces ? $pieces . ' ' : '',
+            // Who will run it, once a shipment has an operator: the client knows whom they are dealing with.
+            'operator' => $job?->ops_id && ($name = User::whereKey($job->ops_id)->value('name'))
+                ? " {$name} from our operations team will be taking care of it."
+                : '',
             'flight' => filled($waybill->flight ?? null) ? ' on flight ' . $waybill->flight . ($date ? ' on ' . $date : '') : '',
             // The AWB PDF can be attached: it is filed, or there is a waybill to make it from when the mail is sent.
             'pdf' => $waybill !== null || ($job && JobDocument::where('job_id', $job->id)->where('document_type', 'awb')->exists()),

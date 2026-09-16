@@ -57,6 +57,23 @@ class DemoMailLoopSeeder extends Seeder
         ['news@freightweekly.test',  'This week in air cargo',                  'Market rates, capacity and more. Unsubscribe at any time.', 4],                      // branch rule: body
     ];
 
+    /**
+     * The ordinary back-and-forth on a live shipment (user, 2026-09-16: longer conversations, so the inbox's
+     * scrolling can be judged). Added to the shipments that ran furthest; [client, desk, client, …].
+     */
+    private const CHATTER = [
+        "Thanks for the rate. Before we confirm — is the space firm for Thursday, and what is the latest we can hand over the cargo at the warehouse? Our factory finishes packing Wednesday evening and the transporter can reach you by 2100 hrs if that still works for the same flight.",
+        "The rate holds and the space is firm for Thursday. Cut-off at the warehouse is 2200 hrs, so 2100 is comfortable. Please send the packing list and the commercial invoice whenever they are ready and we will start the paperwork in parallel.",
+        "Packing list and invoice attached. One correction from our side: carton 7 is 3 kg heavier than the earlier list, so the gross goes up slightly. Volumetric should be unchanged as the box size is the same.",
+        "Noted, thank you — we have used the revised gross. The chargeable weight is unchanged, so the rate stands as quoted. Nothing further needed from you at this point.",
+        "Also, our consignee has asked whether the shipment can be insured through you, and what the premium would be. If it is simpler for them to arrange it at their end, please say so.",
+        "We can arrange insurance at 0.35% of the invoice value plus 10%, minimum ₹750. If your consignee already has an open marine policy it is usually cheaper on their side — worth one call before you decide.",
+        "Understood. They will use their own policy, so no insurance from your side. Please go ahead with the booking as discussed.",
+        "Booked. We will raise the draft air waybill and send it for your check before anything goes to the airline.",
+        "One last thing: please mark the AWB with our PO number 44820 in the handling information, the consignee's accounts team asks for it every time.",
+        "PO 44820 will be shown in the handling information on the waybill. We will point it out on the draft so you can confirm the placement.",
+    ];
+
     /** A few rules a branch would write, so each step of the classifier is visible. */
     private const RULES = [
         ['Customs filings',    'subject_keyword',     'bill of entry',  'clearance',     10],
@@ -129,6 +146,17 @@ class DemoMailLoopSeeder extends Seeder
 
         // 2. Pricing answers from the desk mailbox: the first reply claims the conversation for them.
         $this->mail($desk, $client, "RE: {$subject}", "Hello,\nThank you for your enquiry. Our rate is attached, valid for 7 days.", $step(1), $first['message_id']);
+
+        // A real shipment is a long conversation, not two mails: the ones that ran furthest carry the whole exchange.
+        if (in_array($stop, ['departed', 'arrived', 'delivered', 'closed'], true)) {
+            foreach (self::CHATTER as $i => $line) {
+                $inbound = $i % 2 === 0;
+                $this->mail(
+                    $inbound ? $client : $desk, $inbound ? $desk : $client, "RE: {$subject}", $line,
+                    $at->copy()->addHours(2)->addMinutes($i * 25), $first['message_id']
+                );
+            }
+        }
 
         // 3. The enquiry is raised from what the mail said (as Classify does), and quoted.
         $enquiry = $this->raiseEnquiry($thread->fresh(), $step(1));
@@ -224,7 +252,14 @@ class DemoMailLoopSeeder extends Seeder
             return;
         }
 
-        $this->mail($this->mailbox->email_address, $draft['to'][0], $draft['subject'], str_replace('[review link]', url('/api/d/demo-link'), $draft['body']), $at, $replyTo);
+        // The person filling the draft in: the review link is minted at send, the booking date and airline are typed.
+        $body = str_replace(
+            ['[review link]', '[date]', '[airline]'],
+            [url('/api/d/demo-link'), $at->copy()->addDays(2)->format('j F Y'), 'Emirates SkyCargo'],
+            $draft['body']
+        );
+
+        $this->mail($this->mailbox->email_address, $draft['to'][0], $draft['subject'], $body, $at, $replyTo);
 
         $thread->forceFill([
             'pending_client_notification' => null,

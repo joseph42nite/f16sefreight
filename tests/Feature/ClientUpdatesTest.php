@@ -157,21 +157,32 @@ class ClientUpdatesTest extends TestCase
     public function test_confirming_prepares_an_update_that_waits_for_the_owner(): void
     {
         $thread = $this->thread(['assigned_ops_id' => $this->pricing->id]);
-        $job = $this->jobFor($thread);
+        $operator = $this->user('operations');
+        $job = $this->jobFor($thread, ['ops_id' => $operator->id]);
 
         $draft = $this->pending($thread);
         $this->assertSame('confirmed', $draft['stage']);
         $this->assertStringContainsString('from BOM to FRA (4 pcs, 120.5 kg)', $draft['body']);
+        // Who will run it, and the two blanks the person fills in before sending (user, 2026-09-16).
+        $this->assertStringContainsString("{$operator->name} from our operations team will be taking care of it", $draft['body']);
+        $this->assertStringContainsString('booked on [date] with [airline]', $draft['body']);
         $this->assertStringNotContainsString($job->execution_job_no, $draft['body'] . $draft['subject']);
         $this->assertSame([], $this->sent);
 
         $bell = DB::table('notifications')->where('type', ClientNotificationService::BELL_TYPE)->where('notifiable_id', $this->pricing->id)->first();
         $this->assertSame($thread->id, json_decode($bell->data, true)['thread_id']);
 
+        // 🔴 A mail still carrying a blank is refused, not sent with "[date]" in it.
         $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$thread->id}/client-update"), ['stage' => 'confirmed', 'decision' => 'send'])
+            ->assertStatus(422)->assertJsonPath('reason', 'blank_left');
+        $this->assertSame([], $this->sent);
+
+        $filled = str_replace(['[date]', '[airline]'], ['18 September 2026', 'Emirates SkyCargo'], $draft['body']);
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$thread->id}/client-update"),
+            ['stage' => 'confirmed', 'decision' => 'send', 'body' => $filled])
             ->assertOk()->assertJsonPath('client_update', null);
 
-        $this->assertStringContainsString('Thank you for confirming', $this->mailed());
+        $this->assertStringContainsString('booked on 18 September 2026 with Emirates SkyCargo', $this->mailed());
         $this->assertSame(0, DB::table('notifications')->where('type', ClientNotificationService::BELL_TYPE)->count());
 
         // Sent once: a second send finds nothing waiting.

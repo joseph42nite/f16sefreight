@@ -664,6 +664,10 @@ __webpack_require__.r(__webpack_exports__);
   computed: {
     hasReviewLink() {
       return this.body.indexOf("[review link]") !== -1;
+    },
+    /** Blanks still to fill in. Mirrors the server, which refuses a mail that carries one. */
+    blanks() {
+      return ["date", "airline"].filter(b => this.body.indexOf("[" + b + "]") !== -1);
     }
   },
   methods: {
@@ -2627,7 +2631,9 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("📎 " + _vm._s(_vm.draft.attachment) + " is attached.")]) : _vm._e(), _vm._v(" "), _vm.hasReviewLink ? _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("The secure review link is made when you send.")]) : _vm._e(), _vm._v(" "), _c("p", {
+  }, [_vm._v("The secure review link is made when you send.")]) : _vm._e(), _vm._v(" "), _vm.blanks.length ? _c("p", {
+    staticClass: "fx-error"
+  }, [_vm._v("Fill in the " + _vm._s(_vm.blanks.join(" and ")) + " — the mail still says " + _vm._s(_vm.blanks.map(b => "[" + b + "]").join(" and ")) + ".")]) : _vm._e(), _vm._v(" "), _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Your signature is added below the message.")]), _vm._v(" "), _vm.error ? _c("p", {
     staticClass: "fx-error",
@@ -2639,7 +2645,7 @@ var render = function render() {
   }, [_c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
-      disabled: _vm.busy || !_vm.to.trim()
+      disabled: _vm.busy || !_vm.to.trim() || _vm.blanks.length > 0
     },
     on: {
       click: function ($event) {

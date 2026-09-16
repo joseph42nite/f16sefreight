@@ -5646,6 +5646,8 @@ body {
   max-width: 34rem; }
 .fx-outcome__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 
+.fx-drawer__ops { display: inline-flex; align-items: center; gap: var(--space-2); }
+.fx-drawer__ops .fx-input { min-width: 12rem; padding: 2px var(--space-2); font-size: .8125rem; }
 .fx-drawer__awb { color: var(--fg-muted); }
 .fx-drawer__awb::before { content: "AWB "; letter-spacing: .04em; }
 

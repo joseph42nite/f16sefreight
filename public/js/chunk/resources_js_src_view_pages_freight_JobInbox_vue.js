@@ -204,6 +204,10 @@ const WORKSPACE_TABS = [{
     canTriage() {
       return this.designation === "pricing";
     },
+    /** The workspace's operator dropdown: pricing and the Boss set it, operations ask for it. */
+    canSeeOperator() {
+      return !!(this.active && this.active.job) && ["pricing", "boss", "operations"].indexOf(this.designation) !== -1;
+    },
     /** Mirrors the server's `assignOperator`. */
     canAssign() {
       return this.designation === "pricing" || this.designation === "boss";
@@ -351,6 +355,16 @@ const WORKSPACE_TABS = [{
     });
     // The people a conversation can be handed to.
     if (this.canAssign) this.loadOperators();
+    // Operations get the branch's operator NAMES only: the staff matrix, with everyone's workload, is pricing's.
+    else if (this.designation === "operations") {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/jobs/branch-operators").then(({
+        data
+      }) => {
+        this.operators = data.operators || [];
+      }).catch(() => {
+        this.operators = [];
+      });
+    }
   },
   watch: {
     "$route.query.thread"(id) {
@@ -651,6 +665,49 @@ const WORKSPACE_TABS = [{
       // lookup must not block the decision itself.
       .catch(() => {
         this.operators = [];
+      });
+    },
+    operatorName(id) {
+      const found = this.operators.find(o => Number(o.id) === Number(id));
+      return found ? found.name : "a colleague";
+    },
+    /**
+     * Pricing (and the Boss) set the operator directly; operations stage a request the job's pricing owner
+     * approves from their bell. The dropdown is the same control — the server decides what the change means.
+     */
+    setOperator(userId) {
+      this.busy = true;
+      this.actionError = null;
+      const asking = this.designation === "operations";
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/jobs/${this.active.job.id}/reassign${asking ? "/request" : ""}`, {
+        ops_id: Number(userId)
+      }).then(({
+        data
+      }) => {
+        this.applyJob(data);
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    withdrawOperator() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/jobs/${this.active.job.id}/reassign/withdraw`, {}).then(({
+        data
+      }) => {
+        this.applyJob(data.job);
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /** The server's job row is the truth; the header reads these four fields. */
+    applyJob(job) {
+      ["ops_id", "pricing_id", "pending_ops_id", "pending_ops_requested_by"].forEach(f => {
+        vue__WEBPACK_IMPORTED_MODULE_10__["default"].set(this.active.job, f, job[f]);
       });
     },
     operatorLabel(o) {
@@ -3039,7 +3096,49 @@ var render = function render() {
           staticClass: "identifier fx-drawer__awb"
         }, [_vm._v("\n            " + _vm._s(_vm.active.job.awb_number) + "\n          ")]) : _vm._e(), _vm._v(" "), _vm.active.job_count > 1 ? _c("span", {
           staticClass: "fx-muted"
-        }, [_vm._v("\n            +" + _vm._s(_vm.active.job_count - 1) + " more on this enquiry\n          ")]) : _vm._e()] : _vm.active.enquiry ? [_c("span", {
+        }, [_vm._v("\n            +" + _vm._s(_vm.active.job_count - 1) + " more on this enquiry\n          ")]) : _vm._e(), _vm._v(" "), _vm.canSeeOperator ? _c("label", {
+          staticClass: "fx-drawer__ops"
+        }, [_c("span", {
+          staticClass: "fx-muted"
+        }, [_vm._v("Operator")]), _vm._v(" "), _c("select", {
+          staticClass: "fx-input",
+          attrs: {
+            disabled: _vm.busy || !!_vm.active.job.pending_ops_id,
+            "aria-label": "The operator running this shipment"
+          },
+          domProps: {
+            value: _vm.active.job.ops_id || ""
+          },
+          on: {
+            change: function ($event) {
+              return _vm.setOperator($event.target.value);
+            }
+          }
+        }, [_c("option", {
+          attrs: {
+            value: "",
+            disabled: ""
+          }
+        }, [_vm._v("Nobody yet")]), _vm._v(" "), _vm._l(_vm.operators, function (o) {
+          return _c("option", {
+            key: o.id,
+            domProps: {
+              value: o.id
+            }
+          }, [_vm._v("\n                " + _vm._s(o.name) + _vm._s(_vm.isMe(o) ? " (you)" : "") + " · " + _vm._s(o.designation) + "\n              ")]);
+        })], 2)]) : _vm._e(), _vm._v(" "), _vm.canSeeOperator && _vm.active.job.pending_ops_id ? _c("span", {
+          staticClass: "fx-muted"
+        }, [_vm._v("\n            Waiting for approval → " + _vm._s(_vm.operatorName(_vm.active.job.pending_ops_id)) + "\n            "), _vm.isMe({
+          id: _vm.active.job.pending_ops_requested_by
+        }) ? _c("button", {
+          staticClass: "fx-btn fx-btn--ghost",
+          attrs: {
+            disabled: _vm.busy
+          },
+          on: {
+            click: _vm.withdrawOperator
+          }
+        }, [_vm._v("Withdraw")]) : _vm._e()]) : _vm._e()] : _vm.active.enquiry ? [_c("span", {
           staticClass: "identifier"
         }, [_vm._v(_vm._s(_vm.active.enquiry.enquiry_no))]), _vm._v(" "), _c("StatusChip", {
           attrs: {

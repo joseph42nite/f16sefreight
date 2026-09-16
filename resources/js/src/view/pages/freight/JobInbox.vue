@@ -361,6 +361,35 @@
             <span v-if="active.job_count > 1" class="fx-muted">
               +{{ active.job_count - 1 }} more on this enquiry
             </span>
+
+            <!--
+              Who is executing this shipment (user, 2026-09-16). Pricing sets it; operations may ASK for a colleague
+              to take it and the job's pricing owner approves in their bell — a request never moves the work itself.
+            -->
+            <label v-if="canSeeOperator" class="fx-drawer__ops">
+              <span class="fx-muted">Operator</span>
+              <select
+                class="fx-input"
+                :value="active.job.ops_id || ''"
+                :disabled="busy || !!active.job.pending_ops_id"
+                aria-label="The operator running this shipment"
+                @change="setOperator($event.target.value)"
+              >
+                <option value="" disabled>Nobody yet</option>
+                <option v-for="o in operators" :key="o.id" :value="o.id">
+                  {{ o.name }}{{ isMe(o) ? " (you)" : "" }} · {{ o.designation }}
+                </option>
+              </select>
+            </label>
+            <span v-if="canSeeOperator && active.job.pending_ops_id" class="fx-muted">
+              Waiting for approval → {{ operatorName(active.job.pending_ops_id) }}
+              <button
+                v-if="isMe({ id: active.job.pending_ops_requested_by })"
+                class="fx-btn fx-btn--ghost"
+                :disabled="busy"
+                @click="withdrawOperator"
+              >Withdraw</button>
+            </span>
           </template>
           <template v-else-if="active.enquiry">
             <span class="identifier">{{ active.enquiry.enquiry_no }}</span>
@@ -683,6 +712,10 @@ export default {
     canTriage() {
       return this.designation === "pricing";
     },
+    /** The workspace's operator dropdown: pricing and the Boss set it, operations ask for it. */
+    canSeeOperator() {
+      return !!(this.active && this.active.job) && ["pricing", "boss", "operations"].indexOf(this.designation) !== -1;
+    },
     /** Mirrors the server's `assignOperator`. */
     canAssign() {
       return this.designation === "pricing" || this.designation === "boss";
@@ -841,6 +874,12 @@ export default {
     if (this.$route.query.thread) this.open({ id: this.$route.query.thread });
     // The people a conversation can be handed to.
     if (this.canAssign) this.loadOperators();
+    // Operations get the branch's operator NAMES only: the staff matrix, with everyone's workload, is pricing's.
+    else if (this.designation === "operations") {
+      ApiService.get("/jobs/branch-operators")
+        .then(({ data }) => { this.operators = data.operators || []; })
+        .catch(() => { this.operators = []; });
+    }
   },
   watch: {
     "$route.query.thread"(id) {
@@ -1138,6 +1177,39 @@ export default {
         // Not fatal: confirming without an operator is a supported outcome, so a failed
         // lookup must not block the decision itself.
         .catch(() => { this.operators = []; });
+    },
+    operatorName(id) {
+      const found = this.operators.find((o) => Number(o.id) === Number(id));
+
+      return found ? found.name : "a colleague";
+    },
+    /**
+     * Pricing (and the Boss) set the operator directly; operations stage a request the job's pricing owner
+     * approves from their bell. The dropdown is the same control — the server decides what the change means.
+     */
+    setOperator(userId) {
+      this.busy = true;
+      this.actionError = null;
+      const asking = this.designation === "operations";
+
+      ApiService.post(`/jobs/${this.active.job.id}/reassign${asking ? "/request" : ""}`, { ops_id: Number(userId) })
+        .then(({ data }) => { this.applyJob(data); })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    withdrawOperator() {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/jobs/${this.active.job.id}/reassign/withdraw`, {})
+        .then(({ data }) => { this.applyJob(data.job); })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    /** The server's job row is the truth; the header reads these four fields. */
+    applyJob(job) {
+      ["ops_id", "pricing_id", "pending_ops_id", "pending_ops_requested_by"].forEach((f) => {
+        Vue.set(this.active.job, f, job[f]);
+      });
     },
     operatorLabel(o) {
       const load = "OLI " + Number(o.oli).toFixed(1) + (o.overloaded ? " ● OVERLOADED" : "");

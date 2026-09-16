@@ -18,6 +18,7 @@ use App\Services\EnquirySequenceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * The post-conversion lifecycle — guide §5.2.
@@ -315,6 +316,22 @@ class JobController extends Controller
         $this->audit->record($job->agent_id, 'job.claimed', 'job', $job->id, auth()->id());
 
         return response()->json($job->fresh());
+    }
+
+    /**
+     * The branch's operators, names only — who a shipment can be handed to (user, 2026-09-16).
+     *
+     * 🔒 Deliberately NOT the staff matrix: that carries everyone's workload and is pricing's alone (PRD §9.4).
+     * Operations need the names to ask for a handover, and nothing more.
+     */
+    public function branchOperators(): JsonResponse
+    {
+        abort_unless(Gate::allows('assignOperator') || Gate::allows('requestReassignment'), 403);
+
+        return response()->json(['operators' => DB::table('users')
+            ->where('branch_name', \App\Support\UserContext::for(auth()->user())->agentId)
+            ->where('designation', 'operations')->where('is_active', 1)
+            ->orderBy('name')->get(['id', 'name', 'designation'])]);
     }
 
     /** Pricing sets the operator directly. Operations must request instead. */

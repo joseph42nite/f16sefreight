@@ -244,4 +244,47 @@ class ReassignmentFlowTest extends TestCase
         $this->assertSame(1, $this->bellCount($job),
             'Two pinned cards for one job make the owner answer a request that is no longer current.');
     }
+
+    // ─── The workspace's operator dropdown (user, 2026-09-16) ────────────────
+
+    /**
+     * Operations read the branch's operator NAMES to ask for a handover — never the staff matrix, which carries
+     * everyone's workload and stays pricing's (PRD §9.4).
+     */
+    public function test_operations_read_the_branch_operators_but_not_the_staff_matrix(): void
+    {
+        $names = $this->api($this->ops)->getJson($this->url('/api/jobs/branch-operators'))
+            ->assertOk()->json('operators');
+
+        $this->assertSame([$this->ops->id, $this->target->id], collect($names)->pluck('id')->sort()->values()->all());
+        $this->assertArrayNotHasKey('oli', $names[0]);
+        $this->api($this->ops)->getJson($this->url('/api/jobs/staff-load'))->assertForbidden();
+
+        $this->api($this->pricing)->getJson($this->url('/api/jobs/branch-operators'))->assertOk();
+        $this->api($this->user('sales'))->getJson($this->url('/api/jobs/branch-operators'))->assertForbidden();
+    }
+
+    /**
+     * 🔴 The dropdown reads the job's own row: who runs it, and whether a handover is waiting for approval —
+     * so the control can show "waiting" instead of offering a change that is already staged.
+     */
+    public function test_the_workspace_carries_the_operator_and_any_staged_handover(): void
+    {
+        $job = $this->job();
+        $threadId = DB::table('email_threads')->insertGetId([
+            'agent_id' => $this->branch->id, 'thread_key' => 'hnd-' . random_int(1, 999999), 'classification' => 'customer_enquiry',
+            'enquiry_id' => $job->enquiry_id, 'job_id' => $job->id, 'latest_message_received_at' => now(),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $before = $this->api($this->ops)->getJson($this->url("/api/inbox/threads/{$threadId}"))->assertOk()->json('thread.job');
+        $this->assertSame([$this->ops->id, $this->pricing->id, null], [$before['ops_id'], $before['pricing_id'], $before['pending_ops_id']]);
+
+        $this->request($job);
+
+        $after = $this->api($this->ops)->getJson($this->url("/api/inbox/threads/{$threadId}"))->assertOk()->json('thread.job');
+        $this->assertSame([$this->target->id, $this->ops->id], [$after['pending_ops_id'], $after['pending_ops_requested_by']]);
+        // Still the original operator until the pricing owner approves.
+        $this->assertSame($this->ops->id, $after['ops_id']);
+    }
 }

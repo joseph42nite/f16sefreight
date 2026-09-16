@@ -342,6 +342,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\Freight\NotificationController::class, 'markRead']);
 
     Route::get('/jobs/staff-load', [\App\Http\Controllers\Freight\JobController::class, 'staffLoad']);
+    // Names of the branch's operators, for the workspace's operator dropdown.
+    Route::get('/jobs/branch-operators', [\App\Http\Controllers\Freight\JobController::class, 'branchOperators']);
     Route::post('/jobs/{job}/reassign', [\App\Http\Controllers\Freight\JobController::class, 'reassign']);
     Route::post('/jobs/{job}/reassign/request', [\App\Http\Controllers\Freight\JobController::class, 'requestReassignment']);
 

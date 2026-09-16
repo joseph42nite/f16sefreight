@@ -122,7 +122,8 @@ class EmailInboxController extends Controller
                 'enquiry:id,enquiry_no,status,lost_reason,lost_automatically',
                 // The job is what the operator quotes once conversion has happened —
                 // eager-loaded so a 50-row list does not become 50 extra queries.
-                'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status',
+                // ops_id and the staged handover ride along for the workspace's operator dropdown.
+                'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status,ops_id,pricing_id,pending_ops_id,pending_ops_requested_by',
             ])
             ->orderByDesc('latest_message_received_at')
             ->paginate(50);
@@ -157,7 +158,7 @@ class EmailInboxController extends Controller
             'thread'   => $this->shape($thread->load([
                 'assignedOps:id,name',
                 'enquiry:id,enquiry_no,status,lost_reason,lost_automatically',
-                'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status',
+                'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status,ops_id,pricing_id,pending_ops_id,pending_ops_requested_by',
             ])),
             'messages' => $messages,
             // What "Add signature" will put under a reply, shown greyed in the composer.
@@ -685,7 +686,8 @@ class EmailInboxController extends Controller
             // 🔗 enquiry -> job -> waybill, resolved once here rather than by a second
             // round trip from the drawer. Newest first, matching JobController@index's
             // `latest()`, so both surfaces name the same job out of a consol split.
-            'job'            => $job ? $job->only(['id', 'execution_job_no', 'awb_number', 'status']) : null,
+            'job'            => $job ? $job->only(['id', 'execution_job_no', 'awb_number', 'status', 'ops_id', 'pricing_id',
+                'pending_ops_id', 'pending_ops_requested_by']) : null,
             'job_count'      => $jobs->count(),
             'message_count'  => $mail['message_count'],
             // The client update waiting for someone to send or skip it — the card on the conversation.

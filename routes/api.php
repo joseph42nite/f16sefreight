@@ -216,6 +216,7 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::post('/create-company', [CompanyController::class, 'register']);
     Route::put('/edit-company/{id}', [CompanyController::class, 'update']);
     Route::get('/all-company/{id?}', [CompanyController::class, 'index']);
+    Route::get('/companies/{company}/outlook-approval-link', [CompanyController::class, 'outlookApprovalLink'])->whereNumber('company');
     Route::delete('/company/{id?}', [CompanyController::class, 'delete']);
     Route::get('/available-templates', [CompanyController::class, 'getAvailableTemplates']);
 

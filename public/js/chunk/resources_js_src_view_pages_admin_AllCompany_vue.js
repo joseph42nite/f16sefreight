@@ -13,6 +13,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../components/SkeletonTable.vue */ "./resources/js/src/view/components/SkeletonTable.vue");
 /* harmony import */ var _core_mixins_adminList_mixin__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/mixins/adminList.mixin */ "./resources/js/src/core/mixins/adminList.mixin.js");
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -27,15 +29,27 @@ __webpack_require__.r(__webpack_exports__);
         label: "Name",
         key: "name"
       }, {
+        label: "Outlook",
+        key: "outlook"
+      }, {
         label: "Action",
         key: "action"
-      }]
+      }],
+      copied: null
     };
   },
   components: {
     SkeletonTable: _components_SkeletonTable_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
   },
   methods: {
+    /** Copies the link to send the company's IT admin. */
+    copyApprovalLink(company) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get(`/superadmin/companies/${company.id}/outlook-approval-link`).then(({
+        data
+      }) => navigator.clipboard.writeText(data.url)).then(() => {
+        this.copied = company.id;
+      }).catch(e => alert(e.response && e.response.data && e.response.data.error || "Could not copy the link."));
+    },
     get_company() {
       return this.loadItems(`/superadmin/all-company/0`);
     }
@@ -154,6 +168,22 @@ var render = function render() {
         }, [_vm._v(_vm._s(data.item.name.charAt(0).toUpperCase()))])]), _vm._v(" "), _c("span", {
           staticClass: "font-weight-bolder text-dark"
         }, [_vm._v(_vm._s(data.item.name))])])];
+      }
+    }, {
+      key: "cell(outlook)",
+      fn: function (data) {
+        return [data.item.outlook_approved_at ? _c("span", {
+          staticClass: "text-success font-weight-bold mr-2"
+        }, [_vm._v("\n                        Approved " + _vm._s(new Date(data.item.outlook_approved_at).toLocaleDateString()) + "\n                    ")]) : _c("span", {
+          staticClass: "text-muted mr-2"
+        }, [_vm._v("Not approved yet")]), _vm._v(" "), _c("button", {
+          staticClass: "btn btn-light-primary btn-sm",
+          on: {
+            click: function ($event) {
+              return _vm.copyApprovalLink(data.item);
+            }
+          }
+        }, [_vm._v("\n                        " + _vm._s(_vm.copied === data.item.id ? "Link copied" : "Copy approval link") + "\n                    ")])];
       }
     }, {
       key: "cell(action)",

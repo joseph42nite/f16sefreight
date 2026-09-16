@@ -224,7 +224,7 @@ class MailboxConnectionTest extends TestCase
     {
         $state = $this->beginConnect();
 
-        $this->fakeSuccessfulExchange('first@f16s.test');
+        $this->fakeSuccessfulExchange('ops-cnx@test.local');
         $this->get($this->callbackUrl($state))->assertRedirect();
 
         $this->get($this->callbackUrl($state))->assertStatus(400);
@@ -236,12 +236,12 @@ class MailboxConnectionTest extends TestCase
     public function test_a_successful_callback_stores_the_connection(): void
     {
         $state = $this->beginConnect();
-        $this->fakeSuccessfulExchange('ops@f16s.test');
+        $this->fakeSuccessfulExchange('ops-cnx@test.local');
 
         $response = $this->get($this->callbackUrl($state));
 
         $connection = MailboxConnection::withoutGlobalScopes()
-            ->where('email_address', 'ops@f16s.test')->first();
+            ->where('email_address', 'ops-cnx@test.local')->first();
 
         // Back to the portal the person started from, onto the import screen.
         $response->assertRedirect(parse_url($this->url('/'), PHP_URL_SCHEME) . '://' . parse_url($this->url('/'), PHP_URL_HOST) . '/mailbox-import/' . $connection->id);
@@ -263,15 +263,15 @@ class MailboxConnectionTest extends TestCase
         $other = Company::create(['name' => 'Other Co', 'code' => 'OTH', 'tier' => 'command']);
         $otherBranch = Agent::create(['company_id' => $other->id, 'agent_name' => 'DEL', 'branch_code' => 'DEL']);
 
-        $this->connection(['email_address' => 'shared@f16s.test'], $otherBranch);
+        $this->connection(['email_address' => 'ops-cnx@test.local'], $otherBranch);
 
         $state = $this->beginConnect();
-        $this->fakeSuccessfulExchange('shared@f16s.test');
+        $this->fakeSuccessfulExchange('ops-cnx@test.local');
 
         $this->get($this->callbackUrl($state))->assertStatus(400);
 
         $this->assertSame((int) $otherBranch->id, (int) MailboxConnection::withoutGlobalScopes()
-            ->where('email_address', 'shared@f16s.test')->value('agent_id'));
+            ->where('email_address', 'ops-cnx@test.local')->value('agent_id'));
     }
 
     // ─── Disconnect ──────────────────────────────────────────────────────────
@@ -348,6 +348,48 @@ class MailboxConnectionTest extends TestCase
         $other = Agent::create(['company_id' => $this->company->id, 'agent_name' => 'MAA', 'branch_code' => 'MAA']);
         $elsewhere = $this->connection(['email_address' => 'maa@f16s.test'], $other);
         $this->postJson($this->url("/mailboxes/{$elsewhere->id}/import"))->assertNotFound();
+    }
+
+    /** 🔴 Their own mailbox: a Microsoft account other than the login email is refused and nothing is stored. */
+    public function test_an_outlook_account_other_than_the_login_email_is_refused(): void
+    {
+        $state = $this->beginConnect();
+        $this->fakeSuccessfulExchange('someone.else@gmail.test');
+
+        $this->get($this->callbackUrl($state))->assertStatus(400)->assertSee('you log in to F16s as ops-cnx@test.local', false);
+        $this->assertSame(0, MailboxConnection::withoutGlobalScopes()->where('agent_id', $this->branch->id)->count());
+    }
+
+    /** A company that lets only its IT admin approve apps: the person is told to get the approval link. */
+    public function test_a_company_needing_admin_approval_is_told_so(): void
+    {
+        $state = $this->beginConnect();
+
+        $this->get('http://accounts.localhost/api/user/mailboxes/callback?state=' . $state . '&error=access_denied&error_description=AADSTS65001')
+            ->assertStatus(400)->assertSee('IT admin to approve F16s once', false);
+    }
+
+    /**
+     * The IT admin's approval (user, 2026-09-16): super admin gets the company's link; Microsoft returns the admin to
+     * the same callback and the approval is recorded on that company. A tampered link records nothing.
+     */
+    public function test_the_it_admin_approval_link_records_the_company(): void
+    {
+        $admin = \App\SuperAdmin::first() ?? \App\SuperAdmin::forceCreate(['name' => 'sa', 'email' => 'sa-cnx@test.local', 'password' => Hash::make('x')]);
+        $url = $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('superAdmin-api')->login($admin), 'Accept' => 'application/json'])
+            ->getJson("http://admin.localhost/api/superadmin/companies/{$this->company->id}/outlook-approval-link")->assertOk()->json('url');
+
+        $this->assertStringContainsString('/organizations/v2.0/adminconsent?', $url);
+        parse_str(parse_url($url, PHP_URL_QUERY), $query);
+
+        $this->get('http://accounts.localhost/api/user/mailboxes/callback?' . http_build_query(['state' => 'approval.' . base64_encode('{"iv":"forged"}'), 'admin_consent' => 'True', 'tenant' => 't-1']))
+            ->assertStatus(400);
+        $this->assertNull($this->company->fresh()->outlook_approved_at);
+
+        $this->get('http://accounts.localhost/api/user/mailboxes/callback?' . http_build_query(['state' => $query['state'], 'admin_consent' => 'True', 'tenant' => 't-1']))
+            ->assertOk()->assertSee('approved for Conn Co', false);
+        $this->assertNotNull($this->company->fresh()->outlook_approved_at);
+        $this->assertSame('t-1', $this->company->fresh()->outlook_tenant_id);
     }
 
     private function beginConnect(): string

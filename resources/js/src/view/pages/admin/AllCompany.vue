@@ -51,6 +51,17 @@
                         </div>
                     </template>
 
+                    <!-- The IT admin's one-time approval, so everyone there can connect Outlook (user, 2026-09-16). -->
+                    <template #cell(outlook)="data">
+                        <span v-if="data.item.outlook_approved_at" class="text-success font-weight-bold mr-2">
+                            Approved {{ new Date(data.item.outlook_approved_at).toLocaleDateString() }}
+                        </span>
+                        <span v-else class="text-muted mr-2">Not approved yet</span>
+                        <button class="btn btn-light-primary btn-sm" @click="copyApprovalLink(data.item)">
+                            {{ copied === data.item.id ? "Link copied" : "Copy approval link" }}
+                        </button>
+                    </template>
+
                     <template #cell(action)="data">
                         <router-link :to="'/superadmin/new-company/' + data.item['id']" class="btn btn-icon btn-light-primary btn-sm">
                             <i class="fas fa-pen font-size-sm"></i>
@@ -73,6 +84,7 @@
 <script>
 import SkeletonTable from "../../components/SkeletonTable.vue";
 import adminListMixin from "@/core/mixins/adminList.mixin";
+import ApiService from "@/core/services/api.service";
 export default {
     name: "superadminallcompany",
     mixins: [adminListMixin],
@@ -81,14 +93,23 @@ export default {
             fields: [
                 { label: "Sl", key: "index" },
                 { label: "Name", key: "name" },
+                { label: "Outlook", key: "outlook" },
                 { label: "Action", key: "action" },
             ],
+            copied: null,
         };
     },
     components: {
         SkeletonTable
     },
     methods: {
+        /** Copies the link to send the company's IT admin. */
+        copyApprovalLink(company) {
+            ApiService.get(`/superadmin/companies/${company.id}/outlook-approval-link`)
+                .then(({ data }) => navigator.clipboard.writeText(data.url))
+                .then(() => { this.copied = company.id; })
+                .catch((e) => alert((e.response && e.response.data && e.response.data.error) || "Could not copy the link."));
+        },
         get_company() {
             return this.loadItems(`/superadmin/all-company/0`);
         },

@@ -53,6 +53,20 @@ class GraphMailProvider implements MailProviderContract
         ]);
     }
 
+    /**
+     * The one-time link a client company's IT admin opens to approve F16s for everyone in their Microsoft 365
+     * (user, 2026-09-16). `.default` asks for the permissions set on the app registration.
+     */
+    public function adminConsentUrl(string $state): string
+    {
+        return rtrim($this->config('authority'), '/') . '/organizations/v2.0/adminconsent?' . http_build_query([
+            'client_id'    => $this->config('client_id'),
+            'scope'        => 'https://graph.microsoft.com/.default',
+            'redirect_uri' => $this->config('redirect'),
+            'state'        => $state,
+        ]);
+    }
+
     public function exchangeCode(string $code): array
     {
         return $this->token([

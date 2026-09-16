@@ -64,7 +64,8 @@ class Kernel extends ConsoleKernel
         // backlog can run past 15 minutes, and a second sweep entering behind it would
         // read the same cursor twice.
         $schedule->command('mailboxes:poll')
-            ->everyFifteenMinutes()
+            // Every 2 minutes until Microsoft's instant notifications are added on a public https address (user, 2026-09-16).
+            ->everyTwoMinutes()
             ->withoutOverlapping()
             ->onOneServer();
     }

@@ -13,7 +13,7 @@ class CompanyController extends Controller
 {
     public function index($id = 0)
     {
-        $columns = ['id', 'name', 'templates_config'];
+        $columns = ['id', 'name', 'templates_config', 'outlook_approved_at'];
         if ($id) {
             $data = Company::where([['id', $id]])->limit(1)->get($columns);
         } else {
@@ -21,6 +21,24 @@ class CompanyController extends Controller
         }
 
         return response()->json($data);
+    }
+
+    /**
+     * The link to send a company's IT admin so everyone there can connect Outlook (user, 2026-09-16). It only records
+     * the approval against this company; Microsoft checks the admin.
+     */
+    public function outlookApprovalLink(int $company, \App\Services\Mail\GraphMailProvider $graph)
+    {
+        $row = Company::withoutGlobalScopes()->findOrFail($company);
+
+        try {
+            $url = $graph->adminConsentUrl(\App\Http\Controllers\Freight\MailboxController::APPROVAL_STATE
+                . \Illuminate\Support\Facades\Crypt::encryptString((string) $row->id));
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => 'Outlook is not set up on this server yet: add GRAPH_CLIENT_ID, GRAPH_CLIENT_SECRET and GRAPH_REDIRECT_URI to .env.'], 503);
+        }
+
+        return response()->json(['url' => $url, 'approved_at' => $row->outlook_approved_at]);
     }
 
     public function register(Request $request)

@@ -30,6 +30,9 @@ use Throwable;
  */
 class MailboxController extends Controller
 {
+    /** Marks the state of an IT admin's company-wide approval, which comes back to the same address. */
+    public const APPROVAL_STATE = 'approval.';
+
     /** How long a user has to finish the consent screen. */
     private const STATE_TTL_MINUTES = 10;
 
@@ -125,6 +128,11 @@ class MailboxController extends Controller
     public function callback(Request $request)
     {
         $state = (string) $request->query('state');
+
+        if (str_starts_with($state, self::APPROVAL_STATE)) {
+            return $this->approved($request, $state);
+        }
+
         $pending = Cache::pull($this->stateKey($state));
 
         if ($pending === null) {
@@ -133,7 +141,15 @@ class MailboxController extends Controller
 
         // Microsoft reports consent refusal as a redirect, not an error status.
         if ($request->filled('error')) {
-            return $this->finish('Microsoft did not grant access: ' . $request->query('error_description', $request->query('error')), false, $pending['return_to'] ?? null);
+            $said = (string) $request->query('error_description', $request->query('error'));
+
+            // The company's Microsoft 365 lets only its IT admin approve apps: say so plainly.
+            if (in_array($request->query('error'), ['access_denied', 'consent_required'], true) || preg_match('/AADSTS(65001|90094|90095)/', $said)) {
+                return $this->finish('Your company\'s Microsoft 365 needs its IT admin to approve F16s once for everyone. '
+                    . 'Ask F16s for your company\'s approval link and send it to your IT admin, then connect again.', false, $pending['return_to'] ?? null);
+            }
+
+            return $this->finish('Microsoft did not grant access: ' . $said, false, $pending['return_to'] ?? null);
         }
 
         if (! $request->filled('code')) {
@@ -146,6 +162,15 @@ class MailboxController extends Controller
             $address = $provider->primaryAddress($tokens['access_token']);
         } catch (Throwable $e) {
             return $this->finish('Could not complete the connection: ' . $e->getMessage(), false, $pending['return_to'] ?? null);
+        }
+
+        // 🔴 Their own mailbox: the Outlook account must be the email they log in with (user, 2026-09-16) — not a
+        // personal account, not a colleague's.
+        $loginEmail = strtolower((string) \App\User::whereKey($pending['user_id'])->value('email'));
+
+        if ($address !== $loginEmail) {
+            return $this->finish("You signed in to Microsoft as {$address}, but you log in to F16s as {$loginEmail}. "
+                . "Connect again and choose the Microsoft account for {$loginEmail}.", false, $pending['return_to'] ?? null);
         }
 
         // 🔴 `email_address` is GLOBALLY unique. A mailbox already attached elsewhere must
@@ -298,6 +323,33 @@ class MailboxController extends Controller
             'from' => $mailbox->backfill_from?->toDateString(),
             'error' => $error,
         ]);
+    }
+
+    /**
+     * Microsoft sends the IT admin back here after approving (or refusing) F16s for their company. The state is the
+     * company, encrypted — the link is sent by email and may be opened days later, so it cannot live in the cache.
+     */
+    private function approved(Request $request, string $state)
+    {
+        try {
+            $companyId = (int) \Illuminate\Support\Facades\Crypt::decryptString(substr($state, strlen(self::APPROVAL_STATE)));
+        } catch (Throwable $e) {
+            return $this->finish('This approval link is not valid. Ask F16s for a new one.', false);
+        }
+
+        $company = \App\Company::withoutGlobalScopes()->find($companyId);
+
+        if ($company === null) {
+            return $this->finish('This approval link is not valid. Ask F16s for a new one.', false);
+        }
+
+        if ($request->query('admin_consent') !== 'True') {
+            return $this->finish('F16s was not approved: ' . $request->query('error_description', $request->query('error', 'no answer from Microsoft')), false);
+        }
+
+        $company->forceFill(['outlook_approved_at' => now(), 'outlook_tenant_id' => mb_substr((string) $request->query('tenant'), 0, 64)])->save();
+
+        return $this->finish("F16s is approved for {$company->name}. Everyone at your company can now connect their Outlook from F16s.", true);
     }
 
     private function stateKey(string $state): string

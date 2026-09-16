@@ -11,8 +11,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
@@ -22,11 +22,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _view_pages_freight_components_CreditsPanel_vue__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @/view/pages/freight/components/CreditsPanel.vue */ "./resources/js/src/view/pages/freight/components/CreditsPanel.vue");
 /* harmony import */ var _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @/view/pages/freight/components/MailEditor.vue */ "./resources/js/src/view/pages/freight/components/MailEditor.vue");
 /* harmony import */ var _view_pages_freight_components_ClientUpdateEditor_vue__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @/view/pages/freight/components/ClientUpdateEditor.vue */ "./resources/js/src/view/pages/freight/components/ClientUpdateEditor.vue");
+/* harmony import */ var _view_pages_freight_components_StaffPicker_vue__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @/view/pages/freight/components/StaffPicker.vue */ "./resources/js/src/view/pages/freight/components/StaffPicker.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -117,7 +119,8 @@ const WORKSPACE_TABS = [{
     CostSheet: _view_pages_freight_components_CostSheet_vue__WEBPACK_IMPORTED_MODULE_5__["default"],
     CreditsPanel: _view_pages_freight_components_CreditsPanel_vue__WEBPACK_IMPORTED_MODULE_6__["default"],
     MailEditor: _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_7__["default"],
-    ClientUpdateEditor: _view_pages_freight_components_ClientUpdateEditor_vue__WEBPACK_IMPORTED_MODULE_8__["default"]
+    ClientUpdateEditor: _view_pages_freight_components_ClientUpdateEditor_vue__WEBPACK_IMPORTED_MODULE_8__["default"],
+    StaffPicker: _view_pages_freight_components_StaffPicker_vue__WEBPACK_IMPORTED_MODULE_9__["default"]
   },
   data: () => ({
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
@@ -169,6 +172,8 @@ const WORKSPACE_TABS = [{
     sentOk: false,
     /** Suggested client mails that were skipped or replaced — kept in the conversation. */
     notSent: [],
+    /** Who the open conversation can be handed to — its own branch's pricing staff. */
+    assignees: [],
     cargoBusy: false,
     cargoError: null,
     cargoSaved: false,
@@ -201,7 +206,7 @@ const WORKSPACE_TABS = [{
     CLASSIFICATIONS,
     WORKSPACE_TABS
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_9__.mapGetters)(["designation", "currentUser", "tierAtLeast"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_10__.mapGetters)(["designation", "currentUser", "tierAtLeast"])), {}, {
     /* Only pricing owns triage — re-classification mints or strands an enquiry. */
     canTriage() {
       return this.designation === "pricing";
@@ -220,10 +225,6 @@ const WORKSPACE_TABS = [{
     /** Mirrors the server's `assignOperator`. */
     canAssign() {
       return this.designation === "pricing" || this.designation === "boss";
-    },
-    /** Who a conversation can be handed to: the other pricing staff in the branch. */
-    assignees() {
-      return this.operators.filter(o => o.designation === "pricing" && !this.isMe(o));
     },
     /**
      * 🔴 TIMING AS A STATE, NOT FOUR TIMESTAMPS. The value in `first_triage_at` and
@@ -598,7 +599,7 @@ const WORKSPACE_TABS = [{
     fetchAttachment(a) {
       this.attachmentBusy = a.id;
       this.attachmentError = null;
-      return vue__WEBPACK_IMPORTED_MODULE_10__["default"].axios.get("/inbox/attachments/" + a.id, {
+      return vue__WEBPACK_IMPORTED_MODULE_11__["default"].axios.get("/inbox/attachments/" + a.id, {
         responseType: "blob"
       }).then(({
         data
@@ -716,7 +717,7 @@ const WORKSPACE_TABS = [{
     /** The server's job row is the truth; the header reads these four fields. */
     applyJob(job) {
       ["ops_id", "pricing_id", "pending_ops_id", "pending_ops_requested_by"].forEach(f => {
-        vue__WEBPACK_IMPORTED_MODULE_10__["default"].set(this.active.job, f, job[f]);
+        vue__WEBPACK_IMPORTED_MODULE_11__["default"].set(this.active.job, f, job[f]);
       });
     },
     operatorLabel(o) {
@@ -748,6 +749,17 @@ const WORKSPACE_TABS = [{
       this.active.assigned_ops = owner;
       const row = this.threads.find(t => t.id === this.active.id);
       if (row) row.assigned_ops = owner;
+    },
+    loadAssignees(threadId) {
+      this.assignees = [];
+      if (!this.canAssign) return;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/inbox/threads/${threadId}/assignees`).then(({
+        data
+      }) => {
+        if (this.active && this.active.id === threadId) this.assignees = data.assignees || [];
+      }).catch(() => {
+        this.assignees = [];
+      });
     },
     assignThread(userId) {
       this.actionError = null;
@@ -935,6 +947,7 @@ const WORKSPACE_TABS = [{
         this.pending = data.thread.classification;
         this.messages = data.messages || [];
         this.notSent = data.not_sent || [];
+        this.loadAssignees(data.thread.id);
         this.signature = data.signature || null;
         /* The cost sheet hangs off the JOB, not the thread, and extraction wants the
            AWB the shipment already carries rather than an empty box — that is what
@@ -2444,6 +2457,77 @@ const PARTY_REQUIRED = {
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=script&lang=js":
+/*!****************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=script&lang=js ***!
+  \****************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "StaffPicker",
+  props: {
+    /** [{ id, name, email? }] */
+    options: {
+      type: Array,
+      default: () => []
+    },
+    placeholder: {
+      type: String,
+      default: "Type a name…"
+    },
+    label: {
+      type: String,
+      default: "Choose a colleague"
+    },
+    disabled: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data: () => ({
+    query: "",
+    open: false,
+    active: 0
+  }),
+  computed: {
+    /** Every word typed must appear in the name or the email, in any order. */
+    matches() {
+      const words = this.query.toLowerCase().split(/\s+/).filter(Boolean);
+      return this.options.filter(o => {
+        const text = (o.name + " " + (o.email || "")).toLowerCase();
+        return words.every(w => text.indexOf(w) !== -1);
+      });
+    }
+  },
+  methods: {
+    move(step) {
+      if (!this.open) {
+        this.open = true;
+        return;
+      }
+      const n = this.matches.length;
+      if (n) this.active = (this.active + step + n) % n;
+    },
+    choose(option) {
+      if (!option) return;
+      this.$emit("select", option);
+      this.query = "";
+      this.open = false;
+      this.$refs.input.blur();
+    },
+    close() {
+      this.open = false;
+      this.active = 0;
+    }
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/JobInbox.vue?vue&type=template&id=e9ffa2de":
 /*!*************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/JobInbox.vue?vue&type=template&id=e9ffa2de ***!
@@ -2639,32 +2723,20 @@ var render = function render() {
         value: c
       }
     }, [_vm._v(_vm._s(c.replace(/_/g, " ")))]);
-  }), 0) : _vm._e(), _vm._v(" "), _vm.canAssign && _vm.assignees.length ? _c("select", {
-    staticClass: "fx-input fx-convo__assign",
+  }), 0) : _vm._e(), _vm._v(" "), _vm.canAssign && _vm.assignees.length ? _c("StaffPicker", {
+    staticClass: "fx-convo__assign",
     attrs: {
-      "aria-label": "Assign this conversation"
-    },
-    domProps: {
-      value: _vm.active.assigned_ops ? _vm.active.assigned_ops.id : ""
+      options: _vm.assignees,
+      disabled: _vm.busy,
+      placeholder: "Assign to… type a name",
+      label: "Assign this conversation"
     },
     on: {
-      change: function ($event) {
-        return _vm.assignThread($event.target.value);
+      select: function ($event) {
+        return _vm.assignThread($event.id);
       }
     }
-  }, [_c("option", {
-    attrs: {
-      value: "",
-      disabled: ""
-    }
-  }, [_vm._v("Assign to…")]), _vm._v(" "), _vm._l(_vm.assignees, function (o) {
-    return _c("option", {
-      key: o.id,
-      domProps: {
-        value: o.id
-      }
-    }, [_vm._v(_vm._s(o.name))]);
-  })], 2) : _vm._e(), _vm._v(" "), _vm.worksTheInbox ? _c("button", {
+  }) : _vm._e(), _vm._v(" "), _vm.worksTheInbox ? _c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
       "data-help": "open-workspace"
@@ -2672,7 +2744,7 @@ var render = function render() {
     on: {
       click: _vm.openWorkspace
     }
-  }, [_vm._v("Open workspace")]) : _vm._e()])]), _vm._v(" "), _vm.actionError ? _c("p", {
+  }, [_vm._v("Open workspace")]) : _vm._e()], 1)]), _vm._v(" "), _vm.actionError ? _c("p", {
     staticClass: "fx-error fx-inbox__pad",
     attrs: {
       role: "alert"
@@ -4680,6 +4752,108 @@ render._withStripped = true;
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=template&id=029b299d":
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=template&id=029b299d ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", {
+    staticClass: "fx-picker",
+    on: {
+      keydown: [function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "down", 40, $event.key, ["Down", "ArrowDown"])) return null;
+        $event.preventDefault();
+        return _vm.move(1);
+      }, function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "up", 38, $event.key, ["Up", "ArrowUp"])) return null;
+        $event.preventDefault();
+        return _vm.move(-1);
+      }, function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        $event.preventDefault();
+        return _vm.choose(_vm.matches[_vm.active]);
+      }, function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "esc", 27, $event.key, ["Esc", "Escape"])) return null;
+        return _vm.close.apply(null, arguments);
+      }]
+    }
+  }, [_c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.query,
+      expression: "query"
+    }],
+    ref: "input",
+    staticClass: "fx-input fx-picker__input",
+    attrs: {
+      type: "text",
+      role: "combobox",
+      "aria-expanded": String(_vm.open),
+      "aria-label": _vm.label,
+      placeholder: _vm.placeholder,
+      disabled: _vm.disabled
+    },
+    domProps: {
+      value: _vm.query
+    },
+    on: {
+      focus: function ($event) {
+        _vm.open = true;
+      },
+      input: [function ($event) {
+        if ($event.target.composing) return;
+        _vm.query = $event.target.value;
+      }, function ($event) {
+        _vm.open = true;
+        _vm.active = 0;
+      }],
+      blur: _vm.close
+    }
+  }), _vm._v(" "), _vm.open ? _c("ul", {
+    staticClass: "fx-picker__list",
+    attrs: {
+      role: "listbox"
+    }
+  }, [_vm._l(_vm.matches, function (o, i) {
+    return _c("li", {
+      key: o.id,
+      staticClass: "fx-picker__option",
+      class: {
+        "is-active": i === _vm.active
+      },
+      attrs: {
+        role: "option",
+        "aria-selected": String(i === _vm.active)
+      },
+      on: {
+        mousedown: function ($event) {
+          $event.preventDefault();
+          return _vm.choose(o);
+        }
+      }
+    }, [_vm._v("\n      " + _vm._s(o.name)), o.email ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" · " + _vm._s(o.email))]) : _vm._e()]);
+  }), _vm._v(" "), !_vm.matches.length ? _c("li", {
+    staticClass: "fx-picker__empty fx-muted"
+  }, [_vm._v("No one matches “" + _vm._s(_vm.query) + "”.")]) : _vm._e()], 2) : _vm._e()]);
+};
+var staticRenderFns = [];
+render._withStripped = true;
+
+
+/***/ }),
+
 /***/ "./resources/js/src/core/config/awbFieldRules.js":
 /*!*******************************************************!*\
   !*** ./resources/js/src/core/config/awbFieldRules.js ***!
@@ -5460,6 +5634,18 @@ function mailDeviations(mailCargo, found) {
 
 /***/ }),
 
+/***/ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=style&index=0&id=029b299d&lang=css":
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=style&index=0&id=029b299d&lang=css ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/JobInbox.vue":
 /*!**********************************************************!*\
   !*** ./resources/js/src/view/pages/freight/JobInbox.vue ***!
@@ -5612,6 +5798,46 @@ component.options.__file = "resources/js/src/view/pages/freight/components/Extra
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/components/StaffPicker.vue":
+/*!************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/StaffPicker.vue ***!
+  \************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _StaffPicker_vue_vue_type_template_id_029b299d__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./StaffPicker.vue?vue&type=template&id=029b299d */ "./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=template&id=029b299d");
+/* harmony import */ var _StaffPicker_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./StaffPicker.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=script&lang=js");
+/* harmony import */ var _StaffPicker_vue_vue_type_style_index_0_id_029b299d_lang_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./StaffPicker.vue?vue&type=style&index=0&id=029b299d&lang=css */ "./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=style&index=0&id=029b299d&lang=css");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+;
+
+
+/* normalize component */
+
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+  _StaffPicker_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _StaffPicker_vue_vue_type_template_id_029b299d__WEBPACK_IMPORTED_MODULE_0__.render,
+  _StaffPicker_vue_vue_type_template_id_029b299d__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/freight/components/StaffPicker.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/JobInbox.vue?vue&type=script&lang=js":
 /*!**********************************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/JobInbox.vue?vue&type=script&lang=js ***!
@@ -5669,6 +5895,21 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ExtractionPanel.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=script&lang=js");
  /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=script&lang=js":
+/*!************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=script&lang=js ***!
+  \************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_StaffPicker_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./StaffPicker.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_StaffPicker_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
 
 /***/ }),
 
@@ -5732,6 +5973,34 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_template_id_fa6bcd28__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_template_id_fa6bcd28__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ExtractionPanel.vue?vue&type=template&id=fa6bcd28 */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=template&id=fa6bcd28");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=template&id=029b299d":
+/*!******************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=template&id=029b299d ***!
+  \******************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_StaffPicker_vue_vue_type_template_id_029b299d__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_StaffPicker_vue_vue_type_template_id_029b299d__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_StaffPicker_vue_vue_type_template_id_029b299d__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./StaffPicker.vue?vue&type=template&id=029b299d */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=template&id=029b299d");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=style&index=0&id=029b299d&lang=css":
+/*!********************************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=style&index=0&id=029b299d&lang=css ***!
+  \********************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_clonedRuleSet_9_use_0_node_modules_laravel_mix_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_StaffPicker_vue_vue_type_style_index_0_id_029b299d_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!../../../../../../../node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./StaffPicker.vue?vue&type=style&index=0&id=029b299d&lang=css */ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/StaffPicker.vue?vue&type=style&index=0&id=029b299d&lang=css");
 
 
 /***/ })

@@ -103,19 +103,18 @@
               consignee is a rejected filing.
             -->
             <!--
-              Hand the conversation to another pricing colleague in the branch (user, 2026-09-16). Pricing assigns
-              directly; the new owner is told in their bell.
+              Hand the conversation to a pricing colleague of the CONVERSATION's branch (user, 2026-09-16): type a
+              name and pick from the matches. Pricing and the Boss assign directly; the new owner is told in their bell.
             -->
-            <select
+            <StaffPicker
               v-if="canAssign && assignees.length"
-              class="fx-input fx-convo__assign"
-              :value="active.assigned_ops ? active.assigned_ops.id : ''"
-              aria-label="Assign this conversation"
-              @change="assignThread($event.target.value)"
-            >
-              <option value="" disabled>Assign to…</option>
-              <option v-for="o in assignees" :key="o.id" :value="o.id">{{ o.name }}</option>
-            </select>
+              class="fx-convo__assign"
+              :options="assignees"
+              :disabled="busy"
+              placeholder="Assign to… type a name"
+              label="Assign this conversation"
+              @select="assignThread($event.id)"
+            />
 
 
             <button v-if="worksTheInbox" class="fx-btn fx-btn--primary" data-help="open-workspace" @click="openWorkspace">Open workspace</button>
@@ -623,6 +622,7 @@ import CostSheet from "@/view/pages/freight/components/CostSheet.vue";
 import CreditsPanel from "@/view/pages/freight/components/CreditsPanel.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 import ClientUpdateEditor from "@/view/pages/freight/components/ClientUpdateEditor.vue";
+import StaffPicker from "@/view/pages/freight/components/StaffPicker.vue";
 
 /** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
 const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
@@ -682,7 +682,7 @@ const WORKSPACE_TABS = [
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor },
+  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor, StaffPicker },
   data: () => ({
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
        has no use for a shipping-line folder and a sea operator none for an airline one;
@@ -710,6 +710,8 @@ export default {
     composing: false, sending: false, sendError: null, sentOk: false,
     /** Suggested client mails that were skipped or replaced — kept in the conversation. */
     notSent: [],
+    /** Who the open conversation can be handed to — its own branch's pricing staff. */
+    assignees: [],
     cargoBusy: false, cargoError: null, cargoSaved: false,
     draft: { to: "", cc: "", subject: "", body: "", includeSignature: true, mode: "reply", inReplyTo: null, files: [], attachmentIds: [] },
     ATTACHMENT_CAP_BYTES,
@@ -746,10 +748,7 @@ export default {
     canAssign() {
       return this.designation === "pricing" || this.designation === "boss";
     },
-    /** Who a conversation can be handed to: the other pricing staff in the branch. */
-    assignees() {
-      return this.operators.filter((o) => o.designation === "pricing" && !this.isMe(o));
-    },
+
     /**
      * 🔴 TIMING AS A STATE, NOT FOUR TIMESTAMPS. The value in `first_triage_at` and
      * `first_response_at` is the CONTRAST between them — a time against triaged with a
@@ -1267,6 +1266,13 @@ export default {
       const row = this.threads.find((t) => t.id === this.active.id);
       if (row) row.assigned_ops = owner;
     },
+    loadAssignees(threadId) {
+      this.assignees = [];
+      if (!this.canAssign) return;
+      ApiService.get(`/inbox/threads/${threadId}/assignees`)
+        .then(({ data }) => { if (this.active && this.active.id === threadId) this.assignees = data.assignees || []; })
+        .catch(() => { this.assignees = []; });
+    },
     assignThread(userId) {
       this.actionError = null;
       ApiService.post("/inbox/threads/" + this.active.id + "/assign", { user_id: Number(userId) })
@@ -1431,6 +1437,7 @@ export default {
           this.pending = data.thread.classification;
           this.messages = data.messages || [];
           this.notSent = data.not_sent || [];
+          this.loadAssignees(data.thread.id);
           this.signature = data.signature || null;
           /* The cost sheet hangs off the JOB, not the thread, and extraction wants the
              AWB the shipment already carries rather than an empty box — that is what

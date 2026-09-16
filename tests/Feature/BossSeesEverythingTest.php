@@ -92,4 +92,20 @@ class BossSeesEverythingTest extends TestCase
         $pricing = $this->user('pricing', $this->bom, '-bom');
         $this->assertSame(['BlueDart'], collect($this->api($pricing)->getJson('http://focusair.localhost/api/partners')->json('data'))->pluck('name')->all());
     }
+
+    /** 🔴 The assign list is the CONVERSATION's branch pricing staff — a Chennai conversation offers Chennai's people. */
+    public function test_the_assign_list_is_the_conversations_branch_pricing_staff(): void
+    {
+        $chennaiPricing = $this->user('pricing', $this->maa, '-maa');
+        $this->user('pricing', $this->bom, '-bom');
+        $this->user('sales', $this->maa, '-maa');
+        $thread = $this->thread($this->maa, 'desk@all.test', $this->boss->email);
+
+        $names = collect($this->api($this->boss)->getJson("http://admin.localhost/api/inbox/threads/{$thread}/assignees")->assertOk()->json('assignees'))->pluck('id')->all();
+        $this->assertSame([$chennaiPricing->id], $names);
+
+        // Pricing never sees themselves; operations do not assign.
+        $this->assertSame([], $this->api($chennaiPricing)->getJson("http://focusair.localhost/api/inbox/threads/{$thread}/assignees")->assertOk()->json('assignees'));
+        $this->api($this->user('operations', $this->maa))->getJson("http://focusair.localhost/api/inbox/threads/{$thread}/assignees")->assertForbidden();
+    }
 }

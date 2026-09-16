@@ -378,6 +378,21 @@ class EmailInboxController extends Controller
     }
 
     /**
+     * Who this conversation can be handed to: the active pricing staff of ITS branch, not the caller's (user,
+     * 2026-09-16). The Boss reads every branch's mail, so a Chennai conversation must offer Chennai's people —
+     * the same people `assign()` accepts.
+     */
+    public function assignees(EmailThread $thread): JsonResponse
+    {
+        $this->authorize('assignOperator');
+        abort_unless($thread->isVisibleTo(auth()->user()), 404);
+
+        return response()->json(['assignees' => \App\User::where('branch_name', $thread->agent_id)
+            ->where('designation', 'pricing')->where('is_active', 1)->whereKeyNot(auth()->id())
+            ->orderBy('name')->get(['id', 'name', 'email'])]);
+    }
+
+    /**
      * Hand a conversation to another pricing colleague in the branch (user, 2026-09-15/16). Pricing (and the Boss)
      * assign directly; the new owner is told in their bell. While the enquiry is still open they also become its
      * pricing owner, so the quote and the confirmed shipment follow the person now handling it.

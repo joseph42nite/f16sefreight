@@ -66,7 +66,11 @@ const STATUSES = [{
     lastPage: 1,
     total: 0
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)(["portalLabel", "can"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)(["portalLabel", "can", "designation"])), {}, {
+    /** The Pricing column is for sales: everyone else either is pricing, or has the owner elsewhere. */
+    showsPricingOwner() {
+      return this.designation === "sales";
+    },
     canConvert() {
       // Mirrors the server gate. Convenience only — the API re-checks it. Sales read the list only.
       return this.can(["pricing"], "tactical");
@@ -236,7 +240,41 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("\n    No enquiries on this portal yet.\n  ")]) : _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Number")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Client")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Status")]), _vm._v(" "), _vm.showsPricingOwner ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Pricing")]) : _vm._e(), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Lane")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Pieces")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Weight")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  })])]), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
     return _c("tr", {
       key: row.id
     }, [_c("td", {
@@ -252,7 +290,12 @@ var render = function render() {
       attrs: {
         value: row.status
       }
-    })], 1), _vm._v(" "), _c("td", [row.origin_code && row.dest_code ? _c("span", {
+    })], 1), _vm._v(" "), _vm.showsPricingOwner ? _c("td", [row.pricing_owner ? _c("span", [_vm._v(_vm._s(row.pricing_owner))]) : _c("span", {
+      staticClass: "is-empty",
+      attrs: {
+        "aria-label": "Nobody in pricing yet"
+      }
+    })]) : _vm._e(), _vm._v(" "), _c("td", [row.origin_code && row.dest_code ? _c("span", {
       staticClass: "identifier"
     }, [_vm._v("\n            " + _vm._s(row.origin_code) + " → " + _vm._s(row.dest_code) + "\n          ")]) : _c("span", {
       staticClass: "is-empty",
@@ -315,41 +358,7 @@ var render = function render() {
     }
   }, [_vm._v("Next →")])]) : _vm._e()]);
 };
-var staticRenderFns = [function () {
-  var _vm = this,
-    _c = _vm._self._c;
-  return _c("thead", [_c("tr", [_c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Number")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Client")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Status")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Lane")]), _vm._v(" "), _c("th", {
-    staticClass: "fx-num",
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Pieces")]), _vm._v(" "), _c("th", {
-    staticClass: "fx-num",
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Weight")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  })])]);
-}];
+var staticRenderFns = [];
 render._withStripped = true;
 
 

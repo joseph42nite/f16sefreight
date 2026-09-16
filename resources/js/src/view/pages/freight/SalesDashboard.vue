@@ -23,26 +23,6 @@
       Figures are {{ staleness.age_minutes }} minutes old. The rollup is overdue.
     </p>
 
-    <div class="fx-toolbar">
-      <label class="fx-field">
-        <span class="fx-field__label">Period</span>
-        <select v-model="grain" class="fx-input" @change="loadCharts">
-          <option value="day">Daily</option>
-          <option value="month">Monthly</option>
-          <option value="year">Yearly</option>
-        </select>
-      </label>
-      <!-- 🔴 The yearly funnel is a UNION over two bases; asking without one counts
-           every enquiry twice. So the control only exists where the choice does. -->
-      <label v-if="grain === 'year'" class="fx-field">
-        <span class="fx-field__label">Year basis</span>
-        <select v-model="basis" class="fx-input" @change="loadCharts">
-          <option value="fiscal">Fiscal (Apr–Mar)</option>
-          <option value="calendar">Calendar</option>
-        </select>
-      </label>
-    </div>
-
     <p v-if="loading" class="fx-muted">Loading…</p>
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
 
@@ -187,13 +167,40 @@
           empty-message="No lanes recorded yet."
         />
 
-        <FxChart
-          title="Win / loss"
-          type="donut"
-          :series="funnelSeries"
-          :options="funnelOptions"
-          empty-message="No closed enquiries in this window."
-        />
+        <!--
+          ⚠️ The period belongs HERE, not at the top of the page (user, 2026-09-16: "does it make any difference?").
+          It changes the win/loss window and nothing else — tonnage is the last 36 months and the lanes are the last
+          12 — so as a page-wide control it read as a filter over figures it never touched.
+        -->
+        <div class="fx-funnel">
+          <div class="fx-toolbar">
+            <label class="fx-field">
+              <span class="fx-field__label">Win / loss over</span>
+              <select v-model="grain" class="fx-input" @change="loadCharts">
+                <option value="day">The last 24 days</option>
+                <option value="month">The last 24 months</option>
+                <option value="year">The last 2 years</option>
+              </select>
+            </label>
+            <!-- 🔴 The yearly funnel is a UNION over two bases; asking without one counts
+                 every enquiry twice. So the control only exists where the choice does. -->
+            <label v-if="grain === 'year'" class="fx-field">
+              <span class="fx-field__label">Year basis</span>
+              <select v-model="basis" class="fx-input" @change="loadCharts">
+                <option value="fiscal">Fiscal (Apr–Mar)</option>
+                <option value="calendar">Calendar</option>
+              </select>
+            </label>
+          </div>
+
+          <FxChart
+            title="Win / loss"
+            type="donut"
+            :series="funnelSeries"
+            :options="funnelOptions"
+            empty-message="No closed enquiries in this window."
+          />
+        </div>
       </section>
 
       <section class="fx-section">

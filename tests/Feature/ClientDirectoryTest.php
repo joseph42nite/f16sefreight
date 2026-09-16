@@ -145,4 +145,20 @@ class ClientDirectoryTest extends TestCase
             $this->assertSame(['Globex Industries', $customer->id, 'globex.test'], [$row['client_label'], $row['customer_id'], $row['client_domain']], $role);
         }
     }
+
+    /** 🔴 Sales see who in pricing is on an enquiry; pricing's own board does not repeat their name. */
+    public function test_sales_see_the_pricing_owner_on_the_enquiries_page(): void
+    {
+        [$company, $branch, $customer] = $this->tenant('tactical');
+        $pricing = \App\User::create(['name' => 'Priya Nair', 'email' => 'owner-tac-dir@test.local', 'password' => 'x',
+            'company_name' => $company->id, 'branch_name' => $branch->id, 'designation' => 'pricing', 'is_active' => 1]);
+        \App\Enquiry::create(['agent_id' => $branch->id, 'transport_mode' => 'air', 'status' => 'new', 'customer_id' => $customer->id,
+            'pricing_id' => $pricing->id, 'enquiry_no' => 'ENQA-TACD-26-0009']);
+
+        $this->as($company, $branch, 'sales')->getJson('http://focusair.localhost/api/enquiries')
+            ->assertOk()->assertJsonPath('data.0.pricing_owner', 'Priya Nair');
+
+        $this->as($company, $branch, 'pricing')->getJson('http://focusair.localhost/api/enquiries')
+            ->assertOk()->assertJsonPath('data.0.pricing_owner', null);
+    }
 }

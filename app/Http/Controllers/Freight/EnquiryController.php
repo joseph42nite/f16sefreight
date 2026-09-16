@@ -101,7 +101,14 @@ class EnquiryController extends Controller
         $threads = DB::table('email_threads')->whereIn('enquiry_id', $ids)->pluck('id', 'enquiry_id');
         $firstMail = $this->firstMailFor($ids);
 
-        $enquiries->getCollection()->transform(function ($enquiry) use ($isCommand, $namesHidden, $threads, $firstMail) {
+        // 🔴 Who in pricing is on it — for SALES only (user, 2026-09-16). A rep fielding "where is my rate?" needs
+        // the colleague to ask; pricing already know, and their own board would just repeat their name on every row.
+        $pricingOwners = $context->designation === 'sales'
+            ? DB::table('users')->whereIn('id', $enquiries->getCollection()->pluck('pricing_id')->filter())->pluck('name', 'id')
+            : collect();
+
+        $enquiries->getCollection()->transform(function ($enquiry) use ($isCommand, $namesHidden, $threads, $firstMail, $pricingOwners) {
+            $enquiry->pricing_owner = $pricingOwners[$enquiry->pricing_id] ?? null;
             $domain = $firstMail[$enquiry->id]['domain'] ?? null;
             // When the client's mail came in — the pool card shows it and how long it has waited.
             $enquiry->received_at = $firstMail[$enquiry->id]['received_at'] ?? $enquiry->created_at;

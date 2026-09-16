@@ -55,6 +55,8 @@
           <th scope="col">Number</th>
           <th scope="col">Client</th>
           <th scope="col">Status</th>
+          <!-- Sales see who in pricing is on it, so "where is my rate?" has somebody to ask (user, 2026-09-16). -->
+          <th v-if="showsPricingOwner" scope="col">Pricing</th>
           <th scope="col">Lane</th>
           <th scope="col" class="fx-num">Pieces</th>
           <th scope="col" class="fx-num">Weight</th>
@@ -82,6 +84,10 @@
             >{{ row.client_domain }}</span>
           </td>
           <td><StatusChip :value="row.status" /></td>
+          <td v-if="showsPricingOwner">
+            <span v-if="row.pricing_owner">{{ row.pricing_owner }}</span>
+            <span v-else class="is-empty" aria-label="Nobody in pricing yet"></span>
+          </td>
           <td>
             <!-- §4.1 NULL is not zero — an unknown lane renders as an em dash, never
                  as a blank that reads like "no lane". -->
@@ -143,7 +149,11 @@ export default {
     client: "", status: "", rows: [], loading: true, error: null, busyId: null, STATUSES,
     page: 1, lastPage: 1, total: 0 }),
   computed: {
-    ...mapGetters(["portalLabel", "can"]),
+    ...mapGetters(["portalLabel", "can", "designation"]),
+    /** The Pricing column is for sales: everyone else either is pricing, or has the owner elsewhere. */
+    showsPricingOwner() {
+      return this.designation === "sales";
+    },
     canConvert() {
       // Mirrors the server gate. Convenience only — the API re-checks it. Sales read the list only.
       return this.can(["pricing"], "tactical");

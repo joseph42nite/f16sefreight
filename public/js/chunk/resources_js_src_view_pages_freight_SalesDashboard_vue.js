@@ -514,75 +514,7 @@ var render = function render() {
     attrs: {
       role: "status"
     }
-  }, [_vm._v("\n    Figures are " + _vm._s(_vm.staleness.age_minutes) + " minutes old. The rollup is overdue.\n  ")]) : _vm._e(), _vm._v(" "), _c("div", {
-    staticClass: "fx-toolbar"
-  }, [_c("label", {
-    staticClass: "fx-field"
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("Period")]), _vm._v(" "), _c("select", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.grain,
-      expression: "grain"
-    }],
-    staticClass: "fx-input",
-    on: {
-      change: [function ($event) {
-        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
-          return o.selected;
-        }).map(function (o) {
-          var val = "_value" in o ? o._value : o.value;
-          return val;
-        });
-        _vm.grain = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
-      }, _vm.loadCharts]
-    }
-  }, [_c("option", {
-    attrs: {
-      value: "day"
-    }
-  }, [_vm._v("Daily")]), _vm._v(" "), _c("option", {
-    attrs: {
-      value: "month"
-    }
-  }, [_vm._v("Monthly")]), _vm._v(" "), _c("option", {
-    attrs: {
-      value: "year"
-    }
-  }, [_vm._v("Yearly")])])]), _vm._v(" "), _vm.grain === "year" ? _c("label", {
-    staticClass: "fx-field"
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("Year basis")]), _vm._v(" "), _c("select", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.basis,
-      expression: "basis"
-    }],
-    staticClass: "fx-input",
-    on: {
-      change: [function ($event) {
-        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
-          return o.selected;
-        }).map(function (o) {
-          var val = "_value" in o ? o._value : o.value;
-          return val;
-        });
-        _vm.basis = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
-      }, _vm.loadCharts]
-    }
-  }, [_c("option", {
-    attrs: {
-      value: "fiscal"
-    }
-  }, [_vm._v("Fiscal (Apr–Mar)")]), _vm._v(" "), _c("option", {
-    attrs: {
-      value: "calendar"
-    }
-  }, [_vm._v("Calendar")])])]) : _vm._e()]), _vm._v(" "), _vm.loading ? _c("p", {
+  }, [_vm._v("\n    Figures are " + _vm._s(_vm.staleness.age_minutes) + " minutes old. The rollup is overdue.\n  ")]) : _vm._e(), _vm._v(" "), _vm.loading ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
     staticClass: "fx-error",
@@ -831,7 +763,77 @@ var render = function render() {
       options: _vm.laneOptions,
       "empty-message": "No lanes recorded yet."
     }
-  }), _vm._v(" "), _c("FxChart", {
+  }), _vm._v(" "), _c("div", {
+    staticClass: "fx-funnel"
+  }, [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Win / loss over")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.grain,
+      expression: "grain"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.grain = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, _vm.loadCharts]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "day"
+    }
+  }, [_vm._v("The last 24 days")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "month"
+    }
+  }, [_vm._v("The last 24 months")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "year"
+    }
+  }, [_vm._v("The last 2 years")])])]), _vm._v(" "), _vm.grain === "year" ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Year basis")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.basis,
+      expression: "basis"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.basis = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, _vm.loadCharts]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "fiscal"
+    }
+  }, [_vm._v("Fiscal (Apr–Mar)")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "calendar"
+    }
+  }, [_vm._v("Calendar")])])]) : _vm._e()]), _vm._v(" "), _c("FxChart", {
     attrs: {
       title: "Win / loss",
       type: "donut",
@@ -839,7 +841,7 @@ var render = function render() {
       options: _vm.funnelOptions,
       "empty-message": "No closed enquiries in this window."
     }
-  })], 1) : _vm._e(), _vm._v(" "), _c("section", {
+  })], 1)], 1) : _vm._e(), _vm._v(" "), _c("section", {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"

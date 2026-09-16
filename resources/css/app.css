@@ -1015,3 +1015,18 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 /* Credits in the workspace: per document, never money. */
 .fx-credits .fx-section__title { margin-top: var(--space-4); }
 .fx-credits__rates { margin: 0 0 var(--space-2); padding-left: 1.2rem; font-size: .875rem; }
+
+/* ═══ Connecting Outlook: the first-sign-in question, the reminder bar, the import screen (user, 2026-09-16) ═══ */
+.fx-welcome { width: min(32rem, 100%); }
+.fx-welcome__points { margin: var(--space-3) 0 0; padding-left: 1.2rem; color: var(--text-muted); display: grid; gap: var(--space-1); }
+.fx-reminder { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2);
+               padding: var(--space-2) var(--space-3); margin-bottom: var(--space-3);
+               border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-raised); }
+.fx-reminder > span { flex: 1 1 16rem; }
+.fx-import { max-width: 36rem; margin: var(--space-6) auto; display: grid; gap: var(--space-3); }
+.fx-import__bar { height: .6rem; border-radius: 999px; background: var(--bg-sunken); overflow: hidden; }
+.fx-import__fill { height: 100%; background: var(--accent, #2F6FEB); border-radius: inherit; transition: width .4s ease; }
+.fx-import__fill.is-unknown { animation: fx-import-pulse 1.4s ease-in-out infinite; }
+@keyframes fx-import-pulse { 50% { opacity: .45; } }
+.fx-import__count { font-size: 1.05rem; margin: 0; }
+.fx-import__actions { display: flex; gap: var(--space-2); }

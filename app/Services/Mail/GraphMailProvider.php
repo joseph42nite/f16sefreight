@@ -25,9 +25,11 @@ use RuntimeException;
  * Delegated access is bounded by the user who consented, which is the boundary the product
  * already wants: a user connects THEIR mailbox.
  *
- * 🔴 **`/me/messages/delta`, NOT `/mailFolders/inbox/messages/delta`.** A reply typed in
- * Outlook lands in Sent Items and never touches the Inbox; an inbox-scoped sync loses half
- * of every conversation and, worse, loses exactly the half that fills `first_response_at`.
+ * 🔴 **Inbox AND Sent Items, each with its own delta.** Graph has no mailbox-wide message
+ * delta — only `/me/mailFolders/{id}/messages/delta` (checked against Microsoft's docs,
+ * 2026-09-16; the `/me/messages/delta` this used before does not exist). A reply typed in
+ * Outlook lands in Sent Items and never touches the Inbox, so reading the Inbox alone loses
+ * half of every conversation — the half that fills `first_response_at`.
  */
 class GraphMailProvider implements MailProviderContract
 {
@@ -90,22 +92,29 @@ class GraphMailProvider implements MailProviderContract
         return strtolower($address);
     }
 
-    public function delta(MailboxConnection $connection, ?string $cursor): array
+    /** Received and sent mail — Graph's well-known folder names. */
+    public function folders(): array
     {
-        $url = $cursor ?: $this->api() . '/me/messages/delta?' . http_build_query([
+        return ['inbox', 'sentitems'];
+    }
+
+    public function delta(MailboxConnection $connection, string $folder, ?string $cursor, ?Carbon $since = null): array
+    {
+        $url = $cursor ?: $this->folderUrl($folder) . '/messages/delta?' . http_build_query(array_filter([
             // 🔴 ccRecipients is REQUESTED, not inferred. Graph returns only the fields
             // named here, so a missing one is silently an empty list rather than an
             // error — which is exactly how CC came to be absent everywhere downstream.
             '$select' => 'id,internetMessageId,conversationId,subject,from,toRecipients,'
                 . 'ccRecipients,bccRecipients,'
                 . 'receivedDateTime,bodyPreview,hasAttachments,internetMessageHeaders',
-            '$top' => 50,
-        ]);
+            // The only filter a message delta accepts. It sets where the stream starts; later
+            // pages and the deltaLink carry it on by themselves.
+            '$filter' => $since ? 'receivedDateTime ge ' . $since->copy()->utc()->format('Y-m-d\TH:i:s\Z') : null,
+        ]));
 
         $response = Http::withToken($connection->access_token)
             ->acceptJson()
-            // Graph returns deltas in pages; `Prefer` keeps the payload to what we select.
-            ->withHeaders(['Prefer' => 'outlook.body-content-type="text"'])
+            ->withHeaders(['Prefer' => 'odata.maxpagesize=50, outlook.body-content-type="text"'])
             ->get($url);
 
         if ($response->failed()) {
@@ -135,6 +144,28 @@ class GraphMailProvider implements MailProviderContract
             // a nextLink as the delta cursor would replay the same page forever.
             'delta_cursor' => $body['@odata.deltaLink'] ?? null,
         ];
+    }
+
+    /** How many messages a folder holds since a date — the import's "of about N". */
+    public function count(MailboxConnection $connection, string $folder, Carbon $since): int
+    {
+        $response = Http::withToken($connection->access_token)->acceptJson()
+            ->get($this->folderUrl($folder) . '/messages', [
+                '$filter' => 'receivedDateTime ge ' . $since->copy()->utc()->format('Y-m-d\TH:i:s\Z'),
+                '$count' => 'true', '$top' => 1, '$select' => 'id',
+            ]);
+
+        if ($response->failed()) {
+            throw new RuntimeException('Graph count failed: ' . $response->status());
+        }
+
+        // Array access, not json('@odata.count'): the dot would be read as a path.
+        return (int) ($response->json()['@odata.count'] ?? 0);
+    }
+
+    private function folderUrl(string $folder): string
+    {
+        return $this->api() . '/me/mailFolders/' . rawurlencode($folder);
     }
 
     /** Graph's message shape → the ingestor's shape. Nothing above this sees Graph JSON. */

@@ -54,6 +54,8 @@ class MailboxSyncTest extends TestCase
             'email_address' => 'ops@f16s.test', 'provider' => 'outlook',
             'access_token' => 'valid-token', 'refresh_token' => 'refresh-token',
             'expires_at' => now()->addHour(), 'auth_state' => 'connected', 'is_active' => true,
+            // Live sync; the first-connection import has its own tests below.
+            'backfill_status' => 'completed',
         ]);
 
         $this->installFake();
@@ -78,9 +80,16 @@ class MailboxSyncTest extends TestCase
 
     private int $graphStatus = 200;
 
+    /** A test's own Graph answers, tried first (a second Http::fake would be ignored — see above). */
+    private ?\Closure $route = null;
+
     private function installFake(): void
     {
         Http::fake(function ($request) {
+            if ($this->route && ($answer = ($this->route)(urldecode($request->url())))) {
+                return $answer;
+            }
+
             if (str_contains($request->url(), 'login.microsoftonline.com')) {
                 return Http::response($this->nextToken ?? [
                     'access_token' => 'fresh-token', 'refresh_token' => 'new-refresh', 'expires_in' => 3600,
@@ -456,7 +465,8 @@ class MailboxSyncTest extends TestCase
         $second = $this->sync();
 
         $this->assertSame(0, $second['ingested']);
-        $this->assertSame(1, $second['echoes']);
+        // The fake answers both folders with the same page, so it comes back twice — both echoes.
+        $this->assertSame(2, $second['echoes']);
         $this->assertSame(1, DB::table('email_messages')
             ->where('message_id', $message['internetMessageId'])->count());
     }
@@ -619,14 +629,74 @@ class MailboxSyncTest extends TestCase
     public function test_only_the_delta_link_is_stored_as_the_sync_cursor(): void
     {
         $this->fakeDelta([$this->graphMessage()],
-            'https://graph.microsoft.com/v1.0/me/messages/delta?$deltatoken=FINAL');
+            'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?$deltatoken=FINAL');
 
         $this->sync();
 
-        $this->assertSame('https://graph.microsoft.com/v1.0/me/messages/delta?$deltatoken=FINAL',
-            $this->mailbox->fresh()->sync_cursor);
+        // One per folder: Inbox and Sent Items each keep their own.
+        $this->assertSame(['inbox', 'sentitems'], array_keys(json_decode($this->mailbox->fresh()->sync_cursor, true)));
         $this->assertNull($this->mailbox->fresh()->backfill_page_cursor);
         $this->assertNotNull($this->mailbox->fresh()->last_synced_at);
+    }
+
+    /**
+     * 🔴 Graph has no mailbox-wide message delta: each folder is read on its own URL, and a new
+     * stream starts from the import's first day — the only filter a message delta accepts.
+     */
+    public function test_inbox_and_sent_items_are_read_each_from_the_import_start(): void
+    {
+        $this->mailbox->forceFill(['backfill_status' => 'pending'])->save();
+
+        $this->sync();
+
+        $deltas = collect(Http::recorded())->map(fn ($pair) => urldecode($pair[0]->url()))->filter(fn ($url) => str_contains($url, '/delta'))->values();
+        $this->assertCount(2, $deltas);
+        $this->assertStringContainsString('/me/mailFolders/inbox/messages/delta', $deltas[0]);
+        $this->assertStringContainsString('/me/mailFolders/sentitems/messages/delta', $deltas[1]);
+        $this->assertStringContainsString('receivedDateTime ge ' . now()->subMonth()->startOfDay()->utc()->format('Y-m-d\TH:i:s\Z'), $deltas[0]);
+    }
+
+    /**
+     * The first sync of a new mailbox imports the last month: its mail is marked historical and
+     * counted, a page left over resumes on the next run, and it completes when every folder has
+     * its deltaLink. Later mail is live.
+     */
+    public function test_a_new_mailbox_imports_a_month_then_syncs_live(): void
+    {
+        $this->mailbox->forceFill(['backfill_status' => 'pending'])->save();
+        $this->route = function (string $url) {
+            if (str_contains($url, '$count')) {
+                return Http::response(['@odata.count' => 3, 'value' => []]);
+            }
+            if (str_contains($url, 'inbox/messages/delta') && ! str_contains($url, 'skiptoken')) {
+                return Http::response(['value' => [$this->graphMessage(), $this->graphMessage()], '@odata.nextLink' => 'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?$skiptoken=P2']);
+            }
+            if (str_contains($url, 'skiptoken=P2')) {
+                return Http::response(['value' => [$this->graphMessage()], '@odata.deltaLink' => 'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?$deltatoken=IN']);
+            }
+            if (str_contains($url, 'sentitems/messages/delta')) {
+                return Http::response(['value' => [], '@odata.deltaLink' => 'https://graph.microsoft.com/v1.0/me/mailFolders/sentitems/messages/delta?$deltatoken=OUT']);
+            }
+
+            return null;
+        };
+
+        // One page per folder: the Inbox's second page waits for the next run.
+        app(MailboxSyncService::class)->sync($this->mailbox->fresh(), 1);
+        $half = $this->mailbox->fresh();
+        $this->assertSame(['running', 2, 6], [$half->backfill_status, $half->backfill_processed, $half->backfill_estimate]);
+        $this->assertStringContainsString('skiptoken=P2', $half->backfill_page_cursor);
+
+        app(MailboxSyncService::class)->sync($this->mailbox->fresh(), 1);
+        $done = $this->mailbox->fresh();
+        $this->assertSame(['completed', 3, null], [$done->backfill_status, $done->backfill_processed, $done->backfill_page_cursor]);
+        $this->assertSame(3, DB::table('email_messages')->where('mailbox_connection_id', $this->mailbox->id)->where('is_historical', 1)->count());
+
+        // After the import: live.
+        $this->route = null;
+        $this->nextDelta = ['value' => [$this->graphMessage()], '@odata.deltaLink' => 'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?$deltatoken=IN2'];
+        app(MailboxSyncService::class)->sync($this->mailbox->fresh());
+        $this->assertSame(1, DB::table('email_messages')->where('mailbox_connection_id', $this->mailbox->id)->where('is_historical', 0)->count());
     }
 
     // ─── Tokens ──────────────────────────────────────────────────────────────

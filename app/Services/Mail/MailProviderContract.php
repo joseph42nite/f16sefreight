@@ -44,15 +44,20 @@ interface MailProviderContract
     /** The mailbox address the tokens belong to — never trust the one the user typed. */
     public function primaryAddress(string $accessToken): string;
 
+    /** The folders a sync reads, each with its own cursor — received and sent mail. */
+    public function folders(): array;
+
     /**
-     * One page of changes since `$cursor`.
+     * One page of one folder's changes since `$cursor`.
      *
-     * ⚠️ A NULL cursor means "start a delta stream", not "read everything ever". The
-     * initial fill is a separate, resumable concern — see `backfill_page_cursor`.
+     * ⚠️ A NULL cursor starts a new stream from `$since` (the import's first day).
      *
      * @return array{messages: array<int,NormalisedMessage>, next_cursor: ?string, delta_cursor: ?string}
      */
-    public function delta(MailboxConnection $connection, ?string $cursor): array;
+    public function delta(MailboxConnection $connection, string $folder, ?string $cursor, ?\Illuminate\Support\Carbon $since = null): array;
+
+    /** How many messages a folder holds since a date. */
+    public function count(MailboxConnection $connection, string $folder, \Illuminate\Support\Carbon $since): int;
 
     /**
      * The files attached to one message — names and types only, never the bytes.

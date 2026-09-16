@@ -129,6 +129,8 @@ class LoginController extends Controller
                 'branch'      => \Illuminate\Support\Facades\DB::table('agents_info')->where('id', $context->agentId)->value('agent_name'),
                 'tier'        => $context->tier,
             ],
+            // Their own Outlook: asked on first sign-in, reminded until connected.
+            'mailbox' => \App\Http\Controllers\Freight\ProfileController::mailboxState($user, $context),
             'portal'  => $portal->exists() ? [
                 'key'   => $portal->key,
                 'label' => $portal->label(),

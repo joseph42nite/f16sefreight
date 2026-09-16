@@ -225,7 +225,7 @@ class MailboxConnectionTest extends TestCase
         $state = $this->beginConnect();
 
         $this->fakeSuccessfulExchange('first@f16s.test');
-        $this->get($this->callbackUrl($state))->assertOk();
+        $this->get($this->callbackUrl($state))->assertRedirect();
 
         $this->get($this->callbackUrl($state))->assertStatus(400);
 
@@ -238,10 +238,14 @@ class MailboxConnectionTest extends TestCase
         $state = $this->beginConnect();
         $this->fakeSuccessfulExchange('ops@f16s.test');
 
-        $this->get($this->callbackUrl($state))->assertOk();
+        $response = $this->get($this->callbackUrl($state));
 
         $connection = MailboxConnection::withoutGlobalScopes()
             ->where('email_address', 'ops@f16s.test')->first();
+
+        // Back to the portal the person started from, onto the import screen.
+        $response->assertRedirect(parse_url($this->url('/'), PHP_URL_SCHEME) . '://' . parse_url($this->url('/'), PHP_URL_HOST) . '/mailbox-import/' . $connection->id);
+        $this->assertSame('pending', $connection->backfill_status);
 
         $this->assertNotNull($connection);
         $this->assertSame('connected', $connection->auth_state);
@@ -314,6 +318,37 @@ class MailboxConnectionTest extends TestCase
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────────
+
+    /**
+     * First sign-in (user, 2026-09-16): pricing, operations, sales, the Boss and accounts are asked to connect their
+     * own Outlook; "Later" stops the question and the reminder stays until connected.
+     */
+    public function test_the_first_sign_in_asks_for_outlook_until_answered_or_connected(): void
+    {
+        $this->api()->getJson('http://focusair.localhost/api/me')->assertOk()
+            ->assertJsonPath('mailbox', ['connected' => false, 'ask' => true, 'mailbox_id' => null, 'importing' => false]);
+
+        $this->postJson($this->url('/mailbox-prompt/later'))->assertOk();
+        $this->getJson('http://focusair.localhost/api/me')->assertJsonPath('mailbox.ask', false)->assertJsonPath('mailbox.connected', false);
+
+        $mailbox = $this->connection(['backfill_status' => 'running']);
+        $this->getJson('http://focusair.localhost/api/me')->assertJsonPath('mailbox.connected', true)
+            ->assertJsonPath('mailbox.mailbox_id', $mailbox->id)->assertJsonPath('mailbox.importing', true);
+
+    }
+
+    /** The import screen's endpoint: a few pages per call, and how far it has got; another branch's mailbox is not found. */
+    public function test_the_import_screen_reads_progress(): void
+    {
+        $mailbox = $this->connection(['backfill_status' => 'completed', 'backfill_processed' => 412, 'backfill_estimate' => 420]);
+
+        $this->api()->postJson($this->url("/mailboxes/{$mailbox->id}/import"))->assertOk()
+            ->assertJsonPath('status', 'completed')->assertJsonPath('processed', 412)->assertJsonPath('estimate', 420);
+
+        $other = Agent::create(['company_id' => $this->company->id, 'agent_name' => 'MAA', 'branch_code' => 'MAA']);
+        $elsewhere = $this->connection(['email_address' => 'maa@f16s.test'], $other);
+        $this->postJson($this->url("/mailboxes/{$elsewhere->id}/import"))->assertNotFound();
+    }
 
     private function beginConnect(): string
     {

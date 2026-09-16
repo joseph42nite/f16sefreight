@@ -24,4 +24,35 @@ class ProfileController extends Controller
 
         return response()->json(['name' => $user->name]);
     }
+
+    /**
+     * Where this person stands with their own Outlook (user, 2026-09-16): pricing, operations, sales, the Boss and
+     * accounts connect their mailbox; on their first sign-in they are asked, and may answer "Later".
+     *
+     * @return ?array{connected: bool, ask: bool, mailbox_id: ?int, importing: bool}  null for anyone who does not connect one
+     */
+    public static function mailboxState($user, \App\Support\UserContext $context): ?array
+    {
+        if (! in_array($context->designation, ['pricing', 'operations', 'sales', 'boss', 'accounts'], true) || $context->tier === 'core') {
+            return null;
+        }
+
+        $mailbox = \App\MailboxConnection::withoutGlobalScopes()->where('user_id', $user->id)
+            ->whereNull('disconnected_at')->where('auth_state', 'connected')->latest('id')->first();
+
+        return [
+            'connected' => $mailbox !== null,
+            'ask' => $mailbox === null && $user->mailbox_prompted_at === null,
+            'mailbox_id' => $mailbox?->id,
+            'importing' => $mailbox !== null && in_array($mailbox->backfill_status, ['pending', 'running'], true),
+        ];
+    }
+
+    /** "Later": not asked again on sign-in; a reminder bar stays until the mailbox is connected. */
+    public function mailboxLater(): JsonResponse
+    {
+        auth()->user()->forceFill(['mailbox_prompted_at' => now()])->save();
+
+        return response()->json(['ok' => true]);
+    }
 }

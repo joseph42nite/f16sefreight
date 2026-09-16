@@ -678,7 +678,7 @@ A Google OAuth client in **"Testing"** publishing status issues refresh tokens t
 
 #### 5.2.2 Historical Backfill & Background Polling
 
-##### Initial backfill — the first 60 days
+##### Initial backfill — the last month (user, 2026-09-16; was 60 days)
 
 A delta query begins at the moment it is first called. Without an explicit backfill a newly connected mailbox shows an **empty inbox** until the next message happens to arrive, which reads as a broken product on day one and strands every enquiry already in flight at the moment of onboarding.
 
@@ -689,7 +689,7 @@ On successful connection the callback dispatches a queued `BackfillMailboxJob`:
 | Microsoft | `GET /me/messages/delta?$filter=receivedDateTime ge {window_floor}` — **mailbox-wide, not inbox-scoped**, so Sent Items are captured too (§5.2.3) — Graph accepts a `receivedDateTime` filter on the *initial* delta request specifically for this scenario, so the history and the terminal `@odata.deltaLink` arrive from one flow |
 | Google | `users.messages.list?q=in:anywhere newer_than:60d` — **`in:anywhere` is required**, or the default inbox scope silently drops Sent. Then capture the current `historyId` as the cursor |
 
-- **Window:** 60 days, stored per connection in `mailbox_connections.backfill_from` so the value is auditable and can be widened for a specific onboarding without a code change.
+- **Window:** 1 month (`MailboxSyncService::IMPORT_MONTHS`), stored per connection in `mailbox_connections.backfill_from` so the value is auditable and can be widened for a specific onboarding without a code change.
 - **Queued, never inline.** The OAuth callback returns immediately. A busy forwarding desk is plausibly 3,000–10,000 messages over 60 days; holding an HTTP request open for that is not an option.
 - **Throttle discipline.** Graph permits ~4 concurrent requests per mailbox. Use `$select` to fetch only the fields we normalize, group reads with `$batch` (20 per request), and back off on `429` honouring `Retry-After`.
 - **Metadata only.** Attachment binaries are *not* pulled during backfill; the lazy-download rule below applies unchanged. Backfilling 60 days of PDFs would be the single largest storage and ClamAV cost in onboarding, for files most of which are never opened.

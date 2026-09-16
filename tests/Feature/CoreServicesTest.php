@@ -190,12 +190,12 @@ class CoreServicesTest extends TestCase
         $this->assertNotNull($service->classify($this->message(), 'air'));
     }
 
-    /** Backfilled mail must not start clocks or propose enquiries. */
-    public function test_historical_mail_is_never_classified(): void
+    /** Imported mail is filed by type like live mail (PRD §5.2.2, GAPS #334) — filing mints nothing. */
+    public function test_imported_mail_is_classified_like_live_mail(): void
     {
         $service = app(RegexClassificationService::class);
 
-        $this->assertNull($service->classify($this->message(['is_historical' => true]), 'air'));
+        $this->assertNotNull($service->classify($this->message(['is_historical' => true]), 'air'));
     }
 
     /**

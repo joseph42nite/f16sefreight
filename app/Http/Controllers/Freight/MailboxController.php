@@ -85,6 +85,9 @@ class MailboxController extends Controller
             'user_id'  => $user->id,
             'agent_id' => $context->agentId,
             'provider' => $data['provider'],
+            // The portal they started from — Microsoft sends the browser back to one fixed address, and the sign-in is
+            // kept per portal, so the import screen must open where they were.
+            'return_to' => $request->getSchemeAndHttpHost(),
         ], now()->addMinutes(self::STATE_TTL_MINUTES));
 
         // 🔴 AN UNCONFIGURED APP MUST EXPLAIN ITSELF, NOT 500. Until the Entra app
@@ -130,11 +133,11 @@ class MailboxController extends Controller
 
         // Microsoft reports consent refusal as a redirect, not an error status.
         if ($request->filled('error')) {
-            return $this->finish('Microsoft did not grant access: ' . $request->query('error_description', $request->query('error')), false);
+            return $this->finish('Microsoft did not grant access: ' . $request->query('error_description', $request->query('error')), false, $pending['return_to'] ?? null);
         }
 
         if (! $request->filled('code')) {
-            return $this->finish('Microsoft did not return an authorization code.', false);
+            return $this->finish('Microsoft did not return an authorization code.', false, $pending['return_to'] ?? null);
         }
 
         try {
@@ -142,7 +145,7 @@ class MailboxController extends Controller
             $tokens = $provider->exchangeCode((string) $request->query('code'));
             $address = $provider->primaryAddress($tokens['access_token']);
         } catch (Throwable $e) {
-            return $this->finish('Could not complete the connection: ' . $e->getMessage(), false);
+            return $this->finish('Could not complete the connection: ' . $e->getMessage(), false, $pending['return_to'] ?? null);
         }
 
         // 🔴 `email_address` is GLOBALLY unique. A mailbox already attached elsewhere must
@@ -151,7 +154,7 @@ class MailboxController extends Controller
         $existing = MailboxConnection::withoutGlobalScopes()->where('email_address', $address)->first();
 
         if ($existing !== null && (int) $existing->agent_id !== (int) $pending['agent_id']) {
-            return $this->finish("{$address} is already connected to another branch.", false);
+            return $this->finish("{$address} is already connected to another branch.", false, $pending['return_to'] ?? null);
         }
 
         $connection = $existing ?? new MailboxConnection();
@@ -170,13 +173,15 @@ class MailboxController extends Controller
             // back, unlike a tier upgrade, which must not.
             'disconnected_at'  => null,
             'disconnected_by'  => null,
-            'backfill_status'  => 'pending',
+            // A reconnect after the import finished carries on from its cursors; otherwise the last month is imported.
+            'backfill_status'  => $connection->backfill_status === 'completed' ? 'completed' : 'pending',
         ])->save();
 
         $this->audit->record($pending['agent_id'], 'mailbox.connected', 'mailbox_connection',
             $connection->id, $pending['user_id']);
 
-        return $this->finish("{$address} is connected. Mail will begin syncing shortly.", true);
+        // Straight to the import screen, in the portal they started from.
+        return redirect()->away(rtrim($pending['return_to'] ?? '', '/') . '/mailbox-import/' . $connection->id);
     }
 
     /**
@@ -266,6 +271,35 @@ class MailboxController extends Controller
         return response()->json($result, $result['ok'] ? 200 : 422);
     }
 
+    /**
+     * Import a few pages of the last month and say how far it has got. The import screen calls this until it is done;
+     * the 15-minute sweep carries on if the screen is closed.
+     */
+    public function import(MailboxConnection $mailbox, MailboxSyncService $sync): JsonResponse
+    {
+        $context = UserContext::for(auth()->user());
+
+        if ((int) $mailbox->agent_id !== (int) $context->agentId) {
+            return response()->json(['error' => 'Not found.'], 404);
+        }
+
+        $error = null;
+
+        if (in_array($mailbox->backfill_status, ['pending', 'running'], true)) {
+            $error = $sync->sync($mailbox, 5)['error'];
+            $mailbox->refresh();
+        }
+
+        return response()->json([
+            'email_address' => $mailbox->email_address,
+            'status' => $mailbox->backfill_status,
+            'processed' => (int) $mailbox->backfill_processed,
+            'estimate' => $mailbox->backfill_estimate,
+            'from' => $mailbox->backfill_from?->toDateString(),
+            'error' => $error,
+        ]);
+    }
+
     private function stateKey(string $state): string
     {
         return "mailbox_oauth_state:{$state}";
@@ -277,7 +311,7 @@ class MailboxController extends Controller
      * ⚠️ The message is escaped: `error_description` is attacker-influencable text arriving
      * from a redirect, and rendering it raw would be reflected XSS on our own origin.
      */
-    private function finish(string $message, bool $ok)
+    private function finish(string $message, bool $ok, ?string $back = null)
     {
         $status = $ok ? 200 : 400;
 
@@ -286,7 +320,8 @@ class MailboxController extends Controller
             . '<body style="font:16px system-ui;padding:2rem;max-width:34rem;margin:auto">'
             . '<h1 style="font-size:1.1rem">' . ($ok ? 'Mailbox connected' : 'Connection failed') . '</h1>'
             . '<p>' . e($message) . '</p>'
-            . '<p style="color:#5A6472">You can close this window and return to the app.</p>',
+            . ($back ? '<p><a href="' . e(rtrim($back, '/')) . '/mailboxes">Back to Mailboxes</a></p>'
+                : '<p style="color:#5A6472">You can close this window and return to the app.</p>'),
             $status,
             ['Content-Type' => 'text/html']
         );

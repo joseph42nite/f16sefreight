@@ -357,7 +357,14 @@ const router = new Router({
           path: "mailboxes",
           name: "Mailboxes",
           component: () => import("@/view/pages/freight/MailboxSettings"),
-          meta: { userType: 'user', designations: ['pricing', 'operations', 'sales', 'boss'], minTier: 'tactical' }
+          meta: { userType: 'user', designations: ['pricing', 'operations', 'sales', 'boss', 'accounts'], minTier: 'tactical' }
+        },
+        {
+          // Where Microsoft's sign-in lands: the last month of mail coming in (user, 2026-09-16).
+          path: "mailbox-import/:id",
+          name: "MailboxImport",
+          component: () => import("@/view/pages/freight/MailboxImport"),
+          meta: { userType: 'user', designations: ['pricing', 'operations', 'sales', 'boss', 'accounts'], minTier: 'tactical' }
         },
         {
           path: "enquiries",

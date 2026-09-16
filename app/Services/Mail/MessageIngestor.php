@@ -29,9 +29,10 @@ class MessageIngestor
 
     /**
      * @param  NormalisedMessage[]  $messages
+     * @param  bool  $historical  read by a new mailbox's import — no enquiry's reminder clock is restarted
      * @return array{ingested: int, echoes: int, threads_created: int}
      */
-    public function ingest(MailboxConnection $connection, array $messages): array
+    public function ingest(MailboxConnection $connection, array $messages, bool $historical = false): array
     {
         $stats = ['ingested' => 0, 'echoes' => 0, 'threads_created' => 0];
 
@@ -43,7 +44,7 @@ class MessageIngestor
             // Each message in its OWN transaction. A page of 50 that fails on the 49th must
             // not roll back the 48 already stored — the cursor would then re-deliver them
             // and the run makes no progress at all.
-            $storedId = DB::transaction(function () use ($connection, $message, &$stats) {
+            $storedId = DB::transaction(function () use ($connection, $message, $historical, &$stats) {
                 $existing = DB::table('email_messages')
                     ->where('message_id', $message->messageId)
                     ->first(['id', 'thread_key']);
@@ -67,7 +68,7 @@ class MessageIngestor
                     $this->createThread($connection, $message, $match['thread_key']);
                     $stats['threads_created']++;
                 } else {
-                    $this->touchThread($connection, $match['thread_key'], $message);
+                    $this->touchThread($connection, $match['thread_key'], $message, $historical);
                 }
 
                 $id = DB::table('email_messages')->insertGetId([
@@ -94,7 +95,7 @@ class MessageIngestor
                     'body_snippet'          => $message->snippet === null
                         ? null : mb_substr($message->snippet, 0, 500),
                     'received_at'           => $message->receivedAt,
-                    'is_historical'         => 0,
+                    'is_historical'         => $historical ? 1 : 0,
                     'created_at'            => now(),
                     'updated_at'            => now(),
                 ]);
@@ -219,7 +220,7 @@ class MessageIngestor
         ]);
     }
 
-    private function touchThread(MailboxConnection $connection, string $threadKey, NormalisedMessage $message): void
+    private function touchThread(MailboxConnection $connection, string $threadKey, NormalisedMessage $message, bool $historical = false): void
     {
         $thread = DB::table('email_threads')->where('thread_key', $threadKey)
             ->first(['agent_id', 'latest_message_received_at', 'first_response_at', 'enquiry_id', 'assigned_ops_id', 'client_updates']);
@@ -259,7 +260,7 @@ class MessageIngestor
 
         DB::table('email_threads')->where('thread_key', $threadKey)->update($update);
 
-        if ($message->direction === 'inbound' && $thread->enquiry_id !== null) {
+        if ($message->direction === 'inbound' && $thread->enquiry_id !== null && ! $historical) {
             $this->restartStaleClock((int) $thread->enquiry_id);
         }
     }

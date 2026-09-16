@@ -56,6 +56,7 @@
       </header>
 
       <main id="fx-main" class="fx-main">
+        <MailboxWelcome />
         <router-view />
       </main>
     </div>
@@ -70,10 +71,11 @@ import BellPanel from "@/view/pages/freight/components/BellPanel.vue";
 import VisualReporter from "@/view/pages/freight/components/VisualReporter.vue";
 import HelpAssistant from "@/view/pages/freight/components/HelpAssistant.vue";
 import ProfileMenu from "@/view/layouts/freight/ProfileMenu.vue";
+import MailboxWelcome from "@/view/pages/freight/components/MailboxWelcome.vue";
 
 export default {
   name: "AppShell",
-  components: { BellPanel, HelpAssistant, VisualReporter, ProfileMenu },
+  components: { BellPanel, HelpAssistant, VisualReporter, ProfileMenu, MailboxWelcome },
   data: () => ({ collapsed: false }),
   /* The shell is the first thing that needs to know who is looking at it, so a session
      that arrived without a stored context recovers here rather than drawing a rail with

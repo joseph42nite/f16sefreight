@@ -96,12 +96,9 @@ class RegexClassificationService
             return null;
         }
 
-        // Backfilled mail must not start SLA clocks, fire notifications or propose
-        // enquiries — a 60-day onboarding import would otherwise detonate the whole
-        // workload engine at once.
-        if ($message->is_historical) {
-            return null;
-        }
+        // Imported (historical) mail IS classified, as PRD §5.2.2 says: this only files the
+        // conversation by type — it mints nothing, starts no clock and rings no bell — and an
+        // imported month the user cannot filter by type is little use (GAPS #334).
 
         $haystack = trim(($message->subject ?? '') . "\n" . ($message->body_snippet ?? ''));
 

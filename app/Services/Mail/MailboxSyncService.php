@@ -26,56 +26,93 @@ class MailboxSyncService
     ) {
     }
 
+    /** How far back a newly connected mailbox is imported (user, 2026-09-16). */
+    public const IMPORT_MONTHS = 1;
+
+    /** Failed import runs before it stops and says so. */
+    private const IMPORT_ATTEMPTS = 5;
+
     /**
+     * Read each folder's changes, page by page.
+     *
+     * The first sync of a mailbox IS its import: with no cursor yet, each folder's stream
+     * starts a month back, and everything read until every folder has its deltaLink is
+     * marked historical and counted for the progress bar.
+     *
      * @return array{ok: bool, ingested: int, echoes: int, threads_created: int, pages: int, error: ?string}
      */
-    public function sync(MailboxConnection $connection): array
+    public function sync(MailboxConnection $connection, int $pagesPerFolder = 20): array
     {
         $result = ['ok' => true, 'ingested' => 0, 'echoes' => 0,
                    'threads_created' => 0, 'pages' => 0, 'error' => null];
+        $importing = $connection->backfill_status !== 'completed';
 
         try {
             $provider = $this->providers->for($connection->provider);
             $this->ensureFreshToken($connection, $provider);
 
-            $cursor = $connection->sync_cursor;
-            $deltaCursor = null;
-
-            // Bounded. A mailbox with a very long backlog must not hold the sweep open
-            // forever and starve every other connection — it resumes on the next run,
-            // which is the whole reason the cursor is persisted per page.
-            for ($page = 0; $page < 20; $page++) {
-                $batch = $provider->delta($connection, $cursor);
-                $stats = $this->ingestor->ingest($connection, $batch['messages']);
-
-                $result['ingested'] += $stats['ingested'];
-                $result['echoes'] += $stats['echoes'];
-                $result['threads_created'] += $stats['threads_created'];
-                $result['pages']++;
-
-                // 🔴 Persist AFTER every committed page, never only at the end. A run that
-                // dies on page 9 of 12 must resume at 9; restarting from the top re-reads
-                // everything and, on a big mailbox, never finishes at all.
-                if (filled($batch['next_cursor'])) {
-                    $cursor = $batch['next_cursor'];
-                    $this->persistCursor($connection, $cursor, final: false);
-
-                    continue;
-                }
-
-                $deltaCursor = $batch['delta_cursor'];
-
-                break;
+            if ($importing && $connection->backfill_status !== 'running') {
+                $this->startImport($connection, $provider);
             }
 
-            // ⚠️ Only a deltaLink is a resumable "everything up to now" marker. Storing a
-            // nextLink as the standing cursor would replay the same page on every run.
-            if (filled($deltaCursor)) {
-                $this->persistCursor($connection, $deltaCursor, final: true);
+            // One cursor per folder, as JSON: the standing deltaLinks, and the page a run stopped on.
+            $cursors = json_decode((string) $connection->sync_cursor, true) ?: [];
+            $pages = json_decode((string) $connection->backfill_page_cursor, true) ?: [];
+            $since = $connection->backfill_from ? \Illuminate\Support\Carbon::parse($connection->backfill_from) : null;
+
+            foreach ($provider->folders() as $folder) {
+                // Bounded. A mailbox with a long backlog must not hold the sweep open and
+                // starve every other connection — it resumes on the next run.
+                for ($page = 0; $page < $pagesPerFolder; $page++) {
+                    $batch = $provider->delta($connection, $folder, $pages[$folder] ?? $cursors[$folder] ?? null, $since);
+                    $stats = $this->ingestor->ingest($connection, $batch['messages'], historical: $importing);
+
+                    $result['ingested'] += $stats['ingested'];
+                    $result['echoes'] += $stats['echoes'];
+                    $result['threads_created'] += $stats['threads_created'];
+                    $result['pages']++;
+
+                    if (filled($batch['next_cursor'])) {
+                        $pages[$folder] = $batch['next_cursor'];
+                    } else {
+                        // ⚠️ Only a deltaLink is a resumable "everything up to now" marker. Storing a
+                        // nextLink as the standing cursor would replay the same page on every run.
+                        unset($pages[$folder]);
+                        $cursors[$folder] = $batch['delta_cursor'] ?? $cursors[$folder] ?? null;
+                    }
+
+                    // 🔴 Persist AFTER every page, never only at the end: a run that dies on page 9
+                    // resumes at 9.
+                    $connection->forceFill([
+                        'sync_cursor' => json_encode($cursors),
+                        'backfill_page_cursor' => $pages === [] ? null : json_encode($pages),
+                        'backfill_processed' => $connection->backfill_processed + ($importing ? count($batch['messages']) : 0),
+                    ])->save();
+
+                    if (! isset($pages[$folder])) {
+                        break;
+                    }
+                }
+            }
+
+            $done = $pages === [] && count(array_filter($cursors)) === count($provider->folders());
+
+            if ($done) {
+                $connection->forceFill(['last_synced_at' => now()])->save();
+            }
+
+            if ($importing && $done) {
+                $connection->forceFill(['backfill_status' => 'completed', 'backfill_completed_at' => now()])->save();
             }
         } catch (Throwable $e) {
             $result['ok'] = false;
             $result['error'] = $e->getMessage();
+
+            if ($importing && $connection->backfill_status === 'running') {
+                $attempts = (int) $connection->backfill_attempts + 1;
+                $connection->forceFill(['backfill_attempts' => $attempts,
+                    'backfill_status' => $attempts >= self::IMPORT_ATTEMPTS ? 'failed' : 'running'])->save();
+            }
 
             // One mailbox failing must not stop the sweep — a single expired consent would
             // otherwise stall every other tenant's mail.
@@ -86,6 +123,24 @@ class MailboxSyncService
         }
 
         return $result;
+    }
+
+    /** The first run of an import: the window, and roughly how much there is to read. */
+    private function startImport(MailboxConnection $connection, MailProviderContract $provider): void
+    {
+        $from = now()->subMonths(self::IMPORT_MONTHS)->startOfDay();
+
+        try {
+            $estimate = collect($provider->folders())->sum(fn ($folder) => $provider->count($connection, $folder, $from));
+        } catch (Throwable $e) {
+            $estimate = null; // the bar shows a count without "of about N"
+        }
+
+        $connection->forceFill([
+            'backfill_status' => 'running', 'backfill_from' => $from, 'backfill_estimate' => $estimate,
+            'backfill_processed' => 0, 'backfill_attempts' => 0,
+            'sync_cursor' => null, 'backfill_page_cursor' => null,
+        ])->save();
     }
 
     /**
@@ -119,14 +174,5 @@ class MailboxSyncService
             'expires_at'    => now()->addSeconds($tokens['expires_in']),
             'auth_state'    => 'connected',
         ])->save();
-    }
-
-    private function persistCursor(MailboxConnection $connection, string $cursor, bool $final): void
-    {
-        $attributes = $final
-            ? ['sync_cursor' => $cursor, 'backfill_page_cursor' => null, 'last_synced_at' => now()]
-            : ['backfill_page_cursor' => $cursor];
-
-        $connection->forceFill($attributes)->save();
     }
 }

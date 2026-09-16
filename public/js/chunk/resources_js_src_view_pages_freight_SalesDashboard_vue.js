@@ -545,6 +545,10 @@ var render = function render() {
     }
   }, [_c("option", {
     attrs: {
+      value: "this_month"
+    }
+  }, [_vm._v("This month")]), _vm._v(" "), _c("option", {
+    attrs: {
       value: "day"
     }
   }, [_vm._v("Last 30 days")]), _vm._v(" "), _c("option", {

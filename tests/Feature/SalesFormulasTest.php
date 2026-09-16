@@ -245,6 +245,12 @@ class SalesFormulasTest extends TestCase
 
         $this->assertSame('the last 12 months', $month['window']['label']);
         $this->assertSame('the last 30 days', $day['window']['label']);
+
+        // This month so far: the 1st to today, drawn day by day (user, 2026-09-16).
+        $thisMonth = $charts('this_month');
+        $this->assertSame('this month so far', $thisMonth['window']['label']);
+        $this->assertSame(Carbon::parse(self::DATE)->startOfMonth()->toDateString(), $thisMonth['window']['from']);
+        $this->assertSame(1, count($thisMonth['tonnage']), 'one month of lane statistics');
         // A lane from 200 days ago is in the 12-month charts and out of the 30-day ones.
         $this->assertContains('MAA → DXB', collect($month['lanes'])->pluck('lane')->all());
         $this->assertNotContains('MAA → DXB', collect($day['lanes'])->pluck('lane')->all());

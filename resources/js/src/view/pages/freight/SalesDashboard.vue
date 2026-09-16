@@ -28,6 +28,7 @@
       <label class="fx-field">
         <span class="fx-field__label">Period</span>
         <select v-model="grain" class="fx-input" @change="loadCharts">
+          <option value="this_month">This month</option>
           <option value="day">Last 30 days</option>
           <option value="month">Last 12 months</option>
           <option value="year">Last 2 years</option>

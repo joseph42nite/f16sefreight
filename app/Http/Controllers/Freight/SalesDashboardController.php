@@ -37,7 +37,20 @@ class SalesDashboardController extends Controller
     private const STALE_AFTER_MINUTES = 60;
 
     /** What each period covers, in the reader's words — one window for every chart on the page. */
-    private const WINDOWS = ['day' => 'the last 30 days', 'month' => 'the last 12 months', 'year' => 'the last 2 years'];
+    private const WINDOWS = [
+        'this_month' => 'this month so far',
+        'day' => 'the last 30 days',
+        'month' => 'the last 12 months',
+        'year' => 'the last 2 years',
+    ];
+
+    /** Which funnel view answers a window: within a month the interesting grain is the day. */
+    private const FUNNEL_VIEWS = [
+        'this_month' => 'dsr_funnel_view',
+        'day' => 'dsr_funnel_view',
+        'month' => 'msr_funnel_view',
+        'year' => 'ysr_funnel_view',
+    ];
 
     /**
      * The cockpit.
@@ -179,13 +192,18 @@ class SalesDashboardController extends Controller
         $mode = app()->bound('active_portal_scope') ? app('active_portal_scope') : null;
 
         $grain = $request->string('grain', 'month')->toString();
-        $grain = in_array($grain, ['day', 'month', 'year'], true) ? $grain : 'month';
+        $grain = isset(self::WINDOWS[$grain]) ? $grain : 'month';
 
         // 🔴 ONE WINDOW FOR EVERY CHART (user, 2026-09-16). The period says how far back to look, so tonnage, lanes
         // and win/loss all describe the same stretch of time rather than three different ones.
         // ⚠️ Lane statistics are monthly, so a 30-day window reads from the start of the month it began in — a month
         // cannot be cut in half after the fact.
-        $from = ['day' => now()->subDays(30), 'month' => now()->subMonths(12), 'year' => now()->subYears(2)][$grain];
+        $from = [
+            'this_month' => now()->startOfMonth(),
+            'day' => now()->subDays(30),
+            'month' => now()->subMonths(12),
+            'year' => now()->subYears(2),
+        ][$grain];
 
         return response()->json([
             'grain'   => $grain,
@@ -458,7 +476,7 @@ class SalesDashboardController extends Controller
      */
     private function funnelSeries(UserContext $context, ?string $mode, string $grain, Carbon $from, Request $request): array
     {
-        $view = ['day' => 'dsr_funnel_view', 'month' => 'msr_funnel_view', 'year' => 'ysr_funnel_view'][$grain];
+        $view = self::FUNNEL_VIEWS[$grain];
 
         $rows = DB::table($view)
             ->where('agent_id', $context->agentId)

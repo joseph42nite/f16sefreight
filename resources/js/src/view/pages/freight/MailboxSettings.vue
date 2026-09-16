@@ -214,7 +214,11 @@ export default {
       this.nameSaved = false;
 
       ApiService.put("/user/profile", { name: this.myName })
-        .then(({ data }) => { this.myName = data.name; this.nameSaved = true; })
+        .then(({ data }) => {
+          this.myName = data.name;
+          this.nameSaved = true;
+          window.dispatchEvent(new Event("f16s:profile-updated"));
+        })
         .catch((e) => { this.connectError = this.messageFor(e); })
         .finally(() => { this.busy = null; });
     },

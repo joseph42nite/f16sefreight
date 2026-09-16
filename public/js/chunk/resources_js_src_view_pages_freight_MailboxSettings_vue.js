@@ -95,6 +95,7 @@ __webpack_require__.r(__webpack_exports__);
       }) => {
         this.myName = data.name;
         this.nameSaved = true;
+        window.dispatchEvent(new Event("f16s:profile-updated"));
       }).catch(e => {
         this.connectError = this.messageFor(e);
       }).finally(() => {

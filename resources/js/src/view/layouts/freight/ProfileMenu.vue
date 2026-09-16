@@ -3,7 +3,8 @@
   <div class="fx-profile">
     <button class="fx-profile__trigger" :aria-expanded="String(open)" aria-haspopup="true" @click="toggle">
       <span class="fx-profile__avatar" aria-hidden="true">{{ initials }}</span>
-      <span class="fx-profile__role">{{ designation }}<template v-if="tier"> · {{ tier }}</template></span>
+      <!-- The person, not their role (user, 2026-09-16): the role and plan are in the menu below. -->
+      <span class="fx-profile__role">Hi, {{ myName }}</span>
       <span aria-hidden="true">▾</span>
     </button>
 
@@ -35,11 +36,15 @@ const PLANS = { core: "Core", tactical: "Tactical", command: "Command" };
 
 export default {
   name: "ProfileMenu",
-  data: () => ({ open: false, profile: null, signingOut: false }),
+  data: () => ({ open: false, profile: null, signingOut: false, name: null }),
   computed: {
-    ...mapGetters(["designation", "tier"]),
+    ...mapGetters(["designation", "tier", "currentUser"]),
+    /** Their name, from the session or from /me on the first load. Never blank: the greeting reads as a greeting. */
+    myName() {
+      return this.name || (this.currentUser && this.currentUser.name) || this.designation || "there";
+    },
     initials() {
-      const name = (this.profile && this.profile.name) || this.designation || "?";
+      const name = this.myName || "?";
       return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
     },
     planLabel() {
@@ -49,16 +54,27 @@ export default {
   },
   mounted() {
     document.addEventListener("click", this.closeOutside);
+    // Settings says so when a person writes their own name in, so the greeting changes without a reload.
+    window.addEventListener("f16s:profile-updated", this.fetchProfile);
+
+    if (!(this.currentUser && this.currentUser.name)) this.fetchProfile();
   },
   beforeDestroy() {
     document.removeEventListener("click", this.closeOutside);
+    window.removeEventListener("f16s:profile-updated", this.fetchProfile);
   },
   methods: {
     toggle() {
       this.open = !this.open;
-      if (this.open && !this.profile) {
-        ApiService.get("/me").then(({ data }) => { this.profile = data.profile; }).catch(() => {});
-      }
+      if (this.open && !this.profile) this.fetchProfile();
+    },
+    fetchProfile() {
+      ApiService.get("/me")
+        .then(({ data }) => {
+          this.profile = data.profile;
+          this.name = (data.profile && data.profile.name) || null;
+        })
+        .catch(() => {});
     },
     closeOutside(e) {
       if (this.open && !this.$el.contains(e.target)) this.open = false;

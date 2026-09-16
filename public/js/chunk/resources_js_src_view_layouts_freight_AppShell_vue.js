@@ -99,11 +99,16 @@ const PLANS = {
   data: () => ({
     open: false,
     profile: null,
-    signingOut: false
+    signingOut: false,
+    name: null
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["designation", "tier"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["designation", "tier", "currentUser"])), {}, {
+    /** Their name, from the session or from /me on the first load. Never blank: the greeting reads as a greeting. */
+    myName() {
+      return this.name || this.currentUser && this.currentUser.name || this.designation || "there";
+    },
     initials() {
-      const name = this.profile && this.profile.name || this.designation || "?";
+      const name = this.myName || "?";
       return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
     },
     planLabel() {
@@ -113,20 +118,26 @@ const PLANS = {
   }),
   mounted() {
     document.addEventListener("click", this.closeOutside);
+    // Settings says so when a person writes their own name in, so the greeting changes without a reload.
+    window.addEventListener("f16s:profile-updated", this.fetchProfile);
+    if (!(this.currentUser && this.currentUser.name)) this.fetchProfile();
   },
   beforeDestroy() {
     document.removeEventListener("click", this.closeOutside);
+    window.removeEventListener("f16s:profile-updated", this.fetchProfile);
   },
   methods: {
     toggle() {
       this.open = !this.open;
-      if (this.open && !this.profile) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/me").then(({
-          data
-        }) => {
-          this.profile = data.profile;
-        }).catch(() => {});
-      }
+      if (this.open && !this.profile) this.fetchProfile();
+    },
+    fetchProfile() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/me").then(({
+        data
+      }) => {
+        this.profile = data.profile;
+        this.name = data.profile && data.profile.name || null;
+      }).catch(() => {});
     },
     closeOutside(e) {
       if (this.open && !this.$el.contains(e.target)) this.open = false;
@@ -863,7 +874,7 @@ var render = function render() {
     }
   }, [_vm._v(_vm._s(_vm.initials))]), _vm._v(" "), _c("span", {
     staticClass: "fx-profile__role"
-  }, [_vm._v(_vm._s(_vm.designation)), _vm.tier ? [_vm._v(" · " + _vm._s(_vm.tier))] : _vm._e()], 2), _vm._v(" "), _c("span", {
+  }, [_vm._v("Hi, " + _vm._s(_vm.myName))]), _vm._v(" "), _c("span", {
     attrs: {
       "aria-hidden": "true"
     }

@@ -21,6 +21,8 @@ __webpack_require__.r(__webpack_exports__);
       company_form: new Form({
         id: "",
         name: "",
+        code: "",
+        tier: null,
         templates_config: {
           allowed_templates: [],
           default_focus_air: "",
@@ -28,6 +30,19 @@ __webpack_require__.r(__webpack_exports__);
         }
       }),
       action: "Add",
+      plans: [{
+        value: null,
+        text: "Select plan"
+      }, {
+        value: "core",
+        text: "Core"
+      }, {
+        value: "tactical",
+        text: "Tactical"
+      }, {
+        value: "command",
+        text: "Command"
+      }],
       location: [],
       searchQuery: "",
       isDropdownOpen: false,
@@ -201,7 +216,59 @@ var render = function render() {
       form: _vm.company_form,
       field: "name"
     }
-  })], 1)], 1), _vm._v(" "), _c("hr", {
+  })], 1), _vm._v(" "), _c("b-form-group", {
+    staticClass: "w-25 mr-2"
+  }, [_c("b-form-input", {
+    staticClass: "mx-1 input-box text-uppercase",
+    class: {
+      "is-invalid": _vm.company_form.errors.has("code")
+    },
+    attrs: {
+      id: "company-code",
+      type: "text",
+      required: "",
+      maxlength: "6",
+      placeholder: "Short code, e.g. BASE"
+    },
+    model: {
+      value: _vm.company_form.code,
+      callback: function ($$v) {
+        _vm.$set(_vm.company_form, "code", $$v);
+      },
+      expression: "company_form.code"
+    }
+  }), _vm._v(" "), _c("has-error", {
+    attrs: {
+      form: _vm.company_form,
+      field: "code"
+    }
+  })], 1), _vm._v(" "), _c("b-form-group", {
+    staticClass: "w-25"
+  }, [_c("b-form-select", {
+    staticClass: "mx-1 input-box",
+    class: {
+      "is-invalid": _vm.company_form.errors.has("tier")
+    },
+    attrs: {
+      id: "company-tier",
+      options: _vm.plans,
+      required: ""
+    },
+    model: {
+      value: _vm.company_form.tier,
+      callback: function ($$v) {
+        _vm.$set(_vm.company_form, "tier", $$v);
+      },
+      expression: "company_form.tier"
+    }
+  }), _vm._v(" "), _c("has-error", {
+    attrs: {
+      form: _vm.company_form,
+      field: "tier"
+    }
+  })], 1)], 1), _vm._v(" "), _c("p", {
+    staticClass: "text-muted small mb-7"
+  }, [_vm._v("The short code goes into every enquiry and job number (ENQA-"), _c("strong", [_vm._v(_vm._s((_vm.company_form.code || "CODE").toUpperCase()))]), _vm._v("-26-0001). The plan sets what the company's people can open and its monthly credits: Core none, Tactical 500, Command 2,000.")]), _vm._v(" "), _c("hr", {
     staticClass: "mb-7"
   }), _vm._v(" "), _c("h5", {
     staticClass: "mb-4 text-dark font-weight-bold"

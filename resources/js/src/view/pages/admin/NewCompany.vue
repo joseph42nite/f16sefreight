@@ -16,7 +16,32 @@
                         ></b-form-input>
                         <has-error :form="company_form" field="name"></has-error>
                     </b-form-group>
+                    <b-form-group class="w-25 mr-2">
+                        <b-form-input
+                            id="company-code"
+                            v-model="company_form.code"
+                            type="text"
+                            required
+                            maxlength="6"
+                            placeholder="Short code, e.g. BASE"
+                            class="mx-1 input-box text-uppercase"
+                            :class="{'is-invalid': company_form.errors.has('code'),}"
+                        ></b-form-input>
+                        <has-error :form="company_form" field="code"></has-error>
+                    </b-form-group>
+                    <b-form-group class="w-25">
+                        <b-form-select
+                            id="company-tier"
+                            v-model="company_form.tier"
+                            :options="plans"
+                            required
+                            class="mx-1 input-box"
+                            :class="{'is-invalid': company_form.errors.has('tier'),}"
+                        ></b-form-select>
+                        <has-error :form="company_form" field="tier"></has-error>
+                    </b-form-group>
                 </div>
+                <p class="text-muted small mb-7">The short code goes into every enquiry and job number (ENQA-<strong>{{ (company_form.code || 'CODE').toUpperCase() }}</strong>-26-0001). The plan sets what the company's people can open and its monthly credits: Core none, Tactical 500, Command 2,000.</p>
                 <hr class="mb-7" />
                 <h5 class="mb-4 text-dark font-weight-bold">Document Templates Configuration</h5>
                 
@@ -99,6 +124,8 @@ export default {
             company_form: new Form({
                 id: "",
                 name: "",
+                code: "",
+                tier: null,
                 templates_config: {
                     allowed_templates: [],
                     default_focus_air: "",
@@ -106,6 +133,12 @@ export default {
                 }
             }),
             action: "Add",
+            plans: [
+                { value: null, text: "Select plan" },
+                { value: "core", text: "Core" },
+                { value: "tactical", text: "Tactical" },
+                { value: "command", text: "Command" },
+            ],
             location: [],
             searchQuery: "",
             isDropdownOpen: false,

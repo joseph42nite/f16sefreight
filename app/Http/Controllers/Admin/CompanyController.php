@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Company;
 use App\SystemTemplate;
 use Illuminate\Support\Facades\Validator;
@@ -13,7 +14,7 @@ class CompanyController extends Controller
 {
     public function index($id = 0)
     {
-        $columns = ['id', 'name', 'templates_config', 'outlook_approved_at'];
+        $columns = ['id', 'name', 'code', 'tier', 'templates_config', 'outlook_approved_at'];
         if ($id) {
             $data = Company::where([['id', $id]])->limit(1)->get($columns);
         } else {
@@ -45,6 +46,10 @@ class CompanyController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:100'],
+            // The plan decides what the company's people can open, and its credits (user, 2026-09-17).
+            'tier' => ['required', 'in:' . implode(',', Company::TIERS)],
+            // Short code inside every enquiry and job number (ENQA-BASE-26-0001): letters only, one per company.
+            'code' => ['required', 'regex:/^[A-Za-z]{2,6}$/', Rule::unique('companies', 'code')->ignore($id ?? null)],
             'templates_config' => ['nullable', 'array'],
             'templates_config.allowed_templates' => ['nullable', 'array'],
             'templates_config.default_focus_air' => ['nullable', 'string'],
@@ -61,6 +66,8 @@ class CompanyController extends Controller
 
         $company = new Company();
         $company->name = $request->name;
+        $company->tier = $request->tier;
+        $company->code = strtoupper($request->code);
         $company->templates_config = $request->templates_config;
         $company->save();
         
@@ -74,6 +81,10 @@ class CompanyController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:100'],
+            // The plan decides what the company's people can open, and its credits (user, 2026-09-17).
+            'tier' => ['required', 'in:' . implode(',', Company::TIERS)],
+            // Short code inside every enquiry and job number (ENQA-BASE-26-0001): letters only, one per company.
+            'code' => ['required', 'regex:/^[A-Za-z]{2,6}$/', Rule::unique('companies', 'code')->ignore($id ?? null)],
             'templates_config' => ['nullable', 'array'],
             'templates_config.allowed_templates' => ['nullable', 'array'],
             'templates_config.default_focus_air' => ['nullable', 'string'],
@@ -94,6 +105,8 @@ class CompanyController extends Controller
         }
 
         $company->name = $request->name;
+        $company->tier = $request->tier;
+        $company->code = strtoupper($request->code);
         $company->templates_config = $request->templates_config;
         $company->save();
         

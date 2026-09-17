@@ -29,6 +29,13 @@ __webpack_require__.r(__webpack_exports__);
         label: "Name",
         key: "name"
       }, {
+        label: "Code",
+        key: "code"
+      }, {
+        label: "Plan",
+        key: "tier",
+        formatter: v => v ? v.charAt(0).toUpperCase() + v.slice(1) : ""
+      }, {
         label: "Outlook",
         key: "outlook"
       }, {

@@ -30,8 +30,9 @@ class Kernel extends ConsoleKernel
         // ever decreases and every tenant eventually hard-stops (guide §4.7). The command
         // is idempotent — it skips any company already granted this calendar month — so a
         // retried deploy or a double-fired scheduler cannot double anyone's credits.
+        // Hourly, so a new company or a plan upgrade gets its credits the same hour, not on the 1st (2026-09-17).
         $schedule->command('credits:grant-monthly')
-            ->monthlyOn(1, '00:15')
+            ->hourly()
             ->withoutOverlapping()
             ->onOneServer();
 

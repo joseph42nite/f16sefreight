@@ -25,9 +25,14 @@ use Illuminate\Support\Facades\DB;
  *    superadmin override pinned to that tenant. Reading NULL as 0 would silently strip
  *    every ordinary tenant of their credits.
  *
- * 3. **Idempotent.** Skips any company that already has a `monthly_grant` row this
- *    calendar month. Without that, a re-run — a retried deploy, a double-fired
- *    scheduler — doubles everyone's balance.
+ * 3. **Idempotent.** Skips any company already granted its allowance this calendar
+ *    month. Without that, a re-run — a retried deploy, a double-fired scheduler —
+ *    doubles everyone's balance.
+ *
+ * 4. **A company never waits for the 1st** (2026-09-17: F16s Base, created on the 10th,
+ *    showed 0 credits). Runs hourly: a company with no grant this month gets its full
+ *    allowance, and one granted less than its allowance (moved up a plan mid-month) gets
+ *    the difference added.
  */
 class GrantMonthlyCredits extends Command
 {
@@ -48,39 +53,45 @@ class GrantMonthlyCredits extends Command
         Company::withoutGlobalScopes()->whereNull('deleted_at')->orderBy('id')
             ->chunkById(100, function ($companies) use (&$granted, &$skipped, $monthStart, $dryRun) {
                 foreach ($companies as $company) {
-                    if ($this->alreadyGrantedThisMonth($company->id, $monthStart)) {
+                    // NULL => follow the tier. Never 0.
+                    $allowance = $company->creditAllowance();
+                    $grantedSoFar = $this->grantedThisMonth($company->id, $monthStart);
+
+                    if ($grantedSoFar !== null && $grantedSoFar >= $allowance) {
                         $skipped++;
                         $this->line("  skip  {$company->name} — already granted this month");
 
                         continue;
                     }
 
-                    // NULL => follow the tier. Never 0.
-                    $allowance = $company->creditAllowance();
+                    // First grant of the month resets to the allowance; a later one adds what a plan change is owed.
+                    $amount = $grantedSoFar === null ? $allowance : $allowance - $grantedSoFar;
+                    $newBalance = $grantedSoFar === null ? $allowance : $company->ocr_credits_balance + $amount;
 
                     if ($dryRun) {
-                        $this->line("  would {$company->name}: {$company->ocr_credits_balance} -> {$allowance}");
+                        $this->line("  would {$company->name}: {$company->ocr_credits_balance} -> {$newBalance}");
                         $granted++;
 
                         continue;
                     }
 
-                    DB::transaction(function () use ($company, $allowance) {
+                    DB::transaction(function () use ($company, $amount, $allowance, $newBalance, $grantedSoFar) {
                         DB::table('ocr_credit_transactions')->insert([
                             'company_id'       => $company->id,
-                            'amount'           => $allowance,
+                            'amount'           => $amount,
                             'transaction_type' => 'monthly_grant',
-                            'notes'            => "Monthly reset to {$allowance} ({$company->tier} tier)",
+                            'notes'            => $grantedSoFar === null
+                                ? "Monthly reset to {$allowance} ({$company->tier} tier)"
+                                : "Topped up by {$amount} to this month's {$allowance} ({$company->tier} tier)",
                             'created_at'       => now(),
                         ]);
 
-                        // RESET, not increment.
                         Company::withoutGlobalScopes()->whereKey($company->id)
-                            ->update(['ocr_credits_balance' => $allowance, 'updated_at' => now()]);
+                            ->update(['ocr_credits_balance' => $newBalance, 'updated_at' => now()]);
                     });
 
                     $granted++;
-                    $this->line("  grant {$company->name}: {$allowance} credits ({$company->tier})");
+                    $this->line("  grant {$company->name}: {$amount} credits ({$company->tier})");
                 }
             });
 
@@ -94,13 +105,14 @@ class GrantMonthlyCredits extends Command
         return self::SUCCESS;
     }
 
-    /** The idempotency guard — see rule 3. */
-    private function alreadyGrantedThisMonth(int $companyId, $monthStart): bool
+    /** What this month's grants add up to, or null when there has been none — rules 3 and 4. */
+    private function grantedThisMonth(int $companyId, $monthStart): ?int
     {
-        return DB::table('ocr_credit_transactions')
+        $grants = DB::table('ocr_credit_transactions')
             ->where('company_id', $companyId)
             ->where('transaction_type', 'monthly_grant')
-            ->where('created_at', '>=', $monthStart)
-            ->exists();
+            ->where('created_at', '>=', $monthStart);
+
+        return $grants->exists() ? (int) $grants->sum('amount') : null;
     }
 }

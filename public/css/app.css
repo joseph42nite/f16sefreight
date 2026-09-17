@@ -6318,6 +6318,7 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 
 /* A mail shown as it was written (user, 2026-09-17). The frame is white like a mail page in either theme. */
 .fx-mail-body__frame { display: block; width: 100%; border: 0; background: #fff; border-radius: var(--radius-sm); }
+.fx-notice { color: var(--status-success, #1d6b45); font-weight: 600; margin: 0; }
 
 @charset "UTF-8";
 html {

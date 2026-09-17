@@ -128,6 +128,7 @@
         </header>
 
         <p v-if="actionError" class="fx-error fx-inbox__pad" role="alert">{{ actionError }}</p>
+        <p v-if="actionNotice" class="fx-inbox__pad fx-notice" role="status">{{ actionNotice }}</p>
         <p v-if="attachmentError" class="fx-error fx-inbox__pad" role="alert">{{ attachmentError }}</p>
 
         <!-- The client update waiting on this conversation: send it as it is, edit it, or skip it. -->
@@ -705,6 +706,8 @@ export default {
   data: () => ({
     /** The New mail pop-up is open. */
     writingNew: false,
+    /** A short "done" line after an action, e.g. a claim whose mail went. */
+    actionNotice: null,
     /** A PDF picked with Extract before the shipment was confirmed; it goes into Extraction on confirm. */
     waitingFile: null,
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
@@ -1457,6 +1460,7 @@ export default {
     },
     open(thread) {
       this.actionError = null;
+      if (!this.active || this.active.id !== thread.id) this.actionNotice = null;
       // A file waiting for confirmation belongs to its own conversation only.
       if (!this.active || this.active.id !== thread.id) this.waitingFile = null;
       /* The outcome gate is per-conversation: a half-typed loss reason must not follow
@@ -1521,6 +1525,10 @@ export default {
           this.load();
           const r = data.client_update_result;
           if (r && !r.ok) this.actionError = "Claimed, but the mail did not go: " + r.error;
+          // Say it went: the sent mail only appears in the conversation once the mailbox syncs it back (user, 2026-09-17).
+          else if (r && r.ok) this.actionNotice = "Claimed — the acknowledgement was sent. It appears in the conversation within about 2 minutes.";
+          else this.actionNotice = "Claimed — it's yours.";
+          setTimeout(() => { this.open(this.active); }, 60000);
         })
         /* 409 is a real outcome, not a failure: someone got there first. */
         .catch((e) => { this.claimDraft = null; this.actionError = this.messageFor(e); this.load(); })

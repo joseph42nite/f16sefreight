@@ -131,6 +131,8 @@ const WORKSPACE_TABS = [{
   data: () => ({
     /** The New mail pop-up is open. */
     writingNew: false,
+    /** A short "done" line after an action, e.g. a claim whose mail went. */
+    actionNotice: null,
     /** A PDF picked with Extract before the shipment was confirmed; it goes into Extraction on confirm. */
     waitingFile: null,
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
@@ -950,6 +952,7 @@ const WORKSPACE_TABS = [{
     },
     open(thread) {
       this.actionError = null;
+      if (!this.active || this.active.id !== thread.id) this.actionNotice = null;
       // A file waiting for confirmation belongs to its own conversation only.
       if (!this.active || this.active.id !== thread.id) this.waitingFile = null;
       /* The outcome gate is per-conversation: a half-typed loss reason must not follow
@@ -1024,6 +1027,11 @@ const WORKSPACE_TABS = [{
         this.load();
         const r = data.client_update_result;
         if (r && !r.ok) this.actionError = "Claimed, but the mail did not go: " + r.error;
+        // Say it went: the sent mail only appears in the conversation once the mailbox syncs it back (user, 2026-09-17).
+        else if (r && r.ok) this.actionNotice = "Claimed — the acknowledgement was sent. It appears in the conversation within about 2 minutes.";else this.actionNotice = "Claimed — it's yours.";
+        setTimeout(() => {
+          this.open(this.active);
+        }, 60000);
       })
       /* 409 is a real outcome, not a failure: someone got there first. */.catch(e => {
         this.claimDraft = null;
@@ -2943,7 +2951,12 @@ var render = function render() {
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), _vm.attachmentError ? _c("p", {
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), _vm.actionNotice ? _c("p", {
+    staticClass: "fx-inbox__pad fx-notice",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v(_vm._s(_vm.actionNotice))]) : _vm._e(), _vm._v(" "), _vm.attachmentError ? _c("p", {
     staticClass: "fx-error fx-inbox__pad",
     attrs: {
       role: "alert"

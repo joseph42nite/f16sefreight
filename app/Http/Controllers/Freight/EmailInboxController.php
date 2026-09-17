@@ -301,15 +301,25 @@ class EmailInboxController extends Controller
     /** Taking on a conversation already filed as a customer enquiry gives it its enquiry number. */
     private function takeOnEnquiry(EmailThread $thread): void
     {
-        if ($thread->classification !== 'customer_enquiry' || $thread->enquiry_id !== null) {
+        if ($thread->classification !== 'customer_enquiry') {
             return;
         }
 
-        DB::transaction(function () use ($thread) {
-            $this->mintEnquiry($thread);
-            $thread->first_triage_at = $thread->first_triage_at ?: now();
-            $thread->save();
-        }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
+        if ($thread->enquiry_id === null) {
+            DB::transaction(function () use ($thread) {
+                $this->mintEnquiry($thread);
+                $thread->first_triage_at = $thread->first_triage_at ?: now();
+                $thread->save();
+            }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
+        }
+
+        // 🔴 The pricing member who takes it on OWNS the enquiry (user, 2026-09-17: Claim assigned the conversation but
+        // left the enquiry with no pricing owner — the Sales "Pricing" column, the Kanban and handover approvals read it).
+        // Only when nobody owns it yet; a later claim never takes it from a colleague.
+        if (auth()->user()->designation === 'pricing') {
+            Enquiry::withoutTenantScope()->whereKey($thread->enquiry_id)->whereNull('pricing_id')
+                ->update(['pricing_id' => auth()->id(), 'updated_at' => now()]);
+        }
     }
 
     /**

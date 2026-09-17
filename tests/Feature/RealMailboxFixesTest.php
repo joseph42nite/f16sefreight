@@ -70,6 +70,9 @@ class RealMailboxFixesTest extends TestCase
         $this->assertSame('customer_enquiry', $claimed->classification);
         $api->postJson("http://focusair.localhost/api/inbox/threads/{$claimed->id}/claim")->assertOk();
         $this->assertNotNull($claimed->fresh()->enquiry_id);
+        // The pricing member who claims it owns the enquiry, not only the conversation.
+        $this->assertSame($this->pricing->id, (int) \App\Enquiry::withoutGlobalScopes()->find($claimed->fresh()->enquiry_id)->pricing_id);
+        $this->assertSame($this->pricing->id, (int) $claimed->fresh()->assigned_ops_id);
 
         $filed = $this->receive('ops@initech.test', 'Can we talk tomorrow?');
         $this->assertSame('other', $filed->classification, 'nothing matched: Other');

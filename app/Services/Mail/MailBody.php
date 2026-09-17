@@ -44,15 +44,18 @@ class MailBody
      */
     public function forDisplay(?string $html): string
     {
+        $html = $this->withoutQuotedMail((string) $html);
+
         $config = HTMLPurifier_Config::createDefault();
         $config->set('HTML.Allowed', 'div[style|align],span[style],p[style|align],br,hr[style],b[style],strong[style],i[style],em[style],u[style],s[style],strike,sub,sup,'
-            . 'font[color|size|face|style],h1[style],h2[style],h3[style],h4[style],h5[style],h6[style],pre[style],code,'
+            . 'font[color|style],h1[style],h2[style],h3[style],h4[style],h5[style],h6[style],pre[style],code,'
             . 'blockquote[style],ul[style],ol[style],li[style],a[href|style|title],center[style],small[style],big[style],'
             . 'table[style|width|border|cellpadding|cellspacing|align|bgcolor],thead,tbody,tfoot,tr[style|bgcolor],'
             . 'td[style|width|colspan|rowspan|align|valign|bgcolor],th[style|width|colspan|rowspan|align|valign|bgcolor],'
             . 'img[src|alt|width|height|style]');
+        // No font-size or font-family: every mail reads at the app's one size (user, 2026-09-17: "the font is too big").
         $config->set('CSS.AllowedProperties', ['color', 'background-color', 'background', 'font-weight', 'font-style',
-            'font-size', 'font-family', 'text-decoration', 'text-align', 'line-height', 'margin', 'margin-top',
+            'text-decoration', 'text-align', 'line-height', 'margin', 'margin-top',
             'margin-bottom', 'margin-left', 'margin-right', 'padding', 'padding-top', 'padding-bottom', 'padding-left',
             'padding-right', 'border', 'border-top', 'border-bottom', 'border-left', 'border-right', 'border-collapse',
             'width', 'height', 'vertical-align', 'white-space', 'list-style-type']);
@@ -62,6 +65,41 @@ class MailBody
         $config->set('Cache.DefinitionImpl', null);
 
         return trim((new HTMLPurifier($config))->purify((string) $html));
+    }
+
+    /**
+     * The mail without the earlier mails quoted under it (user, 2026-09-17: "just show the mail — the previous mail is
+     * already there in the loop"). Cut at the first marker each client writes above its quote: Outlook web and new
+     * Outlook (`appendonsend`, `divRplyFwdMsg`), Outlook desktop (the grey rule above "From:"), Gmail (`gmail_quote`),
+     * Apple Mail (`blockquote type="cite"`) and Yahoo. A mail that is nothing but a quote keeps its text.
+     */
+    public function withoutQuotedMail(string $html): string
+    {
+        $markers = [
+            '/<div[^>]*id="?appendonsend"?/i',
+            '/<div[^>]*id="?divRplyFwdMsg"?/i',
+            '/<hr[^>]*>\s*(?:<[^>]+>\s*)*<(?:b|strong)>\s*From:/i',
+            '/<div[^>]*border-top:\s*solid\s*#E1E1E1[^>]*>/i',
+            '/<div[^>]*class="?gmail_quote/i',
+            '/<blockquote[^>]*type="?cite"?/i',
+            '/<div[^>]*class="?yahoo_quoted/i',
+            '/<div[^>]*id="?mail-editor-reference-message-container"?/i',
+        ];
+
+        $cut = null;
+        foreach ($markers as $marker) {
+            if (preg_match($marker, $html, $m, PREG_OFFSET_CAPTURE) && ($cut === null || $m[0][1] < $cut)) {
+                $cut = $m[0][1];
+            }
+        }
+
+        if ($cut === null) {
+            return $html;
+        }
+
+        $before = substr($html, 0, $cut);
+
+        return trim(html_entity_decode(strip_tags($before))) === '' ? $html : $before;
     }
 
     /**

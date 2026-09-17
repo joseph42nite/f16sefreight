@@ -34,6 +34,20 @@ class MailFormattingTest extends TestCase
         $this->assertStringNotContainsString('onclick', $html);
     }
 
+    /** Only the mail itself: the earlier mails quoted under a reply are already in the conversation (user, 2026-09-17). */
+    public function test_the_quoted_earlier_mail_is_left_out_and_font_sizes_follow_the_app(): void
+    {
+        $body = app(MailBody::class);
+
+        // Outlook (the real reply to "blr-ord"), Gmail and Apple Mail.
+        $this->assertSame('<div>Hello,<br />Kind regards,</div>', $body->forDisplay('<div>Hello,<br>Kind regards,</div><div id="appendonsend"></div><hr><b>From:</b> Joseph'));
+        $this->assertSame('<div>Thanks</div>', $body->forDisplay('<div>Thanks</div><div class="gmail_quote"><div>On Mon, X wrote:</div><blockquote>old</blockquote></div>'));
+        $this->assertSame('<div>Noted</div>', $body->forDisplay('<div>Noted</div><blockquote type="cite">old</blockquote>'));
+        // A forward that is only the quoted mail keeps it; no quote, nothing cut.
+        $this->assertStringContainsString('old', $body->forDisplay('<div id="divRplyFwdMsg"><b>From:</b> A</div><div>old</div>'));
+        $this->assertSame('<div style="color:#FF0000;">Big</div>', $body->forDisplay('<div style="color:red;font-size:18pt;font-family:Aptos">Big</div>'));
+    }
+
     public function test_a_blank_line_typed_when_sending_is_kept(): void
     {
         $this->assertStringContainsString('<p>Dear Sir,</p><p><br /></p><p>Please quote.</p>',

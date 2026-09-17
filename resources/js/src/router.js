@@ -361,10 +361,9 @@ const router = new Router({
           // §4.2 — connecting the mailbox the Inbox reads from. Same tier gate as the
           // Inbox itself: there is no reason to let a Core tenant connect a mailbox whose
           // messages they will never be shown.
+          // Mailboxes live in Settings now (user, 2026-09-17); old links land there.
           path: "mailboxes",
-          name: "Mailboxes",
-          component: () => import("@/view/pages/freight/MailboxSettings"),
-          meta: { userType: 'user', designations: ['pricing', 'operations', 'sales', 'boss', 'accounts'], minTier: 'tactical' }
+          redirect: "/settings"
         },
         {
           // Where Microsoft's sign-in lands: the last month of mail coming in (user, 2026-09-16).

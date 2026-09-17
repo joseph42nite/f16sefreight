@@ -549,7 +549,7 @@ class EmailInboxController extends Controller
             ->whereNull('disconnected_at')->where('auth_state', 'connected')->latest('id')->first();
 
         if ($connection === null) {
-            return response()->json(['error' => 'Connect your Outlook first (Settings → Mailboxes), so the mail goes from you.', 'reason' => 'no_mailbox'], 422);
+            return response()->json(['error' => 'Connect your Outlook first (in Settings), so the mail goes from you.', 'reason' => 'no_mailbox'], 422);
         }
 
         $mailBody = app(\App\Services\Mail\MailBody::class);

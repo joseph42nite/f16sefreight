@@ -102,7 +102,7 @@ class SalesOutreachController extends Controller
 
         if ($connection === null) {
             return response()->json([
-                'error' => 'Connect your mailbox in Settings → Mailboxes first, so the email comes from you.',
+                'error' => 'Connect your mailbox in Settings first, so the email comes from you.',
                 'reason' => 'no_mailbox',
             ], 422);
         }

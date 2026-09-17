@@ -10,7 +10,7 @@
           <ul class="fx-welcome__points">
             <li>You sign in with Microsoft. We never see your password.</li>
             <li>Mail is kept here for 3 months. Anything older is still in your Outlook.</li>
-            <li>You can disconnect at any time from Settings → Mailboxes.</li>
+            <li>You can disconnect at any time from Settings.</li>
           </ul>
           <p v-if="error" class="fx-error" role="alert">{{ error }}</p>
         </div>
@@ -43,7 +43,7 @@ export default {
   data: () => ({ state: null, busy: false, error: null, hidden: false }),
   computed: {
     showReminder() {
-      const onMailPages = ["/mailboxes"].includes(this.$route.path) || this.$route.path.startsWith("/mailbox-import");
+      const onMailPages = ["/settings"].includes(this.$route.path) || this.$route.path.startsWith("/mailbox-import");
       return !this.state.connected && !this.hidden && !onMailPages;
     },
   },

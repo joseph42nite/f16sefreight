@@ -33,9 +33,9 @@ export const HELP_TARGETS = [
   { name: "what-will-be-used", page: "/inbox", label: "What will be used table" },
   { name: "save-draft", page: "/inbox", label: "Save as draft button" },
 
-  // Mailboxes (/mailboxes)
-  { name: "connect-outlook", page: "/mailboxes", label: "Connect Outlook / Microsoft 365" },
-  { name: "mailbox-signature", page: "/mailboxes", label: "Signature editor for a mailbox" },
+  // Mailbox, inside Settings (/settings)
+  { name: "connect-outlook", page: "/settings", label: "Connect Outlook / Microsoft 365" },
+  { name: "mailbox-signature", page: "/settings", label: "Signature editor for a mailbox" },
 
   // Everywhere
   { name: "report-problem", page: null, label: "Raise a ticket (⚑) inside Help" },

@@ -3446,7 +3446,7 @@ var render = function render() {
     }
   }) : _vm.draft.includeSignature ? _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("\n            No signature set for this mailbox. Add one in Settings → Mailboxes.\n          ")]) : _vm._e(), _vm._v(" "), _c("div", {
+  }, [_vm._v("\n            No signature set for this mailbox. Add one in Settings.\n          ")]) : _vm._e(), _vm._v(" "), _c("div", {
     staticClass: "fx-compose__attach"
   }, [_c("button", {
     staticClass: "fx-btn",

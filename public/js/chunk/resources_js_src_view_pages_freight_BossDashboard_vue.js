@@ -305,9 +305,9 @@ var render = function render() {
     }
   }, [_vm._v("\n      Mails go from your own mailbox. "), _c("router-link", {
     attrs: {
-      to: "/mailboxes"
+      to: "/settings"
     }
-  }, [_vm._v("Connect your mailbox")]), _vm._v(" before sending.\n    ")], 1) : _vm._e(), _vm._v(" "), _vm.mailsLoaded && !_vm.mails.length ? _c("p", {
+  }, [_vm._v("Connect your mailbox in Settings")]), _vm._v(" before sending.\n    ")], 1) : _vm._e(), _vm._v(" "), _vm.mailsLoaded && !_vm.mails.length ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Nothing to raise with the team right now.")]) : _c("ul", {
     staticClass: "fx-outreach"

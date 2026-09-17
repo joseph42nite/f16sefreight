@@ -80,7 +80,7 @@ class BossMailController extends Controller
         $connection = $this->mailbox();
 
         if ($connection === null) {
-            return response()->json(['error' => 'Connect your mailbox in Settings → Mailboxes first, so the mail comes from you.',
+            return response()->json(['error' => 'Connect your mailbox in Settings first, so the mail comes from you.',
                 'reason' => 'no_mailbox'], 422);
         }
 

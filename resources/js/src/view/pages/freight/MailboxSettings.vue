@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <header class="fx-page-head">
+  <div class="fx-mailbox-settings">
+    <header v-if="!embedded" class="fx-page-head">
       <h1 class="fx-page-title">Mailboxes</h1>
       <p class="fx-page-sub">
         Connect the mailbox your clients write to. Messages appear in the Inbox; nothing is
@@ -175,6 +175,8 @@ import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 export default {
   name: "MailboxSettings",
   components: { MailEditor, StatusChip },
+  /** Shown inside Settings, under Settings' own heading (user, 2026-09-17: no separate page). */
+  props: { embedded: { type: Boolean, default: false } },
   data: () => ({
     loading: true, error: null, connectError: null,
     connections: [], connecting: false, busy: null,

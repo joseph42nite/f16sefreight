@@ -3484,14 +3484,14 @@ const HELP_TARGETS = [
   page: "/inbox",
   label: "Save as draft button"
 },
-// Mailboxes (/mailboxes)
+// Mailbox, inside Settings (/settings)
 {
   name: "connect-outlook",
-  page: "/mailboxes",
+  page: "/settings",
   label: "Connect Outlook / Microsoft 365"
 }, {
   name: "mailbox-signature",
-  page: "/mailboxes",
+  page: "/settings",
   label: "Signature editor for a mailbox"
 },
 // Everywhere

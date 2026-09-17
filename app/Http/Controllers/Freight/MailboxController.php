@@ -45,6 +45,8 @@ class MailboxController extends Controller
     /** The tenant's connected mailboxes. Never includes tokens — see $hidden on the model. */
     public function index(): JsonResponse
     {
+        $this->authorize('manageMailbox');
+
         $context = UserContext::for(auth()->user());
 
         $connections = MailboxConnection::where('agent_id', $context->agentId)
@@ -73,6 +75,8 @@ class MailboxController extends Controller
      */
     public function connect(Request $request): JsonResponse
     {
+        $this->authorize('manageMailbox');
+
         $data = $request->validate([
             'provider' => ['required', 'string', 'in:' . implode(',', $this->providers->available())],
         ]);
@@ -224,6 +228,8 @@ class MailboxController extends Controller
      */
     public function disconnect(MailboxConnection $mailbox): JsonResponse
     {
+        $this->authorize('manageMailbox');
+
         $context = UserContext::for(auth()->user());
 
         if ((int) $mailbox->agent_id !== (int) $context->agentId) {
@@ -254,6 +260,8 @@ class MailboxController extends Controller
      */
     public function updateSignature(Request $request, MailboxConnection $mailbox, MailBody $mailBody): JsonResponse
     {
+        $this->authorize('manageMailbox');
+
         $context = UserContext::for(auth()->user());
 
         if ((int) $mailbox->agent_id !== (int) $context->agentId) {
@@ -282,6 +290,8 @@ class MailboxController extends Controller
      */
     public function uploadSignatureImage(Request $request, MailboxConnection $mailbox): JsonResponse
     {
+        $this->authorize('manageMailbox');
+
         if ((int) $mailbox->agent_id !== (int) UserContext::for(auth()->user())->agentId) {
             return response()->json(['error' => 'Not found.'], 404);
         }
@@ -310,6 +320,8 @@ class MailboxController extends Controller
 
     public function removeSignatureImage(MailboxConnection $mailbox): JsonResponse
     {
+        $this->authorize('manageMailbox');
+
         if ((int) $mailbox->agent_id !== (int) UserContext::for(auth()->user())->agentId) {
             return response()->json(['error' => 'Not found.'], 404);
         }
@@ -336,6 +348,8 @@ class MailboxController extends Controller
     /** Sync one mailbox now, rather than waiting for the sweep. */
     public function syncNow(MailboxConnection $mailbox, MailboxSyncService $sync): JsonResponse
     {
+        $this->authorize('manageMailbox');
+
         $context = UserContext::for(auth()->user());
 
         if ((int) $mailbox->agent_id !== (int) $context->agentId) {
@@ -353,6 +367,8 @@ class MailboxController extends Controller
      */
     public function import(MailboxConnection $mailbox, MailboxSyncService $sync): JsonResponse
     {
+        $this->authorize('manageMailbox');
+
         $context = UserContext::for(auth()->user());
 
         if ((int) $mailbox->agent_id !== (int) $context->agentId) {
@@ -423,7 +439,7 @@ class MailboxController extends Controller
             . '<body style="font:16px system-ui;padding:2rem;max-width:34rem;margin:auto">'
             . '<h1 style="font-size:1.1rem">' . ($ok ? 'Mailbox connected' : 'Connection failed') . '</h1>'
             . '<p>' . e($message) . '</p>'
-            . ($back ? '<p><a href="' . e(rtrim($back, '/')) . '/mailboxes">Back to Mailboxes</a></p>'
+            . ($back ? '<p><a href="' . e(rtrim($back, '/')) . '/settings">Back to Settings</a></p>'
                 : '<p style="color:#5A6472">You can close this window and return to the app.</p>'),
             $status,
             ['Content-Type' => 'text/html']

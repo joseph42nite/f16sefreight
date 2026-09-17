@@ -392,6 +392,15 @@ class MailboxConnectionTest extends TestCase
         $this->assertSame('t-1', $this->company->fresh()->outlook_tenant_id);
     }
 
+    /** Core has no inbox, so it cannot connect a mailbox — refused on the server too (user, 2026-09-17). */
+    public function test_a_core_company_cannot_connect_a_mailbox(): void
+    {
+        $this->company->forceFill(['tier' => 'core'])->save();
+
+        $this->api()->postJson($this->url('/mailboxes/connect'), ['provider' => 'outlook'])->assertForbidden();
+        $this->getJson($this->url('/mailboxes'))->assertForbidden();
+    }
+
     private function beginConnect(): string
     {
         $url = $this->api()->postJson($this->url('/mailboxes/connect'), ['provider' => 'outlook'])

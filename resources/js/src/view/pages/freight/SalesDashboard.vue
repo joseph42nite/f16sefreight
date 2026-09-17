@@ -66,7 +66,7 @@
         <p class="fx-muted fx-outreach__intro">Suggested from each client's shipping trends. You read, edit and send every email yourself.</p>
 
         <p v-if="outreachLoaded && !hasMailbox" class="fx-warn" role="status">
-          Emails go from your own mailbox. <router-link to="/mailboxes">Connect your mailbox</router-link> before sending.
+          Emails go from your own mailbox. <router-link to="/settings">Connect your mailbox in Settings</router-link> before sending.
         </p>
 
         <p v-if="outreachLoaded && !emails.length" class="fx-muted">No client emails suggested right now.</p>

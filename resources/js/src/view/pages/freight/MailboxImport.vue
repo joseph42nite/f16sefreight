@@ -21,7 +21,7 @@
     <p v-if="error" class="fx-error" role="alert">{{ error }}</p>
 
     <div class="fx-import__actions">
-      <button v-if="info && info.status === 'failed'" class="fx-btn fx-btn--primary" @click="$router.push('/mailboxes')">Go to Mailboxes</button>
+      <button v-if="info && info.status === 'failed'" class="fx-btn fx-btn--primary" @click="$router.push('/settings')">Go to Settings</button>
       <button v-else-if="done" class="fx-btn fx-btn--primary" @click="$router.push(next.path)">{{ next.label }}</button>
       <button v-else class="fx-btn fx-btn--ghost" @click="$router.push(next.path)">Continue to {{ next.label.replace('Open ', '') }}</button>
     </div>

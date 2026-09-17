@@ -10620,14 +10620,9 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       // §4.2 — connecting the mailbox the Inbox reads from. Same tier gate as the
       // Inbox itself: there is no reason to let a Core tenant connect a mailbox whose
       // messages they will never be shown.
+      // Mailboxes live in Settings now (user, 2026-09-17); old links land there.
       path: "mailboxes",
-      name: "Mailboxes",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_MailboxSettings_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/MailboxSettings */ "./resources/js/src/view/pages/freight/MailboxSettings.vue")),
-      meta: {
-        userType: 'user',
-        designations: ['pricing', 'operations', 'sales', 'boss', 'accounts'],
-        minTier: 'tactical'
-      }
+      redirect: "/settings"
     }, {
       // Where Microsoft's sign-in lands: the last month of mail coming in (user, 2026-09-16).
       path: "mailbox-import/:id",

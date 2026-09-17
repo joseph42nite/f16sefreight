@@ -309,7 +309,7 @@
             <MailEditor v-model="draft.body" data-help="compose-editor" />
 
             <!--
-              The signature comes from Settings → Mailboxes and is added by the server, so it
+              The signature comes from Settings and is added by the server, so it
               cannot be mangled per message. The switch turns it off for one email.
             -->
             <label class="fx-checkbox fx-compose__signature-switch" data-help="add-signature">
@@ -319,7 +319,7 @@
             <!-- eslint-disable-next-line vue/no-v-html — cleaned by HTMLPurifier on the server -->
             <div v-if="draft.includeSignature && signature" class="fx-compose__signature" v-html="signature"></div>
             <p v-else-if="draft.includeSignature" class="fx-muted">
-              No signature set for this mailbox. Add one in Settings → Mailboxes.
+              No signature set for this mailbox. Add one in Settings.
             </p>
 
             <!--

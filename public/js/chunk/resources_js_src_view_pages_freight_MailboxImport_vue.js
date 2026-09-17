@@ -134,10 +134,10 @@ var render = function render() {
     staticClass: "fx-btn fx-btn--primary",
     on: {
       click: function ($event) {
-        return _vm.$router.push("/mailboxes");
+        return _vm.$router.push("/settings");
       }
     }
-  }, [_vm._v("Go to Mailboxes")]) : _vm.done ? _c("button", {
+  }, [_vm._v("Go to Settings")]) : _vm.done ? _c("button", {
     staticClass: "fx-btn fx-btn--primary",
     on: {
       click: function ($event) {

@@ -44,6 +44,8 @@ class AuthServiceProvider extends ServiceProvider
         // Sales read and answer only the mail they are on (EmailThread::scopeVisibleTo).
         // The Boss reads the mail he is on (user, 2026-09-16) — EmailThread::scopeVisibleTo narrows it.
         $this->define('viewInbox', ['pricing', 'operations', 'sales', 'boss'], 'tactical');
+        // Connecting Outlook and its signatures: Tactical and Command only — Core has no inbox (user, 2026-09-17).
+        $this->define('manageMailbox', ['pricing', 'operations', 'sales', 'boss', 'accounts'], 'tactical');
 
         // ── Enquiry lifecycle — pricing owns triage and conversion ───────────
         $this->define('triage',     ['pricing'], 'tactical');

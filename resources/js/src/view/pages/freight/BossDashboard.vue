@@ -18,7 +18,7 @@
       <p class="fx-muted fx-outreach__intro">Suggested from the figures. Open one to read the draft, change anything, and send it yourself.</p>
 
       <p v-if="mailsLoaded && !hasMailbox" class="fx-warn" role="status">
-        Mails go from your own mailbox. <router-link to="/mailboxes">Connect your mailbox</router-link> before sending.
+        Mails go from your own mailbox. <router-link to="/settings">Connect your mailbox in Settings</router-link> before sending.
       </p>
       <p v-if="mailsLoaded && !mails.length" class="fx-muted">Nothing to raise with the team right now.</p>
 

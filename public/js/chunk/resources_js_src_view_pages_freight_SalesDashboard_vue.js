@@ -704,9 +704,9 @@ var render = function render() {
     }
   }, [_vm._v("\n        Emails go from your own mailbox. "), _c("router-link", {
     attrs: {
-      to: "/mailboxes"
+      to: "/settings"
     }
-  }, [_vm._v("Connect your mailbox")]), _vm._v(" before sending.\n      ")], 1) : _vm._e(), _vm._v(" "), _vm.outreachLoaded && !_vm.emails.length ? _c("p", {
+  }, [_vm._v("Connect your mailbox in Settings")]), _vm._v(" before sending.\n      ")], 1) : _vm._e(), _vm._v(" "), _vm.outreachLoaded && !_vm.emails.length ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("No client emails suggested right now.")]) : _c("ul", {
     staticClass: "fx-outreach"

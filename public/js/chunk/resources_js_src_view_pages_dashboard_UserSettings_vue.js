@@ -11,8 +11,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/view/layouts/public/SideBar.vue */ "./resources/js/src/view/layouts/public/SideBar.vue");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _view_pages_freight_MailboxSettings_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/MailboxSettings.vue */ "./resources/js/src/view/pages/freight/MailboxSettings.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -20,11 +22,20 @@ function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" 
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 
+
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "UserSettings",
   components: {
-    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"]
+    SideBar: _view_layouts_public_SideBar_vue__WEBPACK_IMPORTED_MODULE_0__["default"],
+    MailboxSettings: _view_pages_freight_MailboxSettings_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
   },
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)(["designation", "tierAtLeast"])), {}, {
+    /** Tactical and Command, for the roles that connect Outlook — Core has no inbox. */
+    showMailboxes() {
+      return this.tierAtLeast("tactical") && ["pricing", "operations", "sales", "boss", "accounts"].includes(this.designation);
+    }
+  }),
   data() {
     return {
       isBusy: false,
@@ -194,6 +205,218 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=script&lang=js":
+/*!*********************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=script&lang=js ***!
+  \*********************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/MailEditor.vue */ "./resources/js/src/view/pages/freight/components/MailEditor.vue");
+/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "MailboxSettings",
+  components: {
+    MailEditor: _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+  },
+  /** Shown inside Settings, under Settings' own heading (user, 2026-09-17: no separate page). */
+  props: {
+    embedded: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data: () => ({
+    loading: true,
+    error: null,
+    connectError: null,
+    connections: [],
+    connecting: false,
+    busy: null,
+    /** mailbox id -> signature HTML being edited. */
+    signatures: {},
+    /** mailbox id -> true once something was pasted into its editor. */
+    pastedInto: {},
+    mySignature: "",
+    saved: null,
+    /** Your own name, as clients read it on the automated updates. */
+    myName: "",
+    nameSaved: false
+  }),
+  computed: {
+    activeConnections() {
+      return this.connections.filter(c => !c.disconnected_at);
+    }
+  },
+  created() {
+    this.load();
+    _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/me").then(({
+      data
+    }) => {
+      this.myName = data.profile && data.profile.name || "";
+    }).catch(() => {});
+  },
+  methods: {
+    load() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/user/mailboxes").then(({
+        data
+      }) => {
+        this.connections = data.connections || [];
+        this.connections.forEach(c => this.$set(this.signatures, c.id, c.signature_html || ""));
+        this.mySignature = data.my_signature || "";
+      }).catch(e => {
+        this.error = this.messageFor(e);
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    saveSignature(c) {
+      this.busy = "sig-" + c.id;
+      this.saved = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put("/user/mailboxes/" + c.id + "/signature", {
+        signature_html: this.signatures[c.id] || "",
+        signature_source: this.pastedInto[c.id] ? "pasted" : "manual"
+      }).then(({
+        data
+      }) => {
+        c.signature_source = data.signature_source;
+        this.$set(this.signatures, c.id, data.signature_html || "");
+        this.saved = "sig-" + c.id;
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
+    uploadImage(c, event) {
+      const file = event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+      const form = new FormData();
+      form.append("image", file);
+      this.busy = "img-" + c.id;
+      this.connectError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/mailboxes/" + c.id + "/signature-image", form).then(({
+        data
+      }) => {
+        this.$set(c, "signature_image", data.signature_image);
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
+    removeImage(c) {
+      this.busy = "img-" + c.id;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"]("/user/mailboxes/" + c.id + "/signature-image").then(() => {
+        this.$set(c, "signature_image", null);
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
+    saveName() {
+      this.busy = "name";
+      this.nameSaved = false;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put("/user/profile", {
+        name: this.myName
+      }).then(({
+        data
+      }) => {
+        this.myName = data.name;
+        this.nameSaved = true;
+        window.dispatchEvent(new Event("f16s:profile-updated"));
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
+    saveMySignature() {
+      this.busy = "mine";
+      this.saved = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put("/user/signature", {
+        signature_text: this.mySignature
+      }).then(() => {
+        this.saved = "mine";
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
+    providerLabel(p) {
+      /* ⚠️ A raw `gmail` in the column looked like a rendering bug the first time this
+         screen was opened against seeded data. Every provider gets a real name, and one
+         that has no ingestion yet says so where it is read. */
+      if (p === "outlook" || p === "microsoft") return "Microsoft 365";
+      if (p === "gmail" || p === "google") return "Gmail (not syncing yet)";
+      return p;
+    },
+    /* Gmail connections exist in seeded data but cannot sync — GAPS #15. Offering the
+       button anyway means the only way to learn that is to press it and read an error. */
+    canSync(c) {
+      return c.provider === "outlook" || c.provider === "microsoft";
+    },
+    /* One column, three sources of truth — the row is easier to read than three flags. */
+    stateOf(c) {
+      if (c.disconnected_at) return "disconnected";
+      if (!c.is_active) return "paused";
+      return c.auth_state;
+    },
+    connect(provider) {
+      this.connecting = true;
+      this.connectError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/mailboxes/connect", {
+        provider
+      }).then(({
+        data
+      }) => {
+        /* A full navigation rather than a popup: popup blockers eat this, and the
+           consent screen is a page the user should see in full. */
+        window.location.href = data.authorization_url;
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+        this.connecting = false;
+      });
+    },
+    syncNow(c) {
+      this.busy = c.id;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/mailboxes/" + c.id + "/sync").then(() => this.load()).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
+    confirmDisconnect(c) {
+      /* 🔴 Confirmed, because it ERASES credentials — reconnecting means going through
+         Microsoft's consent screen again, not flipping a switch back. */
+      if (!window.confirm("Disconnect " + c.email_address + "?\n\n" + "The stored credentials are erased. New mail stops arriving in the Inbox; " + "messages already synced are kept.")) return;
+      this.busy = c.id;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/mailboxes/" + c.id + "/disconnect").then(() => this.load()).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
+    messageFor(e) {
+      const d = e.response && e.response.data || {};
+      return d.error || d.message || "Something went wrong.";
+    }
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/UserSettings.vue?vue&type=template&id=2d627c25&scoped=true":
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/UserSettings.vue?vue&type=template&id=2d627c25&scoped=true ***!
@@ -237,23 +460,23 @@ var render = function render() {
     staticClass: "nav-title"
   }, [_vm._v("User & Branch Settings")]), _vm._v(" "), _c("p", {
     staticClass: "nav-subtitle"
-  }, [_vm._v("\n                        View your profile details and manage saved branch address records for accurate OCR matching.\n                    ")])]), _vm._v(" "), _c("b-card", {
-    staticClass: "profile-card border-0 mb-6 shadow-sm"
-  }, [_c("div", {
-    staticClass: "d-flex align-items-center justify-content-between flex-wrap"
-  }, [_c("div", [_c("h5", {
+  }, [_vm._v("\n                        View your profile details and manage saved branch address records for accurate OCR matching.\n                    ")])]), _vm._v(" "), _vm.showMailboxes ? _c("b-card", {
+    staticClass: "profile-card border-0 mb-6 shadow-sm",
+    attrs: {
+      id: "mailboxes"
+    }
+  }, [_c("h5", {
     staticClass: "mb-1 font-weight-700",
     staticStyle: {
       color: "#355594"
     }
-  }, [_vm._v("Mailboxes")]), _vm._v(" "), _c("p", {
-    staticClass: "mb-0 text-muted"
-  }, [_vm._v("\n                                Connect the mailbox your clients write to. Messages appear in the\n                                Inbox; nothing is sent without you asking.\n                            ")])]), _vm._v(" "), _c("router-link", {
-    staticClass: "btn btn-primary",
+  }, [_vm._v("Mailbox")]), _vm._v(" "), _c("p", {
+    staticClass: "text-muted"
+  }, [_vm._v("\n                        Connect the Outlook your clients write to. Messages appear in the Inbox; nothing is sent\n                        without you asking.\n                    ")]), _vm._v(" "), _c("MailboxSettings", {
     attrs: {
-      to: "/mailboxes"
+      embedded: ""
     }
-  }, [_vm._v("\n                            Manage mailboxes\n                        ")])], 1)]), _vm._v(" "), _c("b-card", {
+  })], 1) : _vm._e(), _vm._v(" "), _c("b-card", {
     staticClass: "profile-card border-0 mb-6 shadow-sm"
   }, [_c("div", {
     staticClass: "d-flex align-items-center mb-4"
@@ -943,6 +1166,302 @@ render._withStripped = true;
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=template&id=2f09ea5f":
+/*!********************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=template&id=2f09ea5f ***!
+  \********************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", {
+    staticClass: "fx-mailbox-settings"
+  }, [!_vm.embedded ? _c("header", {
+    staticClass: "fx-page-head"
+  }, [_c("h1", {
+    staticClass: "fx-page-title"
+  }, [_vm._v("Mailboxes")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-page-sub"
+  }, [_vm._v("\n      Connect the mailbox your clients write to. Messages appear in the Inbox; nothing is\n      sent without you asking.\n    ")])]) : _vm._e(), _vm._v(" "), _vm.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.error))]) : [_c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Your name")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Clients see this on the automated updates — “" + _vm._s(_vm.myName || "your name") + " from our operations team will be\n        taking care of it”.\n      ")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Name")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.myName,
+      expression: "myName"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "text",
+      maxlength: "100"
+    },
+    domProps: {
+      value: _vm.myName
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.myName = $event.target.value;
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy === "name" || !_vm.myName.trim()
+    },
+    on: {
+      click: _vm.saveName
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.busy === "name" ? "Saving…" : "Save name") + "\n      ")]), _vm._v(" "), _vm.nameSaved ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Saved.")]) : _vm._e()]), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Connected")]), _vm._v(" "), !_vm.connections.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        No mailbox is connected yet, so the Inbox has nothing to show.\n      ")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.connections, function (c) {
+    return _c("tr", {
+      key: c.id
+    }, [_c("td", [_vm._v(_vm._s(c.email_address))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.providerLabel(c.provider)))]), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: _vm.stateOf(c)
+      }
+    })], 1), _vm._v(" "), _c("td", [c.last_synced_at ? _c("span", [_vm._v(_vm._s(c.last_synced_at))]) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("not yet")])]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [!c.disconnected_at ? _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy === c.id || !_vm.canSync(c),
+        title: _vm.canSync(c) ? "Fetch new mail now" : "Gmail ingestion is not built yet"
+      },
+      on: {
+        click: function ($event) {
+          return _vm.syncNow(c);
+        }
+      }
+    }, [_vm._v("Sync now")]) : _vm._e(), _vm._v(" "), !c.disconnected_at ? _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy === c.id
+      },
+      on: {
+        click: function ($event) {
+          return _vm.confirmDisconnect(c);
+        }
+      }
+    }, [_vm._v("Disconnect")]) : _vm._e()])]);
+  }), 0)])]), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Signatures")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Copy your signature from Outlook and paste it in. Replies from a mailbox carry its\n        signature when “Add signature” is on; a mailbox without one uses yours.\n      ")]), _vm._v(" "), _vm._l(_vm.activeConnections, function (c) {
+    return _c("div", {
+      key: "sig-" + c.id,
+      staticClass: "fx-signature"
+    }, [_c("h3", {
+      staticClass: "fx-signature__title"
+    }, [_vm._v("\n          " + _vm._s(c.email_address) + "\n          "), c.signature_source ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" · " + _vm._s(c.signature_source))]) : _vm._e()]), _vm._v(" "), _c("MailEditor", {
+      attrs: {
+        "data-help": "mailbox-signature",
+        value: _vm.signatures[c.id] || ""
+      },
+      on: {
+        input: function ($event) {
+          return _vm.$set(_vm.signatures, c.id, $event);
+        },
+        paste: function ($event) {
+          return _vm.$set(_vm.pastedInto, c.id, true);
+        }
+      }
+    }), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy === "sig-" + c.id
+      },
+      on: {
+        click: function ($event) {
+          return _vm.saveSignature(c);
+        }
+      }
+    }, [_vm._v("\n          " + _vm._s(_vm.busy === "sig-" + c.id ? "Saving…" : "Save signature") + "\n        ")]), _vm._v(" "), _vm.saved === "sig-" + c.id ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" Saved.")]) : _vm._e(), _vm._v(" "), _c("div", {
+      staticClass: "fx-signature__image"
+    }, [_c("span", {
+      staticClass: "fx-field__label"
+    }, [_vm._v("Signature image")]), _vm._v(" "), c.signature_image ? _c("img", {
+      staticClass: "fx-signature__preview",
+      attrs: {
+        src: c.signature_image,
+        alt: "Signature image"
+      }
+    }) : _c("p", {
+      staticClass: "fx-muted"
+    }, [_vm._v("No image. PNG, JPG or GIF, up to 500 KB — shown up to 240 px wide under the signature.")]), _vm._v(" "), _c("div", {
+      staticClass: "fx-signature__image-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        type: "button",
+        disabled: _vm.busy === "img-" + c.id
+      },
+      on: {
+        click: function ($event) {
+          _vm.$refs["imagePicker" + c.id][0].click();
+        }
+      }
+    }, [_vm._v("\n              " + _vm._s(_vm.busy === "img-" + c.id ? "Uploading…" : c.signature_image ? "Replace image" : "Add image") + "\n            ")]), _vm._v(" "), _c("input", {
+      ref: "imagePicker" + c.id,
+      refInFor: true,
+      staticClass: "fx-drop__input",
+      attrs: {
+        type: "file",
+        accept: "image/png,image/jpeg,image/gif"
+      },
+      on: {
+        change: function ($event) {
+          return _vm.uploadImage(c, $event);
+        }
+      }
+    }), _vm._v(" "), c.signature_image ? _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        type: "button",
+        disabled: _vm.busy === "img-" + c.id
+      },
+      on: {
+        click: function ($event) {
+          return _vm.removeImage(c);
+        }
+      }
+    }, [_vm._v("Remove image")]) : _vm._e()])])], 1);
+  }), _vm._v(" "), _c("label", {
+    staticClass: "fx-field fx-signature"
+  }, [_c("span", {
+    staticClass: "fx-signature__title"
+  }, [_vm._v("Your own signature (when a mailbox has none)")]), _vm._v(" "), _c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.mySignature,
+      expression: "mySignature"
+    }],
+    staticClass: "fx-input fx-signature__text",
+    attrs: {
+      rows: "3"
+    },
+    domProps: {
+      value: _vm.mySignature
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.mySignature = $event.target.value;
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy === "mine"
+    },
+    on: {
+      click: _vm.saveMySignature
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.busy === "mine" ? "Saving…" : "Save") + "\n      ")]), _vm._v(" "), _vm.saved === "mine" ? _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(" Saved.")]) : _vm._e()], 2), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Add a mailbox")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        You will be taken to Microsoft to sign in and approve access. F16s never sees your\n        password, and you can disconnect at any time — disconnecting erases the stored\n        credentials.\n      ")]), _vm._v(" "), _vm.connectError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.connectError))]) : _vm._e(), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.connecting,
+      "data-help": "connect-outlook"
+    },
+    on: {
+      click: function ($event) {
+        return _vm.connect("outlook");
+      }
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.connecting ? "Opening Microsoft…" : "Connect Outlook / Microsoft 365") + "\n      ")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: "",
+      title: "Deferred — Google requires a separate security assessment"
+    }
+  }, [_vm._v("\n        Connect Gmail (not available yet)\n      ")])])]], 2);
+};
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Mailbox")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Provider")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("State")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Last synced")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_c("span", {
+    staticClass: "fx-sr-only"
+  }, [_vm._v("Actions")])])])]);
+}];
+render._withStripped = true;
+
+
+/***/ }),
+
 /***/ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/UserSettings.vue?vue&type=style&index=0&id=2d627c25&scoped=true&lang=css":
 /*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/UserSettings.vue?vue&type=style&index=0&id=2d627c25&scoped=true&lang=css ***!
@@ -995,6 +1514,44 @@ component.options.__file = "resources/js/src/view/pages/dashboard/UserSettings.v
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/MailboxSettings.vue":
+/*!*****************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/MailboxSettings.vue ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _MailboxSettings_vue_vue_type_template_id_2f09ea5f__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./MailboxSettings.vue?vue&type=template&id=2f09ea5f */ "./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=template&id=2f09ea5f");
+/* harmony import */ var _MailboxSettings_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MailboxSettings.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=script&lang=js");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+;
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _MailboxSettings_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _MailboxSettings_vue_vue_type_template_id_2f09ea5f__WEBPACK_IMPORTED_MODULE_0__.render,
+  _MailboxSettings_vue_vue_type_template_id_2f09ea5f__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/freight/MailboxSettings.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/dashboard/UserSettings.vue?vue&type=script&lang=js":
 /*!****************************************************************************************!*\
   !*** ./resources/js/src/view/pages/dashboard/UserSettings.vue?vue&type=script&lang=js ***!
@@ -1010,6 +1567,21 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=script&lang=js":
+/*!*****************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=script&lang=js ***!
+  \*****************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_MailboxSettings_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./MailboxSettings.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_MailboxSettings_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/dashboard/UserSettings.vue?vue&type=template&id=2d627c25&scoped=true":
 /*!**********************************************************************************************************!*\
   !*** ./resources/js/src/view/pages/dashboard/UserSettings.vue?vue&type=template&id=2d627c25&scoped=true ***!
@@ -1022,6 +1594,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_UserSettings_vue_vue_type_template_id_2d627c25_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_UserSettings_vue_vue_type_template_id_2d627c25_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./UserSettings.vue?vue&type=template&id=2d627c25&scoped=true */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/dashboard/UserSettings.vue?vue&type=template&id=2d627c25&scoped=true");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=template&id=2f09ea5f":
+/*!***********************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=template&id=2f09ea5f ***!
+  \***********************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_MailboxSettings_vue_vue_type_template_id_2f09ea5f__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_MailboxSettings_vue_vue_type_template_id_2f09ea5f__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_MailboxSettings_vue_vue_type_template_id_2f09ea5f__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./MailboxSettings.vue?vue&type=template&id=2f09ea5f */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/MailboxSettings.vue?vue&type=template&id=2f09ea5f");
 
 
 /***/ }),

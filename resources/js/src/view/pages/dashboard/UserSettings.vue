@@ -33,19 +33,14 @@
                       OAuth round trip, and nesting that inside a profile form would put a
                       redirect in the middle of an unrelated screen.
                     -->
-                    <b-card class="profile-card border-0 mb-6 shadow-sm">
-                        <div class="d-flex align-items-center justify-content-between flex-wrap">
-                            <div>
-                                <h5 class="mb-1 font-weight-700" style="color: #355594;">Mailboxes</h5>
-                                <p class="mb-0 text-muted">
-                                    Connect the mailbox your clients write to. Messages appear in the
-                                    Inbox; nothing is sent without you asking.
-                                </p>
-                            </div>
-                            <router-link to="/mailboxes" class="btn btn-primary">
-                                Manage mailboxes
-                            </router-link>
-                        </div>
+                    <!-- Everything about the person's Outlook, here in Settings — Tactical and Command only (user, 2026-09-17). -->
+                    <b-card v-if="showMailboxes" id="mailboxes" class="profile-card border-0 mb-6 shadow-sm">
+                        <h5 class="mb-1 font-weight-700" style="color: #355594;">Mailbox</h5>
+                        <p class="text-muted">
+                            Connect the Outlook your clients write to. Messages appear in the Inbox; nothing is sent
+                            without you asking.
+                        </p>
+                        <MailboxSettings embedded />
                     </b-card>
 
                     <!-- User Profile Details Card -->
@@ -366,13 +361,23 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import SideBar from "@/view/layouts/public/SideBar.vue";
 import ApiService from "@/core/services/api.service";
+import MailboxSettings from "@/view/pages/freight/MailboxSettings.vue";
 
 export default {
     name: "UserSettings",
     components: {
         SideBar,
+        MailboxSettings,
+    },
+    computed: {
+        ...mapGetters(["designation", "tierAtLeast"]),
+        /** Tactical and Command, for the roles that connect Outlook — Core has no inbox. */
+        showMailboxes() {
+            return this.tierAtLeast("tactical") && ["pricing", "operations", "sales", "boss", "accounts"].includes(this.designation);
+        },
     },
     data() {
         return {

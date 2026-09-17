@@ -589,7 +589,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
   }),
   computed: {
     showReminder() {
-      const onMailPages = ["/mailboxes"].includes(this.$route.path) || this.$route.path.startsWith("/mailbox-import");
+      const onMailPages = ["/settings"].includes(this.$route.path) || this.$route.path.startsWith("/mailbox-import");
       return !this.state.connected && !this.hidden && !onMailPages;
     }
   },
@@ -1479,7 +1479,7 @@ var staticRenderFns = [function () {
     _c = _vm._self._c;
   return _c("ul", {
     staticClass: "fx-welcome__points"
-  }, [_c("li", [_vm._v("You sign in with Microsoft. We never see your password.")]), _vm._v(" "), _c("li", [_vm._v("Mail is kept here for 3 months. Anything older is still in your Outlook.")]), _vm._v(" "), _c("li", [_vm._v("You can disconnect at any time from Settings → Mailboxes.")])]);
+  }, [_c("li", [_vm._v("You sign in with Microsoft. We never see your password.")]), _vm._v(" "), _c("li", [_vm._v("Mail is kept here for 3 months. Anything older is still in your Outlook.")]), _vm._v(" "), _c("li", [_vm._v("You can disconnect at any time from Settings.")])]);
 }];
 render._withStripped = true;
 

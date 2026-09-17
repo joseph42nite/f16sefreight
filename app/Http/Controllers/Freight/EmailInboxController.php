@@ -202,10 +202,12 @@ class EmailInboxController extends Controller
         $promoting = $to === 'customer_enquiry';
         $demoting = $from === 'customer_enquiry' && $thread->enquiry_id !== null;
 
-        if ($demoting && Job::withoutTenantScope()->where('enquiry_id', $thread->enquiry_id)->exists()) {
+        // A cancelled shipment does not block it (user, 2026-09-17: the message said "cancel the job first", and after
+        // cancelling it still refused).
+        if ($demoting && Job::withoutTenantScope()->where('enquiry_id', $thread->enquiry_id)->where('status', '!=', 'Cancelled')->exists()) {
             return response()->json([
-                'error'  => 'This conversation already has a shipment against it. '
-                          . 'Cancel the job first — re-classifying would strand it.',
+                'error'  => 'This conversation has a shipment in progress. Cancel the shipment first (Open workspace → '
+                          . 'Cancel shipment), then change what it is filed as.',
                 'reason' => 'has_job',
             ], 422);
         }

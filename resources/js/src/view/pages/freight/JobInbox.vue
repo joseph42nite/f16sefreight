@@ -128,6 +128,34 @@
         </header>
 
         <p v-if="actionError" class="fx-error fx-inbox__pad" role="alert">{{ actionError }}</p>
+        <div v-if="cancelling" class="fx-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
+          <div class="fx-modal__panel fx-welcome">
+            <header class="fx-modal__head"><h2 id="cancel-title" class="fx-modal__title">Cancel shipment {{ active.job.execution_job_no }}</h2></header>
+            <div class="fx-modal__body fx-newmail">
+              <p class="fx-muted">The shipment is kept with its reason for review, and any AWB goes back to stock. It cannot be undone; a new quote starts a new enquiry.</p>
+              <label class="fx-field" for="cancel-reason">
+                <span class="fx-field__label">Why?</span>
+                <select id="cancel-reason" v-model="cancelling.reason" class="fx-input">
+                  <option value="" disabled>Choose a reason</option>
+                  <option v-for="(label, key) in CANCELLATION_REASONS" :key="key" :value="key">{{ label }}</option>
+                </select>
+              </label>
+              <label v-if="cancelling.reason === 'other'" class="fx-field" for="cancel-custom">
+                <span class="fx-field__label">In your own words</span>
+                <input id="cancel-custom" v-model="cancelling.custom" class="fx-input" maxlength="255" />
+              </label>
+              <p v-if="cancelling.error" class="fx-error" role="alert">{{ cancelling.error }}</p>
+            </div>
+            <footer class="fx-modal__foot">
+              <button class="fx-btn" :disabled="busy" @click="cancelling = null">Keep the shipment</button>
+              <button
+                class="fx-btn fx-btn--primary"
+                :disabled="busy || !cancelling.reason || (cancelling.reason === 'other' && !cancelling.custom.trim())"
+                @click="cancelShipment"
+              >Cancel shipment</button>
+            </footer>
+          </div>
+        </div>
         <p v-if="actionNotice" class="fx-inbox__pad fx-notice" role="status">{{ actionNotice }}</p>
         <p v-if="attachmentError" class="fx-error fx-inbox__pad" role="alert">{{ attachmentError }}</p>
 
@@ -404,6 +432,14 @@
                 </option>
               </select>
             </label>
+            <!-- PRD §5.4 State 4: a confirmed shipment can be cancelled, with a reason (user, 2026-09-17). -->
+            <button
+              v-if="canTriage && active.job.status !== 'Cancelled'"
+              class="fx-btn fx-btn--ghost"
+              :disabled="busy"
+              @click="cancelling = { reason: '', custom: '', error: null }"
+            >Cancel shipment</button>
+            <span v-if="active.job.status === 'Cancelled'" class="fx-muted">Cancelled — this conversation can now be filed as something else.</span>
             <span v-if="canSeeOperator && active.job.pending_ops_id" class="fx-muted">
               Waiting for approval → {{ operatorName(active.job.pending_ops_id) }}
               <button
@@ -649,6 +685,21 @@ const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
 
 const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road", "other"];
 
+/** PRD §5.4 State 4 — mirrors JobController::CANCELLATION_REASONS. */
+const CANCELLATION_REASONS = {
+  customs_hold: "Customs hold unresolved",
+  client_cancelled: "Client cancelled",
+  cargo_not_ready: "Cargo not ready / no-show",
+  documentation_incomplete: "Documentation incomplete",
+  payment_credit_hold: "Payment / credit hold",
+  carrier_space_lost: "Carrier space lost",
+  cargo_damaged: "Cargo damaged",
+  prohibited_regulatory: "Prohibited / regulatory",
+  rate_expired: "Rate expired (re-quote)",
+  duplicate: "Duplicate",
+  other: "Other",
+};
+
 /* §740's tab set. The two carrying real data today come first; the rest name the
    Step 6 item that fills them, so an unfinished tab cannot be mistaken for a bug. */
 /**
@@ -706,6 +757,8 @@ export default {
   data: () => ({
     /** The New mail pop-up is open. */
     writingNew: false,
+    /** The Cancel shipment pop-up: { reason, custom, error }. */
+    cancelling: null,
     /** A short "done" line after an action, e.g. a claim whose mail went. */
     actionNotice: null,
     /** A PDF picked with Extract before the shipment was confirmed; it goes into Extraction on confirm. */
@@ -751,7 +804,7 @@ export default {
     /** The acknowledgement shown when claiming, and the state of sending a client update. */
     claimDraft: null, updateBusy: false, updateError: null,
     LOST_REASONS,
-    CLASSIFICATIONS, WORKSPACE_TABS,
+    CLASSIFICATIONS, WORKSPACE_TABS, CANCELLATION_REASONS,
   }),
   computed: {
     ...mapGetters(["designation", "currentUser", "tierAtLeast"]),
@@ -1388,6 +1441,17 @@ export default {
     createEnquiry() {
       this.pending = "customer_enquiry";
       this.classify();
+    },
+    cancelShipment() {
+      this.busy = true;
+      ApiService.post("/jobs/" + this.active.job.id + "/cancel", {
+        cancellation_reason: this.cancelling.reason,
+        cancellation_reason_custom: this.cancelling.reason === "other" ? this.cancelling.custom : null,
+      })
+        .then(() => { this.cancelling = null; this.actionNotice = "Shipment cancelled."; return this.open(this.active); })
+        .then(() => this.load())
+        .catch((e) => { this.cancelling.error = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
     },
     closeWorkspace() {
       this.setSplit(false);

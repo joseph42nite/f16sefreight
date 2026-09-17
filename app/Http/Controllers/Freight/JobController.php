@@ -206,11 +206,33 @@ class JobController extends Controller
      *
      * On success the AWB/HAWB is DETACHED (`job_id → NULL`), releasing the number to stock.
      */
+    /** PRD §5.4 State 4: the fixed reasons, in the order the dropdown shows them. */
+    public const CANCELLATION_REASONS = [
+        'customs_hold' => 'Customs hold unresolved',
+        'client_cancelled' => 'Client cancelled',
+        'cargo_not_ready' => 'Cargo not ready / no-show',
+        'documentation_incomplete' => 'Documentation incomplete',
+        'payment_credit_hold' => 'Payment / credit hold',
+        'carrier_space_lost' => 'Carrier space lost',
+        'cargo_damaged' => 'Cargo damaged',
+        'prohibited_regulatory' => 'Prohibited / regulatory',
+        'rate_expired' => 'Rate expired (re-quote)',
+        'duplicate' => 'Duplicate',
+        'other' => 'Other',
+    ];
+
     public function cancel(Request $request, Job $job): JsonResponse
     {
+        // Cancelling is the pricing owner's call, like confirming it (user, 2026-09-17: the button was never built).
+        $this->authorize('convert');
+
+        if ($job->status === JobStatus::Cancelled) {
+            return response()->json(['error' => 'This shipment is already cancelled.', 'reason' => 'already_cancelled'], 422);
+        }
+
         $data = $request->validate([
-            'cancellation_reason'        => ['required', 'string', 'max:30'],
-            'cancellation_reason_custom' => ['nullable', 'string', 'max:255'],
+            'cancellation_reason'        => ['required', 'in:' . implode(',', array_keys(self::CANCELLATION_REASONS))],
+            'cancellation_reason_custom' => ['nullable', 'string', 'max:255', 'required_if:cancellation_reason,other'],
         ]);
 
         $postedInvoices = AccountsInvoice::withoutTenantScope()

@@ -59,14 +59,20 @@ class EnquiryMinter
      */
     public function remove(EmailThread $thread, ?int $actorId = null): void
     {
-        if ($thread->enquiry_id === null || Job::withoutTenantScope()->where('enquiry_id', $thread->enquiry_id)->exists()) {
+        if ($thread->enquiry_id === null
+            || Job::withoutTenantScope()->where('enquiry_id', $thread->enquiry_id)->where('status', '!=', 'Cancelled')->exists()) {
             return;
         }
 
         $id = $thread->enquiry_id;
         EmailThread::withoutTenantScope()->whereKey($thread->id)->update(['enquiry_id' => null]);
         $thread->enquiry_id = null;
-        Enquiry::withoutGlobalScopes()->whereKey($id)->forceDelete();
+
+        // With a cancelled shipment the enquiry and the shipment are KEPT — every cancellation stays for the Boss to review
+        // (PRD §5.4) — and only the conversation lets go of them.
+        if (! Job::withoutTenantScope()->where('enquiry_id', $id)->exists()) {
+            Enquiry::withoutGlobalScopes()->whereKey($id)->forceDelete();
+        }
         $this->audit->record($thread->agent_id, 'thread.enquiry_removed', 'enquiry', $id, $actorId);
     }
 

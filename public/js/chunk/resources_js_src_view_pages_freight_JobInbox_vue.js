@@ -49,6 +49,21 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
 const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road", "other"];
 
+/** PRD §5.4 State 4 — mirrors JobController::CANCELLATION_REASONS. */
+const CANCELLATION_REASONS = {
+  customs_hold: "Customs hold unresolved",
+  client_cancelled: "Client cancelled",
+  cargo_not_ready: "Cargo not ready / no-show",
+  documentation_incomplete: "Documentation incomplete",
+  payment_credit_hold: "Payment / credit hold",
+  carrier_space_lost: "Carrier space lost",
+  cargo_damaged: "Cargo damaged",
+  prohibited_regulatory: "Prohibited / regulatory",
+  rate_expired: "Rate expired (re-quote)",
+  duplicate: "Duplicate",
+  other: "Other"
+};
+
 /* §740's tab set. The two carrying real data today come first; the rest name the
    Step 6 item that fills them, so an unfinished tab cannot be mistaken for a bug. */
 /**
@@ -131,6 +146,8 @@ const WORKSPACE_TABS = [{
   data: () => ({
     /** The New mail pop-up is open. */
     writingNew: false,
+    /** The Cancel shipment pop-up: { reason, custom, error }. */
+    cancelling: null,
     /** A short "done" line after an action, e.g. a claim whose mail went. */
     actionNotice: null,
     /** A PDF picked with Extract before the shipment was confirmed; it goes into Extraction on confirm. */
@@ -216,7 +233,8 @@ const WORKSPACE_TABS = [{
     updateError: null,
     LOST_REASONS,
     CLASSIFICATIONS,
-    WORKSPACE_TABS
+    WORKSPACE_TABS,
+    CANCELLATION_REASONS
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_12__.mapGetters)(["designation", "currentUser", "tierAtLeast"])), {}, {
     /* Only pricing owns triage — re-classification mints or strands an enquiry. */
@@ -872,6 +890,21 @@ const WORKSPACE_TABS = [{
     createEnquiry() {
       this.pending = "customer_enquiry";
       this.classify();
+    },
+    cancelShipment() {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/jobs/" + this.active.job.id + "/cancel", {
+        cancellation_reason: this.cancelling.reason,
+        cancellation_reason_custom: this.cancelling.reason === "other" ? this.cancelling.custom : null
+      }).then(() => {
+        this.cancelling = null;
+        this.actionNotice = "Shipment cancelled.";
+        return this.open(this.active);
+      }).then(() => this.load()).catch(e => {
+        this.cancelling.error = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
     },
     closeWorkspace() {
       this.setSplit(false);
@@ -2951,7 +2984,121 @@ var render = function render() {
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), _vm.actionNotice ? _c("p", {
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), _vm.cancelling ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "cancel-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel fx-welcome"
+  }, [_c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "cancel-title"
+    }
+  }, [_vm._v("Cancel shipment " + _vm._s(_vm.active.job.execution_job_no))])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body fx-newmail"
+  }, [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("The shipment is kept with its reason for review, and any AWB goes back to stock. It cannot be undone; a new quote starts a new enquiry.")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field",
+    attrs: {
+      for: "cancel-reason"
+    }
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Why?")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.cancelling.reason,
+      expression: "cancelling.reason"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      id: "cancel-reason"
+    },
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.cancelling, "reason", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "",
+      disabled: ""
+    }
+  }, [_vm._v("Choose a reason")]), _vm._v(" "), _vm._l(_vm.CANCELLATION_REASONS, function (label, key) {
+    return _c("option", {
+      key: key,
+      domProps: {
+        value: key
+      }
+    }, [_vm._v(_vm._s(label))]);
+  })], 2)]), _vm._v(" "), _vm.cancelling.reason === "other" ? _c("label", {
+    staticClass: "fx-field",
+    attrs: {
+      for: "cancel-custom"
+    }
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("In your own words")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.cancelling.custom,
+      expression: "cancelling.custom"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      id: "cancel-custom",
+      maxlength: "255"
+    },
+    domProps: {
+      value: _vm.cancelling.custom
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.cancelling, "custom", $event.target.value);
+      }
+    }
+  })]) : _vm._e(), _vm._v(" "), _vm.cancelling.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.cancelling.error))]) : _vm._e()]), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.cancelling = null;
+      }
+    }
+  }, [_vm._v("Keep the shipment")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.cancelling.reason || _vm.cancelling.reason === "other" && !_vm.cancelling.custom.trim()
+    },
+    on: {
+      click: _vm.cancelShipment
+    }
+  }, [_vm._v("Cancel shipment")])])])]) : _vm._e(), _vm._v(" "), _vm.actionNotice ? _c("p", {
     staticClass: "fx-inbox__pad fx-notice",
     attrs: {
       role: "status"
@@ -3463,7 +3610,23 @@ var render = function render() {
               value: o.id
             }
           }, [_vm._v("\n                " + _vm._s(o.name) + _vm._s(_vm.isMe(o) ? " (you)" : "") + " · " + _vm._s(o.designation) + "\n              ")]);
-        })], 2)]) : _vm._e(), _vm._v(" "), _vm.canSeeOperator && _vm.active.job.pending_ops_id ? _c("span", {
+        })], 2)]) : _vm._e(), _vm._v(" "), _vm.canTriage && _vm.active.job.status !== "Cancelled" ? _c("button", {
+          staticClass: "fx-btn fx-btn--ghost",
+          attrs: {
+            disabled: _vm.busy
+          },
+          on: {
+            click: function ($event) {
+              _vm.cancelling = {
+                reason: "",
+                custom: "",
+                error: null
+              };
+            }
+          }
+        }, [_vm._v("Cancel shipment")]) : _vm._e(), _vm._v(" "), _vm.active.job.status === "Cancelled" ? _c("span", {
+          staticClass: "fx-muted"
+        }, [_vm._v("Cancelled — this conversation can now be filed as something else.")]) : _vm._e(), _vm._v(" "), _vm.canSeeOperator && _vm.active.job.pending_ops_id ? _c("span", {
           staticClass: "fx-muted"
         }, [_vm._v("\n            Waiting for approval → " + _vm._s(_vm.operatorName(_vm.active.job.pending_ops_id)) + "\n            "), _vm.isMe({
           id: _vm.active.job.pending_ops_requested_by

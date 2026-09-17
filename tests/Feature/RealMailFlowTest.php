@@ -152,4 +152,26 @@ class RealMailFlowTest extends TestCase
         $this->assertDatabaseMissing('enquiries', ['id' => $thread->enquiry_id]);
         $this->assertNull(DB::table('email_threads')->where('id', $thread->id)->value('enquiry_id'));
     }
+
+    /**
+     * A shipment confirmed by mistake (user, 2026-09-17): re-filing is refused while it is live, Cancel shipment takes a
+     * reason, and afterwards the conversation can be filed as something else — the cancelled shipment is kept.
+     */
+    public function test_a_shipment_is_cancelled_with_a_reason_and_the_conversation_can_then_be_refiled(): void
+    {
+        $thread = $this->arrives('awb1@skylink-flow.test', 'RE: 125-23736134', 'Please quote the best rate. Attached AWB copy.');
+        $job = $this->as($this->pricing)->postJson($this->url("/enquiries/{$thread->enquiry_id}/convert"), [])->assertCreated()->json('job');
+
+        $this->postJson($this->url("/inbox/threads/{$thread->id}/classify"), ['classification' => 'other'])
+            ->assertStatus(422)->assertJsonPath('reason', 'has_job');
+
+        $this->postJson($this->url("/jobs/{$job['id']}/cancel"), [])->assertStatus(422);
+        $this->postJson($this->url("/jobs/{$job['id']}/cancel"), ['cancellation_reason' => 'other'])->assertStatus(422);
+        $this->postJson($this->url("/jobs/{$job['id']}/cancel"), ['cancellation_reason' => 'duplicate'])->assertOk()->assertJsonPath('status', 'Cancelled');
+
+        $this->postJson($this->url("/inbox/threads/{$thread->id}/classify"), ['classification' => 'other'])->assertOk();
+        $this->assertNull(DB::table('email_threads')->where('id', $thread->id)->value('enquiry_id'));
+        $this->assertSame('Cancelled', DB::table('jobs')->where('id', $job['id'])->value('status'), 'kept for review');
+        $this->assertTrue(DB::table('enquiries')->where('id', $thread->enquiry_id)->exists());
+    }
 }

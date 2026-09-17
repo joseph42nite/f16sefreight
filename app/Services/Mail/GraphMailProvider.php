@@ -249,6 +249,21 @@ class GraphMailProvider implements MailProviderContract
         return $files;
     }
 
+    public function body(MailboxConnection $connection, string $providerMessageId): string
+    {
+        $response = Http::withToken($connection->access_token)->acceptJson()
+            ->withHeaders(['Prefer' => 'outlook.body-content-type="html"'])
+            ->get($this->api() . '/me/messages/' . rawurlencode($providerMessageId), ['$select' => 'body']);
+
+        if ($response->failed()) {
+            throw new RuntimeException('Graph message body failed: ' . $response->status());
+        }
+
+        $content = (string) $response->json('body.content');
+
+        return $response->json('body.contentType') === 'text' ? nl2br(e($content), false) : $content;
+    }
+
     public function attachmentContent(MailboxConnection $connection, string $providerMessageId, string $providerAttachmentId): string
     {
         $response = Http::withToken($connection->access_token)

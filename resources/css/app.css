@@ -1036,3 +1036,6 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 @keyframes fx-import-pulse { 50% { opacity: .45; } }
 .fx-import__count { font-size: 1.05rem; margin: 0; }
 .fx-import__actions { display: flex; gap: var(--space-2); }
+
+/* A mail shown as it was written (user, 2026-09-17). The frame is white like a mail page in either theme. */
+.fx-mail-body__frame { display: block; width: 100%; border: 0; background: #fff; border-radius: var(--radius-sm); }

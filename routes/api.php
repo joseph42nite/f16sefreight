@@ -384,6 +384,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/inbox/threads', [\App\Http\Controllers\Freight\EmailInboxController::class, 'index']);
     Route::post('/inbox/compose', [\App\Http\Controllers\Freight\EmailInboxController::class, 'compose']);
     Route::get('/inbox/threads/{thread}', [\App\Http\Controllers\Freight\EmailInboxController::class, 'show']);
+    Route::get('/inbox/messages/{message}/body', [\App\Http\Controllers\Freight\EmailInboxController::class, 'messageBody']);
     Route::get('/inbox/attachments/{attachment}', [\App\Http\Controllers\Freight\EmailAttachmentController::class, 'show']);
     Route::post('/inbox/threads/{thread}/classify', [\App\Http\Controllers\Freight\EmailInboxController::class, 'classify']);
     Route::post('/inbox/threads/{thread}/claim', [\App\Http\Controllers\Freight\EmailInboxController::class, 'claim']);

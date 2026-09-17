@@ -30,7 +30,38 @@ class MailBody
             $html = nl2br(e($html), false);
         }
 
+        // 🔴 A blank line typed in the editor is an EMPTY paragraph, which has no height in any mail client — the gap
+        // the sender left vanished (user, 2026-09-17: "the spacing is to be maintained"). A line break keeps it.
+        $html = preg_replace('#<p>\s*</p>#i', '<p><br></p>', $html);
+
         return trim($this->purifier()->purify($html));
+    }
+
+    /**
+     * A received or sent mail as it was written, safe to show (user, 2026-09-17: "respect the spacing, bold and
+     * colours the way the mail is sent"). Much wider than the composer's eight primitives — tables, colours, sizes,
+     * alignment, spacing and images stay — and still no scripts, forms, frames or event handlers.
+     */
+    public function forDisplay(?string $html): string
+    {
+        $config = HTMLPurifier_Config::createDefault();
+        $config->set('HTML.Allowed', 'div[style|align],span[style],p[style|align],br,hr[style],b[style],strong[style],i[style],em[style],u[style],s[style],strike,sub,sup,'
+            . 'font[color|size|face|style],h1[style],h2[style],h3[style],h4[style],h5[style],h6[style],pre[style],code,'
+            . 'blockquote[style],ul[style],ol[style],li[style],a[href|style|title],center[style],small[style],big[style],'
+            . 'table[style|width|border|cellpadding|cellspacing|align|bgcolor],thead,tbody,tfoot,tr[style|bgcolor],'
+            . 'td[style|width|colspan|rowspan|align|valign|bgcolor],th[style|width|colspan|rowspan|align|valign|bgcolor],'
+            . 'img[src|alt|width|height|style]');
+        $config->set('CSS.AllowedProperties', ['color', 'background-color', 'background', 'font-weight', 'font-style',
+            'font-size', 'font-family', 'text-decoration', 'text-align', 'line-height', 'margin', 'margin-top',
+            'margin-bottom', 'margin-left', 'margin-right', 'padding', 'padding-top', 'padding-bottom', 'padding-left',
+            'padding-right', 'border', 'border-top', 'border-bottom', 'border-left', 'border-right', 'border-collapse',
+            'width', 'height', 'vertical-align', 'white-space', 'list-style-type']);
+        $config->set('CSS.MaxImgLength', null);
+        $config->set('HTML.MaxImgLength', null);
+        $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'data' => true]);
+        $config->set('Cache.DefinitionImpl', null);
+
+        return trim((new HTMLPurifier($config))->purify((string) $html));
     }
 
     /**

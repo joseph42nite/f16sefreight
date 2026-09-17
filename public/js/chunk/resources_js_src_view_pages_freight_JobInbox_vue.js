@@ -11,8 +11,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
@@ -24,11 +24,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _view_pages_freight_components_ClientUpdateEditor_vue__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @/view/pages/freight/components/ClientUpdateEditor.vue */ "./resources/js/src/view/pages/freight/components/ClientUpdateEditor.vue");
 /* harmony import */ var _view_pages_freight_components_StaffPicker_vue__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @/view/pages/freight/components/StaffPicker.vue */ "./resources/js/src/view/pages/freight/components/StaffPicker.vue");
 /* harmony import */ var _view_pages_freight_components_NewMail_vue__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @/view/pages/freight/components/NewMail.vue */ "./resources/js/src/view/pages/freight/components/NewMail.vue");
+/* harmony import */ var _view_pages_freight_components_MailBodyFrame_vue__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! @/view/pages/freight/components/MailBodyFrame.vue */ "./resources/js/src/view/pages/freight/components/MailBodyFrame.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -123,11 +125,14 @@ const WORKSPACE_TABS = [{
     MailEditor: _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_7__["default"],
     ClientUpdateEditor: _view_pages_freight_components_ClientUpdateEditor_vue__WEBPACK_IMPORTED_MODULE_8__["default"],
     StaffPicker: _view_pages_freight_components_StaffPicker_vue__WEBPACK_IMPORTED_MODULE_9__["default"],
-    NewMail: _view_pages_freight_components_NewMail_vue__WEBPACK_IMPORTED_MODULE_10__["default"]
+    NewMail: _view_pages_freight_components_NewMail_vue__WEBPACK_IMPORTED_MODULE_10__["default"],
+    MailBodyFrame: _view_pages_freight_components_MailBodyFrame_vue__WEBPACK_IMPORTED_MODULE_11__["default"]
   },
   data: () => ({
     /** The New mail pop-up is open. */
     writingNew: false,
+    /** A PDF picked with Extract before the shipment was confirmed; it goes into Extraction on confirm. */
+    waitingFile: null,
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
        has no use for a shipping-line folder and a sea operator none for an airline one;
        hardcoding air here is what put the wrong counterparty in front of both. Seeded with
@@ -211,7 +216,7 @@ const WORKSPACE_TABS = [{
     CLASSIFICATIONS,
     WORKSPACE_TABS
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_11__.mapGetters)(["designation", "currentUser", "tierAtLeast"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_12__.mapGetters)(["designation", "currentUser", "tierAtLeast"])), {}, {
     /* Only pricing owns triage — re-classification mints or strands an enquiry. */
     canTriage() {
       return this.designation === "pricing";
@@ -311,7 +316,8 @@ const WORKSPACE_TABS = [{
     },
     /** The Extraction panel exists only once the enquiry has a job (see the drawer's chain). */
     canExtractAttachments() {
-      return this.isEnquiryWork && !!(this.active && this.active.enquiry && this.active.job);
+      // On every PDF of a customer enquiry (user, 2026-09-17); before a shipment exists, Extract asks to confirm it first.
+      return this.isEnquiryWork;
     },
     /** Extraction and the cost sheet are shipment work: a customer enquiry, and not for sales. */
     isEnquiryWork() {
@@ -605,7 +611,7 @@ const WORKSPACE_TABS = [{
     fetchAttachment(a) {
       this.attachmentBusy = a.id;
       this.attachmentError = null;
-      return vue__WEBPACK_IMPORTED_MODULE_12__["default"].axios.get("/inbox/attachments/" + a.id, {
+      return vue__WEBPACK_IMPORTED_MODULE_13__["default"].axios.get("/inbox/attachments/" + a.id, {
         responseType: "blob"
       }).then(({
         data
@@ -643,16 +649,24 @@ const WORKSPACE_TABS = [{
       this.fetchAttachment(a).then(blob => {
         this.openWorkspace();
         this.openExtraction();
-
-        // ⚠️ The panel renders when the drawer opens, which can be a few ticks away.
         const file = new File([blob], a.filename, {
           type: "application/pdf"
         });
-        const hand = tries => {
-          if (this.$refs.extraction) this.$refs.extraction.add([file]);else if (tries > 0) setTimeout(() => hand(tries - 1), 100);
-        };
-        this.$nextTick(() => hand(20));
+
+        // No shipment yet: the workspace asks "Did this shipment confirm?" first, and the file waits for the answer.
+        if (!this.active.job) {
+          this.waitingFile = file;
+          return;
+        }
+        this.handToExtraction(file);
       }).catch(() => {});
+    },
+    /** ⚠️ The panel renders when the drawer opens, which can be a few ticks away. */
+    handToExtraction(file) {
+      const hand = tries => {
+        if (this.$refs.extraction) this.$refs.extraction.add([file]);else if (tries > 0) setTimeout(() => hand(tries - 1), 100);
+      };
+      this.$nextTick(() => hand(20));
     },
     openExtraction() {
       this.tab = "extraction";
@@ -723,7 +737,7 @@ const WORKSPACE_TABS = [{
     /** The server's job row is the truth; the header reads these four fields. */
     applyJob(job) {
       ["ops_id", "pricing_id", "pending_ops_id", "pending_ops_requested_by"].forEach(f => {
-        vue__WEBPACK_IMPORTED_MODULE_12__["default"].set(this.active.job, f, job[f]);
+        vue__WEBPACK_IMPORTED_MODULE_13__["default"].set(this.active.job, f, job[f]);
       });
     },
     operatorLabel(o) {
@@ -787,7 +801,11 @@ const WORKSPACE_TABS = [{
         planned_clearance_date: this.clearanceDate || null
       })
       /* Reload rather than patch: conversion changes the enquiry's status, mints the
-         job number and moves the thread's identifier — the server owns all of it. */.then(() => this.open(this.active)).catch(e => {
+         job number and moves the thread's identifier — the server owns all of it. */.then(() => this.open(this.active)).then(() => {
+        // The file picked with Extract before confirming goes into Extraction now.
+        if (this.waitingFile && this.active.job) this.handToExtraction(this.waitingFile);
+        this.waitingFile = null;
+      }).catch(e => {
         this.outcomeError = this.messageFor(e);
       }).finally(() => {
         this.outcomeBusy = false;
@@ -932,6 +950,8 @@ const WORKSPACE_TABS = [{
     },
     open(thread) {
       this.actionError = null;
+      // A file waiting for confirmation belongs to its own conversation only.
+      if (!this.active || this.active.id !== thread.id) this.waitingFile = null;
       /* The outcome gate is per-conversation: a half-typed loss reason must not follow
          the operator to the next thread. */
       this.losing = false;
@@ -2468,6 +2488,72 @@ const PARTY_REQUIRED = {
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=script&lang=js":
+/*!******************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=script&lang=js ***!
+  \******************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "MailBodyFrame",
+  props: {
+    messageId: {
+      type: Number,
+      required: true
+    },
+    /** Shown while the full mail loads, or if it cannot be fetched. */
+    snippet: {
+      type: String,
+      default: ""
+    }
+  },
+  data: () => ({
+    html: null,
+    height: 60
+  }),
+  computed: {
+    document() {
+      return '<!doctype html><html><head><meta charset="utf-8"><base target="_blank">' + "<style>body{margin:0;font:14px/1.5 Arial,Helvetica,sans-serif;color:#1f2933;overflow-wrap:anywhere}" + "img{max-width:100%;height:auto}table{max-width:100%}p{margin:0 0 10px}</style></head><body>" + this.html + "</body></html>";
+    }
+  },
+  watch: {
+    messageId: {
+      immediate: true,
+      handler: "load"
+    }
+  },
+  methods: {
+    load() {
+      this.html = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/inbox/messages/" + this.messageId + "/body").then(({
+        data
+      }) => {
+        this.html = data.html || "";
+      }).catch(() => {
+        this.html = null;
+      });
+    },
+    /** As tall as the mail, so only the conversation scrolls — never a box inside it. */
+    fit() {
+      const doc = this.$refs.frame && this.$refs.frame.contentDocument;
+      if (!doc || !doc.body) return;
+      this.height = Math.max(24, doc.documentElement.scrollHeight);
+      // Images arriving late change the height once more.
+      Array.from(doc.images).forEach(img => img.addEventListener("load", () => {
+        this.height = Math.max(24, doc.documentElement.scrollHeight);
+      }));
+    }
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/NewMail.vue?vue&type=script&lang=js":
 /*!************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/NewMail.vue?vue&type=script&lang=js ***!
@@ -2984,9 +3070,12 @@ var render = function render() {
       }
     })], 1)]), _vm._v(" "), _c("div", {
       staticClass: "fx-message__to"
-    }, [_vm._v("\n            to " + _vm._s(m.to || "—")), m.cc ? [_vm._v(" · cc " + _vm._s(m.cc))] : _vm._e()], 2), _vm._v(" "), _c("p", {
-      staticClass: "fx-message__body"
-    }, [_vm._v(_vm._s(m.body_snippet))]), _vm._v(" "), m.attachments && m.attachments.length ? _c("ul", {
+    }, [_vm._v("\n            to " + _vm._s(m.to || "—")), m.cc ? [_vm._v(" · cc " + _vm._s(m.cc))] : _vm._e()], 2), _vm._v(" "), _c("MailBodyFrame", {
+      attrs: {
+        "message-id": m.id,
+        snippet: m.body_snippet || ""
+      }
+    }), _vm._v(" "), m.attachments && m.attachments.length ? _c("ul", {
       staticClass: "fx-attachments",
       attrs: {
         "data-help": "mail-attachments"
@@ -3025,7 +3114,7 @@ var render = function render() {
           }
         }
       }, [_vm._v("Extract")]) : _vm._e()]);
-    }), 0) : _vm._e()]);
+    }), 0) : _vm._e()], 1);
   })], 2), _vm._v(" "), _vm.messages.length ? _c("section", {
     staticClass: "fx-compose"
   }, [!_vm.composing ? _c("div", {
@@ -3540,7 +3629,9 @@ var render = function render() {
         _vm.losing = false;
       }
     }
-  }, [_vm._v("\n                Cancel\n              ")])])] : [_c("p", [_c("strong", [_vm._v("Did this shipment confirm?")])]), _vm._v(" "), _c("p", {
+  }, [_vm._v("\n                Cancel\n              ")])])] : [_vm.waitingFile ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n              📎 "), _c("strong", [_vm._v(_vm._s(_vm.waitingFile.name))]), _vm._v(" opens in Extraction as soon as you confirm the shipment.\n            ")]) : _vm._e(), _vm._v(" "), _c("p", [_c("strong", [_vm._v("Did this shipment confirm?")])]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n              Confirming converts the enquiry to a job and opens AWB drafting. Until then\n              there is nothing to raise a waybill against.\n            ")]), _vm._v(" "), _c("label", {
     staticClass: "fx-field"
@@ -3627,7 +3718,7 @@ var render = function render() {
     staticClass: "fx-error"
   }, [_vm._v(_vm._s(_vm.outcomeError))]) : _vm._e()], 2) : !_vm.active.enquiry ? _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("\n          No enquiry on this conversation yet, so there is no shipment to confirm.\n        ")]) : _c("ExtractionPanel", {
+  }, [_vm._v("\n          No enquiry on this conversation yet, so there is no shipment to confirm. Claim it or choose\n          "), _c("strong", [_vm._v("Create enquiry")]), _vm._v(" above" + _vm._s(_vm.waitingFile ? ", then confirm the shipment to extract " + _vm.waitingFile.name : "") + ".\n        ")]) : _c("ExtractionPanel", {
     ref: "extraction",
     attrs: {
       "prefill-awb": _vm.jobAwb,
@@ -4863,6 +4954,46 @@ var staticRenderFns = [function () {
     }
   }, [_vm._v("Edit or clean for the waybill")])])]);
 }];
+render._withStripped = true;
+
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=template&id=7a580243":
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=template&id=7a580243 ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", {
+    staticClass: "fx-mail-body"
+  }, [_vm.html !== null ? _c("iframe", {
+    ref: "frame",
+    staticClass: "fx-mail-body__frame",
+    style: {
+      height: _vm.height + "px"
+    },
+    attrs: {
+      srcdoc: _vm.document,
+      sandbox: "allow-same-origin allow-popups allow-popups-to-escape-sandbox",
+      title: "Message"
+    },
+    on: {
+      load: _vm.fit
+    }
+  }) : _c("p", {
+    staticClass: "fx-message__body"
+  }, [_vm._v(_vm._s(_vm.snippet))])]);
+};
+var staticRenderFns = [];
 render._withStripped = true;
 
 
@@ -6179,6 +6310,44 @@ component.options.__file = "resources/js/src/view/pages/freight/components/Extra
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/components/MailBodyFrame.vue":
+/*!**************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/MailBodyFrame.vue ***!
+  \**************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _MailBodyFrame_vue_vue_type_template_id_7a580243__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./MailBodyFrame.vue?vue&type=template&id=7a580243 */ "./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=template&id=7a580243");
+/* harmony import */ var _MailBodyFrame_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MailBodyFrame.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=script&lang=js");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+;
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _MailBodyFrame_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _MailBodyFrame_vue_vue_type_template_id_7a580243__WEBPACK_IMPORTED_MODULE_0__.render,
+  _MailBodyFrame_vue_vue_type_template_id_7a580243__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/freight/components/MailBodyFrame.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/components/NewMail.vue":
 /*!********************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/components/NewMail.vue ***!
@@ -6317,6 +6486,21 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=script&lang=js":
+/*!**************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=script&lang=js ***!
+  \**************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_MailBodyFrame_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./MailBodyFrame.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_MailBodyFrame_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/components/NewMail.vue?vue&type=script&lang=js":
 /*!********************************************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/components/NewMail.vue?vue&type=script&lang=js ***!
@@ -6407,6 +6591,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_template_id_fa6bcd28__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_ExtractionPanel_vue_vue_type_template_id_fa6bcd28__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ExtractionPanel.vue?vue&type=template&id=fa6bcd28 */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ExtractionPanel.vue?vue&type=template&id=fa6bcd28");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=template&id=7a580243":
+/*!********************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=template&id=7a580243 ***!
+  \********************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_MailBodyFrame_vue_vue_type_template_id_7a580243__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_MailBodyFrame_vue_vue_type_template_id_7a580243__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_MailBodyFrame_vue_vue_type_template_id_7a580243__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./MailBodyFrame.vue?vue&type=template&id=7a580243 */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/MailBodyFrame.vue?vue&type=template&id=7a580243");
 
 
 /***/ }),

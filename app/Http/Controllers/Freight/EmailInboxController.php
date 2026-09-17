@@ -594,6 +594,44 @@ class EmailInboxController extends Controller
         return response()->json(['ok' => true, 'from' => $connection->email_address]);
     }
 
+    /**
+     * One message's full body, formatted as it was sent (user, 2026-09-17). Fetched from the mailbox the first time
+     * it is opened and kept with the message (deleted with it after 3 months); until then, or when the mailbox cannot
+     * give it, the stored preview.
+     */
+    public function messageBody(EmailMessage $message): JsonResponse
+    {
+        $this->authorize('viewInbox');
+        $thread = EmailThread::where('thread_key', $message->thread_key)->first();
+        abort_unless($thread !== null && $thread->isVisibleTo(auth()->user()), 404);
+
+        $disk = \Illuminate\Support\Facades\Storage::disk('local');
+        $mailBody = app(\App\Services\Mail\MailBody::class);
+
+        if ($message->body_storage_path && $disk->exists($message->body_storage_path)) {
+            return response()->json(['html' => $disk->get($message->body_storage_path), 'full' => true]);
+        }
+
+        $connection = $message->mailbox_connection_id ? MailboxConnection::find($message->mailbox_connection_id) : null;
+
+        if ($connection !== null && $connection->is_active && $connection->auth_state === 'connected' && filled($message->provider_message_id)) {
+            try {
+                $provider = app(\App\Services\Mail\MailProviderRegistry::class)->for($connection->provider);
+                app(\App\Services\Mail\MailboxSyncService::class)->ensureFreshToken($connection, $provider);
+                $html = $mailBody->forDisplay($provider->body($connection, $message->provider_message_id));
+                $path = 'mail-bodies/' . $message->id . '.html';
+                $disk->put($path, $html);
+                $message->forceFill(['body_storage_path' => $path])->save();
+
+                return response()->json(['html' => $html, 'full' => true]);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return response()->json(['html' => $mailBody->forDisplay(nl2br(e((string) $message->body_snippet), false)), 'full' => false]);
+    }
+
     // ─── Internals ───────────────────────────────────────────────────────────
 
     /** PRD §5.2.3: the provider cap, for everything attached to one mail together. */

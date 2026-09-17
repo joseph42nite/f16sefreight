@@ -42,7 +42,8 @@ class PruneOldMail extends Command
                 $messageIds = DB::table('email_messages')->whereIn('thread_key', $keys)->pluck('id');
 
                 DB::transaction(function () use ($keys, $ids, $messageIds) {
-                    $files = DB::table('email_attachments')->whereIn('email_message_id', $messageIds)->whereNotNull('file_path')->pluck('file_path');
+                    $files = DB::table('email_attachments')->whereIn('email_message_id', $messageIds)->whereNotNull('file_path')->pluck('file_path')
+                        ->merge(DB::table('email_messages')->whereIn('id', $messageIds)->whereNotNull('body_storage_path')->pluck('body_storage_path'));
                     DB::table('email_attachments')->whereIn('email_message_id', $messageIds)->delete();
                     DB::table('email_messages')->whereIn('id', $messageIds)->delete();
                     DB::table('notifications')->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.thread_id'))"), $ids->map(fn ($id) => (string) $id))->delete();

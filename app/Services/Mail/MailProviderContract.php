@@ -69,6 +69,9 @@ interface MailProviderContract
      */
     public function attachments(MailboxConnection $connection, string $providerMessageId): array;
 
+    /** One message's full body as HTML, exactly as sent (user, 2026-09-17). Throws when the provider refuses. */
+    public function body(MailboxConnection $connection, string $providerMessageId): string;
+
     /** The bytes of one attachment. Throws when the provider refuses. */
     public function attachmentContent(MailboxConnection $connection, string $providerMessageId, string $providerAttachmentId): string;
 

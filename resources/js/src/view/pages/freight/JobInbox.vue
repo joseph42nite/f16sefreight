@@ -210,7 +210,7 @@
             <div class="fx-message__to">
               to {{ m.to || "—" }}<template v-if="m.cc"> · cc {{ m.cc }}</template>
             </div>
-            <p class="fx-message__body">{{ m.body_snippet }}</p>
+            <MailBodyFrame :message-id="m.id" :snippet="m.body_snippet || ''" />
 
             <!--
               🔴 The files the mail carried (guide §4.2). Listed at sync; the bytes are fetched,
@@ -563,6 +563,9 @@
             </template>
 
             <template v-else>
+              <p v-if="waitingFile" class="fx-muted">
+                📎 <strong>{{ waitingFile.name }}</strong> opens in Extraction as soon as you confirm the shipment.
+              </p>
               <p><strong>Did this shipment confirm?</strong></p>
               <p class="fx-muted">
                 Confirming converts the enquiry to a job and opens AWB drafting. Until then
@@ -607,7 +610,8 @@
           </div>
 
           <p v-else-if="!active.enquiry" class="fx-muted">
-            No enquiry on this conversation yet, so there is no shipment to confirm.
+            No enquiry on this conversation yet, so there is no shipment to confirm. Claim it or choose
+            <strong>Create enquiry</strong> above{{ waitingFile ? ', then confirm the shipment to extract ' + waitingFile.name : '' }}.
           </p>
 
           <!-- The waybill this conversation is already about, so the operator is not
@@ -637,6 +641,7 @@ import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 import ClientUpdateEditor from "@/view/pages/freight/components/ClientUpdateEditor.vue";
 import StaffPicker from "@/view/pages/freight/components/StaffPicker.vue";
 import NewMail from "@/view/pages/freight/components/NewMail.vue";
+import MailBodyFrame from "@/view/pages/freight/components/MailBodyFrame.vue";
 
 /** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
 const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
@@ -696,10 +701,12 @@ const WORKSPACE_TABS = [
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor, StaffPicker, NewMail },
+  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor, StaffPicker, NewMail, MailBodyFrame },
   data: () => ({
     /** The New mail pop-up is open. */
     writingNew: false,
+    /** A PDF picked with Extract before the shipment was confirmed; it goes into Extraction on confirm. */
+    waitingFile: null,
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
        has no use for a shipping-line folder and a sea operator none for an airline one;
        hardcoding air here is what put the wrong counterparty in front of both. Seeded with
@@ -850,7 +857,8 @@ export default {
     },
     /** The Extraction panel exists only once the enquiry has a job (see the drawer's chain). */
     canExtractAttachments() {
-      return this.isEnquiryWork && !!(this.active && this.active.enquiry && this.active.job);
+      // On every PDF of a customer enquiry (user, 2026-09-17); before a shipment exists, Extract asks to confirm it first.
+      return this.isEnquiryWork;
     },
     /** Extraction and the cost sheet are shipment work: a customer enquiry, and not for sales. */
     isEnquiryWork() {
@@ -1186,15 +1194,25 @@ export default {
           this.openWorkspace();
           this.openExtraction();
 
-          // ⚠️ The panel renders when the drawer opens, which can be a few ticks away.
           const file = new File([blob], a.filename, { type: "application/pdf" });
-          const hand = (tries) => {
-            if (this.$refs.extraction) this.$refs.extraction.add([file]);
-            else if (tries > 0) setTimeout(() => hand(tries - 1), 100);
-          };
-          this.$nextTick(() => hand(20));
+
+          // No shipment yet: the workspace asks "Did this shipment confirm?" first, and the file waits for the answer.
+          if (!this.active.job) {
+            this.waitingFile = file;
+            return;
+          }
+
+          this.handToExtraction(file);
         })
         .catch(() => {});
+    },
+    /** ⚠️ The panel renders when the drawer opens, which can be a few ticks away. */
+    handToExtraction(file) {
+      const hand = (tries) => {
+        if (this.$refs.extraction) this.$refs.extraction.add([file]);
+        else if (tries > 0) setTimeout(() => hand(tries - 1), 100);
+      };
+      this.$nextTick(() => hand(20));
     },
     openExtraction() {
       this.tab = "extraction";
@@ -1306,6 +1324,11 @@ export default {
         /* Reload rather than patch: conversion changes the enquiry's status, mints the
            job number and moves the thread's identifier — the server owns all of it. */
         .then(() => this.open(this.active))
+        .then(() => {
+          // The file picked with Extract before confirming goes into Extraction now.
+          if (this.waitingFile && this.active.job) this.handToExtraction(this.waitingFile);
+          this.waitingFile = null;
+        })
         .catch((e) => { this.outcomeError = this.messageFor(e); })
         .finally(() => { this.outcomeBusy = false; });
     },
@@ -1434,6 +1457,8 @@ export default {
     },
     open(thread) {
       this.actionError = null;
+      // A file waiting for confirmation belongs to its own conversation only.
+      if (!this.active || this.active.id !== thread.id) this.waitingFile = null;
       /* The outcome gate is per-conversation: a half-typed loss reason must not follow
          the operator to the next thread. */
       this.losing = false;

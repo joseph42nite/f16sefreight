@@ -6320,6 +6320,11 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 .fx-mail-body__frame { display: block; width: 100%; border: 0; background: #fff; border-radius: var(--radius-sm); }
 .fx-notice { color: var(--status-success, #1d6b45); font-weight: 600; margin: 0; }
 
+/* Super admin → Mail filing (2026-09-17). */
+.fx-filing__filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); margin-bottom: var(--space-4); }
+.fx-filing__high { color: var(--status-danger, #b42318); font-weight: 600; }
+.fx-filing__text { max-width: 36rem; white-space: pre-line; }
+
 @charset "UTF-8";
 html {
   scroll-behavior: smooth;

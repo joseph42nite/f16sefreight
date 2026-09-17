@@ -15,7 +15,7 @@
       <span v-if="checkedAt" class="fx-muted">
         Checked <Figure :value="checkedAt" kind="dateTime" />
       </span>
-      <a class="fx-btn" :href="exportUrl" download>Export classification overrides</a>
+      <router-link class="fx-btn" to="/superadmin/mail-filing">Mail filing and export</router-link>
     </div>
 
     <p v-if="error" class="fx-error" role="alert">{{ error }}</p>
@@ -95,9 +95,6 @@ export default {
     logLines: [], logPath: null, logSize: null, logLoading: false,
   }),
   computed: {
-    exportUrl() {
-      return "/api/admin/classification-overrides/export";
-    },
     queues() {
       const q = this.health && this.health.queues;
       return q && q.status === "up" ? q : null;

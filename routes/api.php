@@ -152,6 +152,8 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'admin'], funct
     // How often the classifier was wrong and about what — the question the 5,000-row
     // export cannot answer.
     Route::get('/classification-failures', [\App\Http\Controllers\Platform\AdminHealthController::class, 'classificationFailures']);
+    // How well the regex files mail, per company and period (user, 2026-09-17).
+    Route::get('/mail-filing', [\App\Http\Controllers\Platform\MailFilingController::class, 'index']);
     // Clears the LEARNING RECORD once the rules have been changed. No mail is touched.
     Route::delete('/classification-overrides', [\App\Http\Controllers\Platform\AdminHealthController::class, 'purgeClassificationOverrides']);
 

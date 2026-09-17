@@ -10457,6 +10457,14 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       }
     }, {
       // How reps answered the suggested client emails: sent, dismissed and why (user, 2026-09-15).
+      // How the regex files mail and how often people change it (user, 2026-09-17).
+      path: "mail-filing",
+      name: "superadmin-mail-filing",
+      component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_admin_MailFiling_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/MailFiling.vue */ "./resources/js/src/view/pages/admin/MailFiling.vue")),
+      meta: {
+        userType: 'superadmin'
+      }
+    }, {
       path: "suggestion-feedback",
       name: "superadmin-suggestion-feedback",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_admin_SuggestionFeedback_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/admin/SuggestionFeedback.vue */ "./resources/js/src/view/pages/admin/SuggestionFeedback.vue")),

@@ -221,6 +221,13 @@ const router = new Router({
         },
         {
           // How reps answered the suggested client emails: sent, dismissed and why (user, 2026-09-15).
+          // How the regex files mail and how often people change it (user, 2026-09-17).
+          path: "mail-filing",
+          name: "superadmin-mail-filing",
+          component: () => import("@/view/pages/admin/MailFiling.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           path: "suggestion-feedback",
           name: "superadmin-suggestion-feedback",
           component: () => import("@/view/pages/admin/SuggestionFeedback.vue"),

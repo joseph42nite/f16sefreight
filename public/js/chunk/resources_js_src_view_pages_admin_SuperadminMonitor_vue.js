@@ -36,9 +36,6 @@ __webpack_require__.r(__webpack_exports__);
     logLoading: false
   }),
   computed: {
-    exportUrl() {
-      return "/api/admin/classification-overrides/export";
-    },
     queues() {
       const q = this.health && this.health.queues;
       return q && q.status === "up" ? q : null;
@@ -161,13 +158,12 @@ var render = function render() {
       value: _vm.checkedAt,
       kind: "dateTime"
     }
-  })], 1) : _vm._e(), _vm._v(" "), _c("a", {
+  })], 1) : _vm._e(), _vm._v(" "), _c("router-link", {
     staticClass: "fx-btn",
     attrs: {
-      href: _vm.exportUrl,
-      download: ""
+      to: "/superadmin/mail-filing"
     }
-  }, [_vm._v("Export classification overrides")])]), _vm._v(" "), _vm.error ? _c("p", {
+  }, [_vm._v("Mail filing and export")])], 1), _vm._v(" "), _vm.error ? _c("p", {
     staticClass: "fx-error",
     attrs: {
       role: "alert"

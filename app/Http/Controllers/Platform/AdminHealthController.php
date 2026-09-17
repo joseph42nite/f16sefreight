@@ -85,9 +85,12 @@ class AdminHealthController extends Controller
      * signal for rule tuning. Exported as CSV because it is read in a spreadsheet by
      * whoever is tuning the rules, not by another service.
      */
-    public function classificationOverrides()
+    public function classificationOverrides(Request $request)
     {
         $rows = DB::table('email_classification_overrides as o')
+            // The Mail filing page exports what it shows: one company, or all.
+            ->when($request->filled('company_id'), fn ($q) => $q->whereIn('o.agent_id',
+                DB::table('agents_info')->where('company_id', (int) $request->query('company_id'))->select('id')))
             ->leftJoin('email_classification_rules as r', 'r.id', '=', 'o.matched_rule_id')
             ->orderByDesc('o.created_at')
             ->limit(5000)

@@ -190,6 +190,8 @@ class MessageIngestor
             ->where('thread_key', $stored->thread_key)
             ->where('classification', 'unclassified')
             ->update([
+                // What the regex said, kept when a person later changes it — Super Admin → Mail filing (2026-09-17).
+                'auto_classification' => $result['classification'],
                 'classification' => $result['classification'],
                 // PRD §5.2.5 — the cargo the parser read, parked for the operator to
                 // confirm. NULL where nothing was found: an airline notice has no cargo in

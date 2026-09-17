@@ -436,6 +436,7 @@ class MailboxSyncTest extends TestCase
 
         $thread = DB::table('email_threads')->where('agent_id', $this->branch->id)->first();
         $this->assertSame('customer_enquiry', $thread->classification);
+        $this->assertSame('customer_enquiry', $thread->auto_classification, 'what the regex filed is kept for Mail filing');
         $this->assertNotNull($thread->enquiry_id);
         $this->assertSame('new', DB::table('enquiries')->where('id', $thread->enquiry_id)->value('status'));
 

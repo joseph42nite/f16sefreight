@@ -564,10 +564,15 @@ class EmailInboxController extends Controller
             return response()->json(['error' => $e->getMessage(), 'reason' => $e->reason], $e->status);
         }
 
-        $signature = ($data['include_signature'] ?? true) ? app(ThreadMailer::class)->signatureFor($connection, $user) : null;
+        $withSignature = $data['include_signature'] ?? true;
+        $signature = $withSignature ? app(ThreadMailer::class)->signatureFor($connection, $user) : null;
+        $image = $withSignature ? app(\App\Services\Mail\SignatureImage::class)->for($connection) : null;
+        if ($image !== null) {
+            $attachments[] = $image;
+        }
 
         $result = app(\App\Services\Mail\MailProviderRegistry::class)->for($connection->provider)->send(
-            $connection, $data['to'], $data['cc'] ?? [], $data['subject'], $mailBody->forEmail($data['body'], $signature), null, $attachments
+            $connection, $data['to'], $data['cc'] ?? [], $data['subject'], $mailBody->forEmail($data['body'], $signature, $image), null, $attachments
         );
 
         if (! $result['ok']) {
@@ -676,7 +681,15 @@ class EmailInboxController extends Controller
             EmailMessage::where('thread_key', $thread->thread_key)->orderByDesc('received_at')->value('mailbox_connection_id')
         );
 
-        return $connection ? app(ThreadMailer::class)->signatureFor($connection, auth()->user()) : null;
+        if ($connection === null) {
+            return null;
+        }
+
+        // The composer's preview shows the picture too (as a data URI — only on screen, never sent that way).
+        $html = app(ThreadMailer::class)->signatureFor($connection, auth()->user());
+        $image = app(\App\Services\Mail\SignatureImage::class)->preview($connection);
+
+        return $image === null ? $html : $html . '<div><img src="' . $image . '" alt="" style="max-width:' . \App\Services\Mail\SignatureImage::MAX_WIDTH . 'px;height:auto;"></div>';
     }
 
     /** The subject as the operator saw it when they corrected the classification. */

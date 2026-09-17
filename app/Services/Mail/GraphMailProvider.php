@@ -458,7 +458,9 @@ class GraphMailProvider implements MailProviderContract
                 'name'         => $file['name'],
                 'contentType'  => $file['mime_type'],
                 'contentBytes' => base64_encode($file['bytes']),
-            ]));
+            ] + (isset($file['content_id'])
+                // A picture shown inside the mail (the signature image), referenced from the body as cid:.
+                ? ['isInline' => true, 'contentId' => $file['content_id']] : [])));
 
             return;
         }

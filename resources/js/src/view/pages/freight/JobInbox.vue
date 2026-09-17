@@ -123,6 +123,13 @@
             />
 
 
+            <!-- Also here, beside Filed as, where "cancel the shipment first" is read (user, 2026-09-17: "where to cancel?"). -->
+            <button
+              v-if="canTriage && active.job && active.job.status !== 'Cancelled'"
+              class="fx-btn"
+              :disabled="busy"
+              @click="cancelling = { reason: '', custom: '', error: null }"
+            >Cancel shipment</button>
             <button v-if="worksTheInbox" class="fx-btn fx-btn--primary" data-help="open-workspace" @click="openWorkspace">Open workspace</button>
           </div>
         </header>

@@ -2971,7 +2971,21 @@ var render = function render() {
         return _vm.assignThread($event.id);
       }
     }
-  }) : _vm._e(), _vm._v(" "), _vm.worksTheInbox ? _c("button", {
+  }) : _vm._e(), _vm._v(" "), _vm.canTriage && _vm.active.job && _vm.active.job.status !== "Cancelled" ? _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.cancelling = {
+          reason: "",
+          custom: "",
+          error: null
+        };
+      }
+    }
+  }, [_vm._v("Cancel shipment")]) : _vm._e(), _vm._v(" "), _vm.worksTheInbox ? _c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
       "data-help": "open-workspace"

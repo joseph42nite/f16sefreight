@@ -88,8 +88,11 @@ class BossMailController extends Controller
             ? $mailBody->clean($connection->signature_html)
             : $mailBody->fromText(auth()->user()->signature_text ?? null);
 
+        $image = app(\App\Services\Mail\SignatureImage::class)->for($connection);
+
         $result = app(MailProviderRegistry::class)->for($connection->provider)->send(
-            $connection, $data['to'], $data['cc'] ?? [], $data['subject'], $mailBody->forEmail($data['body'], $signature)
+            $connection, $data['to'], $data['cc'] ?? [], $data['subject'], $mailBody->forEmail($data['body'], $signature, $image),
+            null, $image ? [$image] : []
         );
 
         if (! $result['ok']) {

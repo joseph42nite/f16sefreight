@@ -52,6 +52,11 @@ class MailboxController extends Controller
                    'last_synced_at', 'disconnected_at', 'backfill_status',
                    'signature_html', 'signature_source']);
 
+        // The signature picture, shown in Settings (on screen only).
+        $images = app(\App\Services\Mail\SignatureImage::class);
+        $connections->each(fn ($c) => $c->setAttribute('signature_image',
+            $images->preview(MailboxConnection::withoutGlobalScopes()->find($c->id))));
+
         return response()->json([
             'connections' => $connections,
             'providers'   => $this->providers->available(),
@@ -269,6 +274,52 @@ class MailboxController extends Controller
         ])->save();
 
         return response()->json($mailbox->only(['id', 'signature_html', 'signature_source']));
+    }
+
+    /**
+     * A picture under this mailbox's signature — a logo or a scanned sign (user, 2026-09-17). PNG, JPG or GIF up to
+     * 500 KB, virus-scanned. Sent inside each mail, so it shows without loading anything from our server.
+     */
+    public function uploadSignatureImage(Request $request, MailboxConnection $mailbox): JsonResponse
+    {
+        if ((int) $mailbox->agent_id !== (int) UserContext::for(auth()->user())->agentId) {
+            return response()->json(['error' => 'Not found.'], 404);
+        }
+
+        $request->validate(['image' => ['required', 'file', 'mimes:png,jpg,jpeg,gif', 'max:500']]);
+        $file = $request->file('image');
+        $bytes = (string) file_get_contents($file->getRealPath());
+
+        try {
+            app(\App\Services\Mail\AttachmentStore::class)->scan($bytes, null, 'The picture');
+        } catch (\App\Services\Mail\AttachmentException $e) {
+            return response()->json(['error' => $e->getMessage(), 'reason' => $e->reason], $e->status);
+        }
+
+        $disk = \Illuminate\Support\Facades\Storage::disk('local');
+        if ($mailbox->signature_image_path) {
+            $disk->delete($mailbox->signature_image_path);
+        }
+        $mime = $file->getMimeType();
+        $path = 'signature-images/' . $mailbox->id . '-' . Str::random(8) . '.' . ($mime === 'image/jpeg' ? 'jpg' : explode('/', $mime)[1]);
+        $disk->put($path, $bytes);
+        $mailbox->forceFill(['signature_image_path' => $path, 'signature_image_mime' => $mime])->save();
+
+        return response()->json(['signature_image' => app(\App\Services\Mail\SignatureImage::class)->preview($mailbox)]);
+    }
+
+    public function removeSignatureImage(MailboxConnection $mailbox): JsonResponse
+    {
+        if ((int) $mailbox->agent_id !== (int) UserContext::for(auth()->user())->agentId) {
+            return response()->json(['error' => 'Not found.'], 404);
+        }
+
+        if ($mailbox->signature_image_path) {
+            \Illuminate\Support\Facades\Storage::disk('local')->delete($mailbox->signature_image_path);
+        }
+        $mailbox->forceFill(['signature_image_path' => null, 'signature_image_mime' => null])->save();
+
+        return response()->json(['signature_image' => null]);
     }
 
     /** The user's own signature, used where a mailbox has none. Plain text, as the column is. */

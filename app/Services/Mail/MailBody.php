@@ -106,14 +106,21 @@ class MailBody
      * The body as it goes out: cleaned, styled inline, with the signature below it.
      *
      * @param  ?string  $signatureHtml  already cleaned, or null for none
+     * @param  ?array   $signatureImage  from SignatureImage::for — its picture goes under the signature, sent inline
      */
-    public function forEmail(string $html, ?string $signatureHtml = null): string
+    public function forEmail(string $html, ?string $signatureHtml = null, ?array $signatureImage = null): string
     {
         $body = $this->inlineStyles($this->clean($html));
 
         if ($signatureHtml !== null && trim(strip_tags($signatureHtml)) !== '') {
             $body .= '<div style="margin-top:16px;color:#52606d;">'
                 . $this->inlineStyles($this->clean($signatureHtml)) . '</div>';
+        }
+
+        // Added after cleaning: the cleaner allows no pictures in what people type, and this one is ours.
+        if ($signatureImage !== null) {
+            $body .= '<div style="margin-top:8px;"><img src="cid:' . $signatureImage['content_id'] . '" alt="" width="'
+                . $signatureImage['width'] . '" style="display:block;border:0;height:auto;"></div>';
         }
 
         return '<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" '

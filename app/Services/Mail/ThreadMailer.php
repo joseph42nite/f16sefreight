@@ -48,10 +48,14 @@ class ThreadMailer
 
         // 🔴 The signature is added HERE, from settings, never typed into the body (ui_ux_guide §composer).
         $signature = $withSignature ? $this->signatureFor($connection, $user) : null;
+        $image = $withSignature ? app(SignatureImage::class)->for($connection) : null;
+        if ($image !== null) {
+            $attachments[] = $image;
+        }
 
         $result = app(MailProviderRegistry::class)->for($connection->provider)->send(
             $connection, $to, $cc, $subject,
-            $this->mailBody->forEmail($body, $signature),
+            $this->mailBody->forEmail($body, $signature, $image),
             // ⚠️ NULL for a historical message without a provider id: it still goes, as a new thread on their side.
             $last->provider_message_id,
             $attachments,

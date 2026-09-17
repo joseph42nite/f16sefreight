@@ -109,6 +109,20 @@
             {{ busy === 'sig-' + c.id ? "Saving…" : "Save signature" }}
           </button>
           <span v-if="saved === 'sig-' + c.id" class="fx-muted"> Saved.</span>
+
+          <!-- A picture under the signature: a logo or a scanned sign (user, 2026-09-17). -->
+          <div class="fx-signature__image">
+            <span class="fx-field__label">Signature image</span>
+            <img v-if="c.signature_image" :src="c.signature_image" alt="Signature image" class="fx-signature__preview" />
+            <p v-else class="fx-muted">No image. PNG, JPG or GIF, up to 500 KB — shown up to 240 px wide under the signature.</p>
+            <div class="fx-signature__image-actions">
+              <button type="button" class="fx-btn" :disabled="busy === 'img-' + c.id" @click="$refs['imagePicker' + c.id][0].click()">
+                {{ busy === 'img-' + c.id ? "Uploading…" : (c.signature_image ? "Replace image" : "Add image") }}
+              </button>
+              <input :ref="'imagePicker' + c.id" type="file" accept="image/png,image/jpeg,image/gif" class="fx-drop__input" @change="uploadImage(c, $event)" />
+              <button v-if="c.signature_image" type="button" class="fx-btn fx-btn--ghost" :disabled="busy === 'img-' + c.id" @click="removeImage(c)">Remove image</button>
+            </div>
+          </div>
         </div>
 
         <label class="fx-field fx-signature">
@@ -206,6 +220,27 @@ export default {
           this.$set(this.signatures, c.id, data.signature_html || "");
           this.saved = "sig-" + c.id;
         })
+        .catch((e) => { this.connectError = this.messageFor(e); })
+        .finally(() => { this.busy = null; });
+    },
+    uploadImage(c, event) {
+      const file = event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+
+      const form = new FormData();
+      form.append("image", file);
+      this.busy = "img-" + c.id;
+      this.connectError = null;
+      ApiService.post("/user/mailboxes/" + c.id + "/signature-image", form)
+        .then(({ data }) => { this.$set(c, "signature_image", data.signature_image); })
+        .catch((e) => { this.connectError = this.messageFor(e); })
+        .finally(() => { this.busy = null; });
+    },
+    removeImage(c) {
+      this.busy = "img-" + c.id;
+      ApiService.delete("/user/mailboxes/" + c.id + "/signature-image")
+        .then(() => { this.$set(c, "signature_image", null); })
         .catch((e) => { this.connectError = this.messageFor(e); })
         .finally(() => { this.busy = null; });
     },

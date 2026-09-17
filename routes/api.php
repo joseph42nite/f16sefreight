@@ -122,6 +122,8 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::post('/mailboxes/{mailbox}/sync', [\App\Http\Controllers\Freight\MailboxController::class, 'syncNow']);
     Route::post('/mailboxes/{mailbox}/import', [\App\Http\Controllers\Freight\MailboxController::class, 'import']);
     Route::put('/mailboxes/{mailbox}/signature', [\App\Http\Controllers\Freight\MailboxController::class, 'updateSignature']);
+    Route::post('/mailboxes/{mailbox}/signature-image', [\App\Http\Controllers\Freight\MailboxController::class, 'uploadSignatureImage']);
+    Route::delete('/mailboxes/{mailbox}/signature-image', [\App\Http\Controllers\Freight\MailboxController::class, 'removeSignatureImage']);
     Route::put('/signature', [\App\Http\Controllers\Freight\MailboxController::class, 'updateMySignature']);
     // Your own name, as clients read it on the automated updates.
     Route::put('/profile', [\App\Http\Controllers\Freight\ProfileController::class, 'update']);

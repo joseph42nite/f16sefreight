@@ -30,7 +30,7 @@ class MailboxConnection extends Model
         'agent_id', 'user_id', 'email_address', 'provider',
         'access_token', 'refresh_token', 'expires_at', 'is_active',
         'sync_cursor', 'last_synced_at', 'auth_state',
-        'signature_html', 'signature_source',
+        'signature_html', 'signature_source', 'signature_image_path', 'signature_image_mime',
         'disconnected_at', 'disconnected_by',
         // ⚠️ Added 2026-09-01 with the sync service. These columns existed in the schema
         // from the start but were missing here — the same omission that silently dropped

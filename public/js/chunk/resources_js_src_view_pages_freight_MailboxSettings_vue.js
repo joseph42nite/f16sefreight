@@ -85,6 +85,34 @@ __webpack_require__.r(__webpack_exports__);
         this.busy = null;
       });
     },
+    uploadImage(c, event) {
+      const file = event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+      const form = new FormData();
+      form.append("image", file);
+      this.busy = "img-" + c.id;
+      this.connectError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/user/mailboxes/" + c.id + "/signature-image", form).then(({
+        data
+      }) => {
+        this.$set(c, "signature_image", data.signature_image);
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
+    removeImage(c) {
+      this.busy = "img-" + c.id;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"]("/user/mailboxes/" + c.id + "/signature-image").then(() => {
+        this.$set(c, "signature_image", null);
+      }).catch(e => {
+        this.connectError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = null;
+      });
+    },
     saveName() {
       this.busy = "name";
       this.nameSaved = false;
@@ -320,7 +348,56 @@ var render = function render() {
       }
     }, [_vm._v("\n          " + _vm._s(_vm.busy === "sig-" + c.id ? "Saving…" : "Save signature") + "\n        ")]), _vm._v(" "), _vm.saved === "sig-" + c.id ? _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v(" Saved.")]) : _vm._e()], 1);
+    }, [_vm._v(" Saved.")]) : _vm._e(), _vm._v(" "), _c("div", {
+      staticClass: "fx-signature__image"
+    }, [_c("span", {
+      staticClass: "fx-field__label"
+    }, [_vm._v("Signature image")]), _vm._v(" "), c.signature_image ? _c("img", {
+      staticClass: "fx-signature__preview",
+      attrs: {
+        src: c.signature_image,
+        alt: "Signature image"
+      }
+    }) : _c("p", {
+      staticClass: "fx-muted"
+    }, [_vm._v("No image. PNG, JPG or GIF, up to 500 KB — shown up to 240 px wide under the signature.")]), _vm._v(" "), _c("div", {
+      staticClass: "fx-signature__image-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        type: "button",
+        disabled: _vm.busy === "img-" + c.id
+      },
+      on: {
+        click: function ($event) {
+          _vm.$refs["imagePicker" + c.id][0].click();
+        }
+      }
+    }, [_vm._v("\n              " + _vm._s(_vm.busy === "img-" + c.id ? "Uploading…" : c.signature_image ? "Replace image" : "Add image") + "\n            ")]), _vm._v(" "), _c("input", {
+      ref: "imagePicker" + c.id,
+      refInFor: true,
+      staticClass: "fx-drop__input",
+      attrs: {
+        type: "file",
+        accept: "image/png,image/jpeg,image/gif"
+      },
+      on: {
+        change: function ($event) {
+          return _vm.uploadImage(c, $event);
+        }
+      }
+    }), _vm._v(" "), c.signature_image ? _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        type: "button",
+        disabled: _vm.busy === "img-" + c.id
+      },
+      on: {
+        click: function ($event) {
+          return _vm.removeImage(c);
+        }
+      }
+    }, [_vm._v("Remove image")]) : _vm._e()])])], 1);
   }), _vm._v(" "), _c("label", {
     staticClass: "fx-field fx-signature"
   }, [_c("span", {

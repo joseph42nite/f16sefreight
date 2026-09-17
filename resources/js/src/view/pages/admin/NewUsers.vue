@@ -45,6 +45,17 @@
             <div class="row">
               <div class="col-md-6">
                  <div class="admin-form-group">
+                   <label for="user-role">Role <span class="text-danger">*</span></label>
+                   <b-form-select id="user-role" v-model="user_form.designation" :options="roles" required class="custom-select"
+                     :class="{ 'is-invalid': user_form.errors.has('designation') }"></b-form-select>
+                   <has-error :form="user_form" field="designation"></has-error>
+                 </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                 <div class="admin-form-group">
                    <label>Company</label>
                    <b-form-select v-model="user_form.company_name" :options="all_company" @change="getBranch('add')" class="custom-select"></b-form-select>
                    <has-error :form="user_form" field="company_name"></has-error>
@@ -147,6 +158,7 @@ export default {
         origin_airport_code:null,
         company_name:null,
         branch_name:null,
+        designation:null,
         daily_login_count:'',
         password: "",
         pima_address: "",
@@ -155,6 +167,15 @@ export default {
         plan_expiry_date:'',
       }),
       action: 'Add',
+      /** What the person does at their company — it decides their pages and what they can change. */
+      roles: [
+        { value: null, text: 'Select Role' },
+        { value: 'pricing', text: 'Pricing' },
+        { value: 'operations', text: 'Operations' },
+        { value: 'sales', text: 'Sales' },
+        { value: 'boss', text: 'Boss' },
+        { value: 'accounts', text: 'Accounts' },
+      ],
       all_company:[{ value: null, text: 'Select Company' }],
       all_branch:[{ value: null, text: 'Select Branch' }],
       location:[],

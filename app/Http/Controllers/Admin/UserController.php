@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Cache;
 
 class UserController extends Controller
 {
+    /** The roles a person at a client company can have (user, 2026-09-17) — what they see and do in the app. */
+    public const ROLES = ['pricing', 'operations', 'sales', 'boss', 'accounts'];
+
     public function index($id = 0)
     {
         if ($id)
@@ -32,6 +35,7 @@ class UserController extends Controller
             // which is how branchless users were created in the first place.
             'branch_name' => ['required', 'integer', 'exists:agents_info,id'],
             'can_send' => ['required'],
+            'designation' => ['required', 'in:' . implode(',', self::ROLES)],
             'email' => ['required', 'string', 'email', 'max:100', 'unique:users'],
             'password' => ['required', 'string', 'min:4'],
         ]);
@@ -44,6 +48,7 @@ class UserController extends Controller
         $user->company_name = $request->company_name;
         $user->branch_name = $request->branch_name;
         $user->email = $request->email;
+        $user->designation = $request->designation;
         $user->can_send = $request->can_send;
         $user->password = Hash::make($request->password);
         $user->plan_expiry_date = $current_date;
@@ -69,6 +74,8 @@ class UserController extends Controller
             'branch_name' => ['required', 'integer', 'exists:agents_info,id'],
             'plan_expiry_date' => ['required'],
             'can_send' => ['required'],
+            // Optional on edit, so an older account with another value can still be saved unchanged.
+            'designation' => ['nullable', 'in:' . implode(',', self::ROLES)],
         ]);
 
         $user = User::find($id);
@@ -79,6 +86,9 @@ class UserController extends Controller
         // $user->daily_login_count=$request->daily_login_count;
         // $user->plan_expiry_date=$request->plan_expiry_date;
         $user->is_active = $request->is_active;
+        if (filled($request->designation)) {
+            $user->designation = $request->designation;
+        }
         $user->can_send = $request->can_send;
         $user->pima_address = $request->pima_address;
         if (!empty($request->password))

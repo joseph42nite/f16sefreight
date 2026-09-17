@@ -108,6 +108,7 @@ export default {
         {label:'Name',key:"name"},
         {label:'Email address',key:"email"},
         {label:'Company',key:"company_name"},
+        {label:'Role',key:"designation", formatter: (v) => v ? v.charAt(0).toUpperCase() + v.slice(1) : ''},
         {label:'Status',key:"is_active"},
         // {label:'Today login count',key:"daily_login_count"},
         // {label:'Plan expiry date',key:"plan_expiry_date"},

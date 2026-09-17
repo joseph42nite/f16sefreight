@@ -35,6 +35,10 @@ __webpack_require__.r(__webpack_exports__);
         label: 'Company',
         key: "company_name"
       }, {
+        label: 'Role',
+        key: "designation",
+        formatter: v => v ? v.charAt(0).toUpperCase() + v.slice(1) : ''
+      }, {
         label: 'Status',
         key: "is_active"
       },

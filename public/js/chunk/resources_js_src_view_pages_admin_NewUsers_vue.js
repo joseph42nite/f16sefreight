@@ -25,6 +25,7 @@ __webpack_require__.r(__webpack_exports__);
         origin_airport_code: null,
         company_name: null,
         branch_name: null,
+        designation: null,
         daily_login_count: '',
         password: "",
         pima_address: "",
@@ -33,6 +34,26 @@ __webpack_require__.r(__webpack_exports__);
         plan_expiry_date: ''
       }),
       action: 'Add',
+      /** What the person does at their company — it decides their pages and what they can change. */
+      roles: [{
+        value: null,
+        text: 'Select Role'
+      }, {
+        value: 'pricing',
+        text: 'Pricing'
+      }, {
+        value: 'operations',
+        text: 'Operations'
+      }, {
+        value: 'sales',
+        text: 'Sales'
+      }, {
+        value: 'boss',
+        text: 'Boss'
+      }, {
+        value: 'accounts',
+        text: 'Accounts'
+      }],
       all_company: [{
         value: null,
         text: 'Select Company'
@@ -294,6 +315,40 @@ var render = function render() {
     attrs: {
       form: _vm.user_form,
       field: "email"
+    }
+  })], 1)])]), _vm._v(" "), _c("div", {
+    staticClass: "row"
+  }, [_c("div", {
+    staticClass: "col-md-6"
+  }, [_c("div", {
+    staticClass: "admin-form-group"
+  }, [_c("label", {
+    attrs: {
+      for: "user-role"
+    }
+  }, [_vm._v("Role "), _c("span", {
+    staticClass: "text-danger"
+  }, [_vm._v("*")])]), _vm._v(" "), _c("b-form-select", {
+    staticClass: "custom-select",
+    class: {
+      "is-invalid": _vm.user_form.errors.has("designation")
+    },
+    attrs: {
+      id: "user-role",
+      options: _vm.roles,
+      required: ""
+    },
+    model: {
+      value: _vm.user_form.designation,
+      callback: function ($$v) {
+        _vm.$set(_vm.user_form, "designation", $$v);
+      },
+      expression: "user_form.designation"
+    }
+  }), _vm._v(" "), _c("has-error", {
+    attrs: {
+      form: _vm.user_form,
+      field: "designation"
     }
   })], 1)])]), _vm._v(" "), _c("div", {
     staticClass: "row"

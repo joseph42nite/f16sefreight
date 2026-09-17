@@ -22,7 +22,9 @@
     <section class="fx-inbox__list" aria-label="Conversations">
       <div class="fx-inbox__search">
         <input v-model="query" class="fx-input" type="search" placeholder="Subject or sender…" @input="debounced" />
+        <button class="fx-btn fx-btn--primary fx-inbox__new" data-help="new-mail" @click="writingNew = true">+ New mail</button>
       </div>
+      <NewMail v-if="writingNew" @close="writingNew = false" />
 
       <p v-if="loading" class="fx-muted fx-inbox__pad">Loading…</p>
       <p v-else-if="error" class="fx-error fx-inbox__pad" role="alert">{{ error }}</p>
@@ -623,6 +625,7 @@ import CreditsPanel from "@/view/pages/freight/components/CreditsPanel.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 import ClientUpdateEditor from "@/view/pages/freight/components/ClientUpdateEditor.vue";
 import StaffPicker from "@/view/pages/freight/components/StaffPicker.vue";
+import NewMail from "@/view/pages/freight/components/NewMail.vue";
 
 /** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
 const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
@@ -682,8 +685,10 @@ const WORKSPACE_TABS = [
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor, StaffPicker },
+  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor, StaffPicker, NewMail },
   data: () => ({
+    /** The New mail pop-up is open. */
+    writingNew: false,
     /* 🔴 The mode's folders come from the SERVER, not a hardcoded list. An air operator
        has no use for a shipping-line folder and a sea operator none for an airline one;
        hardcoding air here is what put the wrong counterparty in front of both. Seeded with

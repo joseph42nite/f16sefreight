@@ -5814,8 +5814,11 @@ body {
 
 .fx-inbox__list { border-right: 1px solid var(--border); display: flex; flex-direction: column;
                   min-width: 0; overflow: hidden; }
-.fx-inbox__search { padding: var(--space-2); border-bottom: 1px solid var(--border); }
-.fx-inbox__search .fx-input { width: 100%; min-width: 0; }
+.fx-inbox__search { padding: var(--space-2); border-bottom: 1px solid var(--border); display: flex; gap: var(--space-2); }
+.fx-inbox__search .fx-input { flex: 1 1 auto; width: 100%; min-width: 0; }
+.fx-inbox__new { flex: 0 0 auto; white-space: nowrap; }
+.fx-newmail { display: grid; gap: var(--space-3); align-content: start; }
+.fx-newmail__sent { margin: 0; }
 
 .fx-threads { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1 1 auto; }
 .fx-thread { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border);

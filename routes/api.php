@@ -382,6 +382,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // ── Triage (§5.1). Threads, never individual messages: a conversation is the
     // unit of work, and classifying one message of five mints a second enquiry.
     Route::get('/inbox/threads', [\App\Http\Controllers\Freight\EmailInboxController::class, 'index']);
+    Route::post('/inbox/compose', [\App\Http\Controllers\Freight\EmailInboxController::class, 'compose']);
     Route::get('/inbox/threads/{thread}', [\App\Http\Controllers\Freight\EmailInboxController::class, 'show']);
     Route::get('/inbox/attachments/{attachment}', [\App\Http\Controllers\Freight\EmailAttachmentController::class, 'show']);
     Route::post('/inbox/threads/{thread}/classify', [\App\Http\Controllers\Freight\EmailInboxController::class, 'classify']);

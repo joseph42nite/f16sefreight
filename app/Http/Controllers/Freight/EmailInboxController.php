@@ -508,6 +508,64 @@ class EmailInboxController extends Controller
         ]);
     }
 
+    /**
+     * A new mail, not on any conversation (user, 2026-09-17: the inbox had no way to start one).
+     *
+     * Sent from the person's OWN connected Outlook, so replies come back to them. Like every send, nothing is written
+     * here: the mail returns on the next sync from Sent Items and starts its conversation then — as ours, already
+     * answered.
+     */
+    public function compose(Request $request): JsonResponse
+    {
+        $this->authorize('viewInbox');
+
+        $data = $request->validate([
+            'to'      => ['required', 'array', 'min:1'],
+            'to.*'    => ['email'],
+            'cc'      => ['nullable', 'array'],
+            'cc.*'    => ['email'],
+            'subject' => ['required', 'string', 'max:255'],
+            'body'    => ['required', 'string'],
+            'include_signature' => ['nullable', 'boolean'],
+            'files'   => ['nullable', 'array'],
+            'files.*' => ['file', 'max:' . (self::ATTACHMENT_CAP_BYTES / 1024)],
+        ]);
+
+        $user = auth()->user();
+        $connection = MailboxConnection::withoutGlobalScopes()->where('user_id', $user->id)->where('is_active', true)
+            ->whereNull('disconnected_at')->where('auth_state', 'connected')->latest('id')->first();
+
+        if ($connection === null) {
+            return response()->json(['error' => 'Connect your Outlook first (Settings → Mailboxes), so the mail goes from you.', 'reason' => 'no_mailbox'], 422);
+        }
+
+        $mailBody = app(\App\Services\Mail\MailBody::class);
+
+        if (trim(strip_tags($mailBody->clean($data['body']))) === '') {
+            return response()->json(['error' => 'The message is empty.', 'reason' => 'empty_body'], 422);
+        }
+
+        try {
+            $attachments = $this->outgoingAttachments($request, null, []);
+        } catch (AttachmentException $e) {
+            return response()->json(['error' => $e->getMessage(), 'reason' => $e->reason], $e->status);
+        }
+
+        $signature = ($data['include_signature'] ?? true) ? app(ThreadMailer::class)->signatureFor($connection, $user) : null;
+
+        $result = app(\App\Services\Mail\MailProviderRegistry::class)->for($connection->provider)->send(
+            $connection, $data['to'], $data['cc'] ?? [], $data['subject'], $mailBody->forEmail($data['body'], $signature), null, $attachments
+        );
+
+        if (! $result['ok']) {
+            return response()->json(['error' => $result['error'] ?? 'The mail provider refused the message.', 'reason' => 'send_failed'], 502);
+        }
+
+        $this->audit->record($connection->agent_id, 'mail.composed', 'mailbox_connection', $connection->id, $user->id);
+
+        return response()->json(['ok' => true, 'from' => $connection->email_address]);
+    }
+
     // ─── Internals ───────────────────────────────────────────────────────────
 
     /** PRD §5.2.3: the provider cap, for everything attached to one mail together. */
@@ -523,12 +581,12 @@ class EmailInboxController extends Controller
      * @return array<int, array{name: string, mime_type: string, bytes: string}>
      * @throws AttachmentException
      */
-    private function outgoingAttachments(Request $request, EmailThread $thread, array $attachmentIds): array
+    private function outgoingAttachments(Request $request, ?EmailThread $thread, array $attachmentIds): array
     {
         $store = app(AttachmentStore::class);
         $files = [];
 
-        if ($attachmentIds !== []) {
+        if ($thread !== null && $attachmentIds !== []) {
             $onThread = EmailAttachment::whereIn('id', $attachmentIds)
                 ->whereIn('email_message_id', EmailMessage::where('thread_key', $thread->thread_key)->select('id'))
                 ->get();

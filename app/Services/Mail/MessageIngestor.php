@@ -186,7 +186,7 @@ class MessageIngestor
             return;
         }
 
-        DB::table('email_threads')
+        $filed = DB::table('email_threads')
             ->where('thread_key', $stored->thread_key)
             ->where('classification', 'unclassified')
             ->update([
@@ -198,6 +198,11 @@ class MessageIngestor
                 'staged_cargo'   => $result['cargo'] === [] ? null : json_encode($result['cargo']),
                 'updated_at'     => now(),
             ]);
+
+        // Filed as a customer enquiry: it gets its enquiry number now (user, 2026-09-17), so it is in the Kanban pool.
+        if ($filed > 0 && $result['classification'] === 'customer_enquiry') {
+            app(\App\Services\EnquiryMinter::class)->mintForArrivedMail($stored->thread_key);
+        }
     }
 
     private function createThread(MailboxConnection $connection, NormalisedMessage $message, string $threadKey): void

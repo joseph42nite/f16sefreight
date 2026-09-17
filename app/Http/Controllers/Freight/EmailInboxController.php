@@ -245,16 +245,9 @@ class EmailInboxController extends Controller
             }
 
             if ($demoting) {
-                // Lost, never deleted. Lost lives on enquiries (PRD.md §1), and nothing
-                // here hard-deletes a numbered document — the number was issued.
-                Enquiry::withoutTenantScope()->whereKey($thread->enquiry_id)->update([
-                    'status'      => 'lost',
-                    'lost_reason' => 'other',
-                    'lost_reason_custom' => 'Re-classified out of the enquiry queue at triage.',
-                    'lost_at'     => now(),
-                ]);
-
-                $this->audit->record($thread->agent_id, 'thread.demoted', 'enquiry', $thread->enquiry_id, auth()->id());
+                // Filed as something else: the enquiry number is REMOVED, not marked lost (user, 2026-09-17: "it could
+                // just not be an enquiry"). Was: marked lost with reason other — PRD §1 "lost, never deleted".
+                app(\App\Services\EnquiryMinter::class)->remove($thread, auth()->id());
             }
 
             $thread->classification = $to;
@@ -275,27 +268,7 @@ class EmailInboxController extends Controller
      */
     private function mintEnquiry(EmailThread $thread): void
     {
-        $enquiry = Enquiry::create([
-            'agent_id'         => $thread->agent_id,
-            'transport_mode'   => $this->modeForBranch($thread->agent_id),
-            'enquiry_no'       => $this->sequences->next($thread->agent_id, $this->prefixForBranch($thread->agent_id)),
-            'status'           => 'new',
-            'cargo_data_source' => 'manual',
-            // 🔗 WHO the enquiry is from, resolved from the sender's domain.
-            // `customers.email_domain` exists precisely for this and nothing was
-            // using it: every promoted enquiry was created with no client at all,
-            // so sales attribution, credit exposure and the client group all had
-            // nothing to hang on.
-            //
-            // ⚠️ NULL when the domain is unknown, and that is a real state — a
-            // brand-new prospect has no customer row yet. The domain is still
-            // recoverable from the thread's first inbound message, which is what
-            // the enquiry list shows when there is no customer to name.
-            'customer_id'      => $this->customerForDomain($thread),
-        ]);
-
-        $thread->enquiry_id = $enquiry->id;
-        $this->audit->record($thread->agent_id, 'thread.promoted', 'enquiry', $enquiry->id, auth()->id());
+        app(\App\Services\EnquiryMinter::class)->mint($thread, auth()->id());
     }
 
     /** Taking on a conversation already filed as a customer enquiry gives it its enquiry number. */
@@ -704,34 +677,6 @@ class EmailInboxController extends Controller
         return $connection ? app(ThreadMailer::class)->signatureFor($connection, auth()->user()) : null;
     }
 
-    /**
-     * ⚠️ Response latency is measured, not stored — `first_response_at` minus the first
-     * inbound message. Storing a computed latency lets it drift from the timestamps it
-     * was computed from.
-     */
-    /**
-     * The client this conversation is with, matched on the sender's domain.
-     *
-     * ⚠️ Scoped to the acting COMPANY, not the branch. `customers` is tenant-wide and a
-     * client group is every row sharing `(company_id, email_domain)` — matching per branch
-     * would fail to recognise a client the Chennai office onboarded.
-     */
-    private function customerForDomain(EmailThread $thread): ?int
-    {
-        $domain = $this->senderDomain($thread);
-
-        if ($domain === null) {
-            return null;
-        }
-
-        $companyId = DB::table('agents_info')->where('id', $thread->agent_id)->value('company_id');
-
-        return DB::table('customers')
-            ->where('company_id', $companyId)
-            ->whereRaw('LOWER(email_domain) = ?', [$domain])
-            ->value('id');
-    }
-
     /** The subject as the operator saw it when they corrected the classification. */
     private function latestSubject(EmailThread $thread): ?string
     {
@@ -848,14 +793,4 @@ class EmailInboxController extends Controller
         ];
     }
 
-    /** The branch's portal decides the mode; a cross-mode caller defaults to air. */
-    private function modeForBranch(int $agentId): string
-    {
-        return app()->bound('active_portal_scope') ? app('active_portal_scope') : 'air';
-    }
-
-    private function prefixForBranch(int $agentId): string
-    {
-        return ['air' => 'ENQA', 'sea' => 'ENQS', 'road' => 'ENQR'][$this->modeForBranch($agentId)];
-    }
 }

@@ -228,32 +228,30 @@ class InboxTriageTest extends TestCase
         $this->assertSame('new', $body['enquiry']['status']);
     }
 
-    /** Re-promoting must not mint a SECOND number for the same conversation. */
+    /**
+     * Choosing customer enquiry again keeps the same number; filed away and back, the old number is gone and a new one
+     * is issued (user, 2026-09-17: re-filing removes the enquiry).
+     */
     public function test_promoting_twice_does_not_mint_a_second_enquiry(): void
     {
         $id = $this->thread();
+        $classify = fn (string $as) => $this->api($this->pricing)
+            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => $as])->assertOk()->json('enquiry.id');
 
-        $first = $this->api($this->pricing)
-            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
-            ->json('enquiry.id');
+        $first = $classify('customer_enquiry');
+        $this->assertSame($first, $classify('customer_enquiry'), 'The same conversation keeps its number.');
 
-        $this->api($this->pricing)
-            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'airline'])
-            ->assertOk();
-
-        $second = $this->api($this->pricing)
-            ->postJson($this->url("/api/inbox/threads/{$id}/classify"), ['classification' => 'customer_enquiry'])
-            ->assertOk()
-            ->json('enquiry.id');
-
-        $this->assertSame($first, $second, 'The same conversation keeps its number.');
+        $classify('airline');
+        $again = $classify('customer_enquiry');
+        $this->assertNotSame($first, $again);
+        $this->assertDatabaseMissing('enquiries', ['id' => $first]);
     }
 
     /**
-     * 🔴 Demotion marks the enquiry LOST, never deletes it. Lost lives on enquiries,
-     * and nothing here hard-deletes a numbered document — the number was issued.
+     * Filed as something else, the enquiry number is REMOVED, not marked lost (user, 2026-09-17: "it could just not be
+     * an enquiry"). Was: marked lost.
      */
-    public function test_demoting_marks_the_orphaned_enquiry_lost(): void
+    public function test_demoting_removes_the_enquiry(): void
     {
         $id = $this->thread();
 
@@ -266,7 +264,8 @@ class InboxTriageTest extends TestCase
             ->assertOk()
             ->assertJsonPath('classification', 'clearance');
 
-        $this->assertDatabaseHas('enquiries', ['id' => $enquiryId, 'status' => 'lost']);
+        $this->assertDatabaseMissing('enquiries', ['id' => $enquiryId]);
+        $this->assertDatabaseHas('email_threads', ['id' => $id, 'enquiry_id' => null]);
     }
 
     /**

@@ -425,26 +425,23 @@ class MailboxSyncTest extends TestCase
     }
 
     /**
-     * 🔴 Ingestion CLASSIFIES but never mints. PRD §5.2.5: the parser *"pre-selects that
-     * classification"* and *"no `enquiry_no` is consumed and no `enquiries` row is created
-     * until an operator confirms via the triage dropdown"* — and the flow at §528 is
-     * literally `Inbound mail → Classify & stage`.
-     *
-     * ⚠️ This test asserted `unclassified` until 2026-09-07, which conflated the two
-     * halves: it read "does not mint" as "does not classify" and so locked in a classifier
-     * that never ran. Minting is the part that would inflate the conversion denominator;
-     * staging a suggestion costs nothing and is the entire point of having a classifier.
+     * Mail the classifier files as a customer enquiry gets its enquiry number as it arrives, so it is in the Kanban pool
+     * (user, 2026-09-17: "the regex is to determine if it's a customer enquiry or not"). Was PRD §5.2.5: no number until
+     * an operator confirms. Mail filed as anything else creates nothing.
      */
-    public function test_ingestion_stages_a_classification_but_mints_nothing(): void
+    public function test_an_arriving_customer_enquiry_gets_its_enquiry_and_other_mail_does_not(): void
     {
         $this->fakeDelta([$this->graphMessage()]);
         $this->sync();
 
         $thread = DB::table('email_threads')->where('agent_id', $this->branch->id)->first();
+        $this->assertSame('customer_enquiry', $thread->classification);
+        $this->assertNotNull($thread->enquiry_id);
+        $this->assertSame('new', DB::table('enquiries')->where('id', $thread->enquiry_id)->value('status'));
 
-        $this->assertNotSame('unclassified', $thread->classification, 'the classifier did not run');
-        $this->assertNull($thread->enquiry_id, 'ingestion minted an enquiry');
-        $this->assertSame(0, DB::table('enquiries')->count());
+        $this->fakeDelta([$this->graphMessage(['subject' => 'Webinar next week', 'bodyPreview' => 'Join us online.'])]);
+        $this->sync();
+        $this->assertSame(1, DB::table('enquiries')->where('agent_id', $this->branch->id)->count());
     }
 
     // ─── Echo suppression ────────────────────────────────────────────────────

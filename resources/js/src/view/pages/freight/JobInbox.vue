@@ -814,6 +814,7 @@ export default {
         gross_weight: "Gross weight",
         chargeable_weight: "Chargeable weight",
         volume_cbm: "Volume (CBM)",
+        dimensions: "Dimensions",
         origin: "Origin",
         destination: "Destination",
       };

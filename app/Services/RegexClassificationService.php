@@ -37,8 +37,11 @@ class RegexClassificationService
      * unlabelled fallback is tried last and marked low confidence.
      */
     private const WEIGHT_PATTERNS = [
-        'chargeable' => '/\b(?:chargeable|charge?able|cw)\D{0,12}?(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?)?\b/i',
-        'gross'      => '/\b(?:gross|gw|actual)\D{0,12}?(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?)?\b/i',
+        // "chargeable weight 520", "CW 520", "Ch wt 18000 kgs", "Chg wt: 18000"
+        'chargeable' => '/\b(?:chargeable|charge?able|cw|ch\.?\s*w(?:gh)?t|chg\.?\s*w(?:gh)?t)\D{0,12}?(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?)?\b/i',
+        // "Gross wgt 17400kgs", "GW 450", "G.W.: 450 kg", and a plain "WEIGHT : 300 kgs" / "Wt 300 kg" — the plain label
+        // only with a kg unit, so a table heading ("Pcs / Weight / Time") never reads as a figure (user, 2026-09-17).
+        'gross'      => '/\b(?:gross|gw|g\.w\.?|actual)\D{0,12}?(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?)?\b|(?<!ch\s)(?<!ch\.)(?<!chg\s)\b(?:weight|wgt|wt)\b\s*[:\-=]?\s*(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?|kilograms?)\b/i',
         'net'        => '/\b(?:net|nw)\D{0,12}?(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?)?\b/i',
     ];
 
@@ -49,6 +52,29 @@ class RegexClassificationService
 
     /** A pallet is one piece (user, 2026-09-14): "3 pallets BOM to SIN" is 3 pieces. */
     private const PIECES_PATTERN = '/(\d+)\s*(?:pcs?|pieces?|packages?|cartons?|pkgs?|pallets?|plts?)\b/i';
+
+    /** The label first, as forwarders write it: "PCS : 21", "Pcs 400", "No. of pieces: 12" (user, 2026-09-17). */
+    private const PIECES_LABEL_FIRST = '/\b(?:no\.?\s*of\s*)?(?:pcs|pieces|pkgs|packages|cartons|ctns)\b\s*[:\-=]?\s*(\d+)\b/i';
+
+    /** "Dims 40x30x30 cms", "Dimensions : 60 x 30 x20" — length × width × height, as written. */
+    private const DIMENSIONS_PATTERN = '/(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)\s*(cms?|mm|inch(?:es)?|in|m)?\b/iu';
+
+    /**
+     * A client asking for a price or a booking (user, 2026-09-17: "can you please quote, quote the best rate, give the
+     * best rate — all of that matters a lot"). Built from the real inbox: it must NOT catch our own sales mails
+     * ("the commercial quotation for Focus Air", "our best commercial offer") or "Rate your support experience".
+     */
+    private const QUOTE_REQUEST_PATTERN = '/\b(?:'
+        . 'rfq'
+        . '|request(?:ing|ed)?\s+(?:for\s+|a\s+|an\s+|your\s+|the\s+)*(?:best\s+)?(?:quot(?:e|ation)s?|rates?|offer|booking)'
+        . '|(?:please|pls|plz|kindly)\s+(?:send\s+|share\s+|give\s+|provide\s+|advise\s+|offer\s+)?(?:us\s+|me\s+)?(?:your\s+|the\s+|a\s+)?(?:best\s+|lowest\s+|competitive\s+)?(?:quote|quotation|rates?|price)'
+        . '|(?:can|could|would)\s+you\s+(?:please\s+|pls\s+|kindly\s+)?(?:send\s+|share\s+|give\s+|provide\s+|offer\s+)?(?:us\s+|me\s+)?(?:your\s+|the\s+|a\s+)?(?:best\s+|lowest\s+)?(?:quote|quotation|rates?|price)'
+        . '|quote\s+(?:us\s+|me\s+)?(?:your\s+|the\s+)?(?:best|lowest|competitive)'
+        . '|(?:best|lowest|competitive|good)\s+(?:possible\s+)?(?:rates?|price|buy\s*rate)'
+        . '|rates?\s+(?:request|enquiry|inquiry|required|needed)'
+        . '|(?:need|require)\s+(?:your\s+|the\s+|a\s+)?(?:best\s+)?(?:rates?|quot(?:e|ation))'
+        . '|booking\s+(?:request|rfq)|confirm(?:ed)?\s+booking'
+        . ')\b/i';
 
     /**
      * A lane, written the way clients write one: "BOM to HAM", "BOM-HAM", "BOM → HAM",
@@ -116,9 +142,9 @@ class RegexClassificationService
             //   1. the tenant's own rules      — a local exception outranks everything
             //   2. a domain we already invoice — see below
             //   3. the platform directory      — what the industry knows about a domain
-            //   4. cargo read with confidence  — the mail names shipment figures (a weight, pieces,
-            //      a lane) the patterns read with high confidence: a customer enquiry (user,
-            //      2026-09-17: "Ex BLR … 400 pcs, gross 17400 kgs" was filed Other)
+            //   4. a quote request, or cargo   — the mail asks for a quote / rate / booking, or names
+            //      read with confidence           shipment figures (weight, pieces, dimensions) read with
+            //      high confidence: a customer enquiry (user, 2026-09-17)
             //   5. other                       — nothing matched, so the filing is a guess: Other,
             //      and a person re-files it (user, 2026-09-17: "when confidence is low just put
             //      it in other"; was customer_enquiry, which filed every newsletter and colleague's
@@ -126,7 +152,7 @@ class RegexClassificationService
             'classification'  => $rule->target_classification
                 ?? $this->knownClientClassification($message)
                 ?? $this->globalClassificationFor($message->from)
-                ?? ($this->readsLikeAShipment($cargo) ? 'customer_enquiry' : 'other'),
+                ?? (preg_match(self::QUOTE_REQUEST_PATTERN, $haystack) || $this->readsLikeAShipment($cargo) ? 'customer_enquiry' : 'other'),
             'matched_rule_id' => $rule->id ?? null,
             'cargo'           => $cargo,
         ];
@@ -269,7 +295,9 @@ class RegexClassificationService
 
         foreach (self::WEIGHT_PATTERNS as $label => $pattern) {
             if (preg_match($pattern, $text, $m)) {
-                $cargo[$label . '_weight'] = ['value' => (float) $m[1], 'confidence' => 'high'];
+                // The first group that caught a number (the gross pattern has two ways to write it).
+                $value = collect(array_slice($m, 1))->first(fn ($v) => $v !== '');
+                $cargo[$label . '_weight'] = ['value' => (float) $value, 'confidence' => 'high'];
             }
         }
 
@@ -279,8 +307,12 @@ class RegexClassificationService
             $cargo['gross_weight'] = ['value' => (float) $m[1], 'confidence' => 'low'];
         }
 
-        if (preg_match(self::PIECES_PATTERN, $text, $m)) {
+        if (preg_match(self::PIECES_PATTERN, $text, $m) || preg_match(self::PIECES_LABEL_FIRST, $text, $m)) {
             $cargo['pieces'] = ['value' => (int) $m[1], 'confidence' => 'high'];
+        }
+
+        if (preg_match(self::DIMENSIONS_PATTERN, $text, $m)) {
+            $cargo['dimensions'] = ['value' => trim("{$m[1]} x {$m[2]} x {$m[3]} " . strtolower($m[4] ?? '')), 'confidence' => 'high'];
         }
 
         if ($transportMode === 'sea' && preg_match(self::CBM_PATTERN, $text, $m)) {

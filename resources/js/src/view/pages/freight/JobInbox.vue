@@ -416,6 +416,13 @@
           <!-- ⚠️ Not promoted is a real state, not a blank. Classifying a conversation as
                a customer enquiry is what mints the number and turns it into work. -->
           <span v-else class="fx-muted">Not promoted to an enquiry</span>
+          <!-- Filed as a customer enquiry by the classifier but no number yet: one click creates it (2026-09-17). -->
+          <button
+            v-if="!active.job && !active.enquiry && active.classification === 'customer_enquiry' && canTriage"
+            class="fx-btn fx-btn--primary"
+            :disabled="busy"
+            @click="createEnquiry"
+          >Create enquiry</button>
 
           <span
             v-if="timing"
@@ -1345,6 +1352,11 @@ export default {
       if (this.active && this.active.enquiry && !this.active.job) {
         this.loadOperators();
       }
+    },
+    /** Gives a customer-enquiry conversation its enquiry number. */
+    createEnquiry() {
+      this.pending = "customer_enquiry";
+      this.classify();
     },
     closeWorkspace() {
       this.setSplit(false);

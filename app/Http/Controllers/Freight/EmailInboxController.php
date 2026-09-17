@@ -194,7 +194,8 @@ class EmailInboxController extends Controller
         $to = $data['classification'];
         $from = $thread->classification;
 
-        if ($to === $from) {
+        // Filed as a customer enquiry already but with no number (the classifier filed it): choosing it again creates it.
+        if ($to === $from && ! ($to === 'customer_enquiry' && $thread->enquiry_id === null)) {
             return response()->json($this->shape($thread->fresh()));
         }
 
@@ -240,27 +241,7 @@ class EmailInboxController extends Controller
 
         DB::transaction(function () use ($thread, $to, $promoting, $demoting) {
             if ($promoting && $thread->enquiry_id === null) {
-                $enquiry = Enquiry::create([
-                    'agent_id'         => $thread->agent_id,
-                    'transport_mode'   => $this->modeForBranch($thread->agent_id),
-                    'enquiry_no'       => $this->sequences->next($thread->agent_id, $this->prefixForBranch($thread->agent_id)),
-                    'status'           => 'new',
-                    'cargo_data_source' => 'manual',
-                    // 🔗 WHO the enquiry is from, resolved from the sender's domain.
-                    // `customers.email_domain` exists precisely for this and nothing was
-                    // using it: every promoted enquiry was created with no client at all,
-                    // so sales attribution, credit exposure and the client group all had
-                    // nothing to hang on.
-                    //
-                    // ⚠️ NULL when the domain is unknown, and that is a real state — a
-                    // brand-new prospect has no customer row yet. The domain is still
-                    // recoverable from the thread's first inbound message, which is what
-                    // the enquiry list shows when there is no customer to name.
-                    'customer_id'      => $this->customerForDomain($thread),
-                ]);
-
-                $thread->enquiry_id = $enquiry->id;
-                $this->audit->record($thread->agent_id, 'thread.promoted', 'enquiry', $enquiry->id, auth()->id());
+                $this->mintEnquiry($thread);
             }
 
             if ($demoting) {
@@ -285,6 +266,50 @@ class EmailInboxController extends Controller
         }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
 
         return response()->json($this->shape($thread->fresh(['assignedOps', 'enquiry'])));
+    }
+
+    /**
+     * Give a customer-enquiry conversation its enquiry number. Called when a person files it as a customer enquiry, and
+     * when they claim one the classifier already filed (first real mailbox, 2026-09-17: imported mail arrives filed, so
+     * without this no enquiry was ever created from it). Sets `enquiry_id` on the thread; the caller saves.
+     */
+    private function mintEnquiry(EmailThread $thread): void
+    {
+        $enquiry = Enquiry::create([
+            'agent_id'         => $thread->agent_id,
+            'transport_mode'   => $this->modeForBranch($thread->agent_id),
+            'enquiry_no'       => $this->sequences->next($thread->agent_id, $this->prefixForBranch($thread->agent_id)),
+            'status'           => 'new',
+            'cargo_data_source' => 'manual',
+            // 🔗 WHO the enquiry is from, resolved from the sender's domain.
+            // `customers.email_domain` exists precisely for this and nothing was
+            // using it: every promoted enquiry was created with no client at all,
+            // so sales attribution, credit exposure and the client group all had
+            // nothing to hang on.
+            //
+            // ⚠️ NULL when the domain is unknown, and that is a real state — a
+            // brand-new prospect has no customer row yet. The domain is still
+            // recoverable from the thread's first inbound message, which is what
+            // the enquiry list shows when there is no customer to name.
+            'customer_id'      => $this->customerForDomain($thread),
+        ]);
+
+        $thread->enquiry_id = $enquiry->id;
+        $this->audit->record($thread->agent_id, 'thread.promoted', 'enquiry', $enquiry->id, auth()->id());
+    }
+
+    /** Taking on a conversation already filed as a customer enquiry gives it its enquiry number. */
+    private function takeOnEnquiry(EmailThread $thread): void
+    {
+        if ($thread->classification !== 'customer_enquiry' || $thread->enquiry_id !== null) {
+            return;
+        }
+
+        DB::transaction(function () use ($thread) {
+            $this->mintEnquiry($thread);
+            $thread->first_triage_at = $thread->first_triage_at ?: now();
+            $thread->save();
+        }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
     }
 
     /**
@@ -318,6 +343,8 @@ class EmailInboxController extends Controller
         }
 
         $this->audit->record($thread->agent_id, 'thread.claimed', 'email_thread', $thread->id, auth()->id());
+
+        $this->takeOnEnquiry($thread);
 
         if ($update !== null) {
             $update = $this->clientUpdates->decide($thread->fresh(), auth()->user(), 'claimed', ...$update);
@@ -496,6 +523,7 @@ class EmailInboxController extends Controller
 
         if ($claimed) {
             $this->audit->record($thread->agent_id, 'thread.claimed', 'email_thread', $thread->id, auth()->id());
+            $this->takeOnEnquiry($thread->fresh());
         }
         if (auth()->user()->designation !== 'sales') {
             $this->clientUpdates->markReplied($thread->fresh());

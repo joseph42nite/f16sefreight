@@ -847,6 +847,11 @@ const WORKSPACE_TABS = [{
         this.loadOperators();
       }
     },
+    /** Gives a customer-enquiry conversation its enquiry number. */
+    createEnquiry() {
+      this.pending = "customer_enquiry";
+      this.classify();
+    },
     closeWorkspace() {
       this.setSplit(false);
     },
@@ -3364,7 +3369,15 @@ var render = function render() {
           }
         })] : _c("span", {
           staticClass: "fx-muted"
-        }, [_vm._v("Not promoted to an enquiry")]), _vm._v(" "), _vm.timing ? _c("span", {
+        }, [_vm._v("Not promoted to an enquiry")]), _vm._v(" "), !_vm.active.job && !_vm.active.enquiry && _vm.active.classification === "customer_enquiry" && _vm.canTriage ? _c("button", {
+          staticClass: "fx-btn fx-btn--primary",
+          attrs: {
+            disabled: _vm.busy
+          },
+          on: {
+            click: _vm.createEnquiry
+          }
+        }, [_vm._v("Create enquiry")]) : _vm._e(), _vm._v(" "), _vm.timing ? _c("span", {
           staticClass: "fx-drawer__timing",
           class: "is-" + _vm.timing.tone,
           attrs: {

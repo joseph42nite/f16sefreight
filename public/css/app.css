@@ -5841,13 +5841,16 @@ body {
 /* 🔴 Only the MESSAGES scroll (user, 2026-09-16). The subject, the timings and a waiting client update stay put at
    the top — a suggestion that scrolls away is one nobody acts on — and the composer stays at the foot. */
 .fx-inbox__convo { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
-.fx-convo__head { display: flex; align-items: flex-start; justify-content: space-between;
+.fx-convo__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between;
                   gap: var(--space-3); padding: var(--space-3) var(--space-4);
                   border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .fx-convo__subject { font-size: .9375rem; font-weight: 600; margin: 0; }
 .fx-convo__meta { font-size: .75rem; color: var(--text-secondary); margin: var(--space-1) 0 0; }
-.fx-convo__actions { display: flex; gap: var(--space-2); align-items: center; flex-shrink: 0; }
+/* Wraps under the subject when the pane is narrow — on one line the dropdowns and Open workspace ran off the edge
+   and were cut off (2026-09-17). */
+.fx-convo__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; min-width: 0; }
 .fx-convo__actions .fx-input { min-width: 10rem; }
+.fx-convo__filed { display: flex; align-items: center; gap: var(--space-1); font-size: .75rem; color: var(--text-secondary); }
 .fx-convo__sla { padding: var(--space-3) var(--space-4); max-width: 22rem;
                  border-bottom: 1px solid var(--border); flex-shrink: 0; }
 /* A client update waiting to be sent — above the messages so it is seen. */

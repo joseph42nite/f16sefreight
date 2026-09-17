@@ -14,8 +14,8 @@ use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 /**
- * What the first real mailbox showed (joseph@f16sefreight.com, 2026-09-17): colleagues' and automated mail was filed as
- * customer enquiries, and a conversation the classifier had filed could never get its enquiry number.
+ * What the first real mailbox showed (joseph@f16sefreight.com, 2026-09-17): a conversation the classifier had filed as a
+ * customer enquiry could never get its enquiry number.
  */
 class RealMailboxFixesTest extends TestCase
 {
@@ -46,15 +46,6 @@ class RealMailboxFixesTest extends TestCase
         )]);
 
         return EmailThread::withoutGlobalScopes()->where('thread_key', \DB::table('email_messages')->where('message_id', $id)->value('thread_key'))->first();
-    }
-
-    public function test_colleagues_and_automated_senders_are_filed_as_other_and_clients_as_enquiries(): void
-    {
-        $this->assertSame('other', $this->receive('deepanjan@forwarder-rlm.test')->classification, 'our own domain');
-        $this->assertSame('other', $this->receive('noreply@descartes.test')->classification);
-        $this->assertSame('other', $this->receive('alerts@notifications.descartes.test')->classification);
-        $this->assertSame('customer_enquiry', $this->receive('buyer@globex.test')->classification);
-        $this->assertSame('customer_enquiry', $this->receive('someone@gmail.com')->classification, 'free mail is never "our domain"');
     }
 
     public function test_claiming_or_choosing_customer_enquiry_again_creates_the_enquiry(): void

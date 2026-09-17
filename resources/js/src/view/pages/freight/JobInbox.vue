@@ -92,9 +92,13 @@
               §8.1 role forbids -> HIDDEN. Only pricing re-classifies; operations reads
               and claims. A disabled dropdown would just invite "why can't I?" tickets.
             -->
-            <select v-if="canTriage" v-model="pending" class="fx-input" :disabled="busy" data-help="thread-classification" @change="classify">
-              <option v-for="c in CLASSIFICATIONS" :key="c" :value="c">{{ c.replace(/_/g, " ") }}</option>
-            </select>
+            <label v-if="canTriage" class="fx-convo__filed" for="thread-classification">
+              <span>Filed as</span>
+              <select id="thread-classification" v-model="pending" class="fx-input" :disabled="busy" data-help="thread-classification" @change="classify">
+                <option value="unclassified" disabled>Not sorted yet</option>
+                <option v-for="c in CLASSIFICATIONS" :key="c" :value="c">{{ c.replace(/_/g, " ") }}</option>
+              </select>
+            </label>
 
             <!--
               §9.2 the split-pane. Opening the workspace slides the folder and thread
@@ -637,7 +641,7 @@ import NewMail from "@/view/pages/freight/components/NewMail.vue";
 /** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
 const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
 
-const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road"];
+const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road", "other"];
 
 /* §740's tab set. The two carrying real data today come first; the rest name the
    Step 6 item that fills them, so an unfinished tab cannot be mistaken for a bug. */

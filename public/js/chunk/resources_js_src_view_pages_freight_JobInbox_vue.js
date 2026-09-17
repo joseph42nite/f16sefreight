@@ -45,7 +45,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 /** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
 const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
-const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road"];
+const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road", "other"];
 
 /* §740's tab set. The two carrying real data today come first; the rest name the
    Step 6 item that fills them, so an unfinished tab cannot be mistaken for a bug. */
@@ -2789,7 +2789,12 @@ var render = function render() {
     on: {
       click: _vm.startClaim
     }
-  }, [_vm._v("Claim")]) : _vm._e(), _vm._v(" "), _vm.canTriage ? _c("select", {
+  }, [_vm._v("Claim")]) : _vm._e(), _vm._v(" "), _vm.canTriage ? _c("label", {
+    staticClass: "fx-convo__filed",
+    attrs: {
+      for: "thread-classification"
+    }
+  }, [_c("span", [_vm._v("Filed as")]), _vm._v(" "), _c("select", {
     directives: [{
       name: "model",
       rawName: "v-model",
@@ -2798,6 +2803,7 @@ var render = function render() {
     }],
     staticClass: "fx-input",
     attrs: {
+      id: "thread-classification",
       disabled: _vm.busy,
       "data-help": "thread-classification"
     },
@@ -2812,14 +2818,19 @@ var render = function render() {
         _vm.pending = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
       }, _vm.classify]
     }
-  }, _vm._l(_vm.CLASSIFICATIONS, function (c) {
+  }, [_c("option", {
+    attrs: {
+      value: "unclassified",
+      disabled: ""
+    }
+  }, [_vm._v("Not sorted yet")]), _vm._v(" "), _vm._l(_vm.CLASSIFICATIONS, function (c) {
     return _c("option", {
       key: c,
       domProps: {
         value: c
       }
     }, [_vm._v(_vm._s(c.replace(/_/g, " ")))]);
-  }), 0) : _vm._e(), _vm._v(" "), _vm.canAssign && _vm.assignees.length ? _c("StaffPicker", {
+  })], 2)]) : _vm._e(), _vm._v(" "), _vm.canAssign && _vm.assignees.length ? _c("StaffPicker", {
     staticClass: "fx-convo__assign",
     attrs: {
       options: _vm.assignees,

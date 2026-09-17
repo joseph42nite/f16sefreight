@@ -118,40 +118,12 @@ class RegexClassificationService
             //      an enquiry costs a re-classification; a real one misfiled as airline
             //      mail is a client waiting on a quote nobody is writing.
             'classification'  => $rule->target_classification
-                ?? $this->ownOrAutomatedMail($message)
                 ?? $this->knownClientClassification($message)
                 ?? $this->globalClassificationFor($message->from)
                 ?? 'customer_enquiry',
             'matched_rule_id' => $rule->id ?? null,
             'cargo'           => $this->extractCargo($haystack, $transportMode),
         ];
-    }
-
-    /**
-     * Not a client writing (first real mailbox, 2026-09-17: 39 colleague mails and every Descartes notice had been filed
-     * as customer enquiries): mail from our own company's domain — the connected mailbox's — and mail from an
-     * automated sender (no-reply, notifications, newsletters). Filed as Other; anyone can re-file it.
-     */
-    private function ownOrAutomatedMail(EmailMessage $message): ?string
-    {
-        $from = strtolower((string) $message->from);
-
-        if (! str_contains($from, '@')) {
-            return null;
-        }
-
-        [$local, $domain] = explode('@', $from, 2);
-        $mailbox = strtolower((string) DB::table('mailbox_connections')->where('id', $message->mailbox_connection_id)->value('email_address'));
-        $ownDomain = str_contains($mailbox, '@') ? substr(strrchr($mailbox, '@'), 1) : null;
-
-        if ($ownDomain !== null && $domain === $ownDomain && ! app(GlobalDomainDirectory::class)->isFreeMail($domain)) {
-            return 'other';
-        }
-
-        $automated = preg_match('/^(no-?reply|do-?not-?reply|notifications?|newsletters?|mailer-daemon|postmaster|bounces?|marketing|alerts?)\b/', $local)
-            || preg_match('/^(notifications?|news|newsletter|mail|email|em|bounce)\./', $domain);
-
-        return $automated ? 'other' : null;
     }
 
     /**

@@ -37,15 +37,27 @@ class RealMailboxFixesTest extends TestCase
             'email_address' => 'joseph@forwarder-rlm.test', 'provider' => 'outlook', 'is_active' => 1, 'auth_state' => 'connected', 'backfill_status' => 'completed']);
     }
 
-    private function receive(string $from): EmailThread
+    private function receive(string $from, string $snippet = '2 pallets, 480 kg'): EmailThread
     {
         $id = '<' . uniqid('', true) . '@rlm.test>';
         app(MessageIngestor::class)->ingest($this->mailbox, [new NormalisedMessage(
             messageId: $id, threadId: null, from: $from, to: [$this->mailbox->email_address], cc: [], bcc: [],
-            subject: 'Rates BOM to FRA', snippet: '2 pallets, 480 kg', receivedAt: now(), direction: 'inbound',
+            subject: 'Rates BOM to FRA', snippet: $snippet, receivedAt: now(), direction: 'inbound',
         )]);
 
         return EmailThread::withoutGlobalScopes()->where('thread_key', \DB::table('email_messages')->where('message_id', $id)->value('thread_key'))->first();
+    }
+
+    /**
+     * Nothing else matching, a mail whose cargo figures the patterns read with high confidence is a customer enquiry;
+     * a low-confidence read is Other (user, 2026-09-17 — the real "Ex BLR RMG 400/18 tons JFK" mail).
+     */
+    public function test_confidently_read_cargo_files_a_customer_enquiry_and_a_guess_files_other(): void
+    {
+        $shipment = "Dear Sir,\nPlease share the confirmed booking schedule\nAgreed rate 350++\nPcs 400\nGross wgt 17400kgs\nCh wt 18000 kgs";
+        $this->assertSame('customer_enquiry', $this->receive('deepanjan@unknown-rlm.test', $shipment)->classification);
+        $this->assertSame('other', $this->receive('someone@unknown-rlm.test', 'about 480 kg')->classification, 'unlabelled weight: low confidence');
+        $this->assertSame('other', $this->receive('news@unknown-rlm.test', 'Join our webinar next week')->classification);
     }
 
     public function test_claiming_or_choosing_customer_enquiry_again_creates_the_enquiry(): void
@@ -59,7 +71,7 @@ class RealMailboxFixesTest extends TestCase
         $api->postJson("http://focusair.localhost/api/inbox/threads/{$claimed->id}/claim")->assertOk();
         $this->assertNotNull($claimed->fresh()->enquiry_id);
 
-        $filed = $this->receive('ops@initech.test');
+        $filed = $this->receive('ops@initech.test', 'Can we talk tomorrow?');
         $this->assertSame('other', $filed->classification, 'nothing matched: Other');
         $api->postJson("http://focusair.localhost/api/inbox/threads/{$filed->id}/classify", ['classification' => 'customer_enquiry'])
             ->assertOk()->assertJsonPath('enquiry.status', 'new');

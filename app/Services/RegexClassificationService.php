@@ -108,23 +108,34 @@ class RegexClassificationService
             DB::table('email_classification_rules')->where('id', $rule->id)->increment('hit_count');
         }
 
+        $cargo = $this->extractCargo($haystack, $transportMode);
+
         return [
             // 🔴 THE FALLBACK CHAIN, most specific first:
             //
             //   1. the tenant's own rules      — a local exception outranks everything
             //   2. a domain we already invoice — see below
             //   3. the platform directory      — what the industry knows about a domain
-            //   4. other                       — nothing matched, so the filing is a guess: Other,
+            //   4. cargo read with confidence  — the mail names shipment figures (a weight, pieces,
+            //      a lane) the patterns read with high confidence: a customer enquiry (user,
+            //      2026-09-17: "Ex BLR … 400 pcs, gross 17400 kgs" was filed Other)
+            //   5. other                       — nothing matched, so the filing is a guess: Other,
             //      and a person re-files it (user, 2026-09-17: "when confidence is low just put
             //      it in other"; was customer_enquiry, which filed every newsletter and colleague's
             //      mail as an enquiry on the first real mailbox).
             'classification'  => $rule->target_classification
                 ?? $this->knownClientClassification($message)
                 ?? $this->globalClassificationFor($message->from)
-                ?? 'other',
+                ?? ($this->readsLikeAShipment($cargo) ? 'customer_enquiry' : 'other'),
             'matched_rule_id' => $rule->id ?? null,
-            'cargo'           => $this->extractCargo($haystack, $transportMode),
+            'cargo'           => $cargo,
         ];
+    }
+
+    /** At least one cargo figure read with high confidence. A low-confidence read alone is not enough. */
+    private function readsLikeAShipment(array $cargo): bool
+    {
+        return collect($cargo)->contains(fn ($field) => ($field['confidence'] ?? null) === 'high');
     }
 
     /**

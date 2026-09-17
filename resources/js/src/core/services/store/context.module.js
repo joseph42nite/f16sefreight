@@ -118,12 +118,11 @@ const actions = {
    * being perfectly authenticated. Nothing prompts them, because nothing is broken from
    * the server's point of view — their token is fine.
    *
-   * ⚠️ Only when it is MISSING. This is not a refresh on every page load; the login
-   * response is still the normal path and localStorage still carries it across refreshes.
+   * 🔴 On EVERY load of the shell, not only when missing (2026-09-17): a role changed in Super Admin after someone
+   * signed in stayed stale in localStorage — joseph@ was made pricing and still got the operations menu and no
+   * Filed as dropdown. The stored copy still draws the first frame; the server's answer replaces it.
    */
   [LOAD_CONTEXT](context) {
-    if (context.state.designation) return Promise.resolve();
-
     return ApiService.get("/me")
       .then(({ data }) => context.commit(SET_CONTEXT, { context: data.context, portal: data.portal }))
       // A failure here leaves the shell exactly as it was. The route guards and the

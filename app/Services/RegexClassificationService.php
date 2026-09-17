@@ -114,13 +114,14 @@ class RegexClassificationService
             //   1. the tenant's own rules      — a local exception outranks everything
             //   2. a domain we already invoice — see below
             //   3. the platform directory      — what the industry knows about a domain
-            //   4. customer_enquiry            — the safe default: an enquiry misfiled as
-            //      an enquiry costs a re-classification; a real one misfiled as airline
-            //      mail is a client waiting on a quote nobody is writing.
+            //   4. other                       — nothing matched, so the filing is a guess: Other,
+            //      and a person re-files it (user, 2026-09-17: "when confidence is low just put
+            //      it in other"; was customer_enquiry, which filed every newsletter and colleague's
+            //      mail as an enquiry on the first real mailbox).
             'classification'  => $rule->target_classification
                 ?? $this->knownClientClassification($message)
                 ?? $this->globalClassificationFor($message->from)
-                ?? 'customer_enquiry',
+                ?? 'other',
             'matched_rule_id' => $rule->id ?? null,
             'cargo'           => $this->extractCargo($haystack, $transportMode),
         ];

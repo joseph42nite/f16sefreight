@@ -52,11 +52,15 @@ class RealMailboxFixesTest extends TestCase
     {
         $api = $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->pricing), 'Accept' => 'application/json']);
 
+        // A known client's mail is filed as an enquiry; an unknown sender's goes to Other (user, 2026-09-17).
+        \App\Customer::create(['company_id' => $this->branch->company_id, 'name' => 'Globex', 'email_domain' => 'globex.test']);
         $claimed = $this->receive('buyer@globex.test');
+        $this->assertSame('customer_enquiry', $claimed->classification);
         $api->postJson("http://focusair.localhost/api/inbox/threads/{$claimed->id}/claim")->assertOk();
         $this->assertNotNull($claimed->fresh()->enquiry_id);
 
         $filed = $this->receive('ops@initech.test');
+        $this->assertSame('other', $filed->classification, 'nothing matched: Other');
         $api->postJson("http://focusair.localhost/api/inbox/threads/{$filed->id}/classify", ['classification' => 'customer_enquiry'])
             ->assertOk()->assertJsonPath('enquiry.status', 'new');
         $this->assertNotNull($filed->fresh()->enquiry_id);

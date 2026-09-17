@@ -43,6 +43,57 @@ class ClientContacts
         }
     }
 
+    /**
+     * The client a confirmed shipment is for, added to Clients & Partners if it is not there yet (user, 2026-09-17: "when
+     * the shipment is confirmed you'll add the domain name there"). Found or created from the first sender of the
+     * enquiry's conversation:
+     *   - a company domain: the client with that domain, or a new one named by the domain (write the real name in later);
+     *   - a free-mail address (gmail.com…): the client with that address, or a new one named by the address, no domain;
+     *   - our own company's domain (a colleague forwarding the request): nobody — we are not our own client.
+     * The sender is saved as one of its contacts. Returns the client's id, or null.
+     */
+    public function clientForConfirmedEnquiry(int $enquiryId): ?int
+    {
+        $thread = DB::table('email_threads')->where('enquiry_id', $enquiryId)->first(['agent_id', 'thread_key']);
+        $first = $thread ? DB::table('email_messages')->where('thread_key', $thread->thread_key)->where('direction', 'inbound')
+            ->orderBy('received_at')->first(['from', 'received_at']) : null;
+        $email = $first ? ($this->emails([$first->from])[0] ?? null) : null;
+        $companyId = $thread ? DB::table('agents_info')->where('id', $thread->agent_id)->value('company_id') : null;
+
+        if ($email === null || $companyId === null) {
+            return null;
+        }
+
+        $domain = $this->domains->domainOf($email);
+        $ourDomains = DB::table('users')->where('company_name', $companyId)->pluck('email')
+            ->map(fn ($e) => $this->domains->domainOf(strtolower($e)))->reject(fn ($d) => $this->domains->isFreeMail((string) $d))->unique();
+
+        if ($ourDomains->contains($domain)) {
+            return null;
+        }
+
+        $freeMail = $this->domains->isFreeMail($domain);
+        $clients = DB::table('customers')->where('company_id', $companyId);
+        $id = $freeMail
+            ? (clone $clients)->whereRaw('LOWER(email) = ?', [$email])->value('id')
+            : (clone $clients)->whereRaw('LOWER(email_domain) = ?', [$domain])->orderBy('id')->value('id');
+
+        if ($id === null) {
+            $customer = Customer::create($freeMail
+                ? ['company_id' => $companyId, 'name' => $email, 'email' => $email]
+                : ['company_id' => $companyId, 'name' => $domain, 'email_domain' => $domain]);
+            $id = $customer->id;
+
+            if (! $freeMail) {
+                $this->backfill($customer); // every address already received from that domain
+            }
+        }
+
+        $this->save((int) $companyId, (int) $id, $email, 1, \Illuminate\Support\Carbon::parse($first->received_at));
+
+        return (int) $id;
+    }
+
     /** The mail already received from a client's domain — run when the domain is written in or changed. */
     public function backfill(Customer $customer): void
     {

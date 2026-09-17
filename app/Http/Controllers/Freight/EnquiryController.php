@@ -361,6 +361,12 @@ class EnquiryController extends Controller
             ->value('assigned_ops_id');
 
         $job = DB::transaction(function () use ($enquiry, $data, $mode, $claimedBy) {
+            // The client is added to Clients & Partners (or found) when the shipment is confirmed (user, 2026-09-17).
+            if (empty($data['customer_id']) && $enquiry->customer_id === null
+                && ($clientId = app(\App\Services\ClientContacts::class)->clientForConfirmedEnquiry($enquiry->id))) {
+                $enquiry->forceFill(['customer_id' => $clientId])->save();
+            }
+
             $job = Job::create($data + [
                 'agent_id'       => $enquiry->agent_id,
                 'enquiry_id'     => $enquiry->id,

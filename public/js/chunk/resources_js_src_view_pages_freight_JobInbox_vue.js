@@ -1589,6 +1589,11 @@ const PARTY_REQUIRED = {
     saving: false,
     saveError: null,
     draftUrl: null,
+    /** The client's link for the saved waybill, once asked for. */
+    sharing: false,
+    shareLink: null,
+    shareError: null,
+    shareCopied: false,
     dragging: false,
     documents: [],
     /** group key -> document uid. One source per group, deliberately. */
@@ -1904,9 +1909,10 @@ const PARTY_REQUIRED = {
     }
   },
   watch: {
-    // A different shipment shows its own readings.
+    // A different shipment shows its own readings, and its own saved draft.
     jobId() {
       this.resumeReadings();
+      this.findSavedDraft();
     },
     /* Immediate, because the job lookup usually resolves before the panel is opened —
        and only when the field is EMPTY, so it never overwrites a number being typed. */
@@ -2236,6 +2242,45 @@ const PARTY_REQUIRED = {
      * The server reads documents in the background, so closing the workspace, changing tab or reloading the page
      * must not lose one.
      */
+    /**
+     * The link the client opens: the PDF is filed against the shipment first (which moves it to "PDF Generated"), then
+     * one link is issued for it (user, 2026-09-18).
+     */
+    createClientLink() {
+      this.sharing = true;
+      this.shareError = null;
+      this.shareCopied = false;
+      const key = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.masterKey)(this.awbCode, this.awbNo);
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post("/user/documents/awb/" + key + "/publish", {}).then(({
+        data
+      }) => _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post("/user/documents/" + data.document_id + "/share", {
+        valid_days: 14,
+        requires_approval: true
+      })).then(({
+        data
+      }) => {
+        this.shareLink = data.url || data.link || null;
+      }).catch(e => {
+        this.shareError = this.messageFor(e);
+      }).finally(() => {
+        this.sharing = false;
+      });
+    },
+    copyShareLink() {
+      navigator.clipboard.writeText(this.shareLink).then(() => {
+        this.shareCopied = true;
+      }).catch(() => {});
+    },
+    /** A draft already saved for this waybill — so its buttons are there after a refresh, not only just after saving. */
+    findSavedDraft() {
+      const key = this.target === "mawb" ? (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.masterKey)(this.awbCode, this.awbNo) : this.hawbNo;
+      if (!key || String(key).length < 8) return;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/airway-bill/" + key).then(({
+        data
+      }) => {
+        if (data && (data.id || data.data && data.data.id)) this.draftUrl = (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.formRoute)(this.target, key);
+      }).catch(() => {});
+    },
     resumeReadings() {
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/ocr-running" + (this.jobId ? "?job_id=" + this.jobId : "")).then(({
         data
@@ -2333,6 +2378,14 @@ const PARTY_REQUIRED = {
             // label reading, and without this they look exactly like the model's.
             doc.warning = data.model_error ? "read by labels only: " + data.model_error : null;
             doc.state = "ready";
+            // 🔴 What it read is USED (user, 2026-09-18: "why isn't the details filled in — it should be populated").
+            // Only sections nothing supplies yet, so a second document never takes over what the first gave, and
+            // "Take from it" still moves any section to another document.
+            const fills = _objectSpread({}, this.assignment);
+            GROUPS.forEach(g => {
+              if (!fills[g.key]) fills[g.key] = doc.uid;
+            });
+            this.assignment = fills;
           } else if (data.job_status === "awaiting_vision_consent") {
             // 🔴 THIS is when a scan is known to be a scan — the parser found no text
             // layer and said so. Until this was handled the job polled forever, because
@@ -2594,6 +2647,7 @@ const PARTY_REQUIRED = {
   mounted() {
     document.addEventListener("mousedown", this.closeTakes);
     this.resumeReadings();
+    this.findSavedDraft();
   },
   beforeDestroy() {
     document.removeEventListener("mousedown", this.closeTakes);
@@ -5178,7 +5232,37 @@ var render = function render() {
     on: {
       click: _vm.saveDraft
     }
-  }, [_vm._v("\n          " + _vm._s(_vm.saving ? "Saving…" : "Save changes") + "\n        ")])] : _vm._e()], 2), _vm._v(" "), _vm.draftUrl ? _c("p", {
+  }, [_vm._v("\n          " + _vm._s(_vm.saving ? "Saving…" : "Save changes") + "\n        ")]), _vm._v(" "), _vm.target === "mawb" ? _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      type: "button",
+      disabled: _vm.sharing
+    },
+    on: {
+      click: _vm.createClientLink
+    }
+  }, [_vm._v("\n          " + _vm._s(_vm.sharing ? "Making the link…" : "Generate client link") + "\n        ")]) : _vm._e()] : _vm._e()], 2), _vm._v(" "), _vm.shareLink ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n      Link for the client, open 14 days:\n      "), _c("a", {
+    attrs: {
+      href: _vm.shareLink,
+      target: "_blank",
+      rel: "noopener"
+    }
+  }, [_vm._v(_vm._s(_vm.shareLink))]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--ghost",
+    attrs: {
+      type: "button"
+    },
+    on: {
+      click: _vm.copyShareLink
+    }
+  }, [_vm._v(_vm._s(_vm.shareCopied ? "Copied" : "Copy"))])]) : _vm._e(), _vm._v(" "), _vm.shareError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.shareError))]) : _vm._e(), _vm._v(" "), _vm.draftUrl ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n      Saved as a draft. Open it to add rates and charges — extraction never supplies\n      those.\n    ")]) : _vm._e(), _vm._v(" "), !_vm.canSave ? _c("p", {
     staticClass: "fx-muted"

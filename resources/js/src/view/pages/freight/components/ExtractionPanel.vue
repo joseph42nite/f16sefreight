@@ -482,8 +482,24 @@
           <button class="fx-btn" :disabled="saving" @click="saveDraft">
             {{ saving ? "Saving…" : "Save changes" }}
           </button>
+
+          <!--
+            🔗 The link the CLIENT opens (user, 2026-09-18). It files the PDF against the shipment — which moves it to
+            "PDF Generated" and readies the client's draft-AWB mail — and issues one link, open 14 days, that asks the
+            client to approve or say what to change.
+          -->
+          <button v-if="target === 'mawb'" type="button" class="fx-btn" :disabled="sharing" @click="createClientLink">
+            {{ sharing ? "Making the link…" : "Generate client link" }}
+          </button>
         </template>
       </div>
+
+      <p v-if="shareLink" class="fx-muted">
+        Link for the client, open 14 days:
+        <a :href="shareLink" target="_blank" rel="noopener">{{ shareLink }}</a>
+        <button type="button" class="fx-btn fx-btn--ghost" @click="copyShareLink">{{ shareCopied ? "Copied" : "Copy" }}</button>
+      </p>
+      <p v-if="shareError" class="fx-error" role="alert">{{ shareError }}</p>
 
       <p v-if="draftUrl" class="fx-muted">
         Saved as a draft. Open it to add rates and charges — extraction never supplies
@@ -710,6 +726,8 @@ export default {
     target: "mawb", KINDS, rejectedFiles: [],
     awbCode: "", awbNo: "", hawbNo: "",
     saving: false, saveError: null, draftUrl: null,
+    /** The client's link for the saved waybill, once asked for. */
+    sharing: false, shareLink: null, shareError: null, shareCopied: false,
     dragging: false,
     documents: [],
     /** group key -> document uid. One source per group, deliberately. */
@@ -1025,9 +1043,10 @@ export default {
     },
   },
   watch: {
-    // A different shipment shows its own readings.
+    // A different shipment shows its own readings, and its own saved draft.
     jobId() {
       this.resumeReadings();
+      this.findSavedDraft();
     },
     /* Immediate, because the job lookup usually resolves before the panel is opened —
        and only when the field is EMPTY, so it never overwrites a number being typed. */
@@ -1340,6 +1359,34 @@ export default {
      * The server reads documents in the background, so closing the workspace, changing tab or reloading the page
      * must not lose one.
      */
+    /**
+     * The link the client opens: the PDF is filed against the shipment first (which moves it to "PDF Generated"), then
+     * one link is issued for it (user, 2026-09-18).
+     */
+    createClientLink() {
+      this.sharing = true;
+      this.shareError = null;
+      this.shareCopied = false;
+      const key = masterKey(this.awbCode, this.awbNo);
+
+      ApiService.post("/user/documents/awb/" + key + "/publish", {})
+        .then(({ data }) => ApiService.post("/user/documents/" + data.document_id + "/share", { valid_days: 14, requires_approval: true }))
+        .then(({ data }) => { this.shareLink = data.url || data.link || null; })
+        .catch((e) => { this.shareError = this.messageFor(e); })
+        .finally(() => { this.sharing = false; });
+    },
+    copyShareLink() {
+      navigator.clipboard.writeText(this.shareLink).then(() => { this.shareCopied = true; }).catch(() => {});
+    },
+    /** A draft already saved for this waybill — so its buttons are there after a refresh, not only just after saving. */
+    findSavedDraft() {
+      const key = this.target === "mawb" ? masterKey(this.awbCode, this.awbNo) : this.hawbNo;
+      if (!key || String(key).length < 8) return;
+
+      ApiService.get("/user/airway-bill/" + key)
+        .then(({ data }) => { if (data && (data.id || (data.data && data.data.id))) this.draftUrl = formRoute(this.target, key); })
+        .catch(() => {});
+    },
     resumeReadings() {
       ApiService.get("/user/ocr-running" + (this.jobId ? "?job_id=" + this.jobId : ""))
         .then(({ data }) => {
@@ -1434,6 +1481,12 @@ export default {
                 ? "read by labels only: " + data.model_error
                 : null;
               doc.state = "ready";
+              // 🔴 What it read is USED (user, 2026-09-18: "why isn't the details filled in — it should be populated").
+              // Only sections nothing supplies yet, so a second document never takes over what the first gave, and
+              // "Take from it" still moves any section to another document.
+              const fills = { ...this.assignment };
+              GROUPS.forEach((g) => { if (!fills[g.key]) fills[g.key] = doc.uid; });
+              this.assignment = fills;
             } else if (data.job_status === "awaiting_vision_consent") {
               // 🔴 THIS is when a scan is known to be a scan — the parser found no text
               // layer and said so. Until this was handled the job polled forever, because
@@ -1706,6 +1759,7 @@ export default {
   mounted() {
     document.addEventListener("mousedown", this.closeTakes);
     this.resumeReadings();
+    this.findSavedDraft();
   },
   beforeDestroy() {
     document.removeEventListener("mousedown", this.closeTakes);

@@ -105,6 +105,16 @@ class GenerateAwbPdfController extends Controller
 
         $document = $this->storeDocument($waybill, auth()->id());
 
+        // 🔗 The waybill now exists as a document, so the shipment has reached "PDF Generated" (user, 2026-09-18) —
+        // which is what prepares the client's "Draft AWB ready" mail with its approval link (JobObserver). Only forward:
+        // a shipment already booked or flying is not pushed back to drafting.
+        $job = \App\Job::withoutTenantScope()->find($waybill->job_id);
+        $before = ['Intake', 'AI Extraction', 'Verification', 'Generation'];
+
+        if ($job !== null && in_array($job->status?->value ?? $job->status, $before, true)) {
+            $job->update(['status' => \App\Enums\JobStatus::PdfGenerated]);
+        }
+
         $audit->record((int) $waybill->agent_id, 'document.published', 'job_document',
             $document->id, auth()->id());
 

@@ -2333,6 +2333,10 @@ const PARTY_REQUIRED = {
             // ⚠️ Reading a scan uses a credit and needs a person's approval, which this panel does not
             // ask for yet (GAPS #261) — so it says what to do instead.
             this.fail(uid, "no selectable text — this is a scan. Reading scans with AI needs approval for " + "1 credit, which this panel cannot ask for yet. Use the paste box below.");
+          } else if (data.job_status === "pending" && Date.now() - doc.startedAt > 60000) {
+            // 🔴 Queued but nothing has picked it up (user, 2026-09-18: "why is the document parsing taking more than
+            // 1 minute?" — the answer was that no queue worker was running, and the panel just said "reading…").
+            doc.warning = "waiting to start — the background worker does not seem to be running";
           } else if (data.job_status === "failed" || data.job_status === "cancelled") {
             clearTimeout(doc.timer);
             this.fail(uid, data.error || "could not be read");

@@ -50,6 +50,163 @@
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
     <p v-else-if="!rows.length" class="fx-muted">No documents match.</p>
 
+    <!-- ── Reports: P&L, balance sheet, trial balance (PRD §6.8) ─────────── -->
+    <template v-else-if="view === 'reports'">
+      <div class="fx-toolbar">
+        <label class="fx-field">
+          <span class="fx-field__label">Report</span>
+          <select v-model="report" class="fx-input" @change="loadReport">
+            <option v-for="r in REPORTS" :key="r.key" :value="r.key">{{ r.label }}</option>
+          </select>
+        </label>
+        <label class="fx-field">
+          <span class="fx-field__label">Period</span>
+          <select v-model.number="periodId" class="fx-input" @change="loadReport">
+            <option :value="null">Choose a period</option>
+            <option v-for="p in visiblePeriods" :key="p.id" :value="p.id">
+              {{ p.period_name }}{{ branches.length > 1 ? " · " + branchName(p.agent_id) : "" }} · {{ p.status }}
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <p v-if="!periodId" class="fx-muted">
+        A report runs over a period, never a date range — half a period is a figure nobody can reconcile against
+        anything they have filed.
+      </p>
+      <p v-else-if="reportLoading" class="fx-muted">Loading…</p>
+      <template v-else-if="reportData">
+        <!-- Profit & loss -->
+        <table v-if="report === 'profit-and-loss'" class="fx-table">
+          <tbody>
+            <tr><td colspan="2"><strong>Revenue</strong></td></tr>
+            <tr v-for="l in reportData.revenue.lines" :key="'r-' + l.code">
+              <td>{{ l.code }} {{ l.name }}</td>
+              <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
+            </tr>
+            <tr><td><strong>Total revenue</strong></td><td class="fx-num"><Figure :value="reportData.revenue.total" kind="currency" currency-code="INR" /></td></tr>
+            <tr><td colspan="2"><strong>Expense</strong></td></tr>
+            <tr v-for="l in reportData.expense.lines" :key="'e-' + l.code">
+              <td>{{ l.code }} {{ l.name }}</td>
+              <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
+            </tr>
+            <tr><td><strong>Total expense</strong></td><td class="fx-num"><Figure :value="reportData.expense.total" kind="currency" currency-code="INR" /></td></tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td><strong>Net</strong></td>
+              <td class="fx-num">
+                <Figure :value="reportData.net" kind="currency" currency-code="INR" />
+                <!-- NULL, never 0%: a period that billed nothing has no margin. -->
+                <span v-if="reportData.margin_pct !== null" class="fx-muted"> · {{ reportData.margin_pct }}%</span>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- Balance sheet -->
+        <table v-else-if="report === 'balance-sheet'" class="fx-table">
+          <tbody>
+            <tr><td colspan="2"><strong>Assets</strong></td></tr>
+            <tr v-for="l in reportData.assets.lines" :key="'a-' + l.code">
+              <td>{{ l.code }} {{ l.name }}</td>
+              <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
+            </tr>
+            <tr><td><strong>Total assets</strong></td><td class="fx-num"><Figure :value="reportData.assets.total" kind="currency" currency-code="INR" /></td></tr>
+            <tr><td colspan="2"><strong>Liabilities</strong></td></tr>
+            <tr v-for="l in reportData.liabilities.lines" :key="'l-' + l.code">
+              <td>{{ l.code }} {{ l.name }}</td>
+              <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
+            </tr>
+            <tr><td><strong>Total liabilities</strong></td><td class="fx-num"><Figure :value="reportData.liabilities.total" kind="currency" currency-code="INR" /></td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td><strong>Retained earnings (the residual)</strong></td><td class="fx-num"><Figure :value="reportData.equity" kind="currency" currency-code="INR" /></td></tr>
+          </tfoot>
+        </table>
+
+        <!-- Trial balance -->
+        <table v-else class="fx-table">
+          <thead><tr><th scope="col">Account</th><th class="fx-num" scope="col">Debit</th><th class="fx-num" scope="col">Credit</th></tr></thead>
+          <tbody>
+            <tr v-for="a in reportData.accounts" :key="'t-' + a.code">
+              <td>{{ a.code }} {{ a.name }}</td>
+              <td class="fx-num"><Figure :value="a.debit" kind="currency" currency-code="INR" /></td>
+              <td class="fx-num"><Figure :value="a.credit" kind="currency" currency-code="INR" /></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td :class="reportData.balanced ? 'fx-journal__balanced' : 'fx-journal__unbalanced'">
+                {{ reportData.balanced ? "balanced ✓" : "OUT OF BALANCE by " + reportData.difference }}
+              </td>
+              <td class="fx-num"><Figure :value="reportData.totals.debit" kind="currency" currency-code="INR" /></td>
+              <td class="fx-num"><Figure :value="reportData.totals.credit" kind="currency" currency-code="INR" /></td>
+            </tr>
+          </tfoot>
+        </table>
+      </template>
+    </template>
+
+    <!-- ── Accounting periods — accounts alone opens and closes them ─────── -->
+    <template v-else-if="view === 'periods'">
+      <table class="fx-table">
+        <thead>
+          <tr>
+            <th scope="col">Period</th>
+            <th scope="col">Branch</th>
+            <th scope="col">From</th>
+            <th scope="col">To</th>
+            <th scope="col">Status</th>
+            <th v-if="canPost" scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="p in visiblePeriods" :key="'p-' + p.id">
+            <td>{{ p.period_name }}</td>
+            <td>{{ branchName(p.agent_id) }}</td>
+            <td><Figure :value="p.start_date" kind="date" /></td>
+            <td><Figure :value="p.end_date" kind="date" /></td>
+            <td><StatusChip :value="p.status" /></td>
+            <td v-if="canPost" class="fx-row-actions">
+              <button v-if="p.status === 'open'" class="fx-btn" :disabled="busy" @click="closePeriod(p)">Close</button>
+              <span v-else class="fx-muted">closed</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <section v-if="canPost" class="fx-section">
+        <h3 class="fx-section__title">Open a period</h3>
+        <div class="fx-toolbar">
+          <label class="fx-field">
+            <span class="fx-field__label">Branch</span>
+            <select v-model.number="newPeriod.agent_id" class="fx-input">
+              <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
+            </select>
+          </label>
+          <label class="fx-field">
+            <span class="fx-field__label">Name</span>
+            <input v-model="newPeriod.period_name" class="fx-input" placeholder="September 2026" />
+          </label>
+          <label class="fx-field">
+            <span class="fx-field__label">From</span>
+            <input v-model="newPeriod.start_date" class="fx-input" type="date" />
+          </label>
+          <label class="fx-field">
+            <span class="fx-field__label">To</span>
+            <input v-model="newPeriod.end_date" class="fx-input" type="date" />
+          </label>
+          <button class="fx-btn fx-btn--primary" :disabled="busy || !newPeriodValid" @click="openPeriod">Open</button>
+        </div>
+        <p class="fx-muted">
+          Nothing can be posted into a month without an open period, and closing one stops anything else being posted
+          into it. Only accounts opens or closes a period.
+        </p>
+      </section>
+      <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
+    </template>
+
     <!-- ── GST charged, per document (PRD §6.2.7) ────────────────────────── -->
     <template v-else-if="view === 'gst'">
       <table class="fx-table">
@@ -377,6 +534,15 @@ const VIEWS = [
   { key: "vouchers", label: "What we owe" },
   { key: "gst", label: "GST register" },
   { key: "unposted", label: "Not yet posted" },
+  { key: "reports", label: "Reports" },
+  { key: "periods", label: "Periods" },
+];
+
+/** The three reports the ledger can prove (PRD §6.8). Each runs over a PERIOD, never a free date range. */
+const REPORTS = [
+  { key: "profit-and-loss", label: "Profit & loss" },
+  { key: "balance-sheet", label: "Balance sheet" },
+  { key: "trial-balance", label: "Trial balance" },
 ];
 const TABS = [
   { key: "credit", label: "Credit standing" },
@@ -395,6 +561,10 @@ export default {
     branches: [], branchId: null,
     /** The totals row of whichever register is open. */
     totals: null,
+    /** Reports: which one, over which period, and what came back. */
+    REPORTS, report: "profit-and-loss", periodId: null, periods: [], reportData: null, reportLoading: false,
+    /** A period being opened. */
+    newPeriod: { agent_id: null, period_name: "", start_date: "", end_date: "" },
     selected: null, tab: "credit",
     credit: null, creditLoading: false,
     preview: null, previewLoading: false,
@@ -419,11 +589,21 @@ export default {
 
       return this.selected.customer ? this.selected.customer.name : "Partner-billed";
     },
+    /** The periods of the branch in view, newest first. */
+    visiblePeriods() {
+      return this.branchId ? this.periods.filter((p) => p.agent_id === this.branchId) : this.periods;
+    },
+    newPeriodValid() {
+      const p = this.newPeriod;
+      return p.agent_id && p.period_name.trim() && p.start_date && p.end_date && p.start_date <= p.end_date;
+    },
     /** The queue is the hand-over; the receivables and payables are the registers themselves. */
     subtitleForView() {
       return {
         awaiting: "Cost sheets pricing has sent across, with what each shipment sells for and what it cost. Finalize one to bill it.",
         gst: "The tax charged on every finalized document, for GSTR-1. Read-only — it is what was charged.",
+        reports: "What the ledger proves, over one period of one branch.",
+        periods: "The months the ledger is open for. Nothing posts into a month without an open period.",
         unposted: "Documents raised and not yet in the ledger, and what each is waiting for.",
         invoices: "The receivables register for this branch. Select a row to see the client's credit standing and the journal a posting would write.",
         vouchers: "What this branch owes its suppliers, one voucher per supplier per shipment. Select one to see the journal a posting would write.",
@@ -441,7 +621,59 @@ export default {
     showView(key) {
       this.view = key;
       this.deselect();
+      this.reportData = null;
+
+      if (key === "reports" || key === "periods") {
+        this.loadPeriods();
+        return;
+      }
+
       this.load();
+    },
+    loadPeriods() {
+      this.loading = true;
+      ApiService.get("/reports/periods")
+        .then(({ data }) => {
+          this.periods = data.periods || [];
+          this.branches = data.branches || this.branches;
+          if (!this.newPeriod.agent_id && this.branches.length) this.newPeriod.agent_id = this.branches[0].id;
+          this.error = null;
+        })
+        .catch((e) => { this.error = this.messageFor(e); })
+        .finally(() => { this.loading = false; });
+    },
+    loadReport() {
+      if (!this.periodId) return;
+
+      this.reportLoading = true;
+      this.reportData = null;
+      ApiService.get(`/reports/${this.report}?period_id=${this.periodId}`)
+        .then(({ data }) => { this.reportData = data; this.error = null; })
+        .catch((e) => { this.error = this.messageFor(e); })
+        .finally(() => { this.reportLoading = false; });
+    },
+    openPeriod() {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post("/reports/periods", this.newPeriod)
+        .then(() => {
+          this.newPeriod = { ...this.newPeriod, period_name: "", start_date: "", end_date: "" };
+          this.loadPeriods();
+        })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    closePeriod(period) {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/reports/periods/${period.id}/close`, {})
+        .then(() => this.loadPeriods())
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    branchName(id) {
+      const b = this.branches.find((x) => x.id === id);
+      return b ? b.name : "—";
     },
     load() {
       this.loading = true;

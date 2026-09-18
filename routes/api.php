@@ -489,6 +489,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         // PERIOD, never a free date range — half a period is a number nobody can
         // reconcile against anything they have filed.
         Route::get('/reports/periods', [\App\Http\Controllers\Freight\FinancialReportController::class, 'periods']);
+        // 🔒 accounts alone: opening and closing a period is what lets anything be posted into it (user, 2026-09-18).
+        Route::post('/reports/periods', [\App\Http\Controllers\Freight\FinancialReportController::class, 'openPeriod']);
+        Route::post('/reports/periods/{period}/close', [\App\Http\Controllers\Freight\FinancialReportController::class, 'closePeriod']);
         Route::get('/reports/profit-and-loss', [\App\Http\Controllers\Freight\FinancialReportController::class, 'profitAndLoss']);
         Route::get('/reports/balance-sheet', [\App\Http\Controllers\Freight\FinancialReportController::class, 'balanceSheet']);
         Route::get('/reports/trial-balance', [\App\Http\Controllers\Freight\FinancialReportController::class, 'trialBalance']);

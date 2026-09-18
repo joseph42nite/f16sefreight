@@ -116,11 +116,17 @@ class FinancialReportsTest extends TestCase
             ->assertStatus(422);
     }
 
-    /** 🔒 A period id from another branch is not theirs to report on, and ids guess easily. */
-    public function test_a_period_from_another_branch_is_refused(): void
+/**
+     * 🔒 A period from ANOTHER COMPANY is not theirs to report on, and ids guess easily.
+     *
+     * ⚠️ Another branch of their OWN company is theirs: one accounts login runs the whole company's ledger and picks
+     * the branch on the page (user, 2026-09-18). That case is asserted below.
+     */
+    public function test_a_period_from_another_company_is_refused(): void
     {
+        $elsewhere = \App\Company::create(['name' => 'Elsewhere Co', 'code' => 'ELS', 'tier' => 'command']);
         $other = Agent::create([
-            'company_id' => $this->company->id, 'agent_name' => 'MAA', 'branch_code' => 'MAA',
+            'company_id' => $elsewhere->id, 'agent_name' => 'DEL', 'branch_code' => 'DEL',
         ]);
         $foreign = DB::table('accounting_periods')->insertGetId([
             'agent_id' => $other->id, 'period_name' => 'Theirs',
@@ -133,6 +139,19 @@ class FinancialReportsTest extends TestCase
             ->getJson($this->url("/api/reports/trial-balance?period_id={$foreign}"))
             ->assertStatus(404)
             ->assertJsonPath('reason', 'period_not_found');
+    }
+
+    /** A sister branch of their own company IS theirs to report on. */
+    public function test_a_period_from_another_branch_of_the_same_company_is_read(): void
+    {
+        $sister = Agent::create(['company_id' => $this->company->id, 'agent_name' => 'MAA', 'branch_code' => 'MAA']);
+        $period = DB::table('accounting_periods')->insertGetId([
+            'agent_id' => $sister->id, 'period_name' => 'Chennai September',
+            'start_date' => now()->startOfMonth()->toDateString(), 'end_date' => now()->endOfMonth()->toDateString(),
+            'status' => 'open', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->api($this->accounts)->getJson($this->url("/api/reports/trial-balance?period_id={$period}"))->assertOk();
     }
 
     /**

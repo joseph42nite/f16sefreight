@@ -44,6 +44,24 @@ const VIEWS = [{
 }, {
   key: "unposted",
   label: "Not yet posted"
+}, {
+  key: "reports",
+  label: "Reports"
+}, {
+  key: "periods",
+  label: "Periods"
+}];
+
+/** The three reports the ledger can prove (PRD §6.8). Each runs over a PERIOD, never a free date range. */
+const REPORTS = [{
+  key: "profit-and-loss",
+  label: "Profit & loss"
+}, {
+  key: "balance-sheet",
+  label: "Balance sheet"
+}, {
+  key: "trial-balance",
+  label: "Trial balance"
 }];
 const TABS = [{
   key: "credit",
@@ -73,6 +91,20 @@ const TABS = [{
     branchId: null,
     /** The totals row of whichever register is open. */
     totals: null,
+    /** Reports: which one, over which period, and what came back. */
+    REPORTS,
+    report: "profit-and-loss",
+    periodId: null,
+    periods: [],
+    reportData: null,
+    reportLoading: false,
+    /** A period being opened. */
+    newPeriod: {
+      agent_id: null,
+      period_name: "",
+      start_date: "",
+      end_date: ""
+    },
     selected: null,
     tab: "credit",
     credit: null,
@@ -103,11 +135,21 @@ const TABS = [{
       if (this.view === "vouchers") return this.selected.vendor ? this.selected.vendor.name : "No supplier";
       return this.selected.customer ? this.selected.customer.name : "Partner-billed";
     },
+    /** The periods of the branch in view, newest first. */
+    visiblePeriods() {
+      return this.branchId ? this.periods.filter(p => p.agent_id === this.branchId) : this.periods;
+    },
+    newPeriodValid() {
+      const p = this.newPeriod;
+      return p.agent_id && p.period_name.trim() && p.start_date && p.end_date && p.start_date <= p.end_date;
+    },
     /** The queue is the hand-over; the receivables and payables are the registers themselves. */
     subtitleForView() {
       return {
         awaiting: "Cost sheets pricing has sent across, with what each shipment sells for and what it cost. Finalize one to bill it.",
         gst: "The tax charged on every finalized document, for GSTR-1. Read-only — it is what was charged.",
+        reports: "What the ledger proves, over one period of one branch.",
+        periods: "The months the ledger is open for. Nothing posts into a month without an open period.",
         unposted: "Documents raised and not yet in the ledger, and what each is waiting for.",
         invoices: "The receivables register for this branch. Select a row to see the client's credit standing and the journal a posting would write.",
         vouchers: "What this branch owes its suppliers, one voucher per supplier per shipment. Select one to see the journal a posting would write."
@@ -125,7 +167,71 @@ const TABS = [{
     showView(key) {
       this.view = key;
       this.deselect();
+      this.reportData = null;
+      if (key === "reports" || key === "periods") {
+        this.loadPeriods();
+        return;
+      }
       this.load();
+    },
+    loadPeriods() {
+      this.loading = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/reports/periods").then(({
+        data
+      }) => {
+        this.periods = data.periods || [];
+        this.branches = data.branches || this.branches;
+        if (!this.newPeriod.agent_id && this.branches.length) this.newPeriod.agent_id = this.branches[0].id;
+        this.error = null;
+      }).catch(e => {
+        this.error = this.messageFor(e);
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    loadReport() {
+      if (!this.periodId) return;
+      this.reportLoading = true;
+      this.reportData = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/reports/${this.report}?period_id=${this.periodId}`).then(({
+        data
+      }) => {
+        this.reportData = data;
+        this.error = null;
+      }).catch(e => {
+        this.error = this.messageFor(e);
+      }).finally(() => {
+        this.reportLoading = false;
+      });
+    },
+    openPeriod() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/reports/periods", this.newPeriod).then(() => {
+        this.newPeriod = _objectSpread(_objectSpread({}, this.newPeriod), {}, {
+          period_name: "",
+          start_date: "",
+          end_date: ""
+        });
+        this.loadPeriods();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    closePeriod(period) {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/reports/periods/${period.id}/close`, {}).then(() => this.loadPeriods()).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    branchName(id) {
+      const b = this.branches.find(x => x.id === id);
+      return b ? b.name : "—";
     },
     load() {
       this.loading = true;
@@ -398,9 +504,408 @@ var render = function render() {
     }
   }, [_vm._v(_vm._s(_vm.error))]) : !_vm.rows.length ? _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("No documents match.")]) : _vm.view === "gst" ? [_c("table", {
+  }, [_vm._v("No documents match.")]) : _vm.view === "reports" ? [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Report")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.report,
+      expression: "report"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.report = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, _vm.loadReport]
+    }
+  }, _vm._l(_vm.REPORTS, function (r) {
+    return _c("option", {
+      key: r.key,
+      domProps: {
+        value: r.key
+      }
+    }, [_vm._v(_vm._s(r.label))]);
+  }), 0)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Period")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.periodId,
+      expression: "periodId",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return _vm._n(val);
+        });
+        _vm.periodId = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, _vm.loadReport]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Choose a period")]), _vm._v(" "), _vm._l(_vm.visiblePeriods, function (p) {
+    return _c("option", {
+      key: p.id,
+      domProps: {
+        value: p.id
+      }
+    }, [_vm._v("\n            " + _vm._s(p.period_name) + _vm._s(_vm.branches.length > 1 ? " · " + _vm.branchName(p.agent_id) : "") + " · " + _vm._s(p.status) + "\n          ")]);
+  })], 2)])]), _vm._v(" "), !_vm.periodId ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n      A report runs over a period, never a date range — half a period is a figure nobody can reconcile against\n      anything they have filed.\n    ")]) : _vm.reportLoading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : _vm.reportData ? [_vm.report === "profit-and-loss" ? _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
+  }, [_c("tbody", [_vm._m(0), _vm._v(" "), _vm._l(_vm.reportData.revenue.lines, function (l) {
+    return _c("tr", {
+      key: "r-" + l.code
+    }, [_c("td", [_vm._v(_vm._s(l.code) + " " + _vm._s(l.name))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), _vm._v(" "), _c("tr", [_vm._m(1), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.reportData.revenue.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _vm._m(2), _vm._v(" "), _vm._l(_vm.reportData.expense.lines, function (l) {
+    return _c("tr", {
+      key: "e-" + l.code
+    }, [_c("td", [_vm._v(_vm._s(l.code) + " " + _vm._s(l.name))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), _vm._v(" "), _c("tr", [_vm._m(3), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.reportData.expense.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_vm._m(4), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.reportData.net,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  }), _vm._v(" "), _vm.reportData.margin_pct !== null ? _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(" · " + _vm._s(_vm.reportData.margin_pct) + "%")]) : _vm._e()], 1)])])]) : _vm.report === "balance-sheet" ? _c("table", {
+    staticClass: "fx-table"
+  }, [_c("tbody", [_vm._m(5), _vm._v(" "), _vm._l(_vm.reportData.assets.lines, function (l) {
+    return _c("tr", {
+      key: "a-" + l.code
+    }, [_c("td", [_vm._v(_vm._s(l.code) + " " + _vm._s(l.name))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), _vm._v(" "), _c("tr", [_vm._m(6), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.reportData.assets.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _vm._m(7), _vm._v(" "), _vm._l(_vm.reportData.liabilities.lines, function (l) {
+    return _c("tr", {
+      key: "l-" + l.code
+    }, [_c("td", [_vm._v(_vm._s(l.code) + " " + _vm._s(l.name))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), _vm._v(" "), _c("tr", [_vm._m(8), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.reportData.liabilities.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_vm._m(9), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.reportData.equity,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])])]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(10), _vm._v(" "), _c("tbody", _vm._l(_vm.reportData.accounts, function (a) {
+    return _c("tr", {
+      key: "t-" + a.code
+    }, [_c("td", [_vm._v(_vm._s(a.code) + " " + _vm._s(a.name))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: a.debit,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: a.credit,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), 0), _vm._v(" "), _c("tfoot", [_c("tr", [_c("td", {
+    class: _vm.reportData.balanced ? "fx-journal__balanced" : "fx-journal__unbalanced"
+  }, [_vm._v("\n              " + _vm._s(_vm.reportData.balanced ? "balanced ✓" : "OUT OF BALANCE by " + _vm.reportData.difference) + "\n            ")]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.reportData.totals.debit,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.reportData.totals.credit,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])])])] : _vm._e()] : _vm.view === "periods" ? [_c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Period")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("From")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("To")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Status")]), _vm._v(" "), _vm.canPost ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.visiblePeriods, function (p) {
+    return _c("tr", {
+      key: "p-" + p.id
+    }, [_c("td", [_vm._v(_vm._s(p.period_name))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.branchName(p.agent_id)))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: p.start_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: p.end_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: p.status
+      }
+    })], 1), _vm._v(" "), _vm.canPost ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [p.status === "open" ? _c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.closePeriod(p);
+        }
+      }
+    }, [_vm._v("Close")]) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("closed")])]) : _vm._e()]);
+  }), 0)]), _vm._v(" "), _vm.canPost ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Open a period")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.newPeriod.agent_id,
+      expression: "newPeriod.agent_id",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return _vm._n(val);
+        });
+        _vm.$set(_vm.newPeriod, "agent_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, _vm._l(_vm.branches, function (b) {
+    return _c("option", {
+      key: b.id,
+      domProps: {
+        value: b.id
+      }
+    }, [_vm._v(_vm._s(b.name))]);
+  }), 0)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Name")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.newPeriod.period_name,
+      expression: "newPeriod.period_name"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "September 2026"
+    },
+    domProps: {
+      value: _vm.newPeriod.period_name
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newPeriod, "period_name", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("From")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.newPeriod.start_date,
+      expression: "newPeriod.start_date"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.newPeriod.start_date
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newPeriod, "start_date", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.newPeriod.end_date,
+      expression: "newPeriod.end_date"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.newPeriod.end_date
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newPeriod, "end_date", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.newPeriodValid
+    },
+    on: {
+      click: _vm.openPeriod
+    }
+  }, [_vm._v("Open")])]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Nothing can be posted into a month without an open period, and closing one stops anything else being posted\n        into it. Only accounts opens or closes a period.\n      ")])]) : _vm._e(), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm.view === "gst" ? [_c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(11), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
     return _c("tr", {
       key: "g-" + r.id
     }, [_c("td", {
@@ -435,7 +940,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), 0), _vm._v(" "), _vm.totals ? _c("tfoot", [_c("tr", [_vm._m(1), _vm._v(" "), _c("td", {
+  }), 0), _vm._v(" "), _vm.totals ? _c("tfoot", [_c("tr", [_vm._m(12), _vm._v(" "), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -463,7 +968,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("\n      Written when a document is finalized: CGST and SGST within the state, IGST across it. Nothing here is edited —\n      it is what was charged.\n    ")])] : _vm.view === "unposted" ? [_c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
+  }, [_vm._m(13), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
     return _c("tr", {
       key: "u-" + r.id
     }, [_c("td", {
@@ -487,7 +992,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), 0), _vm._v(" "), _vm.totals !== null ? _c("tfoot", [_c("tr", [_vm._m(3), _c("td", {
+  }), 0), _vm._v(" "), _vm.totals !== null ? _c("tfoot", [_c("tr", [_vm._m(14), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -499,7 +1004,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("Each stays here until it is posted; posting removes it from this list.")])] : _vm.view === "vouchers" ? _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(4), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+  }, [_vm._m(15), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
     return _c("tr", {
       key: "v-" + row.id,
       staticClass: "is-clickable",
@@ -826,6 +1331,80 @@ var render = function render() {
   }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e()], 2)], 2);
 };
 var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("tr", [_c("td", {
+    attrs: {
+      colspan: "2"
+    }
+  }, [_c("strong", [_vm._v("Revenue")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", [_c("strong", [_vm._v("Total revenue")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("tr", [_c("td", {
+    attrs: {
+      colspan: "2"
+    }
+  }, [_c("strong", [_vm._v("Expense")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", [_c("strong", [_vm._v("Total expense")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", [_c("strong", [_vm._v("Net")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("tr", [_c("td", {
+    attrs: {
+      colspan: "2"
+    }
+  }, [_c("strong", [_vm._v("Assets")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", [_c("strong", [_vm._v("Total assets")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("tr", [_c("td", {
+    attrs: {
+      colspan: "2"
+    }
+  }, [_c("strong", [_vm._v("Liabilities")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", [_c("strong", [_vm._v("Total liabilities")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", [_c("strong", [_vm._v("Retained earnings (the residual)")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Account")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Debit")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Credit")])])]);
+}, function () {
   var _vm = this,
     _c = _vm._self._c;
   return _c("thead", [_c("tr", [_c("th", {

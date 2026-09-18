@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\DB;
  */
 class FinancialReportController extends Controller
 {
+    public function __construct(private readonly \App\Services\AuditLogger $audit) {}
+
     /** Account-code prefixes. PRD.md §12 numbering: 1 assets, 2 liabilities, 4 revenue, 5 expense. */
     private const REVENUE = '4';
     private const EXPENSE = '5';
@@ -42,11 +44,16 @@ class FinancialReportController extends Controller
 
         $context = UserContext::for(auth()->user());
 
+        // One accounts login covers the company (user, 2026-09-18), so periods are listed per branch and the reports
+        // take the branch with them. A period belongs to ONE branch: each files its own returns.
+        $branches = DB::table('agents_info')->where('company_id', $context->companyId)->orderBy('agent_name')->get(['id', 'agent_name as name']);
+
         return response()->json([
             'periods' => DB::table('accounting_periods')
-                ->where('agent_id', $context->agentId)
+                ->whereIn('agent_id', $branches->pluck('id'))
                 ->orderByDesc('start_date')
-                ->get(['id', 'period_name', 'start_date', 'end_date', 'status']),
+                ->get(['id', 'agent_id', 'period_name', 'start_date', 'end_date', 'status']),
+            'branches' => $branches,
         ]);
     }
 
@@ -170,21 +177,103 @@ class FinancialReportController extends Controller
 
         $data = $request->validate(['period_id' => 'required|integer']);
 
+        // Scoped to the caller's own tenancy: their branch, or every branch of their company for accounts and the
+        // Boss (user, 2026-09-18). A period id from another company is not theirs to report on, and ids are guessable.
         $period = DB::table('accounting_periods')
             ->where('id', $data['period_id'])
-            // Scoped to the caller's branch: a period id from another branch is not
-            // theirs to report on, and ids are guessable.
-            ->where('agent_id', $context->agentId)
+            ->whereIn('agent_id', $this->reachableBranches($context))
             ->first();
 
         if ($period === null) {
             return [null, response()->json([
-                'error'  => 'That accounting period is not on this branch.',
+                'error'  => 'That accounting period is not one of yours.',
                 'reason' => 'period_not_found',
             ], 404)];
         }
 
         return [$period, null];
+    }
+
+    /** The branches this person may report on: every branch of the company for accounts and the Boss, else their own. */
+    private function reachableBranches(UserContext $context): array
+    {
+        if (in_array($context->designation, ['accounts', 'boss'], true) && $context->companyId !== null) {
+            return DB::table('agents_info')->where('company_id', $context->companyId)->pluck('id')->all();
+        }
+
+        return [$context->agentId];
+    }
+
+    /**
+     * Opening a period, and closing one — 🔒 **accounts alone**, not even the Boss (PRD §2.4 "sole").
+     *
+     * 🔴 Closing is what stops anything else being posted into that month. A period with documents still waiting to
+     * reach the ledger is NOT closed: they would have nowhere to go, and the month's figures would be wrong the
+     * moment somebody posted them into the next one.
+     */
+    public function openPeriod(Request $request): JsonResponse
+    {
+        $this->authorize('managePeriods');
+        $context = UserContext::for(auth()->user());
+
+        $data = $request->validate([
+            'agent_id' => 'required|integer',
+            'period_name' => 'required|string|max:50',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        if (! in_array((int) $data['agent_id'], $this->reachableBranches($context), true)) {
+            return response()->json(['error' => 'That branch is not one of yours.', 'reason' => 'branch_not_found'], 404);
+        }
+
+        $overlap = DB::table('accounting_periods')->where('agent_id', $data['agent_id'])
+            ->where('start_date', '<=', $data['end_date'])->where('end_date', '>=', $data['start_date'])->first(['period_name']);
+
+        if ($overlap !== null) {
+            return response()->json(['error' => "Those dates are already covered by {$overlap->period_name}.",
+                'reason' => 'overlaps'], 422);
+        }
+
+        $id = DB::table('accounting_periods')->insertGetId($data + ['status' => 'open', 'created_at' => now(), 'updated_at' => now()]);
+        $this->audit->record((int) $data['agent_id'], 'period.opened', 'accounting_period', $id, auth()->id());
+
+        return response()->json(DB::table('accounting_periods')->find($id), 201);
+    }
+
+    public function closePeriod(Request $request, int $periodId): JsonResponse
+    {
+        $this->authorize('managePeriods');
+        $context = UserContext::for(auth()->user());
+
+        $period = DB::table('accounting_periods')->where('id', $periodId)
+            ->whereIn('agent_id', $this->reachableBranches($context))->first();
+
+        if ($period === null) {
+            return response()->json(['error' => 'That accounting period is not one of yours.', 'reason' => 'period_not_found'], 404);
+        }
+
+        if ($period->status !== 'open') {
+            return response()->json(['error' => 'That period is already closed.', 'reason' => 'not_open'], 422);
+        }
+
+        $waiting = DB::table('unposted_transactions_queue as q')
+            ->leftJoin('accounts_invoices as i', fn ($j) => $j->on('i.id', '=', 'q.source_id')->where('q.source_type', '=', 'invoice'))
+            ->where('q.agent_id', $period->agent_id)
+            ->whereBetween(DB::raw('COALESCE(i.document_date, DATE(q.created_at))'), [$period->start_date, $period->end_date])
+            ->count();
+
+        if ($waiting > 0) {
+            return response()->json([
+                'error' => "{$waiting} document(s) in this period have not reached the ledger. Post or void them before closing it.",
+                'reason' => 'unposted_documents', 'unposted' => $waiting,
+            ], 422);
+        }
+
+        DB::table('accounting_periods')->where('id', $periodId)->update(['status' => 'closed', 'updated_at' => now()]);
+        $this->audit->record((int) $period->agent_id, 'period.closed', 'accounting_period', $periodId, auth()->id());
+
+        return response()->json(DB::table('accounting_periods')->find($periodId));
     }
 
     /**

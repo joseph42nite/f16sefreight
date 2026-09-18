@@ -46,6 +46,8 @@ class AuthServiceProvider extends ServiceProvider
         $this->define('viewInbox', ['pricing', 'operations', 'sales', 'boss'], 'tactical');
         // Connecting Outlook and its signatures: Tactical and Command only — Core has no inbox (user, 2026-09-17).
         $this->define('manageMailbox', ['pricing', 'operations', 'sales', 'boss', 'accounts'], 'tactical');
+        // 🔒 Opening and closing an accounting period is accounts' ALONE — not even the Boss (PRD §2.4 "sole").
+        $this->define('managePeriods', ['accounts'], 'command');
 
         // ── Enquiry lifecycle — pricing owns triage and conversion ───────────
         $this->define('triage',     ['pricing'], 'tactical');

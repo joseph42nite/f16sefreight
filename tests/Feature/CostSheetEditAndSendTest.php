@@ -133,4 +133,30 @@ class CostSheetEditAndSendTest extends TestCase
         $this->postJson("http://focusair.localhost/api/jobs/{$unknown->id}/cost-sheet/lines", ['side' => 'buy',
             'charge_type' => 'cartage', 'description' => 'Cartage', 'quantity' => 1, 'rate' => 500])->assertStatus(422);
     }
+
+    /** Each supplier is paid against its own voucher (user, 2026-09-18), and every buy line says who is owed it. */
+    public function test_each_supplier_has_its_own_voucher(): void
+    {
+        DB::table('airlines')->updateOrInsert(['prefix' => '176'], ['name' => 'Emirates SkyCargo', 'code' => 'EK', 'is_active' => 1]);
+        $this->job->forceFill(['awb_number' => '176-12345678'])->save();
+        $trucker = Partner::create(['company_id' => $this->branch->company_id, 'name' => 'Blue Dart Surface', 'partner_type' => 'transporter']);
+
+        // The airline, off the waybill; then the trucker, chosen.
+        $this->as($this->pricing)->postJson($this->url('/lines'), ['side' => 'buy', 'charge_type' => 'air_freight',
+            'description' => 'Air freight', 'quantity' => 102, 'rate' => 150])->assertCreated();
+        $sheet = $this->postJson($this->url('/lines'), ['side' => 'buy', 'charge_type' => 'cartage',
+            'description' => 'Cartage to the airport', 'quantity' => 1, 'rate' => 2500, 'vendor_id' => $trucker->id])->assertCreated()->json();
+
+        $vouchers = DB::table('accounts_purchase_vouchers as v')->join('partners as p', 'p.id', '=', 'v.vendor_id')
+            ->where('v.job_id', $this->job->id)->orderBy('p.name')->pluck('p.name');
+
+        $this->assertSame(['Blue Dart Surface', 'Emirates SkyCargo'], $vouchers->all());
+        $this->assertSame(['Blue Dart Surface', 'Emirates SkyCargo'], collect($sheet['buy']['lines'])->pluck('vendor')->all());
+        $this->assertSame(17800.0, (float) $sheet['buy']['total']);
+
+        // A second line for the same supplier joins that supplier's voucher rather than opening another.
+        $this->postJson($this->url('/lines'), ['side' => 'buy', 'charge_type' => 'miscellaneous',
+            'description' => 'Fuel surcharge', 'quantity' => 1, 'rate' => 2000])->assertCreated();
+        $this->assertSame(2, DB::table('accounts_purchase_vouchers')->where('job_id', $this->job->id)->count());
+    }
 }

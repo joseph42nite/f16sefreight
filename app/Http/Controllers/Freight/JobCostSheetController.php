@@ -312,10 +312,12 @@ class JobCostSheetController extends Controller
 
     private function buyLines(Job $job)
     {
-        return AccountsPurchaseItem::whereIn(
-            'purchase_voucher_id',
-            AccountsPurchaseVoucher::withoutTenantScope()->where('job_id', $job->id)->select('id')
-        )->get();
+        return AccountsPurchaseItem::query()
+            ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'accounts_purchase_items.purchase_voucher_id')
+            ->leftJoin('partners as p', 'p.id', '=', 'v.vendor_id')
+            ->where('v.job_id', $job->id)
+            ->orderBy('p.name')->orderBy('accounts_purchase_items.id')
+            ->get(['accounts_purchase_items.*', 'p.name as vendor_name']);
     }
 
     /**
@@ -329,6 +331,8 @@ class JobCostSheetController extends Controller
             'id' => $i->id, 'charge_type' => $i->charge_type, 'description' => $i->description,
             'quantity' => $i->quantity, 'amount' => $i->amount,
             'tax_amount' => $i->tax_amount, 'net_amount' => $i->net_amount,
+            // Who is owed it: each supplier has its own voucher (user, 2026-09-18), so the line has to say which.
+            'vendor' => $i->vendor_name,
         ];
     }
 
@@ -476,26 +480,32 @@ class JobCostSheetController extends Controller
         ]);
     }
 
+    /**
+     * The voucher for ONE supplier on this shipment (user, 2026-09-18: "each supplier should have its own voucher").
+     *
+     * 🔴 A voucher is what a supplier is paid against, so it is per supplier, never per shipment. It used to return
+     * whichever voucher the job already had when no vendor was named, so cartage owed to a trucker landed on the
+     * airline's voucher and accounts would have paid the wrong party.
+     */
     private function voucherFor(Job $job, ?int $vendorId): AccountsPurchaseVoucher
     {
+        // A voucher needs a vendor. Falling back to the first partner would attribute a
+        // cost to somebody who is not owed it, so the caller must name one.
+        abort_if($vendorId === null, 422, 'A buy line needs a vendor.');
+
         $existing = AccountsPurchaseVoucher::withoutTenantScope()
-            ->where('job_id', $job->id)
-            ->when($vendorId !== null, fn ($q) => $q->where('vendor_id', $vendorId))
-            ->first();
+            ->where('job_id', $job->id)->where('vendor_id', $vendorId)->first();
 
         if ($existing) {
             return $existing;
         }
 
-        // A voucher needs a vendor. Falling back to the first partner would attribute a
-        // cost to somebody who is not owed it, so the caller must name one.
-        abort_if($vendorId === null, 422, 'A buy line needs a vendor.');
-
         return AccountsPurchaseVoucher::create([
             'agent_id' => $job->agent_id, 'job_id' => $job->id,
             'transport_mode' => $job->transport_mode, 'vendor_id' => $vendorId,
             'created_by' => auth()->id(),
-            'voucher_no' => 'PV-' . $job->id . '-' . now()->format('YmdHis'),
+            // One per supplier on this shipment, so two vouchers created in the same second cannot collide.
+            'voucher_no' => 'PV-' . $job->id . '-' . $vendorId . '-' . now()->format('YmdHis'),
             'document_date' => now()->toDateString(), 'status' => 'unpaid',
         ]);
     }

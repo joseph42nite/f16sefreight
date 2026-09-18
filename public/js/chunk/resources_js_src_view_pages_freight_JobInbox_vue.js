@@ -4511,9 +4511,11 @@ var render = function render() {
           _vm.editing = {};
         }
       }
-    }, [_vm._v("Cancel")])])] : [_c("td", [_vm._v(_vm._s(l.description) + " "), _c("span", {
+    }, [_vm._v("Cancel")])])] : [_c("td", [_vm._v("\n                " + _vm._s(l.description) + " "), _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("(" + _vm._s(_vm.label(l.charge_type)) + ")")])]), _vm._v(" "), _c("td", {
+    }, [_vm._v("(" + _vm._s(_vm.label(l.charge_type)) + ")")]), _vm._v(" "), l.vendor ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" · " + _vm._s(l.vendor))]) : _vm._e()]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
     }, [_c("Figure", {
       attrs: {

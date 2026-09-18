@@ -106,7 +106,11 @@
                 </td>
               </template>
               <template v-else>
-                <td>{{ l.description }} <span class="fx-muted">({{ label(l.charge_type) }})</span></td>
+                <td>
+                  {{ l.description }} <span class="fx-muted">({{ label(l.charge_type) }})</span>
+                  <!-- Each supplier is paid against its own voucher, so each line says who is owed it. -->
+                  <span v-if="l.vendor" class="fx-muted"> · {{ l.vendor }}</span>
+                </td>
                 <td class="fx-num"><Figure :value="l.quantity" kind="count" /></td>
                 <td class="fx-num"><Figure :value="l.net_amount" kind="currency" currency-code="INR" /></td>
                 <td v-if="canEdit && !sheet.locked" class="fx-row-actions">

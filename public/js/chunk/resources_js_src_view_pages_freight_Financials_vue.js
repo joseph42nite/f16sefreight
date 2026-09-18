@@ -38,6 +38,12 @@ const VIEWS = [{
 }, {
   key: "vouchers",
   label: "What we owe"
+}, {
+  key: "gst",
+  label: "GST register"
+}, {
+  key: "unposted",
+  label: "Not yet posted"
 }];
 const TABS = [{
   key: "credit",
@@ -59,9 +65,14 @@ const TABS = [{
     error: null,
     status: "",
     outstanding: false,
-    /** Which register is open: the hand-over queue, the receivables, or the payables. */
+    /** Which register is open: the hand-over queue, the receivables, the payables, or a read-only register. */
     view: "awaiting",
     VIEWS,
+    /** One accounts login covers the company; NULL is every branch (user, 2026-09-18). */
+    branches: [],
+    branchId: null,
+    /** The totals row of whichever register is open. */
+    totals: null,
     selected: null,
     tab: "credit",
     credit: null,
@@ -96,6 +107,8 @@ const TABS = [{
     subtitleForView() {
       return {
         awaiting: "Cost sheets pricing has sent across, with what each shipment sells for and what it cost. Finalize one to bill it.",
+        gst: "The tax charged on every finalized document, for GSTR-1. Read-only — it is what was charged.",
+        unposted: "Documents raised and not yet in the ledger, and what each is waiting for.",
         invoices: "The receivables register for this branch. Select a row to see the client's credit standing and the journal a posting would write.",
         vouchers: "What this branch owes its suppliers, one voucher per supplier per shipment. Select one to see the journal a posting would write."
       }[this.view];
@@ -120,11 +133,19 @@ const TABS = [{
       if (this.view === "awaiting") params.push("awaiting=1");
       if (this.view !== "vouchers" && this.status) params.push("status=" + encodeURIComponent(this.status));
       if (this.view === "invoices" && this.outstanding) params.push("outstanding=1");
-      const path = this.view === "vouchers" ? "/vouchers" : "/invoices";
+      if (this.branchId) params.push("agent_id=" + this.branchId);
+      const path = {
+        vouchers: "/vouchers",
+        gst: "/registers/gst",
+        unposted: "/registers/unposted"
+      }[this.view] || "/invoices";
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(path + (params.length ? "?" + params.join("&") : "")).then(({
         data
       }) => {
-        this.rows = data.data || [];
+        // The registers answer with their own shape: rows plus the totals that belong under them.
+        this.rows = data.data || data.rows || [];
+        this.totals = data.totals !== undefined ? data.totals : data.total !== undefined ? data.total : null;
+        if (data.branches) this.branches = data.branches;
         this.error = null;
       }).catch(e => {
         this.error = this.messageFor(e);
@@ -263,7 +284,43 @@ var render = function render() {
         }
       }
     }, [_vm._v(_vm._s(v.label))]);
-  }), 0), _vm._v(" "), _vm.view !== "vouchers" ? _c("div", {
+  }), 0), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_vm.branches.length > 1 ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.branchId,
+      expression: "branchId"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.branchId = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("All branches")]), _vm._v(" "), _vm._l(_vm.branches, function (b) {
+    return _c("option", {
+      key: b.id,
+      domProps: {
+        value: b.id
+      }
+    }, [_vm._v(_vm._s(b.name))]);
+  })], 2)]) : _vm._e()]), _vm._v(" "), _vm.view === "invoices" || _vm.view === "awaiting" ? _c("div", {
     staticClass: "fx-toolbar"
   }, [_c("label", {
     staticClass: "fx-field"
@@ -341,9 +398,108 @@ var render = function render() {
     }
   }, [_vm._v(_vm._s(_vm.error))]) : !_vm.rows.length ? _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("No documents match.")]) : _vm.view === "vouchers" ? _c("table", {
+  }, [_vm._v("No documents match.")]) : _vm.view === "gst" ? [_c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
+    return _c("tr", {
+      key: "g-" + r.id
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.invoice_no || r.voucher_type))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.customer || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.branch))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: r.document_date || r.created_at,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.cgst_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.sgst_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.igst_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), 0), _vm._v(" "), _vm.totals ? _c("tfoot", [_c("tr", [_vm._m(1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.totals.cgst,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.totals.sgst,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.totals.igst,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])]) : _vm._e()]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n      Written when a document is finalized: CGST and SGST within the state, IGST across it. Nothing here is edited —\n      it is what was charged.\n    ")])] : _vm.view === "unposted" ? [_c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
+    return _c("tr", {
+      key: "u-" + r.id
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [r.number ? _c("span", [_vm._v(_vm._s(r.number))]) : _c("span", {
+      staticClass: "is-empty",
+      attrs: {
+        "aria-label": "Not yet numbered"
+      }
+    })]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.source_type === "invoice" ? "Invoice" : "Purchase voucher"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.branch))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: r.created_at,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.created_by || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.waiting_for))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.net_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), 0), _vm._v(" "), _vm.totals !== null ? _c("tfoot", [_c("tr", [_vm._m(3), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.totals,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])]) : _vm._e()]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Each stays here until it is posted; posting removes it from this list.")])] : _vm.view === "vouchers" ? _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(4), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
     return _c("tr", {
       key: "v-" + row.id,
       staticClass: "is-clickable",
@@ -667,9 +823,93 @@ var render = function render() {
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e()], 2)], 1);
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e()], 2)], 2);
 };
 var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Document")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Client")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("CGST")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("SGST")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("IGST")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "4"
+    }
+  }, [_c("strong", [_vm._v("Total")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Document")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Kind")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Raised")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("By")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Waiting for")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "6"
+    }
+  }, [_c("strong", [_vm._v("Total waiting")])]);
+}, function () {
   var _vm = this,
     _c = _vm._self._c;
   return _c("thead", [_c("tr", [_c("th", {

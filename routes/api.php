@@ -497,6 +497,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
 
         // ── The buy side. Same segregation: viewFinancials reads, postLedger commits.
         Route::get('/vouchers', [\App\Http\Controllers\Freight\PurchaseVoucherController::class, 'index']);
+        // The registers accounts read: tax charged per document, and what has not reached the ledger (user, 2026-09-18).
+        Route::get('/registers/gst', [\App\Http\Controllers\Freight\RegisterController::class, 'gst']);
+        Route::get('/registers/unposted', [\App\Http\Controllers\Freight\RegisterController::class, 'unposted']);
         Route::get('/vouchers/{voucher}/posting-preview', [\App\Http\Controllers\Freight\PurchaseVoucherController::class, 'postingPreview']);
         Route::post('/vouchers/{voucher}/post', [\App\Http\Controllers\Freight\PurchaseVoucherController::class, 'post']);
 

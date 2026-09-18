@@ -87,4 +87,55 @@ class AccountsWorkQueueTest extends TestCase
 
         $this->assertSame('finalized', DB::table('accounts_invoices')->where('id', $invoiceId)->value('status'));
     }
+
+    /**
+     * One accounts login covers the whole company, with a branch to narrow to (user, 2026-09-18: "1 main accounts login
+     * and a way to differ based on branch"). The registers read what posting wrote.
+     */
+    public function test_accounts_covers_every_branch_and_can_narrow_to_one(): void
+    {
+        $chennai = Agent::create(['company_id' => $this->branch->company_id, 'agent_name' => 'Chennai', 'branch_code' => 'MAA']);
+        $elsewhere = Company::create(['name' => 'Other Co', 'code' => 'OTH', 'tier' => 'command']);
+        $otherBranch = Agent::create(['company_id' => $elsewhere->id, 'agent_name' => 'Delhi', 'branch_code' => 'DEL']);
+
+        $invoice = function (Agent $at, string $no, float $total) {
+            $enquiry = Enquiry::create(['agent_id' => $at->id, 'transport_mode' => 'air', 'status' => 'converted',
+                'enquiry_no' => 'ENQA-' . $at->branch_code . '-26-' . random_int(1000, 9999)]);
+            $job = Job::create(['agent_id' => $at->id, 'enquiry_id' => $enquiry->id, 'transport_mode' => 'air',
+                'execution_job_no' => 'JOBA-' . $at->branch_code . '-26-' . random_int(1000, 9999)]);
+
+            return DB::table('accounts_invoices')->insertGetId(['agent_id' => $at->id, 'job_id' => $job->id, 'transport_mode' => 'air', 'invoice_no' => $no,
+                'type' => 'invoice', 'document_date' => now()->toDateString(), 'status' => 'finalized', 'currency' => 'INR',
+                'grand_total' => $total, 'subtotal' => $total, 'tax_amount' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        };
+        $mumbai = $invoice($this->branch, 'INV-BOM-1', 1000);
+        $maa = $invoice($chennai, 'INV-MAA-1', 2000);
+        $invoice($otherBranch, 'INV-DEL-1', 9999);
+
+        // Both branches of the company, never another company's.
+        $numbers = collect($this->as($this->accounts)->getJson('http://accounts.localhost/api/invoices')->assertOk()->json('data'))->pluck('invoice_no');
+        $this->assertSame(['INV-BOM-1', 'INV-MAA-1'], $numbers->sort()->values()->all());
+
+        // The GST register reads what posting wrote, and narrows to one branch.
+        foreach ([[$mumbai, $this->branch, 90, 90, 0], [$maa, $chennai, 0, 0, 360]] as [$id, $at, $cgst, $sgst, $igst]) {
+            DB::table('gst_ledger_entries')->insert(['agent_id' => $at->id, 'company_id' => $this->branch->company_id,
+                'voucher_id' => $id, 'voucher_type' => 'invoice', 'cgst_amount' => $cgst, 'sgst_amount' => $sgst,
+                'igst_amount' => $igst, 'created_at' => now(), 'updated_at' => now()]);
+        }
+
+        $all = $this->getJson('http://accounts.localhost/api/registers/gst')->assertOk()->json();
+        $this->assertSame([90.0, 90.0, 360.0], array_map('floatval', [$all['totals']['cgst'], $all['totals']['sgst'], $all['totals']['igst']]));
+        $this->assertSame(['BOM', 'Chennai'], collect($all['branches'])->pluck('name')->sort()->values()->all());
+
+        $justChennai = $this->getJson("http://accounts.localhost/api/registers/gst?agent_id={$chennai->id}")->assertOk()->json();
+        $this->assertSame([0.0, 0.0, 360.0], array_map('floatval', [$justChennai['totals']['cgst'], $justChennai['totals']['sgst'], $justChennai['totals']['igst']]));
+
+        // What has not reached the ledger, and what each is waiting for.
+        DB::table('unposted_transactions_queue')->insert(['agent_id' => $this->branch->id, 'company_id' => $this->branch->company_id,
+            'created_by' => $this->pricing->id, 'source_id' => $mumbai, 'source_type' => 'invoice', 'net_amount' => 1000,
+            'created_at' => now(), 'updated_at' => now()]);
+
+        $queue = $this->getJson('http://accounts.localhost/api/registers/unposted')->assertOk()->json();
+        $this->assertSame(['INV-BOM-1', 'Ready to post', 1000.0], [$queue['rows'][0]['number'], $queue['rows'][0]['waiting_for'], (float) $queue['total']]);
+    }
 }

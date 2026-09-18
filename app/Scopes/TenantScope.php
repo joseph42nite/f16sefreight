@@ -69,9 +69,11 @@ class TenantScope implements Scope
             return;
         }
 
-        // 🔴 THE BOSS SEES EVERY BRANCH (user, 2026-09-16: "the boss sees everything"). For branch-scoped rows the
-        // Boss's tenancy is the whole company — every branch of it, and still never another company's.
-        if ($column !== 'company_id' && $context->designation === 'boss' && $context->companyId !== null) {
+        // 🔴 THE BOSS SEES EVERY BRANCH (user, 2026-09-16: "the boss sees everything"), and so does ACCOUNTS
+        // (user, 2026-09-18: "1 main accounts login and a way to differ based on branch") — one team runs the whole
+        // company's ledger and filters by branch on the page. For branch-scoped rows their tenancy is the whole
+        // company — every branch of it, and still never another company's.
+        if ($column !== 'company_id' && in_array($context->designation, ['boss', 'accounts'], true) && $context->companyId !== null) {
             // A subquery, not a cached list: a branch added during the request is still one of the company's.
             $builder->whereIn($model->qualifyColumn($column), fn ($q) => $q->select('id')->from('agents_info')
                 ->where('company_id', $context->companyId));

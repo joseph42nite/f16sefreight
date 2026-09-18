@@ -20,7 +20,18 @@
       >{{ v.label }}</button>
     </div>
 
-    <div v-if="view !== 'vouchers'" class="fx-toolbar">
+    <div class="fx-toolbar">
+      <!-- One accounts login runs the whole company; the branch picker is how it looks at one at a time. -->
+      <label v-if="branches.length > 1" class="fx-field">
+        <span class="fx-field__label">Branch</span>
+        <select v-model="branchId" class="fx-input" @change="load">
+          <option :value="null">All branches</option>
+          <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div v-if="view === 'invoices' || view === 'awaiting'" class="fx-toolbar">
       <label class="fx-field">
         <span class="fx-field__label">Status</span>
         <select v-model="status" class="fx-input" @change="load">
@@ -38,6 +49,81 @@
     <p v-if="loading" class="fx-muted">Loading…</p>
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
     <p v-else-if="!rows.length" class="fx-muted">No documents match.</p>
+
+    <!-- ── GST charged, per document (PRD §6.2.7) ────────────────────────── -->
+    <template v-else-if="view === 'gst'">
+      <table class="fx-table">
+        <thead>
+          <tr>
+            <th scope="col">Document</th>
+            <th scope="col">Client</th>
+            <th scope="col">Branch</th>
+            <th scope="col">Date</th>
+            <th class="fx-num" scope="col">CGST</th>
+            <th class="fx-num" scope="col">SGST</th>
+            <th class="fx-num" scope="col">IGST</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="r in rows" :key="'g-' + r.id">
+            <td class="identifier">{{ r.invoice_no || r.voucher_type }}</td>
+            <td>{{ r.customer || "—" }}</td>
+            <td>{{ r.branch }}</td>
+            <td><Figure :value="r.document_date || r.created_at" kind="date" /></td>
+            <td class="fx-num"><Figure :value="r.cgst_amount" kind="currency" currency-code="INR" /></td>
+            <td class="fx-num"><Figure :value="r.sgst_amount" kind="currency" currency-code="INR" /></td>
+            <td class="fx-num"><Figure :value="r.igst_amount" kind="currency" currency-code="INR" /></td>
+          </tr>
+        </tbody>
+        <tfoot v-if="totals">
+          <tr>
+            <td colspan="4"><strong>Total</strong></td>
+            <td class="fx-num"><Figure :value="totals.cgst" kind="currency" currency-code="INR" /></td>
+            <td class="fx-num"><Figure :value="totals.sgst" kind="currency" currency-code="INR" /></td>
+            <td class="fx-num"><Figure :value="totals.igst" kind="currency" currency-code="INR" /></td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="fx-muted">
+        Written when a document is finalized: CGST and SGST within the state, IGST across it. Nothing here is edited —
+        it is what was charged.
+      </p>
+    </template>
+
+    <!-- ── Drafted, not yet in the ledger (PRD §6.2.8) ───────────────────── -->
+    <template v-else-if="view === 'unposted'">
+      <table class="fx-table">
+        <thead>
+          <tr>
+            <th scope="col">Document</th>
+            <th scope="col">Kind</th>
+            <th scope="col">Branch</th>
+            <th scope="col">Raised</th>
+            <th scope="col">By</th>
+            <th scope="col">Waiting for</th>
+            <th class="fx-num" scope="col">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="r in rows" :key="'u-' + r.id">
+            <td class="identifier">
+              <span v-if="r.number">{{ r.number }}</span>
+              <span v-else class="is-empty" aria-label="Not yet numbered"></span>
+            </td>
+            <td>{{ r.source_type === "invoice" ? "Invoice" : "Purchase voucher" }}</td>
+            <td>{{ r.branch }}</td>
+            <td><Figure :value="r.created_at" kind="date" /></td>
+            <td>{{ r.created_by || "—" }}</td>
+            <td>{{ r.waiting_for }}</td>
+            <td class="fx-num"><Figure :value="r.net_amount" kind="currency" currency-code="INR" /></td>
+          </tr>
+        </tbody>
+        <tfoot v-if="totals !== null">
+          <tr><td colspan="6"><strong>Total waiting</strong></td><td class="fx-num"><Figure :value="totals" kind="currency" currency-code="INR" /></td></tr>
+        </tfoot>
+      </table>
+      <p class="fx-muted">Each stays here until it is posted; posting removes it from this list.</p>
+    </template>
 
     <!-- ── What we owe suppliers ─────────────────────────────────────────── -->
     <table v-else-if="view === 'vouchers'" class="fx-table">
@@ -289,6 +375,8 @@ const VIEWS = [
   { key: "awaiting", label: "Waiting to be billed" },
   { key: "invoices", label: "Invoices" },
   { key: "vouchers", label: "What we owe" },
+  { key: "gst", label: "GST register" },
+  { key: "unposted", label: "Not yet posted" },
 ];
 const TABS = [
   { key: "credit", label: "Credit standing" },
@@ -301,8 +389,12 @@ export default {
   data: () => ({
     rows: [], loading: true, error: null,
     status: "", outstanding: false,
-    /** Which register is open: the hand-over queue, the receivables, or the payables. */
+    /** Which register is open: the hand-over queue, the receivables, the payables, or a read-only register. */
     view: "awaiting", VIEWS,
+    /** One accounts login covers the company; NULL is every branch (user, 2026-09-18). */
+    branches: [], branchId: null,
+    /** The totals row of whichever register is open. */
+    totals: null,
     selected: null, tab: "credit",
     credit: null, creditLoading: false,
     preview: null, previewLoading: false,
@@ -331,6 +423,8 @@ export default {
     subtitleForView() {
       return {
         awaiting: "Cost sheets pricing has sent across, with what each shipment sells for and what it cost. Finalize one to bill it.",
+        gst: "The tax charged on every finalized document, for GSTR-1. Read-only — it is what was charged.",
+        unposted: "Documents raised and not yet in the ledger, and what each is waiting for.",
         invoices: "The receivables register for this branch. Select a row to see the client's credit standing and the journal a posting would write.",
         vouchers: "What this branch owes its suppliers, one voucher per supplier per shipment. Select one to see the journal a posting would write.",
       }[this.view];
@@ -357,10 +451,20 @@ export default {
       if (this.view !== "vouchers" && this.status) params.push("status=" + encodeURIComponent(this.status));
       if (this.view === "invoices" && this.outstanding) params.push("outstanding=1");
 
-      const path = this.view === "vouchers" ? "/vouchers" : "/invoices";
+      if (this.branchId) params.push("agent_id=" + this.branchId);
+
+      const path = {
+        vouchers: "/vouchers", gst: "/registers/gst", unposted: "/registers/unposted",
+      }[this.view] || "/invoices";
 
       ApiService.get(path + (params.length ? "?" + params.join("&") : ""))
-        .then(({ data }) => { this.rows = data.data || []; this.error = null; })
+        .then(({ data }) => {
+          // The registers answer with their own shape: rows plus the totals that belong under them.
+          this.rows = data.data || data.rows || [];
+          this.totals = data.totals !== undefined ? data.totals : (data.total !== undefined ? data.total : null);
+          if (data.branches) this.branches = data.branches;
+          this.error = null;
+        })
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.loading = false; });
     },

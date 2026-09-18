@@ -1070,6 +1070,19 @@ export default {
      */
     onExtracted(payload) {
       this.extracted = payload;
+
+      /* 🔗 The draft just written carries a waybill number; the shipment must hold the same one, or the waybill
+         belongs to nobody — generating its PDF would never move the shipment on, and the client would never get the
+         draft-AWB mail with the approval link (user, 2026-09-18). */
+      const identity = payload && payload.identity;
+      const number = identity && identity.target === "mawb" && identity.awbCode && identity.awbNo
+        ? identity.awbCode + identity.awbNo : null;
+
+      if (!number || !this.active.job || this.active.job.awb_number) return;
+
+      ApiService.put("/jobs/" + this.active.job.id + "/awb-number", { awb_number: number })
+        .then(() => this.open(this.active))
+        .catch((e) => { this.actionError = this.messageFor(e); });
     },
     /**
      * Open the composer with the recipients each action starts from.

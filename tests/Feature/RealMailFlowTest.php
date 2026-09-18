@@ -174,4 +174,31 @@ class RealMailFlowTest extends TestCase
         $this->assertSame('Cancelled', DB::table('jobs')->where('id', $job['id'])->value('status'), 'kept for review');
         $this->assertTrue(DB::table('enquiries')->where('id', $thread->enquiry_id)->exists());
     }
+
+    /**
+     * The waybill number drafted from Extraction reaches the shipment, which is what links the waybill to it — and
+     * generating the PDF then prepares the draft-AWB mail with the approval link (user, 2026-09-18).
+     */
+    public function test_the_drafted_waybill_number_joins_the_shipment_and_generation_prepares_the_client_mail(): void
+    {
+        $thread = $this->arrives('buyer@acme-flow.test', 'Rates BLR-ORD', 'Please quote the best rate. PCS : 21, WEIGHT : 300 kgs');
+        $job = $this->as($this->pricing)->postJson($this->url("/enquiries/{$thread->enquiry_id}/convert"), [])->assertCreated()->json('job');
+        $this->assertNull(DB::table('jobs')->where('id', $job['id'])->value('awb_number'));
+
+        $this->putJson($this->url("/jobs/{$job['id']}/awb-number"), ['awb_number' => '17'])->assertStatus(422)->assertJsonPath('reason', 'not_an_awb');
+        $this->putJson($this->url("/jobs/{$job['id']}/awb-number"), ['awb_number' => '176-12345678'])
+            ->assertOk()->assertJsonPath('awb_number', '176-12345678');
+
+        // A second shipment cannot take the same number.
+        $other = $this->arrives('buyer@acme-flow.test', 'Another', 'Please quote the best rate, 2 pallets');
+        $second = $this->postJson($this->url("/enquiries/{$other->enquiry_id}/convert"), [])->assertCreated()->json('job');
+        $this->putJson($this->url("/jobs/{$second['id']}/awb-number"), ['awb_number' => '176-12345678'])
+            ->assertStatus(422)->assertJsonPath('reason', 'already_used');
+
+        // Generating the PDF moves the shipment on, and the client's draft-AWB mail is waiting on the conversation.
+        $this->putJson($this->url("/jobs/{$job['id']}/status"), ['status' => 'PDF Generated'])->assertOk();
+        $update = $this->getJson($this->url("/inbox/threads/{$thread->id}"))->assertOk()->json('thread.client_update');
+        $this->assertSame('draft_awb', $update['stage']);
+        $this->assertStringContainsString('[review link]', $update['body']);
+    }
 }

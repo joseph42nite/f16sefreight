@@ -172,6 +172,40 @@ class JobController extends Controller
         });
     }
 
+    /**
+     * The waybill number this shipment is being drafted on (user, 2026-09-18).
+     *
+     * 🔴 Without it the draft written from Extraction belonged to nobody: `air_way_bills.job_id` stayed NULL, so
+     * generating its PDF never moved the shipment to "PDF Generated" and the client never got the draft-AWB mail with
+     * the approval link. Writing the number here links the waybill (JobObserver → AwbJobLinker) and joins the chain.
+     */
+    public function setAwbNumber(Request $request, Job $job): JsonResponse
+    {
+        abort_unless(in_array(auth()->user()->designation, ['pricing', 'operations', 'boss'], true), 403);
+
+        $data = $request->validate(['awb_number' => ['required', 'string', 'max:20']]);
+        $canonical = \App\Support\AwbNumber::normalise($data['awb_number']);
+
+        if ($canonical === null) {
+            return response()->json(['error' => 'That is not an air waybill number (3 digits, then 8).', 'reason' => 'not_an_awb'], 422);
+        }
+
+        if ($job->transport_mode !== 'air') {
+            return response()->json(['error' => 'An AWB number belongs to an air shipment.', 'reason' => 'mode_mismatch'], 422);
+        }
+
+        $taken = Job::withoutTenantScope()->where('awb_number', $canonical)->where('id', '!=', $job->id)->first(['execution_job_no']);
+
+        if ($taken !== null) {
+            return response()->json(['error' => "That waybill number is already on {$taken->execution_job_no}.", 'reason' => 'already_used'], 422);
+        }
+
+        $job->update(['awb_number' => $canonical]);
+        $this->audit->record($job->agent_id, 'job.awb_number_set', 'job', $job->id, auth()->id());
+
+        return response()->json($job->fresh());
+    }
+
     /** Milestone transitions. Every one writes an SLA row via JobObserver. */
     public function updateStatus(Request $request, Job $job): JsonResponse
     {

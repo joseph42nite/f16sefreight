@@ -480,6 +480,18 @@ const WORKSPACE_TABS = [{
      */
     onExtracted(payload) {
       this.extracted = payload;
+
+      /* 🔗 The draft just written carries a waybill number; the shipment must hold the same one, or the waybill
+         belongs to nobody — generating its PDF would never move the shipment on, and the client would never get the
+         draft-AWB mail with the approval link (user, 2026-09-18). */
+      const identity = payload && payload.identity;
+      const number = identity && identity.target === "mawb" && identity.awbCode && identity.awbNo ? identity.awbCode + identity.awbNo : null;
+      if (!number || !this.active.job || this.active.job.awb_number) return;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put("/jobs/" + this.active.job.id + "/awb-number", {
+        awb_number: number
+      }).then(() => this.open(this.active)).catch(e => {
+        this.actionError = this.messageFor(e);
+      });
     },
     /**
      * Open the composer with the recipients each action starts from.
@@ -5945,6 +5957,7 @@ function buildPayload(target, fields, identity) {
   const chargeable = raw(fields.chargeable_weight);
   const goods = raw(fields.goods) || raw(fields.description);
   const dimensions = raw(fields.dimensions);
+  const lines = Array.isArray(raw(fields.dimension_lines)) ? raw(fields.dimension_lines) : null;
   if (pieces || weight || goods || dimensions) {
     const entry = {
       pieces: pieces || "",
@@ -5968,8 +5981,18 @@ function buildPayload(target, fields, identity) {
       uld_infos: [],
       itemss: []
     };
-    const line = dimensionLine(dimensions, pieces);
-    if (line) entry.itemss.push(line);
+
+    // One line per dimension written on the document, each with its own piece count.
+    if (lines) {
+      lines.forEach(d => {
+        const line = dimensionLine(d.dimension, d.count || "");
+        if (line) entry.itemss.push(line);
+      });
+    }
+    if (!entry.itemss.length) {
+      const line = dimensionLine(dimensions, pieces);
+      if (line) entry.itemss.push(line);
+    }
     payload.entries = [entry];
   }
 
@@ -6256,10 +6279,29 @@ function flattenCargo(fields) {
     value: goods,
     confidence: confidence(cargo.description)
   };
-  const dims = (Array.isArray(cargo.dimensions) ? cargo.dimensions : []).map(d => value(d && typeof d === "object" && "dimension" in d ? d.dimension : d)).filter(Boolean);
-  if (dims.length && out.dimensions === undefined) out.dimensions = {
-    value: dims.join(", "),
-    confidence: "high"
+  const lines = (Array.isArray(cargo.dimensions) ? cargo.dimensions : []).map(d => d && typeof d === "object" && "dimension" in d ? {
+    count: parseFloat(value(d.count)) || null,
+    dimension: value(d.dimension)
+  } : {
+    count: null,
+    dimension: value(d)
+  }).filter(d => d.dimension);
+  if (lines.length && out.dimensions === undefined) {
+    out.dimensions = {
+      value: lines.map(d => d.dimension).join(", "),
+      confidence: "high"
+    };
+    // Kept whole so each line carries its own piece count onto the waybill.
+    out.dimension_lines = lines;
+  }
+
+  // 🔴 The pieces the DIMENSION LINES add up to, when the model read none (user, 2026-09-18: "after the extraction the
+  // number of pieces is not mentioned in the draft" — the AWB said 10 boxes of 60x30x30 and `no_of_pieces` came back 0).
+  // Marked to check: it is counted from the dimension table, not read off the pieces box.
+  const counted = lines.reduce((sum, d) => sum + (d.count || 0), 0);
+  if (!out.pieces && counted > 0) out.pieces = {
+    value: String(counted),
+    confidence: "low"
   };
   return out;
 }

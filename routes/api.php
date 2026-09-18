@@ -336,6 +336,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // ── Post-conversion ─────────────────────────────────────────────────────
     Route::get('/jobs', [\App\Http\Controllers\Freight\JobController::class, 'index']);
     Route::put('/jobs/{job}/status', [\App\Http\Controllers\Freight\JobController::class, 'updateStatus']);
+    // The waybill number the shipment is drafted on — it links the waybill to the job (user, 2026-09-18).
+    Route::put('/jobs/{job}/awb-number', [\App\Http\Controllers\Freight\JobController::class, 'setAwbNumber']);
     Route::get('/jobs/{job}/tracking', [\App\Http\Controllers\Freight\JobController::class, 'tracking']);
     Route::post('/jobs/{job}/cancel', [\App\Http\Controllers\Freight\JobController::class, 'cancel']);
     Route::post('/jobs/{job}/reinitiate', [\App\Http\Controllers\Freight\JobController::class, 'reinitiate']);

@@ -69,6 +69,8 @@ export const NAV_ITEMS = [
   // For a SALES login this is their dashboard (user, 2026-09-16); the Boss reads it as Sales.
   { path: "/sales", label: "Sales", labelFor: { sales: "Dashboard" },
     icon: "graph-up", designations: ["sales", "boss"], minTier: "tactical" },
+  // ⚠️ /settings/finance is reached FROM Financials, not from the rail: the chart of accounts and the rate cards are
+  // set up once and read rarely, and a seventh rail item competes with the registers worked every day.
   { path: "/financials", label: "Financials", icon: "cash", designations: ["accounts", "boss"], minTier: "command" },
   { path: "/boss", label: "Overview", icon: "speedometer", designations: ["boss"], minTier: "tactical" },
 

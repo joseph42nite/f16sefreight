@@ -507,6 +507,12 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/vouchers/{voucher}/post', [\App\Http\Controllers\Freight\PurchaseVoucherController::class, 'post']);
 
         // ── Bank reconciliation. `reconcile` is accounts-only; the Boss reads only.
+        // Settings → Finance: the chart of accounts and the rate cards (user, 2026-09-18).
+        Route::get('/finance-settings', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'index']);
+        Route::post('/finance-settings/accounts', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveAccount']);
+        Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
+        Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
+
         Route::get('/reconciliation', [\App\Http\Controllers\Freight\ReconciliationController::class, 'index']);
         Route::get('/reconciliation/{transaction}/candidates', [\App\Http\Controllers\Freight\ReconciliationController::class, 'candidates']);
         Route::post('/reconciliation/{transaction}/match', [\App\Http\Controllers\Freight\ReconciliationController::class, 'match']);

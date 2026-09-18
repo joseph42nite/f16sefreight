@@ -8777,7 +8777,10 @@ const NAV_ITEMS = [
   icon: "graph-up",
   designations: ["sales", "boss"],
   minTier: "tactical"
-}, {
+},
+// ⚠️ /settings/finance is reached FROM Financials, not from the rail: the chart of accounts and the rate cards are
+// set up once and read rarely, and a seventh rail item competes with the registers worked every day.
+{
   path: "/financials",
   label: "Financials",
   icon: "cash",
@@ -10724,6 +10727,16 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
     }, {
       // §9.6 — `command` only, and gated per role rather than per group: the Boss
       // READS the register from admin., accounts WORKS it from accounts.
+      // Settings → Finance: the chart of accounts and the rate cards (user, 2026-09-18).
+      path: "settings/finance",
+      name: "FinanceSettings",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_FinanceSettings_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/FinanceSettings */ "./resources/js/src/view/pages/freight/FinanceSettings.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['accounts', 'boss'],
+        minTier: 'command'
+      }
+    }, {
       path: "financials",
       name: "Financials",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_Financials_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Financials */ "./resources/js/src/view/pages/freight/Financials.vue")),

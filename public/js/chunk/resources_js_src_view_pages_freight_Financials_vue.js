@@ -50,6 +50,9 @@ const VIEWS = [{
 }, {
   key: "periods",
   label: "Periods"
+}, {
+  key: "bank",
+  label: "Bank"
 }];
 
 /** The three reports the ledger can prove (PRD §6.8). Each runs over a PERIOD, never a free date range. */
@@ -105,6 +108,11 @@ const TABS = [{
       start_date: "",
       end_date: ""
     },
+    /** Bank reconciliation: the row being settled, what it could settle, and how a short payment is treated. */
+    bankRow: null,
+    candidates: [],
+    candidateNote: "",
+    resolution: "",
     selected: null,
     tab: "credit",
     credit: null,
@@ -150,6 +158,7 @@ const TABS = [{
         gst: "The tax charged on every finalized document, for GSTR-1. Read-only — it is what was charged.",
         reports: "What the ledger proves, over one period of one branch.",
         periods: "The months the ledger is open for. Nothing posts into a month without an open period.",
+        bank: "Money in the bank, and the invoice each payment settles.",
         unposted: "Documents raised and not yet in the ledger, and what each is waiting for.",
         invoices: "The receivables register for this branch. Select a row to see the client's credit standing and the journal a posting would write.",
         vouchers: "What this branch owes its suppliers, one voucher per supplier per shipment. Select one to see the journal a posting would write."
@@ -229,6 +238,51 @@ const TABS = [{
         this.busy = false;
       });
     },
+    findCandidates(row) {
+      this.bankRow = row;
+      this.candidates = [];
+      this.actionError = null;
+      this.resolution = "";
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/reconciliation/${row.id}/candidates`).then(({
+        data
+      }) => {
+        this.candidates = data.candidates || [];
+        this.candidateNote = data.limitation || "";
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      });
+    },
+    matchTo(candidate) {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/reconciliation/${this.bankRow.id}/match`, _objectSpread({
+        invoice_id: candidate.invoice.id
+      }, this.resolution ? {
+        resolution: this.resolution
+      } : {})).then(() => {
+        this.bankRow = null;
+        this.candidates = [];
+        this.load();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    unmatch(row) {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/reconciliation/${row.id}/unmatch`, {}).then(() => this.load()).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    money(value) {
+      return "INR " + Number(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2
+      });
+    },
     branchName(id) {
       const b = this.branches.find(x => x.id === id);
       return b ? b.name : "—";
@@ -243,7 +297,8 @@ const TABS = [{
       const path = {
         vouchers: "/vouchers",
         gst: "/registers/gst",
-        unposted: "/registers/unposted"
+        unposted: "/registers/unposted",
+        bank: "/reconciliation"
       }[this.view] || "/invoices";
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(path + (params.length ? "?" + params.join("&") : "")).then(({
         data
@@ -375,7 +430,11 @@ var render = function render() {
     staticClass: "fx-page-title"
   }, [_vm._v("Financials")]), _vm._v(" "), _c("p", {
     staticClass: "fx-page-sub"
-  }, [_vm._v(_vm._s(_vm.subtitleForView))])]), _vm._v(" "), _c("div", {
+  }, [_vm._v("\n      " + _vm._s(_vm.subtitleForView) + "\n      "), _c("router-link", {
+    attrs: {
+      to: "/settings/finance"
+    }
+  }, [_vm._v("Finance settings →")])], 1)]), _vm._v(" "), _c("div", {
     staticClass: "fx-toolbar fx-financials__views"
   }, _vm._l(_vm.VIEWS, function (v) {
     return _c("button", {
@@ -504,7 +563,178 @@ var render = function render() {
     }
   }, [_vm._v(_vm._s(_vm.error))]) : !_vm.rows.length ? _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("No documents match.")]) : _vm.view === "reports" ? [_c("div", {
+  }, [_vm._v("No documents match.")]) : _vm.view === "bank" ? [_c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Bank reference")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Status")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Settled against")]), _vm._v(" "), _vm.canPost ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (t) {
+    return _c("tr", {
+      key: "b-" + t.id,
+      class: {
+        "is-selected": _vm.bankRow && _vm.bankRow.id === t.id
+      }
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(t.plaid_transaction_id || t.id))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: t.amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: t.reconciliation_status
+      }
+    })], 1), _vm._v(" "), _c("td", [t.matched_invoice ? _c("span", [_vm._v(_vm._s(t.matched_invoice.invoice_no))]) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])]), _vm._v(" "), _vm.canPost ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [!t.matched_invoice ? _c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.findCandidates(t);
+        }
+      }
+    }, [_vm._v("Find the invoice")]) : _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.unmatch(t);
+        }
+      }
+    }, [_vm._v("Unmatch")])]) : _vm._e()]);
+  }), 0)]), _vm._v(" "), !_vm.rows.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing is waiting to be reconciled.")]) : _vm._e(), _vm._v(" "), _vm.bankRow ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("\n        What this " + _vm._s(_vm.money(_vm.bankRow.amount)) + " could settle\n      ")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v(_vm._s(_vm.candidateNote))]), _vm._v(" "), !_vm.candidates.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No open invoice matches this amount.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Invoice")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Client")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Outstanding")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Confidence")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Why")]), _vm._v(" "), _vm.canPost ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.candidates, function (c) {
+    return _c("tr", {
+      key: "c-" + c.invoice.id
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(c.invoice.invoice_no))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(c.invoice.customer ? c.invoice.customer.name : "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: c.invoice.outstanding,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: c.confidence
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(c.reason))]), _vm._v(" "), _vm.canPost ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [c.variance < 0 ? _c("select", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.resolution,
+        expression: "resolution"
+      }],
+      staticClass: "fx-input",
+      on: {
+        change: function ($event) {
+          var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+            return o.selected;
+          }).map(function (o) {
+            var val = "_value" in o ? o._value : o.value;
+            return val;
+          });
+          _vm.resolution = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+        }
+      }
+    }, [_c("option", {
+      attrs: {
+        value: ""
+      }
+    }, [_vm._v("Still owed (short paid)")]), _vm._v(" "), _c("option", {
+      attrs: {
+        value: "write_off"
+      }
+    }, [_vm._v("Write the difference off")]), _vm._v(" "), _c("option", {
+      attrs: {
+        value: "discount"
+      }
+    }, [_vm._v("Treat it as a discount")])]) : _vm._e(), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.matchTo(c);
+        }
+      }
+    }, [_vm._v("Settle")])]) : _vm._e()]);
+  }), 0)]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()]) : _vm._e()] : _vm.view === "reports" ? [_c("div", {
     staticClass: "fx-toolbar"
   }, [_c("label", {
     staticClass: "fx-field"

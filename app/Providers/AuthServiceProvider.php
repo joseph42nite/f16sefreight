@@ -48,6 +48,8 @@ class AuthServiceProvider extends ServiceProvider
         $this->define('manageMailbox', ['pricing', 'operations', 'sales', 'boss', 'accounts'], 'tactical');
         // 🔒 Opening and closing an accounting period is accounts' ALONE — not even the Boss (PRD §2.4 "sole").
         $this->define('managePeriods', ['accounts'], 'command');
+        // Settings → Finance: the chart of accounts and the rate cards (PRD §2.4 — accounts and the Boss).
+        $this->define('manageFinanceSettings', ['accounts', 'boss'], 'command');
 
         // ── Enquiry lifecycle — pricing owns triage and conversion ───────────
         $this->define('triage',     ['pricing'], 'tactical');

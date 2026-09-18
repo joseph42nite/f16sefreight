@@ -2,7 +2,10 @@
   <div>
     <header class="fx-page-head">
       <h1 class="fx-page-title">Financials</h1>
-      <p class="fx-page-sub">{{ subtitleForView }}</p>
+      <p class="fx-page-sub">
+        {{ subtitleForView }}
+        <router-link to="/settings/finance">Finance settings →</router-link>
+      </p>
     </header>
 
     <!--
@@ -49,6 +52,76 @@
     <p v-if="loading" class="fx-muted">Loading…</p>
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
     <p v-else-if="!rows.length" class="fx-muted">No documents match.</p>
+
+    <!-- ── Bank reconciliation (PRD §6.5) ────────────────────────────────── -->
+    <template v-else-if="view === 'bank'">
+      <table class="fx-table">
+        <thead>
+          <tr>
+            <th scope="col">Bank reference</th>
+            <th class="fx-num" scope="col">Amount</th>
+            <th scope="col">Status</th>
+            <th scope="col">Settled against</th>
+            <th v-if="canPost" scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="t in rows" :key="'b-' + t.id" :class="{ 'is-selected': bankRow && bankRow.id === t.id }">
+            <td class="identifier">{{ t.plaid_transaction_id || t.id }}</td>
+            <td class="fx-num"><Figure :value="t.amount" kind="currency" currency-code="INR" /></td>
+            <td><StatusChip :value="t.reconciliation_status" /></td>
+            <td>
+              <span v-if="t.matched_invoice">{{ t.matched_invoice.invoice_no }}</span>
+              <span v-else class="fx-muted">—</span>
+            </td>
+            <td v-if="canPost" class="fx-row-actions">
+              <button v-if="!t.matched_invoice" class="fx-btn" :disabled="busy" @click="findCandidates(t)">Find the invoice</button>
+              <button v-else class="fx-btn fx-btn--ghost" :disabled="busy" @click="unmatch(t)">Unmatch</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-if="!rows.length" class="fx-muted">Nothing is waiting to be reconciled.</p>
+
+      <section v-if="bankRow" class="fx-section">
+        <h3 class="fx-section__title">
+          What this {{ money(bankRow.amount) }} could settle
+        </h3>
+        <p class="fx-muted">{{ candidateNote }}</p>
+        <p v-if="!candidates.length" class="fx-muted">No open invoice matches this amount.</p>
+        <table v-else class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Invoice</th>
+              <th scope="col">Client</th>
+              <th class="fx-num" scope="col">Outstanding</th>
+              <th scope="col">Confidence</th>
+              <th scope="col">Why</th>
+              <th v-if="canPost" scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="c in candidates" :key="'c-' + c.invoice.id">
+              <td class="identifier">{{ c.invoice.invoice_no }}</td>
+              <td>{{ c.invoice.customer ? c.invoice.customer.name : "—" }}</td>
+              <td class="fx-num"><Figure :value="c.invoice.outstanding" kind="currency" currency-code="INR" /></td>
+              <td><StatusChip :value="c.confidence" /></td>
+              <td>{{ c.reason }}</td>
+              <td v-if="canPost" class="fx-row-actions">
+                <!-- A short payment has to say what the difference IS: written off, discounted, or still owed. -->
+                <select v-if="c.variance < 0" v-model="resolution" class="fx-input">
+                  <option value="">Still owed (short paid)</option>
+                  <option value="write_off">Write the difference off</option>
+                  <option value="discount">Treat it as a discount</option>
+                </select>
+                <button class="fx-btn fx-btn--primary" :disabled="busy" @click="matchTo(c)">Settle</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
+      </section>
+    </template>
 
     <!-- ── Reports: P&L, balance sheet, trial balance (PRD §6.8) ─────────── -->
     <template v-else-if="view === 'reports'">
@@ -536,6 +609,7 @@ const VIEWS = [
   { key: "unposted", label: "Not yet posted" },
   { key: "reports", label: "Reports" },
   { key: "periods", label: "Periods" },
+  { key: "bank", label: "Bank" },
 ];
 
 /** The three reports the ledger can prove (PRD §6.8). Each runs over a PERIOD, never a free date range. */
@@ -565,6 +639,8 @@ export default {
     REPORTS, report: "profit-and-loss", periodId: null, periods: [], reportData: null, reportLoading: false,
     /** A period being opened. */
     newPeriod: { agent_id: null, period_name: "", start_date: "", end_date: "" },
+    /** Bank reconciliation: the row being settled, what it could settle, and how a short payment is treated. */
+    bankRow: null, candidates: [], candidateNote: "", resolution: "",
     selected: null, tab: "credit",
     credit: null, creditLoading: false,
     preview: null, previewLoading: false,
@@ -604,6 +680,7 @@ export default {
         gst: "The tax charged on every finalized document, for GSTR-1. Read-only — it is what was charged.",
         reports: "What the ledger proves, over one period of one branch.",
         periods: "The months the ledger is open for. Nothing posts into a month without an open period.",
+        bank: "Money in the bank, and the invoice each payment settles.",
         unposted: "Documents raised and not yet in the ledger, and what each is waiting for.",
         invoices: "The receivables register for this branch. Select a row to see the client's credit standing and the journal a posting would write.",
         vouchers: "What this branch owes its suppliers, one voucher per supplier per shipment. Select one to see the journal a posting would write.",
@@ -671,6 +748,40 @@ export default {
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
+    findCandidates(row) {
+      this.bankRow = row;
+      this.candidates = [];
+      this.actionError = null;
+      this.resolution = "";
+
+      ApiService.get(`/reconciliation/${row.id}/candidates`)
+        .then(({ data }) => { this.candidates = data.candidates || []; this.candidateNote = data.limitation || ""; })
+        .catch((e) => { this.actionError = this.messageFor(e); });
+    },
+    matchTo(candidate) {
+      this.busy = true;
+      this.actionError = null;
+
+      ApiService.post(`/reconciliation/${this.bankRow.id}/match`, {
+        invoice_id: candidate.invoice.id,
+        ...(this.resolution ? { resolution: this.resolution } : {}),
+      })
+        .then(() => { this.bankRow = null; this.candidates = []; this.load(); })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    unmatch(row) {
+      this.busy = true;
+      this.actionError = null;
+
+      ApiService.post(`/reconciliation/${row.id}/unmatch`, {})
+        .then(() => this.load())
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    money(value) {
+      return "INR " + Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+    },
     branchName(id) {
       const b = this.branches.find((x) => x.id === id);
       return b ? b.name : "—";
@@ -686,7 +797,7 @@ export default {
       if (this.branchId) params.push("agent_id=" + this.branchId);
 
       const path = {
-        vouchers: "/vouchers", gst: "/registers/gst", unposted: "/registers/unposted",
+        vouchers: "/vouchers", gst: "/registers/gst", unposted: "/registers/unposted", bank: "/reconciliation",
       }[this.view] || "/invoices";
 
       ApiService.get(path + (params.length ? "?" + params.join("&") : ""))

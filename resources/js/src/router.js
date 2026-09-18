@@ -437,6 +437,13 @@ const router = new Router({
         {
           // §9.6 — `command` only, and gated per role rather than per group: the Boss
           // READS the register from admin., accounts WORKS it from accounts.
+          // Settings → Finance: the chart of accounts and the rate cards (user, 2026-09-18).
+          path: "settings/finance",
+          name: "FinanceSettings",
+          component: () => import("@/view/pages/freight/FinanceSettings"),
+          meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
+        },
+        {
           path: "financials",
           name: "Financials",
           component: () => import("@/view/pages/freight/Financials"),

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class AccountsInvoiceItem extends Model
 {
     protected $fillable = [
-        'invoice_id', 'house_job_id', 'charge_type', 'charge_basis', 'hsn_sac_code',
+        'invoice_id', 'house_job_id', 'charge_type', 'charge_basis', 'source', 'hsn_sac_code',
         'description', 'quantity', 'rate', 'amount',
         'tax_status', 'tax_percentage', 'tax_amount', 'net_amount',
     ];

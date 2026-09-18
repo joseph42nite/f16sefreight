@@ -698,6 +698,14 @@ class AirwayBillController extends Controller
 
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
 
+        // 💰 The cost sheet's SELL side follows the draft (user, 2026-09-18). Outside the transaction: billing lines
+        // are not part of saving the waybill, and a failure writing them must never undo the waybill itself.
+        try {
+            app(\App\Services\SellFromWaybill::class)->refresh($awb_id);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         $send_response = [];
 
         if ($request->status == 'send') {
@@ -868,6 +876,14 @@ class AirwayBillController extends Controller
         }
 
         $awb_id = $request->first_box['awb_code'] . $request->first_box['awb_no'];
+
+        // 💰 The cost sheet's SELL side follows the draft (user, 2026-09-18). Outside the transaction: billing lines
+        // are not part of saving the waybill, and a failure writing them must never undo the waybill itself.
+        try {
+            app(\App\Services\SellFromWaybill::class)->refresh($awb_id);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         $send_response = [];
 

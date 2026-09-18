@@ -82,6 +82,8 @@ class JobCostSheetController extends Controller
                 'tax_statuses' => self::TAX_STATUSES,
             ],
             'locked' => $this->isLocked($job),
+            // Where the sell lines come from, so an empty sheet says what to do (user, 2026-09-18).
+            'from_waybill' => $this->waybillState($job),
         ];
 
         // 🔴 The buy side and the margin travel together and are OMITTED together.
@@ -269,6 +271,32 @@ class JobCostSheetController extends Controller
      * Locked once ANY invoice on the job has left draft. Before that the sheet is a
      * working document; after it, the numbers have been issued to a client.
      */
+    /**
+     * The draft waybill the sell lines are written from, and whether it carries a rate yet.
+     *
+     * ⚠️ An empty cost sheet has two very different causes — no waybill at all, or a waybill nobody has priced — and
+     * "No sell lines yet" says neither.
+     *
+     * @return ?array{awb_number: string, chargeable_weight: ?float, has_rate: bool}
+     */
+    private function waybillState(Job $job): ?array
+    {
+        $waybill = DB::table('air_way_bills')->where('job_id', $job->id)->first(['id', 'awb_code', 'awb_no']);
+
+        if ($waybill === null) {
+            return null;
+        }
+
+        $cargo = DB::table('way_bill_consignment_data')->where('awb_id', $waybill->id)->first(['chargable_weight', 'gross_weight', 'rate']);
+        $charge = (float) DB::table('payment_info')->where('awb_id', $waybill->id)->value('weight_charge');
+
+        return [
+            'awb_number' => \App\Support\AwbNumber::normalise((string) $waybill->awb_code . $waybill->awb_no) ?? (string) $waybill->id,
+            'chargeable_weight' => $cargo ? (float) ($cargo->chargable_weight ?: $cargo->gross_weight) : null,
+            'has_rate' => (float) ($cargo->rate ?? 0) > 0 || $charge > 0,
+        ];
+    }
+
     private function isLocked(Job $job): bool
     {
         return AccountsInvoice::withoutTenantScope()

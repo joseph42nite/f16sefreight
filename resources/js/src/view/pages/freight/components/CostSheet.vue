@@ -36,7 +36,18 @@
               </td>
             </tr>
             <tr v-if="!sheet.sell.lines.length">
-              <td colspan="5" class="fx-muted">No sell lines yet.</td>
+              <!-- An empty sell side has two causes, and they need different answers (user, 2026-09-18). -->
+              <td colspan="5" class="fx-muted">
+                <template v-if="sheet.from_waybill && !sheet.from_waybill.has_rate">
+                  No sell lines yet. They are written from the draft waybill
+                  <strong>{{ sheet.from_waybill.awb_number }}</strong>, which has no rate yet — open it in FocusAir,
+                  enter the rate and charges and save, and the freight line appears here.
+                </template>
+                <template v-else-if="!sheet.from_waybill">
+                  No sell lines yet. Draft the air waybill first (Extraction), or add a line below.
+                </template>
+                <template v-else>No sell lines yet.</template>
+              </td>
             </tr>
           </tbody>
           <tfoot>
@@ -133,7 +144,7 @@
           </label>
           <label class="fx-field">
             <span class="fx-field__label">Qty</span>
-            <input v-model.number="draft.quantity" class="fx-input" type="number" step="0.001" min="0" />
+            <input v-model.number="draft.quantity" class="fx-input" type="number" step="0.001" min="0" @input="quantityTouched = true" />
           </label>
           <label class="fx-field">
             <span class="fx-field__label">Rate</span>
@@ -172,6 +183,8 @@ export default {
     sheet: null, partners: [], loading: true, busy: false, error: null, actionError: null,
     draft: { side: "sell", charge_type: "air_freight", description: "",
              quantity: 1, rate: 0, tax_percentage: 18, vendor_id: "" },
+    /** True once somebody has typed a quantity, so the waybill's weight never overwrites it. */
+    quantityTouched: false,
   }),
   computed: {
     ...mapGetters(["designation"]),
@@ -198,7 +211,14 @@ export default {
     load() {
       this.loading = true;
       ApiService.get(`/jobs/${this.jobId}/cost-sheet`)
-        .then(({ data }) => { this.sheet = data; this.error = null; })
+        .then(({ data }) => {
+          this.sheet = data;
+          this.error = null;
+
+          // The weight the freight is charged on, so a line typed here starts from the waybill's own figure.
+          const weight = data.from_waybill && data.from_waybill.chargeable_weight;
+          if (weight && !this.quantityTouched && this.draft.charge_type === "air_freight") this.draft.quantity = weight;
+        })
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.loading = false; });
     },

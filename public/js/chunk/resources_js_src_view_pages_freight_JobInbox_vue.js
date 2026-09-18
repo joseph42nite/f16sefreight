@@ -1176,7 +1176,9 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       rate: 0,
       tax_percentage: 18,
       vendor_id: ""
-    }
+    },
+    /** True once somebody has typed a quantity, so the waybill's weight never overwrites it. */
+    quantityTouched: false
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["designation"])), {}, {
     /* Pricing owns the rates; accounts finalizes them. The server re-checks. */
@@ -1206,6 +1208,10 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       }) => {
         this.sheet = data;
         this.error = null;
+
+        // The weight the freight is charged on, so a line typed here starts from the waybill's own figure.
+        const weight = data.from_waybill && data.from_waybill.chargeable_weight;
+        if (weight && !this.quantityTouched && this.draft.charge_type === "air_freight") this.draft.quantity = weight;
       }).catch(e => {
         this.error = this.readable(e);
       }).finally(() => {
@@ -4178,7 +4184,7 @@ var render = function render() {
     attrs: {
       colspan: "5"
     }
-  }, [_vm._v("No sell lines yet.")])]) : _vm._e()], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_vm._m(0), _vm._v(" "), _c("td", {
+  }, [_vm.sheet.from_waybill && !_vm.sheet.from_waybill.has_rate ? [_vm._v("\n                No sell lines yet. They are written from the draft waybill\n                "), _c("strong", [_vm._v(_vm._s(_vm.sheet.from_waybill.awb_number))]), _vm._v(", which has no rate yet — open it in FocusAir,\n                enter the rate and charges and save, and the freight line appears here.\n              ")] : !_vm.sheet.from_waybill ? [_vm._v("\n                No sell lines yet. Draft the air waybill first (Extraction), or add a line below.\n              ")] : [_vm._v("No sell lines yet.")]], 2)]) : _vm._e()], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_vm._m(0), _vm._v(" "), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -4385,10 +4391,12 @@ var render = function render() {
       value: _vm.draft.quantity
     },
     on: {
-      input: function ($event) {
+      input: [function ($event) {
         if ($event.target.composing) return;
         _vm.$set(_vm.draft, "quantity", _vm._n($event.target.value));
-      },
+      }, function ($event) {
+        _vm.quantityTouched = true;
+      }],
       blur: function ($event) {
         return _vm.$forceUpdate();
       }

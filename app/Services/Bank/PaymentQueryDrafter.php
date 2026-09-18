@@ -28,6 +28,10 @@ class PaymentQueryDrafter
             . 'held against their next shipment.',
         'unidentified' => 'A payment has arrived that we cannot place against any invoice. State the amount, the date, '
             . 'the reference and whatever the bank narration says, and ask which invoices it is meant to settle.',
+        // A supplier's own statement against our vouchers (user, 2026-09-19) — an airline's CASS, a trucker's month.
+        'vendor_difference' => 'A supplier\'s statement does not agree with what we booked. Name the statement and the '
+            . 'period, list each shipment where the figures differ with what they billed and what we booked, and ask '
+            . 'them to check those lines and send a corrected statement or a credit note.',
     ];
 
     public function __construct(private readonly OpenRouterClient $client, private readonly AiUsageService $usage) {}
@@ -92,8 +96,11 @@ class PaymentQueryDrafter
     {
         $money = fn ($n) => '₹' . number_format((float) $n, 2);
         $invoice = $facts['invoice_no'] ?? 'our invoice';
-        $paid = "{$money($facts['received'])} reached us on {$facts['value_date']}"
-            . (filled($facts['reference'] ?? null) ? " under reference {$facts['reference']}" : '');
+        // Only the payment mails have a payment in their facts; a supplier's statement has none.
+        $paid = isset($facts['received'])
+            ? "{$money($facts['received'])} reached us on {$facts['value_date']}"
+                . (filled($facts['reference'] ?? null) ? " under reference {$facts['reference']}" : '')
+            : '';
 
         [$subject, $paragraphs] = match ($kind) {
             'short' => ["{$invoice}: {$money($facts['difference'])} short",
@@ -103,6 +110,17 @@ class PaymentQueryDrafter
                     "{$paid}, which leaves {$money($facts['difference'])} outstanding.",
                     'Could you confirm whether the balance is on its way, or tell us what on the invoice is in question? We will hold the account open meanwhile.',
                 ]],
+            'vendor_difference' => [
+                "{$facts['vendor']} — {$facts['period']}: " . count($facts['lines']) . ' line(s) to check',
+                array_merge(
+                    ['Thank you for the statement' . (filled($facts['statement_no'] ?? null) ? " {$facts['statement_no']}" : '')
+                        . " for {$facts['period']}, totalling {$money($facts['their_total'])}."],
+                    array_map(fn ($l) => ($l['reference'] ?? $l['shipment'] ?? 'One line') . ': you have billed '
+                        . $money($l['they_billed'])
+                        . (isset($l['we_booked']) ? ', we have ' . $money($l['we_booked']) . ' booked' : ', we have nothing booked')
+                        . (isset($l['difference']) ? ' — a difference of ' . $money($l['difference']) : '') . '.', $facts['lines']),
+                    ['Could you check these and send a corrected statement or a credit note? Everything else on the statement agrees.']
+                )],
             'over' => ["{$invoice}: {$money($facts['difference'])} more than billed",
                 [
                     "Invoice {$invoice} was for {$money($facts['billed'])}.",

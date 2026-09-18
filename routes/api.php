@@ -513,6 +513,14 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
 
+        // Supplier statements — airlines (CASS), truckers, brokers, anyone we owe (user, 2026-09-19).
+        Route::get('/vendor-statements', [\App\Http\Controllers\Freight\VendorStatementController::class, 'index']);
+        Route::post('/vendor-statements', [\App\Http\Controllers\Freight\VendorStatementController::class, 'import']);
+        Route::get('/vendor-statements/{id}', [\App\Http\Controllers\Freight\VendorStatementController::class, 'show'])->whereNumber('id');
+        Route::post('/vendor-statements/{id}/compare', [\App\Http\Controllers\Freight\VendorStatementController::class, 'recompare'])->whereNumber('id');
+        Route::post('/vendor-statements/{id}/lines/{lineId}/dispute', [\App\Http\Controllers\Freight\VendorStatementController::class, 'dispute'])->whereNumber('id');
+        Route::post('/vendor-statements/{id}/draft-query', [\App\Http\Controllers\Freight\VendorStatementController::class, 'draftQuery'])->whereNumber('id');
+
         Route::get('/reconciliation', [\App\Http\Controllers\Freight\ReconciliationController::class, 'index']);
         Route::get('/reconciliation/{transaction}/candidates', [\App\Http\Controllers\Freight\ReconciliationController::class, 'candidates']);
         // What was credited against what was billed, and the mail that asks about it (user, 2026-09-19).

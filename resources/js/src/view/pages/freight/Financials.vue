@@ -51,6 +51,141 @@
 
     <p v-if="loading" class="fx-muted">Loading…</p>
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
+    <!-- ── Supplier statements: what they say we owe, against our own vouchers ─ -->
+    <template v-else-if="view === 'vendors'">
+      <!--
+        Not airlines alone (user, 2026-09-19): a CASS, a trucker's month, a broker's or a warehouse's all ask the same
+        question. The supplier type only narrows the picker; the comparison is the same for every one of them.
+      -->
+      <div class="fx-toolbar">
+        <label class="fx-field">
+          <span class="fx-field__label">Supplier type</span>
+          <select v-model="vendorForm.vendor_type" class="fx-input" @change="loadVendors">
+            <option value="">All</option>
+            <option v-for="t in vendorTypes" :key="t" :value="t">{{ t.replace(/[_-]/g, " ") }}</option>
+          </select>
+        </label>
+        <button class="fx-btn" @click="importingVendor = !importingVendor">
+          {{ importingVendor ? "Cancel import" : "Import a statement" }}
+        </button>
+      </div>
+
+      <section v-if="importingVendor" class="fx-section">
+        <div class="fx-toolbar">
+          <label class="fx-field">
+            <span class="fx-field__label">Supplier</span>
+            <select v-model="vendorForm.vendor_id" class="fx-input">
+              <option :value="null">Choose…</option>
+              <option v-for="v in vendors" :key="v.id" :value="v.id">{{ v.name }}</option>
+            </select>
+          </label>
+          <label class="fx-field">
+            <span class="fx-field__label">Period</span>
+            <input v-model="vendorForm.period" class="fx-input" placeholder="2026-09 or Sep 2026 2nd half" />
+          </label>
+          <label class="fx-field">
+            <span class="fx-field__label">Their statement no.</span>
+            <input v-model="vendorForm.statement_no" class="fx-input" />
+          </label>
+        </div>
+        <label class="fx-field" for="vendor-csv">
+          <span class="fx-field__label">Paste their statement (CSV: awb or job, description, date, weight, rate, amount)</span>
+          <textarea id="vendor-csv" v-model="vendorForm.csv" class="fx-input" rows="6"></textarea>
+        </label>
+        <p class="fx-muted">Sending the same period again replaces it — a statement is their whole word for that month.</p>
+        <button
+          class="fx-btn fx-btn--primary"
+          :disabled="busy || !vendorForm.vendor_id || !vendorForm.period.trim() || !vendorForm.csv.trim() || !branchForImport"
+          @click="importVendorStatement"
+        >{{ busy ? "Importing…" : "Import and compare" }}</button>
+        <span v-if="!branchForImport" class="fx-muted"> Choose a branch above first.</span>
+      </section>
+
+      <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
+      <p v-if="!vendorStatements.length" class="fx-muted">No supplier statement has been imported yet.</p>
+      <table v-else class="fx-table">
+        <thead>
+          <tr>
+            <th scope="col">Supplier</th>
+            <th scope="col">Type</th>
+            <th scope="col">Period</th>
+            <th class="fx-num" scope="col">They say</th>
+            <th scope="col">Lines</th>
+            <th class="fx-num" scope="col">Difference</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="st in vendorStatements" :key="'vs-' + st.id" :class="{ 'is-selected': vendorStatement && vendorStatement.id === st.id }">
+            <td>{{ st.vendor }}</td>
+            <td class="fx-muted">{{ (st.vendor_type || "").replace(/[_-]/g, " ") }}</td>
+            <td class="identifier">{{ st.period }}</td>
+            <td class="fx-num"><Figure :value="st.their_total" kind="currency" :currency-code="st.currency || 'INR'" /></td>
+            <td>
+              {{ st.lines }} line(s)<span v-if="disagreeing(st)">, {{ disagreeing(st) }} to check</span>
+            </td>
+            <td class="fx-num"><Figure :value="st.difference" kind="currency" :currency-code="st.currency || 'INR'" /></td>
+            <td class="fx-row-actions">
+              <button class="fx-btn" :disabled="busy" @click="openStatement(st.id)">Open</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <section v-if="vendorStatement" class="fx-section">
+        <h3 class="fx-section__title">
+          {{ vendorStatement.vendor }} — {{ vendorStatement.period }}
+        </h3>
+        <div class="fx-toolbar">
+          <button class="fx-btn" :disabled="busy" @click="recompare">Compare again</button>
+          <button v-if="canPost" class="fx-btn" :disabled="busy" @click="draftVendorQuery">Ask the supplier</button>
+        </div>
+        <p class="fx-muted">
+          They billed {{ money(vendorTotals.theirs) }}; we have {{ money(vendorTotals.ours) }} booked against these
+          shipments for this supplier — a difference of {{ money(vendorTotals.difference) }}.
+        </p>
+        <table class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Their reference</th>
+              <th scope="col">Shipment</th>
+              <th scope="col">What it is</th>
+              <th class="fx-num" scope="col">They billed</th>
+              <th class="fx-num" scope="col">We booked</th>
+              <th class="fx-num" scope="col">Difference</th>
+              <th scope="col">Where it stands</th>
+              <th v-if="canPost" scope="col">Queried</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="l in vendorLines" :key="'vl-' + l.id">
+              <td class="identifier">{{ l.reference || "—" }}</td>
+              <td class="identifier">{{ l.job_no || "—" }}</td>
+              <td>{{ l.description || "—" }}</td>
+              <td class="fx-num"><Figure :value="l.their_amount" kind="currency" currency-code="INR" /></td>
+              <td class="fx-num">
+                <Figure v-if="l.our_amount !== null" :value="l.our_amount" kind="currency" currency-code="INR" />
+                <span v-else class="fx-muted">—</span>
+              </td>
+              <td class="fx-num">
+                <Figure v-if="l.difference !== null" :value="l.difference" kind="currency" currency-code="INR" />
+                <span v-else class="fx-muted">—</span>
+              </td>
+              <td>{{ vendorStates[l.state] || l.state }}</td>
+              <td v-if="canPost">
+                <input
+                  class="fx-input"
+                  :value="l.dispute_note"
+                  placeholder="what we asked them"
+                  @change="dispute(l, $event.target.value)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </template>
+
     <p v-else-if="!rows.length" class="fx-muted">No documents match.</p>
 
     <!-- ── Bank reconciliation (PRD §6.5) ────────────────────────────────── -->
@@ -114,38 +249,6 @@
           </tbody>
         </table>
       </section>
-
-      <!-- The drafted mail, before anybody sends it. -->
-      <div v-if="queryDraft" class="fx-modal" role="dialog" aria-modal="true" aria-labelledby="query-title">
-        <div class="fx-modal__panel">
-          <header class="fx-modal__head">
-            <h2 id="query-title" class="fx-modal__title">Ask the client about this payment</h2>
-          </header>
-          <div class="fx-modal__body fx-newmail">
-            <p class="fx-muted">
-              Written from the figures{{ queryDraft.written_by === "ai" ? " by the model" : "" }}; every number comes
-              from the invoice and the bank row. Edit anything before it goes.
-            </p>
-            <label class="fx-field" for="query-to">
-              <span class="fx-field__label">To</span>
-              <input id="query-to" v-model="queryDraft.toLine" class="fx-input" placeholder="comma separated" />
-            </label>
-            <label class="fx-field" for="query-subject">
-              <span class="fx-field__label">Subject</span>
-              <input id="query-subject" v-model="queryDraft.subject" class="fx-input" />
-            </label>
-            <MailEditor v-model="queryDraft.body" />
-            <p v-if="queryDraft.sent" class="fx-notice" role="status">Sent from your mailbox.</p>
-            <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
-          </div>
-          <footer class="fx-modal__foot">
-            <button class="fx-btn" :disabled="busy" @click="queryDraft = null">Close</button>
-            <button v-if="!queryDraft.sent" class="fx-btn fx-btn--primary" :disabled="busy || !queryDraft.toLine.trim()" @click="sendQuery">
-              {{ busy ? "Sending…" : "Send from my mailbox" }}
-            </button>
-          </footer>
-        </div>
-      </div>
 
       <table class="fx-table">
         <thead>
@@ -680,6 +783,37 @@
         </template>
       </template>
     </FxDrawer>
+    <!-- The drafted mail, before anybody sends it. -->
+    <div v-if="queryDraft" class="fx-modal" role="dialog" aria-modal="true" aria-labelledby="query-title">
+      <div class="fx-modal__panel">
+        <header class="fx-modal__head">
+          <h2 id="query-title" class="fx-modal__title">{{ queryDraft.title }}</h2>
+        </header>
+        <div class="fx-modal__body fx-newmail">
+          <p class="fx-muted">
+            Written from the figures{{ queryDraft.written_by === "ai" ? " by the model" : "" }}; every number comes
+            from our own records. Edit anything before it goes.
+          </p>
+          <label class="fx-field" for="query-to">
+            <span class="fx-field__label">To</span>
+            <input id="query-to" v-model="queryDraft.toLine" class="fx-input" placeholder="comma separated" />
+          </label>
+          <label class="fx-field" for="query-subject">
+            <span class="fx-field__label">Subject</span>
+            <input id="query-subject" v-model="queryDraft.subject" class="fx-input" />
+          </label>
+          <MailEditor v-model="queryDraft.body" />
+          <p v-if="queryDraft.sent" class="fx-notice" role="status">Sent from your mailbox.</p>
+          <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
+        </div>
+        <footer class="fx-modal__foot">
+          <button class="fx-btn" :disabled="busy" @click="queryDraft = null">Close</button>
+          <button v-if="!queryDraft.sent" class="fx-btn fx-btn--primary" :disabled="busy || !queryDraft.toLine.trim()" @click="sendQuery">
+            {{ busy ? "Sending…" : "Send from my mailbox" }}
+          </button>
+        </footer>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -703,6 +837,7 @@ const VIEWS = [
   { key: "reports", label: "Reports" },
   { key: "periods", label: "Periods" },
   { key: "bank", label: "Bank" },
+  { key: "vendors", label: "Supplier statements" },
 ];
 
 /** The three reports the ledger can prove (PRD §6.8). Each runs over a PERIOD, never a free date range. */
@@ -736,6 +871,10 @@ export default {
     bankRow: null, candidates: [], candidateNote: "", resolution: "",
     /** Statement import, the credited-vs-billed list, and the query mail being written. */
     importing: false, csv: "", importResult: null, differences: [], queryDraft: null,
+    /** Supplier statements: the list, the one open, and the import being typed (user, 2026-09-19). */
+    vendorStatements: [], vendorTypes: [], vendorStates: {}, vendors: [],
+    vendorStatement: null, vendorLines: [], vendorTotals: { theirs: 0, ours: 0, difference: 0 },
+    importingVendor: false, vendorForm: { vendor_type: "", vendor_id: null, period: "", statement_no: "", csv: "" },
     selected: null, tab: "credit",
     credit: null, creditLoading: false,
     preview: null, previewLoading: false,
@@ -764,6 +903,10 @@ export default {
     visiblePeriods() {
       return this.branchId ? this.periods.filter((p) => p.agent_id === this.branchId) : this.periods;
     },
+    /** The branch a statement belongs to: the one in view, or the only one there is. */
+    branchForImport() {
+      return this.branchId || (this.branches.length === 1 ? this.branches[0].id : null);
+    },
     newPeriodValid() {
       const p = this.newPeriod;
       return p.agent_id && p.period_name.trim() && p.start_date && p.end_date && p.start_date <= p.end_date;
@@ -776,6 +919,7 @@ export default {
         reports: "What the ledger proves, over one period of one branch.",
         periods: "The months the ledger is open for. Nothing posts into a month without an open period.",
         bank: "Money in the bank, and the invoice each payment settles.",
+        vendors: "What each supplier says we owe — an airline's CASS, a trucker's month, anyone's — against our own vouchers.",
         unposted: "Documents raised and not yet in the ledger, and what each is waiting for.",
         invoices: "The receivables register for this branch. Select a row to see the client's credit standing and the journal a posting would write.",
         vouchers: "What this branch owes its suppliers, one voucher per supplier per shipment. Select one to see the journal a posting would write.",
@@ -797,6 +941,12 @@ export default {
 
       if (key === "reports" || key === "periods") {
         this.loadPeriods();
+        return;
+      }
+
+      if (key === "vendors") {
+        this.vendorStatement = null;
+        this.loadVendorStatements();
         return;
       }
 
@@ -843,10 +993,6 @@ export default {
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
-    /** The branch a statement belongs to: the one in view, or the only one there is. */
-    branchForImport() {
-      return this.branchId || (this.branches.length === 1 ? this.branches[0].id : null);
-    },
     findCandidates(row) {
       this.bankRow = row;
       this.candidates = [];
@@ -886,6 +1032,87 @@ export default {
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
+    /** How many lines on a statement do not agree — the only number anybody acts on. */
+    disagreeing(statement) {
+      const by = statement.by_state || {};
+      return (by.different || 0) + (by.not_booked || 0) + (by.unmatched || 0);
+    },
+    loadVendorStatements() {
+      this.loading = true;
+      const params = [];
+      if (this.branchId) params.push("agent_id=" + this.branchId);
+      if (this.vendorForm.vendor_type) params.push("vendor_type=" + encodeURIComponent(this.vendorForm.vendor_type));
+
+      ApiService.get("/vendor-statements" + (params.length ? "?" + params.join("&") : ""))
+        .then(({ data }) => {
+          this.vendorStatements = data.statements || [];
+          this.vendorTypes = data.vendor_types || [];
+          this.vendorStates = data.states || {};
+          if (data.branches) this.branches = data.branches;
+          this.error = null;
+        })
+        .catch((e) => { this.error = this.messageFor(e); })
+        .finally(() => { this.loading = false; });
+    },
+    /** The suppliers of the chosen type, for the picker. */
+    loadVendors() {
+      this.vendorForm.vendor_id = null;
+      this.loadVendorStatements();
+      ApiService.get("/partners" + (this.vendorForm.vendor_type ? "?type=" + encodeURIComponent(this.vendorForm.vendor_type) : ""))
+        .then(({ data }) => { this.vendors = data.data || []; })
+        .catch((e) => { this.actionError = this.messageFor(e); });
+    },
+    importVendorStatement() {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post("/vendor-statements", { agent_id: this.branchForImport, ...this.vendorForm })
+        .then(({ data }) => {
+          this.showStatement(data);
+          this.vendorForm = { ...this.vendorForm, csv: "", statement_no: "" };
+          this.importingVendor = false;
+          this.loadVendorStatements();
+        })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    openStatement(id) {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.get(`/vendor-statements/${id}`)
+        .then(({ data }) => this.showStatement(data))
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    /** Compare again — vouchers move, and a line with no cost booked last week may have one today. */
+    recompare() {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/vendor-statements/${this.vendorStatement.id}/compare`, {})
+        .then(({ data }) => { this.showStatement(data); this.loadVendorStatements(); })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    dispute(line, note) {
+      ApiService.post(`/vendor-statements/${this.vendorStatement.id}/lines/${line.id}/dispute`, { dispute_note: note })
+        .then(({ data }) => this.showStatement(data))
+        .catch((e) => { this.actionError = this.messageFor(e); });
+    },
+    draftVendorQuery() {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/vendor-statements/${this.vendorStatement.id}/draft-query`, {})
+        .then(({ data }) => {
+          this.queryDraft = { ...data, title: "Ask the supplier about these lines", toLine: (data.to || []).join(", "), sent: false };
+        })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    showStatement(data) {
+      this.vendorStatement = data.statement;
+      this.vendorLines = data.lines || [];
+      this.vendorTotals = data.totals || { theirs: 0, ours: 0, difference: 0 };
+      this.vendorStates = data.states || this.vendorStates;
+    },
     loadDifferences() {
       this.busy = true;
       ApiService.get("/reconciliation/differences" + (this.branchId ? "?agent_id=" + this.branchId : ""))
@@ -898,7 +1125,7 @@ export default {
       this.actionError = null;
       ApiService.post(`/reconciliation/${difference.transaction_id}/draft-query`, { kind: difference.kind })
         .then(({ data }) => {
-          this.queryDraft = { ...data, toLine: (data.to || []).join(", "), sent: false };
+          this.queryDraft = { ...data, title: "Ask the client about this payment", toLine: (data.to || []).join(", "), sent: false };
         })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
@@ -926,6 +1153,11 @@ export default {
       return b ? b.name : "—";
     },
     load() {
+      if (this.view === "vendors") {
+        this.loadVendorStatements();
+        return;
+      }
+
       this.loading = true;
       const params = [];
 

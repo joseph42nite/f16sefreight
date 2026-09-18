@@ -55,6 +55,9 @@ const VIEWS = [{
 }, {
   key: "bank",
   label: "Bank"
+}, {
+  key: "vendors",
+  label: "Supplier statements"
 }];
 
 /** The three reports the ledger can prove (PRD §6.8). Each runs over a PERIOD, never a free date range. */
@@ -122,6 +125,26 @@ const TABS = [{
     importResult: null,
     differences: [],
     queryDraft: null,
+    /** Supplier statements: the list, the one open, and the import being typed (user, 2026-09-19). */
+    vendorStatements: [],
+    vendorTypes: [],
+    vendorStates: {},
+    vendors: [],
+    vendorStatement: null,
+    vendorLines: [],
+    vendorTotals: {
+      theirs: 0,
+      ours: 0,
+      difference: 0
+    },
+    importingVendor: false,
+    vendorForm: {
+      vendor_type: "",
+      vendor_id: null,
+      period: "",
+      statement_no: "",
+      csv: ""
+    },
     selected: null,
     tab: "credit",
     credit: null,
@@ -156,6 +179,10 @@ const TABS = [{
     visiblePeriods() {
       return this.branchId ? this.periods.filter(p => p.agent_id === this.branchId) : this.periods;
     },
+    /** The branch a statement belongs to: the one in view, or the only one there is. */
+    branchForImport() {
+      return this.branchId || (this.branches.length === 1 ? this.branches[0].id : null);
+    },
     newPeriodValid() {
       const p = this.newPeriod;
       return p.agent_id && p.period_name.trim() && p.start_date && p.end_date && p.start_date <= p.end_date;
@@ -168,6 +195,7 @@ const TABS = [{
         reports: "What the ledger proves, over one period of one branch.",
         periods: "The months the ledger is open for. Nothing posts into a month without an open period.",
         bank: "Money in the bank, and the invoice each payment settles.",
+        vendors: "What each supplier says we owe — an airline's CASS, a trucker's month, anyone's — against our own vouchers.",
         unposted: "Documents raised and not yet in the ledger, and what each is waiting for.",
         invoices: "The receivables register for this branch. Select a row to see the client's credit standing and the journal a posting would write.",
         vouchers: "What this branch owes its suppliers, one voucher per supplier per shipment. Select one to see the journal a posting would write."
@@ -188,6 +216,11 @@ const TABS = [{
       this.reportData = null;
       if (key === "reports" || key === "periods") {
         this.loadPeriods();
+        return;
+      }
+      if (key === "vendors") {
+        this.vendorStatement = null;
+        this.loadVendorStatements();
         return;
       }
       this.load();
@@ -247,10 +280,6 @@ const TABS = [{
         this.busy = false;
       });
     },
-    /** The branch a statement belongs to: the one in view, or the only one there is. */
-    branchForImport() {
-      return this.branchId || (this.branches.length === 1 ? this.branches[0].id : null);
-    },
     findCandidates(row) {
       this.bankRow = row;
       this.candidates = [];
@@ -309,6 +338,125 @@ const TABS = [{
         this.busy = false;
       });
     },
+    /** How many lines on a statement do not agree — the only number anybody acts on. */
+    disagreeing(statement) {
+      const by = statement.by_state || {};
+      return (by.different || 0) + (by.not_booked || 0) + (by.unmatched || 0);
+    },
+    loadVendorStatements() {
+      this.loading = true;
+      const params = [];
+      if (this.branchId) params.push("agent_id=" + this.branchId);
+      if (this.vendorForm.vendor_type) params.push("vendor_type=" + encodeURIComponent(this.vendorForm.vendor_type));
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/vendor-statements" + (params.length ? "?" + params.join("&") : "")).then(({
+        data
+      }) => {
+        this.vendorStatements = data.statements || [];
+        this.vendorTypes = data.vendor_types || [];
+        this.vendorStates = data.states || {};
+        if (data.branches) this.branches = data.branches;
+        this.error = null;
+      }).catch(e => {
+        this.error = this.messageFor(e);
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    /** The suppliers of the chosen type, for the picker. */
+    loadVendors() {
+      this.vendorForm.vendor_id = null;
+      this.loadVendorStatements();
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/partners" + (this.vendorForm.vendor_type ? "?type=" + encodeURIComponent(this.vendorForm.vendor_type) : "")).then(({
+        data
+      }) => {
+        this.vendors = data.data || [];
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      });
+    },
+    importVendorStatement() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/vendor-statements", _objectSpread({
+        agent_id: this.branchForImport
+      }, this.vendorForm)).then(({
+        data
+      }) => {
+        this.showStatement(data);
+        this.vendorForm = _objectSpread(_objectSpread({}, this.vendorForm), {}, {
+          csv: "",
+          statement_no: ""
+        });
+        this.importingVendor = false;
+        this.loadVendorStatements();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    openStatement(id) {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/vendor-statements/${id}`).then(({
+        data
+      }) => this.showStatement(data)).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /** Compare again — vouchers move, and a line with no cost booked last week may have one today. */
+    recompare() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/vendor-statements/${this.vendorStatement.id}/compare`, {}).then(({
+        data
+      }) => {
+        this.showStatement(data);
+        this.loadVendorStatements();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    dispute(line, note) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/vendor-statements/${this.vendorStatement.id}/lines/${line.id}/dispute`, {
+        dispute_note: note
+      }).then(({
+        data
+      }) => this.showStatement(data)).catch(e => {
+        this.actionError = this.messageFor(e);
+      });
+    },
+    draftVendorQuery() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/vendor-statements/${this.vendorStatement.id}/draft-query`, {}).then(({
+        data
+      }) => {
+        this.queryDraft = _objectSpread(_objectSpread({}, data), {}, {
+          title: "Ask the supplier about these lines",
+          toLine: (data.to || []).join(", "),
+          sent: false
+        });
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    showStatement(data) {
+      this.vendorStatement = data.statement;
+      this.vendorLines = data.lines || [];
+      this.vendorTotals = data.totals || {
+        theirs: 0,
+        ours: 0,
+        difference: 0
+      };
+      this.vendorStates = data.states || this.vendorStates;
+    },
     loadDifferences() {
       this.busy = true;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/reconciliation/differences" + (this.branchId ? "?agent_id=" + this.branchId : "")).then(({
@@ -330,6 +478,7 @@ const TABS = [{
         data
       }) => {
         this.queryDraft = _objectSpread(_objectSpread({}, data), {}, {
+          title: "Ask the client about this payment",
           toLine: (data.to || []).join(", "),
           sent: false
         });
@@ -368,6 +517,10 @@ const TABS = [{
       return b ? b.name : "—";
     },
     load() {
+      if (this.view === "vendors") {
+        this.loadVendorStatements();
+        return;
+      }
       this.loading = true;
       const params = [];
       if (this.view === "awaiting") params.push("awaiting=1");
@@ -641,7 +794,331 @@ var render = function render() {
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.error))]) : !_vm.rows.length ? _c("p", {
+  }, [_vm._v(_vm._s(_vm.error))]) : _vm.view === "vendors" ? [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Supplier type")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.vendorForm.vendor_type,
+      expression: "vendorForm.vendor_type"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.vendorForm, "vendor_type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.loadVendors]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("All")]), _vm._v(" "), _vm._l(_vm.vendorTypes, function (t) {
+    return _c("option", {
+      key: t,
+      domProps: {
+        value: t
+      }
+    }, [_vm._v(_vm._s(t.replace(/[_-]/g, " ")))]);
+  })], 2)]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    on: {
+      click: function ($event) {
+        _vm.importingVendor = !_vm.importingVendor;
+      }
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.importingVendor ? "Cancel import" : "Import a statement") + "\n      ")])]), _vm._v(" "), _vm.importingVendor ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Supplier")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.vendorForm.vendor_id,
+      expression: "vendorForm.vendor_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.vendorForm, "vendor_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.vendors, function (v) {
+    return _c("option", {
+      key: v.id,
+      domProps: {
+        value: v.id
+      }
+    }, [_vm._v(_vm._s(v.name))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Period")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.vendorForm.period,
+      expression: "vendorForm.period"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "2026-09 or Sep 2026 2nd half"
+    },
+    domProps: {
+      value: _vm.vendorForm.period
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.vendorForm, "period", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Their statement no.")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.vendorForm.statement_no,
+      expression: "vendorForm.statement_no"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.vendorForm.statement_no
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.vendorForm, "statement_no", $event.target.value);
+      }
+    }
+  })])]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field",
+    attrs: {
+      for: "vendor-csv"
+    }
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Paste their statement (CSV: awb or job, description, date, weight, rate, amount)")]), _vm._v(" "), _c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.vendorForm.csv,
+      expression: "vendorForm.csv"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      id: "vendor-csv",
+      rows: "6"
+    },
+    domProps: {
+      value: _vm.vendorForm.csv
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.vendorForm, "csv", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Sending the same period again replaces it — a statement is their whole word for that month.")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.vendorForm.vendor_id || !_vm.vendorForm.period.trim() || !_vm.vendorForm.csv.trim() || !_vm.branchForImport
+    },
+    on: {
+      click: _vm.importVendorStatement
+    }
+  }, [_vm._v(_vm._s(_vm.busy ? "Importing…" : "Import and compare"))]), _vm._v(" "), !_vm.branchForImport ? _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(" Choose a branch above first.")]) : _vm._e()]) : _vm._e(), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), !_vm.vendorStatements.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No supplier statement has been imported yet.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.vendorStatements, function (st) {
+    return _c("tr", {
+      key: "vs-" + st.id,
+      class: {
+        "is-selected": _vm.vendorStatement && _vm.vendorStatement.id === st.id
+      }
+    }, [_c("td", [_vm._v(_vm._s(st.vendor))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s((st.vendor_type || "").replace(/[_-]/g, " ")))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(st.period))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: st.their_total,
+        kind: "currency",
+        "currency-code": st.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v("\n            " + _vm._s(st.lines) + " line(s)"), _vm.disagreeing(st) ? _c("span", [_vm._v(", " + _vm._s(_vm.disagreeing(st)) + " to check")]) : _vm._e()]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: st.difference,
+        kind: "currency",
+        "currency-code": st.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.openStatement(st.id);
+        }
+      }
+    }, [_vm._v("Open")])])]);
+  }), 0)]), _vm._v(" "), _vm.vendorStatement ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("\n        " + _vm._s(_vm.vendorStatement.vendor) + " — " + _vm._s(_vm.vendorStatement.period) + "\n      ")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.recompare
+    }
+  }, [_vm._v("Compare again")]), _vm._v(" "), _vm.canPost ? _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.draftVendorQuery
+    }
+  }, [_vm._v("Ask the supplier")]) : _vm._e()]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        They billed " + _vm._s(_vm.money(_vm.vendorTotals.theirs)) + "; we have " + _vm._s(_vm.money(_vm.vendorTotals.ours)) + " booked against these\n        shipments for this supplier — a difference of " + _vm._s(_vm.money(_vm.vendorTotals.difference)) + ".\n      ")]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Their reference")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipment")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("What it is")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("They billed")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("We booked")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Difference")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Where it stands")]), _vm._v(" "), _vm.canPost ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Queried")]) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.vendorLines, function (l) {
+    return _c("tr", {
+      key: "vl-" + l.id
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(l.reference || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(l.job_no || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(l.description || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.their_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [l.our_amount !== null ? _c("Figure", {
+      attrs: {
+        value: l.our_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [l.difference !== null ? _c("Figure", {
+      attrs: {
+        value: l.difference,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.vendorStates[l.state] || l.state))]), _vm._v(" "), _vm.canPost ? _c("td", [_c("input", {
+      staticClass: "fx-input",
+      attrs: {
+        placeholder: "what we asked them"
+      },
+      domProps: {
+        value: l.dispute_note
+      },
+      on: {
+        change: function ($event) {
+          return _vm.dispute(l, $event.target.value);
+        }
+      }
+    })]) : _vm._e()]);
+  }), 0)])]) : _vm._e()] : !_vm.rows.length ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("No documents match.")]) : _vm.view === "bank" ? [_c("div", {
     staticClass: "fx-toolbar"
@@ -783,113 +1260,7 @@ var render = function render() {
         }
       }
     }, [_vm._v("Ask the client")])]) : _vm._e()]);
-  }), 0)])]) : _vm._e(), _vm._v(" "), _vm.queryDraft ? _c("div", {
-    staticClass: "fx-modal",
-    attrs: {
-      role: "dialog",
-      "aria-modal": "true",
-      "aria-labelledby": "query-title"
-    }
-  }, [_c("div", {
-    staticClass: "fx-modal__panel"
-  }, [_vm._m(0), _vm._v(" "), _c("div", {
-    staticClass: "fx-modal__body fx-newmail"
-  }, [_c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v("\n            Written from the figures" + _vm._s(_vm.queryDraft.written_by === "ai" ? " by the model" : "") + "; every number comes\n            from the invoice and the bank row. Edit anything before it goes.\n          ")]), _vm._v(" "), _c("label", {
-    staticClass: "fx-field",
-    attrs: {
-      for: "query-to"
-    }
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.queryDraft.toLine,
-      expression: "queryDraft.toLine"
-    }],
-    staticClass: "fx-input",
-    attrs: {
-      id: "query-to",
-      placeholder: "comma separated"
-    },
-    domProps: {
-      value: _vm.queryDraft.toLine
-    },
-    on: {
-      input: function ($event) {
-        if ($event.target.composing) return;
-        _vm.$set(_vm.queryDraft, "toLine", $event.target.value);
-      }
-    }
-  })]), _vm._v(" "), _c("label", {
-    staticClass: "fx-field",
-    attrs: {
-      for: "query-subject"
-    }
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("Subject")]), _vm._v(" "), _c("input", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.queryDraft.subject,
-      expression: "queryDraft.subject"
-    }],
-    staticClass: "fx-input",
-    attrs: {
-      id: "query-subject"
-    },
-    domProps: {
-      value: _vm.queryDraft.subject
-    },
-    on: {
-      input: function ($event) {
-        if ($event.target.composing) return;
-        _vm.$set(_vm.queryDraft, "subject", $event.target.value);
-      }
-    }
-  })]), _vm._v(" "), _c("MailEditor", {
-    model: {
-      value: _vm.queryDraft.body,
-      callback: function ($$v) {
-        _vm.$set(_vm.queryDraft, "body", $$v);
-      },
-      expression: "queryDraft.body"
-    }
-  }), _vm._v(" "), _vm.queryDraft.sent ? _c("p", {
-    staticClass: "fx-notice",
-    attrs: {
-      role: "status"
-    }
-  }, [_vm._v("Sent from your mailbox.")]) : _vm._e(), _vm._v(" "), _vm.actionError ? _c("p", {
-    staticClass: "fx-error",
-    attrs: {
-      role: "alert"
-    }
-  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()], 1), _vm._v(" "), _c("footer", {
-    staticClass: "fx-modal__foot"
-  }, [_c("button", {
-    staticClass: "fx-btn",
-    attrs: {
-      disabled: _vm.busy
-    },
-    on: {
-      click: function ($event) {
-        _vm.queryDraft = null;
-      }
-    }
-  }, [_vm._v("Close")]), _vm._v(" "), !_vm.queryDraft.sent ? _c("button", {
-    staticClass: "fx-btn fx-btn--primary",
-    attrs: {
-      disabled: _vm.busy || !_vm.queryDraft.toLine.trim()
-    },
-    on: {
-      click: _vm.sendQuery
-    }
-  }, [_vm._v("\n            " + _vm._s(_vm.busy ? "Sending…" : "Send from my mailbox") + "\n          ")]) : _vm._e()])])]) : _vm._e(), _vm._v(" "), _c("table", {
+  }), 0)])]) : _vm._e(), _vm._v(" "), _c("table", {
     staticClass: "fx-table"
   }, [_c("thead", [_c("tr", [_c("th", {
     attrs: {
@@ -1884,19 +2255,155 @@ var render = function render() {
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e()], 2)], 2);
-};
-var staticRenderFns = [function () {
-  var _vm = this,
-    _c = _vm._self._c;
-  return _c("header", {
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e()], 2), _vm._v(" "), _vm.queryDraft ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "query-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_c("header", {
     staticClass: "fx-modal__head"
   }, [_c("h2", {
     staticClass: "fx-modal__title",
     attrs: {
       id: "query-title"
     }
-  }, [_vm._v("Ask the client about this payment")])]);
+  }, [_vm._v(_vm._s(_vm.queryDraft.title))])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body fx-newmail"
+  }, [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          Written from the figures" + _vm._s(_vm.queryDraft.written_by === "ai" ? " by the model" : "") + "; every number comes\n          from our own records. Edit anything before it goes.\n        ")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field",
+    attrs: {
+      for: "query-to"
+    }
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.queryDraft.toLine,
+      expression: "queryDraft.toLine"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      id: "query-to",
+      placeholder: "comma separated"
+    },
+    domProps: {
+      value: _vm.queryDraft.toLine
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.queryDraft, "toLine", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field",
+    attrs: {
+      for: "query-subject"
+    }
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Subject")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.queryDraft.subject,
+      expression: "queryDraft.subject"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      id: "query-subject"
+    },
+    domProps: {
+      value: _vm.queryDraft.subject
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.queryDraft, "subject", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("MailEditor", {
+    model: {
+      value: _vm.queryDraft.body,
+      callback: function ($$v) {
+        _vm.$set(_vm.queryDraft, "body", $$v);
+      },
+      expression: "queryDraft.body"
+    }
+  }), _vm._v(" "), _vm.queryDraft.sent ? _c("p", {
+    staticClass: "fx-notice",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("Sent from your mailbox.")]) : _vm._e(), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()], 1), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.queryDraft = null;
+      }
+    }
+  }, [_vm._v("Close")]), _vm._v(" "), !_vm.queryDraft.sent ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.queryDraft.toLine.trim()
+    },
+    on: {
+      click: _vm.sendQuery
+    }
+  }, [_vm._v("\n          " + _vm._s(_vm.busy ? "Sending…" : "Send from my mailbox") + "\n        ")]) : _vm._e()])])]) : _vm._e()], 2);
+};
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Supplier")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Type")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Period")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("They say")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Lines")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Difference")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  })])]);
 }, function () {
   var _vm = this,
     _c = _vm._self._c;

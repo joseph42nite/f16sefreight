@@ -1422,6 +1422,10 @@ export default {
       const doc = this.documents.find((d) => d.uid === uid);
       if (doc && doc.timer) clearTimeout(doc.timer);
 
+      // 🔴 Removed means DELETED (user, 2026-09-18): the file and what was read from it go from the server too, or it
+      // comes straight back the next time this shipment's readings are fetched.
+      if (doc && doc.jobId) ApiService.delete("/user/ocr-jobs/" + doc.jobId).catch(() => {});
+
       // Whatever it was supplying is no longer supplied by anything.
       const next = { ...this.assignment };
       Object.keys(next).forEach((k) => { if (next[k] === uid) delete next[k]; });

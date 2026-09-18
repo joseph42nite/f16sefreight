@@ -71,4 +71,34 @@ class ExtractionResumesTest extends TestCase
 
         $this->assertSame(['packing-list.pdf', 'invoice.pdf'], $names->all());
     }
+
+    /** Removing a document deletes the file and what was read from it, and it never comes back (user, 2026-09-18). */
+    public function test_removing_a_document_deletes_it_and_it_does_not_return(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('pdf_temp');
+        $company = \App\Company::create(['name' => 'Gone Co', 'code' => 'GON', 'tier' => 'tactical']);
+        $branch = \App\Agent::create(['company_id' => $company->id, 'agent_name' => 'BOM', 'branch_code' => 'BOM']);
+        $mine = \App\User::create(['name' => 'P', 'email' => 'p-gon@test.local', 'password' => \Illuminate\Support\Facades\Hash::make('x'),
+            'company_name' => $company->id, 'branch_name' => $branch->id, 'designation' => 'pricing', 'is_active' => 1]);
+        $theirs = \App\User::create(['name' => 'Q', 'email' => 'q-gon@test.local', 'password' => \Illuminate\Support\Facades\Hash::make('x'),
+            'company_name' => $company->id, 'branch_name' => $branch->id, 'designation' => 'pricing', 'is_active' => 1]);
+        $enquiry = \App\Enquiry::create(['agent_id' => $branch->id, 'transport_mode' => 'air', 'status' => 'converted', 'enquiry_no' => 'ENQA-GONBOM-26-0001']);
+        $job = \App\Job::create(['agent_id' => $branch->id, 'enquiry_id' => $enquiry->id, 'transport_mode' => 'air', 'execution_job_no' => 'JOBA-GONBOM-26-0001']);
+
+        \Illuminate\Support\Facades\Storage::disk('pdf_temp')->put('invoice.pdf', '%PDF');
+        $reading = PdfProcessingJob::create(['user_id' => $mine->id, 'original_filename' => 'invoice.pdf', 'temp_file_path' => 'invoice.pdf',
+            'document_type' => 'unstructured', 'status' => 'completed', 'job_id' => $job->id, 'extracted_data' => ['shipper' => ['name' => 'Globex']]]);
+
+        $api = fn (\App\User $u) => $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($u), 'Accept' => 'application/json']);
+
+        // Somebody else's document is not theirs to delete.
+        $api($theirs)->deleteJson("http://focusair.localhost/api/user/ocr-jobs/{$reading->id}")->assertNotFound();
+
+        $api($mine)->deleteJson("http://focusair.localhost/api/user/ocr-jobs/{$reading->id}")->assertOk();
+
+        \Illuminate\Support\Facades\Storage::disk('pdf_temp')->assertMissing('invoice.pdf');
+        $this->assertNull($reading->fresh()->extracted_data, 'what was read from it is gone');
+        $this->assertSame('dismissed', $reading->fresh()->status);
+        $this->assertSame([], $this->getJson("http://focusair.localhost/api/user/ocr-running?job_id={$job->id}")->assertOk()->json('data'));
+    }
 }

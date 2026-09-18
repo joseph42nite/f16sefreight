@@ -264,6 +264,36 @@ class OcrController extends Controller
         return response()->json(['status' => true, 'data' => $jobs]);
     }
 
+    /**
+     * Remove a document from the workspace (user, 2026-09-18: "if I delete it then delete the document — you're not
+     * supposed to keep it there").
+     *
+     * 🔴 The FILE and everything read from it go: the uploaded PDF is deleted from the temp disk and `extracted_data`
+     * is cleared, so nothing of the document is kept and it never comes back into the panel.
+     *
+     * ⚠️ The row itself stays, marked `dismissed`, ONLY so the credit it spent is still explainable in Credits —
+     * "1 credit, document removed" beats a credit that appears to have been spent on nothing. It carries no content.
+     *
+     * DELETE /api/user/ocr-jobs/{jobId}
+     */
+    public function destroy(int $jobId)
+    {
+        $job = PdfProcessingJob::where('id', $jobId)->where('user_id', Auth::id())->firstOrFail();
+
+        if (filled($job->temp_file_path)) {
+            Storage::disk('pdf_temp')->delete($job->temp_file_path);
+        }
+
+        $job->forceFill([
+            'status'         => 'dismissed',
+            'extracted_data' => null,
+            'temp_file_path' => '',
+            'error_message'  => null,
+        ])->save();
+
+        return response()->json(['status' => true, 'deleted' => $job->id]);
+    }
+
     public function history()
     {
         $jobs = PdfProcessingJob::forUser(Auth::id())

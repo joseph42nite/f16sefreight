@@ -1142,6 +1142,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+const _excluded = ["side", "id"];
+function _objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -1168,6 +1171,10 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     busy: false,
     error: null,
     actionError: null,
+    /** The line being changed in place: { side, id, description, quantity, rate, tax_percentage, charge_type }. */
+    editing: {},
+    /** The confirmation before the sheet goes to accounts. */
+    confirming: false,
     draft: {
       side: "sell",
       charge_type: "air_freight",
@@ -1228,6 +1235,51 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       }) => {
         this.sheet = data;
         this.draft.description = "";
+      }).catch(e => {
+        this.actionError = this.readable(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    edit(side, line) {
+      this.editing = {
+        side,
+        id: line.id,
+        description: line.description,
+        quantity: Number(line.quantity),
+        rate: Number(line.rate),
+        tax_percentage: Number(line.tax_percentage || 0),
+        charge_type: line.charge_type
+      };
+    },
+    saveLine() {
+      this.busy = true;
+      this.actionError = null;
+      const _this$editing = this.editing,
+        {
+          side,
+          id
+        } = _this$editing,
+        line = _objectWithoutProperties(_this$editing, _excluded);
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put(`/jobs/${this.jobId}/cost-sheet/${side}/${id}`, line).then(({
+        data
+      }) => {
+        this.sheet = data;
+        this.editing = {};
+      }).catch(e => {
+        this.actionError = this.readable(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    sendToAccounts() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/jobs/${this.jobId}/cost-sheet/send`, {}).then(({
+        data
+      }) => {
+        this.sheet = data;
+        this.confirming = false;
       }).catch(e => {
         this.actionError = this.readable(e);
       }).finally(() => {
@@ -4144,7 +4196,138 @@ var render = function render() {
   }) : _vm._e()])]), _vm._v(" "), _c("tbody", [_vm._l(_vm.sheet.sell.lines, function (l) {
     return _c("tr", {
       key: l.id
-    }, [_c("td", [_vm._v(_vm._s(l.description) + " "), _c("span", {
+    }, [_vm.editing.side === "sell" && _vm.editing.id === l.id ? [_c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.editing.description,
+        expression: "editing.description"
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        type: "text"
+      },
+      domProps: {
+        value: _vm.editing.description
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "description", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.editing.quantity,
+        expression: "editing.quantity",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.001",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.editing.quantity
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "quantity", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.editing.rate,
+        expression: "editing.rate",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.editing.rate
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "rate", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.editing.tax_percentage,
+        expression: "editing.tax_percentage",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0",
+        max: "100"
+      },
+      domProps: {
+        value: _vm.editing.tax_percentage
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "tax_percentage", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: _vm.saveLine
+      }
+    }, [_vm._v("Save")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          _vm.editing = {};
+        }
+      }
+    }, [_vm._v("Cancel")])])] : [_c("td", [_vm._v(_vm._s(l.description) + " "), _c("span", {
       staticClass: "fx-muted"
     }, [_vm._v("(" + _vm._s(_vm.label(l.charge_type)) + ")")])]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
@@ -4175,10 +4358,17 @@ var render = function render() {
       staticClass: "fx-btn fx-btn--ghost",
       on: {
         click: function ($event) {
+          return _vm.edit("sell", l);
+        }
+      }
+    }, [_vm._v("Edit")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
           return _vm.remove("sell", l.id);
         }
       }
-    }, [_vm._v("✕")])]) : _vm._e()]);
+    }, [_vm._v("✕")])]) : _vm._e()]], 2);
   }), _vm._v(" "), !_vm.sheet.sell.lines.length ? _c("tr", [_c("td", {
     staticClass: "fx-muted",
     attrs: {
@@ -4219,7 +4409,107 @@ var render = function render() {
   }) : _vm._e()])]), _vm._v(" "), _c("tbody", [_vm._l(_vm.sheet.buy.lines, function (l) {
     return _c("tr", {
       key: l.id
-    }, [_c("td", [_vm._v(_vm._s(l.description) + " "), _c("span", {
+    }, [_vm.editing.side === "buy" && _vm.editing.id === l.id ? [_c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.editing.description,
+        expression: "editing.description"
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        type: "text"
+      },
+      domProps: {
+        value: _vm.editing.description
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "description", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.editing.quantity,
+        expression: "editing.quantity",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.001",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.editing.quantity
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "quantity", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.editing.rate,
+        expression: "editing.rate",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.editing.rate
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "rate", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: _vm.saveLine
+      }
+    }, [_vm._v("Save")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          _vm.editing = {};
+        }
+      }
+    }, [_vm._v("Cancel")])])] : [_c("td", [_vm._v(_vm._s(l.description) + " "), _c("span", {
       staticClass: "fx-muted"
     }, [_vm._v("(" + _vm._s(_vm.label(l.charge_type)) + ")")])]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
@@ -4242,10 +4532,17 @@ var render = function render() {
       staticClass: "fx-btn fx-btn--ghost",
       on: {
         click: function ($event) {
+          return _vm.edit("buy", l);
+        }
+      }
+    }, [_vm._v("Edit")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
           return _vm.remove("buy", l.id);
         }
       }
-    }, [_vm._v("✕")])]) : _vm._e()]);
+    }, [_vm._v("✕")])]) : _vm._e()]], 2);
   }), _vm._v(" "), !_vm.sheet.buy.lines.length ? _c("tr", [_c("td", {
     staticClass: "fx-muted",
     attrs: {
@@ -4276,7 +4573,141 @@ var render = function render() {
     attrs: {
       "aria-label": "Nothing billed yet"
     }
-  }) : _c("span", [_vm._v(_vm._s(Number(_vm.sheet.margin.percent).toFixed(2)) + "%")])])])]) : _vm._e(), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("section", {
+  }) : _c("span", [_vm._v(_vm._s(Number(_vm.sheet.margin.percent).toFixed(2)) + "%")])])])]) : _vm._e(), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Accounts")]), _vm._v(" "), _vm.sheet.sent_to_accounts ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Sent to accounts " + _vm._s(String(_vm.sheet.sent_to_accounts.at).slice(0, 16))), _vm.sheet.sent_to_accounts.by ? [_vm._v(" by " + _vm._s(_vm.sheet.sent_to_accounts.by))] : _vm._e(), _vm._v(".\n        Sending again replaces what they see.\n      ")], 2) : _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Accounts do not see this sheet until you send it.")]), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.sheet.sell.lines.length
+    },
+    on: {
+      click: function ($event) {
+        _vm.confirming = true;
+      }
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.sheet.sent_to_accounts ? "Send again to accounts" : "Send to accounts") + "\n      ")]) : _vm._e(), _vm._v(" "), !_vm.sheet.sell.lines.length ? _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(" Add at least one sell line first.")]) : _vm._e()]), _vm._v(" "), _vm.confirming ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "send-accounts-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_vm._m(2), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body"
+  }, [_c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(3), _vm._v(" "), _c("tbody", [_vm._m(4), _vm._v(" "), _vm._l(_vm.sheet.sell.lines, function (l) {
+    return _c("tr", {
+      key: "c-sell-" + l.id
+    }, [_c("td", [_vm._v(_vm._s(l.description))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.quantity,
+        kind: "count"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.rate,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.net_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), _vm._v(" "), _c("tr", [_vm._m(5), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.sell.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _vm.sheet.buy ? [_vm._m(6), _vm._v(" "), _vm._l(_vm.sheet.buy.lines, function (l) {
+    return _c("tr", {
+      key: "c-buy-" + l.id
+    }, [_c("td", [_vm._v(_vm._s(l.description))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.quantity,
+        kind: "count"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v("—")]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.net_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), _vm._v(" "), _c("tr", [_vm._m(7), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.buy.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])] : _vm._e(), _vm._v(" "), _vm.sheet.margin ? _c("tr", [_vm._m(8), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.margin.value,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  }), _vm._v(" "), _vm.sheet.margin.percent !== null ? _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(" · " + _vm._s(_vm.sheet.margin.percent) + "%")]) : _vm._e()], 1)]) : _vm._e()], 2)]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Accounts finalize and post the invoice; sending does not post anything.")]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()]), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.confirming = false;
+      }
+    }
+  }, [_vm._v("Back to the sheet")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.sendToAccounts
+    }
+  }, [_vm._v(_vm._s(_vm.busy ? "Sending…" : "Send to accounts"))])])])]) : _vm._e(), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("section", {
     staticClass: "fx-section"
   }, [_c("h3", {
     staticClass: "fx-section__title"
@@ -4531,6 +4962,80 @@ var staticRenderFns = [function () {
       colspan: "2"
     }
   }, [_c("strong", [_vm._v("Total")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "send-accounts-title"
+    }
+  }, [_vm._v("Send this cost sheet to accounts?")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Charge")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Qty")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rate")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Net")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("tr", [_c("td", {
+    attrs: {
+      colspan: "4"
+    }
+  }, [_c("strong", [_vm._v("Sell — what the client is billed")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "3"
+    }
+  }, [_c("strong", [_vm._v("Sell total")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("tr", [_c("td", {
+    attrs: {
+      colspan: "4"
+    }
+  }, [_c("strong", [_vm._v("Buy — what we owe suppliers")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "3"
+    }
+  }, [_c("strong", [_vm._v("Buy total")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "3"
+    }
+  }, [_c("strong", [_vm._v("Margin")])]);
 }];
 render._withStripped = true;
 

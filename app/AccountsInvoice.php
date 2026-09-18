@@ -48,6 +48,7 @@ class AccountsInvoice extends Model
     }
 
     protected $fillable = [
+        'sent_to_accounts_at', 'sent_to_accounts_by',
         'agent_id', 'job_id', 'transport_mode', 'customer_id',
         'billed_party_type', 'billed_party_id', 'parent_invoice_id', 'created_by',
         'invoice_no', 'type', 'document_date', 'status',

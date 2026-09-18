@@ -443,7 +443,10 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // 🔴 Nothing here writes to a manifest table: rates move, declarations do not.
     Route::get('/jobs/{job}/cost-sheet', [\App\Http\Controllers\Freight\JobCostSheetController::class, 'show']);
     Route::post('/jobs/{job}/cost-sheet/lines', [\App\Http\Controllers\Freight\JobCostSheetController::class, 'storeLine']);
+    Route::put('/jobs/{job}/cost-sheet/{side}/{lineId}', [\App\Http\Controllers\Freight\JobCostSheetController::class, 'updateLine']);
     Route::delete('/jobs/{job}/cost-sheet/{side}/{lineId}', [\App\Http\Controllers\Freight\JobCostSheetController::class, 'destroyLine']);
+    // Pricing hands the finished sheet to accounts; the screen confirms the figures first (user, 2026-09-18).
+    Route::post('/jobs/{job}/cost-sheet/send', [\App\Http\Controllers\Freight\JobCostSheetController::class, 'sendToAccounts']);
 
     // ── FocusSea (§5.8). The cargo-type matrix and ISO 6346 are enforced here,
     // not in the Vue watcher — see SeaShipmentController.

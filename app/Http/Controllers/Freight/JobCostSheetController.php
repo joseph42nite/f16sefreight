@@ -84,6 +84,8 @@ class JobCostSheetController extends Controller
             'locked' => $this->isLocked($job),
             // Where the sell lines come from, so an empty sheet says what to do (user, 2026-09-18).
             'from_waybill' => $this->waybillState($job),
+            // Pricing's hand-over to accounts: when it was sent, and by whom.
+            'sent_to_accounts' => $this->sentState($job),
         ];
 
         // 🔴 The buy side and the margin travel together and are OMITTED together.
@@ -169,6 +171,91 @@ class JobCostSheetController extends Controller
         $this->audit->record($job->agent_id, "costsheet.{$data['side']}_line_added", 'job', $job->id, auth()->id());
 
         return response()->json($this->show($job)->getData(true), 201);
+    }
+
+    /**
+     * Change a line that is already on the sheet (user, 2026-09-18). Same gate, same lock as adding one.
+     *
+     * ⚠️ A line written from the waybill can be edited like any other, and doing so makes it the operator's: it is
+     * marked as typed, so the next save of the draft waybill does not overwrite what they decided.
+     */
+    public function updateLine(Request $request, Job $job, string $side, int $lineId): JsonResponse
+    {
+        $this->authorize('editCostSheet');
+
+        if (! in_array($side, ['sell', 'buy'], true)) {
+            return response()->json(['error' => 'Unknown side.'], 404);
+        }
+
+        if ($this->isLocked($job)) {
+            return response()->json(['error' => 'This cost sheet has been finalized and posted. Corrections need a credit note.',
+                'reason' => 'locked'], 422);
+        }
+
+        $data = $request->validate([
+            'charge_type'    => 'required|string|in:' . implode(',', self::CHARGE_TYPES),
+            'description'    => 'required|string|max:255',
+            'quantity'       => 'required|numeric|min:0',
+            'rate'           => 'required|numeric|min:0',
+            'charge_basis'   => 'nullable|string|in:' . implode(',', self::CHARGE_BASES),
+            'tax_status'     => 'nullable|string|in:' . implode(',', self::TAX_STATUSES),
+            'tax_percentage' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        $line = $side === 'sell'
+            ? AccountsInvoiceItem::whereKey($lineId)->whereIn('invoice_id', AccountsInvoice::withoutTenantScope()->where('job_id', $job->id)->select('id'))->first()
+            : AccountsPurchaseItem::whereKey($lineId)->whereIn('purchase_voucher_id', AccountsPurchaseVoucher::withoutTenantScope()->where('job_id', $job->id)->select('id'))->first();
+
+        if ($line === null) {
+            return response()->json(['error' => 'Line not found on this sheet.'], 404);
+        }
+
+        $amount = round($data['quantity'] * $data['rate'], 2);
+        $taxPct = (float) ($data['tax_percentage'] ?? 0);
+        $tax = round($amount * $taxPct / 100, 2);
+
+        $line->forceFill([
+            'charge_type' => $data['charge_type'],
+            'description' => $data['description'],
+            'quantity' => $data['quantity'],
+            'rate' => $data['rate'],
+            'amount' => $amount,
+            'tax_percentage' => $taxPct,
+            'tax_amount' => $tax,
+            'net_amount' => round($amount + $tax, 2),
+        ] + ($side === 'sell'
+            // A sell line edited by hand becomes the operator's: the next save of the draft waybill leaves it alone.
+            // `charge_basis` and `tax_status` are the sell side's alone — the buy table carries neither.
+            ? ['source' => null, 'charge_basis' => $data['charge_basis'] ?? $line->charge_basis, 'tax_status' => $data['tax_status'] ?? $line->tax_status]
+            : []))->save();
+
+        $this->audit->record($job->agent_id, "costsheet.{$side}_line_edited", 'job', $job->id, auth()->id());
+
+        return response()->json($this->show($job)->getData(true));
+    }
+
+    /**
+     * Pricing hands the sheet to accounts (user, 2026-09-18). The screen confirms the figures first; this records the
+     * hand-over, and accounts do the finalizing as before — nothing is posted here.
+     */
+    public function sendToAccounts(Job $job): JsonResponse
+    {
+        $this->authorize('editCostSheet');
+
+        if ($this->isLocked($job)) {
+            return response()->json(['error' => 'This cost sheet has already been finalized.', 'reason' => 'locked'], 422);
+        }
+
+        $invoice = AccountsInvoice::withoutTenantScope()->where('job_id', $job->id)->where('status', 'draft')->first();
+
+        if ($invoice === null || $invoice->items()->count() === 0) {
+            return response()->json(['error' => 'There is nothing to send: the sell side is empty.', 'reason' => 'nothing_to_send'], 422);
+        }
+
+        $invoice->forceFill(['sent_to_accounts_at' => now(), 'sent_to_accounts_by' => auth()->id()])->save();
+        $this->audit->record($job->agent_id, 'costsheet.sent_to_accounts', 'job', $job->id, auth()->id());
+
+        return response()->json($this->show($job)->getData(true));
     }
 
     /** Remove a line. Same lock, same gate. */
@@ -294,6 +381,18 @@ class JobCostSheetController extends Controller
             'awb_number' => \App\Support\AwbNumber::normalise((string) $waybill->awb_code . $waybill->awb_no) ?? (string) $waybill->id,
             'chargeable_weight' => $cargo ? (float) ($cargo->chargable_weight ?: $cargo->gross_weight) : null,
             'has_rate' => (float) ($cargo->rate ?? 0) > 0 || $charge > 0,
+        ];
+    }
+
+    /** @return ?array{at: string, by: ?string} */
+    private function sentState(Job $job): ?array
+    {
+        $invoice = AccountsInvoice::withoutTenantScope()->where('job_id', $job->id)->whereNotNull('sent_to_accounts_at')
+            ->orderByDesc('sent_to_accounts_at')->first(['sent_to_accounts_at', 'sent_to_accounts_by']);
+
+        return $invoice === null ? null : [
+            'at' => (string) $invoice->sent_to_accounts_at,
+            'by' => DB::table('users')->where('id', $invoice->sent_to_accounts_by)->value('name'),
         ];
     }
 

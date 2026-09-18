@@ -50,6 +50,122 @@ class ReconciliationController extends Controller
         return response()->json($transactions);
     }
 
+    /**
+     * What was credited against what was billed (user, 2026-09-19: "we can check what actually got credited and what
+     * was mentioned in the bill").
+     *
+     * Three things a desk has to act on, in one list: a settled invoice the client paid SHORT, one they paid OVER, and
+     * money that arrived and fits no invoice at all. Each carries the figures the query mail is written from.
+     */
+    public function differences(Request $request): JsonResponse
+    {
+        $this->authorize('viewFinancials');
+
+        $rows = BankTransaction::query()
+            ->where('direction', 'credit')
+            ->when($request->filled('agent_id'), fn ($q) => $q->where('agent_id', $request->integer('agent_id')))
+            ->with(['matchedInvoice'])
+            ->latest('value_date')->limit(200)->get();
+
+        $differences = [];
+
+        foreach ($rows as $row) {
+            $invoice = $row->matchedInvoice;
+            $received = round((float) $row->amount, 2);
+
+            if ($invoice === null) {
+                if ($row->reconciliation_status === 'unreconciled') {
+                    $differences[] = $this->difference('unidentified', $row, null, $received, $received);
+                }
+
+                continue;
+            }
+
+            $billed = round((float) $invoice->grand_total, 2);
+            $paid = round((float) $invoice->amount_paid, 2);
+
+            // Short: the invoice is still open after this payment. Over: more arrived than the invoice ever asked for.
+            if ($paid + 0.01 < $billed) {
+                $differences[] = $this->difference('short', $row, $invoice, $received, round($billed - $paid, 2));
+            } elseif ($paid - 0.01 > $billed) {
+                $differences[] = $this->difference('over', $row, $invoice, $received, round($paid - $billed, 2));
+            }
+        }
+
+        return response()->json(['differences' => $differences, 'total' => count($differences)]);
+    }
+
+    /** The draft mail for one of those differences. Nothing is sent: accounts read it, edit it and send it. */
+    public function draftQuery(Request $request, BankTransaction $transaction): JsonResponse
+    {
+        $this->authorize('viewFinancials');
+
+        $data = $request->validate(['kind' => 'required|in:short,over,unidentified']);
+        $invoice = $transaction->matchedInvoice;
+        $customer = $invoice?->customer_id ? \App\Customer::withoutTenantScope()->find($invoice->customer_id) : null;
+
+        $facts = [
+            'invoice_no' => $invoice?->invoice_no,
+            'document_date' => (string) $invoice?->document_date,
+            'job_no' => $invoice?->job_id ? DB::table('jobs')->where('id', $invoice->job_id)->value('execution_job_no') : null,
+            'billed' => $invoice ? round((float) $invoice->grand_total, 2) : null,
+            'received' => round((float) $transaction->amount, 2),
+            'difference' => $invoice ? round(abs((float) $invoice->grand_total - (float) $invoice->amount_paid), 2) : round((float) $transaction->amount, 2),
+            'value_date' => (string) $transaction->value_date,
+            'reference' => $transaction->reference,
+            'narration' => $transaction->narration,
+            'client' => $customer?->name,
+        ];
+
+        $draft = app(\App\Services\Bank\PaymentQueryDrafter::class)->draft($data['kind'], array_filter($facts, fn ($v) => $v !== null), auth()->user());
+
+        return response()->json($draft + [
+            // Where it would go: the client's own contacts, so accounts do not hunt for an address.
+            'to' => $customer ? DB::table('customer_contacts')->where('customer_id', $customer->id)->orderByDesc('message_count')->limit(3)->pluck('email')->all() : [],
+            'facts' => $facts,
+        ]);
+    }
+
+    /** Statement lines in — a bank's CSV today, the Setu or Plaid feed on the same road later (PRD §6.4). */
+    public function importStatement(Request $request): JsonResponse
+    {
+        $this->authorize('reconcile');
+
+        $data = $request->validate([
+            'agent_id' => 'required|integer',
+            'csv' => 'required_without:lines|nullable|string',
+            'lines' => 'required_without:csv|nullable|array',
+        ]);
+
+        $context = \App\Support\UserContext::for(auth()->user());
+
+        if (! DB::table('agents_info')->where('id', $data['agent_id'])->where('company_id', $context->companyId)->exists()) {
+            return response()->json(['error' => 'That branch is not one of yours.', 'reason' => 'branch_not_found'], 404);
+        }
+
+        $importer = app(\App\Services\Bank\StatementImporter::class);
+        $lines = $data['lines'] ?? $importer->fromCsv($data['csv']);
+
+        return response()->json($importer->import((int) $data['agent_id'], $lines));
+    }
+
+    /** One row of the comparison, in the shape both the list and the drafter read. */
+    private function difference(string $kind, BankTransaction $row, ?\App\AccountsInvoice $invoice, float $received, float $difference): array
+    {
+        return [
+            'kind' => $kind,
+            'transaction_id' => $row->id,
+            'value_date' => (string) $row->value_date,
+            'reference' => $row->reference,
+            'narration' => $row->narration,
+            'counterparty' => $row->counterparty,
+            'received' => $received,
+            'invoice_no' => $invoice?->invoice_no,
+            'billed' => $invoice ? round((float) $invoice->grand_total, 2) : null,
+            'difference' => $difference,
+        ];
+    }
+
     /** The right pane: confidence-ranked candidates for one bank row. */
     public function candidates(BankTransaction $transaction): JsonResponse
     {

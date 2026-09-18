@@ -355,7 +355,8 @@ const router = new Router({
           path: "inbox",
           name: "Inbox",
           component: () => import("@/view/pages/freight/JobInbox"),
-          meta: { userType: 'user', designations: ['pricing', 'operations', 'sales', 'boss'], minTier: 'tactical' }
+          // Accounts read their own mail here too (user, 2026-09-19) — remittances, supplier bills, payment queries.
+          meta: { userType: 'user', designations: ['pricing', 'operations', 'sales', 'boss', 'accounts'], minTier: 'tactical' }
         },
         {
           // §4.2 — connecting the mailbox the Inbox reads from. Same tier gate as the

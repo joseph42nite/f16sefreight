@@ -11,16 +11,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
 /* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
+/* harmony import */ var _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/MailEditor.vue */ "./resources/js/src/view/pages/freight/components/MailEditor.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 
 
@@ -78,7 +80,8 @@ const TABS = [{
   components: {
     Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
     StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
-    FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
+    FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
+    MailEditor: _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_4__["default"]
   },
   data: () => ({
     rows: [],
@@ -113,6 +116,12 @@ const TABS = [{
     candidates: [],
     candidateNote: "",
     resolution: "",
+    /** Statement import, the credited-vs-billed list, and the query mail being written. */
+    importing: false,
+    csv: "",
+    importResult: null,
+    differences: [],
+    queryDraft: null,
     selected: null,
     tab: "credit",
     credit: null,
@@ -129,7 +138,7 @@ const TABS = [{
       label: "Journal"
     }]
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_4__.mapGetters)(["designation"])), {}, {
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_5__.mapGetters)(["designation"])), {}, {
     /* Only accounts commits. The Boss reads the register and the journal, and that
        asymmetry is the segregation of duties, not a UI convenience. */
     canPost() {
@@ -238,6 +247,10 @@ const TABS = [{
         this.busy = false;
       });
     },
+    /** The branch a statement belongs to: the one in view, or the only one there is. */
+    branchForImport() {
+      return this.branchId || (this.branches.length === 1 ? this.branches[0].id : null);
+    },
     findCandidates(row) {
       this.bankRow = row;
       this.candidates = [];
@@ -273,6 +286,73 @@ const TABS = [{
       this.busy = true;
       this.actionError = null;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/reconciliation/${row.id}/unmatch`, {}).then(() => this.load()).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    importStatement() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/reconciliation/import", {
+        agent_id: this.branchForImport,
+        csv: this.csv
+      }).then(({
+        data
+      }) => {
+        this.importResult = data;
+        this.csv = "";
+        this.load();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    loadDifferences() {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/reconciliation/differences" + (this.branchId ? "?agent_id=" + this.branchId : "")).then(({
+        data
+      }) => {
+        this.differences = data.differences || [];
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    draftQuery(difference) {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/reconciliation/${difference.transaction_id}/draft-query`, {
+        kind: difference.kind
+      }).then(({
+        data
+      }) => {
+        this.queryDraft = _objectSpread(_objectSpread({}, data), {}, {
+          toLine: (data.to || []).join(", "),
+          sent: false
+        });
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /** Sent from the person's own mailbox, through the same path as any other mail they write. */
+    sendQuery() {
+      const form = new FormData();
+      this.queryDraft.toLine.split(",").map(a => a.trim()).filter(Boolean).forEach(a => form.append("to[]", a));
+      form.append("subject", this.queryDraft.subject);
+      form.append("body", this.queryDraft.body);
+      form.append("include_signature", "1");
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/inbox/compose", form).then(() => {
+        this.queryDraft = _objectSpread(_objectSpread({}, this.queryDraft), {}, {
+          sent: true
+        });
+      }).catch(e => {
         this.actionError = this.messageFor(e);
       }).finally(() => {
         this.busy = false;
@@ -563,7 +643,253 @@ var render = function render() {
     }
   }, [_vm._v(_vm._s(_vm.error))]) : !_vm.rows.length ? _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("No documents match.")]) : _vm.view === "bank" ? [_c("table", {
+  }, [_vm._v("No documents match.")]) : _vm.view === "bank" ? [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    on: {
+      click: function ($event) {
+        _vm.importing = !_vm.importing;
+      }
+    }
+  }, [_vm._v(_vm._s(_vm.importing ? "Cancel import" : "Import a statement"))]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.loadDifferences
+    }
+  }, [_vm._v("Credited vs billed")])]), _vm._v(" "), _vm.importing ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("label", {
+    staticClass: "fx-field",
+    attrs: {
+      for: "bank-csv"
+    }
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Paste the statement (CSV: date, reference, narration, credit, debit)")]), _vm._v(" "), _c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.csv,
+      expression: "csv"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      id: "bank-csv",
+      rows: "6"
+    },
+    domProps: {
+      value: _vm.csv
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.csv = $event.target.value;
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.csv.trim() || !_vm.branchForImport
+    },
+    on: {
+      click: _vm.importStatement
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.busy ? "Importing…" : "Import") + "\n      ")]), _vm._v(" "), !_vm.branchForImport ? _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(" Choose a branch above first.")]) : _vm._e(), _vm._v(" "), _vm.importResult ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        " + _vm._s(_vm.importResult.imported) + " new, " + _vm._s(_vm.importResult.repeated) + " already had, " + _vm._s(_vm.importResult.skipped) + " skipped\n        (a line with no reference cannot be told apart from the next one).\n      ")]) : _vm._e()]) : _vm._e(), _vm._v(" "), _vm.differences.length ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Credited vs billed")]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("What happened")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Invoice")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Billed")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Credited")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Difference")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Bank says")]), _vm._v(" "), _vm.canPost ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.differences, function (d) {
+    return _c("tr", {
+      key: "d-" + d.transaction_id + d.kind
+    }, [_c("td", [d.kind === "short" ? _c("span", [_vm._v("Paid short")]) : d.kind === "over" ? _c("span", [_vm._v("Paid more than billed")]) : _c("span", [_vm._v("Cannot be placed")])]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(d.invoice_no || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [d.billed ? _c("Figure", {
+      attrs: {
+        value: d.billed,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", [_vm._v("—")])], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: d.received,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: d.difference,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(d.narration || d.reference || "—"))]), _vm._v(" "), _vm.canPost ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.draftQuery(d);
+        }
+      }
+    }, [_vm._v("Ask the client")])]) : _vm._e()]);
+  }), 0)])]) : _vm._e(), _vm._v(" "), _vm.queryDraft ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "query-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_vm._m(0), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body fx-newmail"
+  }, [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n            Written from the figures" + _vm._s(_vm.queryDraft.written_by === "ai" ? " by the model" : "") + "; every number comes\n            from the invoice and the bank row. Edit anything before it goes.\n          ")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field",
+    attrs: {
+      for: "query-to"
+    }
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.queryDraft.toLine,
+      expression: "queryDraft.toLine"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      id: "query-to",
+      placeholder: "comma separated"
+    },
+    domProps: {
+      value: _vm.queryDraft.toLine
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.queryDraft, "toLine", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field",
+    attrs: {
+      for: "query-subject"
+    }
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Subject")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.queryDraft.subject,
+      expression: "queryDraft.subject"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      id: "query-subject"
+    },
+    domProps: {
+      value: _vm.queryDraft.subject
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.queryDraft, "subject", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("MailEditor", {
+    model: {
+      value: _vm.queryDraft.body,
+      callback: function ($$v) {
+        _vm.$set(_vm.queryDraft, "body", $$v);
+      },
+      expression: "queryDraft.body"
+    }
+  }), _vm._v(" "), _vm.queryDraft.sent ? _c("p", {
+    staticClass: "fx-notice",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("Sent from your mailbox.")]) : _vm._e(), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()], 1), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.queryDraft = null;
+      }
+    }
+  }, [_vm._v("Close")]), _vm._v(" "), !_vm.queryDraft.sent ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.queryDraft.toLine.trim()
+    },
+    on: {
+      click: _vm.sendQuery
+    }
+  }, [_vm._v("\n            " + _vm._s(_vm.busy ? "Sending…" : "Send from my mailbox") + "\n          ")]) : _vm._e()])])]) : _vm._e(), _vm._v(" "), _c("table", {
     staticClass: "fx-table"
   }, [_c("thead", [_c("tr", [_c("th", {
     attrs: {
@@ -809,7 +1135,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.reportData ? [_vm.report === "profit-and-loss" ? _c("table", {
     staticClass: "fx-table"
-  }, [_c("tbody", [_vm._m(0), _vm._v(" "), _vm._l(_vm.reportData.revenue.lines, function (l) {
+  }, [_c("tbody", [_vm._m(1), _vm._v(" "), _vm._l(_vm.reportData.revenue.lines, function (l) {
     return _c("tr", {
       key: "r-" + l.code
     }, [_c("td", [_vm._v(_vm._s(l.code) + " " + _vm._s(l.name))]), _vm._v(" "), _c("td", {
@@ -821,7 +1147,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), _vm._v(" "), _c("tr", [_vm._m(1), _c("td", {
+  }), _vm._v(" "), _c("tr", [_vm._m(2), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -829,7 +1155,7 @@ var render = function render() {
       kind: "currency",
       "currency-code": "INR"
     }
-  })], 1)]), _vm._v(" "), _vm._m(2), _vm._v(" "), _vm._l(_vm.reportData.expense.lines, function (l) {
+  })], 1)]), _vm._v(" "), _vm._m(3), _vm._v(" "), _vm._l(_vm.reportData.expense.lines, function (l) {
     return _c("tr", {
       key: "e-" + l.code
     }, [_c("td", [_vm._v(_vm._s(l.code) + " " + _vm._s(l.name))]), _vm._v(" "), _c("td", {
@@ -841,7 +1167,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), _vm._v(" "), _c("tr", [_vm._m(3), _c("td", {
+  }), _vm._v(" "), _c("tr", [_vm._m(4), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -849,7 +1175,7 @@ var render = function render() {
       kind: "currency",
       "currency-code": "INR"
     }
-  })], 1)])], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_vm._m(4), _vm._v(" "), _c("td", {
+  })], 1)])], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_vm._m(5), _vm._v(" "), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -861,7 +1187,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v(" · " + _vm._s(_vm.reportData.margin_pct) + "%")]) : _vm._e()], 1)])])]) : _vm.report === "balance-sheet" ? _c("table", {
     staticClass: "fx-table"
-  }, [_c("tbody", [_vm._m(5), _vm._v(" "), _vm._l(_vm.reportData.assets.lines, function (l) {
+  }, [_c("tbody", [_vm._m(6), _vm._v(" "), _vm._l(_vm.reportData.assets.lines, function (l) {
     return _c("tr", {
       key: "a-" + l.code
     }, [_c("td", [_vm._v(_vm._s(l.code) + " " + _vm._s(l.name))]), _vm._v(" "), _c("td", {
@@ -873,7 +1199,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), _vm._v(" "), _c("tr", [_vm._m(6), _c("td", {
+  }), _vm._v(" "), _c("tr", [_vm._m(7), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -881,7 +1207,7 @@ var render = function render() {
       kind: "currency",
       "currency-code": "INR"
     }
-  })], 1)]), _vm._v(" "), _vm._m(7), _vm._v(" "), _vm._l(_vm.reportData.liabilities.lines, function (l) {
+  })], 1)]), _vm._v(" "), _vm._m(8), _vm._v(" "), _vm._l(_vm.reportData.liabilities.lines, function (l) {
     return _c("tr", {
       key: "l-" + l.code
     }, [_c("td", [_vm._v(_vm._s(l.code) + " " + _vm._s(l.name))]), _vm._v(" "), _c("td", {
@@ -893,7 +1219,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), _vm._v(" "), _c("tr", [_vm._m(8), _c("td", {
+  }), _vm._v(" "), _c("tr", [_vm._m(9), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -901,7 +1227,7 @@ var render = function render() {
       kind: "currency",
       "currency-code": "INR"
     }
-  })], 1)])], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_vm._m(9), _c("td", {
+  })], 1)])], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_vm._m(10), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -911,7 +1237,7 @@ var render = function render() {
     }
   })], 1)])])]) : _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(10), _vm._v(" "), _c("tbody", _vm._l(_vm.reportData.accounts, function (a) {
+  }, [_vm._m(11), _vm._v(" "), _c("tbody", _vm._l(_vm.reportData.accounts, function (a) {
     return _c("tr", {
       key: "t-" + a.code
     }, [_c("td", [_vm._v(_vm._s(a.code) + " " + _vm._s(a.name))]), _vm._v(" "), _c("td", {
@@ -1135,7 +1461,7 @@ var render = function render() {
     }
   }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm.view === "gst" ? [_c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(11), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
+  }, [_vm._m(12), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
     return _c("tr", {
       key: "g-" + r.id
     }, [_c("td", {
@@ -1170,7 +1496,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), 0), _vm._v(" "), _vm.totals ? _c("tfoot", [_c("tr", [_vm._m(12), _vm._v(" "), _c("td", {
+  }), 0), _vm._v(" "), _vm.totals ? _c("tfoot", [_c("tr", [_vm._m(13), _vm._v(" "), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -1198,7 +1524,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("\n      Written when a document is finalized: CGST and SGST within the state, IGST across it. Nothing here is edited —\n      it is what was charged.\n    ")])] : _vm.view === "unposted" ? [_c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(13), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
+  }, [_vm._m(14), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
     return _c("tr", {
       key: "u-" + r.id
     }, [_c("td", {
@@ -1222,7 +1548,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), 0), _vm._v(" "), _vm.totals !== null ? _c("tfoot", [_c("tr", [_vm._m(14), _c("td", {
+  }), 0), _vm._v(" "), _vm.totals !== null ? _c("tfoot", [_c("tr", [_vm._m(15), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -1234,7 +1560,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("Each stays here until it is posted; posting removes it from this list.")])] : _vm.view === "vouchers" ? _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(15), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+  }, [_vm._m(16), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
     return _c("tr", {
       key: "v-" + row.id,
       staticClass: "is-clickable",
@@ -1561,6 +1887,17 @@ var render = function render() {
   }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e()], 2)], 2);
 };
 var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "query-title"
+    }
+  }, [_vm._v("Ask the client about this payment")])]);
+}, function () {
   var _vm = this,
     _c = _vm._self._c;
   return _c("tr", [_c("td", {

@@ -26,7 +26,7 @@ export const NAV_ITEMS = [
   // ── Shared operational surface ────────────────────────────────────────────
   // Sales see only the mail they are on (user, 2026-09-15).
   // The Boss reads the mail he is on too — to, cc or bcc (user, 2026-09-16).
-  { path: "/inbox", label: "Inbox", icon: "envelope", designations: ["pricing", "operations", "sales", "boss"], minTier: "tactical" },
+  { path: "/inbox", label: "Inbox", icon: "envelope", designations: ["pricing", "operations", "sales", "boss", "accounts"], minTier: "tactical" },
   // Sales see the whole branch's board, read-only (user, 2026-09-15).
   { path: "/kanban", label: "Kanban", icon: "columns", designations: ["pricing", "operations", "sales"], minTier: "tactical" },
   // Sales follow the branch's enquiries read-only (user, 2026-09-15).
@@ -88,6 +88,8 @@ export const NAV_ITEMS = [
 const RAIL_ORDER = {
   sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
   boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
+  // Accounts start in the registers; their inbox sits under it (user, 2026-09-19).
+  accounts: ["/financials", "/inbox", "/clients-partners", "/settings"],
 };
 
 const railRank = (item, designation) => {

@@ -26,9 +26,11 @@ class BankTransaction extends Model
     protected $fillable = [
         'agent_id', 'matched_invoice_id', 'matched_voucher_id',
         'plaid_transaction_id', 'amount', 'reconciliation_status',
+        // What the bank said (user, 2026-09-19), so a credit can be compared with the bill it is meant to settle.
+        'provider', 'value_date', 'direction', 'narration', 'counterparty', 'reference', 'currency',
     ];
 
-    protected $casts = ['amount' => 'decimal:2'];
+    protected $casts = ['amount' => 'decimal:2', 'value_date' => 'date'];
 
     protected $attributes = ['reconciliation_status' => 'unreconciled'];
 

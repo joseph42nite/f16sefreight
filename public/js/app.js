@@ -8688,7 +8688,7 @@ const NAV_ITEMS = [
   path: "/inbox",
   label: "Inbox",
   icon: "envelope",
-  designations: ["pricing", "operations", "sales", "boss"],
+  designations: ["pricing", "operations", "sales", "boss", "accounts"],
   minTier: "tactical"
 },
 // Sales see the whole branch's board, read-only (user, 2026-09-15).
@@ -8810,7 +8810,9 @@ const NAV_ITEMS = [
  */
 const RAIL_ORDER = {
   sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
-  boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"]
+  boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
+  // Accounts start in the registers; their inbox sits under it (user, 2026-09-19).
+  accounts: ["/financials", "/inbox", "/clients-partners", "/settings"]
 };
 const railRank = (item, designation) => {
   const order = RAIL_ORDER[designation] || [];
@@ -10614,9 +10616,10 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       path: "inbox",
       name: "Inbox",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_freight_JobInbox_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/JobInbox */ "./resources/js/src/view/pages/freight/JobInbox.vue")),
+      // Accounts read their own mail here too (user, 2026-09-19) — remittances, supplier bills, payment queries.
       meta: {
         userType: 'user',
-        designations: ['pricing', 'operations', 'sales', 'boss'],
+        designations: ['pricing', 'operations', 'sales', 'boss', 'accounts'],
         minTier: 'tactical'
       }
     }, {

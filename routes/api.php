@@ -515,6 +515,10 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
 
         Route::get('/reconciliation', [\App\Http\Controllers\Freight\ReconciliationController::class, 'index']);
         Route::get('/reconciliation/{transaction}/candidates', [\App\Http\Controllers\Freight\ReconciliationController::class, 'candidates']);
+        // What was credited against what was billed, and the mail that asks about it (user, 2026-09-19).
+        Route::get('/reconciliation/differences', [\App\Http\Controllers\Freight\ReconciliationController::class, 'differences']);
+        Route::post('/reconciliation/import', [\App\Http\Controllers\Freight\ReconciliationController::class, 'importStatement']);
+        Route::post('/reconciliation/{transaction}/draft-query', [\App\Http\Controllers\Freight\ReconciliationController::class, 'draftQuery']);
         Route::post('/reconciliation/{transaction}/match', [\App\Http\Controllers\Freight\ReconciliationController::class, 'match']);
         Route::post('/reconciliation/{transaction}/unmatch', [\App\Http\Controllers\Freight\ReconciliationController::class, 'unmatch']);
     });

@@ -55,6 +55,98 @@
 
     <!-- ── Bank reconciliation (PRD §6.5) ────────────────────────────────── -->
     <template v-else-if="view === 'bank'">
+      <!--
+        Statement in (user, 2026-09-19): a bank's CSV today, the Setu or Plaid feed on the same road later. Sending the
+        same statement twice is normal and costs nothing — the bank's own reference is what stops money being counted
+        twice.
+      -->
+      <div class="fx-toolbar">
+        <button class="fx-btn" @click="importing = !importing">{{ importing ? "Cancel import" : "Import a statement" }}</button>
+        <button class="fx-btn" :disabled="busy" @click="loadDifferences">Credited vs billed</button>
+      </div>
+
+      <section v-if="importing" class="fx-section">
+        <label class="fx-field" for="bank-csv">
+          <span class="fx-field__label">Paste the statement (CSV: date, reference, narration, credit, debit)</span>
+          <textarea id="bank-csv" v-model="csv" class="fx-input" rows="6"></textarea>
+        </label>
+        <button class="fx-btn fx-btn--primary" :disabled="busy || !csv.trim() || !branchForImport" @click="importStatement">
+          {{ busy ? "Importing…" : "Import" }}
+        </button>
+        <span v-if="!branchForImport" class="fx-muted"> Choose a branch above first.</span>
+        <p v-if="importResult" class="fx-muted">
+          {{ importResult.imported }} new, {{ importResult.repeated }} already had, {{ importResult.skipped }} skipped
+          (a line with no reference cannot be told apart from the next one).
+        </p>
+      </section>
+
+      <!-- What the bank credited against what we billed. -->
+      <section v-if="differences.length" class="fx-section">
+        <h3 class="fx-section__title">Credited vs billed</h3>
+        <table class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">What happened</th>
+              <th scope="col">Invoice</th>
+              <th class="fx-num" scope="col">Billed</th>
+              <th class="fx-num" scope="col">Credited</th>
+              <th class="fx-num" scope="col">Difference</th>
+              <th scope="col">Bank says</th>
+              <th v-if="canPost" scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="d in differences" :key="'d-' + d.transaction_id + d.kind">
+              <td>
+                <span v-if="d.kind === 'short'">Paid short</span>
+                <span v-else-if="d.kind === 'over'">Paid more than billed</span>
+                <span v-else>Cannot be placed</span>
+              </td>
+              <td class="identifier">{{ d.invoice_no || "—" }}</td>
+              <td class="fx-num"><Figure v-if="d.billed" :value="d.billed" kind="currency" currency-code="INR" /><span v-else>—</span></td>
+              <td class="fx-num"><Figure :value="d.received" kind="currency" currency-code="INR" /></td>
+              <td class="fx-num"><Figure :value="d.difference" kind="currency" currency-code="INR" /></td>
+              <td class="fx-muted">{{ d.narration || d.reference || "—" }}</td>
+              <td v-if="canPost" class="fx-row-actions">
+                <button class="fx-btn" :disabled="busy" @click="draftQuery(d)">Ask the client</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- The drafted mail, before anybody sends it. -->
+      <div v-if="queryDraft" class="fx-modal" role="dialog" aria-modal="true" aria-labelledby="query-title">
+        <div class="fx-modal__panel">
+          <header class="fx-modal__head">
+            <h2 id="query-title" class="fx-modal__title">Ask the client about this payment</h2>
+          </header>
+          <div class="fx-modal__body fx-newmail">
+            <p class="fx-muted">
+              Written from the figures{{ queryDraft.written_by === "ai" ? " by the model" : "" }}; every number comes
+              from the invoice and the bank row. Edit anything before it goes.
+            </p>
+            <label class="fx-field" for="query-to">
+              <span class="fx-field__label">To</span>
+              <input id="query-to" v-model="queryDraft.toLine" class="fx-input" placeholder="comma separated" />
+            </label>
+            <label class="fx-field" for="query-subject">
+              <span class="fx-field__label">Subject</span>
+              <input id="query-subject" v-model="queryDraft.subject" class="fx-input" />
+            </label>
+            <MailEditor v-model="queryDraft.body" />
+            <p v-if="queryDraft.sent" class="fx-notice" role="status">Sent from your mailbox.</p>
+            <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
+          </div>
+          <footer class="fx-modal__foot">
+            <button class="fx-btn" :disabled="busy" @click="queryDraft = null">Close</button>
+            <button v-if="!queryDraft.sent" class="fx-btn fx-btn--primary" :disabled="busy || !queryDraft.toLine.trim()" @click="sendQuery">
+              {{ busy ? "Sending…" : "Send from my mailbox" }}
+            </button>
+          </footer>
+        </div>
+      </div>
+
       <table class="fx-table">
         <thead>
           <tr>
@@ -597,6 +689,7 @@ import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
+import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 
 const STATUSES = ["draft", "finalized", "sent", "partially_paid", "paid", "void"];
 
@@ -625,7 +718,7 @@ const TABS = [
 
 export default {
   name: "Financials",
-  components: { Figure, StatusChip, FxDrawer },
+  components: { Figure, StatusChip, FxDrawer, MailEditor },
   data: () => ({
     rows: [], loading: true, error: null,
     status: "", outstanding: false,
@@ -641,6 +734,8 @@ export default {
     newPeriod: { agent_id: null, period_name: "", start_date: "", end_date: "" },
     /** Bank reconciliation: the row being settled, what it could settle, and how a short payment is treated. */
     bankRow: null, candidates: [], candidateNote: "", resolution: "",
+    /** Statement import, the credited-vs-billed list, and the query mail being written. */
+    importing: false, csv: "", importResult: null, differences: [], queryDraft: null,
     selected: null, tab: "credit",
     credit: null, creditLoading: false,
     preview: null, previewLoading: false,
@@ -748,6 +843,10 @@ export default {
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
+    /** The branch a statement belongs to: the one in view, or the only one there is. */
+    branchForImport() {
+      return this.branchId || (this.branches.length === 1 ? this.branches[0].id : null);
+    },
     findCandidates(row) {
       this.bankRow = row;
       this.candidates = [];
@@ -776,6 +875,46 @@ export default {
 
       ApiService.post(`/reconciliation/${row.id}/unmatch`, {})
         .then(() => this.load())
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    importStatement() {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post("/reconciliation/import", { agent_id: this.branchForImport, csv: this.csv })
+        .then(({ data }) => { this.importResult = data; this.csv = ""; this.load(); })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    loadDifferences() {
+      this.busy = true;
+      ApiService.get("/reconciliation/differences" + (this.branchId ? "?agent_id=" + this.branchId : ""))
+        .then(({ data }) => { this.differences = data.differences || []; })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    draftQuery(difference) {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/reconciliation/${difference.transaction_id}/draft-query`, { kind: difference.kind })
+        .then(({ data }) => {
+          this.queryDraft = { ...data, toLine: (data.to || []).join(", "), sent: false };
+        })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    /** Sent from the person's own mailbox, through the same path as any other mail they write. */
+    sendQuery() {
+      const form = new FormData();
+      this.queryDraft.toLine.split(",").map((a) => a.trim()).filter(Boolean).forEach((a) => form.append("to[]", a));
+      form.append("subject", this.queryDraft.subject);
+      form.append("body", this.queryDraft.body);
+      form.append("include_signature", "1");
+
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post("/inbox/compose", form)
+        .then(() => { this.queryDraft = { ...this.queryDraft, sent: true }; })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },

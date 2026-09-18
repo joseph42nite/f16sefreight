@@ -55,7 +55,7 @@ class EmailThread extends Model
      */
     public function scopeVisibleTo($query, User $user)
     {
-        if (! in_array($user->designation, ['sales', 'boss'], true)) {
+        if (! in_array($user->designation, ['sales', 'boss', 'accounts'], true)) {
             return $query;
         }
 

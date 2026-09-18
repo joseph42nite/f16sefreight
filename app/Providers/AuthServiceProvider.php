@@ -43,7 +43,9 @@ class AuthServiceProvider extends ServiceProvider
         // the inbox is deliberately wider than changing what a thread IS.
         // Sales read and answer only the mail they are on (EmailThread::scopeVisibleTo).
         // The Boss reads the mail he is on (user, 2026-09-16) — EmailThread::scopeVisibleTo narrows it.
-        $this->define('viewInbox', ['pricing', 'operations', 'sales', 'boss'], 'tactical');
+        // Accounts have their own inbox too (user, 2026-09-19): remittance advices, supplier bills, payment queries.
+        // Like sales and the Boss they see only the mail they are on, and they never claim a shipment.
+        $this->define('viewInbox', ['pricing', 'operations', 'sales', 'boss', 'accounts'], 'tactical');
         // Connecting Outlook and its signatures: Tactical and Command only — Core has no inbox (user, 2026-09-17).
         $this->define('manageMailbox', ['pricing', 'operations', 'sales', 'boss', 'accounts'], 'tactical');
         // 🔒 Opening and closing an accounting period is accounts' ALONE — not even the Boss (PRD §2.4 "sole").

@@ -1552,6 +1552,14 @@ const PARTY_REQUIRED = {
     mailCargo: {
       type: Object,
       default: null
+    },
+    /**
+     * The shipment these readings belong to (user, 2026-09-18: "when I refresh why did the data go? it should stay in
+     * the workspace"). Sent with each upload and used to fetch this shipment's readings back.
+     */
+    jobId: {
+      type: Number,
+      default: null
     }
   },
   data: () => ({
@@ -1896,6 +1904,10 @@ const PARTY_REQUIRED = {
     }
   },
   watch: {
+    // A different shipment shows its own readings.
+    jobId() {
+      this.resumeReadings();
+    },
     /* Immediate, because the job lookup usually resolves before the panel is opened —
        and only when the field is EMPTY, so it never overwrites a number being typed. */
     prefillAwb: {
@@ -2225,7 +2237,7 @@ const PARTY_REQUIRED = {
      * must not lose one.
      */
     resumeReadings() {
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/ocr-running").then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/ocr-running" + (this.jobId ? "?job_id=" + this.jobId : "")).then(({
         data
       }) => {
         (data.data || []).forEach(job => {
@@ -2284,6 +2296,8 @@ const PARTY_REQUIRED = {
       // `ksr` for everything, so an invoice was cropped at an airway bill's coordinates
       // and returned whatever text happened to sit at those boxes.
       form.append("type", doc.kind === "awb" ? "ksr" : "unstructured");
+      // The shipment this reading belongs to, so it is still here after a refresh.
+      if (this.jobId) form.append("job_id", this.jobId);
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].post("/user/upload-awb-file", form).then(({
         data
       }) => {
@@ -3986,6 +4000,7 @@ var render = function render() {
     ref: "extraction",
     attrs: {
       "prefill-awb": _vm.jobAwb,
+      "job-id": _vm.active.job ? _vm.active.job.id : null,
       "mail-cargo": _vm.active && _vm.active.staged_cargo
     },
     on: {

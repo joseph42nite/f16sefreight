@@ -55,8 +55,11 @@ class AiUsageService
     }
 
     /**
-     * Whether the free Gemma should be tried first now (user, 2026-09-15): between 9pm and 11am India time, and only
-     * for the kinds of work superadmin has switched on. `$use` is 'extraction', or 'help' / 'draft'.
+     * Whether the free Gemma should be tried first now: OUTSIDE the working day — from 8pm to 10am India time, the
+     * paid model between (user, 2026-09-18; was 9pm–11am) — and only for the kinds of work superadmin has switched on.
+     * `$use` is 'extraction', or 'help' / 'draft'.
+     *
+     * ⚠️ Credits are charged either way: what the person gets is the reading, not the model that produced it.
      */
     public function freeFirst(string $use): bool
     {

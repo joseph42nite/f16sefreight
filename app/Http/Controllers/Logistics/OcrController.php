@@ -25,7 +25,9 @@ class OcrController extends Controller
         // Preserving backward-compatible input validation names for seamlessly zero-downtime API swap
         $request->validate([
             'upload_file' => ['required', 'file', 'mimes:pdf', 'max:25600'], // Expanded to 25MB max
-            'type'        => ['required', 'string']
+            'type'        => ['required', 'string'],
+            // The shipment being worked on, so the workspace can show its readings again after a refresh (2026-09-18).
+            'job_id'      => ['nullable', 'integer'],
         ]);
 
         $file = $request->file('upload_file');
@@ -44,6 +46,7 @@ class OcrController extends Controller
                 'temp_file_path'    => $tempFilename,
                 'document_type'     => $request->input('type', 'ksr'),
                 'status'            => 'pending',
+                'job_id'            => \App\Job::whereKey($request->input('job_id'))->value('id'),
             ]);
 
             // 3. Push directly onto the dedicated high-speed Redis pipe
@@ -241,12 +244,19 @@ class OcrController extends Controller
      *
      * GET /api/user/ocr-running
      */
-    public function running()
+    public function running(Request $request)
     {
+        // A shipment's own readings come back in full — that is what the workspace shows again after a refresh
+        // (user, 2026-09-18: "when the document AWB got saved, when I refresh why did the data go?").
+        $jobId = \App\Job::whereKey($request->query('job_id'))->value('id');
+
         $jobs = PdfProcessingJob::forUser(Auth::id())
-            ->where(fn ($q) => $q->whereIn('status', ['pending', 'processing', 'awaiting_vision_consent'])
-                ->orWhere(fn ($done) => $done->where('status', 'completed')->where('completed_at', '>=', now()->subMinutes(10))))
-            ->where('created_at', '>=', now()->subHours(2))
+            ->when($jobId, fn ($q) => $q->where('job_id', $jobId)->where('created_at', '>=', now()->subDays(7)))
+            ->when(! $jobId, fn ($q) => $q
+                ->where(fn ($unfinished) => $unfinished->whereIn('status', ['pending', 'processing', 'awaiting_vision_consent'])
+                    ->orWhere(fn ($done) => $done->where('status', 'completed')->where('completed_at', '>=', now()->subMinutes(10))))
+                ->where('created_at', '>=', now()->subHours(2)))
+            ->whereIn('status', ['pending', 'processing', 'awaiting_vision_consent', 'completed'])
             ->orderBy('created_at')
             ->limit(10)
             ->get(['id', 'original_filename', 'status', 'document_type', 'created_at']);

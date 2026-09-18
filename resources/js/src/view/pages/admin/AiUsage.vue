@@ -78,11 +78,12 @@
           </label>
         </div>
         <!--
-          🌙 Free Gemma from 9pm to 11am India time, the paid model when it does not answer (user, 2026-09-15). It is
+          🌙 Free Gemma from 8pm to 10am India time, the paid model through the working day and whenever the free one
+          does not answer (user, 2026-09-18). Credits are charged either way. It is
           shared free capacity (often busy) and gives looser JSON, so extraction starts off.
         -->
         <fieldset class="fx-ai-night">
-          <legend class="fx-field__label">Free Gemma at night (9pm–11am), paid if it does not answer</legend>
+          <legend class="fx-field__label">Free Gemma outside the working day (8pm–10am), paid if it does not answer</legend>
           <label class="fx-checkbox"><input v-model="form.night_free_help_drafts" type="checkbox" /> Help questions and email drafts</label>
           <label class="fx-checkbox"><input v-model="form.night_free_extraction" type="checkbox" /> Reading invoices and packing lists (scans always use the paid model)</label>
         </fieldset>

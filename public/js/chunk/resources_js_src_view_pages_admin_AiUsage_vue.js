@@ -308,7 +308,7 @@ var render = function render() {
     staticClass: "fx-ai-night"
   }, [_c("legend", {
     staticClass: "fx-field__label"
-  }, [_vm._v("Free Gemma at night (9pm–11am), paid if it does not answer")]), _vm._v(" "), _c("label", {
+  }, [_vm._v("Free Gemma outside the working day (8pm–10am), paid if it does not answer")]), _vm._v(" "), _c("label", {
     staticClass: "fx-checkbox"
   }, [_c("input", {
     directives: [{

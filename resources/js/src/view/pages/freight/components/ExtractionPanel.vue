@@ -684,6 +684,11 @@ export default {
     prefillAwb: { type: String, default: null },
     /** The thread's `staged_cargo` — what the mail said — to compare the documents against. */
     mailCargo: { type: Object, default: null },
+    /**
+     * The shipment these readings belong to (user, 2026-09-18: "when I refresh why did the data go? it should stay in
+     * the workspace"). Sent with each upload and used to fetch this shipment's readings back.
+     */
+    jobId: { type: Number, default: null },
   },
   data: () => ({
     GROUPS,
@@ -1020,6 +1025,10 @@ export default {
     },
   },
   watch: {
+    // A different shipment shows its own readings.
+    jobId() {
+      this.resumeReadings();
+    },
     /* Immediate, because the job lookup usually resolves before the panel is opened —
        and only when the field is EMPTY, so it never overwrites a number being typed. */
     prefillAwb: { immediate: true, handler: "applyPrefill" },
@@ -1332,7 +1341,7 @@ export default {
      * must not lose one.
      */
     resumeReadings() {
-      ApiService.get("/user/ocr-running")
+      ApiService.get("/user/ocr-running" + (this.jobId ? "?job_id=" + this.jobId : ""))
         .then(({ data }) => {
           (data.data || []).forEach((job) => {
             if (this.documents.some((d) => d.jobId === job.id)) return;
@@ -1385,6 +1394,8 @@ export default {
       // `ksr` for everything, so an invoice was cropped at an airway bill's coordinates
       // and returned whatever text happened to sit at those boxes.
       form.append("type", doc.kind === "awb" ? "ksr" : "unstructured");
+      // The shipment this reading belongs to, so it is still here after a refresh.
+      if (this.jobId) form.append("job_id", this.jobId);
 
       ApiService.post("/user/upload-awb-file", form)
         .then(({ data }) => {

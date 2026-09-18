@@ -664,7 +664,14 @@
             switching to Cost sheet or Credits destroyed the panel mid-read, its timers with it, and the reading was
             lost even though the server had carried on.
           -->
-          <ExtractionPanel v-show="active.enquiry && active.job" ref="extraction" :prefill-awb="jobAwb" :mail-cargo="active && active.staged_cargo" @apply="onExtracted" />
+          <ExtractionPanel
+            v-show="active.enquiry && active.job"
+            ref="extraction"
+            :prefill-awb="jobAwb"
+            :job-id="active.job ? active.job.id : null"
+            :mail-cargo="active && active.staged_cargo"
+            @apply="onExtracted"
+          />
         </section>
       </template>
 

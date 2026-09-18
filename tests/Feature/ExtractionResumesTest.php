@@ -44,4 +44,31 @@ class ExtractionResumesTest extends TestCase
         $this->assertContains($reading->id, collect($this->getJson('http://focusair.localhost/api/user/ocr-running')->json('data'))->pluck('id'));
         $this->assertNotNull($justDone->fresh()->completed_at);
     }
+
+    /** A shipment's own readings come back in full after a refresh, however long ago they were read (user, 2026-09-18). */
+    public function test_a_shipments_readings_come_back_after_a_refresh(): void
+    {
+        $company = \App\Company::create(['name' => 'Keep Co', 'code' => 'KEP', 'tier' => 'tactical']);
+        $branch = \App\Agent::create(['company_id' => $company->id, 'agent_name' => 'BOM', 'branch_code' => 'BOM']);
+        $user = \App\User::create(['name' => 'P', 'email' => 'p-kep@test.local', 'password' => \Illuminate\Support\Facades\Hash::make('x'),
+            'company_name' => $company->id, 'branch_name' => $branch->id, 'designation' => 'pricing', 'is_active' => 1]);
+        $enquiry = \App\Enquiry::create(['agent_id' => $branch->id, 'transport_mode' => 'air', 'status' => 'converted', 'enquiry_no' => 'ENQA-KEPBOM-26-0001']);
+        $job = \App\Job::create(['agent_id' => $branch->id, 'enquiry_id' => $enquiry->id, 'transport_mode' => 'air', 'execution_job_no' => 'JOBA-KEPBOM-26-0001']);
+        $other = \App\Job::create(['agent_id' => $branch->id, 'enquiry_id' => $enquiry->id, 'transport_mode' => 'air', 'execution_job_no' => 'JOBA-KEPBOM-26-0002']);
+
+        $read = function ($jobId, string $name, $created) use ($user) {
+            $row = PdfProcessingJob::create(['user_id' => $user->id, 'original_filename' => $name, 'temp_file_path' => uniqid() . '.pdf',
+                'document_type' => 'unstructured', 'status' => 'completed', 'job_id' => $jobId]);
+            $row->forceFill(['created_at' => $created, 'completed_at' => $created])->saveQuietly();
+        };
+        $read($job->id, 'invoice.pdf', now()->subHours(6));       // read hours ago: still this shipment's
+        $read($job->id, 'packing-list.pdf', now()->subDays(2));
+        $read($job->id, 'ancient.pdf', now()->subDays(9));        // older than a week: left out
+        $read($other->id, 'another-shipment.pdf', now()->subHour());
+
+        $names = collect($this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($user), 'Accept' => 'application/json'])
+            ->getJson("http://focusair.localhost/api/user/ocr-running?job_id={$job->id}")->assertOk()->json('data'))->pluck('original_filename');
+
+        $this->assertSame(['packing-list.pdf', 'invoice.pdf'], $names->all());
+    }
 }

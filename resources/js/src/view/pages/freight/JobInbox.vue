@@ -551,7 +551,7 @@
           <p v-else class="fx-muted">This enquiry has not been converted to a job yet.</p>
         </section>
 
-        <section v-else-if="tab === 'extraction'">
+        <section v-if="isEnquiryWork" v-show="tab === 'extraction'">
           <!--
             🔴 THE OUTCOME GATE. A waybill is a document for a shipment that is HAPPENING.
             Drafting one against an enquiry nobody has confirmed produces paperwork for a
@@ -658,9 +658,13 @@
             <strong>Create enquiry</strong> above{{ waitingFile ? ', then confirm the shipment to extract ' + waitingFile.name : '' }}.
           </p>
 
-          <!-- The waybill this conversation is already about, so the operator is not
-               asked to retype a number the job already holds. -->
-          <ExtractionPanel v-else ref="extraction" :prefill-awb="jobAwb" :mail-cargo="active && active.staged_cargo" @apply="onExtracted" />
+          <!--
+            The waybill this conversation is already about, so the operator is not asked to retype a number the job
+            already holds. 🔴 `v-show`, never `v-if` (user, 2026-09-18: "when I move the tab why does it stop?"):
+            switching to Cost sheet or Credits destroyed the panel mid-read, its timers with it, and the reading was
+            lost even though the server had carried on.
+          -->
+          <ExtractionPanel v-show="active.enquiry && active.job" ref="extraction" :prefill-awb="jobAwb" :mail-cargo="active && active.staged_cargo" @apply="onExtracted" />
         </section>
       </template>
 

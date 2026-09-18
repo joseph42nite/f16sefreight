@@ -1307,6 +1307,31 @@ export default {
       // the names tell them immediately whether it mattered.
       this.rejectedFiles = rejected;
     },
+    /**
+     * Pick up readings that are still running, or that finished while this panel was closed (user, 2026-09-18).
+     * The server reads documents in the background, so closing the workspace, changing tab or reloading the page
+     * must not lose one.
+     */
+    resumeReadings() {
+      ApiService.get("/user/ocr-running")
+        .then(({ data }) => {
+          (data.data || []).forEach((job) => {
+            if (this.documents.some((d) => d.jobId === job.id)) return;
+
+            const doc = {
+              uid: ++this.seq, name: job.original_filename, file: null,
+              kind: job.document_type === "ksr" ? "awb" : "other",
+              state: "reading", fields: null, error: null, warning: null, piecesNote: null,
+              jobId: job.id, credits: null, readable: "unknown",
+              startedAt: new Date(job.created_at).getTime(),
+            };
+            this.documents.push(doc);
+            this.tick();
+            this.poll(doc.uid);
+          });
+        })
+        .catch(() => {});
+    },
     extract(uid) {
       const doc = this.documents.find((d) => d.uid === uid);
       if (!doc) return;
@@ -1646,6 +1671,7 @@ export default {
   },
   mounted() {
     document.addEventListener("mousedown", this.closeTakes);
+    this.resumeReadings();
   },
   beforeDestroy() {
     document.removeEventListener("mousedown", this.closeTakes);

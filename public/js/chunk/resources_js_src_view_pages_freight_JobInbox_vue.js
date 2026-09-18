@@ -2195,6 +2195,38 @@ const PARTY_REQUIRED = {
       // the names tell them immediately whether it mattered.
       this.rejectedFiles = rejected;
     },
+    /**
+     * Pick up readings that are still running, or that finished while this panel was closed (user, 2026-09-18).
+     * The server reads documents in the background, so closing the workspace, changing tab or reloading the page
+     * must not lose one.
+     */
+    resumeReadings() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_1__["default"].get("/user/ocr-running").then(({
+        data
+      }) => {
+        (data.data || []).forEach(job => {
+          if (this.documents.some(d => d.jobId === job.id)) return;
+          const doc = {
+            uid: ++this.seq,
+            name: job.original_filename,
+            file: null,
+            kind: job.document_type === "ksr" ? "awb" : "other",
+            state: "reading",
+            fields: null,
+            error: null,
+            warning: null,
+            piecesNote: null,
+            jobId: job.id,
+            credits: null,
+            readable: "unknown",
+            startedAt: new Date(job.created_at).getTime()
+          };
+          this.documents.push(doc);
+          this.tick();
+          this.poll(doc.uid);
+        });
+      }).catch(() => {});
+    },
     extract(uid) {
       const doc = this.documents.find(d => d.uid === uid);
       if (!doc) return;
@@ -2519,6 +2551,7 @@ const PARTY_REQUIRED = {
   },
   mounted() {
     document.addEventListener("mousedown", this.closeTakes);
+    this.resumeReadings();
   },
   beforeDestroy() {
     document.removeEventListener("mousedown", this.closeTakes);
@@ -3730,7 +3763,14 @@ var render = function render() {
     }
   }) : _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("This enquiry has not been converted to a job yet.")])], 1) : _vm.tab === "extraction" ? _c("section", [_vm.active.enquiry && !_vm.active.job ? _c("div", {
+  }, [_vm._v("This enquiry has not been converted to a job yet.")])], 1) : _vm._e(), _vm._v(" "), _vm.isEnquiryWork ? _c("section", {
+    directives: [{
+      name: "show",
+      rawName: "v-show",
+      value: _vm.tab === "extraction",
+      expression: "tab === 'extraction'"
+    }]
+  }, [_vm.active.enquiry && !_vm.active.job ? _c("div", {
     staticClass: "fx-outcome"
   }, [_vm.enquiryLost ? [_vm.active.enquiry.lost_automatically ? _c("p", [_c("strong", [_vm._v("Closed automatically")]), _vm._v(" — the client never answered our\n              reminders, so this was marked "), _c("StatusChip", {
     attrs: {
@@ -3908,7 +3948,13 @@ var render = function render() {
     staticClass: "fx-error"
   }, [_vm._v(_vm._s(_vm.outcomeError))]) : _vm._e()], 2) : !_vm.active.enquiry ? _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("\n          No enquiry on this conversation yet, so there is no shipment to confirm. Claim it or choose\n          "), _c("strong", [_vm._v("Create enquiry")]), _vm._v(" above" + _vm._s(_vm.waitingFile ? ", then confirm the shipment to extract " + _vm.waitingFile.name : "") + ".\n        ")]) : _c("ExtractionPanel", {
+  }, [_vm._v("\n          No enquiry on this conversation yet, so there is no shipment to confirm. Claim it or choose\n          "), _c("strong", [_vm._v("Create enquiry")]), _vm._v(" above" + _vm._s(_vm.waitingFile ? ", then confirm the shipment to extract " + _vm.waitingFile.name : "") + ".\n        ")]) : _vm._e(), _vm._v(" "), _c("ExtractionPanel", {
+    directives: [{
+      name: "show",
+      rawName: "v-show",
+      value: _vm.active.enquiry && _vm.active.job,
+      expression: "active.enquiry && active.job"
+    }],
     ref: "extraction",
     attrs: {
       "prefill-awb": _vm.jobAwb,

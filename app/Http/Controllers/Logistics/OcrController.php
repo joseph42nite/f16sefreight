@@ -234,6 +234,26 @@ class OcrController extends Controller
      * Optional Utility
      * GET /api/user/ocr-history
      */
+    /**
+     * The documents still being read, and any finished in the last 10 minutes — so the panel can pick them up again
+     * after a tab change, a closed workspace or a reload (user, 2026-09-18). Reading happens on the server; nothing
+     * here starts or stops it.
+     *
+     * GET /api/user/ocr-running
+     */
+    public function running()
+    {
+        $jobs = PdfProcessingJob::forUser(Auth::id())
+            ->where(fn ($q) => $q->whereIn('status', ['pending', 'processing', 'awaiting_vision_consent'])
+                ->orWhere(fn ($done) => $done->where('status', 'completed')->where('completed_at', '>=', now()->subMinutes(10))))
+            ->where('created_at', '>=', now()->subHours(2))
+            ->orderBy('created_at')
+            ->limit(10)
+            ->get(['id', 'original_filename', 'status', 'document_type', 'created_at']);
+
+        return response()->json(['status' => true, 'data' => $jobs]);
+    }
+
     public function history()
     {
         $jobs = PdfProcessingJob::forUser(Auth::id())

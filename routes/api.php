@@ -109,6 +109,8 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::post('/upload-awb-file', [OcrController::class, 'extract'])->middleware('throttle:60,1');
     Route::get('/ocr-status/{jobId}', [OcrController::class, 'status']);
     Route::get('/ocr-history', [OcrController::class, 'history']);
+    // Readings still running (or just finished), so the panel picks them up again (user, 2026-09-18).
+    Route::get('/ocr-running', [OcrController::class, 'running']);
     // Credits per document for the workspace (user, 2026-09-14): balance, rates, this month, recent.
     Route::get('/credits', [\App\Http\Controllers\Freight\CreditsController::class, 'index']);
     // 🔒 The single point at which an OCR credit is ever spent — see OcrController::consent.

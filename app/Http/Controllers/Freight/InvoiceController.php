@@ -40,9 +40,29 @@ class InvoiceController extends Controller
         $invoices = AccountsInvoice::query()
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->boolean('outstanding'), fn ($q) => $q->outstanding())
+            // Cost sheets pricing has handed over and nobody has billed yet (user, 2026-09-18).
+            ->when($request->boolean('awaiting'), fn ($q) => $q->whereNotNull('sent_to_accounts_at')->where('status', 'draft'))
             ->with('customer:id,name,email_domain')
             ->latest('document_date')
             ->paginate(50);
+
+        // What each document is worth, and what the shipment cost — the figures accounts decide on.
+        $invoices->getCollection()->transform(function (AccountsInvoice $invoice) {
+            $sell = (float) $invoice->items()->sum('net_amount');
+            $buy = (float) DB::table('accounts_purchase_items as i')
+                ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
+                ->where('v.job_id', $invoice->job_id)->sum('i.net_amount');
+
+            // array_merge, never `+`: with `+` the model's own `sent_to_accounts_by` (an id) would win over the name.
+            return array_merge($invoice->toArray(), [
+                'job_no' => DB::table('jobs')->where('id', $invoice->job_id)->value('execution_job_no'),
+                'sell_total' => round($sell, 2),
+                'buy_total' => round($buy, 2),
+                'margin' => $sell > 0 ? round($sell - $buy, 2) : null,
+                'sent_to_accounts_at' => $invoice->sent_to_accounts_at,
+                'sent_to_accounts_by' => DB::table('users')->where('id', $invoice->sent_to_accounts_by)->value('name'),
+            ]);
+        });
 
         return response()->json($invoices);
     }

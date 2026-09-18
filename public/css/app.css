@@ -6330,6 +6330,9 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 .fx-signature__preview { max-width: 240px; height: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #fff; }
 .fx-signature__image-actions { display: flex; gap: var(--space-2); }
 
+/* Financials: the three registers accounts work (2026-09-18). */
+.fx-financials__views { gap: var(--space-2); margin-bottom: var(--space-3); }
+
 @charset "UTF-8";
 html {
   scroll-behavior: smooth;

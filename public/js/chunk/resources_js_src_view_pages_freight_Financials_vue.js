@@ -27,6 +27,18 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 
 const STATUSES = ["draft", "finalized", "sent", "partially_paid", "paid", "void"];
+
+/** The three registers accounts work (user, 2026-09-18). */
+const VIEWS = [{
+  key: "awaiting",
+  label: "Waiting to be billed"
+}, {
+  key: "invoices",
+  label: "Invoices"
+}, {
+  key: "vouchers",
+  label: "What we owe"
+}];
 const TABS = [{
   key: "credit",
   label: "Credit standing"
@@ -47,6 +59,9 @@ const TABS = [{
     error: null,
     status: "",
     outstanding: false,
+    /** Which register is open: the hand-over queue, the receivables, or the payables. */
+    view: "awaiting",
+    VIEWS,
     selected: null,
     tab: "credit",
     credit: null,
@@ -56,7 +71,12 @@ const TABS = [{
     busy: false,
     actionError: null,
     STATUSES,
-    TABS
+    TABS,
+    /** A voucher has no customer credit to check, so its drawer shows the journal alone. */
+    VOUCHER_TABS: [{
+      key: "journal",
+      label: "Journal"
+    }]
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_4__.mapGetters)(["designation"])), {}, {
     /* Only accounts commits. The Boss reads the register and the journal, and that
@@ -69,7 +89,16 @@ const TABS = [{
     },
     drawerSubtitle() {
       if (!this.selected) return null;
+      if (this.view === "vouchers") return this.selected.vendor ? this.selected.vendor.name : "No supplier";
       return this.selected.customer ? this.selected.customer.name : "Partner-billed";
+    },
+    /** The queue is the hand-over; the receivables and payables are the registers themselves. */
+    subtitleForView() {
+      return {
+        awaiting: "Cost sheets pricing has sent across, with what each shipment sells for and what it cost. Finalize one to bill it.",
+        invoices: "The receivables register for this branch. Select a row to see the client's credit standing and the journal a posting would write.",
+        vouchers: "What this branch owes its suppliers, one voucher per supplier per shipment. Select one to see the journal a posting would write."
+      }[this.view];
     }
   }),
   created() {
@@ -80,12 +109,19 @@ const TABS = [{
     balanceOf(row) {
       return Number(row.grand_total || 0) - Number(row.amount_paid || 0);
     },
+    showView(key) {
+      this.view = key;
+      this.deselect();
+      this.load();
+    },
     load() {
       this.loading = true;
       const params = [];
-      if (this.status) params.push("status=" + encodeURIComponent(this.status));
-      if (this.outstanding) params.push("outstanding=1");
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/invoices" + (params.length ? "?" + params.join("&") : "")).then(({
+      if (this.view === "awaiting") params.push("awaiting=1");
+      if (this.view !== "vouchers" && this.status) params.push("status=" + encodeURIComponent(this.status));
+      if (this.view === "invoices" && this.outstanding) params.push("outstanding=1");
+      const path = this.view === "vouchers" ? "/vouchers" : "/invoices";
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(path + (params.length ? "?" + params.join("&") : "")).then(({
         data
       }) => {
         this.rows = data.data || [];
@@ -94,6 +130,23 @@ const TABS = [{
         this.error = this.messageFor(e);
       }).finally(() => {
         this.loading = false;
+      });
+    },
+    /** A voucher's drawer: the journal a posting would write, and Post for accounts. */
+    selectVoucher(row) {
+      this.selected = row;
+      this.tab = "journal";
+      this.actionError = null;
+      this.credit = null;
+      this.previewLoading = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/vouchers/${row.id}/posting-preview`).then(({
+        data
+      }) => {
+        this.preview = data;
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.previewLoading = false;
       });
     },
     select(row) {
@@ -140,7 +193,8 @@ const TABS = [{
       this.commit(`/invoices/${this.selected.id}/finalize`);
     },
     post() {
-      this.commit(`/invoices/${this.selected.id}/post`);
+      // The buy side posts through its own endpoint — same segregation, different document.
+      this.commit(this.view === "vouchers" ? `/vouchers/${this.selected.id}/post` : `/invoices/${this.selected.id}/post`);
     },
     /**
      * Both commits share this because both can be REFUSED for a reason the user
@@ -188,7 +242,28 @@ __webpack_require__.r(__webpack_exports__);
 var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
-  return _c("div", [_vm._m(0), _vm._v(" "), _c("div", {
+  return _c("div", [_c("header", {
+    staticClass: "fx-page-head"
+  }, [_c("h1", {
+    staticClass: "fx-page-title"
+  }, [_vm._v("Financials")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-page-sub"
+  }, [_vm._v(_vm._s(_vm.subtitleForView))])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar fx-financials__views"
+  }, _vm._l(_vm.VIEWS, function (v) {
+    return _c("button", {
+      key: v.key,
+      staticClass: "fx-btn",
+      class: {
+        "fx-btn--primary": _vm.view === v.key
+      },
+      on: {
+        click: function ($event) {
+          return _vm.showView(v.key);
+        }
+      }
+    }, [_vm._v(_vm._s(v.label))]);
+  }), 0), _vm._v(" "), _vm.view !== "vouchers" ? _c("div", {
     staticClass: "fx-toolbar"
   }, [_c("label", {
     staticClass: "fx-field"
@@ -257,7 +332,7 @@ var render = function render() {
         }
       }, _vm.load]
     }
-  }), _vm._v("\n      Outstanding only\n    ")])]), _vm._v(" "), _vm.loading ? _c("p", {
+  }), _vm._v("\n      Outstanding only\n    ")])]) : _vm._e(), _vm._v(" "), _vm.loading ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
     staticClass: "fx-error",
@@ -266,9 +341,109 @@ var render = function render() {
     }
   }, [_vm._v(_vm._s(_vm.error))]) : !_vm.rows.length ? _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("No documents match.")]) : _c("table", {
+  }, [_vm._v("No documents match.")]) : _vm.view === "vouchers" ? _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(1), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+    return _c("tr", {
+      key: "v-" + row.id,
+      staticClass: "is-clickable",
+      class: {
+        "is-selected": _vm.selected && _vm.selected.id === row.id
+      },
+      attrs: {
+        tabindex: "0"
+      },
+      on: {
+        click: function ($event) {
+          return _vm.selectVoucher(row);
+        },
+        keydown: function ($event) {
+          if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+          return _vm.selectVoucher(row);
+        }
+      }
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(row.voucher_no))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(row.vendor ? row.vendor.name : "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(row.job_no || row.job_id))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: row.document_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: row.status
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: row.is_posted ? "posted" : "unposted"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: row.net_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), 0)]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_vm.view === "awaiting" ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipment")]) : _vm._e(), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Invoice")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Customer")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Status")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Posted")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Total")]), _vm._v(" "), _vm.view === "awaiting" ? [_c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Cost")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Margin")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Sent by")])] : [_c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Paid")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Balance")])]], 2)]), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
     return _c("tr", {
       key: row.id,
       staticClass: "is-clickable",
@@ -287,7 +462,9 @@ var render = function render() {
           return _vm.select(row);
         }
       }
-    }, [_c("td", {
+    }, [_vm.view === "awaiting" ? _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(row.job_no))]) : _vm._e(), _vm._v(" "), _c("td", {
       staticClass: "identifier"
     }, [row.invoice_no ? _c("span", [_vm._v(_vm._s(row.invoice_no))]) : _c("span", {
       staticClass: "is-empty",
@@ -313,11 +490,29 @@ var render = function render() {
       staticClass: "fx-num"
     }, [_c("Figure", {
       attrs: {
-        value: row.grand_total,
+        value: _vm.view === "awaiting" ? row.sell_total : row.grand_total,
         kind: "currency",
         "currency-code": row.currency || "INR"
       }
+    })], 1), _vm._v(" "), _vm.view === "awaiting" ? [_c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: row.buy_total,
+        kind: "currency",
+        "currency-code": "INR"
+      }
     })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [row.margin !== null ? _c("Figure", {
+      attrs: {
+        value: row.margin,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(row.sent_to_accounts_by || "—"))])] : [_c("td", {
       staticClass: "fx-num"
     }, [_c("Figure", {
       attrs: {
@@ -333,13 +528,13 @@ var render = function render() {
         kind: "currency",
         "currency-code": row.currency || "INR"
       }
-    })], 1)]);
+    })], 1)]], 2);
   }), 0)]), _vm._v(" "), _c("FxDrawer", {
     attrs: {
       open: !!_vm.selected,
       title: _vm.selected ? _vm.selected.invoice_no || "Draft invoice" : "",
       subtitle: _vm.drawerSubtitle,
-      tabs: _vm.TABS,
+      tabs: _vm.view === "vouchers" ? _vm.VOUCHER_TABS : _vm.TABS,
       "active-tab": _vm.tab
     },
     on: {
@@ -356,7 +551,7 @@ var render = function render() {
           on: {
             click: _vm.deselect
           }
-        }, [_vm._v("Close")]), _vm._v(" "), _vm.canPost && _vm.selected ? [_vm.selected.status === "draft" ? _c("button", {
+        }, [_vm._v("Close")]), _vm._v(" "), _vm.canPost && _vm.selected ? [_vm.view !== "vouchers" && _vm.selected.status === "draft" ? _c("button", {
           staticClass: "fx-btn fx-btn--primary",
           attrs: {
             disabled: _vm.busy
@@ -477,25 +672,19 @@ var render = function render() {
 var staticRenderFns = [function () {
   var _vm = this,
     _c = _vm._self._c;
-  return _c("header", {
-    staticClass: "fx-page-head"
-  }, [_c("h1", {
-    staticClass: "fx-page-title"
-  }, [_vm._v("Financials")]), _vm._v(" "), _c("p", {
-    staticClass: "fx-page-sub"
-  }, [_vm._v("\n      The receivables register for this branch. Select a row to see the client's credit\n      standing and the journal a posting would write.\n    ")])]);
-}, function () {
-  var _vm = this,
-    _c = _vm._self._c;
   return _c("thead", [_c("tr", [_c("th", {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Invoice")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Voucher")]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Customer")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Supplier")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipment")]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }
@@ -512,17 +701,7 @@ var staticRenderFns = [function () {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Total")]), _vm._v(" "), _c("th", {
-    staticClass: "fx-num",
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Paid")]), _vm._v(" "), _c("th", {
-    staticClass: "fx-num",
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Balance")])])]);
+  }, [_vm._v("Total")])])]);
 }];
 render._withStripped = true;
 

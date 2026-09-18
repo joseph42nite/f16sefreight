@@ -1193,7 +1193,9 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       return this.designation === "pricing" || this.designation === "accounts";
     },
     valid() {
-      return this.draft.description && this.draft.quantity > 0 && (this.draft.side === "sell" || this.draft.vendor_id);
+      return this.draft.description && this.draft.quantity > 0
+      // A buy line needs somebody to owe: the waybill's airline, or a vendor chosen here.
+      && (this.draft.side === "sell" || this.draft.vendor_id || this.sheet && this.sheet.awb_airline);
     }
   }),
   created() {
@@ -4924,7 +4926,7 @@ var render = function render() {
     attrs: {
       value: ""
     }
-  }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.partners, function (p) {
+  }, [_vm._v(_vm._s(_vm.sheet.awb_airline ? _vm.sheet.awb_airline.name + " — from AWB " + _vm.sheet.awb_airline.prefix : "Choose…"))]), _vm._v(" "), _vm._l(_vm.partners, function (p) {
     return _c("option", {
       key: p.id,
       domProps: {

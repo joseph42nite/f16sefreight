@@ -245,10 +245,14 @@
             <input v-model.number="draft.tax_percentage" class="fx-input" type="number" step="0.01" min="0" max="100" />
           </label>
           <!-- A cost is owed to somebody: a buy line without a vendor is refused. -->
+          <!--
+            The airline comes off the WAYBILL, not from a list: the AWB's first three digits are the carrier
+            (user, 2026-09-18). Anyone else owed money — a trucker, a customs broker — is chosen here.
+          -->
           <label v-if="draft.side === 'buy'" class="fx-field">
             <span class="fx-field__label">Vendor</span>
             <select v-model="draft.vendor_id" class="fx-input">
-              <option value="">Choose…</option>
+              <option value="">{{ sheet.awb_airline ? sheet.awb_airline.name + " — from AWB " + sheet.awb_airline.prefix : "Choose…" }}</option>
               <option v-for="p in partners" :key="p.id" :value="p.id">{{ p.name }}</option>
             </select>
           </label>
@@ -289,7 +293,8 @@ export default {
     valid() {
       return this.draft.description
         && this.draft.quantity > 0
-        && (this.draft.side === "sell" || this.draft.vendor_id);
+        // A buy line needs somebody to owe: the waybill's airline, or a vendor chosen here.
+        && (this.draft.side === "sell" || this.draft.vendor_id || (this.sheet && this.sheet.awb_airline));
     },
   },
   created() {

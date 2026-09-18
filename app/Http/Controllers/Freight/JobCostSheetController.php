@@ -84,6 +84,8 @@ class JobCostSheetController extends Controller
             'locked' => $this->isLocked($job),
             // Where the sell lines come from, so an empty sheet says what to do (user, 2026-09-18).
             'from_waybill' => $this->waybillState($job),
+            // The carrier the AWB prefix names — the vendor a buy line takes by default.
+            'awb_airline' => $this->airlineOf($job),
             // Pricing's hand-over to accounts: when it was sent, and by whom.
             'sent_to_accounts' => $this->sentState($job),
         ];
@@ -137,6 +139,13 @@ class JobCostSheetController extends Controller
         $amount = round($data['quantity'] * $data['rate'], 2);
         $taxPct = (float) ($data['tax_percentage'] ?? 0);
         $tax = round($amount * $taxPct / 100, 2);
+
+        // 🔴 The airline is not a partner anybody types in: the AWB's first three digits ARE the carrier (user,
+        // 2026-09-18: "we have an airline table — you will get to know from the 3 letter code of the AWB number which
+        // airline it is"). A buy line with no vendor takes the airline off the waybill.
+        if ($data['side'] === 'buy' && empty($data['vendor_id'])) {
+            $data['vendor_id'] = $this->airlineVendor($job);
+        }
 
         $line = DB::transaction(function () use ($job, $data, $amount, $tax, $taxPct) {
             if ($data['side'] === 'sell') {
@@ -384,6 +393,20 @@ class JobCostSheetController extends Controller
         ];
     }
 
+    /** @return ?array{name: string, code: ?string, prefix: string} the carrier named by the waybill's prefix */
+    private function airlineOf(Job $job): ?array
+    {
+        $prefix = substr(preg_replace('/\D/', '', (string) $job->awb_number), 0, 3);
+
+        if ($job->transport_mode !== 'air' || strlen($prefix) !== 3) {
+            return null;
+        }
+
+        $airline = DB::table('airlines')->where('prefix', $prefix)->where('is_active', true)->first(['name', 'code']);
+
+        return $airline === null ? null : ['name' => $airline->name, 'code' => $airline->code, 'prefix' => $prefix];
+    }
+
     /** @return ?array{at: string, by: ?string} */
     private function sentState(Job $job): ?array
     {
@@ -419,6 +442,37 @@ class JobCostSheetController extends Controller
             'invoice_no' => AccountsInvoice::placeholderNumber($job->id),
             'type' => 'invoice', 'document_date' => now()->toDateString(),
             'status' => 'draft', 'currency' => 'INR',
+        ]);
+    }
+
+    /**
+     * The carrier this shipment flies on, as a vendor to owe money to — from `jobs.awb_number`'s prefix and the
+     * platform's airline list (user, 2026-09-18).
+     *
+     * ⚠️ A purchase voucher points at `partners`, so the airline is kept as this company's partner row the first time
+     * it is owed anything: found by name, created as an `airline` partner otherwise. Nothing is invented — the name is
+     * the directory's — and a prefix the directory does not know returns NULL, leaving the old "name a vendor" error.
+     */
+    private function airlineVendor(Job $job): ?int
+    {
+        $prefix = substr(preg_replace('/\D/', '', (string) $job->awb_number), 0, 3);
+
+        if ($job->transport_mode !== 'air' || strlen($prefix) !== 3) {
+            return null;
+        }
+
+        $airline = DB::table('airlines')->where('prefix', $prefix)->where('is_active', true)->first(['name', 'code']);
+
+        if ($airline === null) {
+            return null;
+        }
+
+        $companyId = DB::table('agents_info')->where('id', $job->agent_id)->value('company_id');
+        $existing = DB::table('partners')->where('company_id', $companyId)->whereRaw('LOWER(name) = ?', [strtolower($airline->name)])->value('id');
+
+        return $existing ?? DB::table('partners')->insertGetId([
+            'company_id' => $companyId, 'agent_id' => $job->agent_id, 'name' => $airline->name,
+            'partner_type' => 'airline', 'created_at' => now(), 'updated_at' => now(),
         ]);
     }
 

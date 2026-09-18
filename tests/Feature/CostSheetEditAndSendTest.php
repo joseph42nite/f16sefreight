@@ -100,4 +100,37 @@ class CostSheetEditAndSendTest extends TestCase
             'description' => 'Cartage', 'quantity' => 1, 'rate' => 1])->assertForbidden();
         $this->postJson($this->url('/send'))->assertForbidden();
     }
+
+    /**
+     * A buy line with no vendor is owed to the airline the WAYBILL names — its first three digits (user, 2026-09-18:
+     * "we have an airline table … you will get to know from the 3 letter code of the AWB number which airline it is").
+     */
+    public function test_a_buy_line_is_owed_to_the_airline_the_awb_prefix_names(): void
+    {
+        DB::table('airlines')->updateOrInsert(['prefix' => '176'], ['name' => 'Emirates SkyCargo', 'code' => 'EK', 'is_active' => 1]);
+        $this->job->forceFill(['awb_number' => '176-12345678'])->save();
+
+        $sheet = $this->as($this->pricing)->postJson($this->url('/lines'), ['side' => 'buy', 'charge_type' => 'air_freight',
+            'description' => 'Air freight', 'quantity' => 102, 'rate' => 150])->assertCreated()->json();
+
+        $this->assertSame(15300.0, (float) $sheet['buy']['total']);
+        $this->assertSame(['Emirates SkyCargo', 'EK', '176'], [$sheet['awb_airline']['name'], $sheet['awb_airline']['code'], $sheet['awb_airline']['prefix']]);
+
+        // The airline is kept as this company's partner, so the voucher accounts will pay points at somebody real.
+        $vendorId = DB::table('accounts_purchase_vouchers')->where('job_id', $this->job->id)->value('vendor_id');
+        $this->assertSame('Emirates SkyCargo', DB::table('partners')->where('id', $vendorId)->value('name'));
+        $this->assertSame('airline', DB::table('partners')->where('id', $vendorId)->value('partner_type'));
+
+        // A second line does not create a second partner for the same airline.
+        $this->postJson($this->url('/lines'), ['side' => 'buy', 'charge_type' => 'miscellaneous',
+            'description' => 'Fuel surcharge', 'quantity' => 1, 'rate' => 2000])->assertCreated();
+        $this->assertSame(1, DB::table('partners')->where('company_id', $this->branch->company_id)->where('name', 'Emirates SkyCargo')->count());
+
+        // A prefix the directory does not know still asks for a vendor — on a shipment with no supplier yet.
+        $unknown = Job::create(['agent_id' => $this->branch->id, 'enquiry_id' => $this->job->enquiry_id, 'transport_mode' => 'air',
+            'execution_job_no' => 'JOBA-SHTBOM-26-0002', 'awb_number' => '999-12345678', 'status' => 'Intake']);
+
+        $this->postJson("http://focusair.localhost/api/jobs/{$unknown->id}/cost-sheet/lines", ['side' => 'buy',
+            'charge_type' => 'cartage', 'description' => 'Cartage', 'quantity' => 1, 'rate' => 500])->assertStatus(422);
+    }
 }

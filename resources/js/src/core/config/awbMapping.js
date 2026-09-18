@@ -436,14 +436,10 @@ export function flattenCargo(fields) {
   const goods = value(cargo.description);
   if (goods && out.goods === undefined) out.goods = { value: goods, confidence: confidence(cargo.description) };
 
-  const lines = (Array.isArray(cargo.dimensions) ? cargo.dimensions : [])
-    .map((d) => (d && typeof d === "object" && "dimension" in d
-      ? { count: parseFloat(value(d.count)) || null, dimension: value(d.dimension) }
-      : { count: null, dimension: value(d) }))
-    .filter((d) => d.dimension);
+  const lines = dimensionLines(cargo.dimensions, parseFloat(value(out.pieces)) || null);
 
   if (lines.length && out.dimensions === undefined) {
-    out.dimensions = { value: lines.map((d) => d.dimension).join(", "), confidence: "high" };
+    out.dimensions = { value: describeDimensions(lines), confidence: "high" };
     // Kept whole so each line carries its own piece count onto the waybill.
     out.dimension_lines = lines;
   }
@@ -455,6 +451,69 @@ export function flattenCargo(fields) {
   if (!out.pieces && counted > 0) out.pieces = { value: String(counted), confidence: "low" };
 
   return out;
+}
+
+/**
+ * The dimension lines of a shipment, each with the pieces it covers (user, 2026-09-18).
+ *
+ * How forwarders write them:
+ *   - `60x40x30` with `PCS: 60` on the document — one size, and it is ALL 60 pieces;
+ *   - `60x40x30/30` and `40x20x10/30` — the number after the slash is that size's own piece count, 30 and 30;
+ *   - a table that already carries a count per row (what the reader returns as `{count, dimension}`).
+ *
+ * @param  {Array|string} written  the dimensions as read
+ * @param  {?number} pieces        the document's own piece count, when it gave one
+ * @return {Array<{count: ?number, dimension: string}>}
+ */
+export function dimensionLines(written, pieces = null) {
+  const value = (node) => (node && typeof node === "object" && "value" in node ? node.value : node);
+  const listed = Array.isArray(written) ? written : String(value(written) || "").split(/\s*(?:,|;|\band\b)\s*/);
+
+  const lines = listed
+    .map((d) => {
+      const node = value(d);
+      const written = node && typeof node === "object" && "dimension" in node ? String(value(node.dimension) || "") : String(node || "");
+      // "60x40x30/30" — the count for THIS size sits after the slash.
+      const [size, afterSlash] = written.split("/");
+      const own = node && typeof node === "object" && "count" in node ? parseFloat(value(node.count)) : NaN;
+      const count = parseFloat(afterSlash);
+
+      return {
+        dimension: String(size || "").trim(),
+        count: count > 0 ? count : (own > 0 ? own : null),
+        // A count written after the slash is the size's own and is never overruled.
+        written: count > 0,
+      };
+    })
+    // Three measurements, each of any length: 60x40x30, 120 X 80 X 90.
+    .filter((d) => /\d+(?:\.\d+)?\s*[xX*]\s*\d+(?:\.\d+)?\s*[xX*]\s*\d+/.test(d.dimension));
+
+  // 🔴 One size and a piece count on the document: that size is EVERY piece (user, 2026-09-18: "when pieces are given
+  // like 60 and then dimensions like 60x40x30, it means 60 pieces with these dimensions"). A table row saying "1" for a
+  // 50-piece shipment is the row, not the pieces — so the document's own count wins, unless the size carries its own
+  // count after a slash.
+  if (lines.length === 1 && !lines[0].written && pieces > 0) {
+    lines[0].count = pieces;
+  }
+
+  return lines.map(({ dimension, count }) => ({ dimension, count }));
+}
+
+/** "60x40x30 — 30 pcs · 40x20x10 — 30 pcs", or just the sizes when no line says how many. */
+export function describeDimensions(lines) {
+  return lines.map((d) => (d.count ? `${d.dimension} — ${d.count} pcs` : d.dimension)).join(" · ");
+}
+
+/** IATA volumetric weight: every line's L×W×H × its pieces, ÷ 6000. NULL when nothing can be worked out. */
+export function volumetricWeight(lines) {
+  const total = lines.reduce((sum, d) => {
+    const parts = String(d.dimension).split(/\s*[xX*]\s*/).map((n) => parseFloat(n));
+    if (parts.length < 3 || parts.some((n) => isNaN(n))) return sum;
+
+    return sum + (parts[0] * parts[1] * parts[2] * (d.count || 1));
+  }, 0);
+
+  return total > 0 ? Math.round((total / 6000) * 10) / 10 : null;
 }
 
 /** A route end as a 3-letter airport code, or null — a document's sea port is not one. */

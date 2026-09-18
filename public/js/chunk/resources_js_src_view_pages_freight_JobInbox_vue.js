@@ -1697,12 +1697,23 @@ const PARTY_REQUIRED = {
      * NULL when there are no dimensions: "not calculable" is a different answer from 0.
      */
     volumetric() {
-      const dims = raw(this.sourceField("dimensions", "cargo"));
-      if (!dims) return null;
-      const parts = String(dims).split(/\s*[xX*]\s*/).map(n => parseFloat(n));
-      if (parts.length < 3 || parts.some(n => isNaN(n))) return null;
-      const pieces = parseFloat(raw(this.sourceField("pieces", "cargo"))) || 1;
-      return Math.round(parts[0] * parts[1] * parts[2] * pieces / 6000 * 10) / 10;
+      const lines = this.dimensionLines;
+      return lines.length ? (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.volumetricWeight)(lines) : null;
+    },
+    /**
+     * Each size with the pieces it covers (user, 2026-09-18): "60x40x30" with 60 pcs on the document is all 60;
+     * "60x40x30/30 and 40x20x10/30" is 30 pieces of each.
+     */
+    dimensionLines() {
+      const lines = raw(this.sourceField("dimension_lines", "cargo"));
+      if (Array.isArray(lines) && lines.length) return lines;
+      const written = raw(this.sourceField("dimensions", "cargo"));
+      return written ? (0,_core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.dimensionLines)(written, parseFloat(raw(this.sourceField("pieces", "cargo"))) || null) : [];
+    },
+    /** What the dimension lines add up to, when each says how many it covers. */
+    piecesFromDimensions() {
+      const total = this.dimensionLines.reduce((sum, d) => sum + (d.count || 0), 0);
+      return total > 0 ? total : null;
     },
     /**
      * The greater of gross and volumetric — what the airline bills.
@@ -2068,6 +2079,7 @@ const PARTY_REQUIRED = {
         confidence: "high"
       });
     },
+    describeDimensions: _core_config_awbMapping__WEBPACK_IMPORTED_MODULE_3__.describeDimensions,
     raw(node) {
       return raw(node);
     },
@@ -5079,7 +5091,12 @@ var render = function render() {
     attrs: {
       role: "status"
     }
-  }, [_vm._v("\n      Pieces: "), _c("strong", [_vm._v(_vm._s(_vm.piecesNote.count))]), _vm._v(" —\n      "), _vm.piecesNote.unit === "pcs" ? [_vm._v("as written")] : [_vm._v("each " + _vm._s(_vm.singular(_vm.piecesNote.unit)) + " counted as one piece")], _vm._v("\n      (written as “" + _vm._s(_vm.piecesNote.written) + "”)."), _vm.piecesNote.also ? [_vm._v(" The document also lists “" + _vm._s(_vm.piecesNote.also) + "”.")] : _vm._e()], 2) : _vm._e(), _vm._v(" "), _vm._l(_vm.mailDeviations, function (d) {
+  }, [_vm._v("\n      Pieces: "), _c("strong", [_vm._v(_vm._s(_vm.piecesNote.count))]), _vm._v(" —\n      "), _vm.piecesNote.unit === "pcs" ? [_vm._v("as written")] : [_vm._v("each " + _vm._s(_vm.singular(_vm.piecesNote.unit)) + " counted as one piece")], _vm._v("\n      (written as “" + _vm._s(_vm.piecesNote.written) + "”)."), _vm.piecesNote.also ? [_vm._v(" The document also lists “" + _vm._s(_vm.piecesNote.also) + "”.")] : _vm._e()], 2) : _vm._e(), _vm._v(" "), _vm.dimensionLines.length ? _c("p", {
+    staticClass: "fx-muted",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n      Dimensions: "), _c("strong", [_vm._v(_vm._s(_vm.describeDimensions(_vm.dimensionLines)))]), _vm._v(" "), _vm.piecesFromDimensions ? [_vm._v(" — " + _vm._s(_vm.piecesFromDimensions) + " pieces in total")] : _vm._e(), _vm._v(" "), _vm.volumetric ? [_vm._v(" · volumetric " + _vm._s(_vm.volumetric) + " kg (L×W×H × pieces ÷ 6000)")] : _vm._e(), _vm._v(".\n    ")], 2) : _vm._e(), _vm._v(" "), _vm._l(_vm.mailDeviations, function (d) {
     return _c("p", {
       key: "mail-" + d.key,
       staticClass: "fx-warn",
@@ -5820,6 +5837,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "buildPayload": () => (/* binding */ buildPayload),
 /* harmony export */   "countryCode": () => (/* binding */ countryCode),
 /* harmony export */   "createEndpoint": () => (/* binding */ createEndpoint),
+/* harmony export */   "describeDimensions": () => (/* binding */ describeDimensions),
+/* harmony export */   "dimensionLines": () => (/* binding */ dimensionLines),
 /* harmony export */   "flattenCargo": () => (/* binding */ flattenCargo),
 /* harmony export */   "flattenParties": () => (/* binding */ flattenParties),
 /* harmony export */   "flattenRoute": () => (/* binding */ flattenRoute),
@@ -5828,6 +5847,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "masterKey": () => (/* binding */ masterKey),
 /* harmony export */   "parsePartyBlock": () => (/* binding */ parsePartyBlock),
 /* harmony export */   "routeDeviations": () => (/* binding */ routeDeviations),
+/* harmony export */   "volumetricWeight": () => (/* binding */ volumetricWeight),
 /* harmony export */   "withoutWorkedOutParts": () => (/* binding */ withoutWorkedOutParts)
 /* harmony export */ });
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
@@ -6279,16 +6299,10 @@ function flattenCargo(fields) {
     value: goods,
     confidence: confidence(cargo.description)
   };
-  const lines = (Array.isArray(cargo.dimensions) ? cargo.dimensions : []).map(d => d && typeof d === "object" && "dimension" in d ? {
-    count: parseFloat(value(d.count)) || null,
-    dimension: value(d.dimension)
-  } : {
-    count: null,
-    dimension: value(d)
-  }).filter(d => d.dimension);
+  const lines = dimensionLines(cargo.dimensions, parseFloat(value(out.pieces)) || null);
   if (lines.length && out.dimensions === undefined) {
     out.dimensions = {
-      value: lines.map(d => d.dimension).join(", "),
+      value: describeDimensions(lines),
       confidence: "high"
     };
     // Kept whole so each line carries its own piece count onto the waybill.
@@ -6304,6 +6318,69 @@ function flattenCargo(fields) {
     confidence: "low"
   };
   return out;
+}
+
+/**
+ * The dimension lines of a shipment, each with the pieces it covers (user, 2026-09-18).
+ *
+ * How forwarders write them:
+ *   - `60x40x30` with `PCS: 60` on the document — one size, and it is ALL 60 pieces;
+ *   - `60x40x30/30` and `40x20x10/30` — the number after the slash is that size's own piece count, 30 and 30;
+ *   - a table that already carries a count per row (what the reader returns as `{count, dimension}`).
+ *
+ * @param  {Array|string} written  the dimensions as read
+ * @param  {?number} pieces        the document's own piece count, when it gave one
+ * @return {Array<{count: ?number, dimension: string}>}
+ */
+function dimensionLines(written, pieces = null) {
+  const value = node => node && typeof node === "object" && "value" in node ? node.value : node;
+  const listed = Array.isArray(written) ? written : String(value(written) || "").split(/\s*(?:,|;|\band\b)\s*/);
+  const lines = listed.map(d => {
+    const node = value(d);
+    const written = node && typeof node === "object" && "dimension" in node ? String(value(node.dimension) || "") : String(node || "");
+    // "60x40x30/30" — the count for THIS size sits after the slash.
+    const [size, afterSlash] = written.split("/");
+    const own = node && typeof node === "object" && "count" in node ? parseFloat(value(node.count)) : NaN;
+    const count = parseFloat(afterSlash);
+    return {
+      dimension: String(size || "").trim(),
+      count: count > 0 ? count : own > 0 ? own : null,
+      // A count written after the slash is the size's own and is never overruled.
+      written: count > 0
+    };
+  })
+  // Three measurements, each of any length: 60x40x30, 120 X 80 X 90.
+  .filter(d => /\d+(?:\.\d+)?\s*[xX*]\s*\d+(?:\.\d+)?\s*[xX*]\s*\d+/.test(d.dimension));
+
+  // 🔴 One size and a piece count on the document: that size is EVERY piece (user, 2026-09-18: "when pieces are given
+  // like 60 and then dimensions like 60x40x30, it means 60 pieces with these dimensions"). A table row saying "1" for a
+  // 50-piece shipment is the row, not the pieces — so the document's own count wins, unless the size carries its own
+  // count after a slash.
+  if (lines.length === 1 && !lines[0].written && pieces > 0) {
+    lines[0].count = pieces;
+  }
+  return lines.map(({
+    dimension,
+    count
+  }) => ({
+    dimension,
+    count
+  }));
+}
+
+/** "60x40x30 — 30 pcs · 40x20x10 — 30 pcs", or just the sizes when no line says how many. */
+function describeDimensions(lines) {
+  return lines.map(d => d.count ? `${d.dimension} — ${d.count} pcs` : d.dimension).join(" · ");
+}
+
+/** IATA volumetric weight: every line's L×W×H × its pieces, ÷ 6000. NULL when nothing can be worked out. */
+function volumetricWeight(lines) {
+  const total = lines.reduce((sum, d) => {
+    const parts = String(d.dimension).split(/\s*[xX*]\s*/).map(n => parseFloat(n));
+    if (parts.length < 3 || parts.some(n => isNaN(n))) return sum;
+    return sum + parts[0] * parts[1] * parts[2] * (d.count || 1);
+  }, 0);
+  return total > 0 ? Math.round(total / 6000 * 10) / 10 : null;
 }
 
 /** A route end as a 3-letter airport code, or null — a document's sea port is not one. */

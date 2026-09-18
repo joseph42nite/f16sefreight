@@ -144,7 +144,7 @@ describe("flattenCargo", () => {
 
   it("brings pieces, gross weight, description and dimensions into the panel's keys", () => {
     expect([flat.pieces.value, flat.gross_weight.value, flat.goods.value, flat.dimensions.value])
-      .toEqual(["50", "364.09", "PU coated polyester travel backpack", "64X32X64"]);
+      .toEqual(["50", "364.09", "PU coated polyester travel backpack", "64X32X64 — 50 pcs"]);
   });
 
   it("leaves out a zero, which the parser writes for a figure it did not find", () => {

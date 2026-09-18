@@ -426,6 +426,12 @@
         <template v-else>each {{ singular(piecesNote.unit) }} counted as one piece</template>
         (written as “{{ piecesNote.written }}”).<template v-if="piecesNote.also"> The document also lists “{{ piecesNote.also }}”.</template>
       </p>
+      <!-- Each size and the pieces it covers, and the volumetric weight worked out from them (user, 2026-09-18). -->
+      <p v-if="dimensionLines.length" class="fx-muted" role="status">
+        Dimensions: <strong>{{ describeDimensions(dimensionLines) }}</strong>
+        <template v-if="piecesFromDimensions"> — {{ piecesFromDimensions }} pieces in total</template>
+        <template v-if="volumetric"> · volumetric {{ volumetric }} kg (L×W×H × pieces ÷ 6000)</template>.
+      </p>
       <p v-for="d in mailDeviations" :key="'mail-' + d.key" class="fx-warn" role="status">
         The mail said {{ d.label }} <strong>{{ d.mail }}</strong>; the document gives <strong>{{ d.document }}</strong>.
       </p>
@@ -498,8 +504,8 @@ import { openPdf } from "@/core/services/pdfLink";
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import {
-  airportCode, buildPayload, countryCode, createEndpoint, flattenCargo, flattenParties, flattenRoute,
-  formRoute, masterKey, mailDeviations, parsePartyBlock, routeDeviations, TARGETS, withoutWorkedOutParts,
+  airportCode, buildPayload, countryCode, createEndpoint, describeDimensions, dimensionLines, flattenCargo, flattenParties, flattenRoute,
+  formRoute, masterKey, mailDeviations, parsePartyBlock, routeDeviations, TARGETS, volumetricWeight, withoutWorkedOutParts,
 } from "@/core/config/awbMapping";
 import { cleanParty } from "@/core/config/awbFieldRules";
 
@@ -816,15 +822,27 @@ export default {
      * NULL when there are no dimensions: "not calculable" is a different answer from 0.
      */
     volumetric() {
-      const dims = raw(this.sourceField("dimensions", "cargo"));
-      if (!dims) return null;
+      const lines = this.dimensionLines;
 
-      const parts = String(dims).split(/\s*[xX*]\s*/).map((n) => parseFloat(n));
-      if (parts.length < 3 || parts.some((n) => isNaN(n))) return null;
+      return lines.length ? volumetricWeight(lines) : null;
+    },
+    /**
+     * Each size with the pieces it covers (user, 2026-09-18): "60x40x30" with 60 pcs on the document is all 60;
+     * "60x40x30/30 and 40x20x10/30" is 30 pieces of each.
+     */
+    dimensionLines() {
+      const lines = raw(this.sourceField("dimension_lines", "cargo"));
+      if (Array.isArray(lines) && lines.length) return lines;
 
-      const pieces = parseFloat(raw(this.sourceField("pieces", "cargo"))) || 1;
+      const written = raw(this.sourceField("dimensions", "cargo"));
 
-      return Math.round(((parts[0] * parts[1] * parts[2] * pieces) / 6000) * 10) / 10;
+      return written ? dimensionLines(written, parseFloat(raw(this.sourceField("pieces", "cargo"))) || null) : [];
+    },
+    /** What the dimension lines add up to, when each says how many it covers. */
+    piecesFromDimensions() {
+      const total = this.dimensionLines.reduce((sum, d) => sum + (d.count || 0), 0);
+
+      return total > 0 ? total : null;
     },
     /**
      * The greater of gross and volumetric — what the airline bills.
@@ -1165,6 +1183,7 @@ export default {
     setManual(key, value) {
       this.$set(this.manual, key, { value, confidence: "high" });
     },
+    describeDimensions,
     raw(node) {
       return raw(node);
     },

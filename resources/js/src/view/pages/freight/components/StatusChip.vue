@@ -70,6 +70,10 @@ const TONE = {
 
   // Collections (user, 2026-09-20). A BROKEN promise is the strongest signal on that screen: they were asked, they
   // committed to a date, and the date passed. "Nobody has called" is a warning about US, not about them.
+  // Today's exceptions: one stops work, the other is worth a look before it does.
+  blocking: "critical",
+  check_this: "warning",
+
   // Profitability. A shipment billed with nothing costed reads as a 100% margin that is not real.
   no_cost_booked: "warning",
   not_billed: "info",

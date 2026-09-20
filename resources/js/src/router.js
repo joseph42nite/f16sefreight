@@ -445,6 +445,13 @@ const router = new Router({
           meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
         },
         {
+          // The accounts desk's home: what to do today (guide §11.2).
+          path: "today",
+          name: "AccountsToday",
+          component: () => import("@/view/pages/freight/AccountsToday"),
+          meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
+        },
+        {
           // What each shipment, client and lane made.
           path: "profitability",
           name: "Profitability",

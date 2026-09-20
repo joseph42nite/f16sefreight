@@ -515,6 +515,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
 
+        // ── The accounts desk's home: what to do today (guide §11.2).
+        Route::get('/accounts/today', [\App\Http\Controllers\Freight\AccountsTodayController::class, 'index']);
+
         // ── What each shipment, client and lane made (user, 2026-09-20).
         Route::get('/profitability/jobs', [\App\Http\Controllers\Freight\ProfitabilityController::class, 'jobs']);
         Route::get('/profitability/clients', [\App\Http\Controllers\Freight\ProfitabilityController::class, 'clients']);

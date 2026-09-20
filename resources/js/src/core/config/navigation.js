@@ -18,7 +18,7 @@ export const LANDING_ROUTE = {
   pricing: "/inbox", // the day starts in the mail
   operations: "/kanban", // the day starts with assigned work
   sales: "/sales", // Today's Actions is the worklist
-  accounts: "/financials", // the registers
+  accounts: "/today", // what to do today, not a register to read (guide §11.2)
   boss: "/boss", // oversight
 };
 
@@ -74,6 +74,8 @@ export const NAV_ITEMS = [
   { path: "/financials", label: "Financials", icon: "cash", designations: ["accounts", "boss"], minTier: "command" },
   // The billing desk (user, 2026-09-19). Accounts' own, not the Boss's: raising and sending a bill is the one thing
   // the role that sets the targets must not do. The Boss reaches the register from Financials.
+  // 🔴 The accounts desk lands on WORK, not on a register. Everything else is reachable from it.
+  { path: "/today", label: "Today", icon: "sun", designations: ["accounts"], minTier: "command" },
   { path: "/billing", label: "Billing", icon: "receipt", designations: ["accounts"], minTier: "command" },
   // Chasing what is owed is accounts' day, not the Boss's; the Boss reads the ageing from Financials.
   { path: "/collections", label: "Collections", icon: "hourglass", designations: ["accounts"], minTier: "command" },
@@ -94,7 +96,7 @@ const RAIL_ORDER = {
   sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
   boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
   // Accounts start in the registers; their inbox sits under it (user, 2026-09-19).
-  accounts: ["/billing", "/collections", "/financials", "/inbox", "/clients-partners", "/settings"],
+  accounts: ["/today", "/billing", "/collections", "/financials", "/inbox", "/clients-partners", "/settings"],
 };
 
 const railRank = (item, designation) => {

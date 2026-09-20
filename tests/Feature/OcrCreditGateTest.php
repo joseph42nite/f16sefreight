@@ -123,10 +123,10 @@ class OcrCreditGateTest extends TestCase
 
         $this->assertNotNull($transactionId);
         // A scan's rate (user, 2026-09-14: 3 credits).
-        $this->assertSame(500 - OcrCreditService::VISION_COST, (int) $company->fresh()->ocr_credits_balance);
+        $this->assertSame(500 - OcrCreditService::VISION_COST, (float) $company->fresh()->ocr_credits_balance);
 
         $row = DB::table('ocr_credit_transactions')->find($transactionId);
-        $this->assertSame(-OcrCreditService::VISION_COST, (int) $row->amount);
+        $this->assertSame(-OcrCreditService::VISION_COST, (float) $row->amount);
         $this->assertSame('consumption', $row->transaction_type);
         $this->assertSame($extraction->id, (int) $row->pdf_processing_job_id,
             'Which extraction burned the credit must be answerable.');
@@ -146,11 +146,11 @@ class OcrCreditGateTest extends TestCase
         // One credit at a time (a text document's rate), so the floor itself is what is tested.
         $this->assertNotNull($service->reserve($company->fresh(), $this->extraction($user->id), 1),
             'At -49 one more credit reaches the -50 floor and is allowed.');
-        $this->assertSame(-50, (int) $company->fresh()->ocr_credits_balance);
+        $this->assertSame(-50.0, (float) $company->fresh()->ocr_credits_balance);
 
         $this->assertNull($service->reserve($company->fresh(), $this->extraction($user->id), 1),
             'Below the floor the reservation must be refused.');
-        $this->assertSame(-50, (int) $company->fresh()->ocr_credits_balance,
+        $this->assertSame(-50.0, (float) $company->fresh()->ocr_credits_balance,
             'A refused reservation must not move the balance.');
     }
 
@@ -170,7 +170,7 @@ class OcrCreditGateTest extends TestCase
             'ocr_credits_balance' => 0, 'ocr_credits_limit' => -500,
         ]);
 
-        $this->assertSame(-500, $company->creditFloor());
+        $this->assertSame(-500.0, $company->creditFloor());
         $this->assertTrue(app(OcrCreditService::class)->canAfford($company));
     }
 
@@ -182,10 +182,10 @@ class OcrCreditGateTest extends TestCase
         $service = app(OcrCreditService::class);
 
         $transactionId = $service->reserve($company, $this->extraction($user->id));
-        $this->assertSame(500 - OcrCreditService::VISION_COST, (int) $company->fresh()->ocr_credits_balance);
+        $this->assertSame(500 - OcrCreditService::VISION_COST, (float) $company->fresh()->ocr_credits_balance);
 
         $this->assertTrue($service->refund($transactionId));
-        $this->assertSame(500, (int) $company->fresh()->ocr_credits_balance);
+        $this->assertSame(500.0, (float) $company->fresh()->ocr_credits_balance);
     }
 
     /**
@@ -203,7 +203,7 @@ class OcrCreditGateTest extends TestCase
         $this->assertTrue($service->refund($transactionId));
         $this->assertFalse($service->refund($transactionId), 'The second refund must be a no-op.');
 
-        $this->assertSame(500, (int) $company->fresh()->ocr_credits_balance,
+        $this->assertSame(500.0, (float) $company->fresh()->ocr_credits_balance,
             'The balance must be restored exactly once.');
     }
 

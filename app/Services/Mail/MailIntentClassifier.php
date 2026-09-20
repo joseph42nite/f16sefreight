@@ -21,7 +21,7 @@ use RuntimeException;
  * another negative lookahead, and every lookahead made the next one harder to reason about.
  *
  * ⚠️ **Only CLASSIFICATION moved to the model. Cargo figures did not.** The weight, pieces,
- * dimension and lane patterns in RegexClassificationService stay exactly where they are:
+ * dimension and lane patterns in MailFilingService stay exactly where they are:
  * they read a number off the page, and those numbers end up on a customs declaration. Jev is
  * explicit that it is not a calculator and does not generate values — asking it for "the
  * gross weight" would be asking the one thing its own documentation says to keep in code.

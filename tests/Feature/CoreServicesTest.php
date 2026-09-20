@@ -8,7 +8,7 @@ use App\EmailMessage;
 use App\Enquiry;
 use App\Services\CargoDataPromotionService;
 use App\Services\EnquirySequenceService;
-use App\Services\RegexClassificationService;
+use App\Services\Mail\MailFilingService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -184,7 +184,7 @@ class CoreServicesTest extends TestCase
      */
     public function test_outbound_mail_is_never_classified(): void
     {
-        $service = app(RegexClassificationService::class);
+        $service = app(MailFilingService::class);
 
         $this->assertNull($service->classify($this->message(['direction' => 'outbound']), 'air'));
         $this->assertNotNull($service->classify($this->message(), 'air'));
@@ -193,7 +193,7 @@ class CoreServicesTest extends TestCase
     /** Imported mail is filed by type like live mail (PRD §5.2.2, GAPS #334) — filing mints nothing. */
     public function test_imported_mail_is_classified_like_live_mail(): void
     {
-        $service = app(RegexClassificationService::class);
+        $service = app(MailFilingService::class);
 
         $this->assertNotNull($service->classify($this->message(['is_historical' => true]), 'air'));
     }
@@ -204,7 +204,7 @@ class CoreServicesTest extends TestCase
      */
     public function test_weights_are_extracted_by_label_not_by_position(): void
     {
-        $cargo = app(RegexClassificationService::class)->extractCargo(
+        $cargo = app(MailFilingService::class)->extractCargo(
             'Gross weight 450 kg, chargeable weight 520 kg, 12 pcs',
             'air'
         );
@@ -217,7 +217,7 @@ class CoreServicesTest extends TestCase
     /** 🔴 A pallet is a piece: the demo subject "3 pallets BOM to SIN" gave no pieces at all. */
     public function test_pallets_are_counted_as_pieces(): void
     {
-        $service = app(RegexClassificationService::class);
+        $service = app(MailFilingService::class);
 
         $this->assertSame(3, $service->extractCargo('Still awaiting your rate — 3 pallets BOM to SIN', 'air')['pieces']['value']);
         $this->assertSame(1, $service->extractCargo('1 pallet, 480 kg', 'air')['pieces']['value']);
@@ -226,7 +226,7 @@ class CoreServicesTest extends TestCase
     /** An unlabelled figure is still captured, but flagged for a human to check. */
     public function test_an_unlabelled_weight_is_stored_as_gross_with_low_confidence(): void
     {
-        $cargo = app(RegexClassificationService::class)->extractCargo('Shipment of 300 kg', 'air');
+        $cargo = app(MailFilingService::class)->extractCargo('Shipment of 300 kg', 'air');
 
         $this->assertSame(300.0, $cargo['gross_weight']['value']);
         $this->assertSame('low', $cargo['gross_weight']['confidence']);
@@ -234,7 +234,7 @@ class CoreServicesTest extends TestCase
 
     public function test_volume_is_extracted_for_sea_only(): void
     {
-        $service = app(RegexClassificationService::class);
+        $service = app(MailFilingService::class);
 
         $this->assertArrayHasKey('volume_cbm', $service->extractCargo('48.75 CBM', 'sea'));
         $this->assertArrayNotHasKey('volume_cbm', $service->extractCargo('48.75 CBM', 'air'));

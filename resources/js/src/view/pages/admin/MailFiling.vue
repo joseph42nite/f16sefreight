@@ -3,8 +3,8 @@
     <header class="fx-page-head">
       <h1 class="fx-page-title">Mail filing</h1>
       <p class="fx-page-sub">
-        How the regex files incoming mail, and how often people change it — so the patterns can be improved. Counts
-        conversations started in the period.
+        How incoming mail is filed, and how often people change it — so the rules and the rubric can be improved.
+        Counts conversations started in the period.
       </p>
     </header>
 
@@ -32,7 +32,7 @@
 
     <template v-if="data">
       <section class="fx-section">
-        <h2 class="fx-section__title">What the regex filed</h2>
+        <h2 class="fx-section__title">What was filed</h2>
         <p v-if="!data.by_type.length" class="fx-muted">No mail filed in this period.</p>
         <table v-else class="fx-table">
           <thead>

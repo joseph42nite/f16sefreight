@@ -45,6 +45,14 @@
         <server name="REDIS_CLIENT" value="predis"/>
         <server name="DB_DATABASE" value="f16s_test"/>
         <!-- No free night model during tests: a suite run after 9pm must not change which calls are made. NightFreeModelTest turns it on. -->
+        <!--
+            🔴 THE DECISION MODEL IS OFF IN TESTS, and it is off because it is a PAID endpoint on a
+            real host. `services.jev.decisions_base` has a working default and the developer's .env
+            carries a real OPENROUTER_API_KEY, so a suite that did not switch this off would file
+            mail by calling openrouter.ai — slowly, differently on each run, and on somebody's card.
+            A test that wants the model turns it on and fakes the HTTP itself; see EnquiryPatternsTest.
+        -->
+        <server name="MAIL_INTENT_AI" value="false"/>
         <server name="OPENROUTER_FREE_FROM_HOUR" value="24"/>
         <server name="OPENROUTER_FREE_UNTIL_HOUR" value="0"/>
         <server name="DB_USERNAME" value="f16s"/>

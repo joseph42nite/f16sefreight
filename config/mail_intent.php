@@ -27,7 +27,7 @@
 | The model is LITERAL: it answers the question written, not the one meant. So
 | each option states the boundary case that actually misfired rather than a
 | definition. It is also bad at arithmetic and dates — nothing here asks for
-| either; cargo figures stay with the regexes in RegexClassificationService,
+| either; cargo figures stay with the regexes in MailFilingService,
 | which read a number off the page instead of judging one.
 |
 */
@@ -77,7 +77,21 @@ return [
      */
     'max_body_chars' => (int) env('MAIL_INTENT_MAX_BODY', 2000),
 
-    /** Stamped on every decision. Bump it whenever anything below this line changes. */
+    /*
+     * Stamped on every decision. Bump it whenever anything below this line changes.
+     *
+     * 2026-09-20 — 13/13 on the acceptance set in EnquiryPatternsTest (US$0.0005, 573ms average).
+     * Two sentences in this rubric were written BY that run rather than guessed at:
+     *   - "the rate is already agreed and they are now asking us to book" — without it, a client
+     *     writing "Agreed rate 350++, please share the confirmed booking schedule" came back at
+     *     0.59 confidence and fell below the floor. The model had the right answer and no
+     *     permission to be sure of it.
+     *   - "a short reply that mentions a figure but names no cargo, no route and no request" —
+     *     without it, a two-word reply reading "about 480 kg" was filed as an enquiry at 0.85 and
+     *     would have minted a document number. With it, 0.44, which the floor turns into Other.
+     * Both are the same lesson, and the one TypeSafe's own jaggedness notes lead with: the model
+     * answers the question written, so a boundary that is not written is not a boundary.
+     */
     'rubric_version' => '2026-09-20',
 
     'instructions' => 'This email arrived in the shared mailbox of a freight forwarder — a company that arranges '
@@ -101,9 +115,12 @@ return [
             . 'would charge to move it. Includes a request for a rate, a quotation, an offer, space or a booking, '
             . 'and includes a bare list of shipment details — pieces, weight, dimensions, a route, a ready date — '
             . 'with no request written out, because sending us the cargo IS the request. '
-            . 'It is still this folder when they are chasing a quote we have not sent, or replying about one we have. '
+            . 'It is still this folder when they are chasing a quote we have not sent, or replying about one we have, '
+            . 'and when the rate is already agreed and they are now asking us to book, to confirm space, or to send '
+            . 'the booking schedule. '
             . 'It is NOT this folder when the quotation or offer is one WE sent them, when they are selling '
-            . 'something to us, or when they ask us to rate their service.',
+            . 'something to us, when they ask us to rate their service, or when the mail is a short reply that '
+            . 'mentions a figure but names no cargo, no route and no request.',
 
         'airline' => 'An air cargo carrier, or the handling agent acting for one, writing about our own shipments '
             . 'or about the space we buy: flight and space confirmations, air waybill matters, FNA / FWB / FHL '

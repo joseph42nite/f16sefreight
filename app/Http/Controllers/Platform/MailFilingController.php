@@ -8,11 +8,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * How well the regex files mail, so it can be improved (user, 2026-09-17: "show in superadmin so we can work on the
+ * How well mail is filed, so it can be improved (user, 2026-09-17: "show in superadmin so we can work on the
  * regex"). Per company or all, over a period of conversations started:
- *   - for each type the regex filed: how many, how many a person changed, and to what;
+ *   - for each type filed: how many, how many a person changed, and to what;
  *   - missed enquiries: filed as something else, changed to customer enquiry;
- *   - the sender domains changed most often, and recent changes with the words the regex read.
+ *   - the sender domains changed most often, and recent changes with the words the classifier read.
+ *
+ * ⚠️ **The per-source breakdown was built and then removed** (user, 2026-09-20: "if it's doing a
+ * good job we don't need the backend page in superadmin to determine"). The COLUMNS behind it are
+ * still written on every decision — `auto_classification_source`, `_confidence`, `_rubric` — because
+ * recording them costs nothing and cannot be done retroactively: the day filing goes wrong, "which
+ * source, at what confidence, under which rubric" is the first question and the only way to answer
+ * it is to have been writing it down. What was dropped is the screen, not the record. Read them with
+ * SQL if that day comes.
+ *
  * 🔒 Super admin only. Reads what `email_threads.auto_classification` and `email_classification_overrides` hold.
  */
 class MailFilingController extends Controller

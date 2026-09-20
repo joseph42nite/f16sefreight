@@ -802,7 +802,7 @@ Without `extraction_path` every extraction bills as vision, and text-selectable 
 - **HTMLPurifier** on `body_html` before storage
 - Compute the SLA reply deadline from the tenant's `sla_policies` tier row
 
-### 4.3 `RegexClassificationService`
+### 4.3 `MailFilingService`
 
 Loads rules from `email_classification_rules` into Redis hash maps (synced by a model event on save).
 

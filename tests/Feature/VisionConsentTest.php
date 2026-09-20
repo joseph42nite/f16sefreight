@@ -82,9 +82,10 @@ class VisionConsentTest extends TestCase
         return "http://focusair.localhost/api/user/ocr-consent/{$jobId}";
     }
 
-    private function balance(Company $company): int
+    /** FLOAT since credits learned decimals (2026-09-20): the column is DECIMAL(12,2). */
+    private function balance(Company $company): float
     {
-        return (int) Company::withoutGlobalScopes()->whereKey($company->id)->value('ocr_credits_balance');
+        return (float) Company::withoutGlobalScopes()->whereKey($company->id)->value('ocr_credits_balance');
     }
 
     // ─── Declining ───────────────────────────────────────────────────────────
@@ -107,7 +108,7 @@ class VisionConsentTest extends TestCase
 
         $this->assertSame('cancelled', $fresh->status);
         $this->assertNull($fresh->failure_code, 'Declining is an outcome, not a failure.');
-        $this->assertSame(10, $this->balance($company), 'A decline moved credits.');
+        $this->assertSame(10.0, $this->balance($company), 'A decline moved credits.');
         $this->assertSame(0, DB::table('ocr_credit_transactions')
             ->where('pdf_processing_job_id', $extraction->id)->count());
     }
@@ -149,7 +150,7 @@ class VisionConsentTest extends TestCase
 
         $this->assertCount(1, $rows);
         $this->assertSame('consumption', $rows[0]->transaction_type);
-        $this->assertSame(-OcrCreditService::VISION_COST, (int) $rows[0]->amount);
+        $this->assertSame(-OcrCreditService::VISION_COST, (float) $rows[0]->amount);
     }
 
     /**
@@ -210,7 +211,7 @@ class VisionConsentTest extends TestCase
 
         $this->assertSame('failed', $extraction->fresh()->status);
         $this->assertSame(VisionConsentService::CREDITS_EXHAUSTED, $extraction->fresh()->failure_code);
-        $this->assertSame(-20, $this->balance($company), 'Nothing was spent on a refusal.');
+        $this->assertSame(-20.0, $this->balance($company), 'Nothing was spent on a refusal.');
     }
 
     // ─── The prompt can only be answered once, and only by its owner ─────────
@@ -274,7 +275,7 @@ class VisionConsentTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('reason', VisionConsentService::NOT_AWAITING);
 
-        $this->assertSame(10, $this->balance($company));
+        $this->assertSame(10.0, $this->balance($company));
     }
 
     /** The decision is a closed vocabulary — anything else is a validation error. */
@@ -311,7 +312,7 @@ class VisionConsentTest extends TestCase
         $this->assertSame('cancelled', $fresh->status);
         $this->assertNull($fresh->temp_file_path);
         $this->assertNull($fresh->failure_code, 'Nobody answering is not a failure.');
-        $this->assertSame(10, $this->balance($company), 'Expiry spent a credit.');
+        $this->assertSame(10.0, $this->balance($company), 'Expiry spent a credit.');
     }
 
     /** ⚠️ A prompt from an hour ago is still LIVE — the operator is still deciding. */
@@ -349,7 +350,7 @@ class VisionConsentTest extends TestCase
 
         $this->assertNotNull($reservation);
         $this->assertTrue(app(\App\Services\OcrCreditService::class)->refund($reservation));
-        $this->assertSame(10, $this->balance($company), 'The refund did not restore the balance.');
+        $this->assertSame(10.0, $this->balance($company), 'The refund did not restore the balance.');
     }
 
     /**
@@ -371,6 +372,6 @@ class VisionConsentTest extends TestCase
 
         $this->assertNull($consent->reservationFor($extraction->fresh()),
             'A refunded reservation was offered for refund a second time.');
-        $this->assertSame(10, $this->balance($company));
+        $this->assertSame(10.0, $this->balance($company));
     }
 }

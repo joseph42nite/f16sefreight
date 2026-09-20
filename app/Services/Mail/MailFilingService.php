@@ -1,12 +1,21 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Mail;
 
 use App\EmailMessage;
+// 🔴 Was same-namespace before this class moved into App\Services\Mail. Without these two the
+// free-mail check and the platform directory lookup resolve to App\Services\Mail\… and fatal.
+use App\Services\GlobalDomainDirectory;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Classifies INBOUND mail and stages cargo figures for an operator to confirm.
+ * Files INBOUND mail into a folder and stages its cargo figures for an operator to confirm.
+ *
+ * 🔴 **Named `RegexClassificationService` until 2026-09-20.** The name outlived the design: the
+ * filing decision is Jev's now (MailIntentClassifier), and what is still regex here is cargo
+ * extraction. A class called "Regex…" that calls a hosted model is a sentence that has to be
+ * unlearned by everyone who reads it, so it is named for what it does — the thing Super Admin →
+ * Mail filing reports on.
  *
  * 🔴 **INBOUND ONLY. This is a load-bearing product rule, not an optimisation.**
  * Outbound messages are stored on the thread and stamp `first_response_at`, but must
@@ -16,13 +25,12 @@ use Illuminate\Support\Facades\DB;
  * classify it and you mint a SECOND enquiry for a conversation that already has one,
  * inflating the conversion denominator and corrupting every funnel metric downstream.
  *
- * 🔴 **REGEX STAGES; THE OPERATOR MINTS.** This service never creates an `enquiries` row
+ * 🔴 **THIS STAGES; THE OPERATOR MINTS.** This service never creates an `enquiries` row
  * and never consumes a number. It returns a proposal. Auto-minting would burn document
  * numbers on spam and, again, corrupt the denominator.
  *
- * 🔴 **THE FILING DECISION IS NO LONGER A REGEX (user, 2026-09-20).** The class keeps its
- * name because it is still where the CARGO regexes live, but whether a mail is a customer
- * enquiry is now Jev's answer — see MailIntentClassifier, and the rubric it reads in
+ * 🔴 **THE FILING DECISION IS NO LONGER A REGEX (user, 2026-09-20).** Whether a mail is a
+ * customer enquiry is Jev's answer — see MailIntentClassifier, and the rubric it reads in
  * config/mail_intent.php. What was removed is `QUOTE_REQUEST_PATTERN`, an eleven-branch
  * alternation that matched the word "quote" and could never tell who was asking whom.
  *
@@ -41,7 +49,7 @@ use Illuminate\Support\Facades\DB;
  * first — silently, and on the figure that prices the shipment. Labelled captures with
  * an unlabelled fallback stored as gross at reduced confidence.
  */
-class RegexClassificationService
+class MailFilingService
 {
     /**
      * Labelled weight patterns. Order matters: the more specific label wins, and the
@@ -175,7 +183,7 @@ class RegexClassificationService
      */
     private function model(EmailMessage $message): ?array
     {
-        $answer = app(\App\Services\Mail\MailIntentClassifier::class)->classify($message);
+        $answer = app(MailIntentClassifier::class)->classify($message);
 
         return $answer === null ? null : $answer + ['source' => 'model'];
     }

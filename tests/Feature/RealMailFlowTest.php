@@ -46,8 +46,22 @@ class RealMailFlowTest extends TestCase
             'email_address' => 'joseph@flow-fwd.test', 'provider' => 'outlook', 'access_token' => 't', 'refresh_token' => 'r',
             'expires_at' => now()->addHour(), 'auth_state' => 'connected', 'is_active' => 1, 'backfill_status' => 'completed']);
 
+        // The decision model is off across the suite (phpunit.xml) because it is a paid endpoint.
+        // This flow starts at a client asking for a rate, so it is switched on here and answered below.
+        config(['mail_intent.enabled' => true, 'services.openrouter.key' => 'flow-test-key']);
+
         Http::fake(function ($request) {
             $url = urldecode($request->url());
+            // 🔴 Jev, on OpenRouter's Decisions API — a typed choice, not chat. Every mail in this
+            // flow is a client asking us for a rate, so one constant answer is the honest fake.
+            if (str_contains($url, '/decisions')) {
+                return Http::response([
+                    'model' => 'typesafe/jev-1.13-20260917', 'provider' => 'TypeSafe',
+                    'answers' => ['folder' => ['type' => 'choice', 'choice' => 'customer_enquiry',
+                        'probabilities' => ['customer_enquiry' => 0.95, 'other' => 0.05], 'confidence' => 0.93]],
+                    'usage' => ['input_tokens' => 900, 'output_tokens' => 20, 'cost' => 0.0000378],
+                ]);
+            }
             if (str_contains($url, '/delta')) {
                 $page = ['value' => str_contains($url, 'inbox') ? $this->inbox : [], '@odata.deltaLink' => $url . '#done'];
                 if (str_contains($url, 'inbox')) {

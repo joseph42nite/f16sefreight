@@ -16,7 +16,7 @@ use App\Job;
 use App\Services\AuditLogger;
 use App\Services\ClientNotificationService;
 use App\Services\EnquirySequenceService;
-use App\Services\RegexClassificationService;
+use App\Services\Mail\MailFilingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -91,7 +91,7 @@ class EmailInboxController extends Controller
     public function __construct(
         private readonly EnquirySequenceService $sequences,
         private readonly AuditLogger $audit,
-        private readonly RegexClassificationService $classifier,
+        private readonly MailFilingService $classifier,
         private readonly ClientNotificationService $clientUpdates,
     ) {}
 
@@ -212,7 +212,7 @@ class EmailInboxController extends Controller
             ], 422);
         }
 
-        // 🔴 THE LEARNING LOOP, and it was never wired. `RegexClassificationService::
+        // 🔴 THE LEARNING LOOP, and it was never wired. `MailFilingService::
         // recordOverride()` existed, wrote the row and incremented `override_count` — and
         // nothing called it. The dropdown is the only place a human tells the system a
         // rule was wrong, so without this the rules could never be measured, only guessed

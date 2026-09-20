@@ -54,7 +54,7 @@ return new class extends Migration
         });
 
         Schema::table('email_threads', function (Blueprint $table) {
-            // rule | client | directory | model | none — see RegexClassificationService::classify().
+            // rule | client | directory | model | none — see MailFilingService::classify().
             $table->string('auto_classification_source', 20)->nullable()->after('auto_classification');
             // The model's own certainty, kept even when it cleared the floor: a folder filed
             // at 0.61 and corrected is a different story from one filed at 0.99 and corrected.

@@ -80,6 +80,14 @@ class MailboxSyncTest extends TestCase
 
     private int $graphStatus = 200;
 
+    /**
+     * What the faked decision model answers: the folder and its confidence.
+     *
+     * ⚠️ Read at request time, for the same reason the delta page is — a second `Http::fake()`
+     * would be ignored and every mail in the test would be filed the first way.
+     */
+    private array $nextFolder = ['other', 0.95];
+
     /** A test's own Graph answers, tried first (a second Http::fake would be ignored — see above). */
     private ?\Closure $route = null;
 
@@ -98,6 +106,20 @@ class MailboxSyncTest extends TestCase
 
             if ($this->graphStatus !== 200) {
                 return Http::response('upstream exploded', $this->graphStatus);
+            }
+
+            // Jev, on OpenRouter's Decisions API. Off by default across the suite (phpunit.xml,
+            // it is a paid endpoint); a test that wants filing switches it on and sets $nextFolder.
+            if (str_contains($request->url(), '/decisions')) {
+                [$folder, $confidence] = $this->nextFolder;
+
+                return Http::response([
+                    'model' => 'typesafe/jev-1.13-20260917', 'provider' => 'TypeSafe',
+                    'answers' => ['folder' => ['type' => 'choice', 'choice' => $folder,
+                        'probabilities' => [$folder => $confidence, 'other' => 1 - $confidence],
+                        'confidence' => $confidence]],
+                    'usage' => ['input_tokens' => 900, 'output_tokens' => 20, 'cost' => 0.0000378],
+                ], 200);
             }
 
             if (str_contains($request->url(), '/attachments')) {
@@ -431,15 +453,22 @@ class MailboxSyncTest extends TestCase
      */
     public function test_an_arriving_customer_enquiry_gets_its_enquiry_and_other_mail_does_not(): void
     {
+        config(['mail_intent.enabled' => true, 'services.openrouter.key' => 'sync-test-key']);
+
+        $this->nextFolder = ['customer_enquiry', 0.94];
         $this->fakeDelta([$this->graphMessage()]);
         $this->sync();
 
         $thread = DB::table('email_threads')->where('agent_id', $this->branch->id)->first();
         $this->assertSame('customer_enquiry', $thread->classification);
-        $this->assertSame('customer_enquiry', $thread->auto_classification, 'what the regex filed is kept for Mail filing');
+        $this->assertSame('customer_enquiry', $thread->auto_classification, 'what the classifier filed is kept for Mail filing');
+        // And WHO filed it, so the accuracy report can tell a bad rubric from a bad tenant rule.
+        $this->assertSame('model', $thread->auto_classification_source);
+        $this->assertSame(0.94, (float) $thread->auto_classification_confidence);
         $this->assertNotNull($thread->enquiry_id);
         $this->assertSame('new', DB::table('enquiries')->where('id', $thread->enquiry_id)->value('status'));
 
+        $this->nextFolder = ['other', 0.98];
         $this->fakeDelta([$this->graphMessage(['subject' => 'Webinar next week', 'bodyPreview' => 'Join us online.'])]);
         $this->sync();
         $this->assertSame(1, DB::table('enquiries')->where('agent_id', $this->branch->id)->count());

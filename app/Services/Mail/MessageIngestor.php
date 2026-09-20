@@ -4,7 +4,6 @@ namespace App\Services\Mail;
 
 use App\MailboxConnection;
 use App\Enquiry;
-use App\Services\RegexClassificationService;
 use App\EmailMessage;
 use Illuminate\Support\Facades\DB;
 
@@ -107,13 +106,6 @@ class MessageIngestor
                     app(\App\Services\ClientContacts::class)->record($connection->agent_id, array_merge([$message->from], $message->to, $message->cc), $message->receivedAt);
                 }
 
-                // 🔴 THE CLASSIFIER IS RUN HERE, and until now it was run NOWHERE. The
-                // service, its fallback chain and its cargo patterns all existed and
-                // nothing ever called `classify()` — every thread arrived 'unclassified'
-                // and stayed that way until a human picked from the dropdown. A classifier
-                // nobody invokes is a constant wearing the shape of a decision.
-                $this->stageClassification($message);
-
                 return $id;
             });
 
@@ -121,6 +113,21 @@ class MessageIngestor
             // and a failed listing must not undo a message that was stored correctly.
             if ($storedId !== null && $message->hasAttachments && $message->providerId !== null) {
                 $this->indexAttachments($connection, $storedId, $message->providerId);
+            }
+
+            // 🔴 ALSO OUTSIDE, and for the same reason plus a worse one (2026-09-20). Filing used
+            // to be a regex and ran inside the transaction above, which was free. It is a hosted
+            // model now: roughly 600ms, up to `mail_intent.timeout` when it hangs. Inside the
+            // transaction that call was held open across a `lockForUpdate` on the tenant's
+            // companies row — taken to charge the credit — so every other mail for that tenant,
+            // AND every document extraction reserving a credit, queued behind one HTTP request.
+            //
+            // ⚠️ The trade is deliberate and is the one indexAttachments already makes: a crash
+            // between the commit and this line leaves a thread `unclassified`. That is a visible
+            // state an operator can file from, and it is recoverable. A lock held across a
+            // third party's latency is neither.
+            if ($storedId !== null) {
+                $this->stageClassification($message);
             }
         }
 
@@ -162,6 +169,10 @@ class MessageIngestor
     /**
      * Stage what the classifier thinks this conversation is. It never mints anything.
      *
+     * 🔴 Called AFTER the message's transaction has committed — see the call site. It re-reads the
+     * message by `message_id` rather than taking one as an argument, which is what makes that safe:
+     * it depends on the committed row, not on anything transaction-local.
+     *
      * ⚠️ PRD §5.2.3: **the classifier stages, the OPERATOR mints.** Creating an enquiry here would
      * inflate the conversion denominator with conversations nobody ever treated as an
      * enquiry — so this writes one column and stops.
@@ -179,7 +190,7 @@ class MessageIngestor
             return;
         }
 
-        $result = app(RegexClassificationService::class)->classify($stored);
+        $result = app(MailFilingService::class)->classify($stored);
 
         // NULL means the message must not be classified at all — outbound, or backfilled.
         if ($result === null) {

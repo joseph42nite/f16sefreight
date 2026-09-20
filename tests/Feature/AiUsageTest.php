@@ -180,7 +180,8 @@ class AiUsageTest extends TestCase
         ])->getJson('http://focusair.localhost/api/user/credits')
             ->assertOk()
             ->assertJsonPath('balance', 9)
-            ->assertJsonPath('rates', ['awb' => 0, 'text' => 1, 'scan' => 3])
+            // 0.1 for a mail — the rate that made the ledger decimal (2026-09-20).
+            ->assertJsonPath('rates', ['awb' => 0, 'text' => 1, 'scan' => 3, 'mail' => 0.1])
             ->assertJsonPath('month.credits', 1)
             ->assertJsonPath('recent.0.filename', 'inv.pdf')
             ->assertJsonPath('recent.0.kind', 'text')

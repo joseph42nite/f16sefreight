@@ -105,6 +105,33 @@ class MailFilingService
     ];
 
     /**
+     * IATA Cargo-IMP message types — the airline's own systems talking to ours.
+     *
+     * 🔴 **THESE NEVER REACH THE MODEL** (user, 2026-09-20: "dont read the fna messages ...
+     * just make a regex for it"). They are machine-generated, identical every time, and arrive
+     * in volume; paying a decision model to re-read the same template is the one case where a
+     * pattern is strictly better than a judgement. It is also the case regexes are actually
+     * good at — there is no intent to infer, because a machine wrote it.
+     *
+     * ⚠️ `FSA` was in this list and was REMOVED after it misfired: "Our FSA audit is due, call
+     * us on 022 12345678" matched, because a UK regulator shares the initialism and a phone
+     * number can be shaped like a waybill. Only types that are both real Cargo-IMP messages and
+     * unlikely as English initialisms belong here. When in doubt, leave it out — the rubric
+     * still catches EDI traffic the pattern misses, one folder later and one credit poorer.
+     */
+    private const AIRLINE_EDI = '/\b(?:FWB|FHL|FNA|FMA|FSU|FFM|FZB|FZC)\b/';
+
+    /**
+     * An air waybill number: three-digit airline prefix, eight-digit serial.
+     *
+     * ⚠️ REQUIRED alongside the message type, and that is the whole safety of this rule. Bare
+     * three-letter tokens are exactly what LANE_STOPWORDS below exists to apologise for — "FSA"
+     * and "FMA" are ordinary initialisms, and a mail is only EDI traffic when a real waybill
+     * number rides with them. Case-sensitive for the same reason: the types are always upper.
+     */
+    private const AWB_NUMBER = '/\b\d{3}[\s-]?\d{8}\b/';
+
+    /**
      * Classify one message and stage what it contains.
      *
      * @return array{classification: string, matched_rule_id: ?int, cargo: array, source: string,
@@ -144,19 +171,27 @@ class MailFilingService
         //   1. the tenant's own rules      — a local exception outranks everything
         //   2. a domain we already invoice — see below
         //   3. the platform directory      — what the industry knows about a domain, airlines included
-        //   4. the decision model          — what the mail actually asks for (MailIntentClassifier)
-        //   5. other                       — nothing decided, so the filing is a guess: Other,
+        //   4. a pattern that cannot be wrong — our own staff, and machine-written airline EDI
+        //   5. the decision model          — what the mail actually asks for (MailIntentClassifier)
+        //   6. other                       — nothing decided, so the filing is a guess: Other,
         //      and a person re-files it (user, 2026-09-17: "when confidence is low just put
         //      it in other"; was customer_enquiry, which filed every newsletter and colleague's
         //      mail as an enquiry on the first real mailbox).
         //
-        // ⚠️ Steps 1–3 are FACTS and are checked first for that reason: a rule someone wrote,
-        // an invoice we have raised, a domain the industry agrees about. Step 4 is a reading of
-        // prose. A reading must never overturn a fact, and the order is the only thing enforcing it.
+        // ⚠️ Steps 1–4 are FACTS and are checked first for that reason: a rule someone wrote, an
+        // invoice we have raised, a domain the industry agrees about, an envelope we can read
+        // without interpreting it. Step 5 is a reading of prose. A reading must never overturn a
+        // fact, and the order is the only thing enforcing it.
+        //
+        // 💰 Step 4 also exists to NOT SPEND. Every mail that reaches step 5 costs a fifth of a
+        // credit, and the two kinds it intercepts — our own outgoing mail coming back, and the
+        // airline EDI a busy branch receives all day — are both high volume and both perfectly
+        // regular. A model adds nothing to a template.
         $decision = $rule !== null
             ? ['classification' => $rule->target_classification, 'source' => 'rule']
             : ($this->firstOf($this->knownClientClassification($message), 'client')
                 ?? $this->firstOf($this->globalClassificationFor($message->from), 'directory')
+                ?? $this->firstOf($this->patternClassification($message, $haystack), 'pattern')
                 ?? $this->model($message)
                 ?? ['classification' => 'other', 'source' => 'none']);
 
@@ -172,6 +207,74 @@ class MailFilingService
     private function firstOf(?string $classification, string $source): ?array
     {
         return $classification === null ? null : ['classification' => $classification, 'source' => $source];
+    }
+
+    /**
+     * What can be read off the envelope without interpreting it. NULL when nothing here applies
+     * and the model should be asked.
+     *
+     * 🔴 The point is as much what it SAVES as what it decides — see the chain above.
+     */
+    private function patternClassification(EmailMessage $message, string $haystack): ?string
+    {
+        // Our own mail, arriving back to us: a colleague's forward, a reply-all that looped, or
+        // one of our own quotations quoted back. There is nothing to classify and nothing to
+        // gain from asking (user, 2026-09-20: "messages from f16s is not required").
+        if ($this->fromOurselves($message)) {
+            return 'other';
+        }
+
+        // Airline systems talking to ours. Both patterns must hit — see AWB_NUMBER.
+        if (preg_match(self::AIRLINE_EDI, $haystack) && preg_match(self::AWB_NUMBER, $haystack)) {
+            return 'airline';
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether this came from one of our own addresses.
+     *
+     * 🔴 THE TENANT'S OWN DOMAIN, resolved per message — never a constant. This product is
+     * multi-tenant and "f16s" is one customer among others; hardcoding f16sefreight.com would
+     * file every other forwarder's internal mail as a stranger's and theirs as ours.
+     *
+     * ⚠️ Two sources, because a company legitimately has more than one address: the domain on
+     * the `companies` row, which may be a comma-separated list, and the domain of the MAILBOX
+     * this message arrived in — which is true by construction even when nobody filled the
+     * company row in.
+     */
+    private function fromOurselves(EmailMessage $message): bool
+    {
+        $from = $this->domainOf((string) $message->from);
+
+        if ($from === null) {
+            return false;
+        }
+
+        $company = DB::table('agents_info')->where('id', $message->agent_id)->value('company_id');
+        $ours = $company === null ? '' : (string) DB::table('companies')->where('id', $company)->value('email_domain');
+
+        $domains = array_filter(array_map(
+            fn ($d) => strtolower(trim($d)),
+            array_merge(explode(',', $ours), [
+                (string) $this->domainOf((string) DB::table('mailbox_connections')
+                    ->where('id', $message->mailbox_connection_id)->value('email_address')),
+            ])
+        ));
+
+        return in_array($from, $domains, true);
+    }
+
+    /** The domain of an address, lowercased. NULL when there is not one. */
+    private function domainOf(string $address): ?string
+    {
+        // "Asha Rao <asha@globex.com>" as readily as a bare address.
+        if (! preg_match('/[^\s<>"]+@([^\s<>"]+)/', $address, $m)) {
+            return null;
+        }
+
+        return strtolower(rtrim($m[1], '>.'));
     }
 
     /**

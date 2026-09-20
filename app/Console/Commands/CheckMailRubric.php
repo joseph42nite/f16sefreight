@@ -24,6 +24,13 @@ use RuntimeException;
  * ⚠️ It costs real money — about US$0.0015 for the whole set, on the OPENROUTER_API_KEY in the
  * environment — which is why it is a command somebody runs and not a test that runs itself.
  *
+ * ⚠️ **Some of these never reach the model in production.** Airline EDI and mail from our own
+ * domain are intercepted by pattern one step earlier (MailFilingService::patternClassification),
+ * precisely so they cost nothing. They stay in this set as the BACKSTOP measurement: the pattern
+ * is deliberately narrow — an EDI type only counts beside a real waybill number — so anything it
+ * does not catch lands on the rubric, and this is where you find out whether the rubric still
+ * catches it. A case passing here that the pattern also catches is belt and braces, not waste.
+ *
  * ── The samples ────────────────────────────────────────────────────────────
  * Every one is real mail from the first live inbox (joseph@f16sefreight.com, 2026-09-17) or a
  * shape the user named. They were expensive to collect and each is here because something got

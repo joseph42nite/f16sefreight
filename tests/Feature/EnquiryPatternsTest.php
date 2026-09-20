@@ -219,6 +219,85 @@ class EnquiryPatternsTest extends TestCase
         Http::assertNothingSent();
     }
 
+    // ─── The patterns that never reach the model ─────────────────────────────
+
+    /**
+     * 🔴 Airline EDI is filed by pattern and the model is NEVER called for it (user, 2026-09-20:
+     * "dont read the fna messages ... just make a regex for it"). A busy branch receives these all
+     * day, they are byte-for-byte templates, and a decision model adds nothing to a template.
+     */
+    public function test_airline_edi_is_filed_by_pattern_without_calling_the_model(): void
+    {
+        $this->fakeAnswer('client', 'wants_a_price', 0.99);
+
+        $result = $this->filed('FNA 607-53138691',
+            'Please note below FNA received. 607-53138691 / SKYLINK FREIGHT FORWARDERS LTD / 0 HAWB / BOM / Mumbai / TLV / Tel Aviv Yafo');
+
+        $this->assertSame(['airline', 'pattern'], [$result['classification'], $result['source']]);
+        // Not a model answer, so there is no confidence and no rubric to record.
+        $this->assertNull($result['confidence']);
+        $this->assertNull($result['rubric']);
+        Http::assertNothingSent();
+        $this->assertSame(500.0, $this->balance(), 'a pattern must not spend a credit');
+    }
+
+    /**
+     * ⚠️ BOTH patterns must hit. A bare three-letter token is what LANE_STOPWORDS exists to
+     * apologise for, so an EDI type only counts with a real waybill number beside it — and a
+     * waybill number alone is just an operator quoting one.
+     */
+    public function test_a_waybill_number_alone_is_not_edi_traffic(): void
+    {
+        $this->fakeAnswer('client', 'operational_update', 0.95);
+
+        $result = $this->filed('AWB 176-28955006', 'Delivered this morning, please confirm POD.');
+
+        $this->assertSame('model', $result['source'], 'no EDI type, so the model still decides');
+    }
+
+    /**
+     * 🔴 Our own mail coming back to us — a forward, a looping reply-all, our own quotation
+     * quoted back. Nothing to classify and nothing to gain from asking.
+     *
+     * ⚠️ Resolved from the TENANT's own domain, never a constant: this is a multi-tenant product
+     * and hardcoding one forwarder's domain files everybody else's internal mail as a stranger's.
+     */
+    public function test_our_own_domain_is_filed_without_calling_the_model(): void
+    {
+        DB::table('companies')->where('id', $this->company->id)->update(['email_domain' => 'ourforwarder-ptn.test']);
+        $this->fakeAnswer('client', 'wants_a_price', 0.99);
+
+        $result = app(MailFilingService::class)->classify(
+            $this->message('FW: Commercial Quotation', 'As discussed, please find below the commercial quotation.',
+                'joseph@ourforwarder-ptn.test'), 'air');
+
+        $this->assertSame(['other', 'pattern'], [$result['classification'], $result['source']]);
+        Http::assertNothingSent();
+        $this->assertSame(500.0, $this->balance());
+    }
+
+    /** ⚠️ A FACT still outranks a pattern: a domain we already invoice is checked first. */
+    public function test_a_known_client_still_beats_the_pattern(): void
+    {
+        DB::table('customers')->insert([
+            'company_id' => $this->company->id, 'name' => 'Globex', 'email_domain' => 'globex-edi.test',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        Http::fake();
+
+        $result = app(MailFilingService::class)->classify(
+            $this->message('FNA 607-53138691', 'FNA received. 607-53138691 / BOM / TLV'),
+            'air');
+
+        $this->assertSame('pattern', $result['source'], 'an unknown sender falls to the pattern');
+
+        $result = app(MailFilingService::class)->classify(
+            $this->message('FNA 607-53138691', 'FNA received. 607-53138691 / BOM / TLV', 'ops@globex-edi.test'),
+            'air');
+
+        $this->assertSame(['customer_enquiry', 'client'], [$result['classification'], $result['source']]);
+    }
+
     // ─── What it costs ───────────────────────────────────────────────────────
 
     /** 🔴 A fifth of a credit a mail — the rate decimals were added for. */

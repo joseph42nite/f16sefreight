@@ -10,14 +10,14 @@ use Illuminate\Support\Facades\Schema;
  *
  * ═══ Why decimals ══════════════════════════════════════════════════════════
  * 🔴 The credit ledger was INTEGER, so every priced thing had to cost a whole document:
- * 0, 1 or 3. Classifying one inbound mail with Jev costs about ₹0.003 against a document's
- * ₹0.025 — a tenth. On an integer ledger that had to be rounded to 1, charging eight times
+ * 0, 1 or 3. Classifying one inbound mail with Jev costs about ₹0.005 against a document's
+ * ₹0.025 — a fifth. On an integer ledger that had to be rounded to 1, charging five times
  * the real cost, or to 0, which tells the tenant the AI reading their mail is free. Neither
  * is a rate; both are a rounding error wearing one.
  *
  * DECIMAL, not float, and the usual reason: `ocr_credits_balance` is money in all but name,
  * it is compared against a floor to decide whether to spend, and binary floats do not hold
- * 0.1. Two decimal places covers every rate in play (0, 0.1, 1, 3) with room under it.
+ * 0.2. Two decimal places covers every rate in play (0, 0.2, 1, 3) with room under it.
  *
  * ⚠️ Widening INT → DECIMAL(12,2) is lossless and needs no data fix: every existing balance
  * and ledger row is a whole number and stays one. `down()` truncates toward zero, which is

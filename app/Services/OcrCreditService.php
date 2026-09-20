@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  *
  * 🔴 RATES, user 2026-09-14 and 2026-09-20: an airway bill (read by fixed boxes, no AI) 0 ·
  * an invoice or packing list read by the AI 1 · a scan read by the AI from page images 3 ·
- * **one inbound mail filed by the decision model 0.1**. The text credit is charged only once
+ * **one inbound mail filed by the decision model 0.2**. The text credit is charged only once
  * the AI has ANSWERED (a document read by labels costs nothing); the scan credit is reserved
  * at consent and refunded if the call fails; the mail credit is reserved before the call and
  * refunded the same way.
@@ -36,7 +36,7 @@ use Illuminate\Support\Facades\DB;
  * ⚠️ Vision asks first because it is the operator's own document, uploaded a moment ago,
  * and a person is standing there to answer. Inbound mail arrives while nobody is looking:
  * there is no one to ask, and a mailbox that stopped syncing to wait for consent would be
- * useless. What keeps it honest is the price — a tenth of a credit, roughly ₹0.003 — and
+ * useless. What keeps it honest is the price — a fifth of a credit, roughly ₹0.005 — and
  * that running out costs the tenant nothing but a duller inbox: unfiled mail lands in
  * `other` and a person re-files it, exactly as it did before the model existed.
  *
@@ -51,7 +51,7 @@ use Illuminate\Support\Facades\DB;
  * ── The costs are floats, and the ledger is DECIMAL ────────────────────────
  * 🔴 `ocr_credit_transactions.amount` and `companies.ocr_credits_balance` are DECIMAL(12,2).
  * Every balance written from here is rounded to two places before it is stored, so PHP's
- * float arithmetic can never drift into the column: 0.1 charged thirty times is 3.00, not
+ * float arithmetic can never drift into the column: 0.2 charged fifteen times is 3.00, not
  * 3.0000000000000004. Read the balance back from the row, never accumulate it in PHP.
  */
 class OcrCreditService
@@ -62,12 +62,16 @@ class OcrCreditService
     /**
      * One inbound mail filed by the decision model.
      *
-     * 🔴 Derived, not chosen: Jev bills $0.042 per million input tokens with output free,
-     * so a subject plus a snippet plus the rubric is about US$0.000038 — near ₹0.003 —
-     * against the ₹0.025 a document costs Gemma. A tenth of a document, priced as one.
-     * If the model or its price changes, this number changes with it; it is not a tariff.
+     * 🔴 Derived, not chosen, and re-derived when the rubric changed. Jev bills $0.042 per
+     * million input tokens with output FREE, so the whole cost is what we send: a subject, a
+     * snippet and two rubrics is ~1,300 tokens, US$0.000055, near ₹0.005 — against the ₹0.025 a
+     * document costs Gemma. A fifth of a document, priced as one.
+     *
+     * ⚠️ It was 0.1 while the rubric asked ONE question at ~850 tokens. Splitting it into sender
+     * and intent (config/mail_intent.php) grew the prompt by half and the rate moved with it.
+     * Measure again when the rubric changes; this is arithmetic, not a tariff.
      */
-    public const MAIL_COST = 0.1;
+    public const MAIL_COST = 0.2;
 
     /**
      * Reserve credits for reading one document, atomically.
@@ -126,7 +130,7 @@ class OcrCreditService
             // rather than failing mid-document, while still bounding the exposure.
             //
             // ⚠️ Rounded before the comparison, not after. A balance of exactly the floor
-            // plus 0.1 must be spendable, and unrounded float subtraction is where that
+            // plus 0.2 must be spendable, and unrounded float subtraction is where that
             // stops being true.
             if (round($balance - $amount, 2) < $floor) {
                 return null;

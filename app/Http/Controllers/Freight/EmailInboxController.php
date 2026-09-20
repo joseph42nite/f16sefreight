@@ -53,7 +53,16 @@ class EmailInboxController extends Controller
      * conversion rate is measured against.
      */
     public const CLASSIFICATIONS = [
-        'customer_enquiry', 'airline', 'shipping_line', 'clearance', 'trucking_road', 'other',
+        // What a client wants from us — the two that were one folder until 2026-09-20.
+        // 🔴 `customer_enquiry` MINTS a number; `client_shipment` does not. A client sending
+        // instructions on a rate already agreed used to land in the first and mint a second
+        // enquiry for a conversation that was never an enquiry, inflating the denominator.
+        'customer_enquiry', 'client_shipment',
+        // Who we work with.
+        'overseas_agent', 'airline', 'shipping_line', 'clearance', 'trucking_road', 'cfs_warehouse', 'regulatory',
+        // Money and trouble, which go to different desks from the counterparty's own folder.
+        'vendor_invoice', 'payment_advice', 'claim',
+        'other',
     ];
 
     /**
@@ -70,11 +79,20 @@ class EmailInboxController extends Controller
      */
     public static function classificationsForMode(?string $mode): array
     {
-        $common = ['customer_enquiry', 'clearance', 'trucking_road', 'other'];
+        // ⚠️ Only the CARRIER folders belong to a mode. Everything else — an agent, a CFS, a
+        // vendor's invoice, a remittance, a claim — happens identically on an air desk and a sea
+        // desk, so scoping them by mode would hide real mail rather than hide an empty folder.
+        $common = [
+            'customer_enquiry', 'client_shipment', 'overseas_agent', 'clearance', 'trucking_road',
+            'cfs_warehouse', 'regulatory', 'vendor_invoice', 'payment_advice', 'claim', 'other',
+        ];
+        $withCarrier = fn (string $carrier) => array_values(array_merge(
+            array_slice($common, 0, 3), [$carrier], array_slice($common, 3)
+        ));
 
         return match ($mode) {
-            'air'  => ['customer_enquiry', 'airline', 'clearance', 'trucking_road', 'other'],
-            'sea'  => ['customer_enquiry', 'shipping_line', 'clearance', 'trucking_road', 'other'],
+            'air'  => $withCarrier('airline'),
+            'sea'  => $withCarrier('shipping_line'),
             'road' => $common,
             default => self::CLASSIFICATIONS,
         };

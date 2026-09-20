@@ -23,12 +23,16 @@ use RuntimeException;
  * without the model. `data_collection: deny` is still sent — the house rule is that no
  * provider keeps our prompts, and a rule only enforced where it is convenient is not one.
  *
- * ── The price, and why a mail costs a tenth of a document ──────────────────
+ * ── The price, and why a mail costs a fifth of a document ──────────────────
  * $0.042 per million input tokens, and OUTPUT IS FREE — a typed choice is a few dozen
- * tokens and TypeSafe does not bill them. A classified mail is ~900 input tokens, about
- * US$0.000038, roughly ₹0.003. A document read by Gemma costs about ₹0.025. That ratio
- * is where OcrCreditService::MAIL_COST's 0.1 comes from, and it is the reason credits
- * had to learn decimals: 1 was eight times the honest number and 0 was a lie.
+ * tokens and TypeSafe does not bill them. So the bill is the PROMPT, and the prompt is the
+ * rubric: a classified mail is ~1,300 input tokens, about US$0.000055, roughly ₹0.005.
+ * A document read by Gemma costs about ₹0.025. That ratio is where OcrCreditService::MAIL_COST's
+ * 0.2 comes from, and it is the reason credits had to learn decimals: 1 was five times the
+ * honest number and 0 was a lie.
+ *
+ * ⚠️ Because output is free, asking a SECOND question of the same state is nearly free too —
+ * which is why the rubric asks sender and intent in one request rather than in two.
  */
 class JevClient
 {

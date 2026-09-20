@@ -26,8 +26,8 @@ class RealMailboxFixesTest extends TestCase
     private User $pricing;
     private MailboxConnection $mailbox;
 
-    /** @var array{0: string, 1: float} the choice and confidence the faked model returns */
-    private array $answer = ['other', 0.92];
+    /** @var array{0: string, 1: string, 2: float} sender, intent and the confidence on both */
+    private array $answer = ['outsider', 'nothing_for_us', 0.92];
 
     protected function setUp(): void
     {
@@ -50,13 +50,17 @@ class RealMailboxFixesTest extends TestCase
         // whatever the first test line set up — which is how this test passed the wrong way once.
         Http::preventStrayRequests();
         Http::fake(function () {
-            [$choice, $confidence] = $this->answer;
+            [$sender, $intent, $confidence] = $this->answer;
 
             return Http::response([
                 'model' => 'typesafe/jev-1.13-20260917', 'provider' => 'TypeSafe',
-                'answers' => ['folder' => ['type' => 'choice', 'choice' => $choice,
-                    'probabilities' => [$choice => $confidence, 'other' => 1 - $confidence], 'confidence' => $confidence]],
-                'usage' => ['input_tokens' => 900, 'output_tokens' => 20, 'cost' => 0.0000378],
+                'answers' => [
+                    'sender' => ['type' => 'choice', 'choice' => $sender,
+                        'probabilities' => [$sender => $confidence, 'outsider' => 1 - $confidence], 'confidence' => $confidence],
+                    'intent' => ['type' => 'choice', 'choice' => $intent,
+                        'probabilities' => [$intent => $confidence, 'nothing_for_us' => 1 - $confidence], 'confidence' => $confidence],
+                ],
+                'usage' => ['input_tokens' => 1300, 'output_tokens' => 40, 'cost' => 0.000055],
             ]);
         });
     }
@@ -67,9 +71,9 @@ class RealMailboxFixesTest extends TestCase
      * ⚠️ Stated by the test rather than keyed on the body: the `state` the classifier sends is its
      * own business, and a fake that inspected it would fail the day the state gains a field.
      */
-    private function modelAnswers(string $choice, float $confidence = 0.92): void
+    private function modelAnswers(string $sender, string $intent, float $confidence = 0.92): void
     {
-        $this->answer = [$choice, $confidence];
+        $this->answer = [$sender, $intent, $confidence];
     }
 
     private function receive(string $from, string $snippet = '2 pallets, 480 kg'): EmailThread
@@ -96,18 +100,18 @@ class RealMailboxFixesTest extends TestCase
     {
         $shipment = "Dear Sir,\nPlease share the confirmed booking schedule\nAgreed rate 350++\nPcs 400\nGross wgt 17400kgs\nCh wt 18000 kgs";
 
-        $this->modelAnswers('customer_enquiry');
+        $this->modelAnswers('client', 'wants_a_price');
         $enquiry = $this->receive('deepanjan@unknown-rlm.test', $shipment);
         $this->assertSame('customer_enquiry', $enquiry->classification);
         $this->assertSame('model', $enquiry->auto_classification_source);
         // The cargo regexes still ran: the figures are staged for the operator to confirm.
         $this->assertStringContainsString('17400', (string) $enquiry->staged_cargo);
 
-        $this->modelAnswers('other');
+        $this->modelAnswers('outsider', 'nothing_for_us');
         $this->assertSame('other', $this->receive('news@unknown-rlm.test', 'Join our webinar next week')->classification);
 
         // Below the confidence floor the answer is not acted on, however plausible the choice.
-        $this->modelAnswers('customer_enquiry', 0.21);
+        $this->modelAnswers('client', 'wants_a_price', 0.05);
         $unsure = $this->receive('someone@unknown-rlm.test', 'about 480 kg');
         $this->assertSame('other', $unsure->classification, 'a coin toss is not a filing');
         $this->assertSame('model', $unsure->auto_classification_source);
@@ -130,7 +134,7 @@ class RealMailboxFixesTest extends TestCase
         $this->assertSame($this->pricing->id, (int) \App\Enquiry::withoutGlobalScopes()->find($claimed->fresh()->enquiry_id)->pricing_id);
         $this->assertSame($this->pricing->id, (int) $claimed->fresh()->assigned_ops_id);
 
-        $this->modelAnswers('other');
+        $this->modelAnswers('outsider', 'nothing_for_us');
         $filed = $this->receive('ops@initech.test', 'Can we talk tomorrow?');
         $this->assertSame('other', $filed->classification, 'nothing matched: Other');
         $api->postJson("http://focusair.localhost/api/inbox/threads/{$filed->id}/classify", ['classification' => 'customer_enquiry'])

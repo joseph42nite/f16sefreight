@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  * Credits, as the workspace shows them: per piece of AI reading, never in money (user, 2026-09-14).
  *
  * Rates: an airway bill (read by fixed boxes, no AI) 0 · an invoice or packing list read by AI 1 ·
- * a scan read by AI from page images 3 · **one inbound mail filed by AI 0.1** (user, 2026-09-20).
+ * a scan read by AI from page images 3 · **one inbound mail filed by AI 0.2** (user, 2026-09-20).
  * A document read by labels — no credits, or the daily limit — uses none. Everyone who works in the
  * workspace sees it, so nobody extracts blind.
  *
@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
  * that can be read IS the thread, in the inbox, where it belongs.
  *
  * ⚠️ Mail rows are found by `email_message_id`, never by `notes` or by amount. The note is
- * English that will be reworded and 0.1 is a price that will change; the foreign key is what
+ * English that will be reworded and 0.2 is a price that will change; the foreign key is what
  * the row actually is.
  */
 class CreditsController extends Controller
@@ -82,7 +82,7 @@ class CreditsController extends Controller
                 'awb' => 0,
                 'text' => OcrCreditService::TEXT_COST,
                 'scan' => OcrCreditService::VISION_COST,
-                // A tenth of a credit, which is why credits carry decimals at all.
+                // A fifth of a credit, which is why credits carry decimals at all.
                 'mail' => OcrCreditService::MAIL_COST,
             ],
             'month' => [

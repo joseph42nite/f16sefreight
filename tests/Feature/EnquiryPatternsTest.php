@@ -94,17 +94,27 @@ class EnquiryPatternsTest extends TestCase
         ]);
     }
 
-    /** The Decisions API, answering with one Choice. */
-    private function fakeAnswer(string $choice, float $confidence): void
+    /**
+     * The Decisions API, answering BOTH questions — the shape the classifier actually reads.
+     *
+     * ⚠️ Stated as sender + intent, not as a folder: the folder is MailFilingService's routing
+     * table, and a fake that returned one would be testing the fake. Tests name the pair and
+     * assert the folder the routing produces from it.
+     */
+    private function fakeAnswer(string $sender, string $intent, float $senderConfidence = 0.9, ?float $intentConfidence = null): void
     {
+        $choice = fn (string $c, float $conf) => [
+            'type' => 'choice', 'choice' => $c,
+            'probabilities' => [$c => $conf, 'outsider' => 1 - $conf], 'confidence' => $conf,
+        ];
+
         Http::fake(['*/decisions' => Http::response([
             'id' => 'gen-dec-test', 'model' => 'typesafe/jev-1.13-20260917', 'provider' => 'TypeSafe',
-            'answers' => ['folder' => [
-                'type' => 'choice', 'choice' => $choice,
-                'probabilities' => [$choice => $confidence, 'other' => 1 - $confidence],
-                'confidence' => $confidence,
-            ]],
-            'usage' => ['input_tokens' => 900, 'output_tokens' => 20, 'cost' => 0.0000378],
+            'answers' => [
+                'sender' => $choice($sender, $senderConfidence),
+                'intent' => $choice($intent, $intentConfidence ?? $senderConfidence),
+            ],
+            'usage' => ['input_tokens' => 1300, 'output_tokens' => 40, 'cost' => 0.000055],
         ])]);
     }
 
@@ -146,12 +156,13 @@ class EnquiryPatternsTest extends TestCase
     /** The model's answer is what gets filed, and the decision says the model said so. */
     public function test_the_models_answer_is_what_gets_filed(): void
     {
-        $this->fakeAnswer('customer_enquiry', 0.91);
+        $this->fakeAnswer('client', 'wants_a_price', 0.91, 0.95);
 
         $result = $this->filed('Hello', 'Can you please quote for 2 shipments next week');
 
         $this->assertSame('customer_enquiry', $result['classification']);
         $this->assertSame('model', $result['source']);
+        // The weaker of the two answers: a decision is only as good as what it rests on.
         $this->assertSame(0.91, $result['confidence']);
         $this->assertSame(config('mail_intent.rubric_version'), $result['rubric']);
     }
@@ -168,7 +179,7 @@ class EnquiryPatternsTest extends TestCase
             'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        $this->fakeAnswer('other', 0.99);
+        $this->fakeAnswer('outsider', 'nothing_for_us', 0.99);
 
         $result = app(MailFilingService::class)->classify(
             $this->message('Newsletter', 'Nothing about freight here', 'ops@globex-ptn.test'), 'air');
@@ -184,7 +195,8 @@ class EnquiryPatternsTest extends TestCase
      */
     public function test_a_low_confidence_answer_is_filed_as_other_with_the_confidence_kept(): void
     {
-        $this->fakeAnswer('customer_enquiry', 0.22);
+        // Neither answer clears its floor, so there is nothing to act on from either axis.
+        $this->fakeAnswer('client', 'wants_a_price', 0.10, 0.12);
 
         $result = $this->filed('FYI', 'Please see below.');
 
@@ -192,7 +204,7 @@ class EnquiryPatternsTest extends TestCase
         // Still 'model': the model WAS asked and WAS paid for. Recording this as 'none' would
         // hide every call the confidence floor threw away.
         $this->assertSame('model', $result['source']);
-        $this->assertSame(0.22, $result['confidence']);
+        $this->assertSame(0.10, $result['confidence']);
     }
 
     /** With the model switched off, unmatched mail falls to Other exactly as it did before it existed. */
@@ -209,31 +221,31 @@ class EnquiryPatternsTest extends TestCase
 
     // ─── What it costs ───────────────────────────────────────────────────────
 
-    /** 🔴 A tenth of a credit a mail — the rate decimals were added for. */
-    public function test_one_filed_mail_costs_a_tenth_of_a_credit(): void
+    /** 🔴 A fifth of a credit a mail — the rate decimals were added for. */
+    public function test_one_filed_mail_costs_a_fifth_of_a_credit(): void
     {
-        $this->fakeAnswer('airline', 0.88);
+        $this->fakeAnswer('airline', 'operational_update', 0.88);
 
         $this->filed('Flight update', 'Space confirmed on tomorrow.');
 
         $this->assertSame(500 - OcrCreditService::MAIL_COST, $this->balance());
-        $this->assertSame(-0.1, (float) DB::table('ocr_credit_transactions')
+        $this->assertSame(-0.2, (float) DB::table('ocr_credit_transactions')
             ->where('company_id', $this->company->id)->whereNotNull('email_message_id')->value('amount'));
     }
 
     /**
-     * 🔴 Ten mails are 1.00 credit, not 0.9999999999999999. The ledger is DECIMAL and every
-     * balance is rounded before it is stored, so float arithmetic can never accumulate in it.
+     * 🔴 Ten mails are exactly 2.00 credits, not 1.9999999999999998. The ledger is DECIMAL and
+     * every balance is rounded before it is stored, so float arithmetic cannot accumulate in it.
      */
-    public function test_tenths_do_not_drift(): void
+    public function test_fractional_charges_do_not_drift(): void
     {
-        $this->fakeAnswer('other', 0.95);
+        $this->fakeAnswer('outsider', 'nothing_for_us', 0.95);
 
         for ($i = 0; $i < 10; $i++) {
             $this->filed('Notice ' . $i, 'Body ' . $i);
         }
 
-        $this->assertSame(499.0, $this->balance());
+        $this->assertSame(498.0, $this->balance());
     }
 
     /** A call that fails costs the tenant nothing, and the mail still lands somewhere findable. */
@@ -299,11 +311,19 @@ class EnquiryPatternsTest extends TestCase
 
         foreach ($samples as [$expected, $subject, $body]) {
             $this->assertContains($expected, $folders, $subject);
-            $this->assertArrayHasKey($expected, config('mail_intent.criteria'), $subject);
         }
 
-        // Every folder the inbox can show must be an option the model can pick, or mail that
-        // belongs there can only ever arrive by a tenant rule.
-        $this->assertSame([], array_diff($folders, array_keys(config('mail_intent.criteria'))));
+        // 🔴 Every (sender, intent) pair the model can return must route to a folder the inbox
+        // can actually show. A rubric option added without a routing arm, or a folder renamed
+        // without the routing following, files mail where no view lists it and the thread
+        // vanishes — which no amount of model accuracy would ever surface.
+        $route = new \ReflectionMethod(\App\Services\Mail\MailIntentClassifier::class, 'route');
+        $classifier = app(\App\Services\Mail\MailIntentClassifier::class);
+
+        foreach (array_keys(config('mail_intent.questions.sender.criteria')) as $sender) {
+            foreach (array_keys(config('mail_intent.questions.intent.criteria')) as $intent) {
+                $this->assertContains($route->invoke($classifier, $sender, $intent), $folders, "{$sender} + {$intent}");
+            }
+        }
     }
 }

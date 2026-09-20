@@ -81,12 +81,12 @@ class MailboxSyncTest extends TestCase
     private int $graphStatus = 200;
 
     /**
-     * What the faked decision model answers: the folder and its confidence.
+     * What the faked decision model answers: who wrote, what they want, and the confidence on both.
      *
      * ⚠️ Read at request time, for the same reason the delta page is — a second `Http::fake()`
      * would be ignored and every mail in the test would be filed the first way.
      */
-    private array $nextFolder = ['other', 0.95];
+    private array $nextFolder = ['outsider', 'nothing_for_us', 0.95];
 
     /** A test's own Graph answers, tried first (a second Http::fake would be ignored — see above). */
     private ?\Closure $route = null;
@@ -111,14 +111,17 @@ class MailboxSyncTest extends TestCase
             // Jev, on OpenRouter's Decisions API. Off by default across the suite (phpunit.xml,
             // it is a paid endpoint); a test that wants filing switches it on and sets $nextFolder.
             if (str_contains($request->url(), '/decisions')) {
-                [$folder, $confidence] = $this->nextFolder;
+                [$sender, $intent, $confidence] = $this->nextFolder;
 
                 return Http::response([
                     'model' => 'typesafe/jev-1.13-20260917', 'provider' => 'TypeSafe',
-                    'answers' => ['folder' => ['type' => 'choice', 'choice' => $folder,
-                        'probabilities' => [$folder => $confidence, 'other' => 1 - $confidence],
-                        'confidence' => $confidence]],
-                    'usage' => ['input_tokens' => 900, 'output_tokens' => 20, 'cost' => 0.0000378],
+                'answers' => [
+                    'sender' => ['type' => 'choice', 'choice' => $sender,
+                        'probabilities' => [$sender => $confidence, 'outsider' => 1 - $confidence], 'confidence' => $confidence],
+                    'intent' => ['type' => 'choice', 'choice' => $intent,
+                        'probabilities' => [$intent => $confidence, 'nothing_for_us' => 1 - $confidence], 'confidence' => $confidence],
+                ],
+                    'usage' => ['input_tokens' => 1300, 'output_tokens' => 40, 'cost' => 0.000055],
                 ], 200);
             }
 
@@ -455,7 +458,7 @@ class MailboxSyncTest extends TestCase
     {
         config(['mail_intent.enabled' => true, 'services.openrouter.key' => 'sync-test-key']);
 
-        $this->nextFolder = ['customer_enquiry', 0.94];
+        $this->nextFolder = ['client', 'wants_a_price', 0.94];
         $this->fakeDelta([$this->graphMessage()]);
         $this->sync();
 
@@ -468,7 +471,7 @@ class MailboxSyncTest extends TestCase
         $this->assertNotNull($thread->enquiry_id);
         $this->assertSame('new', DB::table('enquiries')->where('id', $thread->enquiry_id)->value('status'));
 
-        $this->nextFolder = ['other', 0.98];
+        $this->nextFolder = ['outsider', 'nothing_for_us', 0.98];
         $this->fakeDelta([$this->graphMessage(['subject' => 'Webinar next week', 'bodyPreview' => 'Join us online.'])]);
         $this->sync();
         $this->assertSame(1, DB::table('enquiries')->where('agent_id', $this->branch->id)->count());

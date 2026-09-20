@@ -24,7 +24,7 @@
       <ul class="fx-credits__rates">
         <li><strong>{{ data.rates.text }}</strong> {{ plural(data.rates.text) }} · invoice or packing list read by AI</li>
         <li><strong>{{ data.rates.scan }}</strong> {{ plural(data.rates.scan) }} · scan read by AI (after you approve it)</li>
-        <!-- The rate that made credits decimal: a mail costs about a tenth of a document to read. -->
+        <!-- The rate that made credits decimal: a mail costs about a fifth of a document to read. -->
         <li><strong>{{ data.rates.mail }}</strong> {{ plural(data.rates.mail) }} · incoming email sorted into a folder for you</li>
         <li><strong>{{ data.rates.awb }}</strong> credits · airway bill, or any document read by labels</li>
       </ul>
@@ -81,7 +81,7 @@ export default {
   },
   methods: {
     plural(n) {
-      // Rates carry decimals now (0.1 for a mail), so only exactly 1 is singular.
+      // Rates carry decimals now (0.2 for a mail), so only exactly 1 is singular.
       return n === 1 ? "credit" : "credits";
     },
   },

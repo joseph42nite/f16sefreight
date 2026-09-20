@@ -113,6 +113,21 @@ class InvoiceController extends Controller
             }
         }
 
+        // 🔴 A credit note may never give back more than the invoice was worth. Checked HERE, against what the
+        // other notes have already credited, because lines can be edited after the note was created (PRD §6.2).
+        if ($invoice->type === 'credit_note' && $invoice->parent_invoice_id !== null) {
+            $room = $this->creditRoom($invoice);
+
+            if ($grandTotal > $room + 0.009) {
+                return response()->json([
+                    'error' => sprintf('This invoice has only %s left to credit; this note is for %s.',
+                        number_format($room, 2), number_format($grandTotal, 2)),
+                    'reason' => 'exceeds_parent_invoice',
+                    'room' => $room,
+                ], 422);
+            }
+        }
+
         DB::transaction(function () use ($invoice, $subtotal, $tax, $grandTotal) {
             // ⚠️ Re-read before deciding. This closure is REPLAYED on a deadlock, and the
             // failed attempt left its rolled-back values on the model in memory — without
@@ -124,8 +139,9 @@ class InvoiceController extends Controller
                 // invoice was issued to the client numbered `DRAFT-…` — the sequence
                 // service was never called for INV at all. Caught by
                 // InvoiceFinalizeTest; see AccountsInvoice::DRAFT_NUMBER_PREFIX.
+                // Each document type has its own counter and prefix — INV, DN, CN, BRK, CSINV (PRD §6.3).
                 'invoice_no'  => $invoice->needsNumber()
-                    ? $this->sequences->next($invoice->agent_id, 'INV')
+                    ? $this->sequences->next($invoice->agent_id, \App\Support\BillingDocuments::prefix($invoice->type))
                     : $invoice->invoice_no,
                 'subtotal'    => $subtotal,
                 'tax_amount'  => $tax,
@@ -191,6 +207,23 @@ class InvoiceController extends Controller
         });
 
         return response()->json($invoice->fresh());
+    }
+
+    /** What is still creditable against a note's parent invoice: its total, less every other note already raised. */
+    private function creditRoom(AccountsInvoice $note): float
+    {
+        $parent = AccountsInvoice::withoutTenantScope()->find($note->parent_invoice_id);
+
+        if ($parent === null) {
+            return 0.0;
+        }
+
+        $credited = (float) AccountsInvoice::withoutTenantScope()
+            ->where('parent_invoice_id', $parent->id)->where('type', 'credit_note')
+            ->where('id', '!=', $note->id)->whereNotIn('status', ['draft', 'void'])
+            ->sum('grand_total');
+
+        return round((float) $parent->grand_total - $credited, 2);
     }
 
     /** The client's current exposure, plus the group roll-up for display. */

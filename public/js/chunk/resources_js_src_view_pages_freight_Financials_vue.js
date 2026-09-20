@@ -665,6 +665,10 @@ var render = function render() {
     staticClass: "fx-page-sub"
   }, [_vm._v("\n      " + _vm._s(_vm.subtitleForView) + "\n      "), _c("router-link", {
     attrs: {
+      to: "/billing"
+    }
+  }, [_vm._v("Billing →")]), _vm._v(" "), _c("router-link", {
+    attrs: {
       to: "/settings/finance"
     }
   }, [_vm._v("Finance settings →")])], 1)]), _vm._v(" "), _c("div", {

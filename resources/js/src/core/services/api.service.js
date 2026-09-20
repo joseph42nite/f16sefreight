@@ -54,6 +54,16 @@ const ApiService = {
   },
 
   /**
+   * A POST whose answer is a FILE rather than JSON — a printed bill, a generated document.
+   *
+   * ⚠️ Separate from post() because axios needs `responseType: "blob"` set BEFORE the response arrives; a PDF
+   * fetched without it comes back as a mangled string and cannot be opened.
+   */
+  postForFile(resource, params) {
+    return Vue.axios.post(`${resource}`, params, { responseType: "blob" });
+  },
+
+  /**
    * Send the UPDATE HTTP request
    * @param resource
    * @param slug

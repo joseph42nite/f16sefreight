@@ -32,6 +32,16 @@ class LedgerPostingService
     public const REVENUE = ['code' => '4000-Freight-Revenue', 'name' => 'Freight Revenue'];
     public const GST_OUTPUT = ['code' => '2200-GST-Output', 'name' => 'GST Output'];
 
+    /**
+     * Brokerage and consol — PRD §6.2 documents 4 and 5. A commission receivable is not an ordinary trade
+     * receivable and an agent is not a client, so neither shares `1200-AR`: collapsing them would put agent
+     * balances into the customer ageing and the credit gate.
+     */
+    public const COMMISSION_RECEIVABLE = ['code' => '1210-Commission-Receivable', 'name' => 'Commission Receivable'];
+    public const COMMISSION_REVENUE = ['code' => '4800-Commission-Revenue', 'name' => 'Commission Revenue'];
+    public const AR_AGENTS = ['code' => '1220-AR-Agents', 'name' => 'Accounts Receivable — Agents'];
+    public const CONSOL_REVENUE = ['code' => '4050-Consol-Revenue', 'name' => 'Consol Revenue'];
+
     /** Buy side. */
     public const AP = ['code' => '2100-AP', 'name' => 'Accounts Payable'];
     public const COST = ['code' => '5000-Direct-Costs', 'name' => 'Direct Costs'];
@@ -62,10 +72,32 @@ class LedgerPostingService
      */
     public function linesForInvoice(AccountsInvoice $invoice): array
     {
+        $gross = round((float) $invoice->grand_total, 2);
+        $net = round((float) $invoice->subtotal, 2);
+        $tax = round((float) $invoice->tax_amount, 2);
+
+        // 🔴 A CREDIT NOTE IS THE MIRROR, NOT A NEGATIVE INVOICE. Posting it as an invoice with minus signs
+        // balances just as well and reports as negative revenue, which is not what happened: the sale stood and
+        // an adjustment was made against it. PRD §6.2 names the accounts.
+        if ($invoice->type === 'credit_note') {
+            return $this->lines(
+                debit: [self::SALES_ADJUSTMENTS, $net],
+                credit: [self::AR, $gross],
+                tax: [self::GST_OUTPUT, $tax, 'debit'],
+            );
+        }
+
+        // Who owes it and what earned it differ by document; the shape does not.
+        [$receivable, $revenue] = match ($invoice->type) {
+            'brokerage' => [self::COMMISSION_RECEIVABLE, self::COMMISSION_REVENUE],
+            'consol_invoice' => [self::AR_AGENTS, self::CONSOL_REVENUE],
+            default => [self::AR, self::REVENUE],   // invoice and debit note both bill the client
+        };
+
         return $this->lines(
-            debit: [self::AR, round((float) $invoice->grand_total, 2)],
-            credit: [self::REVENUE, round((float) $invoice->subtotal, 2)],
-            tax: [self::GST_OUTPUT, round((float) $invoice->tax_amount, 2), 'credit'],
+            debit: [$receivable, $gross],
+            credit: [$revenue, $net],
+            tax: [self::GST_OUTPUT, $tax, 'credit'],
         );
     }
 

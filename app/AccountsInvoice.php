@@ -54,10 +54,14 @@ class AccountsInvoice extends Model
         'invoice_no', 'type', 'document_date', 'status',
         'subtotal', 'tax_amount', 'grand_total', 'amount_paid',
         'currency', 'exchange_rate', 'is_posted', 'billed_party_role',
+        // The billing desk's own columns (user, 2026-09-19): a date to age against, what the bill is for in words,
+        // why a note exists, and what the IRP gave back.
+        'due_date', 'narration', 'reason', 'irn', 'irn_status', 'ack_no', 'ack_date',
     ];
 
     protected $casts = [
         'document_date' => 'date',
+        'due_date'      => 'date',
         'subtotal'      => 'decimal:2',
         'tax_amount'    => 'decimal:2',
         'grand_total'   => 'decimal:2',

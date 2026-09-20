@@ -445,6 +445,13 @@ const router = new Router({
           meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
         },
         {
+          // The billing desk: the five sales documents, receipts, printing and the e-invoice register.
+          path: "billing",
+          name: "Billing",
+          component: () => import("@/view/pages/freight/Billing"),
+          meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
+        },
+        {
           path: "financials",
           name: "Financials",
           component: () => import("@/view/pages/freight/Financials"),

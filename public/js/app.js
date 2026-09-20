@@ -8786,6 +8786,15 @@ const NAV_ITEMS = [
   icon: "cash",
   designations: ["accounts", "boss"],
   minTier: "command"
+},
+// The billing desk (user, 2026-09-19). Accounts' own, not the Boss's: raising and sending a bill is the one thing
+// the role that sets the targets must not do. The Boss reaches the register from Financials.
+{
+  path: "/billing",
+  label: "Billing",
+  icon: "receipt",
+  designations: ["accounts"],
+  minTier: "command"
 }, {
   path: "/boss",
   label: "Overview",
@@ -8812,7 +8821,7 @@ const RAIL_ORDER = {
   sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
   boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
   // Accounts start in the registers; their inbox sits under it (user, 2026-09-19).
-  accounts: ["/financials", "/inbox", "/clients-partners", "/settings"]
+  accounts: ["/billing", "/financials", "/inbox", "/clients-partners", "/settings"]
 };
 const railRank = (item, designation) => {
   const order = RAIL_ORDER[designation] || [];
@@ -9178,6 +9187,17 @@ const ApiService = {
    */
   post(resource, params) {
     return vue__WEBPACK_IMPORTED_MODULE_3__["default"].axios.post(`${resource}`, params);
+  },
+  /**
+   * A POST whose answer is a FILE rather than JSON — a printed bill, a generated document.
+   *
+   * ⚠️ Separate from post() because axios needs `responseType: "blob"` set BEFORE the response arrives; a PDF
+   * fetched without it comes back as a mangled string and cannot be opened.
+   */
+  postForFile(resource, params) {
+    return vue__WEBPACK_IMPORTED_MODULE_3__["default"].axios.post(`${resource}`, params, {
+      responseType: "blob"
+    });
   },
   /**
    * Send the UPDATE HTTP request
@@ -10734,6 +10754,16 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       path: "settings/finance",
       name: "FinanceSettings",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_FinanceSettings_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/FinanceSettings */ "./resources/js/src/view/pages/freight/FinanceSettings.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['accounts', 'boss'],
+        minTier: 'command'
+      }
+    }, {
+      // The billing desk: the five sales documents, receipts, printing and the e-invoice register.
+      path: "billing",
+      name: "Billing",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_Billing_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Billing */ "./resources/js/src/view/pages/freight/Billing.vue")),
       meta: {
         userType: 'user',
         designations: ['accounts', 'boss'],

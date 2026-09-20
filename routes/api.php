@@ -513,6 +513,23 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
 
+        // ── The billing desk (user, 2026-09-19). One register over the five sales documents, plus receipts,
+        // multiple bill printing, data export and the e-invoice register.
+        Route::get('/billing', [\App\Http\Controllers\Freight\BillingController::class, 'index']);
+        Route::get('/billing/export', [\App\Http\Controllers\Freight\BillingController::class, 'export']);
+        Route::post('/billing/print', [\App\Http\Controllers\Freight\BillingController::class, 'print']);
+        Route::post('/billing/mail', [\App\Http\Controllers\Freight\BillingController::class, 'mail']);
+        Route::post('/billing/documents', [\App\Http\Controllers\Freight\BillingController::class, 'store']);
+        Route::get('/billing/e-invoice', [\App\Http\Controllers\Freight\BillingController::class, 'eInvoice']);
+        Route::post('/billing/{id}/irn', [\App\Http\Controllers\Freight\BillingController::class, 'recordIrn'])->whereNumber('id');
+        Route::get('/billing/{id}/credit-room', [\App\Http\Controllers\Freight\BillingController::class, 'creditRoom'])->whereNumber('id');
+
+        Route::get('/receipts', [\App\Http\Controllers\Freight\ReceiptController::class, 'index']);
+        Route::get('/receipts/open-documents', [\App\Http\Controllers\Freight\ReceiptController::class, 'openDocuments']);
+        Route::post('/receipts', [\App\Http\Controllers\Freight\ReceiptController::class, 'store']);
+        Route::get('/receipts/{id}/posting-preview', [\App\Http\Controllers\Freight\ReceiptController::class, 'postingPreview'])->whereNumber('id');
+        Route::post('/receipts/{id}/post', [\App\Http\Controllers\Freight\ReceiptController::class, 'post'])->whereNumber('id');
+
         // Supplier statements — airlines (CASS), truckers, brokers, anyone we owe (user, 2026-09-19).
         Route::get('/vendor-statements', [\App\Http\Controllers\Freight\VendorStatementController::class, 'index']);
         Route::post('/vendor-statements', [\App\Http\Controllers\Freight\VendorStatementController::class, 'import']);

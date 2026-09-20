@@ -4,6 +4,7 @@
       <h1 class="fx-page-title">Financials</h1>
       <p class="fx-page-sub">
         {{ subtitleForView }}
+        <router-link to="/billing">Billing →</router-link>
         <router-link to="/settings/finance">Finance settings →</router-link>
       </p>
     </header>

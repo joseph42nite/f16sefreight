@@ -66,7 +66,8 @@ class GrantMonthlyCredits extends Command
 
                     // First grant of the month resets to the allowance; a later one adds what a plan change is owed.
                     $amount = $grantedSoFar === null ? $allowance : $allowance - $grantedSoFar;
-                    $newBalance = $grantedSoFar === null ? $allowance : $company->ocr_credits_balance + $amount;
+                    // round(): the balance is DECIMAL(12,2) now and carries fractions spent on mail.
+                    $newBalance = $grantedSoFar === null ? $allowance : round($company->ocr_credits_balance + $amount, 2);
 
                     if ($dryRun) {
                         $this->line("  would {$company->name}: {$company->ocr_credits_balance} -> {$newBalance}");
@@ -106,13 +107,13 @@ class GrantMonthlyCredits extends Command
     }
 
     /** What this month's grants add up to, or null when there has been none — rules 3 and 4. */
-    private function grantedThisMonth(int $companyId, $monthStart): ?int
+    private function grantedThisMonth(int $companyId, $monthStart): ?float
     {
         $grants = DB::table('ocr_credit_transactions')
             ->where('company_id', $companyId)
             ->where('transaction_type', 'monthly_grant')
             ->where('created_at', '>=', $monthStart);
 
-        return $grants->exists() ? (int) $grants->sum('amount') : null;
+        return $grants->exists() ? (float) $grants->sum('amount') : null;
     }
 }

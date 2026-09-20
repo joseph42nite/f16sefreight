@@ -24,6 +24,11 @@ class Company extends Model
 
     protected $casts = [
         'templates_config' => 'array',
+        // DECIMAL(12,2) in the database; without these casts MySQL hands back "500.00" as a
+        // string and `$balance - $amount` quietly does string arithmetic.
+        'ocr_credits_balance'          => 'float',
+        'ocr_credits_monthly_allowance' => 'float',
+        'ocr_credits_limit'            => 'float',
         'deleted_at'       => 'datetime',
     ];
 
@@ -49,15 +54,19 @@ class Company extends Model
      * which is why it wins: an ordinary tenant is lifted automatically on upgrade, while
      * a negotiated allowance is never silently overwritten by a tier change.
      */
-    public function creditAllowance(): int
+    public function creditAllowance(): float
     {
-        return $this->ocr_credits_monthly_allowance
-            ?? (int) config("f16s.credits.{$this->tier}.monthly_allowance", 0);
+        return (float) ($this->ocr_credits_monthly_allowance
+            ?? config("f16s.credits.{$this->tier}.monthly_allowance", 0));
     }
 
-    public function creditFloor(): int
+    /**
+     * ⚠️ FLOAT since credits learned decimals (2026-09-20). Casting this to int rounded a
+     * -20.50 floor to -20 and refused the last half credit a tenant had actually been given.
+     */
+    public function creditFloor(): float
     {
-        return $this->ocr_credits_limit
-            ?? (int) config("f16s.credits.{$this->tier}.overdraft_limit", 0);
+        return (float) ($this->ocr_credits_limit
+            ?? config("f16s.credits.{$this->tier}.overdraft_limit", 0));
     }
 }

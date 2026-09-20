@@ -127,8 +127,8 @@ class OcrController extends Controller
                 : null;
 
             // What THIS document used, in credits (user, 2026-09-14): charges less refunds.
-            $response['credits_used'] = -(int) \Illuminate\Support\Facades\DB::table('ocr_credit_transactions')
-                ->where('pdf_processing_job_id', $job->id)->sum('amount');
+            $response['credits_used'] = round(-(float) \Illuminate\Support\Facades\DB::table('ocr_credit_transactions')
+                ->where('pdf_processing_job_id', $job->id)->sum('amount'), 2);
         }
 
         // 🔴 The consent prompt has to carry its PRICE. "This document needs vision — 1

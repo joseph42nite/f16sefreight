@@ -92,16 +92,20 @@ class AiUsageService
     /**
      * Log any model call: a document, a help question (`help`), or indexing a help document (`help_index`).
      *
-     * @param  array  $refs  enquiry_id / job_id / pdf_processing_job_id, where there are any
+     * @param  array  $refs  enquiry_id / job_id / pdf_processing_job_id, where there are any,
+     *                        plus agent_id / company_id for work NO USER asked for
      */
     public function log(array $usage, string $purpose, ?User $user = null, array $refs = []): void
     {
         $context = $user ? UserContext::for($user) : null;
 
         DB::table('llm_usage_logs')->insert([
-            'agent_id'              => $context?->agentId,
+            // 🔴 The branch and company fall back to $refs because inbound mail is filed
+            // while nobody is signed in. Without them the call has no company_id, and a
+            // spend CompanyAiBudget cannot see is a spend no budget can stop.
+            'agent_id'              => $context?->agentId ?? ($refs['agent_id'] ?? null),
             // The company the call is charged to — its monthly AI limit (CompanyAiBudget).
-            'company_id'            => $context?->companyId,
+            'company_id'            => $context?->companyId ?? ($refs['company_id'] ?? null),
             'user_id'               => $user?->id,
             'enquiry_id'            => $refs['enquiry_id'] ?? null,
             'job_id'                => $refs['job_id'] ?? null,

@@ -50,6 +50,7 @@ class BillingDemoSeeder extends Seeder
 
             // A branch with no bills of its own has an empty register, which demonstrates nothing.
             $this->billSomeShipments($branch);
+            $this->billOneSeaShipment($branch);
 
             $billed = AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)->where('type', 'invoice')
                 ->whereNotIn('status', ['draft', 'void'])->orderByDesc('id')->limit(6)->get();
@@ -151,6 +152,50 @@ class BillingDemoSeeder extends Seeder
             ['agent_id' => $branchId, 'partner_type' => 'agent', 'email' => 'accounts@skyline-dxb.test',
              'phone' => '+971 4 555 0100', 'address' => 'Cargo Village, Dubai']
         );
+    }
+
+    /**
+     * Bill one sea shipment, so the lane report has a sea lane in it.
+     *
+     * ⚠️ Sea lanes are quoted as five-character LOCODEs — INNSA → DEHAM — and they read from `ports`, not from
+     * `locations`. With only air shipments billed, nothing on the demo exercises that half (GAPS #376).
+     */
+    private function billOneSeaShipment(int $branch): void
+    {
+        $job = DB::table('jobs as j')->join('enquiries as e', 'e.id', '=', 'j.enquiry_id')
+            ->where('j.agent_id', $branch)->where('j.transport_mode', 'sea')
+            ->whereNotNull('e.origin_code')
+            ->whereNotIn('j.id', AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)->select('job_id'))
+            ->orderByDesc('j.id')->first(['j.id', 'e.customer_id']);
+
+        if ($job === null) {
+            return;
+        }
+
+        $customer = $job->customer_id ?? DB::table('customers')
+            ->where('company_id', DB::table('agents_info')->where('id', $branch)->value('company_id'))->value('id');
+
+        if ($customer === null) {
+            return;
+        }
+
+        $freight = 285000;
+        $tax = round($freight * 0.05, 2);   // ocean freight on an export leg
+
+        $invoice = AccountsInvoice::withoutGlobalScopes()->create([
+            'agent_id' => $branch, 'job_id' => $job->id, 'transport_mode' => 'sea',
+            'customer_id' => $customer, 'billed_party_type' => 'customer', 'billed_party_id' => $customer,
+            'billed_party_role' => 'client', 'invoice_no' => $this->sequences->next($branch, 'INV'),
+            'type' => 'invoice', 'document_date' => now()->subDays(18)->toDateString(),
+            'due_date' => now()->addDays(12)->toDateString(), 'status' => 'sent',
+            'narration' => 'Ocean freight and terminal handling',
+            'currency' => 'INR', 'exchange_rate' => 1,
+            'subtotal' => $freight, 'tax_amount' => $tax, 'grand_total' => $freight + $tax,
+        ]);
+
+        $invoice->items()->create(['charge_type' => 'freight', 'description' => 'Ocean freight, 1 x 40HC',
+            'hsn_sac_code' => '996521', 'quantity' => 1, 'rate' => $freight, 'amount' => $freight,
+            'tax_percentage' => 5, 'tax_amount' => $tax, 'net_amount' => $freight + $tax]);
     }
 
     /** Bill a few of this branch's shipments, if nobody has billed any. */

@@ -20,6 +20,17 @@ use Illuminate\Support\Facades\DB;
  * and never consumes a number. It returns a proposal. Auto-minting would burn document
  * numbers on spam and, again, corrupt the denominator.
  *
+ * 🔴 **THE FILING DECISION IS NO LONGER A REGEX (user, 2026-09-20).** The class keeps its
+ * name because it is still where the CARGO regexes live, but whether a mail is a customer
+ * enquiry is now Jev's answer — see MailIntentClassifier, and the rubric it reads in
+ * config/mail_intent.php. What was removed is `QUOTE_REQUEST_PATTERN`, an eleven-branch
+ * alternation that matched the word "quote" and could never tell who was asking whom.
+ *
+ * ⚠️ The cargo patterns below STAYED, deliberately. They read figures off a page; the model
+ * decides what a mail is for. Jev generates nothing and is documented as unreliable on
+ * numbers, so moving extraction to it would trade a pattern that is occasionally wrong for
+ * a judgement that is confidently wrong on a customs declaration.
+ *
  * ── Rules are scoped by transport_mode ─────────────────────────────────────
  * Air and sea speak different languages: kg/pieces and IATA codes versus CBM/TEU and
  * 5-char LOCODEs. A shared pattern set mis-parses both.
@@ -60,23 +71,6 @@ class RegexClassificationService
     private const DIMENSIONS_PATTERN = '/(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)\s*(cms?|mm|inch(?:es)?|in|m)?\b/iu';
 
     /**
-     * A client asking for a price or a booking (user, 2026-09-17: "can you please quote, quote the best rate, give the
-     * best rate — all of that matters a lot"). Built from the real inbox: it must NOT catch our own sales mails
-     * ("the commercial quotation for Focus Air", "our best commercial offer") or "Rate your support experience".
-     */
-    private const QUOTE_REQUEST_PATTERN = '/\b(?:'
-        . 'rfq'
-        . '|request(?:ing|ed)?\s+(?:for\s+|a\s+|an\s+|your\s+|the\s+)*(?:best\s+)?(?:quot(?:e|ation)s?|rates?|offer|booking)'
-        . '|(?:please|pls|plz|kindly)\s+(?:send\s+|share\s+|give\s+|provide\s+|advise\s+|offer\s+)?(?:us\s+|me\s+)?(?:your\s+|the\s+|a\s+)?(?:best\s+|lowest\s+|competitive\s+)?(?:quote|quotation|rates?|price)'
-        . '|(?:can|could|would)\s+you\s+(?:please\s+|pls\s+|kindly\s+)?(?:send\s+|share\s+|give\s+|provide\s+|offer\s+)?(?:us\s+|me\s+)?(?:your\s+|the\s+|a\s+)?(?:best\s+|lowest\s+)?(?:quote|quotation|rates?|price)'
-        . '|quote\s+(?:us\s+|me\s+)?(?:your\s+|the\s+)?(?:best|lowest|competitive)'
-        . '|(?:best|lowest|competitive|good)\s+(?:possible\s+)?(?:rates?|price|buy\s*rate)'
-        . '|rates?\s+(?:request|enquiry|inquiry|required|needed)'
-        . '|(?:need|require)\s+(?:your\s+|the\s+|a\s+)?(?:best\s+)?(?:rates?|quot(?:e|ation))'
-        . '|booking\s+(?:request|rfq)|confirm(?:ed)?\s+booking'
-        . ')\b/i';
-
-    /**
      * A lane, written the way clients write one: "BOM to HAM", "BOM-HAM", "BOM → HAM",
      * "Mumbai to Hamburg".
      *
@@ -105,7 +99,8 @@ class RegexClassificationService
     /**
      * Classify one message and stage what it contains.
      *
-     * @return array{classification: string, matched_rule_id: ?int, cargo: array}|null
+     * @return array{classification: string, matched_rule_id: ?int, cargo: array, source: string,
+     *               confidence: ?float, rubric: ?string}|null
      *         NULL when the message must not be classified at all.
      */
     /**
@@ -134,34 +129,55 @@ class RegexClassificationService
             DB::table('email_classification_rules')->where('id', $rule->id)->increment('hit_count');
         }
 
-        $cargo = $this->extractCargo($haystack, $transportMode);
+        // 🔴 THE FALLBACK CHAIN, most specific first. Each step also records WHERE the
+        // answer came from, because "the filing got worse" has a different fix depending
+        // on whether it was a tenant's rule, the shared directory or the model that said so.
+        //
+        //   1. the tenant's own rules      — a local exception outranks everything
+        //   2. a domain we already invoice — see below
+        //   3. the platform directory      — what the industry knows about a domain, airlines included
+        //   4. the decision model          — what the mail actually asks for (MailIntentClassifier)
+        //   5. other                       — nothing decided, so the filing is a guess: Other,
+        //      and a person re-files it (user, 2026-09-17: "when confidence is low just put
+        //      it in other"; was customer_enquiry, which filed every newsletter and colleague's
+        //      mail as an enquiry on the first real mailbox).
+        //
+        // ⚠️ Steps 1–3 are FACTS and are checked first for that reason: a rule someone wrote,
+        // an invoice we have raised, a domain the industry agrees about. Step 4 is a reading of
+        // prose. A reading must never overturn a fact, and the order is the only thing enforcing it.
+        $decision = $rule !== null
+            ? ['classification' => $rule->target_classification, 'source' => 'rule']
+            : ($this->firstOf($this->knownClientClassification($message), 'client')
+                ?? $this->firstOf($this->globalClassificationFor($message->from), 'directory')
+                ?? $this->model($message)
+                ?? ['classification' => 'other', 'source' => 'none']);
 
-        return [
-            // 🔴 THE FALLBACK CHAIN, most specific first:
-            //
-            //   1. the tenant's own rules      — a local exception outranks everything
-            //   2. a domain we already invoice — see below
-            //   3. the platform directory      — what the industry knows about a domain
-            //   4. a quote request, or cargo   — the mail asks for a quote / rate / booking, or names
-            //      read with confidence           shipment figures (weight, pieces, dimensions) read with
-            //      high confidence: a customer enquiry (user, 2026-09-17)
-            //   5. other                       — nothing matched, so the filing is a guess: Other,
-            //      and a person re-files it (user, 2026-09-17: "when confidence is low just put
-            //      it in other"; was customer_enquiry, which filed every newsletter and colleague's
-            //      mail as an enquiry on the first real mailbox).
-            'classification'  => $rule->target_classification
-                ?? $this->knownClientClassification($message)
-                ?? $this->globalClassificationFor($message->from)
-                ?? (preg_match(self::QUOTE_REQUEST_PATTERN, $haystack) || $this->readsLikeAShipment($cargo) ? 'customer_enquiry' : 'other'),
+        return $decision + [
             'matched_rule_id' => $rule->id ?? null,
-            'cargo'           => $cargo,
+            'cargo'           => $this->extractCargo($haystack, $transportMode),
+            'confidence'      => null,
+            'rubric'          => null,
         ];
     }
 
-    /** At least one cargo figure read with high confidence. A low-confidence read alone is not enough. */
-    private function readsLikeAShipment(array $cargo): bool
+    /** @return array{classification: string, source: string}|null */
+    private function firstOf(?string $classification, string $source): ?array
     {
-        return collect($cargo)->contains(fn ($field) => ($field['confidence'] ?? null) === 'high');
+        return $classification === null ? null : ['classification' => $classification, 'source' => $source];
+    }
+
+    /**
+     * Ask the model, when nothing already known has answered.
+     *
+     * ⚠️ NULL is not a failure to handle here — it covers the model being switched off, the
+     * tenant being out of AI budget or credits, and the call not coming back. All of them mean
+     * the same thing to this chain: nobody decided, so the mail falls through to `other`.
+     */
+    private function model(EmailMessage $message): ?array
+    {
+        $answer = app(\App\Services\Mail\MailIntentClassifier::class)->classify($message);
+
+        return $answer === null ? null : $answer + ['source' => 'model'];
     }
 
     /**

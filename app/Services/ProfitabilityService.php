@@ -159,12 +159,18 @@ class ProfitabilityService
     /**
      * Port and airport names for the codes in use.
      *
-     * ⚠️ Air codes resolve from `locations`; sea LOCODEs do not, because `ports` is empty (GAPS #375). A code with
-     * no name shows as the code, which is what the desk calls it anyway.
+     * ⚠️ **Two directories, because a code's LENGTH says which one it is.** Three characters is IATA and names an
+     * airport (`locations`); five is a UN/LOCODE and names a seaport or terminal (`ports`) — and a three-letter
+     * code cannot address DEHAM, which is the whole reason both tables exist. They cannot collide, so the merge
+     * order does not matter. A code in neither shows as the code, which is what the desk calls it anyway.
      */
     public function placeNames(array $codes): array
     {
-        return DB::table('locations')->whereIn('iata_code', array_filter($codes))
-            ->pluck('destination', 'iata_code')->all();
+        $codes = array_values(array_unique(array_filter($codes)));
+
+        return array_merge(
+            DB::table('locations')->whereIn('iata_code', $codes)->pluck('destination', 'iata_code')->all(),
+            DB::table('ports')->whereIn('locode', $codes)->pluck('port_name', 'locode')->all()
+        );
     }
 }

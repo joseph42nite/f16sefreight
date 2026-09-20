@@ -55,12 +55,15 @@ class ProfitabilityTest extends TestCase
     /** A shipment on a lane, for a client. */
     private function shipment(Customer $customer, string $origin, string $dest, string $mode = 'air'): Job
     {
+        // The mode marker is load-bearing: `chk_enq_mode_prefix` refuses ENQA on a sea enquiry (PRD §6.3).
+        $marker = ['air' => 'A', 'sea' => 'S', 'road' => 'R'][$mode] ?? 'A';
+
         $enquiry = Enquiry::create(['agent_id' => $this->branch->id, 'transport_mode' => $mode, 'status' => 'converted',
-            'enquiry_no' => 'ENQA-MRGBOM-26-' . random_int(1000, 9999), 'customer_id' => $customer->id,
+            'enquiry_no' => "ENQ{$marker}-MRGBOM-26-" . random_int(1000, 9999), 'customer_id' => $customer->id,
             'origin_code' => $origin, 'dest_code' => $dest]);
 
         return Job::create(['agent_id' => $this->branch->id, 'enquiry_id' => $enquiry->id, 'transport_mode' => $mode,
-            'execution_job_no' => 'JOBA-MRGBOM-26-' . random_int(1000, 9999), 'customer_id' => $customer->id,
+            'execution_job_no' => "JOB{$marker}-MRGBOM-26-" . random_int(1000, 9999), 'customer_id' => $customer->id,
             'completed_at' => now()->subDays(5)]);
     }
 
@@ -202,7 +205,7 @@ class ProfitabilityTest extends TestCase
             (float) $clients['Alpha Exports']['margin_pct'], (float) $clients['Alpha Exports']['margin_each'],
         ]);
 
-        // Air codes resolve to names from `locations`; a sea LOCODE does not, because `ports` is empty (GAPS #375).
+        // Three characters is IATA and reads from `locations`; five is a UN/LOCODE and reads from `ports`.
         DB::table('locations')->insert(['destination' => 'bombay', 'iata_code' => 'BOM', 'is_active' => 1,
             'created_at' => now(), 'updated_at' => now()]);
 
@@ -218,6 +221,28 @@ class ProfitabilityTest extends TestCase
         $lanesTotal = $this->getJson($this->url('/profitability/lanes'))->json('totals');
         $this->assertSame($jobsTotal['margin'], $lanesTotal['margin']);
         $this->assertSame(360000.0, (float) $jobsTotal['revenue']);
+    }
+
+    public function test_a_sea_lane_reads_as_ports_not_as_five_letter_codes(): void
+    {
+        // 🔴 `locations` names airports by IATA and has never heard of DEHAM; a three-letter code cannot address
+        // it. Sea lanes resolve from `ports`, the UN/LOCODE directory (GAPS #376).
+        DB::table('ports')->insert([
+            ['locode' => 'INNSA', 'port_name' => 'Jawaharlal Nehru (Nhava Sheva)', 'country_code' => 'IN',
+             'port_type' => 'sea', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['locode' => 'DEHAM', 'port_name' => 'Hamburg', 'country_code' => 'DE',
+             'port_type' => 'sea', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $job = $this->shipment($this->beta, 'INNSA', 'DEHAM', 'sea');
+        $this->bill($job, 250000);
+        $this->cost($job, 190000);
+
+        $lane = collect($this->as($this->accounts)->getJson($this->url('/profitability/lanes'))->assertOk()->json('groups'))
+            ->firstWhere('name', 'INNSA → DEHAM');
+
+        $this->assertSame(['Jawaharlal Nehru (Nhava Sheva)', 'Hamburg'], [$lane['origin_name'], $lane['dest_name']]);
+        $this->assertSame(['sea', 60000.0], [$lane['mode'], (float) $lane['margin']]);
     }
 
     public function test_the_report_filters_by_client_lane_and_date_and_exports(): void

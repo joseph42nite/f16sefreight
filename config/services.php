@@ -102,6 +102,21 @@ return [
         'embedding_timeout'      => (int) env('OPENROUTER_EMBEDDING_TIMEOUT', 8),
     ],
 
+    /*
+     * Jev — the decision model that files inbound mail (user, 2026-09-20).
+     *
+     * 🔴 A SEPARATE BASE, and not a typo. The Decisions API lives at
+     * https://openrouter.ai/api/alpha/decisions — it is NOT under /api/v1, so it cannot
+     * share `openrouter.base`, and pointing it at /api/v1 returns 404s that read like the
+     * model is missing. Same OPENROUTER_API_KEY, same bill, different endpoint.
+     *
+     * The rubric it answers against, its model id and its timeout live in
+     * config/mail_intent.php, where filing is edited as English rather than as code.
+     */
+    'jev' => [
+        'decisions_base' => env('JEV_DECISIONS_BASE', 'https://openrouter.ai/api/alpha'),
+    ],
+
     // clamd, for mail attachments (guide §4.2). docker-compose publishes it on 3310.
     'clamav' => [
         'host' => env('CLAMAV_HOST', '127.0.0.1'),

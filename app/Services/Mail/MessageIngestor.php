@@ -160,9 +160,9 @@ class MessageIngestor
     }
 
     /**
-     * Stage what the regex thinks this conversation is. It never mints anything.
+     * Stage what the classifier thinks this conversation is. It never mints anything.
      *
-     * ⚠️ PRD §5.2.3: **regex stages, the OPERATOR mints.** Creating an enquiry here would
+     * ⚠️ PRD §5.2.3: **the classifier stages, the OPERATOR mints.** Creating an enquiry here would
      * inflate the conversion denominator with conversations nobody ever treated as an
      * enquiry — so this writes one column and stops.
      *
@@ -190,8 +190,14 @@ class MessageIngestor
             ->where('thread_key', $stored->thread_key)
             ->where('classification', 'unclassified')
             ->update([
-                // What the regex said, kept when a person later changes it — Super Admin → Mail filing (2026-09-17).
+                // What the classifier said, kept when a person later changes it — Super Admin → Mail filing (2026-09-17).
                 'auto_classification' => $result['classification'],
+                // 🔴 And WHO said it: rule | client | directory | model | none. An override
+                // report that cannot name the source cannot tell a bad tenant rule from a bad
+                // rubric, and those have nothing in common but the symptom (2026-09-20).
+                'auto_classification_source' => $result['source'],
+                'auto_classification_confidence' => $result['confidence'],
+                'auto_classification_rubric' => $result['rubric'],
                 'classification' => $result['classification'],
                 // PRD §5.2.5 — the cargo the parser read, parked for the operator to
                 // confirm. NULL where nothing was found: an airline notice has no cargo in

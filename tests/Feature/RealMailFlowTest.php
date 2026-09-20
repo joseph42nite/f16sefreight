@@ -148,7 +148,19 @@ class RealMailFlowTest extends TestCase
         Http::assertSent(fn ($r) => str_ends_with($r->url(), '/me/sendMail') && str_contains($r['message']['body']['content'], '<p style="margin:0 0 10px;"><br /></p>'));
     }
 
-    /** A Gmail sender becomes a client under their address; a colleague forwarding a request adds no client. */
+    /**
+     * A Gmail sender becomes a client under their address; a colleague's mail never becomes one.
+     *
+     * 🔴 The colleague half CHANGED on 2026-09-20. `deepanjan@flow-fwd.test` writes from OUR OWN
+     * mailbox domain, and mail from our own domain is now filed `other` by pattern without ever
+     * reaching the decision model (user: "messages from f16s is not required"). It used to mint
+     * an enquiry on arrival; it does not any more, and the mail waits for a person.
+     *
+     * ⚠️ The assertion that matters survived the change and is now stronger: promoting it by hand
+     * STILL creates no customer for our own domain. A forwarder whose own staff appear in their
+     * own client book has a corrupt client book, and the conversion denominator counts a
+     * conversation we started with ourselves.
+     */
     public function test_free_mail_and_colleague_senders_when_confirmed(): void
     {
         $gmail = $this->arrives('jomy.flow@gmail.com', 'blr-ord', 'Requesting quotation for BLR-ORD, PCS : 21');
@@ -156,8 +168,18 @@ class RealMailFlowTest extends TestCase
         $this->assertSame('jomy.flow@gmail.com', DB::table('customers')->where('id', DB::table('enquiries')->where('id', $gmail->enquiry_id)->value('customer_id'))->value('name'));
 
         $colleague = $this->arrives('deepanjan@flow-fwd.test', 'Ex BLR 400 pcs JFK', 'Please share the confirmed booking schedule. Pcs 400, Gross wgt 17400kgs');
-        $this->postJson($this->url("/enquiries/{$colleague->enquiry_id}/convert"), [])->assertCreated();
-        $this->assertNull(DB::table('enquiries')->where('id', $colleague->enquiry_id)->value('customer_id'));
+
+        $this->assertSame('other', $colleague->classification, 'our own domain is filed by pattern');
+        $this->assertSame('pattern', $colleague->auto_classification_source);
+        $this->assertNull($colleague->enquiry_id, 'and mints nothing on arrival');
+
+        // A person decides it really is one. That mints the number, as it always did.
+        $this->postJson($this->url("/inbox/threads/{$colleague->id}/classify"), ['classification' => 'customer_enquiry'])->assertOk();
+        $enquiryId = DB::table('email_threads')->where('id', $colleague->id)->value('enquiry_id');
+        $this->assertNotNull($enquiryId);
+
+        $this->postJson($this->url("/enquiries/{$enquiryId}/convert"), [])->assertCreated();
+        $this->assertNull(DB::table('enquiries')->where('id', $enquiryId)->value('customer_id'));
         $this->assertFalse(DB::table('customers')->where('email_domain', 'flow-fwd.test')->exists());
     }
 

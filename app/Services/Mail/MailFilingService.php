@@ -171,7 +171,7 @@ class MailFilingService
         //   1. the tenant's own rules      — a local exception outranks everything
         //   2. a domain we already invoice — see below
         //   3. the platform directory      — what the industry knows about a domain, airlines included
-        //   4. a pattern that cannot be wrong — our own staff, and machine-written airline EDI
+        //   4. a pattern with nothing to interpret — our own domain, machine-written airline EDI
         //   5. the decision model          — what the mail actually asks for (MailIntentClassifier)
         //   6. other                       — nothing decided, so the filing is a guess: Other,
         //      and a person re-files it (user, 2026-09-17: "when confidence is low just put
@@ -182,6 +182,11 @@ class MailFilingService
         // invoice we have raised, a domain the industry agrees about, an envelope we can read
         // without interpreting it. Step 5 is a reading of prose. A reading must never overturn a
         // fact, and the order is the only thing enforcing it.
+        //
+        // ⚠️ "Fact" is a claim about the KIND of evidence, not a promise of correctness — step 4
+        // is a regex and regexes misfire (see AIRLINE_EDI, which lost a message type to a UK
+        // regulator's initialism). It outranks the model because it reads an envelope rather than
+        // interpreting prose, not because it is infallible.
         //
         // 💰 Step 4 also exists to NOT SPEND. Every mail that reaches step 5 costs a fifth of a
         // credit, and the two kinds it intercepts — our own outgoing mail coming back, and the

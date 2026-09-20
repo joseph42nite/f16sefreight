@@ -445,6 +445,13 @@ const router = new Router({
           meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
         },
         {
+          // The day book, and the drill from a report line to the document behind it.
+          path: "journal",
+          name: "Journal",
+          component: () => import("@/view/pages/freight/Journal"),
+          meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
+        },
+        {
           // Ageing and collections: who owes what, and what has been done about it.
           path: "collections",
           name: "Collections",

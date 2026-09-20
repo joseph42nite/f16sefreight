@@ -42,7 +42,7 @@ class BillingDemoSeeder extends Seeder
         $this->openPeriods($branches);
 
         $agent = $this->overseasAgent($company->id, $branches[0]);
-        $made = ['debit_note' => 0, 'credit_note' => 0, 'brokerage' => 0, 'consol_invoice' => 0, 'receipts' => 0, 'chases' => 0];
+        $made = ['debit_note' => 0, 'credit_note' => 0, 'brokerage' => 0, 'consol_invoice' => 0, 'receipts' => 0, 'chases' => 0, 'postings' => 0];
 
         foreach ($branches as $branch) {
             // Give the invoices already there the columns a bill register prints.
@@ -83,6 +83,7 @@ class BillingDemoSeeder extends Seeder
 
             $made['receipts'] += $this->receipts($branch, $billed);
             $made['chases'] += $this->chases($branch);
+            $made['postings'] += $this->postSome($branch);
         }
 
         // One invoice through the IRP and the rest waiting, so the e-invoice register shows both states.
@@ -93,9 +94,10 @@ class BillingDemoSeeder extends Seeder
             'ack_no' => '112' . random_int(100000000, 999999999), 'ack_date' => now()->subDays(2)]);
 
         $this->command->info(sprintf(
-            'Billing demo: %d debit notes, %d credit notes, %d brokerage, %d consol, %d receipts, %d chases across %d branches.',
+            'Billing demo: %d debit notes, %d credit notes, %d brokerage, %d consol, %d receipts, %d chases, '
+                . '%d documents posted to the ledger across %d branches.',
             $made['debit_note'], $made['credit_note'], $made['brokerage'], $made['consol_invoice'],
-            $made['receipts'], $made['chases'], count($branches)
+            $made['receipts'], $made['chases'], $made['postings'], count($branches)
         ));
     }
 
@@ -112,8 +114,11 @@ class BillingDemoSeeder extends Seeder
         DB::table('accounts_invoice_items')->whereIn('invoice_id', $ids)->delete();
         DB::table('accounts_invoice_brokerage_details')->whereIn('invoice_id', $ids)->delete();
         DB::table('accounts_invoice_consol_details')->whereIn('invoice_id', $ids)->delete();
-        DB::table('accounts_ledger_entries')->whereIn('source_id', $ids)->where('source_type', 'invoice')->delete();
         AccountsInvoice::withoutGlobalScopes()->whereIn('id', $ids)->delete();
+
+        // The ledger of a DEMO tenant is the seeder's to rebuild; on a live one it would never be touched.
+        DB::table('accounts_ledger_entries')->whereIn('agent_id', $branches)->delete();
+        AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branches)->update(['is_posted' => false]);
 
         // Whatever those receipts had settled goes back to being owed.
         AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branches)->where('amount_paid', '>', 0)
@@ -187,6 +192,51 @@ class BillingDemoSeeder extends Seeder
                     'tax_amount' => round($amount * 0.18, 2), 'net_amount' => round($amount * 1.18, 2)]);
             }
         }
+    }
+
+    /**
+     * Post some of it, so the day book, the reports and the drill-through have something in them.
+     *
+     * ⚠️ Through the same service the controllers use. A seeder that wrote its own journal lines would put figures
+     * in the ledger that the product itself would never produce — and the trial balance would prove nothing.
+     */
+    private function postSome(int $branch): int
+    {
+        $ledger = app(\App\Services\LedgerPostingService::class);
+        $posted = 0;
+
+        $post = function ($lines, $date, $sourceId, $type) use ($ledger, $branch, &$posted) {
+            $period = $ledger->openPeriodFor($branch, $date);
+
+            if ($period === null) {
+                return false;   // dated outside every open period — exactly what the posting gate is for
+            }
+
+            $ledger->write($lines, $branch, $period->id, $sourceId, $type);
+            $posted++;
+
+            return true;
+        };
+
+        foreach (AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)
+            ->whereNotIn('status', ['draft', 'void'])->orderByDesc('id')->limit(10)->get() as $invoice) {
+            if ($post($ledger->linesForInvoice($invoice), $invoice->document_date, $invoice->id, 'invoice')) {
+                $invoice->update(['is_posted' => true]);
+            }
+        }
+
+        foreach (\App\AccountsPurchaseVoucher::withoutGlobalScopes()->where('agent_id', $branch)
+            ->orderByDesc('id')->limit(6)->get() as $voucher) {
+            $post($ledger->linesForVoucher($voucher), $voucher->document_date, $voucher->id, 'purchase_voucher');
+        }
+
+        foreach (AccountsReceipt::withoutGlobalScopes()->where('agent_id', $branch)->get() as $receipt) {
+            if ($post($ledger->linesForReceipt((float) $receipt->amount), $receipt->receipt_date, $receipt->id, 'receipt')) {
+                $receipt->update(['is_posted' => true]);
+            }
+        }
+
+        return $posted;
     }
 
     /** A due date and a narration on the invoices already there — the columns the register prints. */

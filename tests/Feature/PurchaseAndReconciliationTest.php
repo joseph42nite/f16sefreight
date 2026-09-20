@@ -143,6 +143,19 @@ class PurchaseAndReconciliationTest extends TestCase
         ]);
     }
 
+    /**
+     * The receipt a bank match created, so its journal can be found.
+     *
+     * 🔴 A match posts against the RECEIPT it raises, not against the invoice — the entry used to carry the
+     * invoice's id under `source_type = 'receipt'`, which pointed the ledger at the wrong document.
+     */
+    private function receiptFor(int $invoiceId): object
+    {
+        return DB::table('accounts_receipts as r')
+            ->join('accounts_receipt_allocations as a', 'a.receipt_id', '=', 'r.id')
+            ->where('a.invoice_id', $invoiceId)->first(['r.*', 'a.amount as allocated', 'a.resolution']);
+    }
+
     private function journalOf(string $type, int $id): array
     {
         return DB::table('accounts_ledger_entries as l')
@@ -280,7 +293,14 @@ class PurchaseAndReconciliationTest extends TestCase
             ->assertJsonPath('invoice.status', 'paid')
             ->assertJsonPath('transaction.reconciliation_status', 'matched');
 
-        $journal = $this->journalOf('receipt', $invoice->id);
+        // Money identified from the bank IS a receipt, and appears in the receipts register as one.
+        $receipt = $this->receiptFor($invoice->id);
+
+        $this->assertStringStartsWith('RCPT-', $receipt->receipt_no);
+        $this->assertSame([$txn->id, 100000.00, true], [(int) $receipt->bank_transaction_id,
+            (float) $receipt->amount, (bool) $receipt->is_posted]);
+
+        $journal = $this->journalOf('receipt', $receipt->id);
 
         $this->assertSame(100000.00, $journal['1100-Bank']['dr'], 'Cash up.');
         $this->assertSame(100000.00, $journal['1200-AR']['cr'], 'Receivable down.');
@@ -304,7 +324,10 @@ class PurchaseAndReconciliationTest extends TestCase
             ->assertJsonPath('invoice.status', 'paid')
             ->assertJsonPath('shortfall', 500);
 
-        $journal = $this->journalOf('receipt', $invoice->id);
+        $receipt = $this->receiptFor($invoice->id);
+        $this->assertSame('write_off', $receipt->resolution, 'the allocation records what the shortfall was');
+
+        $journal = $this->journalOf('receipt', $receipt->id);
 
         $this->assertSame(99500.00, $journal['1100-Bank']['dr']);
         $this->assertSame(500.00, $journal['5100-Bank-Charges']['dr'], 'The absorbed cost is visible.');
@@ -325,7 +348,7 @@ class PurchaseAndReconciliationTest extends TestCase
             ->assertJsonPath('invoice.status', 'partially_paid');
 
         $this->assertSame(0, count(array_filter(
-            array_keys($this->journalOf('receipt', $invoice->id)),
+            array_keys($this->journalOf('receipt', $this->receiptFor($invoice->id)->id)),
             fn ($code) => $code === '5100-Bank-Charges'
         )), 'Nothing is written off when the balance stays open.');
     }

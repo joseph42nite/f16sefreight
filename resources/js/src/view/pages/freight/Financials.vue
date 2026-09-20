@@ -6,6 +6,7 @@
         {{ subtitleForView }}
         <router-link to="/billing">Billing →</router-link>
         <router-link to="/collections">Ageing &amp; collections →</router-link>
+        <router-link to="/journal">Journal →</router-link>
         <router-link to="/settings/finance">Finance settings →</router-link>
       </p>
     </header>
@@ -344,6 +345,8 @@
         A report runs over a period, never a date range — half a period is a figure nobody can reconcile against
         anything they have filed.
       </p>
+      <!-- 🔴 Every figure below opens. A number you cannot take apart is a number you have to take on faith. -->
+      <p v-else class="fx-muted">Click any account to see the postings behind it, and the documents behind those.</p>
       <p v-else-if="reportLoading" class="fx-muted">Loading…</p>
       <template v-else-if="reportData">
         <!-- Profit & loss -->
@@ -351,13 +354,13 @@
           <tbody>
             <tr><td colspan="2"><strong>Revenue</strong></td></tr>
             <tr v-for="l in reportData.revenue.lines" :key="'r-' + l.code">
-              <td>{{ l.code }} {{ l.name }}</td>
+              <td><router-link :to="drillTo(l.code)">{{ l.code }} {{ l.name }}</router-link></td>
               <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
             </tr>
             <tr><td><strong>Total revenue</strong></td><td class="fx-num"><Figure :value="reportData.revenue.total" kind="currency" currency-code="INR" /></td></tr>
             <tr><td colspan="2"><strong>Expense</strong></td></tr>
             <tr v-for="l in reportData.expense.lines" :key="'e-' + l.code">
-              <td>{{ l.code }} {{ l.name }}</td>
+              <td><router-link :to="drillTo(l.code)">{{ l.code }} {{ l.name }}</router-link></td>
               <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
             </tr>
             <tr><td><strong>Total expense</strong></td><td class="fx-num"><Figure :value="reportData.expense.total" kind="currency" currency-code="INR" /></td></tr>
@@ -379,13 +382,13 @@
           <tbody>
             <tr><td colspan="2"><strong>Assets</strong></td></tr>
             <tr v-for="l in reportData.assets.lines" :key="'a-' + l.code">
-              <td>{{ l.code }} {{ l.name }}</td>
+              <td><router-link :to="drillTo(l.code)">{{ l.code }} {{ l.name }}</router-link></td>
               <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
             </tr>
             <tr><td><strong>Total assets</strong></td><td class="fx-num"><Figure :value="reportData.assets.total" kind="currency" currency-code="INR" /></td></tr>
             <tr><td colspan="2"><strong>Liabilities</strong></td></tr>
             <tr v-for="l in reportData.liabilities.lines" :key="'l-' + l.code">
-              <td>{{ l.code }} {{ l.name }}</td>
+              <td><router-link :to="drillTo(l.code)">{{ l.code }} {{ l.name }}</router-link></td>
               <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
             </tr>
             <tr><td><strong>Total liabilities</strong></td><td class="fx-num"><Figure :value="reportData.liabilities.total" kind="currency" currency-code="INR" /></td></tr>
@@ -400,7 +403,7 @@
           <thead><tr><th scope="col">Account</th><th class="fx-num" scope="col">Debit</th><th class="fx-num" scope="col">Credit</th></tr></thead>
           <tbody>
             <tr v-for="a in reportData.accounts" :key="'t-' + a.code">
-              <td>{{ a.code }} {{ a.name }}</td>
+              <td><router-link :to="drillTo(a.code)">{{ a.code }} {{ a.name }}</router-link></td>
               <td class="fx-num"><Figure :value="a.debit" kind="currency" currency-code="INR" /></td>
               <td class="fx-num"><Figure :value="a.credit" kind="currency" currency-code="INR" /></td>
             </tr>
@@ -935,6 +938,10 @@ export default {
     /* Balance is derived, never stored — a stored balance drifts from its own parts. */
     balanceOf(row) {
       return Number(row.grand_total || 0) - Number(row.amount_paid || 0);
+    },
+    /** From a report line down to the ledger: the same account, the same period. */
+    drillTo(code) {
+      return { path: "/journal", query: { account: code, period_id: this.periodId } };
     },
     showView(key) {
       this.view = key;

@@ -29,6 +29,7 @@ class ReconciliationController extends Controller
     public function __construct(
         private readonly BankReconciliationService $matcher,
         private readonly LedgerPostingService $ledger,
+        private readonly \App\Services\EnquirySequenceService $sequences,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -251,14 +252,36 @@ class ReconciliationController extends Controller
         $result = DB::transaction(function () use (
             $transaction, $invoice, $received, $shortfall, $adjustmentAccount, $resolution, $period
         ) {
+            /* One receipt per match, numbered off the same counter as one typed by hand. */
             // The race is decided in the database — see BankReconciliationService::claim.
             if (! $this->matcher->claim($transaction, $invoice)) {
                 return null;
             }
 
+            // 🔴 **Money identified from the bank IS a receipt**, and it needs a receipt to be one. This used to
+            // post the journal with `source_type = 'receipt'` and the INVOICE's id as the source, so the entry
+            // pointed at the wrong document and the money never appeared in the receipts register at all.
+            $receipt = \App\AccountsReceipt::withoutGlobalScopes()->create([
+                'agent_id' => $transaction->agent_id,
+                'payer_type' => 'customer', 'payer_id' => $invoice->customer_id,
+                'receipt_no' => $this->sequences->next($transaction->agent_id, 'RCPT'),
+                'receipt_date' => $transaction->value_date ?? now()->toDateString(),
+                'mode' => 'bank_transfer',
+                'reference' => $transaction->reference ?? $transaction->plaid_transaction_id,
+                'amount' => $received, 'currency' => $transaction->currency ?? 'INR', 'exchange_rate' => 1,
+                'bank_transaction_id' => $transaction->id,
+                'narration' => $transaction->narration,
+                'is_posted' => true, 'created_by' => auth()->id(),
+            ]);
+
+            $receipt->allocations()->create([
+                'invoice_id' => $invoice->id, 'amount' => $received,
+                'resolution' => $shortfall > 0 && $adjustmentAccount !== null ? $resolution : null,
+            ]);
+
             $this->ledger->write(
                 $this->ledger->linesForReceipt($received, $adjustmentAccount, $shortfall),
-                $transaction->agent_id, $period->id, $invoice->id, 'receipt'
+                $transaction->agent_id, $period->id, $receipt->id, 'receipt'
             );
 
             // The invoice is closed when nothing is left owing — which, after a
@@ -317,10 +340,11 @@ class ReconciliationController extends Controller
             ], 422);
         }
 
-        $posted = DB::table('accounts_ledger_entries')
-            ->where('source_type', 'receipt')
-            ->where('source_id', $transaction->matched_invoice_id)
-            ->exists();
+        // 🔴 Asked of the RECEIPT this match raised, not of the invoice. Looking for a ledger entry whose
+        // `source_id` was the invoice found the wrong document — and would have found an unrelated receipt against
+        // the same invoice, refusing an unmatch that was perfectly safe.
+        $posted = DB::table('accounts_receipts')
+            ->where('bank_transaction_id', $transaction->id)->where('is_posted', true)->exists();
 
         if ($posted) {
             return response()->json([

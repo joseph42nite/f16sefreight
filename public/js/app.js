@@ -10768,6 +10768,16 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
         minTier: 'command'
       }
     }, {
+      // The day book, and the drill from a report line to the document behind it.
+      path: "journal",
+      name: "Journal",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_Journal_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Journal */ "./resources/js/src/view/pages/freight/Journal.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['accounts', 'boss'],
+        minTier: 'command'
+      }
+    }, {
       // Ageing and collections: who owes what, and what has been done about it.
       path: "collections",
       name: "Collections",

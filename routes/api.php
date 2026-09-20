@@ -513,6 +513,12 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
 
+        // ── The journal, and the way down from a report to the document behind it (user, 2026-09-20).
+        Route::get('/journal', [\App\Http\Controllers\Freight\JournalController::class, 'index']);
+        Route::get('/journal/export', [\App\Http\Controllers\Freight\JournalController::class, 'export']);
+        Route::get('/journal/entries/{id}', [\App\Http\Controllers\Freight\JournalController::class, 'entry'])->whereNumber('id');
+        Route::get('/journal/accounts/{code}', [\App\Http\Controllers\Freight\JournalController::class, 'account']);
+
         // ── Ageing and collections (user, 2026-09-20): who owes what, for how long, and what has been done.
         Route::get('/ageing', [\App\Http\Controllers\Freight\CollectionsController::class, 'ageing']);
         Route::get('/ageing/export', [\App\Http\Controllers\Freight\CollectionsController::class, 'export']);

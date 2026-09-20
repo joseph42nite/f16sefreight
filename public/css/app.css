@@ -88650,6 +88650,12 @@ to { transform: rotate(360deg);
 }
 
 
+/* Over ninety days is the number people look for first; it should not need hunting. */
+.is-late[data-v-7b9183fd] {
+  font-weight: 600;
+}
+
+
 .fx-signin[data-v-0219db28] { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px;
   background: var(--bg-canvas, #f0f2f5); font-family: "Inter", system-ui, sans-serif;
 }

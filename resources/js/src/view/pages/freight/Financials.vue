@@ -5,6 +5,7 @@
       <p class="fx-page-sub">
         {{ subtitleForView }}
         <router-link to="/billing">Billing →</router-link>
+        <router-link to="/collections">Ageing &amp; collections →</router-link>
         <router-link to="/settings/finance">Finance settings →</router-link>
       </p>
     </header>

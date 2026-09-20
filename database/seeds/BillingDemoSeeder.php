@@ -42,7 +42,7 @@ class BillingDemoSeeder extends Seeder
         $this->openPeriods($branches);
 
         $agent = $this->overseasAgent($company->id, $branches[0]);
-        $made = ['debit_note' => 0, 'credit_note' => 0, 'brokerage' => 0, 'consol_invoice' => 0, 'receipts' => 0];
+        $made = ['debit_note' => 0, 'credit_note' => 0, 'brokerage' => 0, 'consol_invoice' => 0, 'receipts' => 0, 'chases' => 0];
 
         foreach ($branches as $branch) {
             // Give the invoices already there the columns a bill register prints.
@@ -82,6 +82,7 @@ class BillingDemoSeeder extends Seeder
             }
 
             $made['receipts'] += $this->receipts($branch, $billed);
+            $made['chases'] += $this->chases($branch);
         }
 
         // One invoice through the IRP and the rest waiting, so the e-invoice register shows both states.
@@ -92,8 +93,9 @@ class BillingDemoSeeder extends Seeder
             'ack_no' => '112' . random_int(100000000, 999999999), 'ack_date' => now()->subDays(2)]);
 
         $this->command->info(sprintf(
-            'Billing demo: %d debit notes, %d credit notes, %d brokerage, %d consol, %d receipts across %d branches.',
-            $made['debit_note'], $made['credit_note'], $made['brokerage'], $made['consol_invoice'], $made['receipts'], count($branches)
+            'Billing demo: %d debit notes, %d credit notes, %d brokerage, %d consol, %d receipts, %d chases across %d branches.',
+            $made['debit_note'], $made['credit_note'], $made['brokerage'], $made['consol_invoice'],
+            $made['receipts'], $made['chases'], count($branches)
         ));
     }
 
@@ -103,6 +105,7 @@ class BillingDemoSeeder extends Seeder
         $ids = AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branches)
             ->whereIn('type', ['debit_note', 'credit_note', 'brokerage', 'consol_invoice'])->pluck('id');
 
+        DB::table('collection_follow_ups')->whereIn('agent_id', $branches)->delete();
         DB::table('accounts_receipt_allocations')
             ->whereIn('receipt_id', DB::table('accounts_receipts')->whereIn('agent_id', $branches)->select('id'))->delete();
         DB::table('accounts_receipts')->whereIn('agent_id', $branches)->delete();
@@ -251,6 +254,53 @@ class BillingDemoSeeder extends Seeder
 
         DB::table($table)->insert(['invoice_id' => $invoice->id, 'partner_agent_id' => $partner->id,
             $column => $basis, 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    /**
+     * Chases against the two most overdue clients: one promise already broken, one still in hand.
+     *
+     * The collections queue is only worth looking at when it shows the three states side by side — a promise that
+     * was not kept, a promise not yet due, and somebody nobody has called at all.
+     */
+    private function chases(int $branch): int
+    {
+        $overdue = app(\App\Services\AgeingService::class)->byParty([$branch])
+            ->filter(fn ($p) => $p['overdue'] > 0 && $p['party_type'] === 'customer')->values();
+
+        if ($overdue->isEmpty()) {
+            return 0;
+        }
+
+        $chases = [
+            // A date already past that nothing has arrived against: a BROKEN promise, top of the queue.
+            ['channel' => 'email', 'logged' => -11, 'promised' => -4, 'next' => 0,
+             'note' => 'Emailed a statement of account; their finance desk confirmed it would be paid by month end.'],
+            // A promise still in hand — asked, committed to, not yet due.
+            ['channel' => 'call', 'logged' => -2, 'promised' => 6, 'next' => 5,
+             'note' => 'Called Ravi in their AP team; he said the payment run goes out on Friday.'],
+        ];
+
+        // ONE party per branch, and never one somebody is already chasing — so the queue shows all three states at
+        // once: a broken promise, a promise in hand, and somebody nobody has called.
+        $already = DB::table('collection_follow_ups')->pluck('party_id')->all();
+        $party = $overdue->first(fn ($p) => ! in_array($p['party_id'], $already, true));
+
+        if ($party === null) {
+            return 0;
+        }
+
+        $chase = $chases[count($already) === 0 ? 0 : 1];
+
+        DB::table('collection_follow_ups')->insert([
+            'agent_id' => $branch, 'party_type' => 'customer', 'party_id' => $party['party_id'],
+            'channel' => $chase['channel'], 'note' => $chase['note'],
+            'promised_date' => now()->addDays($chase['promised'])->toDateString(),
+            'promised_amount' => round($party['overdue'] * 0.6, 2),
+            'next_action_date' => now()->addDays($chase['next'])->toDateString(),
+            'state' => 'open', 'created_at' => now()->addDays($chase['logged']), 'updated_at' => now(),
+        ]);
+
+        return 1;
     }
 
     /** One settled in full, one part paid, and one advance nobody has placed yet. */

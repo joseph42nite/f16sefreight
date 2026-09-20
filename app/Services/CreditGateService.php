@@ -25,8 +25,13 @@ use App\Customer;
  */
 class CreditGateService
 {
-    /** Statuses that represent money genuinely owed. Drafts and voids are not exposure. */
-    private const OUTSTANDING_STATUSES = ['finalized', 'sent', 'partially_paid'];
+    /**
+     * Statuses that represent money genuinely owed. Drafts and voids are not exposure.
+     *
+     * ⚠️ Shared with the ageing, deliberately: two definitions of "what they owe" is two answers to the one
+     * question the desk asks, and the one on the collections screen would not be the one the gate blocks on.
+     */
+    private const OUTSTANDING_STATUSES = \App\Services\AgeingService::OWED;
 
     /**
      * Current receivable exposure for ONE customer row — not the group.
@@ -36,9 +41,12 @@ class CreditGateService
         $rows = AccountsInvoice::withoutTenantScope()
             ->where('customer_id', $customer->id)
             ->whereIn('status', self::OUTSTANDING_STATUSES)
-            ->get(['grand_total', 'amount_paid']);
+            ->get(['type', 'grand_total', 'amount_paid']);
 
-        return round($rows->sum(fn ($i) => (float) $i->grand_total - (float) $i->amount_paid), 2);
+        // 🔴 A CREDIT NOTE SUBTRACTS. Its face is positive, but it reduces what they owe — counted the other way,
+        // giving a client money back TIGHTENED their credit gate by twice the credit.
+        return round($rows->sum(fn ($i) => ($i->type === 'credit_note' ? -1 : 1)
+            * ((float) $i->grand_total - (float) $i->amount_paid)), 2);
     }
 
     /**

@@ -513,6 +513,15 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
 
+        // ── Ageing and collections (user, 2026-09-20): who owes what, for how long, and what has been done.
+        Route::get('/ageing', [\App\Http\Controllers\Freight\CollectionsController::class, 'ageing']);
+        Route::get('/ageing/export', [\App\Http\Controllers\Freight\CollectionsController::class, 'export']);
+        Route::get('/ageing/{partyType}/{partyId}', [\App\Http\Controllers\Freight\CollectionsController::class, 'party'])->whereNumber('partyId');
+        Route::post('/ageing/{partyType}/{partyId}/draft-chase', [\App\Http\Controllers\Freight\CollectionsController::class, 'draftChase'])->whereNumber('partyId');
+        Route::get('/collections', [\App\Http\Controllers\Freight\CollectionsController::class, 'queue']);
+        Route::post('/collections/follow-ups', [\App\Http\Controllers\Freight\CollectionsController::class, 'logFollowUp']);
+        Route::post('/collections/follow-ups/{id}/close', [\App\Http\Controllers\Freight\CollectionsController::class, 'closeFollowUp'])->whereNumber('id');
+
         // ── The billing desk (user, 2026-09-19). One register over the five sales documents, plus receipts,
         // multiple bill printing, data export and the e-invoice register.
         Route::get('/billing', [\App\Http\Controllers\Freight\BillingController::class, 'index']);

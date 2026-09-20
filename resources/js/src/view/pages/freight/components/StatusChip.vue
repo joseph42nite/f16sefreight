@@ -67,6 +67,15 @@ const TONE = {
   // 🔴 A credit hold is the state that stops cargo moving — the strongest tone we have.
   credit_hold: "critical",
   within_limit: "success",
+
+  // Collections (user, 2026-09-20). A BROKEN promise is the strongest signal on that screen: they were asked, they
+  // committed to a date, and the date passed. "Nobody has called" is a warning about US, not about them.
+  promise_broken: "critical",
+  not_chased: "warning",
+  open: "info",
+  kept: "success",
+  broken: "critical",
+  closed: "neutral",
 };
 
 export default {

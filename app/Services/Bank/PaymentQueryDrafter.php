@@ -28,6 +28,10 @@ class PaymentQueryDrafter
             . 'held against their next shipment.',
         'unidentified' => 'A payment has arrived that we cannot place against any invoice. State the amount, the date, '
             . 'the reference and whatever the bank narration says, and ask which invoices it is meant to settle.',
+        // Chasing what is overdue (user, 2026-09-20). Firm, never threatening: the relationship outlives the debt.
+        'collection' => 'Invoices are overdue. State how much is outstanding in total, list each invoice with its '
+            . 'date and how many days it is past due, and ask for payment or for a date by which it will be made. '
+            . 'Courteous and businesslike; no threats, no legal language, no interest claims.',
         // A supplier's own statement against our vouchers (user, 2026-09-19) — an airline's CASS, a trucker's month.
         'vendor_difference' => 'A supplier\'s statement does not agree with what we booked. Name the statement and the '
             . 'period, list each shipment where the figures differ with what they billed and what we booked, and ask '
@@ -110,6 +114,18 @@ class PaymentQueryDrafter
                     "{$paid}, which leaves {$money($facts['difference'])} outstanding.",
                     'Could you confirm whether the balance is on its way, or tell us what on the invoice is in question? We will hold the account open meanwhile.',
                 ]],
+            'collection' => [
+                count($facts['invoices']) === 1
+                    ? "{$facts['invoices'][0]['invoice_no']}: {$money($facts['total_overdue'])} overdue"
+                    : count($facts['invoices']) . " invoices overdue — {$money($facts['total_overdue'])}",
+                array_merge(
+                    ['Our records show ' . $money($facts['total_overdue']) . ' outstanding past its due date'
+                        . ($facts['oldest_days'] > 0 ? ", the oldest by {$facts['oldest_days']} days" : '') . '.'],
+                    array_map(fn ($i) => "{$i['invoice_no']} of {$i['document_date']}: " . $money($i['outstanding'])
+                        . ", due {$i['due_on']}"
+                        . ($i['days_overdue'] > 0 ? " — {$i['days_overdue']} days ago" : '') . '.', $facts['invoices']),
+                    ['Could you let us know when payment will be made, or tell us if anything on these is in question?']
+                )],
             'vendor_difference' => [
                 "{$facts['vendor']} — {$facts['period']}: " . count($facts['lines']) . ' line(s) to check',
                 array_merge(

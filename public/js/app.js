@@ -8795,6 +8795,14 @@ const NAV_ITEMS = [
   icon: "receipt",
   designations: ["accounts"],
   minTier: "command"
+},
+// Chasing what is owed is accounts' day, not the Boss's; the Boss reads the ageing from Financials.
+{
+  path: "/collections",
+  label: "Collections",
+  icon: "hourglass",
+  designations: ["accounts"],
+  minTier: "command"
 }, {
   path: "/boss",
   label: "Overview",
@@ -8821,7 +8829,7 @@ const RAIL_ORDER = {
   sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
   boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
   // Accounts start in the registers; their inbox sits under it (user, 2026-09-19).
-  accounts: ["/billing", "/financials", "/inbox", "/clients-partners", "/settings"]
+  accounts: ["/billing", "/collections", "/financials", "/inbox", "/clients-partners", "/settings"]
 };
 const railRank = (item, designation) => {
   const order = RAIL_ORDER[designation] || [];
@@ -10754,6 +10762,16 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       path: "settings/finance",
       name: "FinanceSettings",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_FinanceSettings_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/FinanceSettings */ "./resources/js/src/view/pages/freight/FinanceSettings.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['accounts', 'boss'],
+        minTier: 'command'
+      }
+    }, {
+      // Ageing and collections: who owes what, and what has been done about it.
+      path: "collections",
+      name: "Collections",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_freight_Collections_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Collections */ "./resources/js/src/view/pages/freight/Collections.vue")),
       meta: {
         userType: 'user',
         designations: ['accounts', 'boss'],

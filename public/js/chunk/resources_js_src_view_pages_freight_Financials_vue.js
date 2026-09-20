@@ -669,6 +669,10 @@ var render = function render() {
     }
   }, [_vm._v("Billing →")]), _vm._v(" "), _c("router-link", {
     attrs: {
+      to: "/collections"
+    }
+  }, [_vm._v("Ageing & collections →")]), _vm._v(" "), _c("router-link", {
+    attrs: {
       to: "/settings/finance"
     }
   }, [_vm._v("Finance settings →")])], 1)]), _vm._v(" "), _c("div", {

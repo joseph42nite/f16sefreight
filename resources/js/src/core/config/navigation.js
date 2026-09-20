@@ -75,6 +75,8 @@ export const NAV_ITEMS = [
   // The billing desk (user, 2026-09-19). Accounts' own, not the Boss's: raising and sending a bill is the one thing
   // the role that sets the targets must not do. The Boss reaches the register from Financials.
   { path: "/billing", label: "Billing", icon: "receipt", designations: ["accounts"], minTier: "command" },
+  // Chasing what is owed is accounts' day, not the Boss's; the Boss reads the ageing from Financials.
+  { path: "/collections", label: "Collections", icon: "hourglass", designations: ["accounts"], minTier: "command" },
   { path: "/boss", label: "Overview", icon: "speedometer", designations: ["boss"], minTier: "tactical" },
 
   // ── Always last ──────────────────────────────────────────────────────────
@@ -92,7 +94,7 @@ const RAIL_ORDER = {
   sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
   boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
   // Accounts start in the registers; their inbox sits under it (user, 2026-09-19).
-  accounts: ["/billing", "/financials", "/inbox", "/clients-partners", "/settings"],
+  accounts: ["/billing", "/collections", "/financials", "/inbox", "/clients-partners", "/settings"],
 };
 
 const railRank = (item, designation) => {

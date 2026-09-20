@@ -317,6 +317,101 @@ class BillingDeskTest extends TestCase
             ->firstWhere('id', $b2b->id)['state']);
     }
 
+    public function test_a_document_opens_with_its_lines_its_notes_its_receipts_and_the_journal_it_would_write(): void
+    {
+        $invoice = $this->invoice(20000, 3600);
+        $note = $this->as($this->accounts)->postJson($this->url('/billing/documents'), [
+            'type' => 'credit_note', 'parent_invoice_id' => $invoice->id, 'reason' => 'Rate dispute',
+            'lines' => [['description' => 'Rate adjustment', 'rate' => 1000]],
+        ])->assertCreated()->json();
+        $this->postJson($this->url("/invoices/{$note['id']}/finalize"))->assertOk();
+
+        $this->postJson($this->url('/receipts'), [
+            'agent_id' => $this->branch->id, 'payer_id' => $this->client->id, 'receipt_date' => now()->toDateString(),
+            'mode' => 'upi', 'reference' => 'UPI-1', 'amount' => 5000,
+            'allocations' => [['invoice_id' => $invoice->id, 'amount' => 5000]],
+        ])->assertCreated();
+
+        $open = $this->getJson($this->url("/billing/{$invoice->id}"))->assertOk()->json();
+
+        $this->assertSame('Invoice', $open['document']['label']);
+        $this->assertSame('Globex', $open['document']['organization']['name']);
+        $this->assertSame(18600.0, (float) $open['document']['outstanding']);
+        $this->assertSame(1, count($open['items']));
+        $this->assertSame($note['id'], $open['notes'][0]['id'], 'the note raised against it is on the document');
+        $this->assertSame('UPI-1', $open['receipts'][0]->reference ?? $open['receipts'][0]['reference']);
+        $this->assertTrue($open['journal']['balanced']);
+        // A finalized, unposted, part-paid invoice: not editable, postable, and a note may be raised on it.
+        $this->assertSame([false, true, true], [$open['can']['edit'], $open['can']['post'], $open['can']['note']]);
+    }
+
+    public function test_a_draft_is_edited_line_by_line_and_the_header_always_follows_the_lines(): void
+    {
+        $job = $this->job();
+        $draft = $this->as($this->accounts)->postJson($this->url('/billing/documents'), [
+            'type' => 'invoice', 'job_id' => $job->id, 'customer_id' => $this->client->id,
+            'narration' => 'Air freight and local charges',
+            'lines' => [['description' => 'Air freight', 'hsn_sac_code' => '996531', 'rate' => 10000, 'tax_percentage' => 18]],
+        ])->assertCreated()->json();
+
+        $this->assertSame('draft', $draft['status']);
+        $this->assertStringStartsWith('DRAFT-', $draft['invoice_no'], 'a draft carries a placeholder until it is finalized');
+
+        $added = $this->postJson($this->url("/billing/{$draft['id']}/lines"), [
+            'description' => 'Handling and documentation', 'hsn_sac_code' => '996719', 'rate' => 2000, 'tax_percentage' => 18,
+        ])->assertOk()->json();
+
+        $this->assertSame(14160.0, (float) $added['document']['grand_total'], 'the header is re-added from the lines');
+
+        $lineId = collect($added['items'])->firstWhere('description', 'Handling and documentation')['id'];
+        $changed = $this->putJson($this->url("/billing/{$draft['id']}/lines/{$lineId}"), [
+            'description' => 'Handling, documentation and delivery order', 'rate' => 3000, 'quantity' => 2, 'tax_percentage' => 18,
+        ])->assertOk()->json();
+
+        $this->assertSame(18880.0, (float) $changed['document']['grand_total']);
+
+        $this->putJson($this->url("/billing/{$draft['id']}"), [
+            'document_date' => '2026-09-14', 'due_date' => '2026-10-14', 'currency' => 'USD', 'exchange_rate' => 83.5,
+        ])->assertOk()->assertJsonPath('document.currency', 'USD');
+
+        $this->deleteJson($this->url("/billing/{$draft['id']}/lines/{$lineId}"))
+            ->assertOk()->assertJsonPath('document.grand_total', '11800.00');
+
+        // Once it is finalized it is not edited any more — that is what a note is for.
+        $this->postJson($this->url("/invoices/{$draft['id']}/finalize"))->assertOk();
+        $this->postJson($this->url("/billing/{$draft['id']}/lines"), ['description' => 'Too late', 'rate' => 1])
+            ->assertStatus(422)->assertJsonPath('reason', 'not_draft');
+    }
+
+    public function test_a_document_is_voided_with_a_reason_and_never_once_it_is_in_the_ledger(): void
+    {
+        $invoice = $this->invoice(9000);
+
+        $voided = $this->as($this->accounts)->postJson($this->url("/billing/{$invoice->id}/void"),
+            ['reason' => 'Raised on the wrong shipment'])->assertOk()->json();
+
+        $this->assertSame('void', $voided['document']['status']);
+        $this->assertSame('Raised on the wrong shipment', $voided['document']['reason']);
+        // 🔴 It is still in the register: a void document that vanished would leave a hole in the sequence.
+        $this->assertNotNull(collect($this->getJson($this->url('/billing?status=void'))->json('rows'))
+            ->firstWhere('id', $invoice->id));
+
+        $posted = $this->invoice(4000);
+        $this->postJson($this->url("/invoices/{$posted->id}/post"))->assertOk();
+        $this->postJson($this->url("/billing/{$posted->id}/void"), ['reason' => 'Changed my mind'])
+            ->assertStatus(422)->assertJsonPath('reason', 'already_posted');
+
+        $paid = $this->invoice(7000);
+        $this->postJson($this->url('/receipts'), [
+            'agent_id' => $this->branch->id, 'payer_id' => $this->client->id, 'receipt_date' => now()->toDateString(),
+            'mode' => 'cash', 'amount' => 7000, 'allocations' => [['invoice_id' => $paid->id, 'amount' => 7000]],
+        ])->assertCreated();
+        $this->postJson($this->url("/billing/{$paid->id}/void"), ['reason' => 'Nope'])
+            ->assertStatus(422)->assertJsonPath('reason', 'has_receipts');
+        // And the button is not offered in the first place — a rule the screen knows is a rule nobody hits.
+        $this->assertFalse($this->getJson($this->url("/billing/{$paid->id}"))->json('can.void'));
+    }
+
     public function test_pricing_may_not_raise_or_print_a_bill(): void
     {
         $pricing = User::create(['name' => 'Pricing', 'email' => 'pricing-bil@test.local', 'password' => Hash::make('x'),

@@ -11,10 +11,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
 /* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
 /* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+/* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -24,12 +25,28 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 
 
+
 const STATUSES = ["draft", "finalized", "sent", "partially_paid", "paid", "void"];
 
-/** Logi-Sys's Billing section, as the three things this desk actually does (user, 2026-09-19). */
+/** Logi-Sys's Billing section: their Forwarding submenu, then Receipts and E-Invoice. */
 const VIEWS = [{
-  key: "documents",
-  label: "Documents"
+  key: "all",
+  label: "All documents"
+}, {
+  key: "invoice",
+  label: "Invoices"
+}, {
+  key: "debit_note",
+  label: "Debit notes"
+}, {
+  key: "credit_note",
+  label: "Credit notes"
+}, {
+  key: "brokerage",
+  label: "Brokerage"
+}, {
+  key: "consol_invoice",
+  label: "Consol"
 }, {
   key: "receipts",
   label: "Receipts"
@@ -37,28 +54,41 @@ const VIEWS = [{
   key: "einvoice",
   label: "E-Invoice"
 }];
+const DOC_TABS = [{
+  key: "document",
+  label: "Document"
+}, {
+  key: "activity",
+  label: "Notes & receipts"
+}, {
+  key: "journal",
+  label: "Journal"
+}];
+const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "consol_invoice"];
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "Billing",
   components: {
     Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
-    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
   },
   data: () => ({
-    view: "documents",
+    view: "all",
     VIEWS,
     STATUSES,
+    DOC_TABS,
     rows: [],
     totals: {
       count: 0,
       amount_inr: 0,
-      outstanding_inr: 0
+      outstanding_inr: 0,
+      credited_inr: 0
     },
     branches: [],
     types: {},
     currencies: [],
     raisedBy: [],
     filters: {
-      type: "",
       agent_id: null,
       from: "",
       to: "",
@@ -76,16 +106,31 @@ const VIEWS = [{
     modes: [],
     eInvoices: [],
     eInvoiceNote: "",
-    /** The document being raised, the receipt being recorded, the IRN being typed. */
+    /** The document open in the drawer, and everything that belongs to it. */
+    document: null,
+    items: [],
+    notes: [],
+    receiptsOn: [],
+    journal: {
+      lines: []
+    },
+    can: {},
+    tab: "document",
+    header: {},
+    newLine: {},
+    editingLine: null,
+    lineDraft: {},
+    /** The forms. */
     raise: null,
     creditRoom: null,
     jobs: [],
     partners: [],
+    clients: [],
     receipt: null,
     openDocuments: [],
     allocation: {},
     resolution: {},
-    clients: [],
+    voidFor: null,
     irnFor: null,
     loading: true,
     busy: false,
@@ -93,16 +138,28 @@ const VIEWS = [{
     actionError: null,
     mailResult: null
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)(["designation"])), {}, {
-    /* Only accounts raise and send a bill. The Boss reads the register. */
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_4__.mapGetters)(["designation"])), {}, {
+    /* Only accounts raise, finalize, post and send a bill. The Boss reads the register. */
     canPost() {
       return this.designation === "accounts";
     },
+    isRegister() {
+      return REGISTERS.includes(this.view);
+    },
+    /** The "New …" button raises what this view is showing; on All documents, an invoice. */
+    newDocumentType() {
+      return this.view === "all" ? "invoice" : this.view;
+    },
     subtitleForView() {
+      if (this.view === "receipts") return "Money received, and the documents each payment settled.";
+      if (this.view === "einvoice") return "What has been through the invoice registration portal, and what is still waiting.";
+      if (this.view === "all") return "Every sales document this company has raised, with what it was billed in and what it is worth in INR.";
       return {
-        documents: "Every sales document this branch has raised — invoices, notes, brokerage and consol — with what it was billed in and what it is worth in INR.",
-        receipts: "Money received, and the documents each payment settled.",
-        einvoice: "What has been through the invoice registration portal, and what is still waiting."
+        invoice: "What clients have been billed for their shipments.",
+        debit_note: "Charges raised after the invoice went out — demurrage, a weight correction, an examination.",
+        credit_note: "What has been given back — a rate dispute, an invoicing error, goodwill.",
+        brokerage: "Commission billed to carriers and overseas agents.",
+        consol_invoice: "Consolidations settled with the counterpart agent."
       }[this.view];
     },
     chosen() {
@@ -124,7 +181,9 @@ const VIEWS = [{
     raiseValid() {
       if (!this.raise) return false;
       const linesOk = this.raise.lines.every(l => l.description && Number(l.rate) > 0);
-      return linesOk && (this.isNote ? !!this.raise.parent_invoice_id && !!(this.raise.reason || "").trim() : !!this.raise.job_id && !!this.raise.partner_id);
+      if (this.isNote) return linesOk && !!this.raise.parent_invoice_id && !!(this.raise.reason || "").trim();
+      if (this.raise.type === "invoice") return linesOk && !!this.raise.job_id && !!this.raise.customer_id;
+      return linesOk && !!this.raise.job_id && !!this.raise.partner_id;
     },
     placedTotal() {
       return Object.values(this.allocation).reduce((sum, v) => sum + (Number(v) || 0), 0);
@@ -139,6 +198,7 @@ const VIEWS = [{
   methods: {
     showView(key) {
       this.view = key;
+      this.document = null;
       this.actionError = null;
       this.mailResult = null;
       this.load();
@@ -150,6 +210,10 @@ const VIEWS = [{
       return "INR " + Number(value || 0).toLocaleString("en-IN", {
         minimumFractionDigits: 2
       });
+    },
+    /** 1.000 reads as 1, 18.00 as 18 — trailing zeros on a quantity are noise. */
+    trim(value) {
+      return String(Number(value || 0));
     },
     lineNet(line) {
       const amount = (Number(line.quantity) || 0) * (Number(line.rate) || 0);
@@ -166,12 +230,12 @@ const VIEWS = [{
     },
     query() {
       const params = [];
-      if (this.filters.type) params.push("types[]=" + this.filters.type);
+      if (this.view !== "all") params.push("types[]=" + this.view);
       ["agent_id", "from", "to", "q", "status", "currency", "created_by", "sort"].forEach(key => {
         if (this.filters[key]) params.push(key + "=" + encodeURIComponent(this.filters[key]));
       });
       if (this.filters.outstanding) params.push("outstanding=1");
-      if (this.filters.exclude_credit_notes) params.push("exclude_credit_notes=1");
+      if (this.view === "all" && this.filters.exclude_credit_notes) params.push("exclude_credit_notes=1");
       return params.length ? "?" + params.join("&") : "";
     },
     load() {
@@ -180,10 +244,10 @@ const VIEWS = [{
         receipts: "/receipts",
         einvoice: "/billing/e-invoice"
       }[this.view] || "/billing";
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(path + (this.view === "documents" ? this.query() : "")).then(({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(path + (this.isRegister ? this.query() : "")).then(({
         data
       }) => {
-        if (this.view === "documents") {
+        if (this.isRegister) {
           this.rows = data.rows || [];
           this.totals = data.totals;
           this.types = data.types || {};
@@ -205,6 +269,115 @@ const VIEWS = [{
         this.loading = false;
       });
     },
+    /* ── One document ──────────────────────────────────────────────────── */
+    open(row) {
+      this.openById(row.id);
+    },
+    openById(id) {
+      this.actionError = null;
+      this.editingLine = null;
+      this.tab = "document";
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/billing/${id}`).then(({
+        data
+      }) => this.showDocument(data)).catch(e => {
+        this.actionError = this.messageFor(e);
+      });
+    },
+    showDocument(data) {
+      this.document = data.document;
+      this.items = data.items || [];
+      this.notes = data.notes || [];
+      this.receiptsOn = data.receipts || [];
+      this.journal = data.journal || {
+        lines: []
+      };
+      this.can = data.can || {};
+      this.editingLine = null;
+      this.newLine = this.blankLine();
+      this.header = {
+        document_date: (this.document.document_date || "").slice(0, 10),
+        due_date: (this.document.due_date || "").slice(0, 10),
+        currency: this.document.currency,
+        exchange_rate: Number(this.document.exchange_rate),
+        narration: this.document.narration || ""
+      };
+    },
+    saveHeader() {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put(`/billing/${this.document.id}`, this.header));
+    },
+    addLine() {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/billing/${this.document.id}/lines`, this.newLine));
+    },
+    editLine(item) {
+      this.editingLine = item.id;
+      this.lineDraft = {
+        description: item.description,
+        hsn_sac_code: item.hsn_sac_code,
+        quantity: Number(item.quantity),
+        rate: Number(item.rate),
+        tax_percentage: Number(item.tax_percentage)
+      };
+    },
+    saveLine(lineId) {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put(`/billing/${this.document.id}/lines/${lineId}`, this.lineDraft));
+    },
+    deleteLine(item) {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"](`/billing/${this.document.id}/lines/${item.id}`));
+    },
+    finalize() {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/invoices/${this.document.id}/finalize`, {}), true);
+    },
+    postDocument() {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/invoices/${this.document.id}/post`, {}), true);
+    },
+    voidDocument() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/billing/${this.document.id}/void`, this.voidFor).then(({
+        data
+      }) => {
+        this.voidFor = null;
+        this.showDocument(data);
+        this.load();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    printOne() {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].postForFile("/billing/print", {
+        ids: [this.document.id]
+      }).then(({
+        data
+      }) => this.openFile(data, "application/pdf")).catch(() => {
+        this.actionError = "The document could not be printed.";
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /**
+     * Every drawer action ends the same way: do it, re-read the document, refresh the register behind.
+     *
+     * ⚠️ The document is re-read from the server rather than patched in place — finalizing changes the number, the
+     * status and what the buttons may do, and a screen that guesses at those shows a stale document as a live one.
+     */
+    commit(call, refreshRegister = false) {
+      this.busy = true;
+      this.actionError = null;
+      call().then(({
+        data
+      }) => {
+        if (data && data.document) this.showDocument(data);else this.openById(this.document.id);
+        if (refreshRegister) this.load();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /* ── Printing, mailing, export ─────────────────────────────────────── */
     toggleAll() {
       const on = !this.allChosen;
       const picked = {};
@@ -213,7 +386,6 @@ const VIEWS = [{
       });
       this.picked = picked;
     },
-    /** The bills come back as a PDF, so they are fetched as bytes and opened, never linked to. */
     printBills() {
       this.busy = true;
       this.actionError = null;
@@ -221,8 +393,8 @@ const VIEWS = [{
         ids: this.chosen
       }).then(({
         data
-      }) => this.openFile(data, "application/pdf")).catch(e => {
-        this.actionError = this.messageFor(e);
+      }) => this.openFile(data, "application/pdf")).catch(() => {
+        this.actionError = "Those documents could not be printed.";
       }).finally(() => {
         this.busy = false;
       });
@@ -233,8 +405,8 @@ const VIEWS = [{
         responseType: "blob"
       }).then(({
         data
-      }) => this.openFile(data, "text/csv", "billing.csv")).catch(e => {
-        this.actionError = this.messageFor(e);
+      }) => this.openFile(data, "text/csv", "billing.csv")).catch(() => {
+        this.actionError = "The export could not be built.";
       }).finally(() => {
         this.busy = false;
       });
@@ -270,19 +442,22 @@ const VIEWS = [{
         this.busy = false;
       });
     },
-    openRaise(type) {
+    /* ── Raising ───────────────────────────────────────────────────────── */
+    openRaise(type, against = null) {
       this.actionError = null;
       this.creditRoom = null;
       this.raise = {
         type,
-        parent_invoice_id: null,
+        parent_invoice_id: against ? against.id : null,
         job_id: null,
+        customer_id: null,
         partner_id: null,
         basis: "flat_rate",
         reason: "",
         narration: "",
         lines: [this.blankLine()]
       };
+      if (against) this.loadCreditRoom();
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/jobs?per_page=50").then(({
         data
       }) => {
@@ -292,6 +467,11 @@ const VIEWS = [{
         data
       }) => {
         this.partners = data.data || [];
+      }).catch(() => {});
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/customers").then(({
+        data
+      }) => {
+        this.clients = data.data || [];
       }).catch(() => {});
     },
     loadCreditRoom() {
@@ -306,15 +486,21 @@ const VIEWS = [{
     saveRaise() {
       this.busy = true;
       this.actionError = null;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/billing/documents", this.raise).then(() => {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/billing/documents", this.raise).then(({
+        data
+      }) => {
         this.raise = null;
         this.load();
+        // Straight into the drawer: a document raised and then hunted for in the register is a document
+        // somebody forgets to finalize.
+        this.openById(data.id);
       }).catch(e => {
         this.actionError = this.messageFor(e);
       }).finally(() => {
         this.busy = false;
       });
     },
+    /* ── Receipts ──────────────────────────────────────────────────────── */
     openReceipt() {
       this.actionError = null;
       this.openDocuments = [];
@@ -359,8 +545,7 @@ const VIEWS = [{
         allocations
       })).then(() => {
         this.receipt = null;
-        this.view = "receipts";
-        this.load();
+        this.showView("receipts");
       }).catch(e => {
         this.actionError = this.messageFor(e);
       }).finally(() => {
@@ -440,43 +625,9 @@ var render = function render() {
         }
       }
     }, [_vm._v(_vm._s(v.label))]);
-  }), 0), _vm._v(" "), _vm.view === "documents" ? [_c("div", {
+  }), 0), _vm._v(" "), _vm.isRegister ? [_c("div", {
     staticClass: "fx-toolbar"
-  }, [_c("label", {
-    staticClass: "fx-field"
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("Document")]), _vm._v(" "), _c("select", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.filters.type,
-      expression: "filters.type"
-    }],
-    staticClass: "fx-input",
-    on: {
-      change: [function ($event) {
-        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
-          return o.selected;
-        }).map(function (o) {
-          var val = "_value" in o ? o._value : o.value;
-          return val;
-        });
-        _vm.$set(_vm.filters, "type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
-      }, _vm.load]
-    }
-  }, [_c("option", {
-    attrs: {
-      value: ""
-    }
-  }, [_vm._v("All documents")]), _vm._v(" "), _vm._l(_vm.types, function (meta, key) {
-    return _c("option", {
-      key: key,
-      domProps: {
-        value: key
-      }
-    }, [_vm._v(_vm._s(meta.label))]);
-  })], 2)]), _vm._v(" "), _vm.branches.length > 1 ? _c("label", {
+  }, [_vm.branches.length > 1 ? _c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
@@ -588,9 +739,7 @@ var render = function render() {
         _vm.$set(_vm.filters, "q", $event.target.value);
       }
     }
-  })])]), _vm._v(" "), _c("div", {
-    staticClass: "fx-toolbar"
-  }, [_c("label", {
+  })]), _vm._v(" "), _c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
@@ -764,7 +913,7 @@ var render = function render() {
         }
       }, _vm.load]
     }
-  }), _vm._v("\n        Outstanding only\n      ")]), _vm._v(" "), _c("label", {
+  }), _vm._v("\n        Outstanding only\n      ")]), _vm._v(" "), _vm.view === "all" ? _c("label", {
     staticClass: "fx-checkbox"
   }, [_c("input", {
     directives: [{
@@ -797,9 +946,16 @@ var render = function render() {
         }
       }, _vm.load]
     }
-  }), _vm._v("\n        Exclude credit notes\n      ")])]), _vm._v(" "), _c("div", {
+  }), _vm._v("\n        Exclude credit notes\n      ")]) : _vm._e()]), _vm._v(" "), _c("div", {
     staticClass: "fx-toolbar"
-  }, [_c("button", {
+  }, [_vm.canPost ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    on: {
+      click: function ($event) {
+        return _vm.openRaise(_vm.newDocumentType);
+      }
+    }
+  }, [_vm._v("\n        New " + _vm._s(_vm.typeLabel(_vm.newDocumentType).toLowerCase()) + "\n      ")]) : _vm._e(), _vm._v(" "), _c("button", {
     staticClass: "fx-btn",
     attrs: {
       disabled: _vm.busy || !_vm.rows.length
@@ -831,14 +987,7 @@ var render = function render() {
     on: {
       click: _vm.exportCsv
     }
-  }, [_vm._v("Data export")]), _vm._v(" "), _vm.canPost ? _c("button", {
-    staticClass: "fx-btn fx-btn--primary",
-    on: {
-      click: function ($event) {
-        return _vm.openRaise("debit_note");
-      }
-    }
-  }, [_vm._v("Raise a document")]) : _vm._e()]), _vm._v(" "), _vm.loading ? _c("p", {
+  }, [_vm._v("Data export")])]), _vm._v(" "), _vm.loading ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
     staticClass: "fx-error",
@@ -849,13 +998,83 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("No document matches.")]) : [_c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Trans No.")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _vm.view === "all" ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Type")]) : _vm._e(), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Organization")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipment")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Curr")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount (INR)")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Outstanding")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Status")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Narration")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
     return _c("tr", {
       key: "d-" + row.id,
+      staticClass: "is-clickable",
       class: {
-        "is-selected": _vm.picked[row.id]
+        "is-selected": _vm.document && _vm.document.id === row.id || _vm.picked[row.id]
+      },
+      attrs: {
+        tabindex: "0"
+      },
+      on: {
+        click: function ($event) {
+          return _vm.open(row);
+        },
+        keydown: function ($event) {
+          if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+          return _vm.open(row);
+        }
       }
-    }, [_c("td", [_c("input", {
+    }, [_c("td", {
+      on: {
+        click: function ($event) {
+          $event.stopPropagation();
+        }
+      }
+    }, [_c("input", {
       directives: [{
         name: "model",
         rawName: "v-model",
@@ -894,7 +1113,7 @@ var render = function render() {
         value: row.document_date,
         kind: "date"
       }
-    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.typeLabel(row.type)))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(row.organization || "—"))]), _vm._v(" "), _c("td", {
+    })], 1), _vm._v(" "), _vm.view === "all" ? _c("td", [_vm._v(_vm._s(_vm.typeLabel(row.type)))]) : _vm._e(), _vm._v(" "), _c("td", [_vm._v(_vm._s(row.organization || "—"))]), _vm._v(" "), _c("td", {
       staticClass: "identifier"
     }, [_vm._v(_vm._s(row.job_no || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(row.currency))]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
@@ -930,7 +1149,7 @@ var render = function render() {
   }), 0), _vm._v(" "), _c("tfoot", [_c("tr", [_c("td", {
     staticClass: "fx-num",
     attrs: {
-      colspan: "8"
+      colspan: _vm.view === "all" ? 8 : 7
     }
   }, [_c("strong", [_vm._v(_vm._s(_vm.totals.count) + " document(s)")])]), _vm._v(" "), _c("td", {
     staticClass: "fx-num"
@@ -954,7 +1173,7 @@ var render = function render() {
     }
   })])])]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("Totalled in INR at each document's own exchange rate.")])], _vm._v(" "), _vm.actionError ? _c("p", {
+  }, [_vm._v("\n        Totalled in INR at each document's own exchange rate.\n        "), _vm.totals.credited_inr ? _c("span", [_vm._v("\n          Credit notes count against the total; " + _vm._s(_vm.money(_vm.totals.credited_inr)) + " has been credited back.\n        ")]) : _vm._e()])], _vm._v(" "), _vm.actionError ? _c("p", {
     staticClass: "fx-error",
     attrs: {
       role: "alert"
@@ -1173,7 +1392,833 @@ var render = function render() {
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e(), _vm._v(" "), _vm.raise ? _c("div", {
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e(), _vm._v(" "), _c("FxDrawer", {
+    attrs: {
+      open: !!_vm.document,
+      title: _vm.document ? _vm.document.invoice_no || "Draft" : "",
+      subtitle: _vm.document ? _vm.document.label + (_vm.document.organization ? " — " + _vm.document.organization.name : "") : "",
+      tabs: _vm.DOC_TABS,
+      "active-tab": _vm.tab
+    },
+    on: {
+      tab: function ($event) {
+        _vm.tab = $event;
+      },
+      close: function ($event) {
+        _vm.document = null;
+      }
+    },
+    scopedSlots: _vm._u([{
+      key: "meta",
+      fn: function () {
+        return [_vm.document ? _c("dl", {
+          staticClass: "fx-defs"
+        }, [_c("dt", [_vm._v("Date")]), _vm._v(" "), _c("dd", [_c("Figure", {
+          attrs: {
+            value: _vm.document.document_date,
+            kind: "date"
+          }
+        })], 1), _vm._v(" "), _c("dt", [_vm._v("Due")]), _vm._v(" "), _c("dd", [_vm.document.due_date ? _c("Figure", {
+          attrs: {
+            value: _vm.document.due_date,
+            kind: "date"
+          }
+        }) : _c("span", {
+          staticClass: "fx-muted"
+        }, [_vm._v("—")])], 1), _vm._v(" "), _c("dt", [_vm._v("Shipment")]), _vm._v(" "), _c("dd", {
+          staticClass: "identifier"
+        }, [_vm._v(_vm._s(_vm.document.job ? _vm.document.job.execution_job_no : "—"))]), _vm._v(" "), _c("dt", [_vm._v("Total")]), _vm._v(" "), _c("dd", [_c("Figure", {
+          attrs: {
+            value: _vm.document.grand_total,
+            kind: "currency",
+            "currency-code": _vm.document.currency || "INR"
+          }
+        })], 1), _vm._v(" "), _c("dt", [_vm._v("Status")]), _vm._v(" "), _c("dd", [_c("StatusChip", {
+          attrs: {
+            value: _vm.document.status
+          }
+        }), _vm._v(" "), _c("StatusChip", {
+          attrs: {
+            value: _vm.document.is_posted ? "posted" : "unposted"
+          }
+        })], 1)]) : _vm._e()];
+      },
+      proxy: true
+    }, {
+      key: "footer",
+      fn: function () {
+        return [_vm.document ? [_c("button", {
+          staticClass: "fx-btn",
+          attrs: {
+            disabled: _vm.busy
+          },
+          on: {
+            click: _vm.printOne
+          }
+        }, [_vm._v("Print")]), _vm._v(" "), _vm.canPost && _vm.can.note ? _c("button", {
+          staticClass: "fx-btn",
+          on: {
+            click: function ($event) {
+              return _vm.openRaise("credit_note", _vm.document);
+            }
+          }
+        }, [_vm._v("Raise a note")]) : _vm._e(), _vm._v(" "), _vm.canPost && _vm.can.void ? _c("button", {
+          staticClass: "fx-btn fx-btn--ghost",
+          on: {
+            click: function ($event) {
+              _vm.voidFor = {
+                reason: ""
+              };
+            }
+          }
+        }, [_vm._v("Void")]) : _vm._e(), _vm._v(" "), _vm.canPost && _vm.can.finalize ? _c("button", {
+          staticClass: "fx-btn fx-btn--primary",
+          attrs: {
+            disabled: _vm.busy || !_vm.items.length
+          },
+          on: {
+            click: _vm.finalize
+          }
+        }, [_vm._v("\n          Finalize\n        ")]) : _vm._e(), _vm._v(" "), _vm.canPost && _vm.can.post ? _c("button", {
+          staticClass: "fx-btn fx-btn--primary",
+          attrs: {
+            disabled: _vm.busy
+          },
+          on: {
+            click: _vm.postDocument
+          }
+        }, [_vm._v("Post to ledger")]) : _vm._e()] : _vm._e()];
+      },
+      proxy: true
+    }])
+  }, [_vm._v(" "), _vm.document ? [_vm.tab === "document" ? _c("section", {
+    staticClass: "fx-section"
+  }, [_vm.document.parent ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          Raised against "), _c("strong", [_vm._v(_vm._s(_vm.document.parent.invoice_no))]), _vm._v("\n          (" + _vm._s(_vm.money(_vm.document.parent.grand_total)) + ").\n          "), _vm.document.reason ? _c("span", [_vm._v("Reason: " + _vm._s(_vm.document.reason))]) : _vm._e()]) : _vm.document.reason ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Reason: " + _vm._s(_vm.document.reason))]) : _vm._e(), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Description")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("HSN/SAC")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Qty")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rate")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Tax %")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Net")]), _vm._v(" "), _vm.can.edit ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.items, function (item) {
+    return _c("tr", {
+      key: "i-" + item.id
+    }, [_vm.can.edit && _vm.editingLine === item.id ? [_c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.lineDraft.description,
+        expression: "lineDraft.description"
+      }],
+      staticClass: "fx-input",
+      domProps: {
+        value: _vm.lineDraft.description
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.lineDraft, "description", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.lineDraft.hsn_sac_code,
+        expression: "lineDraft.hsn_sac_code"
+      }],
+      staticClass: "fx-input",
+      domProps: {
+        value: _vm.lineDraft.hsn_sac_code
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.lineDraft, "hsn_sac_code", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.lineDraft.quantity,
+        expression: "lineDraft.quantity",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.001"
+      },
+      domProps: {
+        value: _vm.lineDraft.quantity
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.lineDraft, "quantity", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.lineDraft.rate,
+        expression: "lineDraft.rate",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01"
+      },
+      domProps: {
+        value: _vm.lineDraft.rate
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.lineDraft, "rate", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.money(_vm.lineDraft.quantity * _vm.lineDraft.rate)))]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.lineDraft.tax_percentage,
+        expression: "lineDraft.tax_percentage",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01"
+      },
+      domProps: {
+        value: _vm.lineDraft.tax_percentage
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.lineDraft, "tax_percentage", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.money(_vm.lineNet(_vm.lineDraft))))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.saveLine(item.id);
+        }
+      }
+    }, [_vm._v("Save")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          _vm.editingLine = null;
+        }
+      }
+    }, [_vm._v("Cancel")])])] : [_c("td", [_vm._v(_vm._s(item.description))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(item.hsn_sac_code || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.trim(item.quantity)))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: item.rate,
+        kind: "currency",
+        "currency-code": _vm.document.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: item.amount,
+        kind: "currency",
+        "currency-code": _vm.document.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.trim(item.tax_percentage)))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: item.net_amount,
+        kind: "currency",
+        "currency-code": _vm.document.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _vm.can.edit ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn",
+      on: {
+        click: function ($event) {
+          return _vm.editLine(item);
+        }
+      }
+    }, [_vm._v("Edit")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy || _vm.items.length < 2
+      },
+      on: {
+        click: function ($event) {
+          return _vm.deleteLine(item);
+        }
+      }
+    }, [_vm._v("Remove")])]) : _vm._e()]], 2);
+  }), 0), _vm._v(" "), _c("tfoot", [_c("tr", [_c("td", {
+    staticClass: "fx-num",
+    attrs: {
+      colspan: "4"
+    }
+  }, [_c("strong", [_vm._v("Total")])]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.document.subtotal,
+      kind: "currency",
+      "currency-code": _vm.document.currency || "INR"
+    }
+  })], 1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.document.tax_amount,
+      kind: "currency",
+      "currency-code": _vm.document.currency || "INR"
+    }
+  })], 1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.document.grand_total,
+      kind: "currency",
+      "currency-code": _vm.document.currency || "INR"
+    }
+  })], 1)]), _vm._v(" "), _vm.can.edit ? _c("td") : _vm._e()])])]), _vm._v(" "), _vm.can.edit ? [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Add a line")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Description")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.newLine.description,
+      expression: "newLine.description"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.newLine.description
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newLine, "description", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("HSN/SAC")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.newLine.hsn_sac_code,
+      expression: "newLine.hsn_sac_code"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.newLine.hsn_sac_code
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newLine, "hsn_sac_code", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Qty")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.newLine.quantity,
+      expression: "newLine.quantity",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input fx-num",
+    attrs: {
+      type: "number",
+      step: "0.001"
+    },
+    domProps: {
+      value: _vm.newLine.quantity
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newLine, "quantity", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Rate")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.newLine.rate,
+      expression: "newLine.rate",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input fx-num",
+    attrs: {
+      type: "number",
+      step: "0.01"
+    },
+    domProps: {
+      value: _vm.newLine.rate
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newLine, "rate", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Tax %")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.newLine.tax_percentage,
+      expression: "newLine.tax_percentage",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input fx-num",
+    attrs: {
+      type: "number",
+      step: "0.01"
+    },
+    domProps: {
+      value: _vm.newLine.tax_percentage
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newLine, "tax_percentage", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy || !_vm.newLine.description || !_vm.newLine.rate
+    },
+    on: {
+      click: _vm.addLine
+    }
+  }, [_vm._v("Add")])]), _vm._v(" "), _c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Header")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Document date")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.header.document_date,
+      expression: "header.document_date"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.header.document_date
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.header, "document_date", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Due date")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.header.due_date,
+      expression: "header.due_date"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.header.due_date
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.header, "due_date", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Currency")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.header.currency,
+      expression: "header.currency"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      maxlength: "3"
+    },
+    domProps: {
+      value: _vm.header.currency
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.header, "currency", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Exchange rate")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.header.exchange_rate,
+      expression: "header.exchange_rate",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input fx-num",
+    attrs: {
+      type: "number",
+      step: "0.0001"
+    },
+    domProps: {
+      value: _vm.header.exchange_rate
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.header, "exchange_rate", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Narration")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.header.narration,
+      expression: "header.narration"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.header.narration
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.header, "narration", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.saveHeader
+    }
+  }, [_vm._v("Save header")])])] : _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          " + _vm._s(_vm.document.status === "void" ? "This document is void." : "Finalized documents are not edited — raise a note against it.") + "\n        ")])], 2) : _vm.tab === "activity" ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Notes raised against it")]), _vm._v(" "), !_vm.notes.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("None.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Note")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Type")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Status")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Reason")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.notes, function (n) {
+    return _c("tr", {
+      key: "n-" + n.id,
+      staticClass: "is-clickable",
+      on: {
+        click: function ($event) {
+          return _vm.openById(n.id);
+        }
+      }
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(n.invoice_no))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.typeLabel(n.type)))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: n.document_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: n.grand_total,
+        kind: "currency",
+        "currency-code": _vm.document.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: n.status
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(n.reason || "—"))])]);
+  }), 0)]), _vm._v(" "), _c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Money received against it")]), _vm._v(" "), !_vm.receiptsOn.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing yet. Outstanding " + _vm._s(_vm.money(_vm.document.outstanding)) + ".")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Receipt")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("How")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Reference")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Placed")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shortfall")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.receiptsOn, function (r, i) {
+    return _c("tr", {
+      key: "ra-" + i
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.receipt_no))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: r.receipt_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s((r.mode || "").replace(/_/g, " ")))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.reference || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.resolution ? r.resolution.replace(/_/g, " ") : "—"))])]);
+  }), 0)])]) : _vm.tab === "journal" ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          " + _vm._s(_vm.document.is_posted ? "This is what was posted." : "This is what posting would write.") + "\n        ")]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Account")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Debit")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Credit")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.journal.lines, function (l, i) {
+    return _c("tr", {
+      key: "j-" + i
+    }, [_c("td", [_vm._v(_vm._s(l.code) + " — " + _vm._s(l.name))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [l.debit ? _c("Figure", {
+      attrs: {
+        value: l.debit,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", [_vm._v("—")])], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [l.credit ? _c("Figure", {
+      attrs: {
+        value: l.credit,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", [_vm._v("—")])], 1)]);
+  }), 0), _vm._v(" "), _c("tfoot", [_c("tr", [_c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_vm._v(_vm._s(_vm.journal.balanced ? "Balanced" : "NOT BALANCED"))])]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.journal.debits,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.journal.credits,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])])])])]) : _vm._e(), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e()], 2), _vm._v(" "), _vm.raise ? _c("div", {
     staticClass: "fx-modal",
     attrs: {
       role: "dialog",
@@ -1182,7 +2227,14 @@ var render = function render() {
     }
   }, [_c("div", {
     staticClass: "fx-modal__panel"
-  }, [_vm._m(1), _vm._v(" "), _c("div", {
+  }, [_c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "raise-title"
+    }
+  }, [_vm._v("New " + _vm._s(_vm.typeLabel(_vm.raise.type).toLowerCase()))])]), _vm._v(" "), _c("div", {
     staticClass: "fx-modal__body"
   }, [_c("label", {
     staticClass: "fx-field"
@@ -1210,6 +2262,10 @@ var render = function render() {
       }]
     }
   }, [_c("option", {
+    attrs: {
+      value: "invoice"
+    }
+  }, [_vm._v("Invoice — bill a client for a shipment")]), _vm._v(" "), _c("option", {
     attrs: {
       value: "debit_note"
     }
@@ -1319,7 +2375,41 @@ var render = function render() {
         value: j.id
       }
     }, [_vm._v(_vm._s(j.execution_job_no))]);
-  })], 2)]), _vm._v(" "), _c("label", {
+  })], 2)]), _vm._v(" "), _vm.raise.type === "invoice" ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Client")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.customer_id,
+      expression: "raise.customer_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.raise, "customer_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.clients, function (c) {
+    return _c("option", {
+      key: c.id,
+      domProps: {
+        value: c.id
+      }
+    }, [_vm._v(_vm._s(c.name))]);
+  })], 2)]) : [_c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
@@ -1352,7 +2442,7 @@ var render = function render() {
       domProps: {
         value: p.id
       }
-    }, [_vm._v(_vm._s(p.name))]);
+    }, [_vm._v(_vm._s(p.name) + " (" + _vm._s(p.partner_type) + ")")]);
   })], 2)]), _vm._v(" "), _c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
@@ -1392,11 +2482,11 @@ var render = function render() {
     attrs: {
       value: "per_container"
     }
-  }, [_vm._v("Per container")])])])], _vm._v(" "), _c("h3", {
+  }, [_vm._v("Per container")])])])]], _vm._v(" "), _c("h3", {
     staticClass: "fx-section__title"
   }, [_vm._v("Lines")]), _vm._v(" "), _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.raise.lines, function (line, i) {
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.raise.lines, function (line, i) {
     return _c("tr", {
       key: "l-" + i
     }, [_c("td", [_c("input", {
@@ -1599,7 +2689,7 @@ var render = function render() {
     }
   }, [_c("div", {
     staticClass: "fx-modal__panel"
-  }, [_vm._m(3), _vm._v(" "), _c("div", {
+  }, [_vm._m(1), _vm._v(" "), _c("div", {
     staticClass: "fx-modal__body"
   }, [_c("div", {
     staticClass: "fx-toolbar"
@@ -1782,7 +2872,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("Choose who it came from; anything they still owe appears here.")]) : _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(4), _vm._v(" "), _c("tbody", _vm._l(_vm.openDocuments, function (d) {
+  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.openDocuments, function (d) {
     return _c("tr", {
       key: "o-" + d.id
     }, [_c("td", {
@@ -1894,7 +2984,76 @@ var render = function render() {
     on: {
       click: _vm.saveReceipt
     }
-  }, [_vm._v("\n          " + _vm._s(_vm.busy ? "Recording…" : "Record it") + "\n        ")])])])]) : _vm._e(), _vm._v(" "), _vm.irnFor ? _c("div", {
+  }, [_vm._v("\n          " + _vm._s(_vm.busy ? "Recording…" : "Record it") + "\n        ")])])])]) : _vm._e(), _vm._v(" "), _vm.voidFor ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "void-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "void-title"
+    }
+  }, [_vm._v("Void " + _vm._s(_vm.document.invoice_no))])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body"
+  }, [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          It stays in the register and in the audit trail, marked void — the number is never reused and never\n          disappears.\n        ")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Why")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.voidFor.reason,
+      expression: "voidFor.reason"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "raised on the wrong shipment"
+    },
+    domProps: {
+      value: _vm.voidFor.reason
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.voidFor, "reason", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()]), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.voidFor = null;
+      }
+    }
+  }, [_vm._v("Cancel")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.voidFor.reason.trim()
+    },
+    on: {
+      click: _vm.voidDocument
+    }
+  }, [_vm._v("Void it")])])])]) : _vm._e(), _vm._v(" "), _vm.irnFor ? _c("div", {
     staticClass: "fx-modal",
     attrs: {
       role: "dialog",
@@ -1982,72 +3141,6 @@ var render = function render() {
   }, [_vm._v("Record it")])])])]) : _vm._e()], 2);
 };
 var staticRenderFns = [function () {
-  var _vm = this,
-    _c = _vm._self._c;
-  return _c("thead", [_c("tr", [_c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Trans No.")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Type")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Organization")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Shipment")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Curr")]), _vm._v(" "), _c("th", {
-    staticClass: "fx-num",
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
-    staticClass: "fx-num",
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Amount (INR)")]), _vm._v(" "), _c("th", {
-    staticClass: "fx-num",
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Outstanding")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Status")]), _vm._v(" "), _c("th", {
-    attrs: {
-      scope: "col"
-    }
-  }, [_vm._v("Narration")])])]);
-}, function () {
-  var _vm = this,
-    _c = _vm._self._c;
-  return _c("header", {
-    staticClass: "fx-modal__head"
-  }, [_c("h2", {
-    staticClass: "fx-modal__title",
-    attrs: {
-      id: "raise-title"
-    }
-  }, [_vm._v("Raise a document")])]);
-}, function () {
   var _vm = this,
     _c = _vm._self._c;
   return _c("thead", [_c("tr", [_c("th", {

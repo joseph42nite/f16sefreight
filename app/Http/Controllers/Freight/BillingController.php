@@ -249,9 +249,10 @@ class BillingController extends Controller
         $this->authorize('finalizeInvoice');
 
         $data = $request->validate([
-            'type' => 'required|in:debit_note,credit_note,brokerage,consol_invoice',
+            'type' => 'required|in:invoice,debit_note,credit_note,brokerage,consol_invoice',
             'parent_invoice_id' => 'required_if:type,debit_note,credit_note|nullable|integer',
-            'job_id' => 'required_if:type,brokerage,consol_invoice|nullable|integer',
+            'job_id' => 'required_if:type,invoice,brokerage,consol_invoice|nullable|integer',
+            'customer_id' => 'required_if:type,invoice|nullable|integer|exists:customers,id',
             'partner_id' => 'required_if:type,brokerage,consol_invoice|nullable|integer|exists:partners,id',
             'basis' => 'nullable|string|max:30',
             'reason' => 'required_if:type,debit_note,credit_note|nullable|string|max:255',
@@ -288,18 +289,22 @@ class BillingController extends Controller
         }
 
         $invoice = DB::transaction(function () use ($data, $parent, $agentId) {
-            $partner = $parent === null ? DB::table('partners')->where('id', $data['partner_id'])->first() : null;
+            // Who the document is addressed to, by type: a note follows its parent, an invoice bills the client, and
+            // brokerage and consol bill a partner with NO customer debtor at all (PRD §6.2).
+            [$billedType, $billedId, $role, $customerId] = match (true) {
+                $parent !== null => [$parent->billed_party_type, $parent->billed_party_id, $parent->billed_party_role, $parent->customer_id],
+                $data['type'] === 'invoice' => ['customer', (int) $data['customer_id'], 'client', (int) $data['customer_id']],
+                default => ['partner', (int) $data['partner_id'], $data['type'] === 'brokerage' ? 'broker' : 'agent', null],
+            };
 
             $invoice = AccountsInvoice::create([
                 'agent_id' => $agentId,
                 'job_id' => $parent?->job_id ?? $data['job_id'],
                 'transport_mode' => $parent?->transport_mode ?? DB::table('jobs')->where('id', $data['job_id'])->value('transport_mode'),
-                // A note follows its parent; a partner-billed document has no customer debtor at all (PRD §6.2).
-                'customer_id' => $parent?->customer_id,
-                'billed_party_type' => $parent !== null ? $parent->billed_party_type : 'partner',
-                'billed_party_id' => $parent !== null ? $parent->billed_party_id : $partner->id,
-                'billed_party_role' => $parent !== null ? $parent->billed_party_role
-                    : ($data['type'] === 'brokerage' ? 'broker' : 'agent'),
+                'customer_id' => $customerId,
+                'billed_party_type' => $billedType,
+                'billed_party_id' => $billedId,
+                'billed_party_role' => $role,
                 'parent_invoice_id' => $parent?->id,
                 'created_by' => auth()->id(),
                 'invoice_no' => AccountsInvoice::placeholderNumber($parent?->job_id ?? (int) $data['job_id']),
@@ -355,6 +360,232 @@ class BillingController extends Controller
         });
 
         return response()->json($invoice->fresh()->load('items'), 201);
+    }
+
+    /**
+     * One document, opened: its header, its lines, who it is for, what it amends, what has been raised against it,
+     * what has been received against it, and the journal posting it would write.
+     *
+     * ⚠️ Everything the drawer shows comes from HERE, in one round trip. A screen that fetches the lines, then the
+     * receipts, then the journal shows a document that is half one version and half another while it loads.
+     */
+    public function show(int $id): JsonResponse
+    {
+        $this->authorize('viewFinancials');
+
+        $invoice = $this->own($id);
+        $job = DB::table('jobs')->where('id', $invoice->job_id)->first(['id', 'execution_job_no', 'awb_number', 'transport_mode']);
+
+        return response()->json([
+            'document' => array_merge($invoice->toArray(), [
+                'label' => BillingDocuments::label($invoice->type),
+                'organization' => $this->organisation($invoice),
+                'job' => $job,
+                'outstanding' => $invoice->outstanding(),
+                'amount_inr' => round((float) $invoice->grand_total * (float) ($invoice->exchange_rate ?: 1), 2),
+                'parent' => $invoice->parent_invoice_id
+                    ? AccountsInvoice::withoutTenantScope()->where('id', $invoice->parent_invoice_id)
+                        ->first(['id', 'invoice_no', 'type', 'grand_total'])
+                    : null,
+                'raised_by' => DB::table('users')->where('id', $invoice->created_by)->value('name'),
+            ]),
+            'items' => $invoice->items()->orderBy('id')->get(),
+            // The notes raised against this document, so nobody raises the same credit twice.
+            'notes' => AccountsInvoice::withoutTenantScope()->where('parent_invoice_id', $invoice->id)
+                ->orderBy('id')->get(['id', 'invoice_no', 'type', 'document_date', 'status', 'grand_total', 'reason']),
+            'receipts' => DB::table('accounts_receipt_allocations as a')
+                ->join('accounts_receipts as r', 'r.id', '=', 'a.receipt_id')
+                ->where('a.invoice_id', $invoice->id)
+                ->get(['r.receipt_no', 'r.receipt_date', 'r.mode', 'r.reference', 'a.amount', 'a.resolution', 'r.is_posted']),
+            'journal' => app(\App\Services\LedgerPostingService::class)
+                ->summarise(app(\App\Services\LedgerPostingService::class)->linesForInvoice($invoice)),
+            // What this document can do next, decided once on the server rather than re-derived by every button.
+            'can' => [
+                'edit' => $invoice->status === 'draft',
+                'finalize' => $invoice->status === 'draft',
+                'post' => $invoice->status !== 'draft' && ! $invoice->is_posted,
+                // 🔴 A POSTED DOCUMENT IS NEVER VOIDED. It is in the ledger and in the GST register; the correction
+                // is a credit note, which leaves both trails intact (PRD §9.3). Nor is one money has arrived
+                // against — the flag carries BOTH rules, so the button is never offered only to refuse.
+                'void' => ! $invoice->is_posted && $invoice->status !== 'void' && (float) $invoice->amount_paid <= 0,
+                'note' => in_array($invoice->type, ['invoice'], true) && ! in_array($invoice->status, ['draft', 'void'], true),
+                'print' => true,
+            ],
+        ]);
+    }
+
+    /** The header of a draft: its dates, its currency, what it is for. */
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $this->authorize('finalizeInvoice');
+
+        $invoice = $this->draft($id);
+
+        if (! $invoice instanceof AccountsInvoice) {
+            return $invoice;
+        }
+
+        $invoice->update($request->validate([
+            'document_date' => 'nullable|date',
+            'due_date' => 'nullable|date|after_or_equal:document_date',
+            'narration' => 'nullable|string|max:255',
+            'reason' => 'nullable|string|max:255',
+            'currency' => 'nullable|string|size:3',
+            'exchange_rate' => 'nullable|numeric|min:0.0001',
+        ]));
+
+        return $this->show($id);
+    }
+
+    /** Add a line to a draft. */
+    public function storeLine(Request $request, int $id): JsonResponse
+    {
+        $this->authorize('finalizeInvoice');
+
+        $invoice = $this->draft($id);
+
+        if (! $invoice instanceof AccountsInvoice) {
+            return $invoice;
+        }
+
+        $invoice->items()->create($this->line($request->validate($this->lineRules())));
+        $this->retotal($invoice);
+
+        return $this->show($id);
+    }
+
+    /** Change one line of a draft. */
+    public function updateLine(Request $request, int $id, int $lineId): JsonResponse
+    {
+        $this->authorize('finalizeInvoice');
+
+        $invoice = $this->draft($id);
+
+        if (! $invoice instanceof AccountsInvoice) {
+            return $invoice;
+        }
+
+        $item = $invoice->items()->where('id', $lineId)->first();
+
+        abort_if($item === null, 404, 'That line is not on this document.');
+
+        $item->update($this->line($request->validate($this->lineRules())));
+        $this->retotal($invoice);
+
+        return $this->show($id);
+    }
+
+    public function destroyLine(int $id, int $lineId): JsonResponse
+    {
+        $this->authorize('finalizeInvoice');
+
+        $invoice = $this->draft($id);
+
+        if (! $invoice instanceof AccountsInvoice) {
+            return $invoice;
+        }
+
+        $invoice->items()->where('id', $lineId)->delete();
+        $this->retotal($invoice);
+
+        return $this->show($id);
+    }
+
+    /**
+     * Void a document that must not stand.
+     *
+     * 🔴 **A status, never a delete** (PRD §9.3). A void invoice stays in the register and in the audit trail with a
+     * reason against it; a deleted one leaves a hole in the number sequence that nobody can explain at filing time.
+     */
+    public function void(Request $request, int $id): JsonResponse
+    {
+        $this->authorize('finalizeInvoice');
+
+        $invoice = $this->own($id);
+        $data = $request->validate(['reason' => 'required|string|max:255']);
+
+        if ($invoice->is_posted) {
+            return response()->json([
+                'error' => 'This document is in the ledger. Raise a credit note against it instead of voiding it.',
+                'reason' => 'already_posted',
+            ], 422);
+        }
+
+        if ((float) $invoice->amount_paid > 0) {
+            return response()->json([
+                'error' => 'Money has been received against this document. Reverse the receipt first.',
+                'reason' => 'has_receipts',
+            ], 422);
+        }
+
+        $invoice->update(['status' => 'void', 'reason' => $data['reason']]);
+        $this->audit->record($invoice->agent_id, 'invoice.voided', 'invoice', $invoice->id, auth()->id());
+
+        return $this->show($id);
+    }
+
+    /** Validation shared by the two line endpoints. */
+    private function lineRules(): array
+    {
+        return [
+            'description' => 'required|string|max:255',
+            'charge_type' => 'nullable|string|max:30',
+            'hsn_sac_code' => 'nullable|string|max:10',
+            'house_job_id' => 'nullable|integer',
+            'quantity' => 'nullable|numeric|min:0',
+            'rate' => 'required|numeric',
+            'tax_percentage' => 'nullable|numeric|min:0|max:100',
+        ];
+    }
+
+    /** One line's figures, computed here so the screen never sends a total we did not calculate. */
+    private function line(array $data): array
+    {
+        $quantity = (float) ($data['quantity'] ?? 1);
+        $amount = round($quantity * (float) $data['rate'], 2);
+        $tax = round($amount * (float) ($data['tax_percentage'] ?? 0) / 100, 2);
+
+        return [
+            'house_job_id' => $data['house_job_id'] ?? null,
+            'charge_type' => $data['charge_type'] ?? 'other',
+            'hsn_sac_code' => $data['hsn_sac_code'] ?? null,
+            'description' => $data['description'],
+            'quantity' => $quantity,
+            'rate' => $data['rate'],
+            'amount' => $amount,
+            'tax_percentage' => $data['tax_percentage'] ?? 0,
+            'tax_amount' => $tax,
+            'net_amount' => round($amount + $tax, 2),
+        ];
+    }
+
+    /** The header follows the lines, always — a stored total that is typed can disagree with what is printed. */
+    private function retotal(AccountsInvoice $invoice): void
+    {
+        $subtotal = round((float) $invoice->items()->sum('amount'), 2);
+        $tax = round((float) $invoice->items()->sum('tax_amount'), 2);
+
+        $invoice->update(['subtotal' => $subtotal, 'tax_amount' => $tax, 'grand_total' => round($subtotal + $tax, 2)]);
+    }
+
+    /** A draft of the caller's own, or the refusal to send back. */
+    private function draft(int $id)
+    {
+        $invoice = $this->own($id);
+
+        return $invoice->status === 'draft' ? $invoice : response()->json([
+            'error' => 'This document is ' . $invoice->status . '. Raise a note against it instead of editing it.',
+            'reason' => 'not_draft',
+        ], 422);
+    }
+
+    /** Who the document is addressed to, whichever directory they are in. */
+    private function organisation(AccountsInvoice $invoice): ?object
+    {
+        $table = $invoice->billed_party_type === 'partner' ? 'partners' : 'customers';
+        $id = $invoice->billed_party_id ?: $invoice->customer_id;
+
+        return $id === null ? null : DB::table($table)->where('id', $id)->first(['id', 'name', 'gst_no', 'email']);
     }
 
     /** What a note may still credit — shown before it is typed, not after it is refused. */

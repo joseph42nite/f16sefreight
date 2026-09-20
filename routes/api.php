@@ -523,6 +523,13 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::get('/billing/e-invoice', [\App\Http\Controllers\Freight\BillingController::class, 'eInvoice']);
         Route::post('/billing/{id}/irn', [\App\Http\Controllers\Freight\BillingController::class, 'recordIrn'])->whereNumber('id');
         Route::get('/billing/{id}/credit-room', [\App\Http\Controllers\Freight\BillingController::class, 'creditRoom'])->whereNumber('id');
+        // One document, opened: header, lines, notes against it, receipts, and the journal it would post.
+        Route::get('/billing/{id}', [\App\Http\Controllers\Freight\BillingController::class, 'show'])->whereNumber('id');
+        Route::put('/billing/{id}', [\App\Http\Controllers\Freight\BillingController::class, 'update'])->whereNumber('id');
+        Route::post('/billing/{id}/void', [\App\Http\Controllers\Freight\BillingController::class, 'void'])->whereNumber('id');
+        Route::post('/billing/{id}/lines', [\App\Http\Controllers\Freight\BillingController::class, 'storeLine'])->whereNumber('id');
+        Route::put('/billing/{id}/lines/{lineId}', [\App\Http\Controllers\Freight\BillingController::class, 'updateLine'])->whereNumber('id');
+        Route::delete('/billing/{id}/lines/{lineId}', [\App\Http\Controllers\Freight\BillingController::class, 'destroyLine'])->whereNumber('id');
 
         Route::get('/receipts', [\App\Http\Controllers\Freight\ReceiptController::class, 'index']);
         Route::get('/receipts/open-documents', [\App\Http\Controllers\Freight\ReceiptController::class, 'openDocuments']);

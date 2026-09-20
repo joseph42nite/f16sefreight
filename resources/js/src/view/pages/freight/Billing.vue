@@ -9,9 +9,9 @@
     </header>
 
     <!--
-      The billing desk's own page (user, 2026-09-19). Every sales document in one register — invoice, debit note,
-      credit note, brokerage, consol — because they share a table, a client and a shipment, and a desk that has to
-      open five screens to answer "what have we billed them?" opens none of them.
+      The billing desk (user, 2026-09-19), one section per document as Logi-Sys lays it out. They share a table, a
+      client and a shipment, so they share a register and a drawer; what differs is who each is addressed to and what
+      it does to the ledger, and that is exactly what the drawer shows.
     -->
     <div class="fx-toolbar fx-financials__views">
       <button
@@ -23,17 +23,9 @@
       >{{ v.label }}</button>
     </div>
 
-    <!-- ── Documents: the register over all five types ───────────────────── -->
-    <template v-if="view === 'documents'">
+    <!-- ── The register, for one document type or all of them ────────────── -->
+    <template v-if="isRegister">
       <div class="fx-toolbar">
-        <label class="fx-field">
-          <span class="fx-field__label">Document</span>
-          <select v-model="filters.type" class="fx-input" @change="load">
-            <option value="">All documents</option>
-            <option v-for="(meta, key) in types" :key="key" :value="key">{{ meta.label }}</option>
-          </select>
-        </label>
-
         <label v-if="branches.length > 1" class="fx-field">
           <span class="fx-field__label">Location</span>
           <select v-model="filters.agent_id" class="fx-input" @change="load">
@@ -55,9 +47,7 @@
           <span class="fx-field__label">Organization or number</span>
           <input v-model="filters.q" class="fx-input" placeholder="client, agent, INV-…, job" @keyup.enter="load" />
         </label>
-      </div>
 
-      <div class="fx-toolbar">
         <label class="fx-field">
           <span class="fx-field__label">Status</span>
           <select v-model="filters.status" class="fx-input" @change="load">
@@ -94,7 +84,7 @@
           Outstanding only
         </label>
         <!-- Logi-Sys calls this "Exclude Reverse Txns": the notes that give money back. -->
-        <label class="fx-checkbox">
+        <label v-if="view === 'all'" class="fx-checkbox">
           <input v-model="filters.exclude_credit_notes" type="checkbox" @change="load" />
           Exclude credit notes
         </label>
@@ -102,6 +92,9 @@
 
       <!-- Multiple Bill Printing: whatever is ticked, printed or mailed in one go. -->
       <div class="fx-toolbar">
+        <button v-if="canPost" class="fx-btn fx-btn--primary" @click="openRaise(newDocumentType)">
+          New {{ typeLabel(newDocumentType).toLowerCase() }}
+        </button>
         <button class="fx-btn" :disabled="busy || !rows.length" @click="toggleAll">
           {{ allChosen ? "Clear selection" : "Check all" }}
         </button>
@@ -110,7 +103,6 @@
         </button>
         <button v-if="canPost" class="fx-btn" :disabled="busy || !chosen.length" @click="mailBills">Send mail</button>
         <button class="fx-btn" :disabled="busy" @click="exportCsv">Data export</button>
-        <button v-if="canPost" class="fx-btn fx-btn--primary" @click="openRaise('debit_note')">Raise a document</button>
       </div>
 
       <p v-if="loading" class="fx-muted">Loading…</p>
@@ -124,7 +116,7 @@
               <th scope="col"></th>
               <th scope="col">Trans No.</th>
               <th scope="col">Date</th>
-              <th scope="col">Type</th>
+              <th v-if="view === 'all'" scope="col">Type</th>
               <th scope="col">Organization</th>
               <th scope="col">Shipment</th>
               <th scope="col">Curr</th>
@@ -136,11 +128,21 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in rows" :key="'d-' + row.id" :class="{ 'is-selected': picked[row.id] }">
-              <td><input v-model="picked[row.id]" type="checkbox" :aria-label="'Choose ' + row.invoice_no" /></td>
+            <tr
+              v-for="row in rows"
+              :key="'d-' + row.id"
+              class="is-clickable"
+              :class="{ 'is-selected': (document && document.id === row.id) || picked[row.id] }"
+              tabindex="0"
+              @click="open(row)"
+              @keydown.enter="open(row)"
+            >
+              <td @click.stop>
+                <input v-model="picked[row.id]" type="checkbox" :aria-label="'Choose ' + row.invoice_no" />
+              </td>
               <td class="identifier">{{ row.invoice_no }}</td>
               <td><Figure :value="row.document_date" kind="date" /></td>
-              <td>{{ typeLabel(row.type) }}</td>
+              <td v-if="view === 'all'">{{ typeLabel(row.type) }}</td>
               <td>{{ row.organization || "—" }}</td>
               <td class="identifier">{{ row.job_no || "—" }}</td>
               <td>{{ row.currency }}</td>
@@ -153,14 +155,13 @@
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="8" class="fx-num"><strong>{{ totals.count }} document(s)</strong></td>
+              <td :colspan="view === 'all' ? 8 : 7" class="fx-num"><strong>{{ totals.count }} document(s)</strong></td>
               <td class="fx-num"><strong><Figure :value="totals.amount_inr" kind="currency" currency-code="INR" /></strong></td>
               <td class="fx-num"><strong><Figure :value="totals.outstanding_inr" kind="currency" currency-code="INR" /></strong></td>
               <td colspan="2"></td>
             </tr>
           </tfoot>
         </table>
-        <!-- Only the INR column totals: a column of mixed currencies has no sum. -->
         <p class="fx-muted">
           Totalled in INR at each document's own exchange rate.
           <span v-if="totals.credited_inr">
@@ -265,16 +266,261 @@
       <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
     </template>
 
-    <!-- Raise a document: a note against a bill, or a brokerage or consol bill on a shipment. -->
+    <!-- ── One document, opened ──────────────────────────────────────────── -->
+    <FxDrawer
+      :open="!!document"
+      :title="document ? (document.invoice_no || 'Draft') : ''"
+      :subtitle="document ? document.label + (document.organization ? ' — ' + document.organization.name : '') : ''"
+      :tabs="DOC_TABS"
+      :active-tab="tab"
+      @tab="tab = $event"
+      @close="document = null"
+    >
+      <template #meta>
+        <dl v-if="document" class="fx-defs">
+          <dt>Date</dt>
+          <dd><Figure :value="document.document_date" kind="date" /></dd>
+          <dt>Due</dt>
+          <dd><Figure v-if="document.due_date" :value="document.due_date" kind="date" /><span v-else class="fx-muted">—</span></dd>
+          <dt>Shipment</dt>
+          <dd class="identifier">{{ document.job ? document.job.execution_job_no : "—" }}</dd>
+          <dt>Total</dt>
+          <dd><Figure :value="document.grand_total" kind="currency" :currency-code="document.currency || 'INR'" /></dd>
+          <dt>Status</dt>
+          <dd><StatusChip :value="document.status" /> <StatusChip :value="document.is_posted ? 'posted' : 'unposted'" /></dd>
+        </dl>
+      </template>
+
+      <template v-if="document">
+        <!-- ── The document itself ───────────────────────────────────────── -->
+        <section v-if="tab === 'document'" class="fx-section">
+          <p v-if="document.parent" class="fx-muted">
+            Raised against <strong>{{ document.parent.invoice_no }}</strong>
+            ({{ money(document.parent.grand_total) }}).
+            <span v-if="document.reason">Reason: {{ document.reason }}</span>
+          </p>
+          <p v-else-if="document.reason" class="fx-muted">Reason: {{ document.reason }}</p>
+
+          <table class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Description</th>
+                <th scope="col">HSN/SAC</th>
+                <th class="fx-num" scope="col">Qty</th>
+                <th class="fx-num" scope="col">Rate</th>
+                <th class="fx-num" scope="col">Amount</th>
+                <th class="fx-num" scope="col">Tax %</th>
+                <th class="fx-num" scope="col">Net</th>
+                <th v-if="can.edit" scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in items" :key="'i-' + item.id">
+                <template v-if="can.edit && editingLine === item.id">
+                  <td><input v-model="lineDraft.description" class="fx-input" /></td>
+                  <td><input v-model="lineDraft.hsn_sac_code" class="fx-input" /></td>
+                  <td><input v-model.number="lineDraft.quantity" type="number" step="0.001" class="fx-input fx-num" /></td>
+                  <td><input v-model.number="lineDraft.rate" type="number" step="0.01" class="fx-input fx-num" /></td>
+                  <td class="fx-num">{{ money(lineDraft.quantity * lineDraft.rate) }}</td>
+                  <td><input v-model.number="lineDraft.tax_percentage" type="number" step="0.01" class="fx-input fx-num" /></td>
+                  <td class="fx-num">{{ money(lineNet(lineDraft)) }}</td>
+                  <td class="fx-row-actions">
+                    <button class="fx-btn fx-btn--primary" :disabled="busy" @click="saveLine(item.id)">Save</button>
+                    <button class="fx-btn fx-btn--ghost" @click="editingLine = null">Cancel</button>
+                  </td>
+                </template>
+                <template v-else>
+                  <td>{{ item.description }}</td>
+                  <td>{{ item.hsn_sac_code || "—" }}</td>
+                  <td class="fx-num">{{ trim(item.quantity) }}</td>
+                  <td class="fx-num"><Figure :value="item.rate" kind="currency" :currency-code="document.currency || 'INR'" /></td>
+                  <td class="fx-num"><Figure :value="item.amount" kind="currency" :currency-code="document.currency || 'INR'" /></td>
+                  <td class="fx-num">{{ trim(item.tax_percentage) }}</td>
+                  <td class="fx-num"><Figure :value="item.net_amount" kind="currency" :currency-code="document.currency || 'INR'" /></td>
+                  <td v-if="can.edit" class="fx-row-actions">
+                    <button class="fx-btn" @click="editLine(item)">Edit</button>
+                    <button class="fx-btn fx-btn--ghost" :disabled="busy || items.length < 2" @click="deleteLine(item)">Remove</button>
+                  </td>
+                </template>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" class="fx-num"><strong>Total</strong></td>
+                <td class="fx-num"><Figure :value="document.subtotal" kind="currency" :currency-code="document.currency || 'INR'" /></td>
+                <td class="fx-num"><Figure :value="document.tax_amount" kind="currency" :currency-code="document.currency || 'INR'" /></td>
+                <td class="fx-num"><strong><Figure :value="document.grand_total" kind="currency" :currency-code="document.currency || 'INR'" /></strong></td>
+                <td v-if="can.edit"></td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <template v-if="can.edit">
+            <h3 class="fx-section__title">Add a line</h3>
+            <div class="fx-toolbar">
+              <label class="fx-field">
+                <span class="fx-field__label">Description</span>
+                <input v-model="newLine.description" class="fx-input" />
+              </label>
+              <label class="fx-field">
+                <span class="fx-field__label">HSN/SAC</span>
+                <input v-model="newLine.hsn_sac_code" class="fx-input" />
+              </label>
+              <label class="fx-field">
+                <span class="fx-field__label">Qty</span>
+                <input v-model.number="newLine.quantity" type="number" step="0.001" class="fx-input fx-num" />
+              </label>
+              <label class="fx-field">
+                <span class="fx-field__label">Rate</span>
+                <input v-model.number="newLine.rate" type="number" step="0.01" class="fx-input fx-num" />
+              </label>
+              <label class="fx-field">
+                <span class="fx-field__label">Tax %</span>
+                <input v-model.number="newLine.tax_percentage" type="number" step="0.01" class="fx-input fx-num" />
+              </label>
+              <button class="fx-btn" :disabled="busy || !newLine.description || !newLine.rate" @click="addLine">Add</button>
+            </div>
+
+            <h3 class="fx-section__title">Header</h3>
+            <div class="fx-toolbar">
+              <label class="fx-field">
+                <span class="fx-field__label">Document date</span>
+                <input v-model="header.document_date" type="date" class="fx-input" />
+              </label>
+              <label class="fx-field">
+                <span class="fx-field__label">Due date</span>
+                <input v-model="header.due_date" type="date" class="fx-input" />
+              </label>
+              <label class="fx-field">
+                <span class="fx-field__label">Currency</span>
+                <input v-model="header.currency" maxlength="3" class="fx-input" />
+              </label>
+              <label class="fx-field">
+                <span class="fx-field__label">Exchange rate</span>
+                <input v-model.number="header.exchange_rate" type="number" step="0.0001" class="fx-input fx-num" />
+              </label>
+              <label class="fx-field">
+                <span class="fx-field__label">Narration</span>
+                <input v-model="header.narration" class="fx-input" />
+              </label>
+              <button class="fx-btn" :disabled="busy" @click="saveHeader">Save header</button>
+            </div>
+          </template>
+          <p v-else class="fx-muted">
+            {{ document.status === "void" ? "This document is void." : "Finalized documents are not edited — raise a note against it." }}
+          </p>
+        </section>
+
+        <!-- ── What has happened to it ───────────────────────────────────── -->
+        <section v-else-if="tab === 'activity'" class="fx-section">
+          <h3 class="fx-section__title">Notes raised against it</h3>
+          <p v-if="!notes.length" class="fx-muted">None.</p>
+          <table v-else class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Note</th>
+                <th scope="col">Type</th>
+                <th scope="col">Date</th>
+                <th class="fx-num" scope="col">Amount</th>
+                <th scope="col">Status</th>
+                <th scope="col">Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="n in notes" :key="'n-' + n.id" class="is-clickable" @click="openById(n.id)">
+                <td class="identifier">{{ n.invoice_no }}</td>
+                <td>{{ typeLabel(n.type) }}</td>
+                <td><Figure :value="n.document_date" kind="date" /></td>
+                <td class="fx-num"><Figure :value="n.grand_total" kind="currency" :currency-code="document.currency || 'INR'" /></td>
+                <td><StatusChip :value="n.status" /></td>
+                <td class="fx-muted">{{ n.reason || "—" }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3 class="fx-section__title">Money received against it</h3>
+          <p v-if="!receiptsOn.length" class="fx-muted">Nothing yet. Outstanding {{ money(document.outstanding) }}.</p>
+          <table v-else class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Receipt</th>
+                <th scope="col">Date</th>
+                <th scope="col">How</th>
+                <th scope="col">Reference</th>
+                <th class="fx-num" scope="col">Placed</th>
+                <th scope="col">Shortfall</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(r, i) in receiptsOn" :key="'ra-' + i">
+                <td class="identifier">{{ r.receipt_no }}</td>
+                <td><Figure :value="r.receipt_date" kind="date" /></td>
+                <td>{{ (r.mode || "").replace(/_/g, " ") }}</td>
+                <td class="identifier">{{ r.reference || "—" }}</td>
+                <td class="fx-num"><Figure :value="r.amount" kind="currency" currency-code="INR" /></td>
+                <td>{{ r.resolution ? r.resolution.replace(/_/g, " ") : "—" }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- ── The journal it writes ─────────────────────────────────────── -->
+        <section v-else-if="tab === 'journal'" class="fx-section">
+          <p class="fx-muted">
+            {{ document.is_posted ? "This is what was posted." : "This is what posting would write." }}
+          </p>
+          <table class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Account</th>
+                <th class="fx-num" scope="col">Debit</th>
+                <th class="fx-num" scope="col">Credit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(l, i) in journal.lines" :key="'j-' + i">
+                <td>{{ l.code }} — {{ l.name }}</td>
+                <td class="fx-num"><Figure v-if="l.debit" :value="l.debit" kind="currency" currency-code="INR" /><span v-else>—</span></td>
+                <td class="fx-num"><Figure v-if="l.credit" :value="l.credit" kind="currency" currency-code="INR" /><span v-else>—</span></td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td class="fx-num"><strong>{{ journal.balanced ? "Balanced" : "NOT BALANCED" }}</strong></td>
+                <td class="fx-num"><strong><Figure :value="journal.debits" kind="currency" currency-code="INR" /></strong></td>
+                <td class="fx-num"><strong><Figure :value="journal.credits" kind="currency" currency-code="INR" /></strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+
+        <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
+      </template>
+
+      <template #footer>
+        <template v-if="document">
+          <button class="fx-btn" :disabled="busy" @click="printOne">Print</button>
+          <button v-if="canPost && can.note" class="fx-btn" @click="openRaise('credit_note', document)">Raise a note</button>
+          <button v-if="canPost && can.void" class="fx-btn fx-btn--ghost" @click="voidFor = { reason: '' }">Void</button>
+          <button v-if="canPost && can.finalize" class="fx-btn fx-btn--primary" :disabled="busy || !items.length" @click="finalize">
+            Finalize
+          </button>
+          <button v-if="canPost && can.post" class="fx-btn fx-btn--primary" :disabled="busy" @click="postDocument">Post to ledger</button>
+        </template>
+      </template>
+    </FxDrawer>
+
+    <!-- Raise a document. -->
     <div v-if="raise" class="fx-modal" role="dialog" aria-modal="true" aria-labelledby="raise-title">
       <div class="fx-modal__panel">
         <header class="fx-modal__head">
-          <h2 id="raise-title" class="fx-modal__title">Raise a document</h2>
+          <h2 id="raise-title" class="fx-modal__title">New {{ typeLabel(raise.type).toLowerCase() }}</h2>
         </header>
         <div class="fx-modal__body">
           <label class="fx-field">
             <span class="fx-field__label">Document</span>
             <select v-model="raise.type" class="fx-input" @change="raise.parent_invoice_id = null">
+              <option value="invoice">Invoice — bill a client for a shipment</option>
               <option value="debit_note">Revenue Debit Note — charge more after the bill went out</option>
               <option value="credit_note">Revenue Credit Note — give some of it back</option>
               <option value="brokerage">Brokerage Invoice — commission from a carrier or agent</option>
@@ -311,22 +557,31 @@
                 <option v-for="j in jobs" :key="j.id" :value="j.id">{{ j.execution_job_no }}</option>
               </select>
             </label>
-            <label class="fx-field">
-              <span class="fx-field__label">Billed to</span>
-              <select v-model="raise.partner_id" class="fx-input">
+            <label v-if="raise.type === 'invoice'" class="fx-field">
+              <span class="fx-field__label">Client</span>
+              <select v-model="raise.customer_id" class="fx-input">
                 <option :value="null">Choose…</option>
-                <option v-for="p in partners" :key="p.id" :value="p.id">{{ p.name }}</option>
+                <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>
               </select>
             </label>
-            <label class="fx-field">
-              <span class="fx-field__label">Basis</span>
-              <select v-model="raise.basis" class="fx-input">
-                <option value="flat_rate">Flat rate</option>
-                <option value="percentage_of_freight">Percentage of freight</option>
-                <option value="per_kg">Per kg</option>
-                <option value="per_container">Per container</option>
-              </select>
-            </label>
+            <template v-else>
+              <label class="fx-field">
+                <span class="fx-field__label">Billed to</span>
+                <select v-model="raise.partner_id" class="fx-input">
+                  <option :value="null">Choose…</option>
+                  <option v-for="p in partners" :key="p.id" :value="p.id">{{ p.name }} ({{ p.partner_type }})</option>
+                </select>
+              </label>
+              <label class="fx-field">
+                <span class="fx-field__label">Basis</span>
+                <select v-model="raise.basis" class="fx-input">
+                  <option value="flat_rate">Flat rate</option>
+                  <option value="percentage_of_freight">Percentage of freight</option>
+                  <option value="per_kg">Per kg</option>
+                  <option value="per_container">Per container</option>
+                </select>
+              </label>
+            </template>
           </template>
 
           <h3 class="fx-section__title">Lines</h3>
@@ -463,6 +718,30 @@
       </div>
     </div>
 
+    <!-- Voiding says why, on the record, forever. -->
+    <div v-if="voidFor" class="fx-modal" role="dialog" aria-modal="true" aria-labelledby="void-title">
+      <div class="fx-modal__panel">
+        <header class="fx-modal__head">
+          <h2 id="void-title" class="fx-modal__title">Void {{ document.invoice_no }}</h2>
+        </header>
+        <div class="fx-modal__body">
+          <p class="fx-muted">
+            It stays in the register and in the audit trail, marked void — the number is never reused and never
+            disappears.
+          </p>
+          <label class="fx-field">
+            <span class="fx-field__label">Why</span>
+            <input v-model="voidFor.reason" class="fx-input" placeholder="raised on the wrong shipment" />
+          </label>
+          <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
+        </div>
+        <footer class="fx-modal__foot">
+          <button class="fx-btn" :disabled="busy" @click="voidFor = null">Cancel</button>
+          <button class="fx-btn fx-btn--primary" :disabled="busy || !voidFor.reason.trim()" @click="voidDocument">Void it</button>
+        </footer>
+      </div>
+    </div>
+
     <!-- The IRN the portal returned, typed in until the GSP is connected. -->
     <div v-if="irnFor" class="fx-modal" role="dialog" aria-modal="true" aria-labelledby="irn-title">
       <div class="fx-modal__panel">
@@ -494,45 +773,75 @@ import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 
 const STATUSES = ["draft", "finalized", "sent", "partially_paid", "paid", "void"];
 
-/** Logi-Sys's Billing section, as the three things this desk actually does (user, 2026-09-19). */
+/** Logi-Sys's Billing section: their Forwarding submenu, then Receipts and E-Invoice. */
 const VIEWS = [
-  { key: "documents", label: "Documents" },
+  { key: "all", label: "All documents" },
+  { key: "invoice", label: "Invoices" },
+  { key: "debit_note", label: "Debit notes" },
+  { key: "credit_note", label: "Credit notes" },
+  { key: "brokerage", label: "Brokerage" },
+  { key: "consol_invoice", label: "Consol" },
   { key: "receipts", label: "Receipts" },
   { key: "einvoice", label: "E-Invoice" },
 ];
 
+const DOC_TABS = [
+  { key: "document", label: "Document" },
+  { key: "activity", label: "Notes & receipts" },
+  { key: "journal", label: "Journal" },
+];
+
+const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "consol_invoice"];
+
 export default {
   name: "Billing",
-  components: { Figure, StatusChip },
+  components: { Figure, StatusChip, FxDrawer },
   data: () => ({
-    view: "documents", VIEWS, STATUSES,
-    rows: [], totals: { count: 0, amount_inr: 0, outstanding_inr: 0 },
+    view: "all", VIEWS, STATUSES, DOC_TABS,
+    rows: [], totals: { count: 0, amount_inr: 0, outstanding_inr: 0, credited_inr: 0 },
     branches: [], types: {}, currencies: [], raisedBy: [],
-    filters: { type: "", agent_id: null, from: "", to: "", q: "", status: "", currency: "",
+    filters: { agent_id: null, from: "", to: "", q: "", status: "", currency: "",
                created_by: null, sort: "date", outstanding: false, exclude_credit_notes: false },
     /** Which rows are ticked for printing or mailing. */
     picked: {},
     receipts: [], modes: [], eInvoices: [], eInvoiceNote: "",
-    /** The document being raised, the receipt being recorded, the IRN being typed. */
-    raise: null, creditRoom: null, jobs: [], partners: [],
-    receipt: null, openDocuments: [], allocation: {}, resolution: {}, clients: [],
-    irnFor: null,
+    /** The document open in the drawer, and everything that belongs to it. */
+    document: null, items: [], notes: [], receiptsOn: [], journal: { lines: [] }, can: {}, tab: "document",
+    header: {}, newLine: {}, editingLine: null, lineDraft: {},
+    /** The forms. */
+    raise: null, creditRoom: null, jobs: [], partners: [], clients: [],
+    receipt: null, openDocuments: [], allocation: {}, resolution: {},
+    voidFor: null, irnFor: null,
     loading: true, busy: false, error: null, actionError: null, mailResult: null,
   }),
   computed: {
     ...mapGetters(["designation"]),
-    /* Only accounts raise and send a bill. The Boss reads the register. */
+    /* Only accounts raise, finalize, post and send a bill. The Boss reads the register. */
     canPost() {
       return this.designation === "accounts";
     },
+    isRegister() {
+      return REGISTERS.includes(this.view);
+    },
+    /** The "New …" button raises what this view is showing; on All documents, an invoice. */
+    newDocumentType() {
+      return this.view === "all" ? "invoice" : this.view;
+    },
     subtitleForView() {
+      if (this.view === "receipts") return "Money received, and the documents each payment settled.";
+      if (this.view === "einvoice") return "What has been through the invoice registration portal, and what is still waiting.";
+      if (this.view === "all") return "Every sales document this company has raised, with what it was billed in and what it is worth in INR.";
+
       return {
-        documents: "Every sales document this branch has raised — invoices, notes, brokerage and consol — with what it was billed in and what it is worth in INR.",
-        receipts: "Money received, and the documents each payment settled.",
-        einvoice: "What has been through the invoice registration portal, and what is still waiting.",
+        invoice: "What clients have been billed for their shipments.",
+        debit_note: "Charges raised after the invoice went out — demurrage, a weight correction, an examination.",
+        credit_note: "What has been given back — a rate dispute, an invoicing error, goodwill.",
+        brokerage: "Commission billed to carriers and overseas agents.",
+        consol_invoice: "Consolidations settled with the counterpart agent.",
       }[this.view];
     },
     chosen() {
@@ -555,9 +864,10 @@ export default {
       if (!this.raise) return false;
       const linesOk = this.raise.lines.every((l) => l.description && Number(l.rate) > 0);
 
-      return linesOk && (this.isNote
-        ? !!this.raise.parent_invoice_id && !!(this.raise.reason || "").trim()
-        : !!this.raise.job_id && !!this.raise.partner_id);
+      if (this.isNote) return linesOk && !!this.raise.parent_invoice_id && !!(this.raise.reason || "").trim();
+      if (this.raise.type === "invoice") return linesOk && !!this.raise.job_id && !!this.raise.customer_id;
+
+      return linesOk && !!this.raise.job_id && !!this.raise.partner_id;
     },
     placedTotal() {
       return Object.values(this.allocation).reduce((sum, v) => sum + (Number(v) || 0), 0);
@@ -573,6 +883,7 @@ export default {
   methods: {
     showView(key) {
       this.view = key;
+      this.document = null;
       this.actionError = null;
       this.mailResult = null;
       this.load();
@@ -582,6 +893,10 @@ export default {
     },
     money(value) {
       return "INR " + Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+    },
+    /** 1.000 reads as 1, 18.00 as 18 — trailing zeros on a quantity are noise. */
+    trim(value) {
+      return String(Number(value || 0));
     },
     lineNet(line) {
       const amount = (Number(line.quantity) || 0) * (Number(line.rate) || 0);
@@ -593,12 +908,12 @@ export default {
     },
     query() {
       const params = [];
-      if (this.filters.type) params.push("types[]=" + this.filters.type);
+      if (this.view !== "all") params.push("types[]=" + this.view);
       ["agent_id", "from", "to", "q", "status", "currency", "created_by", "sort"].forEach((key) => {
         if (this.filters[key]) params.push(key + "=" + encodeURIComponent(this.filters[key]));
       });
       if (this.filters.outstanding) params.push("outstanding=1");
-      if (this.filters.exclude_credit_notes) params.push("exclude_credit_notes=1");
+      if (this.view === "all" && this.filters.exclude_credit_notes) params.push("exclude_credit_notes=1");
 
       return params.length ? "?" + params.join("&") : "";
     },
@@ -607,9 +922,9 @@ export default {
 
       const path = { receipts: "/receipts", einvoice: "/billing/e-invoice" }[this.view] || "/billing";
 
-      ApiService.get(path + (this.view === "documents" ? this.query() : ""))
+      ApiService.get(path + (this.isRegister ? this.query() : ""))
         .then(({ data }) => {
-          if (this.view === "documents") {
+          if (this.isRegister) {
             this.rows = data.rows || [];
             this.totals = data.totals;
             this.types = data.types || {};
@@ -630,26 +945,115 @@ export default {
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.loading = false; });
     },
+
+    /* ── One document ──────────────────────────────────────────────────── */
+    open(row) {
+      this.openById(row.id);
+    },
+    openById(id) {
+      this.actionError = null;
+      this.editingLine = null;
+      this.tab = "document";
+      ApiService.get(`/billing/${id}`)
+        .then(({ data }) => this.showDocument(data))
+        .catch((e) => { this.actionError = this.messageFor(e); });
+    },
+    showDocument(data) {
+      this.document = data.document;
+      this.items = data.items || [];
+      this.notes = data.notes || [];
+      this.receiptsOn = data.receipts || [];
+      this.journal = data.journal || { lines: [] };
+      this.can = data.can || {};
+      this.editingLine = null;
+      this.newLine = this.blankLine();
+      this.header = {
+        document_date: (this.document.document_date || "").slice(0, 10),
+        due_date: (this.document.due_date || "").slice(0, 10),
+        currency: this.document.currency,
+        exchange_rate: Number(this.document.exchange_rate),
+        narration: this.document.narration || "",
+      };
+    },
+    saveHeader() {
+      this.commit(() => ApiService.put(`/billing/${this.document.id}`, this.header));
+    },
+    addLine() {
+      this.commit(() => ApiService.post(`/billing/${this.document.id}/lines`, this.newLine));
+    },
+    editLine(item) {
+      this.editingLine = item.id;
+      this.lineDraft = {
+        description: item.description, hsn_sac_code: item.hsn_sac_code,
+        quantity: Number(item.quantity), rate: Number(item.rate), tax_percentage: Number(item.tax_percentage),
+      };
+    },
+    saveLine(lineId) {
+      this.commit(() => ApiService.put(`/billing/${this.document.id}/lines/${lineId}`, this.lineDraft));
+    },
+    deleteLine(item) {
+      this.commit(() => ApiService.delete(`/billing/${this.document.id}/lines/${item.id}`));
+    },
+    finalize() {
+      this.commit(() => ApiService.post(`/invoices/${this.document.id}/finalize`, {}), true);
+    },
+    postDocument() {
+      this.commit(() => ApiService.post(`/invoices/${this.document.id}/post`, {}), true);
+    },
+    voidDocument() {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/billing/${this.document.id}/void`, this.voidFor)
+        .then(({ data }) => { this.voidFor = null; this.showDocument(data); this.load(); })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    printOne() {
+      this.busy = true;
+      ApiService.postForFile("/billing/print", { ids: [this.document.id] })
+        .then(({ data }) => this.openFile(data, "application/pdf"))
+        .catch(() => { this.actionError = "The document could not be printed."; })
+        .finally(() => { this.busy = false; });
+    },
+    /**
+     * Every drawer action ends the same way: do it, re-read the document, refresh the register behind.
+     *
+     * ⚠️ The document is re-read from the server rather than patched in place — finalizing changes the number, the
+     * status and what the buttons may do, and a screen that guesses at those shows a stale document as a live one.
+     */
+    commit(call, refreshRegister = false) {
+      this.busy = true;
+      this.actionError = null;
+      call()
+        .then(({ data }) => {
+          if (data && data.document) this.showDocument(data);
+          else this.openById(this.document.id);
+          if (refreshRegister) this.load();
+        })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+
+    /* ── Printing, mailing, export ─────────────────────────────────────── */
     toggleAll() {
       const on = !this.allChosen;
       const picked = {};
       this.rows.forEach((r) => { picked[r.id] = on; });
       this.picked = picked;
     },
-    /** The bills come back as a PDF, so they are fetched as bytes and opened, never linked to. */
     printBills() {
       this.busy = true;
       this.actionError = null;
       ApiService.postForFile("/billing/print", { ids: this.chosen })
         .then(({ data }) => this.openFile(data, "application/pdf"))
-        .catch((e) => { this.actionError = this.messageFor(e); })
+        .catch(() => { this.actionError = "Those documents could not be printed."; })
         .finally(() => { this.busy = false; });
     },
     exportCsv() {
       this.busy = true;
       ApiService.query("/billing/export" + this.query(), { responseType: "blob" })
         .then(({ data }) => this.openFile(data, "text/csv", "billing.csv"))
-        .catch((e) => { this.actionError = this.messageFor(e); })
+        .catch(() => { this.actionError = "The export could not be built."; })
         .finally(() => { this.busy = false; });
     },
     openFile(data, mime, download) {
@@ -675,14 +1079,20 @@ export default {
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
-    openRaise(type) {
+
+    /* ── Raising ───────────────────────────────────────────────────────── */
+    openRaise(type, against = null) {
       this.actionError = null;
       this.creditRoom = null;
-      this.raise = { type, parent_invoice_id: null, job_id: null, partner_id: null, basis: "flat_rate",
+      this.raise = { type, parent_invoice_id: against ? against.id : null,
+                     job_id: null, customer_id: null, partner_id: null, basis: "flat_rate",
                      reason: "", narration: "", lines: [this.blankLine()] };
+
+      if (against) this.loadCreditRoom();
 
       ApiService.get("/jobs?per_page=50").then(({ data }) => { this.jobs = data.data || data.rows || []; }).catch(() => {});
       ApiService.get("/partners").then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
+      ApiService.get("/customers").then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
     },
     loadCreditRoom() {
       this.creditRoom = null;
@@ -696,10 +1106,18 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post("/billing/documents", this.raise)
-        .then(() => { this.raise = null; this.load(); })
+        .then(({ data }) => {
+          this.raise = null;
+          this.load();
+          // Straight into the drawer: a document raised and then hunted for in the register is a document
+          // somebody forgets to finalize.
+          this.openById(data.id);
+        })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
+
+    /* ── Receipts ──────────────────────────────────────────────────────── */
     openReceipt() {
       this.actionError = null;
       this.openDocuments = [];
@@ -730,7 +1148,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post("/receipts", { ...this.receipt, allocations })
-        .then(() => { this.receipt = null; this.view = "receipts"; this.load(); })
+        .then(() => { this.receipt = null; this.showView("receipts"); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },

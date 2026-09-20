@@ -1421,13 +1421,106 @@ Resolve these before the dependent module starts:
 | Item | Blocks |
 |---|---|
 | ~~3 triggers, never authored~~ · ~~3 views, never authored~~ | ✅ **Authored 2026-08-26**, both dialects, SQLite forms behaviourally tested — `database_relations_tree.md` §*Triggers & Views*. **They will break naive test factories:** any factory attaching a random user to `ops_id` now fails at the database |
-| **Load the `ports` UN/LOCODE directory** | Batch 1a·7 leaves `users.origin_port_id` nullable and empty until this data exists; registration cannot require an origin port before then (`PRD.md` §2.2) |
+| ~~**Load the `ports` UN/LOCODE directory**~~ | ✅ **Loaded 2026-09-20** — 25,158 freight nodes (17,520 sea · 7,246 air · 392 land) via `python/export_ports.py` + `PortSeeder`. `users.origin_port_id` and `customers.default_port_id` can now be required (GAPS #376) |
 | ~~`composer require doctrine/dbal`~~ | ✅ **Installed 2026-08-26**, pinned `^3.1.4` with `carbonphp/carbon-doctrine-types:^2.0`. **Never let it drift to 4.x** — Laravel 9 supports `^2.13.3\|^3.1.4` only, and a bare `require` pulls 4.4 |
 | **The 4 production data checks** (`CONTEXT.md` §6) | Batch 1a·7 — the local DB is empty, so the `branch_name` conversion is unverified against real data |
 | **Install `laravel/horizon`** | Step 4. `docker-compose.yml` now runs a plain `queue:work` across the seven named queues in priority order, which is correct but gives no dashboard, no per-queue worker counts and no failed-job inspector (`PRD.md` §2.3.6 expects all three). Swap the `queue` service command to `php artisan horizon` once installed |
 | **`air_import_details` table** is not yet defined in `database_relations_tree.md` | Segment C.1 Air Import — add it there first |
 | ~~`enquiries.quoted_amount` / `quoted_currency`~~ | ✅ **Present in the DDL** — verified 2026-08-26 |
 | ~~`email_threads.first_response_at`~~ | ✅ **Present in the DDL**, and filled automatically by Sent-folder sync (`PRD.md` §5.2.3) |
+
+## Step 11 — The accounts section, laid out by the job rather than by the document
+
+> **Why this step exists.** Steps 5 and 6 built the finance screens in the order they were asked for, and it shows:
+> 23 views across 6 surfaces, organised by *document type*. An accounts manager does not think in document types —
+> they think in **today, this week, month end**. This step re-lays the same working code against that.
+>
+> **Nothing here is new behaviour.** Every endpoint already exists and is tested. This is navigation and framing,
+> plus the four genuinely missing pieces named in §11.6.
+
+### 11.1 What was wrong
+
+| Fault | Evidence |
+|---|---|
+| **"Invoices" exists twice** | `Financials → Invoices` and `Billing → Invoices` are the same table with different columns. Nobody can say which is canonical |
+| **Financials is a junk drawer** | Nine views doing seven unrelated jobs: two work queues, a payables register, a compliance register, reporting, period admin, bank matching |
+| **The two "why" screens are unreachable** | Journal and Profitability are on no rail — only small links in a subheading |
+| **No home** | You land on a register and must already know where today's work is. Nothing counts what is waiting |
+| **Month-end is spread across five places** | unposted · periods · GST register · e-invoice · reports. "Closing the month" is not an action anywhere |
+| **Payables is homeless** | Receivables got two pages; what we owe is two tabs inside the junk drawer |
+
+### 11.2 The shape
+
+Five surfaces. Each is a **numbered pipeline** across the top — stages, not tabs — showing where work is stuck.
+Clicking a stage filters the list beneath it.
+
+| Surface | Pipeline | Replaces |
+|---|---|---|
+| **Today** | four to six cards, each a count *and* a rupee figure, each a link | *(new — there is no home today)* |
+| **Money in** | ① To bill → ② Drafts → ③ Issued → ④ Money in → ⑤ Overdue | Financials→awaiting · Billing (all 8 views) · Collections (both) · Financials→bank |
+| **Money out** | ① Cost to book → ② Vouchers → ③ Statements to check → ④ Due to pay | Financials→vouchers · Financials→vendors |
+| **Close the month** | ① Billed? → ② Costed? → ③ Posted? → ④ GST → ⑤ Close → ⑥ Statements | Financials→unposted · →gst · →periods · →reports · Billing→e-invoice |
+| **How we're doing** | by shipment · by client · by lane, drilling into the journal | Profitability · Journal |
+
+Plus **Setup** under Settings (chart of accounts, rate cards, bank accounts, tax rates).
+
+> 🔴 **The five sales documents become a FILTER, not five menu entries.** Invoice, debit note, credit note,
+> brokerage and consol share a table, a client and a shipment; they differ in who they address and what they do to
+> the ledger, which is what the document drawer already shows.
+
+> ⚠️ **Collections merges into Money in ⑤ rather than keeping its own rail item** (owner's decision, 2026-09-20:
+> *"it's me doing it between other things"*). Where a business has somebody whose day **is** chasing money, it
+> should be lifted back out — a stage inside another surface is not owned by anyone.
+
+### 11.3 Ordering rule for every stage
+
+Stages are ordered by **what needs doing**, never by size. The list sorted by revenue is the one you already know;
+the row worth opening is the loss, the broken promise, the client nobody has called. This is already how
+`CollectionsController::queue()` and `ProfitabilityController::sort()` behave, and it becomes the house rule.
+
+### 11.4 The client book — `Clients.vue` 🟢 *built 2026-09-20*
+
+> Owner, 2026-09-20: *"we have no place to show all the clients of all the branches, a full onboarding is done …
+> and then a sales person is to be attached to it with a credit limit to it."*
+
+Every branch's clients in one list. Columns: **Client · Branch · Salesperson · GSTIN · Terms · Credit limit ·
+Owed now · Left · Contacts**, filterable by branch, by rep, by *no salesperson* and by *no credit limit*, and
+groupable by domain — because **the group IS `(company_id, email_domain)`** (`PRD.md` §2.2), so one client with
+five GSTINs is five rows sharing a domain.
+
+Onboarding captures every column the PRD names, in four sections: **who they are** (name, domain, email, phone,
+address) · **who owns them** (our branch, salesperson, their usual port) · **tax and legal** (GSTIN, PAN, DUNS) ·
+**terms and credit** (payment terms, credit limit) · **their bank** (encrypted at rest, never read back).
+
+- 🔴 **`sales_id` and `branch_id` are checked against the acting tenant.** `exists:users,id` passes for any user on
+  the platform, and `sales_id` is the scoping key for the entire Command client book — a wrong id moves the client
+  into a stranger's book and out of ours.
+- 🔴 **A NULL credit limit is "not configured" and never blocks; `0.00` blocks every shipment.** The book shows
+  *Not set*, never `0`.
+- ⚠️ **"Owed now" nets credit notes**, the same rule as the ageing, the credit gate and the billing register —
+  computed in one grouped query, not a credit check per row.
+- ❓ **Proximity routing is not implemented.** `PRD.md` §2.2 says a new customer's branch is resolved by LOCODE
+  proximity and a sales rep auto-assigned from it. `ports` carries no coordinates, so branch and rep are explicit
+  fields defaulting to the creating user's branch. Guessing a branch wrongly is worse than asking.
+
+### 11.5 Migration order
+
+1. **Clients** 🟢 — needed by Money in ⑤ for limits and by Today for credit holds
+2. **Today** — the home, reading counts from endpoints that already exist
+3. **Money in** — the largest merge: Billing + Collections + bank matching
+4. **Close the month** — the highest-value reframing; five screens become one checklist
+5. **Money out** — smallest, and needs §11.6's payment run to be worth a surface
+6. **How we're doing** — already correct; only needs to be reachable
+
+### 11.6 Still missing — gaps, not layout
+
+| Gap | Why it matters |
+|---|---|
+| **Payment runs** | You can see what is owed and cannot pay it. No payment document, no batch |
+| **Bank accounts master** | `1100-Bank` is one account for the whole company; two bank accounts cannot be told apart |
+| **"Cost to book" as a queue** | Shipments billed with nothing costed exist only as a warning on a report |
+| **GSTR-1 / 3B as files** | The register exists; the return does not |
+| **TDS** | Not started |
 
 ## 📌 Conventions
 

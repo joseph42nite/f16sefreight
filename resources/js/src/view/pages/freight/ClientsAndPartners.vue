@@ -23,11 +23,17 @@
       so swapping only the prop would show the new heading over the old rows — the exact
       kind of stale render that reads as "the partners list is showing customers".
     -->
-    <DirectoryTable :key="active" :endpoint="active" />
+    <!--
+      Clients get their own screen (user, 2026-09-20): every branch's book in one list, with the salesperson and
+      the credit limit on the row. Partners stay on the generic directory — nothing is attached to them.
+    -->
+    <Clients v-if="active === '/customers'" />
+    <DirectoryTable v-else :key="active" :endpoint="active" />
   </div>
 </template>
 
 <script>
+import Clients from "@/view/pages/freight/Clients.vue";
 import DirectoryTable from "@/view/pages/freight/DirectoryTable.vue";
 
 const TABS = [
@@ -37,7 +43,7 @@ const TABS = [
 
 export default {
   name: "ClientsAndPartners",
-  components: { DirectoryTable },
+  components: { Clients, DirectoryTable },
   data: () => ({ TABS, active: "/customers" }),
 };
 </script>

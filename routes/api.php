@@ -368,6 +368,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/customers', [\App\Http\Controllers\Freight\CustomerController::class, 'index']);
     Route::post('/customers', [\App\Http\Controllers\Freight\CustomerController::class, 'store']);
     Route::put('/customers/{customer}', [\App\Http\Controllers\Freight\CustomerController::class, 'update']);
+    // The ports directory, searched: 25,158 rows is not a dropdown (user, 2026-09-20).
+    Route::get('/customers/ports', [\App\Http\Controllers\Freight\CustomerController::class, 'ports']);
     Route::get('/customers/{customer}/contacts', [\App\Http\Controllers\Freight\CustomerController::class, 'contacts']);
     Route::get('/customers/{customer}/group', [\App\Http\Controllers\Freight\CustomerController::class, 'group']);
 

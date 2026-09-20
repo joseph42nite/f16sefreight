@@ -43,21 +43,26 @@ class CustomerController extends Controller
             // §9.10 — the client book is scoped to the rep on Command. A sales user sees
             // their own accounts; everyone else sees the tenant's whole directory.
             ->when($this->scopeToOwnBook(), fn ($q) => $q->where('sales_id', auth()->id()))
+            // Every branch's clients, or one branch's (user, 2026-09-20: "show all the clients of all the branches").
+            ->when($request->filled('branch_id'), fn ($q) => $q->where('branch_id', $request->integer('branch_id')))
+            ->when($request->filled('sales_id'), fn ($q) => $q->where('sales_id', $request->integer('sales_id')))
+            ->when($request->boolean('unassigned'), fn ($q) => $q->whereNull('sales_id'))
+            ->when($request->boolean('no_limit'), fn ($q) => $q->whereNull('credit_limit'))
             // The mail addresses saved from the client's domain.
             ->withCount('contacts')
             ->orderBy('name')
-            ->paginate(50);
+            ->paginate($request->integer('per_page') ?: 50);
 
         if (! $this->withAccounts()) {
             $customers->getCollection()->each->makeHidden(self::ACCOUNTS_FIELDS);
         }
 
-        // The branch that manages each client, for the Boss reading every branch's clients (user, 2026-09-16).
-        $branches = \Illuminate\Support\Facades\DB::table('agents_info')
-            ->whereIn('id', $customers->getCollection()->pluck('branch_id')->filter()->unique())->pluck('agent_name', 'id');
-        $customers->getCollection()->each(fn ($c) => $c->setAttribute('branch', $branches[$c->branch_id] ?? null));
+        $this->describe($customers->getCollection());
 
-        return response()->json($customers->toArray() + ['with_accounts' => $this->withAccounts()]);
+        return response()->json(array_merge($customers->toArray(), [
+            'with_accounts' => $this->withAccounts(),
+            'options' => $this->options(),
+        ]));
     }
 
     public function store(Request $request): JsonResponse
@@ -89,6 +94,71 @@ class CustomerController extends Controller
         return response()->json($this->shown($customer->fresh()));
     }
 
+    /**
+     * Put the branch, the rep and the money on every row.
+     *
+     * ⚠️ Three lookups for the page, not one per client. A credit check per row is what turns a 50-row directory
+     * into 150 queries, and this page is the one the Boss leaves open.
+     */
+    private function describe($customers): void
+    {
+        $branches = \Illuminate\Support\Facades\DB::table('agents_info')
+            ->whereIn('id', $customers->pluck('branch_id')->filter()->unique())->pluck('agent_name', 'id');
+        $reps = \Illuminate\Support\Facades\DB::table('users')
+            ->whereIn('id', $customers->pluck('sales_id')->filter()->unique())->pluck('name', 'id');
+
+        // What each client owes, in one grouped query. Credit notes subtract — the same rule as the ageing and
+        // the credit gate, and the reason all three agree.
+        $owed = \App\AccountsInvoice::withoutGlobalScopes()
+            ->whereIn('customer_id', $customers->pluck('id'))
+            ->whereIn('status', \App\Services\AgeingService::OWED)
+            ->selectRaw('customer_id, SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * (grand_total - amount_paid)) AS owed', ['credit_note'])
+            ->groupBy('customer_id')->pluck('owed', 'customer_id');
+
+        foreach ($customers as $customer) {
+            $customer->setAttribute('branch', $branches[$customer->branch_id] ?? null);
+            $customer->setAttribute('salesperson', $reps[$customer->sales_id] ?? null);
+
+            if (! $this->withAccounts()) {
+                continue;
+            }
+
+            $exposure = round((float) ($owed[$customer->id] ?? 0), 2);
+            $limit = $customer->credit_limit === null ? null : (float) $customer->credit_limit;
+
+            $customer->setAttribute('exposure', $exposure);
+            // NULL limit is "not configured", never zero — the difference decides whether cargo moves.
+            $customer->setAttribute('available', $limit === null ? null : round($limit - $exposure, 2));
+            $customer->setAttribute('on_hold', $limit !== null && $exposure > $limit);
+        }
+    }
+
+    /** What the onboarding form has to offer: our branches, our reps, and the ports directory. */
+    private function options(): array
+    {
+        $companyId = $this->companyId();
+
+        return [
+            'branches' => \Illuminate\Support\Facades\DB::table('agents_info')->where('company_id', $companyId)
+                ->orderBy('agent_name')->get(['id', 'agent_name as name']),
+            'salespeople' => \Illuminate\Support\Facades\DB::table('users')->where('company_name', $companyId)
+                ->whereIn('designation', ['sales', 'boss'])->where('is_active', 1)
+                ->orderBy('name')->get(['id', 'name', 'designation', 'branch_name as branch_id']),
+        ];
+    }
+
+    /** The ports picker, searched rather than listed — 25,158 rows is not a dropdown. */
+    public function ports(Request $request): JsonResponse
+    {
+        $term = $request->string('q')->toString();
+
+        return response()->json(['ports' => \Illuminate\Support\Facades\DB::table('ports')
+            ->where('is_active', true)
+            ->when($term !== '', fn ($q) => $q->where(fn ($w) => $w->where('locode', 'like', strtoupper($term) . '%')
+                ->orWhere('port_name', 'like', '%' . $term . '%')))
+            ->orderBy('locode')->limit(25)->get(['id', 'locode', 'port_name', 'country_code', 'port_type'])]);
+    }
+
     /** The addresses the client writes from, most used first. */
     public function contacts(Customer $customer): JsonResponse
     {
@@ -108,19 +178,38 @@ class CustomerController extends Controller
             'email'        => ['nullable', 'email', 'max:100'],
             'phone'        => ['nullable', 'string', 'max:30'],
             'address'      => ['nullable', 'string'],
-            'sales_id'     => ['nullable', 'integer', 'exists:users,id'],
+            // Who owns the relationship, and which of our branches carries it (PRD §2.2). Both are checked
+            // against THIS tenant below — `exists:users,id` alone would let another company's rep be attached.
+            'sales_id'     => ['nullable', 'integer'],
+            'branch_id'    => ['nullable', 'integer'],
+            'default_port_id' => ['nullable', 'integer', 'exists:ports,id'],
         ];
 
         if ($this->withAccounts()) {
             $rules += [
                 'gst_no'             => ['nullable', 'string', 'max:30'],
                 'pan_no'             => ['nullable', 'string', 'max:20'],
+                'duns_no'            => ['nullable', 'string', 'max:20'],
                 'payment_terms_days' => ['nullable', 'integer', 'min:0', 'max:365'],
                 'credit_limit'       => ['nullable', 'numeric', 'min:0'],
+                'bank_name'          => ['nullable', 'string', 'max:100'],
+                'bank_account_no'    => ['nullable', 'string', 'max:40'],
+                'bank_ifsc_code'     => ['nullable', 'string', 'max:20'],
             ];
         }
 
         $data = $request->validate($rules);
+
+        // 🔴 **A rep and a branch of OUR company, or neither.** `exists:users,id` passes for any user on the
+        // platform, so an id typed or guessed would attach a client to a stranger's sales rep — and
+        // `customers.sales_id` is the scoping key for the entire Command-tier client book, so that client would
+        // then appear in their book and vanish from ours.
+        foreach ([['sales_id', 'users', 'company_name'], ['branch_id', 'agents_info', 'company_id']] as [$field, $table, $column]) {
+            if (! empty($data[$field]) && ! \Illuminate\Support\Facades\DB::table($table)
+                ->where('id', $data[$field])->where($column, $this->companyId())->exists()) {
+                abort(422, 'That ' . ($field === 'sales_id' ? 'salesperson' : 'branch') . ' is not one of yours.');
+            }
+        }
 
         // The column is NOT NULL with a default; an empty box means "use the default", not NULL.
         if (array_key_exists('payment_terms_days', $data) && $data['payment_terms_days'] === null) {

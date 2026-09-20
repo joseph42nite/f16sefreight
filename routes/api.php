@@ -513,6 +513,12 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
 
+        // ── What each shipment, client and lane made (user, 2026-09-20).
+        Route::get('/profitability/jobs', [\App\Http\Controllers\Freight\ProfitabilityController::class, 'jobs']);
+        Route::get('/profitability/clients', [\App\Http\Controllers\Freight\ProfitabilityController::class, 'clients']);
+        Route::get('/profitability/lanes', [\App\Http\Controllers\Freight\ProfitabilityController::class, 'lanes']);
+        Route::get('/profitability/export', [\App\Http\Controllers\Freight\ProfitabilityController::class, 'export']);
+
         // ── The journal, and the way down from a report to the document behind it (user, 2026-09-20).
         Route::get('/journal', [\App\Http\Controllers\Freight\JournalController::class, 'index']);
         Route::get('/journal/export', [\App\Http\Controllers\Freight\JournalController::class, 'export']);

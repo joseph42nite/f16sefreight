@@ -194,6 +194,9 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
   }),
   created() {
     this.load();
+
+    // Arrived from the journal's drill-through: open that document straight away.
+    if (this.$route.query.open) this.openById(Number(this.$route.query.open));
   },
   methods: {
     showView(key) {

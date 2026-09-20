@@ -687,6 +687,10 @@ var render = function render() {
     }
   }, [_vm._v("Journal →")]), _vm._v(" "), _c("router-link", {
     attrs: {
+      to: "/profitability"
+    }
+  }, [_vm._v("Profitability →")]), _vm._v(" "), _c("router-link", {
+    attrs: {
       to: "/settings/finance"
     }
   }, [_vm._v("Finance settings →")])], 1)]), _vm._v(" "), _c("div", {

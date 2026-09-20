@@ -42,7 +42,7 @@ class BillingDemoSeeder extends Seeder
         $this->openPeriods($branches);
 
         $agent = $this->overseasAgent($company->id, $branches[0]);
-        $made = ['debit_note' => 0, 'credit_note' => 0, 'brokerage' => 0, 'consol_invoice' => 0, 'receipts' => 0, 'chases' => 0, 'postings' => 0];
+        $made = ['debit_note' => 0, 'credit_note' => 0, 'brokerage' => 0, 'consol_invoice' => 0, 'receipts' => 0, 'chases' => 0, 'vouchers' => 0, 'postings' => 0];
 
         foreach ($branches as $branch) {
             // Give the invoices already there the columns a bill register prints.
@@ -83,6 +83,7 @@ class BillingDemoSeeder extends Seeder
 
             $made['receipts'] += $this->receipts($branch, $billed);
             $made['chases'] += $this->chases($branch);
+            $made['vouchers'] += $this->costSome($branch);
             $made['postings'] += $this->postSome($branch);
         }
 
@@ -95,9 +96,9 @@ class BillingDemoSeeder extends Seeder
 
         $this->command->info(sprintf(
             'Billing demo: %d debit notes, %d credit notes, %d brokerage, %d consol, %d receipts, %d chases, '
-                . '%d documents posted to the ledger across %d branches.',
+                . '%d purchase vouchers, %d documents posted to the ledger across %d branches.',
             $made['debit_note'], $made['credit_note'], $made['brokerage'], $made['consol_invoice'],
-            $made['receipts'], $made['chases'], $made['postings'], count($branches)
+            $made['receipts'], $made['chases'], $made['vouchers'], $made['postings'], count($branches)
         ));
     }
 
@@ -115,6 +116,10 @@ class BillingDemoSeeder extends Seeder
         DB::table('accounts_invoice_brokerage_details')->whereIn('invoice_id', $ids)->delete();
         DB::table('accounts_invoice_consol_details')->whereIn('invoice_id', $ids)->delete();
         AccountsInvoice::withoutGlobalScopes()->whereIn('id', $ids)->delete();
+
+        DB::table('accounts_purchase_items')->whereIn('purchase_voucher_id',
+            DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branches)->select('id'))->delete();
+        DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branches)->delete();
 
         // The ledger of a DEMO tenant is the seeder's to rebuild; on a live one it would never be touched.
         DB::table('accounts_ledger_entries')->whereIn('agent_id', $branches)->delete();
@@ -192,6 +197,72 @@ class BillingDemoSeeder extends Seeder
                     'tax_amount' => round($amount * 0.18, 2), 'net_amount' => round($amount * 1.18, 2)]);
             }
         }
+    }
+
+    /**
+     * The buy side, so a margin is a margin.
+     *
+     * ⚠️ Without vouchers every shipment reads 100% and the profitability report is a revenue report with a
+     * warning on every row. The costs here are shaped like real ones — most of it the carrier, a little trucking
+     * and clearance — and one shipment in six is deliberately a LOSS, because a report where nothing ever loses
+     * money is one nobody opens twice.
+     */
+    private function costSome(int $branch): int
+    {
+        $company = DB::table('agents_info')->where('id', $branch)->value('company_id');
+
+        $carrier = Partner::withoutGlobalScopes()->firstOrCreate(
+            ['company_id' => $company, 'name' => 'Emirates SkyCargo'],
+            ['agent_id' => $branch, 'partner_type' => 'airline', 'email' => 'cass@emirates-skycargo.test']
+        );
+        $trucker = Partner::withoutGlobalScopes()->where('company_id', $company)
+            ->where('partner_type', 'transporter')->first() ?? $carrier;
+        $broker = Partner::withoutGlobalScopes()->where('company_id', $company)
+            ->where('partner_type', 'customs_broker')->first() ?? $carrier;
+
+        // Only shipments that have actually been billed: a cost against an unbilled job is work in progress.
+        $billed = AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)
+            ->whereNotIn('status', ['draft', 'void'])->where('type', 'invoice')
+            ->selectRaw('job_id, SUM(subtotal * exchange_rate) AS revenue')->groupBy('job_id')->get();
+
+        $made = 0;
+
+        foreach ($billed as $index => $job) {
+            $revenue = (float) $job->revenue;
+
+            if ($revenue <= 0) {
+                continue;
+            }
+
+            // Most shipments earn 12–30%; every fifth one is sold below cost.
+            $share = $index % 5 === 4 ? 1.09 : (0.70 + ($index % 4) * 0.055);
+
+            foreach ([[$carrier, 'Air freight', 0.78], [$trucker, 'Pickup and delivery', 0.13],
+                      [$broker, 'Customs clearance', 0.09]] as [$vendor, $what, $slice]) {
+                $amount = round($revenue * $share * $slice, 2);
+
+                if ($amount <= 0) {
+                    continue;
+                }
+
+                $voucherId = DB::table('accounts_purchase_vouchers')->insertGetId([
+                    'agent_id' => $branch, 'job_id' => $job->job_id, 'vendor_id' => $vendor->id,
+                    'transport_mode' => 'air', 'voucher_no' => $this->sequences->next($branch, 'PV'),
+                    'document_date' => now()->subDays(random_int(5, 40))->toDateString(), 'status' => 'unpaid',
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+
+                DB::table('accounts_purchase_items')->insert([
+                    'purchase_voucher_id' => $voucherId, 'charge_type' => 'freight', 'description' => $what,
+                    'quantity' => 1, 'rate' => $amount, 'amount' => $amount, 'tax_percentage' => 18,
+                    'tax_amount' => round($amount * 0.18, 2), 'net_amount' => round($amount * 1.18, 2),
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+                $made++;
+            }
+        }
+
+        return $made;
     }
 
     /**

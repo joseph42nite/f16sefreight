@@ -10768,6 +10768,16 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
         minTier: 'command'
       }
     }, {
+      // What each shipment, client and lane made.
+      path: "profitability",
+      name: "Profitability",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_freight_Profitability_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Profitability */ "./resources/js/src/view/pages/freight/Profitability.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['accounts', 'boss'],
+        minTier: 'command'
+      }
+    }, {
       // The day book, and the drill from a report line to the document behind it.
       path: "journal",
       name: "Journal",

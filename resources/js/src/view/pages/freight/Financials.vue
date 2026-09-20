@@ -7,6 +7,7 @@
         <router-link to="/billing">Billing →</router-link>
         <router-link to="/collections">Ageing &amp; collections →</router-link>
         <router-link to="/journal">Journal →</router-link>
+        <router-link to="/profitability">Profitability →</router-link>
         <router-link to="/settings/finance">Finance settings →</router-link>
       </p>
     </header>

@@ -4,10 +4,10 @@
       <h1 class="fx-page-title">Financials</h1>
       <p class="fx-page-sub">
         {{ subtitleForView }}
-        <router-link to="/billing">Billing →</router-link>
-        <router-link to="/collections">Ageing &amp; collections →</router-link>
-        <router-link to="/journal">Journal →</router-link>
-        <router-link to="/profitability">Profitability →</router-link>
+        <router-link to="/money-in">Money in →</router-link>
+        <router-link to="/money-out">Money out →</router-link>
+        <router-link to="/close-month">Close the month →</router-link>
+        <router-link to="/how-were-doing">How we're doing →</router-link>
         <router-link to="/settings/finance">Finance settings →</router-link>
       </p>
     </header>

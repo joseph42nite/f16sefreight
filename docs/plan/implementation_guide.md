@@ -1510,7 +1510,14 @@ address) · **who owns them** (our branch, salesperson, their usual port) · **t
 3. **Money in** 🟢 *(2026-09-21)* — the largest merge: Billing + Collections + bank matching
 4. **Close the month** 🟢 *(2026-09-21)* — the highest-value reframing; five screens become one checklist
 5. **Money out** 🟢 *(2026-09-21)* — smallest, and needed §11.6's payment run first, which was built with it
-6. **How we're doing** — already correct; only needs to be reachable
+6. **How we're doing** 🟢 *(2026-09-21)* — already correct; only needed to be reachable
+
+> **§11 is complete.** The accounts rail is now **Today · Money in · Money out · Close the month · How we're
+> doing · Inbox · Clients & Partners · Settings** — five surfaces named after the job, replacing 23 views spread
+> over six destinations. `navigationRail.spec.js` pins that list, because the failure mode is silent: one stray
+> rail entry re-opens the junk drawer and nothing tells anyone. **Financials keeps its route and stays on the
+> BOSS's rail** as the read-only register; it is off the accounts desk's, because every one of its nine views is
+> now reached from one of the five surfaces and a tenth way in is how the drawer formed the first time.
 
 ### 11.6 Still missing — gaps, not layout
 

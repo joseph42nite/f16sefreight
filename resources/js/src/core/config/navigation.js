@@ -71,7 +71,10 @@ export const NAV_ITEMS = [
     icon: "graph-up", designations: ["sales", "boss"], minTier: "tactical" },
   // ⚠️ /settings/finance is reached FROM Financials, not from the rail: the chart of accounts and the rate cards are
   // set up once and read rarely, and a seventh rail item competes with the registers worked every day.
-  { path: "/financials", label: "Financials", icon: "cash", designations: ["accounts", "boss"], minTier: "command" },
+  // ⚠️ `boss` only on the rail now. Accounts reach every one of its nine views from Today, Money in, Money out or
+  // Close the month; leaving it on their rail as well would be a tenth way into screens they already own, which
+  // is how the junk drawer formed in the first place. The route is kept for deep links and for the Boss.
+  { path: "/financials", label: "Financials", icon: "cash", designations: ["boss"], minTier: "command" },
   // The billing desk (user, 2026-09-19). Accounts' own, not the Boss's: raising and sending a bill is the one thing
   // the role that sets the targets must not do. The Boss reaches the register from Financials.
   // 🔴 The accounts desk lands on WORK, not on a register. Everything else is reachable from it.
@@ -82,6 +85,8 @@ export const NAV_ITEMS = [
   { path: "/money-out", label: "Money out", icon: "cash-stack", designations: ["accounts"], minTier: "command" },
   // Month-end as one action instead of five screens. Accounts' own — the Boss reads the statements from Financials.
   { path: "/close-month", label: "Close the month", icon: "calendar-check", designations: ["accounts"], minTier: "command" },
+  // 🔴 The two screens that answer "why" used to be on no rail at all (guide §11.1).
+  { path: "/how-were-doing", label: "How we're doing", icon: "graph-up", designations: ["accounts"], minTier: "command" },
   { path: "/boss", label: "Overview", icon: "speedometer", designations: ["boss"], minTier: "tactical" },
 
   // ── Always last ──────────────────────────────────────────────────────────
@@ -99,7 +104,7 @@ const RAIL_ORDER = {
   sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
   boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
   // Accounts start in the registers; their inbox sits under it (user, 2026-09-19).
-  accounts: ["/today", "/money-in", "/money-out", "/close-month", "/financials", "/inbox", "/clients-partners", "/settings"],
+  accounts: ["/today", "/money-in", "/money-out", "/close-month", "/how-were-doing", "/inbox", "/clients-partners", "/settings"],
 };
 
 const railRank = (item, designation) => {

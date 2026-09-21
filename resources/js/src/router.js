@@ -445,6 +445,13 @@ const router = new Router({
           meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
         },
         {
+          // How we're doing: the margin, and the way down to the document behind any figure (guide §11.2).
+          path: "how-were-doing",
+          name: "HowWereDoing",
+          component: () => import("@/view/pages/freight/HowWereDoing"),
+          meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
+        },
+        {
           // Money out: what we owe, and the run that pays it (guide §11.2).
           path: "money-out",
           name: "MoneyOut",

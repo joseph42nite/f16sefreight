@@ -64,4 +64,46 @@ describe("the navigation rail", () => {
     const boss = labels({ designation: "boss", tier: "command", portalKey: "admin" });
     expect(boss).toEqual(["Overview", "Inbox", "Sales", "Financials", "Clients & Partners", "Settings"]);
   });
+
+  /**
+   * 🔴 The accounts rail IS the deliverable of guide §11: five surfaces named after the job, in the order the
+   * work happens, replacing 23 views spread over six destinations. Pinning it here because the failure mode is
+   * silent — a stray rail entry re-opens the junk drawer and nothing tells anyone.
+   */
+  it("lays the accounts desk out by the job, in the order the work happens", () => {
+    const accounts = labels({ designation: "accounts", tier: "command", portalKey: "accounts" });
+
+    expect(accounts).toEqual([
+      "Today", "Money in", "Money out", "Close the month", "How we're doing",
+      "Inbox", "Clients & Partners", "Settings",
+    ]);
+  });
+
+  /**
+   * ⚠️ Financials is the Boss's read-only register. Accounts reach every one of its nine views from one of the
+   * five surfaces, so a tenth way in is how the junk drawer formed the first time.
+   */
+  it("keeps Financials on the Boss's rail and off the accounts desk's", () => {
+    expect(labels({ designation: "boss", tier: "command", portalKey: "admin" })).toContain("Financials");
+    expect(labels({ designation: "accounts", tier: "command", portalKey: "accounts" })).not.toContain("Financials");
+  });
+
+  /**
+   * 🔒 §8.1: Command-tier surfaces are VISIBLE AND **LOCKED** below Command, never silently missing — hiding the
+   * item hides the reason to upgrade, so the lock has to explain itself. The five accounts surfaces come back
+   * with `locked: true` rather than disappearing.
+   */
+  it("shows a Tactical accounts login the Command surfaces, locked rather than missing", () => {
+    const tactical = visibleNavFor({
+      designation: "accounts", tier: "tactical", portalKey: "accounts",
+      // Faithful to the real helper: an item with no minimum is satisfied by every tier.
+      tierAtLeast: (min) => !min || min === "tactical",
+    });
+
+    const locked = tactical.filter((i) => i.locked).map((i) => i.label);
+
+    expect(locked).toEqual(["Today", "Money in", "Money out", "Close the month", "How we're doing"]);
+    // Their inbox and the directory are Tactical surfaces and stay usable.
+    expect(tactical.find((i) => i.label === "Inbox").locked).toBe(false);
+  });
 });

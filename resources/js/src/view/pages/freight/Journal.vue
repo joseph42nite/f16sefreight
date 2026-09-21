@@ -1,12 +1,13 @@
 <template>
   <div>
-    <header class="fx-page-head">
+    <header v-if="!embedded" class="fx-page-head">
       <h1 class="fx-page-title">{{ account ? account.account_name : "Journal" }}</h1>
       <p class="fx-page-sub">
         {{ subtitle }}
         <router-link to="/financials">Financials →</router-link>
       </p>
     </header>
+    <p v-else class="fx-muted">{{ subtitle }}</p>
 
     <!--
       The day book (user, 2026-09-20). Every posting the ledger holds, and the document that wrote each one — a
@@ -277,6 +278,10 @@ const DRILL_TABS = [
 export default {
   name: "Journal",
   components: { Figure, FxDrawer },
+  props: {
+    /** Rendered as the drill target inside How we're doing. */
+    embedded: { type: Boolean, default: false },
+  },
   data: () => ({
     DRILL_TABS,
     entries: [], totals: { count: 0, debits: 0, credits: 0 },

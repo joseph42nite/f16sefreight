@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header class="fx-page-head">
+    <header v-if="!embedded" class="fx-page-head">
       <h1 class="fx-page-title">Profitability</h1>
       <p class="fx-page-sub">
         {{ subtitleForView }}
@@ -12,7 +12,8 @@
       Three views of ONE calculation (user, 2026-09-20). A client roll-up that disagreed with the shipments under
       it would leave the desk choosing which screen to believe, so the two roll-ups are the shipment list grouped.
     -->
-    <div class="fx-toolbar fx-financials__views">
+    <!-- Inside How we're doing the page's own view bar is the navigation; this one would be a second copy. -->
+    <div v-if="!embedded" class="fx-toolbar fx-financials__views">
       <button
         v-for="v in VIEWS"
         :key="v.key"
@@ -220,6 +221,11 @@ const VIEWS = [
 export default {
   name: "Profitability",
   components: { Figure, StatusChip },
+  props: {
+    /** Rendered as a view of How we're doing rather than as a page of its own. */
+    embedded: { type: Boolean, default: false },
+    initialView: { type: String, default: "jobs" },
+  },
   data: () => ({
     view: "jobs", VIEWS,
     jobs: [], groups: [], totals: { count: 0, revenue: 0, cost: 0, margin: 0, margin_pct: null },
@@ -236,7 +242,16 @@ export default {
       }[this.view];
     },
   },
+  watch: {
+    // The shell changed view: swap the roll-up without remounting and losing the filters.
+    initialView(view) {
+      this.view = view;
+      this.load();
+    },
+  },
   created() {
+    this.view = this.initialView;
+
     // Arrived from a roll-up: show that client's or that lane's shipments.
     ["customer_id", "origin", "dest", "mode"].forEach((key) => {
       if (this.$route.query[key]) this.filters[key] = this.$route.query[key];

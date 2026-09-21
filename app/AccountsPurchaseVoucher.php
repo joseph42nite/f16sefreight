@@ -18,7 +18,7 @@ class AccountsPurchaseVoucher extends Model
 
     protected $fillable = [
         'agent_id', 'job_id', 'transport_mode', 'vendor_id', 'created_by',
-        'voucher_no', 'document_date', 'status',
+        'voucher_no', 'document_date', 'due_date', 'status', 'amount_paid',
     ];
 
     protected $casts = ['document_date' => 'date'];

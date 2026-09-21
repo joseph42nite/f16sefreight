@@ -1509,14 +1509,14 @@ address) · **who owns them** (our branch, salesperson, their usual port) · **t
 2. **Today** 🟢 *(2026-09-20)* — the home, reading counts from endpoints that already exist
 3. **Money in** 🟢 *(2026-09-21)* — the largest merge: Billing + Collections + bank matching
 4. **Close the month** 🟢 *(2026-09-21)* — the highest-value reframing; five screens become one checklist
-5. **Money out** — smallest, and needs §11.6's payment run to be worth a surface
+5. **Money out** 🟢 *(2026-09-21)* — smallest, and needed §11.6's payment run first, which was built with it
 6. **How we're doing** — already correct; only needs to be reachable
 
 ### 11.6 Still missing — gaps, not layout
 
 | Gap | Why it matters |
 |---|---|
-| **Payment runs** | You can see what is owed and cannot pay it. No payment document, no batch |
+| ~~**Payment runs**~~ | ✅ **Built 2026-09-21** — `accounts_payments` + allocations, one payment per supplier per run, posting Dr `2100-AP` / Cr `1100-Bank` (GAPS #383) |
 | **Bank accounts master** | `1100-Bank` is one account for the whole company; two bank accounts cannot be told apart |
 | **"Cost to book" as a queue** | Shipments billed with nothing costed exist only as a warning on a report |
 | **GSTR-1 / 3B as files** | The register exists; the return does not |

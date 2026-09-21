@@ -68,6 +68,7 @@ class VerifyAccounts extends Command
         $this->today();
         $this->moneyIn();
         $this->closeMonth();
+        $this->moneyOut();
         $this->ledger();
         $this->crossChecks();
 
@@ -261,6 +262,24 @@ class VerifyAccounts extends Command
         $this->check('close ⑥: net profit', 170000.0, $steps['statements']['figures']['net']);
     }
 
+    /** The buy side: four stages, one voucher settled and three still open. */
+    private function moneyOut(): void
+    {
+        $stages = collect(json_decode(app(\App\Http\Controllers\Freight\MoneyOutController::class)
+            ->stages(new Request())->getContent(), true)['stages'])->keyBy('key');
+
+        // ① Every billed shipment is costed, so this warning must be silent.
+        $this->check('money out ①: nothing uncosted', 0, $stages['to_cost']['count']);
+        // ② Four vouchers, gross of input tax: 82,600 + 177,000 + 70,800 + 210,000.
+        $this->check('money out ②: vouchers booked', 540400.0, $stages['vouchers']['amount']);
+        $this->check('money out ②: voucher count', 4, $stages['vouchers']['count']);
+        $this->check('money out ③: statements to check', 0, $stages['statements']['count']);
+        // ④ 540,400 booked less the 82,600 paid, across the three vouchers still open — one supplier.
+        $this->check('money out ④: still owed', 457800.0, $stages['due']['amount']);
+        $this->check('money out ④: open vouchers', 3, $stages['due']['vouchers']);
+        $this->check('money out ④: suppliers', 1, $stages['due']['count']);
+    }
+
     /* ── The books themselves ─────────────────────────────────────────────── */
 
     private function ledger(): void
@@ -273,8 +292,9 @@ class VerifyAccounts extends Command
         $accounts = collect($tb['accounts'])->keyBy('code');
 
         $this->check('ledger: trial balance is balanced', true, $tb['balanced']);
-        $this->check('ledger: total debits', 1556800.0, $tb['totals']['debit']);
-        $this->check('ledger: total credits', 1556800.0, $tb['totals']['credit']);
+        // 1,556,800 of billing and receipts, plus the 82,600 payment on both sides.
+        $this->check('ledger: total debits', 1639400.0, $tb['totals']['debit']);
+        $this->check('ledger: total credits', 1639400.0, $tb['totals']['credit']);
 
         // Dr 736,600 raised against Cr 279,800 credited and received.
         $this->check('ledger: AR debits', 736600.0, $accounts['1200-AR']['debit'] ?? null);
@@ -288,8 +308,11 @@ class VerifyAccounts extends Command
         $this->check('ledger: direct costs', 490000.0, $accounts['5000-Direct-Costs']['debit'] ?? null);
         // 🔴 GST input is an ASSET, reclaimable — never an expense.
         $this->check('ledger: GST input', 50400.0, $accounts['1300-GST-Input']['debit'] ?? null);
-        $this->check('ledger: payables', 540400.0, $accounts['2100-AP']['credit'] ?? null);
-        $this->check('ledger: bank', 268000.0, $accounts['1100-Bank']['debit'] ?? null);
+        $this->check('ledger: payables raised', 540400.0, $accounts['2100-AP']['credit'] ?? null);
+        // 🔴 The other half of the ledger: a payment brings the payable DOWN and takes cash out.
+        $this->check('ledger: payables settled', 82600.0, $accounts['2100-AP']['debit'] ?? null);
+        $this->check('ledger: bank in', 268000.0, $accounts['1100-Bank']['debit'] ?? null);
+        $this->check('ledger: bank out', 82600.0, $accounts['1100-Bank']['credit'] ?? null);
 
         $pl = json_decode($reports->profitAndLoss(new Request(['period_id' => $period]))->getContent(), true);
         $this->check('P&L: revenue', 660000.0, $pl['revenue']['total']);
@@ -297,8 +320,10 @@ class VerifyAccounts extends Command
         $this->check('P&L: net', 170000.0, $pl['net']);
 
         $bs = json_decode($reports->balanceSheet(new Request(['period_id' => $period]))->getContent(), true);
-        $this->check('balance sheet: assets', 775200.0, $bs['assets']['total']);
-        $this->check('balance sheet: liabilities', 605200.0, $bs['liabilities']['total']);
+        // AR 456,800 + GST input 50,400 + bank (268,000 − 82,600).
+        $this->check('balance sheet: assets', 692600.0, $bs['assets']['total']);
+        // GST output 64,800 + payables (540,400 − 82,600).
+        $this->check('balance sheet: liabilities', 522600.0, $bs['liabilities']['total']);
         $this->check('balance sheet: retained earnings', 170000.0, $bs['equity']);
 
         $book = json_decode(app(\App\Http\Controllers\Freight\JournalController::class)
@@ -306,7 +331,8 @@ class VerifyAccounts extends Command
         $this->check('journal: debits equal credits', $book['totals']['debits'], $book['totals']['credits']);
         // 17 sales lines (three documents with tax, one export without, plus both notes), 11 purchase lines
         // (three with input tax, one without) and 6 receipt lines — 34.
-        $this->check('journal: postings', 34, $book['totals']['count']);
+        // 34, plus the payment's two.
+        $this->check('journal: postings', 36, $book['totals']['count']);
     }
 
     /**

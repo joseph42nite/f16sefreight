@@ -515,6 +515,14 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
 
+        // ── Money out: what we owe, and the run that pays it (user, 2026-09-21).
+        Route::get('/payments', [\App\Http\Controllers\Freight\PaymentController::class, 'index']);
+        Route::get('/payments/due', [\App\Http\Controllers\Freight\PaymentController::class, 'due']);
+        Route::post('/payments/run', [\App\Http\Controllers\Freight\PaymentController::class, 'run']);
+        Route::get('/payments/{id}/posting-preview', [\App\Http\Controllers\Freight\PaymentController::class, 'postingPreview'])->whereNumber('id');
+        Route::post('/payments/{id}/post', [\App\Http\Controllers\Freight\PaymentController::class, 'post'])->whereNumber('id');
+        Route::get('/money-out/stages', [\App\Http\Controllers\Freight\MoneyOutController::class, 'stages']);
+
         // ── Close the month: six steps that know where you are (guide §11.2).
         Route::get('/close-month', [\App\Http\Controllers\Freight\CloseMonthController::class, 'index']);
 

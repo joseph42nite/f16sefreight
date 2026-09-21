@@ -176,6 +176,23 @@ class LedgerPostingService
         return $lines;
     }
 
+    /**
+     * A payment: payable down, cash out. The exact mirror of a receipt.
+     *
+     *   Dr  2100-AP                amount paid
+     *   Cr  1100-Bank              amount paid
+     *
+     * ⚠️ No adjustment leg. A supplier settled SHORT is a dispute, not a write-off we take silently — it stays on
+     * the voucher as an outstanding balance and goes through the statement comparison, where somebody argues it.
+     */
+    public function linesForPayment(float $paid): array
+    {
+        return [
+            self::AP + ['debit' => round($paid, 2), 'credit' => 0.0],
+            self::BANK + ['debit' => 0.0, 'credit' => round($paid, 2)],
+        ];
+    }
+
     /** Debits, credits and whether they agree — the summary a preview needs. */
     public function summarise(array $lines): array
     {

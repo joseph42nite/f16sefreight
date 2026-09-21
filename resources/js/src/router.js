@@ -445,6 +445,13 @@ const router = new Router({
           meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
         },
         {
+          // Money out: what we owe, and the run that pays it (guide §11.2).
+          path: "money-out",
+          name: "MoneyOut",
+          component: () => import("@/view/pages/freight/MoneyOut"),
+          meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
+        },
+        {
           // Close the month: six steps that know where you are (guide §11.2).
           path: "close-month",
           name: "CloseMonth",

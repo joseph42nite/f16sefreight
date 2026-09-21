@@ -82,6 +82,8 @@ class AccountsRegressionSeeder extends Seeder
             ['job' => 'j3', 'net' => 60000, 'tax' => 10800],   // sold at a LOSS: billed 50,000, cost 60,000
             ['job' => 'j4', 'net' => 210000, 'tax' => 0],
         ],
+        // The voucher settled in the fixture: j1's, at 70,000 + 12,600 = 82,600 gross.
+        'paid_voucher' => 'j1',
         'receipts' => [
             ['key' => 'r1', 'client' => 'northstar', 'amount' => 118000, 'against' => 'inv1'],   // settles it in full
             ['key' => 'r2', 'client' => 'northstar', 'amount' => 100000, 'against' => 'inv2'],   // part payment
@@ -269,9 +271,14 @@ class AccountsRegressionSeeder extends Seeder
             'rate' => $f['draft']['net'], 'amount' => $f['draft']['net'], 'tax_percentage' => 0,
             'tax_amount' => $f['draft']['tax'], 'net_amount' => $f['draft']['net'] + $f['draft']['tax']]);
 
+        $bought = [];
         foreach ($f['costs'] as $c) {
-            $this->buy($branch, $jobs[$c['job']], $carrier, $c['net'], $c['tax'], $period, $accounts);
+            $bought[$c['job']] = $this->buy($branch, $jobs[$c['job']], $carrier, $c['net'], $c['tax'], $period, $accounts);
         }
+
+        // One voucher paid in full — 70,000 plus 12,600 of input tax — so the payable comes down and the bank
+        // shows both sides. The rest stay open, which is what stage ④ of Money out is for.
+        $this->pay($branch, $carrier, $bought[$f['paid_voucher']], $accounts);
 
         foreach ($f['receipts'] as $r) {
             $this->receive($branch, $clients[$r['client']], $r['amount'],
@@ -368,7 +375,7 @@ class AccountsRegressionSeeder extends Seeder
         return $invoice->fresh();
     }
 
-    private function buy(Agent $branch, Job $job, Partner $vendor, float $net, float $tax, int $period, User $by): void
+    private function buy(Agent $branch, Job $job, Partner $vendor, float $net, float $tax, int $period, User $by): \App\AccountsPurchaseVoucher
     {
         $voucher = \App\AccountsPurchaseVoucher::withoutGlobalScopes()->create([
             'agent_id' => $branch->id, 'job_id' => $job->id, 'vendor_id' => $vendor->id,
@@ -382,6 +389,28 @@ class AccountsRegressionSeeder extends Seeder
 
         $this->post($this->ledger->linesForVoucher($voucher->fresh()), $branch->id,
             $voucher->document_date, $voucher->id, 'purchase_voucher');
+
+        return $voucher->fresh();
+    }
+
+    /** A payment against one voucher, in full, posted — the mirror of a receipt. */
+    private function pay(Agent $branch, Partner $vendor, \App\AccountsPurchaseVoucher $voucher, User $by): void
+    {
+        $gross = round((float) $voucher->items()->sum('net_amount'), 2);
+
+        $payment = \App\AccountsPayment::withoutGlobalScopes()->create([
+            'agent_id' => $branch->id, 'payee_type' => 'partner', 'payee_id' => $vendor->id,
+            'payment_no' => $this->sequences->next($branch->id, 'PAY'),
+            'payment_date' => now()->subDays(2)->toDateString(), 'mode' => 'bank_transfer',
+            'reference' => 'UTR-REG-PAYOUT', 'amount' => $gross, 'currency' => 'INR', 'exchange_rate' => 1,
+            'run_ref' => 'RUN-FIXTURE', 'is_posted' => true, 'created_by' => $by->id,
+        ]);
+
+        $payment->allocations()->create(['purchase_voucher_id' => $voucher->id, 'amount' => $gross]);
+        $voucher->update(['amount_paid' => $gross, 'status' => 'paid']);
+
+        $this->post($this->ledger->linesForPayment($gross), $branch->id,
+            $payment->payment_date, $payment->id, 'payment');
     }
 
     private function receive(Agent $branch, Customer $client, float $amount, ?AccountsInvoice $against,

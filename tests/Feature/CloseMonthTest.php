@@ -194,6 +194,45 @@ class CloseMonthTest extends TestCase
         $this->assertStringContainsString('DOES NOT BALANCE', $broken['note']);
     }
 
+    /**
+     * 🔴 Closing the last open month must not leave the page with nothing selected.
+     *
+     * It defaulted only to an OPEN period, so closing the final one left the screen blank — and therefore with
+     * no reopen button, which put the one-way door straight back where reopening was meant to remove it.
+     */
+    public function test_the_page_still_shows_the_month_after_the_last_one_is_closed(): void
+    {
+        DB::table('accounting_periods')->where('id', $this->periodId)->update(['status' => 'closed']);
+
+        $body = $this->as($this->accounts)->getJson($this->url('/close-month'))->assertOk()->json();
+
+        $this->assertSame($this->periodId, $body['period']['id'], 'the last closed month is still shown');
+        $this->assertFalse($body['can_close']);
+
+        $step5 = collect($body['steps'])->firstWhere('key', 'close');
+        $this->assertTrue($step5['can_reopen'], 'and it can be reopened from here');
+        $this->assertStringContainsString('It can be reopened', $step5['note']);
+    }
+
+    /** ⚠️ An older month offers no reopen while a later one is closed — it names the one to unwind first. */
+    public function test_an_older_closed_month_points_at_the_later_one_first(): void
+    {
+        DB::table('accounting_periods')->where('id', $this->periodId)->update(['status' => 'closed']);
+        DB::table('accounting_periods')->insert([
+            'agent_id' => $this->branch->id, 'period_name' => 'FY27',
+            'start_date' => now()->addMonths(2)->toDateString(), 'end_date' => now()->addMonths(14)->toDateString(),
+            'status' => 'closed', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $step5 = collect($this->as($this->accounts)
+            ->getJson($this->url("/close-month?period_id={$this->periodId}"))->json('steps'))
+            ->firstWhere('key', 'close');
+
+        $this->assertFalse($step5['can_reopen']);
+        $this->assertSame('FY27', $step5['reopen_blocked_by']);
+        $this->assertStringContainsString('reopen FY27 first', $step5['note']);
+    }
+
     public function test_another_company_cannot_see_or_close_this_period(): void
     {
         $other = Company::create(['name' => 'Rival Close', 'code' => 'RVC', 'tier' => 'command']);

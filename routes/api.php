@@ -494,6 +494,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         // 🔒 accounts alone: opening and closing a period is what lets anything be posted into it (user, 2026-09-18).
         Route::post('/reports/periods', [\App\Http\Controllers\Freight\FinancialReportController::class, 'openPeriod']);
         Route::post('/reports/periods/{period}/close', [\App\Http\Controllers\Freight\FinancialReportController::class, 'closePeriod']);
+        // Closing was a one-way door until now (PRD §251 always promised a reopen).
+        Route::post('/reports/periods/{period}/reopen', [\App\Http\Controllers\Freight\FinancialReportController::class, 'reopenPeriod']);
         Route::get('/reports/profit-and-loss', [\App\Http\Controllers\Freight\FinancialReportController::class, 'profitAndLoss']);
         Route::get('/reports/balance-sheet', [\App\Http\Controllers\Freight\FinancialReportController::class, 'balanceSheet']);
         Route::get('/reports/trial-balance', [\App\Http\Controllers\Freight\FinancialReportController::class, 'trialBalance']);

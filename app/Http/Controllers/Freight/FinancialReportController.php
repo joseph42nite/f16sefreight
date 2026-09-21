@@ -270,8 +270,70 @@ class FinancialReportController extends Controller
             ], 422);
         }
 
-        DB::table('accounting_periods')->where('id', $periodId)->update(['status' => 'closed', 'updated_at' => now()]);
+        DB::table('accounting_periods')->where('id', $periodId)->update([
+            'status' => 'closed', 'closed_at' => now(), 'closed_by' => auth()->id(),
+            // A month closed again after a reopen starts a clean sheet: the old reason describes the old close.
+            'reopened_at' => null, 'reopened_by' => null, 'reopen_reason' => null,
+            'updated_at' => now(),
+        ]);
         $this->audit->record((int) $period->agent_id, 'period.closed', 'accounting_period', $periodId, auth()->id());
+
+        return response()->json(DB::table('accounting_periods')->find($periodId));
+    }
+
+    /**
+     * Reopen a closed month (PRD §251).
+     *
+     * 🔴 **ONLY THE MOST RECENTLY CLOSED MONTH OF THAT BRANCH.** Reopening an older one while newer ones stay
+     * closed is how a ledger quietly goes wrong: every report for the later months was built on the arithmetic
+     * of this one being final, and a rupee posted back into it now makes those months' opening figures a lie
+     * without anything saying so. To reach an older month you reopen the ones after it first, in order, and see
+     * each of those months become unfinal as you go.
+     *
+     * ⚠️ It needs a reason, and the reason stays on the period. "Reopened on the 11th because the airline's
+     * September invoice arrived late" is what makes a reopened month defensible; an unexplained one is not.
+     */
+    public function reopenPeriod(Request $request, int $periodId): JsonResponse
+    {
+        $this->authorize('managePeriods');
+
+        $data = $request->validate(['reason' => 'required|string|max:255']);
+
+        $context = UserContext::for(auth()->user());
+        $period = DB::table('accounting_periods')->where('id', $periodId)
+            ->whereIn('agent_id', $this->reachableBranches($context))->first();
+
+        if ($period === null) {
+            return response()->json(['error' => 'That accounting period is not one of yours.',
+                'reason' => 'period_not_found'], 404);
+        }
+
+        if ($period->status !== 'closed') {
+            return response()->json(['error' => 'That period is already open.', 'reason' => 'not_closed'], 422);
+        }
+
+        $newer = DB::table('accounting_periods')->where('agent_id', $period->agent_id)
+            ->where('status', 'closed')->where('start_date', '>', $period->start_date)
+            ->orderBy('start_date')->first();
+
+        if ($newer !== null) {
+            return response()->json([
+                'error' => sprintf(
+                    '%s was closed after this one. Reopen it first — otherwise its opening figures would no '
+                    . 'longer match what this month ends at.',
+                    $newer->period_name
+                ),
+                'reason' => 'later_period_closed',
+                'blocked_by' => $newer->period_name,
+            ], 422);
+        }
+
+        DB::table('accounting_periods')->where('id', $periodId)->update([
+            'status' => 'open', 'reopened_at' => now(), 'reopened_by' => auth()->id(),
+            'reopen_reason' => $data['reason'], 'updated_at' => now(),
+        ]);
+
+        $this->audit->record((int) $period->agent_id, 'period.reopened', 'accounting_period', $periodId, auth()->id());
 
         return response()->json(DB::table('accounting_periods')->find($periodId));
     }

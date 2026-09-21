@@ -108,6 +108,20 @@
                 :disabled="busy || !canClose"
                 @click="confirming = true"
               >{{ busy ? "Closing…" : "Close " + period.period_name }}</button>
+
+              <!--
+                🔴 Closing used to be a one-way door. Only the LATEST closed month may be reopened: an older one
+                reopened while newer ones stay closed makes every later month's opening figures a lie.
+              -->
+              <button
+                v-if="s.key === 'close' && s.can_reopen"
+                class="fx-btn"
+                :disabled="busy"
+                @click="reopening = { reason: '' }"
+              >Reopen {{ period.period_name }}</button>
+              <span v-else-if="s.key === 'close' && s.reopen_blocked_by" class="fx-muted">
+                Reopen {{ s.reopen_blocked_by }} first.
+              </span>
             </div>
           </div>
         </li>
@@ -115,6 +129,34 @@
 
       <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
     </template>
+
+    <!-- Reopening a month that has been reported on is a serious act, so it asks and it keeps the reason. -->
+    <div v-if="reopening" class="fx-modal" role="dialog" aria-modal="true" aria-labelledby="reopen-title">
+      <div class="fx-modal__panel">
+        <header class="fx-modal__head">
+          <h2 id="reopen-title" class="fx-modal__title">Reopen {{ period.period_name }}?</h2>
+        </header>
+        <div class="fx-modal__body">
+          <p>
+            Documents dated inside {{ period.period_name }} will be able to post again. Anything already reported
+            from this month — the P&amp;L, the balance sheet, a filed return — was worked out on the figures as
+            they stand now, and posting into it will move them.
+          </p>
+          <label class="fx-field">
+            <span class="fx-field__label">Why are you reopening it?</span>
+            <input v-model="reopening.reason" class="fx-input" placeholder="the airline's September invoice arrived late" />
+          </label>
+          <p class="fx-muted">It stays on the period, with your name and today's date.</p>
+          <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
+        </div>
+        <footer class="fx-modal__foot">
+          <button class="fx-btn" :disabled="busy" @click="reopening = null">Cancel</button>
+          <button class="fx-btn fx-btn--primary" :disabled="busy || !reopening.reason.trim()" @click="reopen">
+            Reopen it
+          </button>
+        </footer>
+      </div>
+    </div>
 
     <!-- Closing is the one irreversible thing on this page, so it asks. -->
     <div v-if="confirming" class="fx-modal" role="dialog" aria-modal="true" aria-labelledby="close-title">
@@ -151,7 +193,7 @@ export default {
   components: { Figure, StatusChip },
   data: () => ({
     steps: [], period: null, periods: [], branches: [], periodId: null,
-    canClose: false, blockedBy: null, note: "", open: null, confirming: false,
+    canClose: false, blockedBy: null, note: "", open: null, confirming: false, reopening: null,
     loading: true, busy: false, error: null, actionError: null,
   }),
   computed: {
@@ -198,6 +240,17 @@ export default {
           this.error = (e.response && e.response.data && e.response.data.error) || "The month could not be read.";
         })
         .finally(() => { this.loading = false; });
+    },
+    reopen() {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/reports/periods/${this.period.id}/reopen`, { reason: this.reopening.reason })
+        .then(() => { this.reopening = null; this.load(); })
+        .catch((e) => {
+          const data = e.response && e.response.data;
+          this.actionError = (data && (data.error || data.message)) || "The period would not reopen.";
+        })
+        .finally(() => { this.busy = false; });
     },
     close() {
       this.busy = true;

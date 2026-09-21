@@ -36,18 +36,21 @@ class CloseMonthController extends Controller
         $branches = $this->branches();
         $periods = DB::table('accounting_periods')->whereIn('agent_id', $branches->pluck('id'))
             ->orderByDesc('start_date')
-            ->get(['id', 'agent_id', 'period_name', 'start_date', 'end_date', 'status']);
+            ->get(['id', 'agent_id', 'period_name', 'start_date', 'end_date', 'status',
+                   'closed_at', 'reopened_at', 'reopen_reason']);
 
+        // 🔴 The open month if there is one, otherwise the LAST ONE CLOSED. Defaulting only to an open period
+        // meant that closing the final month left this page with nothing selected — and therefore no way to
+        // reopen it, which put the one-way door straight back where reopening was meant to remove it.
         $period = $request->filled('period_id')
             ? $periods->firstWhere('id', $request->integer('period_id'))
-            : $periods->firstWhere('status', 'open');
+            : ($periods->firstWhere('status', 'open')
+                ?? $periods->where('status', 'closed')->sortByDesc('start_date')->first());
 
         if ($period === null) {
             return response()->json([
                 'period' => null, 'periods' => $periods, 'branches' => $branches, 'steps' => [],
-                'note' => $periods->isEmpty()
-                    ? 'No accounting period has been opened yet.'
-                    : 'Every period is closed. Open the next one before billing into it.',
+                'note' => 'No accounting period has been opened yet.',
             ]);
         }
 
@@ -61,14 +64,28 @@ class CloseMonthController extends Controller
         // ⚠️ `can_close` is the BLOCKING steps only — see the class docblock.
         $blocked = collect($steps)->first(fn ($s) => $s['blocking'] && ! $s['clear']);
 
+        // 🔴 Only the LATEST closed month of the branch may be reopened — see `reopenPeriod()`.
+        $laterClosed = $period->status !== 'open'
+            ? DB::table('accounting_periods')->where('agent_id', $period->agent_id)->where('status', 'closed')
+                ->where('start_date', '>', $period->start_date)->orderBy('start_date')->value('period_name')
+            : null;
+
         $steps[] = [
             'step' => 5, 'key' => 'close', 'label' => 'Close the period', 'blocking' => false,
             'clear' => $period->status !== 'open', 'count' => 0,
+            'can_reopen' => $period->status !== 'open' && $laterClosed === null,
+            'reopen_blocked_by' => $laterClosed,
+            'reopened' => $period->reopened_at !== null,
             'note' => $period->status !== 'open'
                 ? $period->period_name . ' is closed. Nothing can post into it.'
-                : ($blocked
-                    ? 'Clear step ' . $blocked['step'] . ' first — ' . strtolower($blocked['label'])
-                    : 'Ready to close. Nothing will be able to post into it afterwards.'),
+                    . ($laterClosed !== null
+                        ? ' To reopen it, reopen ' . $laterClosed . ' first.'
+                        : ' It can be reopened if something dated inside it still has to be posted.')
+                : ($period->reopened_at !== null
+                    ? $period->period_name . ' was reopened: ' . $period->reopen_reason
+                    : ($blocked
+                        ? 'Clear step ' . $blocked['step'] . ' first — ' . strtolower($blocked['label'])
+                        : 'Ready to close. Nothing will be able to post into it afterwards.')),
         ];
 
         $steps[] = $this->statements($period);

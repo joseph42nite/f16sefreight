@@ -2,10 +2,7 @@
   <div>
     <header class="fx-page-head">
       <h1 class="fx-page-title">Today</h1>
-      <p class="fx-page-sub">
-        {{ greeting }}
-        <router-link to="/financials">Financials →</router-link>
-      </p>
+      <p class="fx-page-sub">{{ greeting }}</p>
     </header>
 
     <div v-if="branches.length > 1" class="fx-toolbar">
@@ -59,17 +56,13 @@
         </ul>
       </section>
 
-      <section class="fx-section">
-        <h2 class="fx-section__title">The rest of the desk</h2>
-        <div class="fx-toolbar">
-          <router-link class="fx-btn" to="/billing">Billing</router-link>
-          <router-link class="fx-btn" to="/collections">Ageing &amp; collections</router-link>
-          <router-link class="fx-btn" to="/financials">Registers &amp; reports</router-link>
-          <router-link class="fx-btn" to="/profitability">Profitability</router-link>
-          <router-link class="fx-btn" to="/journal">Journal</router-link>
-          <router-link class="fx-btn" to="/clients-partners">Clients</router-link>
-        </div>
-      </section>
+      <!--
+        🔴 There was a "rest of the desk" row of links here, added when Today was built and before the re-layout
+        finished (guide §11). Every one of its six buttons is now either a STAGE of a rail item — Billing and
+        Ageing are Money in, Profitability and the Journal are How we're doing — or the Financials drawer that was
+        deliberately taken off this rail. A second set of navigation under the rail is how that drawer formed the
+        first time, so it is gone: the rail is the navigation, and this page is the day's work.
+      -->
     </template>
   </div>
 </template>
@@ -92,12 +85,16 @@ export default {
       if (this.loading || this.error) return "The accounts desk.";
 
       const work = this.cards.filter((c) => c.count > 0).length;
+      const decisions = this.exceptions.length;
 
-      if (!work && !this.exceptions.length) return "Nothing is waiting. The desk is clear.";
+      if (!work && !decisions) return "Nothing is waiting. The desk is clear.";
 
-      return this.exceptions.length
-        ? `${work} thing(s) to work through, and ${this.exceptions.length} that need a decision.`
-        : `${work} thing(s) to work through.`;
+      // Written out rather than "thing(s)": this is the first line the desk reads every morning.
+      const things = work === 1 ? "1 thing to work through" : `${work} things to work through`;
+
+      if (!decisions) return `${things}.`;
+
+      return `${things}, and ${decisions === 1 ? "1 that needs" : decisions + " that need"} a decision.`;
     },
   },
   created() {

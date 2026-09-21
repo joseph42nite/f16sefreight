@@ -69,6 +69,7 @@ class VerifyAccounts extends Command
         $this->moneyIn();
         $this->closeMonth();
         $this->moneyOut();
+        $this->banks();
         $this->ledger();
         $this->crossChecks();
 
@@ -280,6 +281,26 @@ class VerifyAccounts extends Command
         $this->check('money out ④: suppliers', 1, $stages['due']['count']);
     }
 
+    /** The bank accounts master: two accounts, two balances, and the statements that belong to each. */
+    private function banks(): void
+    {
+        $body = json_decode(app(\App\Http\Controllers\Freight\BankAccountController::class)
+            ->index(new Request())->getContent(), true);
+        $accounts = collect($body['accounts'])->keyBy('name');
+
+        $this->check('banks: accounts on the master', 2, count($body['accounts']));
+        $this->check('banks: Collections balance', 268000.0, $accounts['Collections']['balance'] ?? null);
+        $this->check('banks: Payouts balance', -82600.0, $accounts['Payouts']['balance'] ?? null);
+        // ⚠️ Nothing was posted before the master existed in this fixture, so the legacy account is empty.
+        $this->check('banks: nothing left undifferentiated', 0.0, $body['legacy_balance']);
+        // 🔐 The number is encrypted and never returned; the last four are, so a statement can be matched by eye.
+        $this->check('banks: account number withheld', false, array_key_exists('account_no', $accounts['Collections']));
+        $this->check('banks: last four shown', '4321', $accounts['Collections']['last_four'] ?? null);
+        // 692,600 of assets, of which the two banks hold 185,400 between them.
+        $this->check('banks: the two together', 185400.0,
+            round((float) $accounts['Collections']['balance'] + (float) $accounts['Payouts']['balance'], 2));
+    }
+
     /* ── The books themselves ─────────────────────────────────────────────── */
 
     private function ledger(): void
@@ -311,8 +332,11 @@ class VerifyAccounts extends Command
         $this->check('ledger: payables raised', 540400.0, $accounts['2100-AP']['credit'] ?? null);
         // 🔴 The other half of the ledger: a payment brings the payable DOWN and takes cash out.
         $this->check('ledger: payables settled', 82600.0, $accounts['2100-AP']['debit'] ?? null);
-        $this->check('ledger: bank in', 268000.0, $accounts['1100-Bank']['debit'] ?? null);
-        $this->check('ledger: bank out', 82600.0, $accounts['1100-Bank']['credit'] ?? null);
+        // 🔴 TWO bank accounts, told apart — the whole reason the master exists. Money in lands in Collections;
+        // the payment leaves Payouts. On a single `1100-Bank` these were one indistinguishable balance.
+        $this->check('ledger: into Collections', 268000.0, $accounts['1100-Bank-HDFCBANK-4321']['debit'] ?? null);
+        $this->check('ledger: out of Payouts', 82600.0, $accounts['1100-Bank-ICICIBANK-9876']['credit'] ?? null);
+        $this->check('ledger: nothing on the undifferentiated bank', null, $accounts['1100-Bank'] ?? null);
 
         $pl = json_decode($reports->profitAndLoss(new Request(['period_id' => $period]))->getContent(), true);
         $this->check('P&L: revenue', 660000.0, $pl['revenue']['total']);

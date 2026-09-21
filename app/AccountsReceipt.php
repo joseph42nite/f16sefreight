@@ -23,6 +23,7 @@ class AccountsReceipt extends Model
 
     protected $fillable = [
         'agent_id', 'payer_type', 'payer_id', 'receipt_no', 'receipt_date', 'mode', 'reference',
+        'bank_account_id',
         'amount', 'currency', 'exchange_rate', 'bank_transaction_id', 'narration', 'is_posted', 'created_by',
     ];
 

@@ -65,6 +65,9 @@ class PaymentController extends Controller
             'total' => round($rows->sum('amount'), 2),
             'branches' => $branches,
             'modes' => AccountsPayment::MODES,
+            'bank_accounts' => \App\BankAccount::withoutTenantScope()
+                ->whereIn('agent_id', $branches->pluck('id'))->active()->orderBy('name')
+                ->get(['id', 'agent_id', 'name', 'bank_name', 'last_four', 'currency', 'is_default']),
         ]);
     }
 
@@ -139,6 +142,7 @@ class PaymentController extends Controller
             'mode' => 'required|in:' . implode(',', AccountsPayment::MODES),
             'reference' => 'nullable|string|max:60',
             'narration' => 'nullable|string|max:255',
+            'bank_account_id' => 'nullable|integer',
             'allocations' => 'required|array|min:1',
             'allocations.*.purchase_voucher_id' => 'required|integer',
             'allocations.*.amount' => 'required|numeric|min:0.01',
@@ -186,6 +190,7 @@ class PaymentController extends Controller
                     'payment_date' => $data['payment_date'], 'mode' => $data['mode'],
                     'reference' => $data['reference'] ?? null, 'amount' => $amount,
                     'currency' => 'INR', 'exchange_rate' => 1, 'run_ref' => $runRef,
+                    'bank_account_id' => $this->bankAccount($data['bank_account_id'] ?? null)?->id,
                     'narration' => $data['narration'] ?? null, 'created_by' => auth()->id(),
                 ]);
 
@@ -231,7 +236,8 @@ class PaymentController extends Controller
         }
 
         DB::transaction(function () use ($payment, $period) {
-            $this->ledger->write($this->ledger->linesForPayment((float) $payment->amount),
+            $this->ledger->write(
+                $this->ledger->linesForPayment((float) $payment->amount, $this->bankAccount($payment->bank_account_id)),
                 $payment->agent_id, $period->id, $payment->id, 'payment');
 
             $payment->update(['is_posted' => true]);
@@ -246,9 +252,18 @@ class PaymentController extends Controller
     {
         $this->authorize('viewFinancials');
 
+        $payment = $this->own($id);
+
         return response()->json($this->ledger->summarise(
-            $this->ledger->linesForPayment((float) $this->own($id)->amount)
+            $this->ledger->linesForPayment((float) $payment->amount, $this->bankAccount($payment->bank_account_id))
         ));
+    }
+
+    /** One of OUR bank accounts, or none — never another company's. */
+    private function bankAccount(?int $id): ?\App\BankAccount
+    {
+        return $id === null ? null : \App\BankAccount::withoutTenantScope()->where('id', $id)
+            ->whereIn('agent_id', $this->branches()->pluck('id'))->first();
     }
 
     /** What a voucher still owes: its lines, less everything placed against it. */

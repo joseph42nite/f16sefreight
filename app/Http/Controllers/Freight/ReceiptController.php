@@ -68,6 +68,9 @@ class ReceiptController extends Controller
             'total' => round($rows->sum('amount'), 2),
             'branches' => $branches,
             'modes' => AccountsReceipt::MODES,
+            'bank_accounts' => \App\BankAccount::withoutTenantScope()
+                ->whereIn('agent_id', $branches->pluck('id'))->active()->orderBy('name')
+                ->get(['id', 'agent_id', 'name', 'bank_name', 'last_four', 'currency', 'is_default']),
         ]);
     }
 
@@ -115,6 +118,9 @@ class ReceiptController extends Controller
             'exchange_rate' => 'nullable|numeric|min:0',
             'narration' => 'nullable|string|max:255',
             'bank_transaction_id' => 'nullable|integer',
+            // Which of our accounts it landed in. Optional: a receipt recorded before the master existed, or by
+            // somebody who does not know yet, posts to the undifferentiated `1100-Bank` and says so.
+            'bank_account_id' => 'nullable|integer',
             'allocations' => 'nullable|array',
             'allocations.*.invoice_id' => 'required|integer',
             'allocations.*.amount' => 'required|numeric|min:0.01',
@@ -163,6 +169,7 @@ class ReceiptController extends Controller
                 'currency' => strtoupper($data['currency'] ?? 'INR'),
                 'exchange_rate' => $data['exchange_rate'] ?? 1,
                 'bank_transaction_id' => $data['bank_transaction_id'] ?? null,
+                'bank_account_id' => $this->bankAccount($data['bank_account_id'] ?? null)?->id,
                 'narration' => $data['narration'] ?? null,
                 'created_by' => auth()->id(),
             ]);
@@ -209,7 +216,8 @@ class ReceiptController extends Controller
 
         DB::transaction(function () use ($receipt, $period) {
             $this->ledger->write(
-                $this->ledger->linesForReceipt((float) $receipt->amount, ...$this->adjustment($receipt)),
+                $this->ledger->linesForReceipt((float) $receipt->amount, ...$this->adjustment($receipt),
+                    into: $this->bankAccount($receipt->bank_account_id)),
                 $receipt->agent_id, $period->id, $receipt->id, 'receipt'
             );
 
@@ -228,7 +236,8 @@ class ReceiptController extends Controller
         $receipt = $this->own($id);
 
         return response()->json($this->ledger->summarise(
-            $this->ledger->linesForReceipt((float) $receipt->amount, ...$this->adjustment($receipt))
+            $this->ledger->linesForReceipt((float) $receipt->amount, ...$this->adjustment($receipt),
+                into: $this->bankAccount($receipt->bank_account_id))
         ));
     }
 
@@ -275,6 +284,13 @@ class ReceiptController extends Controller
                 default => $invoice->status,
             },
         ]);
+    }
+
+    /** One of OUR bank accounts, or none — never another company's. */
+    private function bankAccount(?int $id): ?\App\BankAccount
+    {
+        return $id === null ? null : \App\BankAccount::withoutTenantScope()->where('id', $id)
+            ->whereIn('agent_id', $this->branches()->pluck('id'))->first();
     }
 
     private function own(int $id): AccountsReceipt

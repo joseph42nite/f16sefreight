@@ -515,6 +515,12 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
 
+        // ── The bank accounts master (user, 2026-09-21). Each posts to its own ledger code.
+        Route::get('/bank-accounts', [\App\Http\Controllers\Freight\BankAccountController::class, 'index']);
+        Route::post('/bank-accounts', [\App\Http\Controllers\Freight\BankAccountController::class, 'store']);
+        Route::put('/bank-accounts/{id}', [\App\Http\Controllers\Freight\BankAccountController::class, 'update'])->whereNumber('id');
+        Route::post('/bank-accounts/{id}/close', [\App\Http\Controllers\Freight\BankAccountController::class, 'close'])->whereNumber('id');
+
         // ── Money out: what we owe, and the run that pays it (user, 2026-09-21).
         Route::get('/payments', [\App\Http\Controllers\Freight\PaymentController::class, 'index']);
         Route::get('/payments/due', [\App\Http\Controllers\Freight\PaymentController::class, 'due']);

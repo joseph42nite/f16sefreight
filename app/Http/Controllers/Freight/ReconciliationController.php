@@ -134,6 +134,7 @@ class ReconciliationController extends Controller
 
         $data = $request->validate([
             'agent_id' => 'required|integer',
+            'bank_account_id' => 'nullable|integer',
             'csv' => 'required_without:lines|nullable|string',
             'lines' => 'required_without:csv|nullable|array',
         ]);
@@ -144,10 +145,24 @@ class ReconciliationController extends Controller
             return response()->json(['error' => 'That branch is not one of yours.', 'reason' => 'branch_not_found'], 404);
         }
 
+        // 🔴 The account a statement belongs to must be one of OURS and one of that BRANCH's: importing HDFC's
+        // statement against the ICICI account reconciles money that arrived somewhere else.
+        $account = null;
+
+        if (! empty($data['bank_account_id'])) {
+            $account = \App\BankAccount::withoutTenantScope()->where('id', $data['bank_account_id'])
+                ->where('agent_id', $data['agent_id'])->first();
+
+            if ($account === null) {
+                return response()->json(['error' => 'That bank account is not one of this branch\'s.',
+                    'reason' => 'bank_account_not_found'], 404);
+            }
+        }
+
         $importer = app(\App\Services\Bank\StatementImporter::class);
         $lines = $data['lines'] ?? $importer->fromCsv($data['csv']);
 
-        return response()->json($importer->import((int) $data['agent_id'], $lines));
+        return response()->json($importer->import((int) $data['agent_id'], $lines, 'manual', $account?->id));
     }
 
     /** One row of the comparison, in the shape both the list and the drafter read. */
@@ -270,6 +285,8 @@ class ReconciliationController extends Controller
                 'reference' => $transaction->reference ?? $transaction->plaid_transaction_id,
                 'amount' => $received, 'currency' => $transaction->currency ?? 'INR', 'exchange_rate' => 1,
                 'bank_transaction_id' => $transaction->id,
+                // The receipt lands in the account the statement line came from.
+                'bank_account_id' => $transaction->bank_account_id,
                 'narration' => $transaction->narration,
                 'is_posted' => true, 'created_by' => auth()->id(),
             ]);
@@ -280,7 +297,10 @@ class ReconciliationController extends Controller
             ]);
 
             $this->ledger->write(
-                $this->ledger->linesForReceipt($received, $adjustmentAccount, $shortfall),
+                $this->ledger->linesForReceipt($received, $adjustmentAccount, $shortfall,
+                    into: $transaction->bank_account_id
+                        ? \App\BankAccount::withoutTenantScope()->find($transaction->bank_account_id)
+                        : null),
                 $transaction->agent_id, $period->id, $receipt->id, 'receipt'
             );
 

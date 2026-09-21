@@ -1524,7 +1524,7 @@ address) · **who owns them** (our branch, salesperson, their usual port) · **t
 | Gap | Why it matters |
 |---|---|
 | ~~**Payment runs**~~ | ✅ **Built 2026-09-21** — `accounts_payments` + allocations, one payment per supplier per run, posting Dr `2100-AP` / Cr `1100-Bank` (GAPS #383) |
-| **Bank accounts master** | `1100-Bank` is one account for the whole company; two bank accounts cannot be told apart |
+| ~~**Bank accounts master**~~ | ✅ **Built 2026-09-21** — `bank_accounts`, each posting to its own `1100-Bank-<slug>` code, with receipts, payments and statement lines all naming the account they moved through (GAPS #386) |
 | **"Cost to book" as a queue** | Shipments billed with nothing costed exist only as a warning on a report |
 | **GSTR-1 / 3B as files** | The register exists; the return does not |
 | **TDS** | Not started |

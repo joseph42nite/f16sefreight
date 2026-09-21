@@ -24,7 +24,9 @@ class BankTransaction extends Model
     use BelongsToTenant;
 
     protected $fillable = [
-        'agent_id', 'matched_invoice_id', 'matched_voucher_id',
+        // 🔴 Which of OUR accounts the line came from (user, 2026-09-21). A statement imported against the wrong
+        // account reconciles money that arrived somewhere else.
+        'agent_id', 'bank_account_id', 'matched_invoice_id', 'matched_voucher_id',
         'plaid_transaction_id', 'amount', 'reconciliation_status',
         // What the bank said (user, 2026-09-19), so a credit can be compared with the bill it is meant to settle.
         'provider', 'value_date', 'direction', 'narration', 'counterparty', 'reference', 'currency',

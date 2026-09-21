@@ -19,6 +19,7 @@ class AccountsPayment extends Model
 
     protected $fillable = [
         'agent_id', 'payee_type', 'payee_id', 'payment_no', 'payment_date', 'mode', 'reference',
+        'bank_account_id',
         'amount', 'currency', 'exchange_rate', 'run_ref', 'bank_transaction_id', 'narration',
         'is_posted', 'created_by',
     ];

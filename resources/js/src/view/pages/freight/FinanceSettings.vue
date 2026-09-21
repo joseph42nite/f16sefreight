@@ -3,7 +3,8 @@
     <header class="fx-page-head">
       <h1 class="fx-page-title">Finance settings</h1>
       <p class="fx-page-sub">
-        The chart of accounts the ledger posts into, and the rates quoted to clients and agreed with suppliers.
+        The bank accounts money moves through, the chart of accounts the ledger posts into, and the rates quoted
+        to clients and agreed with suppliers.
       </p>
     </header>
 
@@ -21,6 +22,93 @@
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
 
     <template v-else>
+      <!-- ── Bank accounts ─────────────────────────────────────────────── -->
+      <section class="fx-section">
+        <h2 class="fx-section__title">Bank accounts</h2>
+        <p class="fx-muted">
+          🔴 Each account posts to its <strong>own</strong> ledger code, so the trial balance tells them apart.
+          The code is issued once when the account is added and never changes — renaming it must not move where
+          its history is posted.
+        </p>
+
+        <p v-if="!banks.length" class="fx-muted">No bank account has been added; money posts to one undifferentiated account.</p>
+        <table v-else class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Account</th>
+              <th scope="col">Bank</th>
+              <th scope="col">Number</th>
+              <th scope="col">Posts to</th>
+              <th v-if="branches.length > 1" scope="col">Branch</th>
+              <th class="fx-num" scope="col">Balance</th>
+              <th scope="col">Waiting</th>
+              <th v-if="canManage" scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in banks" :key="'b-' + b.id">
+              <td>
+                {{ b.name }}
+                <StatusChip v-if="b.is_default" value="default" />
+              </td>
+              <td>{{ b.bank_name || "—" }}</td>
+              <!-- 🔐 The number is encrypted and never returned; the last four identify it by eye. -->
+              <td class="identifier">{{ b.last_four ? "•••• " + b.last_four : "—" }}</td>
+              <td class="identifier">{{ b.account_code }}</td>
+              <td v-if="branches.length > 1">{{ b.branch }}</td>
+              <td class="fx-num"><Figure :value="b.balance" kind="currency" :currency-code="b.currency || 'INR'" /></td>
+              <td>{{ b.unreconciled ? b.unreconciled + " to place" : "—" }}</td>
+              <td v-if="canManage" class="fx-row-actions">
+                <button class="fx-btn" @click="editBank(b)">Edit</button>
+                <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="closeBank(b)">Close</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p v-if="legacyBalance" class="fx-muted">
+          <!-- ⚠️ Everything posted before the master existed. History is not rewritten. -->
+          {{ money(legacyBalance) }} sits on the single account money posted to before this list existed.
+        </p>
+
+        <template v-if="canManage">
+          <h3 class="fx-section__title">{{ bankForm.id ? "Edit " + bankForm.name : "Add a bank account" }}</h3>
+          <div class="fx-toolbar">
+            <label v-if="branches.length > 1 && !bankForm.id" class="fx-field">
+              <span class="fx-field__label">Branch</span>
+              <select v-model="bankForm.agent_id" class="fx-input">
+                <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
+              </select>
+            </label>
+            <label class="fx-field">
+              <span class="fx-field__label">What you call it</span>
+              <input v-model="bankForm.name" class="fx-input" placeholder="Collections" />
+            </label>
+            <label class="fx-field">
+              <span class="fx-field__label">Bank</span>
+              <input v-model="bankForm.bank_name" class="fx-input" placeholder="HDFC Bank" />
+            </label>
+            <label class="fx-field">
+              <span class="fx-field__label">Account number</span>
+              <input v-model="bankForm.account_no" class="fx-input" />
+            </label>
+            <label class="fx-field">
+              <span class="fx-field__label">IFSC</span>
+              <input v-model="bankForm.ifsc_code" class="fx-input" />
+            </label>
+            <label class="fx-checkbox">
+              <input v-model="bankForm.is_default" type="checkbox" />
+              The one to use by default
+            </label>
+            <button class="fx-btn fx-btn--primary" :disabled="busy || !bankForm.name.trim()" @click="saveBank">
+              {{ bankForm.id ? "Save" : "Add it" }}
+            </button>
+            <button v-if="bankForm.id" class="fx-btn" @click="bankForm = blankBank()">Cancel</button>
+          </div>
+          <p class="fx-muted">Stored encrypted and never shown again — re-enter to change them.</p>
+        </template>
+      </section>
+
       <!-- ── Chart of accounts ─────────────────────────────────────────── -->
       <section class="fx-section">
         <h2 class="fx-section__title">Chart of accounts</h2>
@@ -176,13 +264,17 @@
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
+import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 
 /** Settings → Finance (PRD §2.4): the chart of accounts and the rate cards, per branch (user, 2026-09-18). */
 export default {
   name: "FinanceSettings",
-  components: { Figure },
+  components: { Figure, StatusChip },
   data: () => ({
     accounts: [], rateCards: [], branches: [], branchId: null,
+    /** The bank accounts master (user, 2026-09-21). */
+    banks: [], legacyBalance: 0,
+    bankForm: { id: null, agent_id: null, name: "", bank_name: "", account_no: "", ifsc_code: "", is_default: false },
     customers: [], partners: [],
     loading: true, busy: false, error: null, actionError: null,
     editing: null, editName: "",
@@ -196,6 +288,10 @@ export default {
     canEdit() {
       return this.designation === "accounts" || this.designation === "boss";
     },
+    /* Changing a bank account is `manageFinanceSettings` — the same two roles. */
+    canManage() {
+      return this.canEdit;
+    },
     rateValid() {
       const r = this.newRate;
       return r.agent_id && r.charge_type && r.party_id && r.rate > 0 && r.valid_from && r.valid_to
@@ -204,14 +300,60 @@ export default {
   },
   created() {
     this.load();
+    this.loadBanks();
     ApiService.get("/customers").then(({ data }) => { this.customers = data.data || []; }).catch(() => {});
     ApiService.get("/partners").then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
   },
   methods: {
+    money(value) {
+      return "INR " + Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+    },
+    blankBank() {
+      return { id: null, agent_id: this.branches.length ? this.branches[0].id : null,
+               name: "", bank_name: "", account_no: "", ifsc_code: "", is_default: false };
+    },
+    loadBanks() {
+      return ApiService.get("/bank-accounts" + (this.branchId ? "?agent_id=" + this.branchId : ""))
+        .then(({ data }) => {
+          this.banks = data.accounts || [];
+          this.legacyBalance = data.legacy_balance || 0;
+          if (!this.bankForm.agent_id) this.bankForm = this.blankBank();
+        })
+        .catch(() => {});
+    },
+    editBank(bank) {
+      // 🔐 The number is never returned, so the boxes start empty: re-enter to change them.
+      this.bankForm = { id: bank.id, agent_id: bank.agent_id, name: bank.name, bank_name: bank.bank_name,
+                        account_no: "", ifsc_code: "", is_default: !!bank.is_default };
+    },
+    saveBank() {
+      this.busy = true;
+      this.actionError = null;
+
+      const body = { ...this.bankForm };
+      Object.keys(body).forEach((k) => { if (body[k] === "") body[k] = null; });
+
+      const call = this.bankForm.id
+        ? ApiService.put(`/bank-accounts/${this.bankForm.id}`, body)
+        : ApiService.post("/bank-accounts", body);
+
+      call
+        .then(() => { this.bankForm = this.blankBank(); return this.loadBanks(); })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    closeBank(bank) {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/bank-accounts/${bank.id}/close`, {})
+        .then(() => this.loadBanks())
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
     load() {
       this.loading = true;
       ApiService.get("/finance-settings" + (this.branchId ? "?agent_id=" + this.branchId : ""))
-        .then(({ data }) => { this.take(data); this.error = null; })
+        .then(({ data }) => { this.take(data); this.error = null; return this.loadBanks(); })
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.loading = false; });
     },

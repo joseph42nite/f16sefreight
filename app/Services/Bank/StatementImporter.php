@@ -23,7 +23,7 @@ class StatementImporter
      *                          narration?: ?string, counterparty?: ?string, currency?: ?string}>  $lines
      * @return array{imported: int, repeated: int, skipped: int}
      */
-    public function import(int $agentId, array $lines, string $provider = 'manual'): array
+    public function import(int $agentId, array $lines, string $provider = 'manual', ?int $bankAccountId = null): array
     {
         $result = ['imported' => 0, 'repeated' => 0, 'skipped' => 0];
 
@@ -40,6 +40,9 @@ class StatementImporter
 
             $values = [
                 'agent_id' => $agentId,
+                // 🔴 Which of OUR accounts the line came from. A statement imported against the wrong account
+                // reconciles money that arrived somewhere else (user, 2026-09-21).
+                'bank_account_id' => $bankAccountId,
                 'provider' => $provider,
                 'amount' => $amount,
                 'value_date' => Carbon::parse($line['value_date'] ?? now())->toDateString(),

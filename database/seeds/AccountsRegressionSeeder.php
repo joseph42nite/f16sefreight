@@ -84,6 +84,12 @@ class AccountsRegressionSeeder extends Seeder
         ],
         // The voucher settled in the fixture: j1's, at 70,000 + 12,600 = 82,600 gross.
         'paid_voucher' => 'j1',
+        // 🔴 Two bank accounts, so the trial balance has to tell them apart: money comes IN to one and goes OUT
+        // of the other, which is exactly the case a single `1100-Bank` could not represent.
+        'banks' => [
+            ['key' => 'collections', 'name' => 'Collections', 'bank' => 'HDFC Bank', 'number' => '50200012344321'],
+            ['key' => 'payouts', 'name' => 'Payouts', 'bank' => 'ICICI Bank', 'number' => '00112233449876'],
+        ],
         'receipts' => [
             ['key' => 'r1', 'client' => 'northstar', 'amount' => 118000, 'against' => 'inv1'],   // settles it in full
             ['key' => 'r2', 'client' => 'northstar', 'amount' => 100000, 'against' => 'inv2'],   // part payment
@@ -191,7 +197,8 @@ class AccountsRegressionSeeder extends Seeder
             // Everything scoped to a branch.
             foreach (['accounts_ledger_entries', 'gst_ledger_entries', 'unposted_transactions_queue',
                       'accounts_receipts', 'accounts_invoices', 'accounts_purchase_vouchers',
-                      'vendor_statements', 'collection_follow_ups', 'bank_transactions', 'chart_of_accounts',
+                      'vendor_statements', 'collection_follow_ups', 'bank_transactions', 'bank_accounts',
+                      'chart_of_accounts',
                       'accounting_periods', 'rate_cards', 'audit_logs', 'notifications',
                       'jobs', 'enquiries', 'sequence_counters'] as $table) {
                 DB::table($table)->whereIn('agent_id', $branches)->delete();
@@ -217,6 +224,17 @@ class AccountsRegressionSeeder extends Seeder
 
         $carrier = Partner::withoutGlobalScopes()->create(['company_id' => $company->id, 'agent_id' => $branch->id,
             'name' => 'Regression Air', 'partner_type' => 'airline', 'email' => 'cass@regression-air.test']);
+
+        $banks = [];
+        foreach ($f['banks'] as $b) {
+            $lastFour = \App\BankAccount::lastFour($b['number']);
+            $banks[$b['key']] = \App\BankAccount::withoutGlobalScopes()->create([
+                'agent_id' => $branch->id, 'name' => $b['name'], 'bank_name' => $b['bank'],
+                'account_no' => $b['number'], 'ifsc_code' => 'HDFC0000123', 'currency' => 'INR',
+                'account_code' => \App\BankAccount::codeFor($b['bank'], $lastFour, $b['name']),
+                'last_four' => $lastFour, 'is_default' => $b['key'] === 'collections', 'is_active' => true,
+            ]);
+        }
 
         $clients = [];
         foreach ($f['clients'] as $c) {
@@ -278,11 +296,12 @@ class AccountsRegressionSeeder extends Seeder
 
         // One voucher paid in full — 70,000 plus 12,600 of input tax — so the payable comes down and the bank
         // shows both sides. The rest stay open, which is what stage ④ of Money out is for.
-        $this->pay($branch, $carrier, $bought[$f['paid_voucher']], $accounts);
+        $this->pay($branch, $carrier, $bought[$f['paid_voucher']], $accounts, $banks['payouts']);
 
+        // Every rupee in lands in Collections; the payment goes out of Payouts.
         foreach ($f['receipts'] as $r) {
             $this->receive($branch, $clients[$r['client']], $r['amount'],
-                $r['against'] ? $documents[$r['against']] : null, $period, $accounts);
+                $r['against'] ? $documents[$r['against']] : null, $period, $accounts, $banks['collections']);
         }
 
         DB::table('bank_transactions')->insert([
@@ -394,7 +413,8 @@ class AccountsRegressionSeeder extends Seeder
     }
 
     /** A payment against one voucher, in full, posted — the mirror of a receipt. */
-    private function pay(Agent $branch, Partner $vendor, \App\AccountsPurchaseVoucher $voucher, User $by): void
+    private function pay(Agent $branch, Partner $vendor, \App\AccountsPurchaseVoucher $voucher, User $by,
+        ?\App\BankAccount $from = null): void
     {
         $gross = round((float) $voucher->items()->sum('net_amount'), 2);
 
@@ -404,17 +424,18 @@ class AccountsRegressionSeeder extends Seeder
             'payment_date' => now()->subDays(2)->toDateString(), 'mode' => 'bank_transfer',
             'reference' => 'UTR-REG-PAYOUT', 'amount' => $gross, 'currency' => 'INR', 'exchange_rate' => 1,
             'run_ref' => 'RUN-FIXTURE', 'is_posted' => true, 'created_by' => $by->id,
+            'bank_account_id' => $from?->id,
         ]);
 
         $payment->allocations()->create(['purchase_voucher_id' => $voucher->id, 'amount' => $gross]);
         $voucher->update(['amount_paid' => $gross, 'status' => 'paid']);
 
-        $this->post($this->ledger->linesForPayment($gross), $branch->id,
+        $this->post($this->ledger->linesForPayment($gross, $from), $branch->id,
             $payment->payment_date, $payment->id, 'payment');
     }
 
     private function receive(Agent $branch, Customer $client, float $amount, ?AccountsInvoice $against,
-        int $period, User $by): void
+        int $period, User $by, ?\App\BankAccount $into = null): void
     {
         $receipt = AccountsReceipt::withoutGlobalScopes()->create([
             'agent_id' => $branch->id, 'payer_type' => 'customer', 'payer_id' => $client->id,
@@ -422,6 +443,7 @@ class AccountsRegressionSeeder extends Seeder
             'receipt_date' => now()->subDays(3)->toDateString(), 'mode' => 'bank_transfer',
             'reference' => 'UTR-REG-' . $client->id . '-' . (int) $amount, 'amount' => $amount,
             'currency' => 'INR', 'exchange_rate' => 1, 'is_posted' => true, 'created_by' => $by->id,
+            'bank_account_id' => $into?->id,
         ]);
 
         if ($against !== null) {
@@ -432,7 +454,8 @@ class AccountsRegressionSeeder extends Seeder
                 'status' => $paid + 0.009 >= (float) $against->grand_total ? 'paid' : 'partially_paid']);
         }
 
-        $this->post($this->ledger->linesForReceipt($amount), $branch->id, $receipt->receipt_date, $receipt->id, 'receipt');
+        $this->post($this->ledger->linesForReceipt($amount, into: $into), $branch->id,
+            $receipt->receipt_date, $receipt->id, 'receipt');
     }
 
     /** Post through the SAME service the controllers use — a seeder writing its own journal proves nothing. */

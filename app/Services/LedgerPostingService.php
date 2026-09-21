@@ -161,10 +161,11 @@ class LedgerPostingService
      * smaller AR credit, because the receivable really did clear in full and the
      * difference really was an expense: netting them hides the cost entirely.
      */
-    public function linesForReceipt(float $received, ?array $adjustmentAccount = null, float $adjustment = 0.0): array
+    public function linesForReceipt(float $received, ?array $adjustmentAccount = null, float $adjustment = 0.0,
+        ?\App\BankAccount $into = null): array
     {
         $lines = [
-            self::BANK + ['debit' => round($received, 2), 'credit' => 0.0],
+            $this->bank($into) + ['debit' => round($received, 2), 'credit' => 0.0],
         ];
 
         if ($adjustmentAccount !== null && $adjustment > 0) {
@@ -185,12 +186,27 @@ class LedgerPostingService
      * ⚠️ No adjustment leg. A supplier settled SHORT is a dispute, not a write-off we take silently — it stays on
      * the voucher as an outstanding balance and goes through the statement comparison, where somebody argues it.
      */
-    public function linesForPayment(float $paid): array
+    public function linesForPayment(float $paid, ?\App\BankAccount $from = null): array
     {
         return [
             self::AP + ['debit' => round($paid, 2), 'credit' => 0.0],
-            self::BANK + ['debit' => 0.0, 'credit' => round($paid, 2)],
+            $this->bank($from) + ['debit' => 0.0, 'credit' => round($paid, 2)],
         ];
+    }
+
+    /**
+     * Which bank the money moved through.
+     *
+     * 🔴 **Each bank account has its own ledger code** — `1100-Bank-HDFC-4321` — so the trial balance shows them
+     * apart, which is the whole reason the master exists. ⚠️ The bare `1100-Bank` remains the fallback for
+     * everything posted before the master existed: history is not rewritten, and an entry with no account named
+     * is honestly "the bank", not a guess at which one.
+     */
+    private function bank(?\App\BankAccount $account): array
+    {
+        return $account === null
+            ? self::BANK
+            : ['code' => $account->account_code, 'name' => trim($account->bank_name . ' — ' . $account->name, ' —')];
     }
 
     /** Debits, credits and whether they agree — the summary a preview needs. */

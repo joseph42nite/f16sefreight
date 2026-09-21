@@ -76,9 +76,9 @@ export const NAV_ITEMS = [
   // the role that sets the targets must not do. The Boss reaches the register from Financials.
   // 🔴 The accounts desk lands on WORK, not on a register. Everything else is reachable from it.
   { path: "/today", label: "Today", icon: "sun", designations: ["accounts"], minTier: "command" },
-  { path: "/billing", label: "Billing", icon: "receipt", designations: ["accounts"], minTier: "command" },
-  // Chasing what is owed is accounts' day, not the Boss's; the Boss reads the ageing from Financials.
-  { path: "/collections", label: "Collections", icon: "hourglass", designations: ["accounts"], minTier: "command" },
+  // 🔴 ONE rail item for the whole receivable side (guide §11.2). Billing and Collections are stages of it now;
+  // their routes stay for deep links and for the Boss, who reaches the ageing from Financials.
+  { path: "/money-in", label: "Money in", icon: "receipt", designations: ["accounts"], minTier: "command" },
   { path: "/boss", label: "Overview", icon: "speedometer", designations: ["boss"], minTier: "tactical" },
 
   // ── Always last ──────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ const RAIL_ORDER = {
   sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
   boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
   // Accounts start in the registers; their inbox sits under it (user, 2026-09-19).
-  accounts: ["/today", "/billing", "/collections", "/financials", "/inbox", "/clients-partners", "/settings"],
+  accounts: ["/today", "/money-in", "/financials", "/inbox", "/clients-partners", "/settings"],
 };
 
 const railRank = (item, designation) => {

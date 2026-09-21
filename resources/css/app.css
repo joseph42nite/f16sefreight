@@ -1067,3 +1067,22 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 .fx-list__item { display: flex; align-items: center; gap: var(--space-2);
                  padding: var(--space-2) 0; border-bottom: 1px solid var(--border-subtle); }
 .fx-list__item:last-child { border-bottom: 0; }
+
+/* ── The Money in pipeline (guide §11.2) ──────────────────────────────────
+   Stages, not tabs: the numbers and the left-to-right order carry the fact
+   that this is ONE thing moving, and the figures say where it is stuck. */
+.fx-pipeline { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
+.fx-pipeline__stage { flex: 1 1 9rem; display: flex; flex-direction: column; gap: 2px;
+                      background: var(--bg-surface); border: 1px solid var(--border);
+                      border-radius: var(--radius-md); padding: var(--space-2) var(--space-3);
+                      text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.fx-pipeline__stage:hover { border-color: var(--accent); }
+.fx-pipeline__stage.is-active { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.fx-pipeline__stage.is-warning { border-left: 3px solid var(--warning); }
+/* An empty stage stays readable but stops competing — nothing is stuck there. */
+.fx-pipeline__stage.is-empty .fx-pipeline__figure,
+.fx-pipeline__stage.is-empty .fx-pipeline__count { color: var(--text-muted); }
+.fx-pipeline__step { font-size: .625rem; font-weight: 700; color: var(--text-secondary); }
+.fx-pipeline__label { font-size: .8125rem; font-weight: 600; }
+.fx-pipeline__figure { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.fx-pipeline__count { font-size: .6875rem; color: var(--text-secondary); }

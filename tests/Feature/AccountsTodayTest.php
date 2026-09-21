@@ -102,7 +102,8 @@ class AccountsTodayTest extends TestCase
         $cards = $this->cards();
 
         $this->assertSame([2, 60000.0], [$cards['to_bill']['count'], (float) $cards['to_bill']['amount']]);
-        $this->assertSame('/billing', $cards['to_bill']['to']['path']);
+        // The card links to the STAGE it counted, not to a page the reader then has to filter (guide §11.2).
+        $this->assertSame(['/money-in', 'to_bill'], [$cards['to_bill']['to']['path'], $cards['to_bill']['to']['query']['stage']]);
         $this->assertSame([1, 25000.0], [$cards['to_place']['count'], (float) $cards['to_place']['amount']]);
 
         // 🔴 Every card is a link: a card you cannot click is a fact nobody can act on.

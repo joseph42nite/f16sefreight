@@ -631,6 +631,10 @@ class BillingController extends Controller
             ->when($request->filled('currency'), fn ($q) => $q->where('i.currency', $request->string('currency')))
             ->when($request->filled('created_by'), fn ($q) => $q->where('i.created_by', $request->integer('created_by')))
             ->when($request->boolean('outstanding'), fn ($q) => $q->whereNotIn('i.status', ['draft', 'void', 'paid']))
+            // Stage ① of Money in: cost sheets pricing has handed over and nobody has billed (guide §11.2).
+            ->when($request->boolean('awaiting'), fn ($q) => $q->whereNotNull('i.sent_to_accounts_at')->where('i.status', 'draft'))
+            // Stage ②: raised on this desk and not finalized — a draft nobody handed over.
+            ->when($request->boolean('own_drafts'), fn ($q) => $q->whereNull('i.sent_to_accounts_at')->where('i.status', 'draft'))
             // Logi-Sys calls it "Exclude Reverse Txns": the credit notes that give money back.
             ->when($request->boolean('exclude_credit_notes'), fn ($q) => $q->where('i.type', '!=', 'credit_note'))
             ->when($request->filled('q'), function ($q) use ($request) {

@@ -67,20 +67,20 @@ class AccountsTodayController extends Controller
                 'key' => 'to_bill', 'label' => 'To bill', 'count' => (int) $toBill->n,
                 'unit' => 'shipment', 'amount' => round((float) $toBill->total, 2),
                 'note' => 'Cost sheets pricing has handed over.',
-                'to' => ['path' => '/billing', 'query' => ['stage' => 'to_bill']],
+                'to' => ['path' => '/money-in', 'query' => ['stage' => 'to_bill']],
             ],
             [
                 'key' => 'to_place', 'label' => 'Money to place', 'count' => (int) $toPlace->n,
                 'unit' => 'payment', 'amount' => round((float) $toPlace->total, 2),
                 'note' => 'Arrived in the bank, not yet against an invoice.',
-                'to' => ['path' => '/financials', 'query' => ['view' => 'bank']],
+                'to' => ['path' => '/money-in', 'query' => ['stage' => 'money_in']],
             ],
             [
                 'key' => 'overdue', 'label' => 'Overdue', 'count' => $overdue->count(),
                 'unit' => 'client', 'amount' => round($overdue->sum('overdue'), 2),
                 'note' => 'Past its due date and still owed.',
                 'tone' => $overdue->sum('overdue') > 0 ? 'warning' : null,
-                'to' => ['path' => '/collections'],
+                'to' => ['path' => '/money-in', 'query' => ['stage' => 'overdue']],
             ],
             [
                 'key' => 'unposted', 'label' => 'Not posted', 'count' => (int) $unposted->n,
@@ -172,7 +172,7 @@ class AccountsTodayController extends Controller
         if ($stale > 0) {
             $out[] = ['kind' => 'stale_draft', 'tone' => 'warning',
                 'text' => $stale . ' cost sheet(s) have been waiting to be billed for over a week.',
-                'to' => ['path' => '/billing', 'query' => ['stage' => 'to_bill']]];
+                'to' => ['path' => '/money-in', 'query' => ['stage' => 'to_bill']]];
         }
 
         return $out;

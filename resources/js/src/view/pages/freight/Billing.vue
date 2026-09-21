@@ -1,6 +1,10 @@
 <template>
   <div>
-    <header class="fx-page-head">
+    <!--
+      ⚠️ Inside Money in this page is a STAGE, not a page: its own title and view bar would be a second set of
+      navigation under the pipeline, which is how a merge ends up looking like two screens stacked.
+    -->
+    <header v-if="!embedded" class="fx-page-head">
       <h1 class="fx-page-title">Billing</h1>
       <p class="fx-page-sub">
         {{ subtitleForView }}
@@ -13,7 +17,7 @@
       client and a shipment, so they share a register and a drawer; what differs is who each is addressed to and what
       it does to the ledger, and that is exactly what the drawer shows.
     -->
-    <div class="fx-toolbar fx-financials__views">
+    <div v-if="!embedded" class="fx-toolbar fx-financials__views">
       <button
         v-for="v in VIEWS"
         :key="v.key"
@@ -800,12 +804,21 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
 export default {
   name: "Billing",
   components: { Figure, StatusChip, FxDrawer },
+  props: {
+    /** Rendered as a stage of Money in rather than as a page of its own. */
+    embedded: { type: Boolean, default: false },
+    /** Which register to open on, and any filter the stage implies. */
+    initialView: { type: String, default: "all" },
+    stageFilter: { type: Object, default: null },
+  },
   data: () => ({
     view: "all", VIEWS, STATUSES, DOC_TABS,
     rows: [], totals: { count: 0, amount_inr: 0, outstanding_inr: 0, credited_inr: 0 },
     branches: [], types: {}, currencies: [], raisedBy: [],
     filters: { agent_id: null, from: "", to: "", q: "", status: "", currency: "",
-               created_by: null, sort: "date", outstanding: false, exclude_credit_notes: false },
+               created_by: null, sort: "date", outstanding: false, exclude_credit_notes: false,
+               /** Set by a Money in stage: handed over by pricing, or raised on this desk. */
+               awaiting: false, own_drafts: false },
     /** Which rows are ticked for printing or mailing. */
     picked: {},
     receipts: [], modes: [], eInvoices: [], eInvoiceNote: "",
@@ -878,10 +891,22 @@ export default {
     },
   },
   created() {
+    this.view = this.initialView;
+    if (this.stageFilter) Object.assign(this.filters, this.stageFilter);
+
     this.load();
 
     // Arrived from the journal's drill-through: open that document straight away.
     if (this.$route.query.open) this.openById(Number(this.$route.query.open));
+  },
+  watch: {
+    // The pipeline changed stage: swap the register under it without remounting the drawer state.
+    initialView(view) {
+      this.view = view;
+      this.document = null;
+      Object.assign(this.filters, { awaiting: false, own_drafts: false }, this.stageFilter || {});
+      this.load();
+    },
   },
   methods: {
     showView(key) {
@@ -916,6 +941,8 @@ export default {
         if (this.filters[key]) params.push(key + "=" + encodeURIComponent(this.filters[key]));
       });
       if (this.filters.outstanding) params.push("outstanding=1");
+      if (this.filters.awaiting) params.push("awaiting=1");
+      if (this.filters.own_drafts) params.push("own_drafts=1");
       if (this.view === "all" && this.filters.exclude_credit_notes) params.push("exclude_credit_notes=1");
 
       return params.length ? "?" + params.join("&") : "";

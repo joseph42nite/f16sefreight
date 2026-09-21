@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header class="fx-page-head">
+    <header v-if="!embedded" class="fx-page-head">
       <h1 class="fx-page-title">Ageing &amp; collections</h1>
       <p class="fx-page-sub">
         {{ subtitleForView }}
@@ -13,6 +13,8 @@
       One page, because an ageing nobody acts on is a report and a queue without the ageing beside it is a to-do
       list nobody trusts.
     -->
+    <!-- Inside Money in the stage bar is the navigation; these two stay, because "who to chase" and "the ageing
+         it comes from" are genuinely two readings of stage ⑤. -->
     <div class="fx-toolbar fx-financials__views">
       <button
         v-for="v in VIEWS"
@@ -376,6 +378,10 @@ const PARTY_TABS = [
 export default {
   name: "Collections",
   components: { Figure, StatusChip, FxDrawer, MailEditor },
+  props: {
+    /** Rendered as stage ⑤ of Money in rather than as a page of its own. */
+    embedded: { type: Boolean, default: false },
+  },
   data: () => ({
     /* The queue opens first: it is the day's work, and the ageing is what it is derived from. */
     view: "queue", VIEWS, PARTY_TABS,

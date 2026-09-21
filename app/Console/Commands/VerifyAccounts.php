@@ -66,6 +66,7 @@ class VerifyAccounts extends Command
         $this->ageing();
         $this->credit();
         $this->today();
+        $this->moneyIn();
         $this->ledger();
         $this->crossChecks();
 
@@ -199,6 +200,33 @@ class VerifyAccounts extends Command
         $this->check('today: flags the stale draft', true, in_array('stale_draft', $kinds, true));
         // Every billed shipment is costed, so that warning must NOT be raised.
         $this->check('today: no uncosted warning', false, in_array('no_cost_booked', $kinds, true));
+    }
+
+    /**
+     * The five stages, which must agree with the registers they were merged from.
+     *
+     * 🔴 This is the assertion that proves the merge changed nothing: every figure here is one already checked
+     * above by the screen that used to own it.
+     */
+    private function moneyIn(): void
+    {
+        $stages = collect(json_decode(app(\App\Http\Controllers\Freight\MoneyInController::class)
+            ->stages(new Request())->getContent(), true)['stages'])->keyBy('key');
+
+        // ① The draft pricing handed over — the same document the Today card counts.
+        $this->check('money in ①: to bill', 75000.0, $stages['to_bill']['amount']);
+        $this->check('money in ①: to bill count', 1, $stages['to_bill']['count']);
+        // ② Nothing was raised on this desk and left unfinalized.
+        $this->check('money in ②: own drafts', 0, $stages['drafts']['count']);
+        // ③ Four invoices and two notes: 118,000 + 236,000 + 59,000 + 300,000 + 23,600 − 11,800.
+        $this->check('money in ③: issued', 724800.0, $stages['issued']['amount']);
+        $this->check('money in ③: issued count', 6, $stages['issued']['count']);
+        // ④ Three receipts totalling 268,000, and one bank line nobody has placed.
+        $this->check('money in ④: received', 268000.0, $stages['money_in']['amount']);
+        $this->check('money in ④: still to place', 40000.0, $stages['money_in']['unplaced']['amount']);
+        // ⑤ The same overdue figure the ageing, the queue and the Today card report.
+        $this->check('money in ⑤: overdue', 206800.0, $stages['overdue']['amount']);
+        $this->check('money in ⑤: clients', 2, $stages['overdue']['count']);
     }
 
     /* ── The books themselves ─────────────────────────────────────────────── */

@@ -57,6 +57,8 @@ class AccountsInvoice extends Model
         // The billing desk's own columns (user, 2026-09-19): a date to age against, what the bill is for in words,
         // why a note exists, and what the IRP gave back.
         'due_date', 'narration', 'reason', 'irn', 'irn_status', 'ack_no', 'ack_date',
+        // Why this invoice was issued over the client's credit limit, and by whom (PRD §251).
+        'credit_override_reason', 'credit_override_by', 'credit_override_at',
     ];
 
     protected $casts = [

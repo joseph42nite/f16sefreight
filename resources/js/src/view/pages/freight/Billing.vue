@@ -304,6 +304,9 @@
             <span v-if="document.reason">Reason: {{ document.reason }}</span>
           </p>
           <p v-else-if="document.reason" class="fx-muted">Reason: {{ document.reason }}</p>
+          <p v-if="document.credit_override_reason" class="fx-notice" role="status">
+            Issued over the client's credit limit: {{ document.credit_override_reason }}
+          </p>
 
           <table class="fx-table">
             <thead>
@@ -499,6 +502,29 @@
         </section>
 
         <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
+
+        <!--
+          🔒 The credit gate stopped this invoice. Overriding is its own ability (PRD §251) and always needs a
+          reason — an override nobody explained is indistinguishable from somebody clicking through a warning.
+        -->
+        <section v-if="creditBlock" class="fx-section">
+          <h3 class="fx-section__title">This is over their credit limit</h3>
+          <p class="fx-muted">
+            They owe {{ money(creditBlock.exposure) }} already; this invoice takes them to
+            {{ money(creditBlock.projected) }} against a limit of {{ money(creditBlock.limit) }}.
+          </p>
+          <template v-if="canOverride">
+            <label class="fx-field">
+              <span class="fx-field__label">Why are you issuing it anyway?</span>
+              <input v-model="overrideReason" class="fx-input" placeholder="the Boss agreed it on the phone" />
+            </label>
+            <button class="fx-btn fx-btn--primary" :disabled="busy || !overrideReason.trim()" @click="finalize(true)">
+              Issue it over the limit
+            </button>
+            <p class="fx-muted">It is recorded on the invoice, with your name and this reason.</p>
+          </template>
+          <p v-else class="fx-muted">Raise the client's limit in Clients, or ask somebody who can override it.</p>
+        </section>
       </template>
 
       <template #footer>
@@ -824,6 +850,8 @@ export default {
     receipts: [], modes: [], eInvoices: [], eInvoiceNote: "",
     /** The document open in the drawer, and everything that belongs to it. */
     document: null, items: [], notes: [], receiptsOn: [], journal: { lines: [] }, can: {}, tab: "document",
+    /** Set when the credit gate refuses a finalize, so the drawer can offer the override (PRD §251). */
+    creditBlock: null, canOverride: false, overrideReason: "",
     header: {}, newLine: {}, editingLine: null, lineDraft: {},
     /** The forms. */
     raise: null, creditRoom: null, jobs: [], partners: [], clients: [],
@@ -990,6 +1018,8 @@ export default {
     },
     showDocument(data) {
       this.document = data.document;
+      this.creditBlock = null;
+      this.overrideReason = "";
       this.items = data.items || [];
       this.notes = data.notes || [];
       this.receiptsOn = data.receipts || [];
@@ -1024,8 +1054,13 @@ export default {
     deleteLine(item) {
       this.commit(() => ApiService.delete(`/billing/${this.document.id}/lines/${item.id}`));
     },
-    finalize() {
-      this.commit(() => ApiService.post(`/invoices/${this.document.id}/finalize`, {}), true);
+    finalize(override = false) {
+      this.creditBlock = null;
+      this.commit(
+        () => ApiService.post(`/invoices/${this.document.id}/finalize`,
+          override ? { override_credit_hold: true, override_reason: this.overrideReason } : {}),
+        true
+      );
     },
     postDocument() {
       this.commit(() => ApiService.post(`/invoices/${this.document.id}/post`, {}), true);
@@ -1060,7 +1095,17 @@ export default {
           else this.openById(this.document.id);
           if (refreshRegister) this.load();
         })
-        .catch((e) => { this.actionError = this.messageFor(e); })
+        .catch((e) => {
+          const data = e.response && e.response.data;
+
+          // The gate's own figures, so the offer states what it is overriding rather than repeating the error.
+          if (data && data.reason === "credit_limit_exceeded") {
+            this.creditBlock = data.credit;
+            this.canOverride = !!data.can_override;
+          }
+
+          this.actionError = this.messageFor(e);
+        })
         .finally(() => { this.busy = false; });
     },
 

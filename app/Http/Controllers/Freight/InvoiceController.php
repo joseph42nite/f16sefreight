@@ -81,6 +81,14 @@ class InvoiceController extends Controller
     {
         $this->authorize('finalizeInvoice');
 
+        $override = $request->validate([
+            // 🔴 An override needs a REASON, always. "Why was this shipment released over the limit?" is the
+            // question somebody asks months later, and an override with no answer to it is indistinguishable
+            // from somebody clicking through a warning.
+            'override_credit_hold' => 'nullable|boolean',
+            'override_reason' => 'required_if:override_credit_hold,true,1|nullable|string|max:255',
+        ]);
+
         if ($invoice->status !== 'draft') {
             return response()->json([
                 'error'  => 'Only a draft invoice can be finalized.',
@@ -100,16 +108,35 @@ class InvoiceController extends Controller
             $check = $this->credit->check($customer, $grandTotal);
 
             if ($check['blocked']) {
-                return response()->json([
-                    'error'  => sprintf(
-                        'Finalizing this invoice would put %s at %s against a limit of %s.',
-                        $customer->name,
-                        number_format($check['projected'], 2),
-                        number_format($check['limit'], 2)
-                    ),
-                    'reason' => 'credit_limit_exceeded',
-                    'credit' => $check,
-                ], 422);
+                $wanted = (bool) ($override['override_credit_hold'] ?? false);
+
+                // 🔒 Overriding is its OWN ability (PRD §251), separate from finalizing: the person who bills
+                // every day is not automatically the person who decides to ship on credit that is already spent.
+                if (! $wanted || ! \Illuminate\Support\Facades\Gate::allows('overrideCreditHold')) {
+                    return response()->json([
+                        'error'  => sprintf(
+                            'Finalizing this invoice would put %s at %s against a limit of %s.',
+                            $customer->name,
+                            number_format($check['projected'], 2),
+                            number_format($check['limit'], 2)
+                        ),
+                        'reason' => 'credit_limit_exceeded',
+                        'credit' => $check,
+                        // ⚠️ Said plainly, so the desk is not left guessing whether there is a way through.
+                        'can_override' => \Illuminate\Support\Facades\Gate::allows('overrideCreditHold'),
+                        'override_hint' => 'Finalize again with a reason to issue it over the limit.',
+                    ], 422);
+                }
+
+                // Recorded on the document itself — see the migration's docblock.
+                $invoice->forceFill([
+                    'credit_override_reason' => $override['override_reason'],
+                    'credit_override_by' => auth()->id(),
+                    'credit_override_at' => now(),
+                ])->save();
+
+                $this->audit->record($invoice->agent_id, 'invoice.credit_hold_overridden',
+                    'invoice', $invoice->id, auth()->id());
             }
         }
 

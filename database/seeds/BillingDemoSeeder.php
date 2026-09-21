@@ -42,7 +42,7 @@ class BillingDemoSeeder extends Seeder
         $this->openPeriods($branches);
 
         $agent = $this->overseasAgent($company->id, $branches[0]);
-        $made = ['debit_note' => 0, 'credit_note' => 0, 'brokerage' => 0, 'consol_invoice' => 0, 'receipts' => 0, 'chases' => 0, 'vouchers' => 0, 'postings' => 0];
+        $made = ['debit_note' => 0, 'credit_note' => 0, 'brokerage' => 0, 'consol_invoice' => 0, 'receipts' => 0, 'chases' => 0, 'vouchers' => 0, 'costsheets' => 0, 'postings' => 0];
 
         foreach ($branches as $branch) {
             // Give the invoices already there the columns a bill register prints.
@@ -85,8 +85,11 @@ class BillingDemoSeeder extends Seeder
             $made['receipts'] += $this->receipts($branch, $billed);
             $made['chases'] += $this->chases($branch);
             $made['vouchers'] += $this->costSome($branch);
+            $made['costsheets'] += $this->costSheets($branch);
             $made['postings'] += $this->postSome($branch);
         }
+
+        $this->creditLimits($branches);
 
         // One invoice through the IRP and the rest waiting, so the e-invoice register shows both states.
         $registered = AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branches)
@@ -97,17 +100,64 @@ class BillingDemoSeeder extends Seeder
 
         $this->command->info(sprintf(
             'Billing demo: %d debit notes, %d credit notes, %d brokerage, %d consol, %d receipts, %d chases, '
-                . '%d purchase vouchers, %d documents posted to the ledger across %d branches.',
+                . '%d purchase vouchers, %d cost sheets waiting, %d documents posted to the ledger across %d branches.',
             $made['debit_note'], $made['credit_note'], $made['brokerage'], $made['consol_invoice'],
-            $made['receipts'], $made['chases'], $made['vouchers'], $made['postings'], count($branches)
+            $made['receipts'], $made['chases'], $made['vouchers'], $made['costsheets'], $made['postings'],
+            count($branches)
         ));
+    }
+
+    /**
+     * Credit limits with room to work in, and ONE client deliberately over.
+     *
+     * 🔴 A demo where every client is over their limit cannot demonstrate anything: the gate refuses every
+     * finalize and the flow stops at the first click. So each client's limit is set from what they actually owe
+     * — comfortable headroom for most, and the largest debtor left ON HOLD on purpose, because a gate nobody
+     * ever sees fire is a gate nobody trusts.
+     */
+    private function creditLimits(array $branches): void
+    {
+        $owed = AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branches)
+            ->whereIn('status', \App\Services\AgeingService::OWED)
+            // ⚠️ Brokerage and consol bills are addressed to a PARTNER and carry no customer at all (PRD §6.2);
+            // grouping them would try to set a credit limit on nobody.
+            ->whereNotNull('customer_id')
+            ->selectRaw('customer_id, SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * (grand_total - amount_paid)) AS owed',
+                ['credit_note'])
+            ->groupBy('customer_id')->pluck('owed', 'customer_id');
+
+        $biggest = $owed->sortDesc()->keys()->first();
+
+        foreach ($owed as $customerId => $balance) {
+            $balance = max(0, round((float) $balance, 2));
+
+            DB::table('customers')->where('id', $customerId)->update([
+                // The biggest debtor sits at 70% of what they owe: on hold, and visibly so.
+                'credit_limit' => $customerId === $biggest
+                    ? round($balance * 0.7, -3)
+                    : round($balance * 2.5 + 500000, -5),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // ⚠️ One client keeps NO limit at all, because "not configured" and "zero" must look different on screen.
+        $noLimit = $owed->keys()->last();
+        if ($noLimit !== null && $noLimit !== $biggest) {
+            DB::table('customers')->where('id', $noLimit)->update(['credit_limit' => null, 'updated_at' => now()]);
+        }
     }
 
     /** Last run's documents, so re-running does not stack six credit notes on one invoice. */
     private function clear(array $branches): void
     {
+        // 🔴 Everything this seeder can recreate, so re-running is IDEMPOTENT. Without the drafts in this list
+        // every run stacked another set of cost sheets on the queue — 4 waiting became 12 in three runs, and a
+        // demo whose figures move every time you rebuild it is a demo nobody can check anything against.
+        // ⚠️ Drafts are safe to drop wholesale: no client has ever seen one, and nothing points at them.
         $ids = AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branches)
-            ->whereIn('type', ['debit_note', 'credit_note', 'brokerage', 'consol_invoice'])->pluck('id');
+            ->where(fn ($q) => $q->whereIn('type', ['debit_note', 'credit_note', 'brokerage', 'consol_invoice'])
+                ->orWhere('status', 'draft'))
+            ->pluck('id');
 
         DB::table('collection_follow_ups')->whereIn('agent_id', $branches)->delete();
         DB::table('accounts_receipt_allocations')
@@ -162,6 +212,12 @@ class BillingDemoSeeder extends Seeder
      */
     private function billOneSeaShipment(int $branch): void
     {
+        // Once per branch, ever — not once per run, which would bill a new sea shipment each time.
+        if (AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)
+            ->where('transport_mode', 'sea')->whereNotIn('status', ['draft', 'void'])->exists()) {
+            return;
+        }
+
         $job = DB::table('jobs as j')->join('enquiries as e', 'e.id', '=', 'j.enquiry_id')
             ->where('j.agent_id', $branch)->where('j.transport_mode', 'sea')
             ->whereNotNull('e.origin_code')
@@ -242,6 +298,77 @@ class BillingDemoSeeder extends Seeder
                     'tax_amount' => round($amount * 0.18, 2), 'net_amount' => round($amount * 1.18, 2)]);
             }
         }
+    }
+
+    /**
+     * Cost sheets in flight, so the hand-over from pricing is visible on both sides.
+     *
+     * 🔴 **Without these, Money in ① is empty and the flow cannot be seen.** Pricing builds a sheet with a sell
+     * side and a buy side and presses *Send to accounts*; accounts then see it waiting to be billed. Two per
+     * branch are sent (accounts' queue) and one is left unsent (pricing's own work in progress).
+     */
+    private function costSheets(int $branch): int
+    {
+        $company = DB::table('agents_info')->where('id', $branch)->value('company_id');
+        $customers = DB::table('customers')->where('company_id', $company)->pluck('id')->all();
+        $carrier = Partner::withoutGlobalScopes()->where('company_id', $company)
+            ->where('partner_type', 'airline')->value('id');
+        $pricing = DB::table('users')->where('branch_name', $branch)->where('designation', 'pricing')->value('id');
+
+        if ($customers === [] || $carrier === null) {
+            return 0;
+        }
+
+        // Shipments that nobody has billed at all — a cost sheet belongs to a job with no invoice yet.
+        $jobs = DB::table('jobs')->where('agent_id', $branch)->whereNull('deleted_at')
+            ->whereNotIn('id', AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)->select('job_id'))
+            ->orderByDesc('id')->limit(3)->pluck('id')->all();
+
+        $made = 0;
+
+        foreach ($jobs as $index => $jobId) {
+            $freight = 120000 + $index * 35000;
+            $handling = round($freight * 0.09, 2);
+            $cost = round($freight * 0.74, 2);
+
+            $invoice = AccountsInvoice::withoutGlobalScopes()->create([
+                'agent_id' => $branch, 'job_id' => $jobId, 'transport_mode' => 'air',
+                'customer_id' => $customers[$index % count($customers)],
+                'billed_party_type' => 'customer', 'billed_party_id' => $customers[$index % count($customers)],
+                'billed_party_role' => 'client', 'created_by' => $pricing,
+                'invoice_no' => AccountsInvoice::placeholderNumber($jobId), 'type' => 'invoice',
+                'document_date' => now()->toDateString(), 'due_date' => now()->addDays(30)->toDateString(),
+                'status' => 'draft', 'currency' => 'INR', 'exchange_rate' => 1,
+                'narration' => 'Air freight and local charges',
+                'subtotal' => $freight + $handling, 'tax_amount' => round(($freight + $handling) * 0.18, 2),
+                'grand_total' => round(($freight + $handling) * 1.18, 2),
+                // ⚠️ The LAST one stays unsent: that is pricing's work in progress, not accounts' queue.
+                'sent_to_accounts_at' => $index < 2 ? now()->subDays($index + 1) : null,
+                'sent_to_accounts_by' => $index < 2 ? $pricing : null,
+            ]);
+
+            foreach ([['Air freight', $freight, '996531'], ['Handling and documentation', $handling, '996719']] as [$what, $amount, $hsn]) {
+                $invoice->items()->create(['charge_type' => 'freight', 'description' => $what, 'hsn_sac_code' => $hsn,
+                    'quantity' => 1, 'rate' => $amount, 'amount' => $amount, 'tax_percentage' => 18,
+                    'tax_amount' => round($amount * 0.18, 2), 'net_amount' => round($amount * 1.18, 2)]);
+            }
+
+            // The buy side of the same sheet, so the margin on it is real before it is ever billed.
+            $voucherId = DB::table('accounts_purchase_vouchers')->insertGetId([
+                'agent_id' => $branch, 'job_id' => $jobId, 'vendor_id' => $carrier, 'transport_mode' => 'air',
+                'voucher_no' => $this->sequences->next($branch, 'PV'), 'document_date' => now()->toDateString(),
+                'status' => 'unpaid', 'created_by' => $pricing, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+            DB::table('accounts_purchase_items')->insert(['purchase_voucher_id' => $voucherId,
+                'charge_type' => 'freight', 'description' => 'Air freight cost', 'quantity' => 1,
+                'rate' => $cost, 'amount' => $cost, 'tax_percentage' => 18,
+                'tax_amount' => round($cost * 0.18, 2), 'net_amount' => round($cost * 1.18, 2),
+                'created_at' => now(), 'updated_at' => now()]);
+
+            $made++;
+        }
+
+        return $made;
     }
 
     /**

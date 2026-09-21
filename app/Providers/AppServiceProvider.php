@@ -58,6 +58,10 @@ class AppServiceProvider extends ServiceProvider
         Enquiry::observe(EnquiryObserver::class);
         EmailThread::observe(EmailThreadObserver::class);
         SeaShipmentDetail::observe(SeaShipmentDetailObserver::class);
+
+        // 🔴 The unposted queue is what the close-of-period guard reads, and nothing ever wrote to it (GAPS #379).
+        \App\AccountsInvoice::observe(\App\Observers\UnpostedDocumentObserver::class);
+        \App\AccountsPurchaseVoucher::observe(\App\Observers\UnpostedDocumentObserver::class);
         // Adding a partner teaches the platform what that domain is — see PartnerObserver.
         \App\Partner::observe(\App\Observers\PartnerObserver::class);
     }

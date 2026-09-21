@@ -32,7 +32,8 @@ class BankTransaction extends Model
         'provider', 'value_date', 'direction', 'narration', 'counterparty', 'reference', 'currency',
     ];
 
-    protected $casts = ['amount' => 'decimal:2', 'value_date' => 'date'];
+    /* 🔴 `date:Y-m-d` — a bare date cast serialises as a UTC timestamp and reads a day early in IST. */
+    protected $casts = ['amount' => 'decimal:2', 'value_date' => 'date:Y-m-d'];
 
     protected $attributes = ['reconciliation_status' => 'unreconciled'];
 

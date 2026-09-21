@@ -25,7 +25,15 @@ class AccountsPayment extends Model
     ];
 
     protected $casts = [
-        'payment_date' => 'date',
+        /*
+         * 🔴 `date:Y-m-d`, NOT `date`. A bare date cast serialises as a UTC timestamp, so a document
+         * dated 20 September in Asia/Kolkata reaches the browser as `2026-09-19T18:30:00Z` — and any
+         * screen that takes the first ten characters of it reads the day BEFORE. The billing drawer did
+         * exactly that, so opening a draft and pressing Save header moved its date back a day, silently
+         * changing which accounting period, which ageing bucket and which month's GST it belongs to.
+         * These columns are DATES; they have no time and no zone.
+         */
+        'payment_date' => 'date:Y-m-d',
         'amount' => 'decimal:2',
         'exchange_rate' => 'decimal:4',
         'is_posted' => 'boolean',

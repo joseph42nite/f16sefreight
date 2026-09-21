@@ -21,7 +21,8 @@ class AccountsPurchaseVoucher extends Model
         'voucher_no', 'document_date', 'due_date', 'status', 'amount_paid',
     ];
 
-    protected $casts = ['document_date' => 'date'];
+    /* 🔴 `date:Y-m-d` — a bare date cast serialises as a UTC timestamp and reads a day early in IST. */
+    protected $casts = ['document_date' => 'date:Y-m-d', 'due_date' => 'date:Y-m-d'];
 
     public function job()
     {

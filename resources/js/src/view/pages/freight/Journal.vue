@@ -396,8 +396,32 @@ export default {
         .catch(() => { this.actionError = "The export could not be built."; })
         .finally(() => { this.busy = false; });
     },
+    /*
+     * The server's own words, whatever shape the refusal takes.
+     *
+     * 🔴 It used to read only `data.error`, so a Laravel VALIDATION failure — which answers with `message` and
+     * `errors`, never `error` — fell through to "Something went wrong. Try again." on a screen that moves money.
+     * A refusal nobody can read is a refusal nobody can act on, and it wasted an afternoon.
+     */
     messageFor(e) {
-      return (e.response && e.response.data && e.response.data.error) || "Something went wrong. Try again.";
+      const response = e.response;
+      const data = response && response.data;
+
+      if (data && data.error) return data.error;
+
+      // A 422 carries the field errors; show the first, which is the one the person has to fix.
+      if (data && data.errors) {
+        const first = Object.values(data.errors)[0];
+
+        return Array.isArray(first) ? first[0] : String(first);
+      }
+
+      if (data && data.message) return data.message;
+
+      // Nothing readable came back: say what actually happened rather than "something".
+      return response
+        ? `The server refused that (${response.status}).`
+        : "Could not reach the server. Check your connection and try again.";
     },
   },
 };

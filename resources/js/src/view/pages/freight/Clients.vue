@@ -488,10 +488,24 @@ export default {
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
+    /* The server's own words — including a 422's field errors, which carry `errors`, never `error`. */
     messageFor(e) {
-      const data = e.response && e.response.data;
+      const response = e.response;
+      const data = response && response.data;
 
-      return (data && (data.error || data.message)) || "Something went wrong. Try again.";
+      if (data && data.error) return data.error;
+
+      if (data && data.errors) {
+        const first = Object.values(data.errors)[0];
+
+        return Array.isArray(first) ? first[0] : String(first);
+      }
+
+      if (data && data.message) return data.message;
+
+      return response
+        ? `The server refused that (${response.status}).`
+        : "Could not reach the server. Check your connection and try again.";
     },
   },
 };

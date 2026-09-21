@@ -412,6 +412,41 @@ class BillingDeskTest extends TestCase
         $this->assertFalse($this->getJson($this->url("/billing/{$paid->id}"))->json('can.void'));
     }
 
+    /**
+     * 🔴 Opening a draft and pressing Save header must not move its date.
+     *
+     * The date columns were cast as `date`, which serialises as a UTC timestamp — a document dated the 20th in
+     * Asia/Kolkata reached the browser as `2026-09-19T18:30:00Z`, the drawer took the first ten characters for
+     * its date box, and saving sent the day BEFORE straight back. That silently changes which accounting period,
+     * which ageing bucket and which month's GST a document belongs to.
+     */
+    public function test_a_document_date_survives_a_round_trip_through_the_drawer(): void
+    {
+        config(['app.timezone' => 'Asia/Kolkata']);
+
+        $job = $this->job();
+        $draft = $this->as($this->accounts)->postJson($this->url('/billing/documents'), [
+            'type' => 'invoice', 'job_id' => $job->id, 'customer_id' => $this->client->id,
+            'document_date' => '2026-09-20', 'due_date' => '2026-10-20',
+            'lines' => [['description' => 'Air freight', 'rate' => 10000]],
+        ])->assertCreated()->json();
+
+        // What the drawer reads into its date boxes: a plain date, not a timestamp a day early.
+        $shown = $this->getJson($this->url("/billing/{$draft['id']}"))->assertOk()->json('document');
+        $this->assertSame('2026-09-20', $shown['document_date']);
+        $this->assertSame('2026-10-20', $shown['due_date']);
+
+        // Save the header back exactly as the drawer would, having touched nothing.
+        $saved = $this->putJson($this->url("/billing/{$draft['id']}"), [
+            'document_date' => substr($shown['document_date'], 0, 10),
+            'due_date' => substr($shown['due_date'], 0, 10),
+            'currency' => 'INR', 'exchange_rate' => 1,
+        ])->assertOk()->json('document');
+
+        $this->assertSame('2026-09-20', $saved['document_date'], 'the date must not move');
+        $this->assertSame('2026-10-20', $saved['due_date']);
+    }
+
     public function test_pricing_may_not_raise_or_print_a_bill(): void
     {
         $pricing = User::create(['name' => 'Pricing', 'email' => 'pricing-bil@test.local', 'password' => Hash::make('x'),

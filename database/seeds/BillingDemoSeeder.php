@@ -159,21 +159,43 @@ class BillingDemoSeeder extends Seeder
                 ->orWhere('status', 'draft'))
             ->pluck('id');
 
-        DB::table('collection_follow_ups')->whereIn('agent_id', $branches)->delete();
-        DB::table('accounts_receipt_allocations')
-            ->whereIn('receipt_id', DB::table('accounts_receipts')->whereIn('agent_id', $branches)->select('id'))->delete();
-        DB::table('accounts_receipts')->whereIn('agent_id', $branches)->delete();
-        DB::table('accounts_invoice_items')->whereIn('invoice_id', $ids)->delete();
-        DB::table('accounts_invoice_brokerage_details')->whereIn('invoice_id', $ids)->delete();
-        DB::table('accounts_invoice_consol_details')->whereIn('invoice_id', $ids)->delete();
-        AccountsInvoice::withoutGlobalScopes()->whereIn('id', $ids)->delete();
+        // 🔴 Foreign-key checks OFF for the clear, for the reason the regression seeder does it (GAPS #380):
+        // every new financial table adds another pointer at the vouchers and invoices this deletes, and a
+        // hand-maintained order is wrong the first time one arrives. It broke exactly that way the day payments
+        // landed — `accounts_payment_allocations` pointed at a voucher and the seeder could no longer clear
+        // itself. ⚠️ Safe HERE only: this removes the financial rows of a DEMO tenant it owns and recreates.
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
-        DB::table('accounts_purchase_items')->whereIn('purchase_voucher_id',
-            DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branches)->select('id'))->delete();
-        DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branches)->delete();
+        try {
+            DB::table('collection_follow_ups')->whereIn('agent_id', $branches)->delete();
 
-        // The ledger of a DEMO tenant is the seeder's to rebuild; on a live one it would never be touched.
-        DB::table('accounts_ledger_entries')->whereIn('agent_id', $branches)->delete();
+            $receipts = DB::table('accounts_receipts')->whereIn('agent_id', $branches)->pluck('id');
+            $payments = DB::table('accounts_payments')->whereIn('agent_id', $branches)->pluck('id');
+            $vouchers = DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branches)->pluck('id');
+
+            DB::table('accounts_receipt_allocations')->whereIn('receipt_id', $receipts)->delete();
+            DB::table('accounts_receipts')->whereIn('agent_id', $branches)->delete();
+            DB::table('accounts_payment_allocations')->whereIn('payment_id', $payments)->delete();
+            DB::table('accounts_payments')->whereIn('agent_id', $branches)->delete();
+
+            DB::table('accounts_invoice_items')->whereIn('invoice_id', $ids)->delete();
+            DB::table('accounts_invoice_brokerage_details')->whereIn('invoice_id', $ids)->delete();
+            DB::table('accounts_invoice_consol_details')->whereIn('invoice_id', $ids)->delete();
+            AccountsInvoice::withoutGlobalScopes()->whereIn('id', $ids)->delete();
+
+            DB::table('accounts_purchase_items')->whereIn('purchase_voucher_id', $vouchers)->delete();
+            DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branches)->delete();
+
+            // Last: receipts, payments and statement lines all point at a bank account.
+            DB::table('bank_transactions')->whereIn('agent_id', $branches)->update(['bank_account_id' => null]);
+            DB::table('bank_accounts')->whereIn('agent_id', $branches)->delete();
+
+            // The ledger of a DEMO tenant is the seeder's to rebuild; on a live one it would never be touched.
+            DB::table('accounts_ledger_entries')->whereIn('agent_id', $branches)->delete();
+            DB::table('unposted_transactions_queue')->whereIn('agent_id', $branches)->delete();
+        } finally {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
         AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branches)->update(['is_posted' => false]);
 
         // Whatever those receipts had settled goes back to being owed.

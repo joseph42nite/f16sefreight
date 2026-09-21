@@ -532,7 +532,12 @@
           <button class="fx-btn" :disabled="busy" @click="printOne">Print</button>
           <button v-if="canPost && can.note" class="fx-btn" @click="openRaise('credit_note', document)">Raise a note</button>
           <button v-if="canPost && can.void" class="fx-btn fx-btn--ghost" @click="voidFor = { reason: '' }">Void</button>
-          <button v-if="canPost && can.finalize" class="fx-btn fx-btn--primary" :disabled="busy || !items.length" @click="finalize">
+          <!--
+            🔴 `finalize()`, with the brackets. Written as `@click="finalize"` Vue hands the method the DOM event
+            as its first argument — which landed in `override`, made every ordinary Finalize look like a request
+            to override the credit gate, and refused with "override reason is required".
+          -->
+          <button v-if="canPost && can.finalize" class="fx-btn fx-btn--primary" :disabled="busy || !items.length" @click="finalize()">
             Finalize
           </button>
           <button v-if="canPost && can.post" class="fx-btn fx-btn--primary" :disabled="busy" @click="postDocument">Post to ledger</button>
@@ -1055,10 +1060,14 @@ export default {
       this.commit(() => ApiService.delete(`/billing/${this.document.id}/lines/${item.id}`));
     },
     finalize(override = false) {
+      // 🔒 `=== true`, never truthiness: overriding a credit hold has to be DELIBERATE, and a stray argument —
+      // a DOM event, a promise, anything — must never be mistaken for the decision to ship on spent credit.
+      const overriding = override === true && !!this.overrideReason.trim();
+
       this.creditBlock = null;
       this.commit(
         () => ApiService.post(`/invoices/${this.document.id}/finalize`,
-          override ? { override_credit_hold: true, override_reason: this.overrideReason } : {}),
+          overriding ? { override_credit_hold: true, override_reason: this.overrideReason } : {}),
         true
       );
     },

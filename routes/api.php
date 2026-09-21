@@ -515,6 +515,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
 
+        // ── Close the month: six steps that know where you are (guide §11.2).
+        Route::get('/close-month', [\App\Http\Controllers\Freight\CloseMonthController::class, 'index']);
+
         // ── Money in: the five stages a rupee travels, counted in one call (guide §11.2).
         Route::get('/money-in/stages', [\App\Http\Controllers\Freight\MoneyInController::class, 'stages']);
 

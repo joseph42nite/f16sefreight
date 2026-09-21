@@ -1508,7 +1508,7 @@ address) · **who owns them** (our branch, salesperson, their usual port) · **t
 1. **Clients** 🟢 *(2026-09-20)* — needed by Money in ⑤ for limits and by Today for credit holds
 2. **Today** 🟢 *(2026-09-20)* — the home, reading counts from endpoints that already exist
 3. **Money in** 🟢 *(2026-09-21)* — the largest merge: Billing + Collections + bank matching
-4. **Close the month** — the highest-value reframing; five screens become one checklist
+4. **Close the month** 🟢 *(2026-09-21)* — the highest-value reframing; five screens become one checklist
 5. **Money out** — smallest, and needs §11.6's payment run to be worth a surface
 6. **How we're doing** — already correct; only needs to be reachable
 

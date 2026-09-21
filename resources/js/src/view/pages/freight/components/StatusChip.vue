@@ -70,6 +70,10 @@ const TONE = {
 
   // Collections (user, 2026-09-20). A BROKEN promise is the strongest signal on that screen: they were asked, they
   // committed to a date, and the date passed. "Nobody has called" is a warning about US, not about them.
+  // A month-end step that is done. Neutral, not green: being clear is the normal state, and a wall of green
+  // trains the eye past the one step that is not.
+  clear: "neutral",
+
   // Today's exceptions: one stops work, the other is worth a look before it does.
   blocking: "critical",
   check_this: "warning",

@@ -79,6 +79,8 @@ export const NAV_ITEMS = [
   // 🔴 ONE rail item for the whole receivable side (guide §11.2). Billing and Collections are stages of it now;
   // their routes stay for deep links and for the Boss, who reaches the ageing from Financials.
   { path: "/money-in", label: "Money in", icon: "receipt", designations: ["accounts"], minTier: "command" },
+  // Month-end as one action instead of five screens. Accounts' own — the Boss reads the statements from Financials.
+  { path: "/close-month", label: "Close the month", icon: "calendar-check", designations: ["accounts"], minTier: "command" },
   { path: "/boss", label: "Overview", icon: "speedometer", designations: ["boss"], minTier: "tactical" },
 
   // ── Always last ──────────────────────────────────────────────────────────
@@ -96,7 +98,7 @@ const RAIL_ORDER = {
   sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
   boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
   // Accounts start in the registers; their inbox sits under it (user, 2026-09-19).
-  accounts: ["/today", "/money-in", "/financials", "/inbox", "/clients-partners", "/settings"],
+  accounts: ["/today", "/money-in", "/close-month", "/financials", "/inbox", "/clients-partners", "/settings"],
 };
 
 const railRank = (item, designation) => {

@@ -108,7 +108,7 @@ class AccountsTodayController extends Controller
         if ($open->isEmpty()) {
             $out[] = ['kind' => 'no_period', 'tone' => 'critical',
                 'text' => 'No accounting period is open for today, so nothing can be posted.',
-                'to' => ['path' => '/financials', 'query' => ['view' => 'periods']]];
+                'to' => ['path' => '/close-month']];
         }
 
         foreach ($open as $period) {
@@ -117,7 +117,7 @@ class AccountsTodayController extends Controller
             if ($days >= 0 && $days <= 7) {
                 $out[] = ['kind' => 'period_closing', 'tone' => 'warning',
                     'text' => $period->period_name . ' ends in ' . ($days === 0 ? 'today' : $days . ' day(s)') . '.',
-                    'to' => ['path' => '/financials', 'query' => ['view' => 'periods']]];
+                    'to' => ['path' => '/close-month']];
             }
         }
 

@@ -445,6 +445,13 @@ const router = new Router({
           meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
         },
         {
+          // Close the month: six steps that know where you are (guide §11.2).
+          path: "close-month",
+          name: "CloseMonth",
+          component: () => import("@/view/pages/freight/CloseMonth"),
+          meta: { userType: 'user', designations: ['accounts', 'boss'], minTier: 'command' }
+        },
+        {
           // Money in: bill it, collect it, chase it — one pipeline (guide §11.2).
           path: "money-in",
           name: "MoneyIn",

@@ -44,11 +44,15 @@ class AccountsRegressionSeeder extends Seeder
         'code' => 'REG', 'name' => 'Regression Freight',
         'clients' => [
             // limit 500,000 — comfortably inside it
-            ['key' => 'northstar', 'name' => 'Northstar Exports', 'domain' => 'northstar.test', 'limit' => 500000, 'terms' => 30],
+            ['key' => 'northstar', 'name' => 'Northstar Exports', 'domain' => 'northstar.test', 'limit' => 500000,
+             'terms' => 30, 'gst_no' => '27AAACN1001A1Z5'],
             // limit 50,000 against 59,000 owed — ON HOLD, so the gate and the Today exception are exercised
-            ['key' => 'harbour', 'name' => 'Harbour Traders', 'domain' => 'harbour.test', 'limit' => 50000, 'terms' => 15],
+            ['key' => 'harbour', 'name' => 'Harbour Traders', 'domain' => 'harbour.test', 'limit' => 50000,
+             'terms' => 15, 'gst_no' => '33AAACH1002A1Z5'],
             // no limit at all — NULL is "not configured" and must never block, whatever they owe
-            ['key' => 'cashflow', 'name' => 'Cashflow Corp', 'domain' => 'cashflow.test', 'limit' => null, 'terms' => 45],
+            // No GSTIN: billed B2C, so it never goes to the invoice registration portal at all.
+            ['key' => 'cashflow', 'name' => 'Cashflow Corp', 'domain' => 'cashflow.test', 'limit' => null,
+             'terms' => 45, 'gst_no' => null],
         ],
         'shipments' => [
             ['key' => 'j1', 'client' => 'northstar', 'mode' => 'air', 'from' => 'BOM', 'to' => 'FRA'],
@@ -217,6 +221,7 @@ class AccountsRegressionSeeder extends Seeder
             $clients[$c['key']] = Customer::withoutGlobalScopes()->create([
                 'company_id' => $company->id, 'name' => $c['name'], 'email_domain' => $c['domain'],
                 'branch_id' => $branch->id, 'credit_limit' => $c['limit'], 'payment_terms_days' => $c['terms'],
+                'gst_no' => $c['gst_no'] ?? null,
             ]);
             DB::table('customer_contacts')->insert(['company_id' => $company->id, 'customer_id' => $clients[$c['key']]->id,
                 'email' => 'ap@' . $c['domain'], 'source' => 'inbound_harvest', 'message_count' => 5,

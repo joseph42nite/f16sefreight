@@ -67,6 +67,7 @@ class VerifyAccounts extends Command
         $this->credit();
         $this->today();
         $this->moneyIn();
+        $this->closeMonth();
         $this->ledger();
         $this->crossChecks();
 
@@ -227,6 +228,37 @@ class VerifyAccounts extends Command
         // ⑤ The same overdue figure the ageing, the queue and the Today card report.
         $this->check('money in ⑤: overdue', 206800.0, $stages['overdue']['amount']);
         $this->check('money in ⑤: clients', 2, $stages['overdue']['count']);
+    }
+
+    /**
+     * The six steps of a month-end, against a period that is deliberately NOT ready to close.
+     *
+     * ⚠️ The fixture is built mid-month on purpose: one shipment unbilled, one document unposted. A checklist is
+     * only worth testing in the state where it says no.
+     */
+    private function closeMonth(): void
+    {
+        $body = json_decode(app(\App\Http\Controllers\Freight\CloseMonthController::class)
+            ->index(new Request())->getContent(), true);
+        $steps = collect($body['steps'])->keyBy('key');
+
+        // ① The fifth shipment carries only a draft, and a draft is not billed.
+        $this->check('close ①: unbilled shipments', 1, $steps['billed']['count']);
+        // ② Every billed shipment has its cost booked.
+        $this->check('close ②: uncosted shipments', 0, $steps['costed']['count']);
+        // ③ That same draft is the one document outside the ledger — and this is the step that blocks.
+        $this->check('close ③: unposted documents', 1, $steps['posted']['count']);
+        $this->check('close ③: blocks the close', true, $steps['posted']['blocking']);
+        // ④ Five B2B documents await an IRN; the export invoice to a client with no GSTIN never needs one.
+        $this->check('close ④: awaiting an IRN', 5, $steps['gst']['count']);
+        // 18,000 + 36,000 + 9,000 + 3,600 − 1,800 = 64,800 charged, net of the credit note.
+        $this->check('close ④: tax charged', 64800.0, $steps['gst']['tax_charged']);
+        // ⑤ Refused, and it says which step to clear.
+        $this->check('close ⑤: cannot close yet', false, $body['can_close']);
+        $this->check('close ⑤: names the blocker', 'Everything posted?', $body['blocked_by']);
+        // ⑥ The ledger balances and proves the same profit as every other screen.
+        $this->check('close ⑥: ledger balances', true, $steps['statements']['balanced']);
+        $this->check('close ⑥: net profit', 170000.0, $steps['statements']['figures']['net']);
     }
 
     /* ── The books themselves ─────────────────────────────────────────────── */

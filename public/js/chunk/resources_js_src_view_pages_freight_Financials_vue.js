@@ -675,21 +675,21 @@ var render = function render() {
     staticClass: "fx-page-sub"
   }, [_vm._v("\n      " + _vm._s(_vm.subtitleForView) + "\n      "), _c("router-link", {
     attrs: {
-      to: "/billing"
+      to: "/money-in"
     }
-  }, [_vm._v("Billing →")]), _vm._v(" "), _c("router-link", {
+  }, [_vm._v("Money in →")]), _vm._v(" "), _c("router-link", {
     attrs: {
-      to: "/collections"
+      to: "/money-out"
     }
-  }, [_vm._v("Ageing & collections →")]), _vm._v(" "), _c("router-link", {
+  }, [_vm._v("Money out →")]), _vm._v(" "), _c("router-link", {
     attrs: {
-      to: "/journal"
+      to: "/close-month"
     }
-  }, [_vm._v("Journal →")]), _vm._v(" "), _c("router-link", {
+  }, [_vm._v("Close the month →")]), _vm._v(" "), _c("router-link", {
     attrs: {
-      to: "/profitability"
+      to: "/how-were-doing"
     }
-  }, [_vm._v("Profitability →")]), _vm._v(" "), _c("router-link", {
+  }, [_vm._v("How we're doing →")]), _vm._v(" "), _c("router-link", {
     attrs: {
       to: "/settings/finance"
     }

@@ -68,6 +68,7 @@ class VerifyAccounts extends Command
         $this->today();
         $this->moneyIn();
         $this->closeMonth();
+        $this->gstReturns();
         $this->moneyOut();
         $this->banks();
         $this->ledger();
@@ -282,6 +283,97 @@ class VerifyAccounts extends Command
     }
 
     /** The bank accounts master: two accounts, two balances, and the statements that belong to each. */
+    /**
+     * GSTR-1 and GSTR-3B, every figure worked out on paper first.
+     *
+     * The fixture's own GSTIN is 27 (Maharashtra). Northstar is 27 → CGST + SGST; Harbour is 33 → IGST;
+     * Cashflow has none at all and its only document carries no tax, so it can be filed under no section.
+     *
+     * 🔴 **The window is the whole fixture span, not a month.** Production files a calendar month — see
+     * `GstReturnService::gstr1()` — but the fixture's documents are back-dated across four of them so the
+     * ageing buckets land where they must, and asserting one month would assert a quarter of the arithmetic.
+     * A one-month call is checked separately below, which is what proves the window is honoured at all.
+     */
+    private function gstReturns(): void
+    {
+        $period = DB::table('accounting_periods')
+            ->whereIn('agent_id', $this->branchIds())->where('status', 'open')->first();
+        $service = app(\App\Services\GstReturnService::class);
+
+        $r1 = $service->gstr1((int) $period->agent_id, $period->start_date, $period->end_date);
+
+        $this->check('gstr1: our own GSTIN is set', '27AAACR1000A1Z5', $r1['gstin']);
+        $this->check('gstr1: the return can be filed', true, $r1['filable']);
+
+        // Three invoices to registered clients. The export to Cashflow is not one: no GSTIN, so no section.
+        $this->check('gstr1: B2B invoices', 3, count($r1['b2b']));
+        $this->check('gstr1: CDNR notes', 2, count($r1['cdnr']));
+
+        $b2b = collect($r1['b2b'])->keyBy('document_no');
+        $notes = collect($r1['cdnr'])->keyBy('document_no');
+
+        // 🔴 inv1: 100,000 at 18% to a client in OUR state — 18,000 halved into two heads, not IGST.
+        $this->check('gstr1: inv1 is intrastate', 'intrastate', $b2b['INV-REGBOM-26-0001']['supply'] ?? null);
+        $this->check('gstr1: inv1 CGST', 9000.0, $b2b['INV-REGBOM-26-0001']['cgst'] ?? null);
+        $this->check('gstr1: inv1 SGST', 9000.0, $b2b['INV-REGBOM-26-0001']['sgst'] ?? null);
+        $this->check('gstr1: inv1 no IGST', 0.0, $b2b['INV-REGBOM-26-0001']['igst'] ?? null);
+        // 🔴 inv3: 50,000 at 18% to a client in 33 — the SAME 9,000 of tax, entirely as IGST.
+        $this->check('gstr1: inv3 is interstate', 'interstate', $b2b['INV-REGBOM-26-0003']['supply'] ?? null);
+        $this->check('gstr1: inv3 IGST', 9000.0, $b2b['INV-REGBOM-26-0003']['igst'] ?? null);
+        $this->check('gstr1: inv3 no CGST', 0.0, $b2b['INV-REGBOM-26-0003']['cgst'] ?? null);
+        $this->check('gstr1: inv3 place of supply', '33', $b2b['INV-REGBOM-26-0003']['place_of_supply'] ?? null);
+        // The note letters the portal uses.
+        $this->check('gstr1: the credit note is a C', 'C', $notes['CN-REGBOM-26-0001']['note_type'] ?? null);
+        $this->check('gstr1: the debit note is a D', 'D', $notes['DN-REGBOM-26-0001']['note_type'] ?? null);
+
+        // 🔴 100,000 + 200,000 + 50,000 + 20,000 (debit note) − 10,000 (credit note) = 360,000.
+        $this->check('gstr1: taxable value', 360000.0, $r1['totals']['taxable_value']);
+        // CGST: 9,000 + 18,000 + 1,800 − 900 = 27,900. SGST the same. IGST is Harbour's 9,000 alone.
+        $this->check('gstr1: CGST', 27900.0, $r1['totals']['cgst']);
+        $this->check('gstr1: SGST', 27900.0, $r1['totals']['sgst']);
+        $this->check('gstr1: IGST', 9000.0, $r1['totals']['igst']);
+        $this->check('gstr1: tax filed', 64800.0, $r1['totals']['tax']);
+        $this->check('gstr1: documents filed', 5, $r1['totals']['documents']);
+
+        // The HSN summary must agree with the sections above it or the file disagrees with itself.
+        $this->check('gstr1: one HSN line (996531 at 18%)', 1, count($r1['hsn']));
+        $this->check('gstr1: HSN taxable value', 360000.0, $r1['hsn'][0]['taxable_value'] ?? null);
+        $this->check('gstr1: HSN CGST', 27900.0, $r1['hsn'][0]['cgst'] ?? null);
+
+        // 🔴 The export: 300,000 with no tax and no counterparty GSTIN. Not filed, and NAMED.
+        $this->check('gstr1: documents not filed', 1, count($r1['exceptions']));
+        $this->check('gstr1: and it is the export', 'INV-REGBOM-26-0004', $r1['exceptions'][0]['document_no'] ?? null);
+        $this->check('gstr1: why it cannot be filed', 'zero_rated_needs_classification', $r1['exceptions'][0]['reason'] ?? null);
+        $this->check('gstr1: its value is still reported', 300000.0, $r1['exceptions'][0]['taxable_value'] ?? null);
+        // Nothing disagrees with the register, because nothing in the fixture wrote one.
+        $this->check('gstr1: no register disagreements', 0, count($r1['warnings']));
+
+        // ⚠️ The window is honoured: one month holds less than the whole span.
+        [$from, $to] = \App\Services\GstReturnService::month(date('Y-m'));
+        $month = $service->gstr1((int) $period->agent_id, $from, $to);
+        $this->check('gstr1: a single month is a subset', true, $month['totals']['tax'] < $r1['totals']['tax']);
+        $this->check('gstr1: the filing period is MMYYYY', date('mY'), $month['filing_period']);
+
+        // ── 3B ──────────────────────────────────────────────────────────────
+        $r3 = $service->gstr3b((int) $period->agent_id, $period->start_date, $period->end_date);
+
+        $this->check('gstr3b: 3.1(a) taxable value', 360000.0, $r3['outward']['taxable_value']);
+        $this->check('gstr3b: 3.1(a) tax', 64800.0, $r3['outward']['tax']);
+        // 🔴 Input credit: the carrier is registered in 27 too, so 12,600 + 27,000 + 10,800 = 50,400 of tax
+        // splits 25,200 a head. The fourth voucher carries no tax and contributes nothing.
+        $this->check('gstr3b: 4(A)(5) input CGST', 25200.0, $r3['input_credit']['cgst']);
+        $this->check('gstr3b: 4(A)(5) input SGST', 25200.0, $r3['input_credit']['sgst']);
+        $this->check('gstr3b: 4(A)(5) no input IGST', 0.0, $r3['input_credit']['igst']);
+        $this->check('gstr3b: vouchers claimed', 4, $r3['input_credit']['vouchers']);
+        // 27,900 − 25,200 = 2,700 a head; IGST has no credit against it at all.
+        $this->check('gstr3b: CGST difference', 2700.0, $r3['difference']['cgst']);
+        $this->check('gstr3b: SGST difference', 2700.0, $r3['difference']['sgst']);
+        $this->check('gstr3b: IGST difference', 9000.0, $r3['difference']['igst']);
+        $this->check('gstr3b: total difference', 14400.0, $r3['difference']['total']);
+        // And it carries what GSTR-1 left out rather than reporting a quietly smaller month.
+        $this->check('gstr3b: names what GSTR-1 left out', 300000.0, $r3['excluded']['value']);
+    }
+
     private function banks(): void
     {
         $body = json_decode(app(\App\Http\Controllers\Freight\BankAccountController::class)
@@ -401,6 +493,21 @@ class VerifyAccounts extends Command
 
         $this->check('cross: AR ledger + money on account == ageing total',
             round($ar + $onAccount, 2), $ageing['totals']['total']);
+
+        // 🔴 THE GST CROSS-CHECK. Close-the-month ④ sums the tax off the document HEADERS; the return sums it
+        // off the LINE ITEMS, splits each one into heads, and nets the credit note. Two different tables, two
+        // different computations, one answer — and the day they disagree, a document's lines have drifted from
+        // its total, which is the one way a filed return can be wrong while every screen still looks right.
+        $close = json_decode(app(\App\Http\Controllers\Freight\CloseMonthController::class)
+            ->index(new Request())->getContent(), true);
+        $gstStep = collect($close['steps'])->firstWhere('key', 'gst');
+        $filed = app(\App\Services\GstReturnService::class)
+            ->gstr1((int) DB::table('accounting_periods')->whereIn('agent_id', $this->branchIds())
+                ->where('status', 'open')->value('agent_id'), '2000-01-01', '2100-01-01');
+
+        // ⚠️ The excepted export carries no tax, so the two figures must agree to the paisa even though one
+        // of them counts a document the other refuses to file.
+        $this->check('cross: tax charged == tax filed', $gstStep['tax_charged'], $filed['totals']['tax']);
     }
 
     /* ── The other tenant ─────────────────────────────────────────────────── */
@@ -425,6 +532,18 @@ class VerifyAccounts extends Command
         $this->check('rival: sees one branch only', 1, count($today['branches']));
         $this->check('rival: that branch is theirs', 'Delhi', $today['branches'][0]->name ?? $today['branches'][0]['name'] ?? null);
         $this->check('rival: no Regression revenue leaked', true, $profit['totals']['revenue'] !== 660000.0);
+        // Their GST return: 139,860 of tax on a 07-to-07 supply, so 69,930 a head — and 27,900 (Regression's
+        // figure) must appear nowhere in it.
+        $rivalPeriod = DB::table('accounting_periods')->whereIn('agent_id', $this->branchIds())
+            ->where('status', 'open')->first();
+        $rivalReturn = app(\App\Services\GstReturnService::class)
+            ->gstr1((int) $rivalPeriod->agent_id, $rivalPeriod->start_date, $rivalPeriod->end_date);
+        $this->check('rival: GSTIN is their own', '07AAACV1000A1Z5', $rivalReturn['gstin']);
+        $this->check('rival: taxable value', 777000.0, $rivalReturn['totals']['taxable_value']);
+        $this->check('rival: CGST', 69930.0, $rivalReturn['totals']['cgst']);
+        $this->check('rival: SGST', 69930.0, $rivalReturn['totals']['sgst']);
+        $this->check('rival: no Regression tax leaked', true, $rivalReturn['totals']['cgst'] !== 27900.0);
+
         $this->check('rival: no Regression client visible', 0, collect(json_decode(
             app(\App\Http\Controllers\Freight\CustomerController::class)->index(new Request())->getContent(), true)['data'])
             ->whereIn('name', ['Northstar Exports', 'Harbour Traders', 'Cashflow Corp'])->count());

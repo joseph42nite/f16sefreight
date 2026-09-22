@@ -8676,8 +8676,8 @@ const LANDING_ROUTE = {
   // the day starts with assigned work
   sales: "/sales",
   // Today's Actions is the worklist
-  accounts: "/financials",
-  // the registers
+  accounts: "/today",
+  // what to do today, not a register to read (guide §11.2)
   boss: "/boss" // oversight
 };
 const NAV_ITEMS = [
@@ -8780,27 +8780,54 @@ const NAV_ITEMS = [
 },
 // ⚠️ /settings/finance is reached FROM Financials, not from the rail: the chart of accounts and the rate cards are
 // set up once and read rarely, and a seventh rail item competes with the registers worked every day.
+// ⚠️ `boss` only on the rail now. Accounts reach every one of its nine views from Today, Money in, Money out or
+// Close the month; leaving it on their rail as well would be a tenth way into screens they already own, which
+// is how the junk drawer formed in the first place. The route is kept for deep links and for the Boss.
 {
   path: "/financials",
   label: "Financials",
   icon: "cash",
-  designations: ["accounts", "boss"],
+  designations: ["boss"],
   minTier: "command"
 },
 // The billing desk (user, 2026-09-19). Accounts' own, not the Boss's: raising and sending a bill is the one thing
 // the role that sets the targets must not do. The Boss reaches the register from Financials.
+// 🔴 The accounts desk lands on WORK, not on a register. Everything else is reachable from it.
 {
-  path: "/billing",
-  label: "Billing",
-  icon: "receipt",
+  path: "/today",
+  label: "Today",
+  icon: "sun",
   designations: ["accounts"],
   minTier: "command"
 },
-// Chasing what is owed is accounts' day, not the Boss's; the Boss reads the ageing from Financials.
+// 🔴 ONE rail item for the whole receivable side (guide §11.2). Billing and Collections are stages of it now;
+// their routes stay for deep links and for the Boss, who reaches the ageing from Financials.
 {
-  path: "/collections",
-  label: "Collections",
-  icon: "hourglass",
+  path: "/money-in",
+  label: "Money in",
+  icon: "receipt",
+  designations: ["accounts"],
+  minTier: "command"
+}, {
+  path: "/money-out",
+  label: "Money out",
+  icon: "cash-stack",
+  designations: ["accounts"],
+  minTier: "command"
+},
+// Month-end as one action instead of five screens. Accounts' own — the Boss reads the statements from Financials.
+{
+  path: "/close-month",
+  label: "Close the month",
+  icon: "calendar-check",
+  designations: ["accounts"],
+  minTier: "command"
+},
+// 🔴 The two screens that answer "why" used to be on no rail at all (guide §11.1).
+{
+  path: "/how-were-doing",
+  label: "How we're doing",
+  icon: "graph-up",
   designations: ["accounts"],
   minTier: "command"
 }, {
@@ -8829,7 +8856,7 @@ const RAIL_ORDER = {
   sales: ["/sales", "/inbox", "/kanban", "/enquiries", "/clients-partners", "/settings"],
   boss: ["/boss", "/inbox", "/sales", "/financials", "/clients-partners", "/settings"],
   // Accounts start in the registers; their inbox sits under it (user, 2026-09-19).
-  accounts: ["/billing", "/collections", "/financials", "/inbox", "/clients-partners", "/settings"]
+  accounts: ["/today", "/money-in", "/money-out", "/close-month", "/how-were-doing", "/inbox", "/clients-partners", "/settings"]
 };
 const railRank = (item, designation) => {
   const order = RAIL_ORDER[designation] || [];
@@ -10768,10 +10795,60 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
         minTier: 'command'
       }
     }, {
+      // How we're doing: the margin, and the way down to the document behind any figure (guide §11.2).
+      path: "how-were-doing",
+      name: "HowWereDoing",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_HowWereDoing_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/HowWereDoing */ "./resources/js/src/view/pages/freight/HowWereDoing.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['accounts', 'boss'],
+        minTier: 'command'
+      }
+    }, {
+      // Money out: what we owe, and the run that pays it (guide §11.2).
+      path: "money-out",
+      name: "MoneyOut",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_MoneyOut_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/MoneyOut */ "./resources/js/src/view/pages/freight/MoneyOut.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['accounts', 'boss'],
+        minTier: 'command'
+      }
+    }, {
+      // Close the month: six steps that know where you are (guide §11.2).
+      path: "close-month",
+      name: "CloseMonth",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_CloseMonth_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/CloseMonth */ "./resources/js/src/view/pages/freight/CloseMonth.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['accounts', 'boss'],
+        minTier: 'command'
+      }
+    }, {
+      // Money in: bill it, collect it, chase it — one pipeline (guide §11.2).
+      path: "money-in",
+      name: "MoneyIn",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_MoneyIn_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/MoneyIn */ "./resources/js/src/view/pages/freight/MoneyIn.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['accounts', 'boss'],
+        minTier: 'command'
+      }
+    }, {
+      // The accounts desk's home: what to do today (guide §11.2).
+      path: "today",
+      name: "AccountsToday",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_freight_AccountsToday_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/AccountsToday */ "./resources/js/src/view/pages/freight/AccountsToday.vue")),
+      meta: {
+        userType: 'user',
+        designations: ['accounts', 'boss'],
+        minTier: 'command'
+      }
+    }, {
       // What each shipment, client and lane made.
       path: "profitability",
       name: "Profitability",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_freight_Profitability_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Profitability */ "./resources/js/src/view/pages/freight/Profitability.vue")),
+      component: () => __webpack_require__.e(/*! import() */ "common").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Profitability */ "./resources/js/src/view/pages/freight/Profitability.vue")),
       meta: {
         userType: 'user',
         designations: ['accounts', 'boss'],
@@ -10781,7 +10858,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       // The day book, and the drill from a report line to the document behind it.
       path: "journal",
       name: "Journal",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_Journal_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Journal */ "./resources/js/src/view/pages/freight/Journal.vue")),
+      component: () => __webpack_require__.e(/*! import() */ "common").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Journal */ "./resources/js/src/view/pages/freight/Journal.vue")),
       meta: {
         userType: 'user',
         designations: ['accounts', 'boss'],
@@ -10791,7 +10868,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       // Ageing and collections: who owes what, and what has been done about it.
       path: "collections",
       name: "Collections",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_freight_Collections_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Collections */ "./resources/js/src/view/pages/freight/Collections.vue")),
+      component: () => __webpack_require__.e(/*! import() */ "common").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Collections */ "./resources/js/src/view/pages/freight/Collections.vue")),
       meta: {
         userType: 'user',
         designations: ['accounts', 'boss'],
@@ -10801,7 +10878,7 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       // The billing desk: the five sales documents, receipts, printing and the e-invoice register.
       path: "billing",
       name: "Billing",
-      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_Billing_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Billing */ "./resources/js/src/view/pages/freight/Billing.vue")),
+      component: () => __webpack_require__.e(/*! import() */ "common").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/Billing */ "./resources/js/src/view/pages/freight/Billing.vue")),
       meta: {
         userType: 'user',
         designations: ['accounts', 'boss'],

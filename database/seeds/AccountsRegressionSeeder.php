@@ -42,6 +42,10 @@ class AccountsRegressionSeeder extends Seeder
     /** The fixture, in full. Every figure is net of tax unless it says otherwise. */
     private const FIXTURE = [
         'code' => 'REG', 'name' => 'Regression Freight',
+        // State 27 (Maharashtra). Northstar is 27 → CGST + SGST; Harbour is 33 → IGST; Cashflow has none at all.
+        'gstin' => '27AAACR1000A1Z5',
+        // The carrier we buy from is registered in 27 too, so input credit splits CGST + SGST.
+        'vendor_gstin' => '27AAACR9001A1Z5',
         'clients' => [
             // limit 500,000 — comfortably inside it
             ['key' => 'northstar', 'name' => 'Northstar Exports', 'domain' => 'northstar.test', 'limit' => 500000,
@@ -100,7 +104,10 @@ class AccountsRegressionSeeder extends Seeder
     ];
 
     /** The second tenant. Different arithmetic on purpose — see the class docblock. */
-    private const RIVAL = ['code' => 'RIV', 'name' => 'Rival Freight', 'net' => 777000, 'tax' => 139860, 'cost' => 555000];
+    private const RIVAL = ['code' => 'RIV', 'name' => 'Rival Freight', 'net' => 777000, 'tax' => 139860, 'cost' => 555000,
+        // 🔴 State 07 (Delhi), against Regression's 27 — so a document leaking across the tenant boundary lands
+        // under the WRONG HEADS as well as in the wrong total, and shows up twice over.
+        'gstin' => '07AAACV1000A1Z5'];
 
     private EnquirySequenceService $sequences;
     private LedgerPostingService $ledger;
@@ -220,10 +227,11 @@ class AccountsRegressionSeeder extends Seeder
     private function buildFixture(): void
     {
         $f = self::FIXTURE;
-        [$company, $branch, $accounts] = $this->tenant($f['code'], $f['name'], 'Mumbai', 'BOM');
+        [$company, $branch, $accounts] = $this->tenant($f['code'], $f['name'], 'Mumbai', 'BOM', $f['gstin']);
 
         $carrier = Partner::withoutGlobalScopes()->create(['company_id' => $company->id, 'agent_id' => $branch->id,
-            'name' => 'Regression Air', 'partner_type' => 'airline', 'email' => 'cass@regression-air.test']);
+            'name' => 'Regression Air', 'partner_type' => 'airline', 'email' => 'cass@regression-air.test',
+            'gst_no' => $f['vendor_gstin']]);
 
         $banks = [];
         foreach ($f['banks'] as $b) {
@@ -317,10 +325,13 @@ class AccountsRegressionSeeder extends Seeder
     private function buildRival(): void
     {
         $r = self::RIVAL;
-        [$company, $branch, $accounts] = $this->tenant($r['code'], $r['name'], 'Delhi', 'DEL');
+        [$company, $branch, $accounts] = $this->tenant($r['code'], $r['name'], 'Delhi', 'DEL', $r['gstin']);
 
+        // Registered in 07 like the branch itself, so their tax splits CGST + SGST — and 139,860 halves to
+        // 69,930 a head, a figure that appears nowhere in Regression Freight's arithmetic.
         $client = Customer::withoutGlobalScopes()->create(['company_id' => $company->id, 'name' => 'Rival Client',
-            'email_domain' => 'rivalclient.test', 'branch_id' => $branch->id, 'credit_limit' => 1000000]);
+            'email_domain' => 'rivalclient.test', 'branch_id' => $branch->id, 'credit_limit' => 1000000,
+            'gst_no' => '07AAACR2000A1Z5']);
         $carrier = Partner::withoutGlobalScopes()->create(['company_id' => $company->id, 'agent_id' => $branch->id,
             'name' => 'Rival Air', 'partner_type' => 'airline']);
 
@@ -337,11 +348,14 @@ class AccountsRegressionSeeder extends Seeder
     }
 
     /** A company, one branch, and the accounts login that works it. */
-    private function tenant(string $code, string $name, string $branchName, string $branchCode): array
+    private function tenant(string $code, string $name, string $branchName, string $branchCode, string $gstin): array
     {
         $company = Company::withoutGlobalScopes()->create(['name' => $name, 'code' => $code, 'tier' => 'command']);
+        // 🔴 OUR OWN GSTIN — state 27, Maharashtra. Every figure in the GST return depends on it: the same 18%
+        // is CGST 9 + SGST 9 against a 27-state client and IGST 18 against a 33-state one, and with no GSTIN
+        // here `GstSplitService` refuses to guess and the whole return is empty (GAPS #36, closed 2026-09-22).
         $branch = Agent::withoutGlobalScopes()->create(['company_id' => $company->id,
-            'agent_name' => $branchName, 'branch_code' => $branchCode]);
+            'agent_name' => $branchName, 'branch_code' => $branchCode, 'gst_no' => $gstin]);
 
         $email = 'accounts@' . strtolower($code) . '.test';
         $user = User::withoutGlobalScopes()->create(['name' => 'Accounts ' . $branchCode, 'email' => $email,

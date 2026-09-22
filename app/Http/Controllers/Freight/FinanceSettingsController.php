@@ -72,6 +72,50 @@ class FinanceSettingsController extends Controller
         return $this->index($request);
     }
 
+    /**
+     * The branch's own GSTIN (user, 2026-09-22: "add gst_no for agent_info as well").
+     *
+     * 🔴 **Nothing about GST works without it** — GAPS #36, open from 2026-08-27 until today. The split rule
+     * is *"if the first two digits of the counterparty GSTIN match our branch state code"*, so with no GSTIN
+     * of our own `GstSplitService` returns `determinable: false`, no `gst_ledger_entries` row is ever written,
+     * and GSTR-1 has nothing to file.
+     *
+     * ⚠️ **The format is validated, and the state code is the reason.** The first two digits decide whether a
+     * supply is CGST + SGST or IGST, i.e. which government is paid. A GSTIN typed with a transposed state
+     * code produces a return that files every intrastate supply as interstate and validates cleanly — so the
+     * 15-character shape is checked here rather than trusted, and a 14-character paste is refused at entry
+     * instead of discovered by a customer who cannot claim their credit.
+     *
+     * ⚠️ Changing it does not rewrite history. Documents already finalized keep the register rows they were
+     * written with, and `GstReturnService` reports any that now disagree rather than silently re-splitting
+     * them — which is what makes a corrected GSTIN visible instead of retroactive.
+     */
+    public function saveGstin(Request $request): JsonResponse
+    {
+        $this->authorize('manageFinanceSettings');
+        $context = UserContext::for(auth()->user());
+
+        $data = $request->validate([
+            'agent_id' => 'required|integer',
+            // Nullable: an overseas branch has no GSTIN, and clearing a wrong one must be possible.
+            // 2 digits state · 10 PAN · 1 entity · 1 alphabet · 1 check character.
+            'gst_no' => ['nullable', 'string', 'regex:/^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z0-9]{1}[A-Z]{1}[A-Z0-9]{1}$/i'],
+        ], [
+            'gst_no.regex' => 'That is not a GSTIN. It is 15 characters — two digits of state code, then a PAN, then three more.',
+        ]);
+
+        if (! $this->ownBranch($context, (int) $data['agent_id'])) {
+            return response()->json(['error' => 'That branch is not one of yours.', 'reason' => 'branch_not_found'], 404);
+        }
+
+        DB::table('agents_info')->where('id', $data['agent_id'])->update([
+            'gst_no' => $data['gst_no'] === null || $data['gst_no'] === '' ? null : strtoupper($data['gst_no']),
+            'updated_at' => now(),
+        ]);
+
+        return $this->index($request);
+    }
+
     /** A rate a client or a supplier is quoted, for a lane and a weight break. */
     public function saveRateCard(Request $request): JsonResponse
     {
@@ -131,7 +175,10 @@ class FinanceSettingsController extends Controller
     private function branches(Request $request): array
     {
         $context = UserContext::for(auth()->user());
-        $branches = DB::table('agents_info')->where('company_id', $context->companyId)->orderBy('agent_name')->get(['id', 'agent_name as name']);
+        // `gst_no` comes back with the branch: it is not a secret — it is printed on every invoice we
+        // issue — and it is the field the whole GST return depends on (GAPS #36).
+        $branches = DB::table('agents_info')->where('company_id', $context->companyId)->orderBy('agent_name')
+            ->get(['id', 'agent_name as name', 'branch_code', 'gst_no']);
         $picked = $request->filled('agent_id') && $branches->contains('id', (int) $request->integer('agent_id'))
             ? (int) $request->integer('agent_id') : null;
 

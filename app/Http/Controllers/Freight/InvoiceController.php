@@ -282,18 +282,23 @@ class InvoiceController extends Controller
     {
         $tax = round((float) $invoice->tax_amount, 2);
 
-        $counterparty = $invoice->customer_id !== null
-            ? Customer::withoutTenantScope()->find($invoice->customer_id)?->gst_no
-            : null;
+        // ⚠️ The BILLED PARTY, not the customer. A brokerage or consol invoice is billed
+        // to a PARTNER and carries no `customer_id` at all (PRD §6.2), so reading only
+        // that column left every one of them with no counterparty, undeterminable, and
+        // absent from the register even when the partner was registered. Same resolution
+        // as `GstReturnService`, or the register and the return disagree by construction.
+        $counterparty = match ($invoice->billed_party_type) {
+            'partner' => \App\Partner::withoutGlobalScopes()->find($invoice->billed_party_id)?->gst_no,
+            default => $invoice->customer_id !== null
+                ? Customer::withoutTenantScope()->find($invoice->customer_id)?->gst_no
+                : null,
+        };
 
-        // 🔴 THE COLUMN DOES NOT EXIST YET (GAPS #36). Guarded rather than assumed, so
-        // this code is ready the day `agents_info.gst_no` lands and returns NULL —
-        // which `GstSplitService` reports as `supplier_gstin_missing` — until then.
-        // Querying it unguarded is exactly the mistake this gap describes, and it took
-        // down six unrelated tests with a 500.
-        $supplier = \Illuminate\Support\Facades\Schema::hasColumn('agents_info', 'gst_no')
-            ? DB::table('agents_info')->where('id', $invoice->agent_id)->value('gst_no')
-            : null;
+        // 🟢 Our own GSTIN — `agents_info.gst_no`, which landed 2026-09-22 and closed GAPS #36. Until then
+        // this was behind a `Schema::hasColumn` guard and always NULL, so `GstSplitService` reported
+        // `supplier_gstin_missing` and NOT ONE ROW was ever written here. Set it per branch in
+        // Settings → Finance; still NULL for a branch that has not, which refuses rather than guesses.
+        $supplier = DB::table('agents_info')->where('id', $invoice->agent_id)->value('gst_no');
 
         $split = $this->gst->split($tax, $counterparty, $supplier);
 

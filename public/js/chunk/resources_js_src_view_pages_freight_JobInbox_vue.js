@@ -1344,6 +1344,7 @@ __webpack_require__.r(__webpack_exports__);
   },
   methods: {
     plural(n) {
+      // Rates carry decimals now (0.2 for a mail), so only exactly 1 is singular.
       return n === 1 ? "credit" : "credits";
     }
   }
@@ -5087,34 +5088,32 @@ var render = function render() {
     staticClass: "fx-tile__value"
   }, [_vm._v(_vm._s(_vm.data.month.credits))]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted fx-tile__detail"
-  }, [_vm._v("across " + _vm._s(_vm.data.month.documents) + " documents")])])]), _vm._v(" "), _c("h3", {
+  }, [_vm._v("\n          across " + _vm._s(_vm.data.month.documents) + " documents"), _vm.data.month.mails ? [_vm._v(" and " + _vm._s(_vm.data.month.mails) + " emails")] : _vm._e()], 2)])]), _vm._v(" "), _c("h3", {
     staticClass: "fx-section__title"
-  }, [_vm._v("What a document uses")]), _vm._v(" "), _c("ul", {
+  }, [_vm._v("What AI reading uses")]), _vm._v(" "), _c("ul", {
     staticClass: "fx-credits__rates"
-  }, [_c("li", [_c("strong", [_vm._v(_vm._s(_vm.data.rates.text))]), _vm._v(" " + _vm._s(_vm.plural(_vm.data.rates.text)) + " · invoice or packing list read by AI")]), _vm._v(" "), _c("li", [_c("strong", [_vm._v(_vm._s(_vm.data.rates.scan))]), _vm._v(" " + _vm._s(_vm.plural(_vm.data.rates.scan)) + " · scan read by AI (after you approve it)")]), _vm._v(" "), _c("li", [_c("strong", [_vm._v(_vm._s(_vm.data.rates.awb))]), _vm._v(" credits · airway bill, or any document read by labels")])]), _vm._v(" "), _c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v("When credits run out, invoices are still read by labels and the panel says so.")]), _vm._v(" "), _c("h3", {
+  }, [_c("li", [_c("strong", [_vm._v(_vm._s(_vm.data.rates.text))]), _vm._v(" " + _vm._s(_vm.plural(_vm.data.rates.text)) + " · invoice or packing list read by AI")]), _vm._v(" "), _c("li", [_c("strong", [_vm._v(_vm._s(_vm.data.rates.scan))]), _vm._v(" " + _vm._s(_vm.plural(_vm.data.rates.scan)) + " · scan read by AI (after you approve it)")]), _vm._v(" "), _c("li", [_c("strong", [_vm._v(_vm._s(_vm.data.rates.mail))]), _vm._v(" " + _vm._s(_vm.plural(_vm.data.rates.mail)) + " · incoming email sorted into a folder for you")]), _vm._v(" "), _c("li", [_c("strong", [_vm._v(_vm._s(_vm.data.rates.awb))]), _vm._v(" credits · airway bill, or any document read by labels")])]), _vm._v(" "), _vm._m(0), _vm._v(" "), _c("h3", {
     staticClass: "fx-section__title"
   }, [_vm._v("This month")]), _vm._v(" "), _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(0), _vm._v(" "), _c("tbody", [_vm._l(_vm.data.month.by_kind.filter(k => k.documents), function (k) {
+  }, [_vm._m(1), _vm._v(" "), _c("tbody", [_vm._l(_vm.data.month.by_kind.filter(k => k.count), function (k) {
     return _c("tr", {
       key: k.kind
     }, [_c("td", [_vm._v(_vm._s(k.label))]), _c("td", {
       staticClass: "fx-num"
-    }, [_vm._v(_vm._s(k.documents))]), _c("td", {
+    }, [_vm._v(_vm._s(k.count))]), _c("td", {
       staticClass: "fx-num"
     }, [_vm._v(_vm._s(k.credits))])]);
-  }), _vm._v(" "), !_vm.data.month.documents ? _c("tr", [_c("td", {
+  }), _vm._v(" "), !_vm.data.month.documents && !_vm.data.month.mails ? _c("tr", [_c("td", {
     staticClass: "fx-muted",
     attrs: {
       colspan: "3"
     }
-  }, [_vm._v("No documents this month.")])]) : _vm._e()], 2)]), _vm._v(" "), _c("h3", {
+  }, [_vm._v("Nothing read this month.")])]) : _vm._e()], 2)]), _vm._v(" "), _c("h3", {
     staticClass: "fx-section__title"
   }, [_vm._v("Recent documents")]), _vm._v(" "), _vm.data.recent.length ? _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(1), _vm._v(" "), _c("tbody", _vm._l(_vm.data.recent, function (d) {
+  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.data.recent, function (d) {
     return _c("tr", {
       key: d.id
     }, [_c("td", [_vm._v(_vm._s(d.filename))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(d.label))]), _vm._v(" "), _c("td", {
@@ -5132,6 +5131,12 @@ var render = function render() {
 var staticRenderFns = [function () {
   var _vm = this,
     _c = _vm._self._c;
+  return _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n      When credits run out, invoices are still read by labels and the panel says so, and new email waits in\n      "), _c("strong", [_vm._v("Other")]), _vm._v(" for you to file.\n    ")]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
   return _c("thead", [_c("tr", [_c("th", {
     attrs: {
       scope: "col"
@@ -5141,7 +5146,7 @@ var staticRenderFns = [function () {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Documents")]), _c("th", {
+  }, [_vm._v("Count")]), _c("th", {
     staticClass: "fx-num",
     attrs: {
       scope: "col"

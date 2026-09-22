@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
 use App\Services\AgeingService;
+use App\Services\GstReturnService;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,8 @@ class CloseMonthController extends Controller
 {
     /** How many rows of detail a step carries. It is a checklist — the full list lives on that step's screen. */
     private const PREVIEW = 20;
+
+    public function __construct(private readonly GstReturnService $returns) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -230,6 +233,31 @@ class CloseMonthController extends Controller
             ->selectRaw('COALESCE(SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * tax_amount), 0) AS tax', ['credit_note'])
             ->value('tax');
 
+        // ── The return itself (user, 2026-09-22) ────────────────────────────
+        // 🔴 A GST return is filed PER CALENDAR MONTH and this period spans a financial year, so the step
+        // shows ONE month and says which. Offering the year as one return would be offering something that
+        // cannot be filed.
+        //
+        // 🔴 **THIS MONTH, not the period's last one.** Found by walking it: defaulting to the month the
+        // period ENDS in put December on the step all through September — an empty return sitting under
+        // "₹6,75,934 of tax was charged", which reads as a contradiction and is really just a month that has
+        // not happened yet. The month being filed is the one the desk is working in.
+        $month = now()->format('Y-m');
+        $firstMonth = date('Y-m', strtotime((string) $period->start_date));
+        $lastMonth = date('Y-m', strtotime((string) $period->end_date));
+
+        if ($month < $firstMonth || $month > $lastMonth) {
+            // A period wholly in the past (or the future) files its own last month, not today's.
+            $month = $lastMonth;
+        }
+        [$from, $to] = GstReturnService::month($month);
+        $gstin = DB::table('agents_info')->where('id', $period->agent_id)->value('gst_no');
+        $return = $gstin === null || $gstin === ''
+            ? null
+            : $this->returns->gstr1((int) $period->agent_id, $from, $to);
+
+        $months = (int) round((strtotime((string) $period->end_date) - strtotime((string) $period->start_date)) / 2629800);
+
         return [
             'step' => 4, 'key' => 'gst', 'label' => 'GST', 'blocking' => false,
             'count' => $count, 'clear' => $count === 0, 'rows' => $rows,
@@ -239,6 +267,30 @@ class CloseMonthController extends Controller
                     ? 'Every B2B document has been registered.'
                     : $count . ' document(s) have not been through the invoice registration portal.'),
             'to' => ['path' => '/billing', 'query' => ['view' => 'einvoice']],
+            // 🔴 Without a GSTIN of our own nothing can be filed at all, and the fix is one field in
+            // Settings → Finance — so the step says that instead of showing an empty return.
+            'gstin' => $gstin ?: null,
+            'return_month' => $month,
+            // The months this branch actually raised documents in, so the picker offers months that exist.
+            'return_months' => DB::table('accounts_invoices')
+                ->where('agent_id', $period->agent_id)->where('status', '!=', 'draft')
+                ->whereBetween('document_date', [$period->start_date, $period->end_date])
+                ->selectRaw("DATE_FORMAT(document_date, '%Y-%m') AS month, COUNT(*) AS documents")
+                ->groupBy('month')->orderByDesc('month')->get(),
+            // ⚠️ Said out loud when the period is longer than the month being filed, because otherwise the
+            // figures on this step look like they disagree with the tax charged just above them.
+            'return_is_one_month_of' => $months > 1 ? $months : null,
+            'return' => $return === null ? null : [
+                'documents' => $return['totals']['documents'],
+                'taxable_value' => $return['totals']['taxable_value'],
+                'cgst' => $return['totals']['cgst'],
+                'sgst' => $return['totals']['sgst'],
+                'igst' => $return['totals']['igst'],
+                'tax' => $return['totals']['tax'],
+                'not_filed' => count($return['exceptions']),
+                'not_filed_value' => round(array_sum(array_column($return['exceptions'], 'taxable_value')), 2),
+                'warnings' => count($return['warnings']),
+            ],
         ];
     }
 

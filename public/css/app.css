@@ -6333,6 +6333,55 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 /* Financials: the three registers accounts work (2026-09-18). */
 .fx-financials__views { gap: var(--space-2); margin-bottom: var(--space-3); }
 
+/* ── Today (guide §11.2) ──────────────────────────────────────────────────
+   The cards are links, so they need the affordance without turning into
+   buttons — a dashboard of buttons reads as a toolbar, not as a day's work. */
+.fx-tile.is-clickable { display: block; text-decoration: none; color: inherit; }
+.fx-tile.is-clickable:hover,
+.fx-tile.is-clickable:focus-visible { border-color: var(--accent); }
+.fx-tile--warning { border-left: 3px solid var(--warning); }
+
+/* The exceptions list. §1.3: the chip carries the word, the rule only reinforces it. */
+.fx-list { list-style: none; margin: 0; padding: 0; }
+.fx-list__item { display: flex; align-items: center; gap: var(--space-2);
+                 padding: var(--space-2) 0; border-bottom: 1px solid var(--border-subtle); }
+.fx-list__item:last-child { border-bottom: 0; }
+
+/* ── The Money in pipeline (guide §11.2) ──────────────────────────────────
+   Stages, not tabs: the numbers and the left-to-right order carry the fact
+   that this is ONE thing moving, and the figures say where it is stuck. */
+.fx-pipeline { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
+.fx-pipeline__stage { flex: 1 1 9rem; display: flex; flex-direction: column; gap: 2px;
+                      background: var(--bg-surface); border: 1px solid var(--border);
+                      border-radius: var(--radius-md); padding: var(--space-2) var(--space-3);
+                      text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.fx-pipeline__stage:hover { border-color: var(--accent); }
+.fx-pipeline__stage.is-active { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.fx-pipeline__stage.is-warning { border-left: 3px solid var(--warning); }
+/* An empty stage stays readable but stops competing — nothing is stuck there. */
+.fx-pipeline__stage.is-empty .fx-pipeline__figure,
+.fx-pipeline__stage.is-empty .fx-pipeline__count { color: var(--text-muted); }
+.fx-pipeline__step { font-size: .625rem; font-weight: 700; color: var(--text-secondary); }
+.fx-pipeline__label { font-size: .8125rem; font-weight: 600; }
+.fx-pipeline__figure { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.fx-pipeline__count { font-size: .6875rem; color: var(--text-secondary); }
+
+/* ── Close the month (guide §11.2) ────────────────────────────────────────
+   A numbered checklist, because the ORDER is the information: you cannot
+   know a month is posted before you know it is billed. */
+.fx-steps { list-style: none; margin: 0; padding: 0; }
+.fx-steps__item { display: flex; gap: var(--space-3); padding: var(--space-3) 0;
+                  border-bottom: 1px solid var(--border-subtle); }
+.fx-steps__item:last-child { border-bottom: 0; }
+.fx-steps__number { flex: 0 0 1.75rem; height: 1.75rem; display: flex; align-items: center;
+                    justify-content: center; border-radius: 50%; border: 1px solid var(--border-strong);
+                    font-size: .8125rem; font-weight: 700; }
+.fx-steps__number.is-done { border-color: var(--accent); }
+.fx-steps__number.is-blocking { border-color: var(--critical); border-width: 2px; }
+.fx-steps__body { flex: 1 1 auto; min-width: 0; }
+.fx-steps__title { font-size: .9375rem; margin: 0 0 var(--space-1);
+                   display: flex; align-items: center; gap: var(--space-2); }
+
 @charset "UTF-8";
 html {
   scroll-behavior: smooth;
@@ -88650,15 +88699,9 @@ to { transform: rotate(360deg);
 }
 
 
-/* §1.3 never signal with colour alone — the minus sign carries it; the weight only reinforces. */
-.is-loss[data-v-08164764] {
-  font-weight: 700;
-}
-
-
-/* Over ninety days is the number people look for first; it should not need hunting. */
-.is-late[data-v-7b9183fd] {
-  font-weight: 600;
+/* The cards are the page; they get room to breathe and read as one row on a desk monitor. */
+.fx-today__cards[data-v-20314b3a] {
+  gap: 1rem;
 }
 
 

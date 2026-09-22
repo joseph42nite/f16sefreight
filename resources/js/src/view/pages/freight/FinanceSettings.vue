@@ -22,6 +22,61 @@
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
 
     <template v-else>
+      <!-- ── Our own GSTIN, per branch ─────────────────────────────────── -->
+      <section class="fx-section">
+        <h2 class="fx-section__title">GST registration</h2>
+        <p class="fx-muted">
+          🔴 One GSTIN per branch, because that is how they are issued — per registered place of business, per
+          state. <strong>Nothing about GST works without it:</strong> the same 18% is CGST + SGST to a client in
+          our own state and IGST to one outside it, and with no GSTIN here neither can be decided, so no tax is
+          registered and no return can be filed.
+        </p>
+
+        <table class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Branch</th>
+              <th scope="col">GSTIN</th>
+              <th scope="col">State code</th>
+              <th v-if="canManage" scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in branches" :key="'g-' + b.id">
+              <td>{{ b.name }} <span class="fx-muted">{{ b.branch_code }}</span></td>
+              <td class="identifier">
+                <template v-if="gstinEditing === b.id">
+                  <input
+                    v-model="gstinValue"
+                    class="fx-input"
+                    maxlength="15"
+                    placeholder="27AAACR1000A1Z5"
+                    aria-label="GSTIN"
+                  />
+                </template>
+                <template v-else-if="b.gst_no">{{ b.gst_no }}</template>
+                <span v-else class="fx-error">Not set — no return can be filed</span>
+              </td>
+              <!-- The first two digits are the whole split rule, so they are shown on their own. -->
+              <td>{{ b.gst_no ? b.gst_no.slice(0, 2) : "—" }}</td>
+              <td v-if="canManage" class="fx-row-actions">
+                <template v-if="gstinEditing === b.id">
+                  <button class="fx-btn fx-btn--primary" :disabled="busy" @click="saveGstin(b)">Save</button>
+                  <button class="fx-btn fx-btn--ghost" @click="gstinEditing = null">Cancel</button>
+                </template>
+                <button v-else class="fx-btn" @click="editGstin(b)">{{ b.gst_no ? "Change" : "Set it" }}</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="fx-muted">
+          ⚠️ Changing it does not rewrite history. Documents already finalized keep the split they were
+          registered with, and the GST return reports any that now disagree rather than re-splitting them
+          quietly.
+        </p>
+      </section>
+
       <!-- ── Bank accounts ─────────────────────────────────────────────── -->
       <section class="fx-section">
         <h2 class="fx-section__title">Bank accounts</h2>
@@ -278,6 +333,8 @@ export default {
     customers: [], partners: [],
     loading: true, busy: false, error: null, actionError: null,
     editing: null, editName: "",
+    /** Our own GSTIN, per branch (user, 2026-09-22) — GAPS #36. */
+    gstinEditing: null, gstinValue: "",
     newAccount: { agent_id: null, account_code: "", account_name: "" },
     newRate: { agent_id: null, charge_type: "air_freight", party_type: "customer", party_id: null,
                weight_break_from: 0, weight_break_to: 1000, rate: 0, currency: "INR", valid_from: "", valid_to: "" },
@@ -325,6 +382,25 @@ export default {
       // 🔐 The number is never returned, so the boxes start empty: re-enter to change them.
       this.bankForm = { id: bank.id, agent_id: bank.agent_id, name: bank.name, bank_name: bank.bank_name,
                         account_no: "", ifsc_code: "", is_default: !!bank.is_default };
+    },
+    editGstin(branch) {
+      this.gstinEditing = branch.id;
+      this.gstinValue = branch.gst_no || "";
+      this.actionError = null;
+    },
+    /*
+     * ⚠️ The server validates the 15-character shape and refuses anything else. A GSTIN with a transposed
+     * state code files every intrastate supply as interstate and validates cleanly at the portal — so it is
+     * refused at entry rather than discovered by a customer who cannot claim their credit.
+     */
+    saveGstin(branch) {
+      this.busy = true;
+      this.actionError = null;
+
+      ApiService.post("/finance-settings/gstin", { agent_id: branch.id, gst_no: this.gstinValue || null })
+        .then(() => { this.gstinEditing = null; return this.load(); })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
     },
     saveBank() {
       this.busy = true;

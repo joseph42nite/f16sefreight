@@ -1477,3 +1477,15 @@ to { opacity: 1; transform: translateY(0) scale(1);
 .fx-update__actions[data-v-b7a57a7c] { display: flex; flex-wrap: wrap; gap: 8px;
 }
 
+
+/* §1.3 never signal with colour alone — the minus sign carries it; the weight only reinforces. */
+.is-loss[data-v-08164764] {
+  font-weight: 700;
+}
+
+
+/* Over ninety days is the number people look for first; it should not need hunting. */
+.is-late[data-v-7b9183fd] {
+  font-weight: 600;
+}
+

@@ -22,6 +22,9 @@ class Agent extends Model
         // The short code prefixed by companies.code to form the {agent_code} segment of
         // every document number (PRD §6.3): F16 + BOM -> ENQA-F16BOM-26-0001.
         'branch_code',
+        // 🔴 Our own GSTIN, per registered place of business (GAPS #36, closed 2026-09-22). The whole GST return
+        // depends on it: CGST + SGST within our state, IGST across it, and no split at all without it.
+        'gst_no',
         'agent_name',
         'agent_address',
         'agent_issue_sign',

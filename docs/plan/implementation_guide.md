@@ -1526,7 +1526,7 @@ address) · **who owns them** (our branch, salesperson, their usual port) · **t
 | ~~**Payment runs**~~ | ✅ **Built 2026-09-21** — `accounts_payments` + allocations, one payment per supplier per run, posting Dr `2100-AP` / Cr `1100-Bank` (GAPS #383) |
 | ~~**Bank accounts master**~~ | ✅ **Built 2026-09-21** — `bank_accounts`, each posting to its own `1100-Bank-<slug>` code, with receipts, payments and statement lines all naming the account they moved through (GAPS #386) |
 | **"Cost to book" as a queue** | Shipments billed with nothing costed exist only as a warning on a report |
-| **GSTR-1 / 3B as files** | The register exists; the return does not |
+| ~~**GSTR-1 / 3B as files**~~ | ✅ **Built 2026-09-22** — `GstReturnService` builds B2B, CDNR, HSN and the document series from the documents (not the register, which was structurally empty until `agents_info.gst_no` landed the same day), as a CSV and as the offline utility's JSON, on Close-the-month ④. 🔴 The window is a **calendar month**, the one report here that is not period-scoped — a return is filed monthly and every period in this system spans a year. 🔴 B2CL/B2CS/EXP are deliberately not written: they need a place of supply and a shipping bill that nothing stores, so those documents are **named as exceptions** instead of guessed (GAPS #394, #36) |
 | **TDS** | Not started |
 
 ## 📌 Conventions

@@ -405,10 +405,18 @@ class BillingDemoSeeder extends Seeder
     {
         $company = DB::table('agents_info')->where('id', $branch)->value('company_id');
 
+        // ⚠️ The carrier needs a GSTIN of its own or every voucher against it claims NO input credit, and
+        // 15 vouchers of unclaimed credit in a demo reads as a defect in GSTR-3B rather than as reference
+        // data nobody filled in. A carrier flying out of Mumbai is registered in 27 like the branch.
         $carrier = Partner::withoutGlobalScopes()->firstOrCreate(
             ['company_id' => $company, 'name' => 'Emirates SkyCargo'],
-            ['agent_id' => $branch, 'partner_type' => 'airline', 'email' => 'cass@emirates-skycargo.test']
+            ['agent_id' => $branch, 'partner_type' => 'airline', 'email' => 'cass@emirates-skycargo.test',
+             'gst_no' => '27AAACE1700A1Z5']
         );
+
+        if ($carrier->gst_no === null) {
+            $carrier->update(['gst_no' => '27AAACE1700A1Z5']);
+        }
         $trucker = Partner::withoutGlobalScopes()->where('company_id', $company)
             ->where('partner_type', 'transporter')->first() ?? $carrier;
         $broker = Partner::withoutGlobalScopes()->where('company_id', $company)

@@ -336,13 +336,20 @@ class FreightDemoSeeder extends Seeder
         $company->update(['tier' => $tenant['tier'], 'name' => $tenant['name']]);
 
         // Two branches, so branch isolation and the per-branch credit rule are visible.
+        //
+        // 🔴 **Each branch has its OWN GSTIN** — 27 Maharashtra, 33 Tamil Nadu — because that is how they are
+        // issued, per registered place of business per state (GAPS #36, closed 2026-09-22). It is the field
+        // the whole GST return turns on: the same 18% is CGST + SGST from Mumbai to a Mumbai client and IGST
+        // from Mumbai to a Chennai one, and with no GSTIN here neither can be decided and nothing can be filed.
         $branches = collect([
-            ['agent_name' => 'Mumbai', 'branch_code' => 'BOM', 'agent_city' => 'Mumbai'],
-            ['agent_name' => 'Chennai', 'branch_code' => 'MAA', 'agent_city' => 'Chennai'],
-        ])->map(fn ($b) => Agent::firstOrCreate(
+            ['agent_name' => 'Mumbai', 'branch_code' => 'BOM', 'agent_city' => 'Mumbai', 'gst_no' => '27AABCD1234E1Z5'],
+            ['agent_name' => 'Chennai', 'branch_code' => 'MAA', 'agent_city' => 'Chennai', 'gst_no' => '33AABCD1234E1Z8'],
+        ])->map(fn ($b) => tap(Agent::firstOrCreate(
             ['company_id' => $company->id, 'branch_code' => $b['branch_code']],
             $b + ['company_id' => $company->id, 'agent_country' => 'India']
-        ));
+        // ⚠️ `firstOrCreate` on an existing demo would keep a branch that predates the column with no GSTIN,
+        // which reads on screen as "no return can be filed" long after the seeder was re-run.
+        ), fn ($branch) => $branch->gst_no === null ? $branch->update(['gst_no' => $b['gst_no']]) : null));
 
         // Every tenant needs its reserved system actor before anything audits.
         SystemActor::forBranch($branches->first()->id);
@@ -648,7 +655,16 @@ class FreightDemoSeeder extends Seeder
                 : strtolower(explode(' ', $c['name'])[0]) . '.test',
             'email' => 'ops@' . (str_starts_with($c['name'], 'Globex') ? 'globex.test' : strtolower(explode(' ', $c['name'])[0]) . '.test'),
             'phone' => '+91 22 4000 ' . (1000 + $i),
-            'gst_no' => '27AAACG' . (1000 + $i) . 'A1Z5',
+            // 🔴 **Not every client is registered where the branch is.** Globex Chennai is registered in 33
+            // and Contoso in 24 (Gujarat) — and Contoso belongs to the MUMBAI branch, which is what puts a
+            // genuine **interstate** supply in the demo. Without one, every document reads CGST + SGST and
+            // the half of the split that decides which government is paid is untested by anything a person
+            // can look at. The tax charged is identical either way; that is the whole difficulty.
+            'gst_no' => match (true) {
+                str_contains($c['name'], 'Chennai') => '33',
+                str_contains($c['name'], 'Contoso') => '24',
+                default => '27',
+            } . 'AAACG' . (1000 + $i) . 'A1Z5',
             'branch_id' => $branch->id,
             'sales_id' => $sales->id,
         ]));

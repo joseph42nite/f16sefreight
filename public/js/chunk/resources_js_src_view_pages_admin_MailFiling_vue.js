@@ -204,7 +204,7 @@ var render = function render() {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"
-  }, [_vm._v("What the regex filed")]), _vm._v(" "), !_vm.data.by_type.length ? _c("p", {
+  }, [_vm._v("What was filed")]), _vm._v(" "), !_vm.data.by_type.length ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("No mail filed in this period.")]) : _c("table", {
     staticClass: "fx-table"
@@ -273,7 +273,7 @@ var staticRenderFns = [function () {
     staticClass: "fx-page-title"
   }, [_vm._v("Mail filing")]), _vm._v(" "), _c("p", {
     staticClass: "fx-page-sub"
-  }, [_vm._v("\n      How the regex files incoming mail, and how often people change it — so the patterns can be improved. Counts\n      conversations started in the period.\n    ")])]);
+  }, [_vm._v("\n      How incoming mail is filed, and how often people change it — so the rules and the rubric can be improved.\n      Counts conversations started in the period.\n    ")])]);
 }, function () {
   var _vm = this,
     _c = _vm._self._c;

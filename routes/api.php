@@ -499,6 +499,11 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::get('/reports/profit-and-loss', [\App\Http\Controllers\Freight\FinancialReportController::class, 'profitAndLoss']);
         Route::get('/reports/balance-sheet', [\App\Http\Controllers\Freight\FinancialReportController::class, 'balanceSheet']);
         Route::get('/reports/trial-balance', [\App\Http\Controllers\Freight\FinancialReportController::class, 'trialBalance']);
+        // 🔴 The GST returns are the ONE report here that is not period-scoped: they are filed per calendar
+        // MONTH and per BRANCH, because a GSTIN belongs to a registered place of business. `?format=csv` to
+        // reconcile by eye, `?format=gstn` for the offline utility's JSON (user, 2026-09-22).
+        Route::get('/reports/gstr1', [\App\Http\Controllers\Freight\GstReturnController::class, 'gstr1']);
+        Route::get('/reports/gstr3b', [\App\Http\Controllers\Freight\GstReturnController::class, 'gstr3b']);
 
         Route::get('/customers/{customer}/credit', [\App\Http\Controllers\Freight\InvoiceController::class, 'creditStanding']);
 
@@ -514,6 +519,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         // Settings → Finance: the chart of accounts and the rate cards (user, 2026-09-18).
         Route::get('/finance-settings', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'index']);
         Route::post('/finance-settings/accounts', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveAccount']);
+        // 🔴 Our own GSTIN, per branch — the field the entire GST return depends on (GAPS #36, 2026-09-22).
+        Route::post('/finance-settings/gstin', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveGstin']);
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
 

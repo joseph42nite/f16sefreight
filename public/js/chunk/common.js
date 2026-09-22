@@ -340,6 +340,984 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Billing.vue?vue&type=script&lang=js":
+/*!*************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Billing.vue?vue&type=script&lang=js ***!
+  \*************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+/* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+
+
+
+
+const STATUSES = ["draft", "finalized", "sent", "partially_paid", "paid", "void"];
+
+/** Logi-Sys's Billing section: their Forwarding submenu, then Receipts and E-Invoice. */
+const VIEWS = [{
+  key: "all",
+  label: "All documents"
+}, {
+  key: "invoice",
+  label: "Invoices"
+}, {
+  key: "debit_note",
+  label: "Debit notes"
+}, {
+  key: "credit_note",
+  label: "Credit notes"
+}, {
+  key: "brokerage",
+  label: "Brokerage"
+}, {
+  key: "consol_invoice",
+  label: "Consol"
+}, {
+  key: "receipts",
+  label: "Receipts"
+}, {
+  key: "einvoice",
+  label: "E-Invoice"
+}];
+const DOC_TABS = [{
+  key: "document",
+  label: "Document"
+}, {
+  key: "activity",
+  label: "Notes & receipts"
+}, {
+  key: "journal",
+  label: "Journal"
+}];
+const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "consol_invoice"];
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "Billing",
+  components: {
+    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
+  },
+  props: {
+    /** Rendered as a stage of Money in rather than as a page of its own. */
+    embedded: {
+      type: Boolean,
+      default: false
+    },
+    /** Which register to open on, and any filter the stage implies. */
+    initialView: {
+      type: String,
+      default: "all"
+    },
+    stageFilter: {
+      type: Object,
+      default: null
+    }
+  },
+  data: () => ({
+    view: "all",
+    VIEWS,
+    STATUSES,
+    DOC_TABS,
+    rows: [],
+    totals: {
+      count: 0,
+      amount_inr: 0,
+      outstanding_inr: 0,
+      credited_inr: 0
+    },
+    branches: [],
+    types: {},
+    currencies: [],
+    raisedBy: [],
+    filters: {
+      agent_id: null,
+      from: "",
+      to: "",
+      q: "",
+      status: "",
+      currency: "",
+      created_by: null,
+      sort: "date",
+      outstanding: false,
+      exclude_credit_notes: false,
+      /** Set by a Money in stage: handed over by pricing, or raised on this desk. */
+      awaiting: false,
+      own_drafts: false
+    },
+    /** Which rows are ticked for printing or mailing. */
+    picked: {},
+    receipts: [],
+    modes: [],
+    eInvoices: [],
+    eInvoiceNote: "",
+    /** The document open in the drawer, and everything that belongs to it. */
+    document: null,
+    items: [],
+    notes: [],
+    receiptsOn: [],
+    journal: {
+      lines: []
+    },
+    can: {},
+    tab: "document",
+    /** Set when the credit gate refuses a finalize, so the drawer can offer the override (PRD §251). */
+    creditBlock: null,
+    canOverride: false,
+    overrideReason: "",
+    header: {},
+    newLine: {},
+    editingLine: null,
+    lineDraft: {},
+    /** The forms. */
+    raise: null,
+    creditRoom: null,
+    jobs: [],
+    partners: [],
+    clients: [],
+    receipt: null,
+    openDocuments: [],
+    allocation: {},
+    resolution: {},
+    voidFor: null,
+    irnFor: null,
+    loading: true,
+    busy: false,
+    error: null,
+    actionError: null,
+    mailResult: null
+  }),
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_4__.mapGetters)(["designation"])), {}, {
+    /* Only accounts raise, finalize, post and send a bill. The Boss reads the register. */
+    canPost() {
+      return this.designation === "accounts";
+    },
+    isRegister() {
+      return REGISTERS.includes(this.view);
+    },
+    /** The "New …" button raises what this view is showing; on All documents, an invoice. */
+    newDocumentType() {
+      return this.view === "all" ? "invoice" : this.view;
+    },
+    subtitleForView() {
+      if (this.view === "receipts") return "Money received, and the documents each payment settled.";
+      if (this.view === "einvoice") return "What has been through the invoice registration portal, and what is still waiting.";
+      if (this.view === "all") return "Every sales document this company has raised, with what it was billed in and what it is worth in INR.";
+      return {
+        invoice: "What clients have been billed for their shipments.",
+        debit_note: "Charges raised after the invoice went out — demurrage, a weight correction, an examination.",
+        credit_note: "What has been given back — a rate dispute, an invoicing error, goodwill.",
+        brokerage: "Commission billed to carriers and overseas agents.",
+        consol_invoice: "Consolidations settled with the counterpart agent."
+      }[this.view];
+    },
+    chosen() {
+      return this.rows.filter(r => this.picked[r.id]).map(r => r.id);
+    },
+    allChosen() {
+      return this.rows.length > 0 && this.chosen.length === this.rows.length;
+    },
+    isNote() {
+      return this.raise && ["debit_note", "credit_note"].includes(this.raise.type);
+    },
+    /** Only a numbered, unvoided invoice can carry a note. */
+    billable() {
+      return this.rows.filter(r => r.type === "invoice" && !["draft", "void"].includes(r.status));
+    },
+    raiseTotal() {
+      return this.raise ? this.raise.lines.reduce((sum, l) => sum + this.lineNet(l), 0) : 0;
+    },
+    raiseValid() {
+      if (!this.raise) return false;
+      const linesOk = this.raise.lines.every(l => l.description && Number(l.rate) > 0);
+      if (this.isNote) return linesOk && !!this.raise.parent_invoice_id && !!(this.raise.reason || "").trim();
+      if (this.raise.type === "invoice") return linesOk && !!this.raise.job_id && !!this.raise.customer_id;
+      return linesOk && !!this.raise.job_id && !!this.raise.partner_id;
+    },
+    placedTotal() {
+      return Object.values(this.allocation).reduce((sum, v) => sum + (Number(v) || 0), 0);
+    },
+    receiptValid() {
+      return !!(this.receipt && this.receipt.agent_id && Number(this.receipt.amount) > 0 && this.placedTotal <= Number(this.receipt.amount) + 0.009);
+    }
+  }),
+  created() {
+    this.view = this.initialView;
+    if (this.stageFilter) Object.assign(this.filters, this.stageFilter);
+    this.load();
+
+    // Arrived from the journal's drill-through: open that document straight away.
+    if (this.$route.query.open) this.openById(Number(this.$route.query.open));
+  },
+  watch: {
+    // The pipeline changed stage: swap the register under it without remounting the drawer state.
+    initialView(view) {
+      this.view = view;
+      this.document = null;
+      Object.assign(this.filters, {
+        awaiting: false,
+        own_drafts: false
+      }, this.stageFilter || {});
+      this.load();
+    }
+  },
+  methods: {
+    showView(key) {
+      this.view = key;
+      this.document = null;
+      this.actionError = null;
+      this.mailResult = null;
+      this.load();
+    },
+    typeLabel(type) {
+      return this.types[type] && this.types[type].label || type;
+    },
+    money(value) {
+      return "INR " + Number(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2
+      });
+    },
+    /** 1.000 reads as 1, 18.00 as 18 — trailing zeros on a quantity are noise. */
+    trim(value) {
+      return String(Number(value || 0));
+    },
+    lineNet(line) {
+      const amount = (Number(line.quantity) || 0) * (Number(line.rate) || 0);
+      return Math.round(amount * (1 + (Number(line.tax_percentage) || 0) / 100) * 100) / 100;
+    },
+    blankLine() {
+      return {
+        description: "",
+        hsn_sac_code: "",
+        quantity: 1,
+        rate: 0,
+        tax_percentage: 18
+      };
+    },
+    query() {
+      const params = [];
+      if (this.view !== "all") params.push("types[]=" + this.view);
+      ["agent_id", "from", "to", "q", "status", "currency", "created_by", "sort"].forEach(key => {
+        if (this.filters[key]) params.push(key + "=" + encodeURIComponent(this.filters[key]));
+      });
+      if (this.filters.outstanding) params.push("outstanding=1");
+      if (this.filters.awaiting) params.push("awaiting=1");
+      if (this.filters.own_drafts) params.push("own_drafts=1");
+      if (this.view === "all" && this.filters.exclude_credit_notes) params.push("exclude_credit_notes=1");
+      return params.length ? "?" + params.join("&") : "";
+    },
+    load() {
+      this.loading = true;
+      const path = {
+        receipts: "/receipts",
+        einvoice: "/billing/e-invoice"
+      }[this.view] || "/billing";
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(path + (this.isRegister ? this.query() : "")).then(({
+        data
+      }) => {
+        if (this.isRegister) {
+          this.rows = data.rows || [];
+          this.totals = data.totals;
+          this.types = data.types || {};
+          this.currencies = data.currencies || [];
+          this.raisedBy = data.created_by || [];
+          this.picked = {};
+        } else if (this.view === "receipts") {
+          this.receipts = data.rows || [];
+          this.modes = data.modes || [];
+        } else {
+          this.eInvoices = data.rows || [];
+          this.eInvoiceNote = data.note || "";
+        }
+        if (data.branches) this.branches = data.branches;
+        this.error = null;
+      }).catch(e => {
+        this.error = this.messageFor(e);
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    /* ── One document ──────────────────────────────────────────────────── */
+    open(row) {
+      this.openById(row.id);
+    },
+    openById(id) {
+      this.actionError = null;
+      this.editingLine = null;
+      this.tab = "document";
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/billing/${id}`).then(({
+        data
+      }) => this.showDocument(data)).catch(e => {
+        this.actionError = this.messageFor(e);
+      });
+    },
+    showDocument(data) {
+      this.document = data.document;
+      this.creditBlock = null;
+      this.overrideReason = "";
+      this.items = data.items || [];
+      this.notes = data.notes || [];
+      this.receiptsOn = data.receipts || [];
+      this.journal = data.journal || {
+        lines: []
+      };
+      this.can = data.can || {};
+      this.editingLine = null;
+      this.newLine = this.blankLine();
+      this.header = {
+        document_date: (this.document.document_date || "").slice(0, 10),
+        due_date: (this.document.due_date || "").slice(0, 10),
+        currency: this.document.currency,
+        exchange_rate: Number(this.document.exchange_rate),
+        narration: this.document.narration || ""
+      };
+    },
+    saveHeader() {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put(`/billing/${this.document.id}`, this.header));
+    },
+    addLine() {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/billing/${this.document.id}/lines`, this.newLine));
+    },
+    editLine(item) {
+      this.editingLine = item.id;
+      this.lineDraft = {
+        description: item.description,
+        hsn_sac_code: item.hsn_sac_code,
+        quantity: Number(item.quantity),
+        rate: Number(item.rate),
+        tax_percentage: Number(item.tax_percentage)
+      };
+    },
+    saveLine(lineId) {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put(`/billing/${this.document.id}/lines/${lineId}`, this.lineDraft));
+    },
+    deleteLine(item) {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"](`/billing/${this.document.id}/lines/${item.id}`));
+    },
+    finalize(override = false) {
+      // 🔒 `=== true`, never truthiness: overriding a credit hold has to be DELIBERATE, and a stray argument —
+      // a DOM event, a promise, anything — must never be mistaken for the decision to ship on spent credit.
+      const overriding = override === true && !!this.overrideReason.trim();
+      this.creditBlock = null;
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/invoices/${this.document.id}/finalize`, overriding ? {
+        override_credit_hold: true,
+        override_reason: this.overrideReason
+      } : {}), true);
+    },
+    postDocument() {
+      this.commit(() => _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/invoices/${this.document.id}/post`, {}), true);
+    },
+    voidDocument() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/billing/${this.document.id}/void`, this.voidFor).then(({
+        data
+      }) => {
+        this.voidFor = null;
+        this.showDocument(data);
+        this.load();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    printOne() {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].postForFile("/billing/print", {
+        ids: [this.document.id]
+      }).then(({
+        data
+      }) => this.openFile(data, "application/pdf")).catch(() => {
+        this.actionError = "The document could not be printed.";
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /**
+     * Every drawer action ends the same way: do it, re-read the document, refresh the register behind.
+     *
+     * ⚠️ The document is re-read from the server rather than patched in place — finalizing changes the number, the
+     * status and what the buttons may do, and a screen that guesses at those shows a stale document as a live one.
+     */
+    commit(call, refreshRegister = false) {
+      this.busy = true;
+      this.actionError = null;
+      call().then(({
+        data
+      }) => {
+        if (data && data.document) this.showDocument(data);else this.openById(this.document.id);
+        if (refreshRegister) this.load();
+      }).catch(e => {
+        const data = e.response && e.response.data;
+
+        // The gate's own figures, so the offer states what it is overriding rather than repeating the error.
+        if (data && data.reason === "credit_limit_exceeded") {
+          this.creditBlock = data.credit;
+          this.canOverride = !!data.can_override;
+        }
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /* ── Printing, mailing, export ─────────────────────────────────────── */
+    toggleAll() {
+      const on = !this.allChosen;
+      const picked = {};
+      this.rows.forEach(r => {
+        picked[r.id] = on;
+      });
+      this.picked = picked;
+    },
+    printBills() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].postForFile("/billing/print", {
+        ids: this.chosen
+      }).then(({
+        data
+      }) => this.openFile(data, "application/pdf")).catch(() => {
+        this.actionError = "Those documents could not be printed.";
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    exportCsv() {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query("/billing/export" + this.query(), {
+        responseType: "blob"
+      }).then(({
+        data
+      }) => this.openFile(data, "text/csv", "billing.csv")).catch(() => {
+        this.actionError = "The export could not be built.";
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    openFile(data, mime, download) {
+      const url = window.URL.createObjectURL(new Blob([data], {
+        type: mime
+      }));
+      if (download) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = download;
+        link.click();
+      } else {
+        window.open(url, "_blank");
+      }
+      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+    },
+    mailBills() {
+      this.busy = true;
+      this.actionError = null;
+      this.mailResult = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/billing/mail", {
+        ids: this.chosen
+      }).then(({
+        data
+      }) => {
+        this.mailResult = data;
+        this.load();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /* ── Raising ───────────────────────────────────────────────────────── */
+    openRaise(type, against = null) {
+      this.actionError = null;
+      this.creditRoom = null;
+      this.raise = {
+        type,
+        parent_invoice_id: against ? against.id : null,
+        job_id: null,
+        customer_id: null,
+        partner_id: null,
+        basis: "flat_rate",
+        reason: "",
+        narration: "",
+        lines: [this.blankLine()]
+      };
+      if (against) this.loadCreditRoom();
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/jobs?per_page=50").then(({
+        data
+      }) => {
+        this.jobs = data.data || data.rows || [];
+      }).catch(() => {});
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/partners").then(({
+        data
+      }) => {
+        this.partners = data.data || [];
+      }).catch(() => {});
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/customers").then(({
+        data
+      }) => {
+        this.clients = data.data || [];
+      }).catch(() => {});
+    },
+    loadCreditRoom() {
+      this.creditRoom = null;
+      if (!this.raise.parent_invoice_id) return;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/billing/${this.raise.parent_invoice_id}/credit-room`).then(({
+        data
+      }) => {
+        this.creditRoom = data;
+      }).catch(() => {});
+    },
+    saveRaise() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/billing/documents", this.raise).then(({
+        data
+      }) => {
+        this.raise = null;
+        this.load();
+        // Straight into the drawer: a document raised and then hunted for in the register is a document
+        // somebody forgets to finalize.
+        this.openById(data.id);
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /* ── Receipts ──────────────────────────────────────────────────────── */
+    openReceipt() {
+      this.actionError = null;
+      this.openDocuments = [];
+      this.allocation = {};
+      this.resolution = {};
+      this.receipt = {
+        agent_id: this.branches.length ? this.branches[0].id : null,
+        payer_id: null,
+        receipt_date: new Date().toISOString().slice(0, 10),
+        mode: "bank_transfer",
+        reference: "",
+        amount: 0
+      };
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/customers").then(({
+        data
+      }) => {
+        this.clients = data.data || [];
+      }).catch(() => {});
+    },
+    loadOpenDocuments() {
+      this.openDocuments = [];
+      this.allocation = {};
+      if (!this.receipt.payer_id) return;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/receipts/open-documents?customer_id=${this.receipt.payer_id}`).then(({
+        data
+      }) => {
+        this.openDocuments = data.rows || [];
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      });
+    },
+    saveReceipt() {
+      const allocations = this.openDocuments.filter(d => Number(this.allocation[d.id]) > 0).map(d => _objectSpread({
+        invoice_id: d.id,
+        amount: Number(this.allocation[d.id])
+      }, this.resolution[d.id] ? {
+        resolution: this.resolution[d.id]
+      } : {}));
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/receipts", _objectSpread(_objectSpread({}, this.receipt), {}, {
+        allocations
+      })).then(() => {
+        this.receipt = null;
+        this.showView("receipts");
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    postReceipt(row) {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/receipts/${row.id}/post`, {}).then(() => this.load()).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    saveIrn() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/billing/${this.irnFor.id}/irn`, {
+        irn: this.irnFor.irn,
+        ack_no: this.irnFor.ack_no
+      }).then(() => {
+        this.irnFor = null;
+        this.load();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /*
+     * The server's own words, whatever shape the refusal takes.
+     *
+     * 🔴 It used to read only `data.error`, so a Laravel VALIDATION failure — which answers with `message` and
+     * `errors`, never `error` — fell through to "Something went wrong. Try again." on a screen that moves money.
+     * A refusal nobody can read is a refusal nobody can act on, and it wasted an afternoon.
+     */
+    messageFor(e) {
+      const response = e.response;
+      const data = response && response.data;
+      if (data && data.error) return data.error;
+
+      // A 422 carries the field errors; show the first, which is the one the person has to fix.
+      if (data && data.errors) {
+        const first = Object.values(data.errors)[0];
+        return Array.isArray(first) ? first[0] : String(first);
+      }
+      if (data && data.message) return data.message;
+
+      // Nothing readable came back: say what actually happened rather than "something".
+      return response ? `The server refused that (${response.status}).` : "Could not reach the server. Check your connection and try again.";
+    }
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Collections.vue?vue&type=script&lang=js":
+/*!*****************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Collections.vue?vue&type=script&lang=js ***!
+  \*****************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+/* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
+/* harmony import */ var _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/MailEditor.vue */ "./resources/js/src/view/pages/freight/components/MailEditor.vue");
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+
+
+
+
+
+const VIEWS = [{
+  key: "queue",
+  label: "Who to chase"
+}, {
+  key: "ageing",
+  label: "Ageing"
+}];
+const PARTY_TABS = [{
+  key: "documents",
+  label: "What they owe"
+}, {
+  key: "chases",
+  label: "What has been done"
+}];
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "Collections",
+  components: {
+    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
+    MailEditor: _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_4__["default"]
+  },
+  props: {
+    /** Rendered as stage ⑤ of Money in rather than as a page of its own. */
+    embedded: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data: () => ({
+    /* The queue opens first: it is the day's work, and the ageing is what it is derived from. */
+    view: "queue",
+    VIEWS,
+    PARTY_TABS,
+    parties: [],
+    totals: {},
+    buckets: {},
+    asOf: "",
+    queue: [],
+    summary: null,
+    branches: [],
+    filters: {
+      agent_id: null,
+      as_of: "",
+      party_type: "",
+      q: ""
+    },
+    party: null,
+    tab: "documents",
+    chase: {
+      agent_id: null,
+      channel: "call",
+      note: "",
+      promised_amount: null,
+      promised_date: "",
+      next_action_date: ""
+    },
+    chaseDraft: null,
+    loading: true,
+    busy: false,
+    error: null,
+    actionError: null
+  }),
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_5__.mapGetters)(["designation"])), {}, {
+    /* Accounts chase. The Boss watches the ageing and does not log calls. */
+    canChase() {
+      return this.designation === "accounts";
+    },
+    subtitleForView() {
+      return this.view === "ageing" ? "What every client and agent owes, and how long it has been owed." : "Who to call today: broken promises first, then whoever nobody has called.";
+    },
+    partySubtitle() {
+      if (!this.party) return "";
+      return `${this.party.documents.length} open document(s)` + (this.party.party.gst_no ? ` · GSTIN ${this.party.party.gst_no}` : "");
+    }
+  }),
+  created() {
+    this.load();
+  },
+  methods: {
+    showView(key) {
+      this.view = key;
+      this.party = null;
+      this.actionError = null;
+      this.load();
+    },
+    money(value) {
+      return "INR " + Number(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2
+      });
+    },
+    isOpen(row) {
+      return !!this.party && this.party.party.id === row.party_id && this.party.party.type === row.party_type;
+    },
+    query() {
+      const params = [];
+      ["agent_id", "party_type", "q"].forEach(key => {
+        if (this.filters[key]) params.push(key + "=" + encodeURIComponent(this.filters[key]));
+      });
+      if (this.view === "ageing" && this.filters.as_of) params.push("as_of=" + this.filters.as_of);
+      return params.length ? "?" + params.join("&") : "";
+    },
+    load() {
+      this.loading = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get((this.view === "ageing" ? "/ageing" : "/collections") + this.query()).then(({
+        data
+      }) => {
+        if (this.view === "ageing") {
+          this.parties = data.parties || [];
+          this.totals = data.totals || {};
+          this.buckets = data.buckets || {};
+          this.asOf = data.as_of;
+        } else {
+          this.queue = data.queue || [];
+          this.summary = data.summary;
+        }
+        if (data.branches) this.branches = data.branches;
+        this.error = null;
+      }).catch(e => {
+        this.error = this.messageFor(e);
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    exportCsv() {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query("/ageing/export" + this.query(), {
+        responseType: "blob"
+      }).then(({
+        data
+      }) => {
+        const url = window.URL.createObjectURL(new Blob([data], {
+          type: "text/csv"
+        }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "ageing.csv";
+        link.click();
+        setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+      }).catch(() => {
+        this.actionError = "The export could not be built.";
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    openParty(row) {
+      this.actionError = null;
+      this.tab = "documents";
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/ageing/${row.party_type}/${row.party_id}` + (this.filters.as_of && this.view === "ageing" ? `?as_of=${this.filters.as_of}` : "")).then(({
+        data
+      }) => {
+        this.party = data;
+        this.chase = {
+          agent_id: this.branches.length ? this.branches[0].id : null,
+          channel: "call",
+          note: "",
+          promised_amount: null,
+          promised_date: "",
+          next_action_date: ""
+        };
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      });
+    },
+    logChase() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/collections/follow-ups", _objectSpread(_objectSpread({}, this.chase), {}, {
+        party_type: this.party.party.type,
+        party_id: this.party.party.id,
+        promised_amount: this.chase.promised_amount || null,
+        promised_date: this.chase.promised_date || null,
+        next_action_date: this.chase.next_action_date || null
+      })).then(({
+        data
+      }) => {
+        this.party = _objectSpread(_objectSpread({}, this.party), {}, {
+          follow_ups: data.follow_ups
+        });
+        this.chase = _objectSpread(_objectSpread({}, this.chase), {}, {
+          note: "",
+          promised_amount: null,
+          promised_date: "",
+          next_action_date: ""
+        });
+        this.load();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    close(followUp, state) {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/collections/follow-ups/${followUp.id}/close`, {
+        state
+      }).then(({
+        data
+      }) => {
+        this.party = _objectSpread(_objectSpread({}, this.party), {}, {
+          follow_ups: data.follow_ups
+        });
+        this.load();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    draftChase() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/ageing/${this.party.party.type}/${this.party.party.id}/draft-chase`, {}).then(({
+        data
+      }) => {
+        this.chaseDraft = _objectSpread(_objectSpread({}, data), {}, {
+          toLine: (data.to || []).join(", "),
+          sent: false
+        });
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /** Sent from the person's own mailbox — and logged, because a chase nobody recorded did not happen. */
+    sendChase() {
+      const form = new FormData();
+      this.chaseDraft.toLine.split(",").map(a => a.trim()).filter(Boolean).forEach(a => form.append("to[]", a));
+      form.append("subject", this.chaseDraft.subject);
+      form.append("body", this.chaseDraft.body);
+      form.append("include_signature", "1");
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/inbox/compose", form).then(() => {
+        this.chaseDraft = _objectSpread(_objectSpread({}, this.chaseDraft), {}, {
+          sent: true
+        });
+        return _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/collections/follow-ups", {
+          agent_id: this.branches.length ? this.branches[0].id : null,
+          party_type: this.party.party.type,
+          party_id: this.party.party.id,
+          channel: "email",
+          note: "Chasing mail sent: " + this.chaseDraft.subject,
+          next_action_date: null,
+          promised_amount: null,
+          promised_date: null
+        });
+      }).then(({
+        data
+      }) => {
+        this.party = _objectSpread(_objectSpread({}, this.party), {}, {
+          follow_ups: data.follow_ups
+        });
+        this.load();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /*
+     * The server's own words, whatever shape the refusal takes.
+     *
+     * 🔴 It used to read only `data.error`, so a Laravel VALIDATION failure — which answers with `message` and
+     * `errors`, never `error` — fell through to "Something went wrong. Try again." on a screen that moves money.
+     * A refusal nobody can read is a refusal nobody can act on, and it wasted an afternoon.
+     */
+    messageFor(e) {
+      const response = e.response;
+      const data = response && response.data;
+      if (data && data.error) return data.error;
+
+      // A 422 carries the field errors; show the first, which is the one the person has to fix.
+      if (data && data.errors) {
+        const first = Object.values(data.errors)[0];
+        return Array.isArray(first) ? first[0] : String(first);
+      }
+      if (data && data.message) return data.message;
+
+      // Nothing readable came back: say what actually happened rather than "something".
+      return response ? `The server refused that (${response.status}).` : "Could not reach the server. Check your connection and try again.";
+    }
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/DirectoryTable.vue?vue&type=script&lang=js":
 /*!********************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/DirectoryTable.vue?vue&type=script&lang=js ***!
@@ -623,6 +1601,419 @@ const SHAPES = {
       }).finally(() => {
         this.loading = false;
       });
+    }
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Journal.vue?vue&type=script&lang=js":
+/*!*************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Journal.vue?vue&type=script&lang=js ***!
+  \*************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+/* harmony import */ var _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/FxDrawer.vue */ "./resources/js/src/view/pages/freight/components/FxDrawer.vue");
+
+
+
+const DRILL_TABS = [{
+  key: "journal",
+  label: "The whole entry"
+}, {
+  key: "document",
+  label: "The document"
+}];
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "Journal",
+  components: {
+    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
+    FxDrawer: _view_pages_freight_components_FxDrawer_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+  },
+  props: {
+    /** Rendered as the drill target inside How we're doing. */
+    embedded: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data: () => ({
+    DRILL_TABS,
+    entries: [],
+    totals: {
+      count: 0,
+      debits: 0,
+      credits: 0
+    },
+    accounts: [],
+    periods: [],
+    branches: [],
+    sources: {},
+    /** Set when one account's ledger is open: it carries an opening balance the day book does not. */
+    account: null,
+    opening: 0,
+    movements: {
+      debits: 0,
+      credits: 0
+    },
+    closing: 0,
+    filters: {
+      account: "",
+      agent_id: null,
+      period_id: null,
+      from: "",
+      to: "",
+      source_type: "",
+      side: ""
+    },
+    drill: null,
+    tab: "journal",
+    loading: true,
+    busy: false,
+    error: null,
+    actionError: null
+  }),
+  computed: {
+    subtitle() {
+      return this.account ? "Every posting to this account, oldest first, with the balance running down the page." : "Every posting the ledger holds, and the document that wrote it. Open a line to see the other side of the entry.";
+    },
+    drillSubtitle() {
+      if (!this.drill) return "";
+      return this.drill.document ? `${this.drill.document.label}${this.drill.document.organization ? " — " + this.drill.document.organization : ""}` : "The document is gone";
+    },
+    debits() {
+      return this.account ? this.movements.debits : this.totals.debits;
+    },
+    credits() {
+      return this.account ? this.movements.credits : this.totals.credits;
+    }
+  },
+  created() {
+    // Arrived from a report line: open that account's ledger for that period.
+    const {
+      account,
+      period_id: periodId,
+      agent_id: agentId
+    } = this.$route.query;
+    if (account) this.filters.account = account;
+    if (periodId) this.filters.period_id = Number(periodId);
+    if (agentId) this.filters.agent_id = Number(agentId);
+    this.load();
+  },
+  methods: {
+    money(value) {
+      return "INR " + Number(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2
+      });
+    },
+    query() {
+      const params = [];
+      Object.entries(this.filters).forEach(([key, value]) => {
+        if (value !== "" && value !== null && key !== "account") params.push(key + "=" + encodeURIComponent(value));
+      });
+      return params.length ? "?" + params.join("&") : "";
+    },
+    load() {
+      this.loading = true;
+      this.drill = null;
+
+      // One account picked is an account LEDGER — opening balance, running balance, oldest first. Everything
+      // else is the day book.
+      const path = this.filters.account ? `/journal/accounts/${encodeURIComponent(this.filters.account)}${this.query()}` : `/journal${this.query()}`;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(path).then(({
+        data
+      }) => {
+        this.entries = data.entries || [];
+        this.branches = data.branches || this.branches;
+        if (this.filters.account) {
+          this.account = data.account;
+          this.opening = data.opening;
+          this.movements = data.movements;
+          this.closing = data.closing;
+        } else {
+          this.account = null;
+          this.totals = data.totals;
+          this.accounts = data.accounts || this.accounts;
+          this.periods = data.periods || this.periods;
+          this.sources = data.sources || this.sources;
+        }
+        this.error = null;
+      }).catch(e => {
+        this.error = this.messageFor(e);
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    openAccount(code) {
+      this.filters.account = code;
+      this.load();
+    },
+    open(entry) {
+      this.actionError = null;
+      this.tab = "journal";
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/journal/entries/${entry.id}`).then(({
+        data
+      }) => {
+        this.drill = data;
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      });
+    },
+    exportCsv() {
+      this.busy = true;
+      const params = this.query();
+      const joiner = params ? "&" : "?";
+      const account = this.filters.account ? joiner + "account=" + encodeURIComponent(this.filters.account) : "";
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query("/journal/export" + params + account, {
+        responseType: "blob"
+      }).then(({
+        data
+      }) => {
+        const url = window.URL.createObjectURL(new Blob([data], {
+          type: "text/csv"
+        }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "day-book.csv";
+        link.click();
+        setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+      }).catch(() => {
+        this.actionError = "The export could not be built.";
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /*
+     * The server's own words, whatever shape the refusal takes.
+     *
+     * 🔴 It used to read only `data.error`, so a Laravel VALIDATION failure — which answers with `message` and
+     * `errors`, never `error` — fell through to "Something went wrong. Try again." on a screen that moves money.
+     * A refusal nobody can read is a refusal nobody can act on, and it wasted an afternoon.
+     */
+    messageFor(e) {
+      const response = e.response;
+      const data = response && response.data;
+      if (data && data.error) return data.error;
+
+      // A 422 carries the field errors; show the first, which is the one the person has to fix.
+      if (data && data.errors) {
+        const first = Object.values(data.errors)[0];
+        return Array.isArray(first) ? first[0] : String(first);
+      }
+      if (data && data.message) return data.message;
+
+      // Nothing readable came back: say what actually happened rather than "something".
+      return response ? `The server refused that (${response.status}).` : "Could not reach the server. Check your connection and try again.";
+    }
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Profitability.vue?vue&type=script&lang=js":
+/*!*******************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Profitability.vue?vue&type=script&lang=js ***!
+  \*******************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+/* harmony import */ var _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/StatusChip.vue */ "./resources/js/src/view/pages/freight/components/StatusChip.vue");
+
+
+
+const VIEWS = [{
+  key: "jobs",
+  label: "By shipment"
+}, {
+  key: "clients",
+  label: "By client"
+}, {
+  key: "lanes",
+  label: "By lane"
+}];
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "Profitability",
+  components: {
+    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
+    StatusChip: _view_pages_freight_components_StatusChip_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+  },
+  props: {
+    /** Rendered as a view of How we're doing rather than as a page of its own. */
+    embedded: {
+      type: Boolean,
+      default: false
+    },
+    initialView: {
+      type: String,
+      default: "jobs"
+    }
+  },
+  data: () => ({
+    view: "jobs",
+    VIEWS,
+    jobs: [],
+    groups: [],
+    totals: {
+      count: 0,
+      revenue: 0,
+      cost: 0,
+      margin: 0,
+      margin_pct: null
+    },
+    branches: [],
+    clients: [],
+    modes: [],
+    filters: {
+      agent_id: null,
+      customer_id: null,
+      mode: "",
+      origin: "",
+      dest: "",
+      from: "",
+      to: "",
+      q: "",
+      sort: "margin"
+    },
+    loading: true,
+    busy: false,
+    error: null,
+    actionError: null
+  }),
+  computed: {
+    subtitleForView() {
+      return {
+        jobs: "What each shipment billed, what it cost, and what that left. Net of tax on both sides.",
+        clients: "Which clients are worth the work — and which are busy rather than profitable.",
+        lanes: "Which routes earn their keep. This is the number to buy against."
+      }[this.view];
+    }
+  },
+  watch: {
+    // The shell changed view: swap the roll-up without remounting and losing the filters.
+    initialView(view) {
+      this.view = view;
+      this.load();
+    }
+  },
+  created() {
+    this.view = this.initialView;
+
+    // Arrived from a roll-up: show that client's or that lane's shipments.
+    ["customer_id", "origin", "dest", "mode"].forEach(key => {
+      if (this.$route.query[key]) this.filters[key] = this.$route.query[key];
+    });
+    if (this.$route.query.customer_id) this.filters.customer_id = Number(this.$route.query.customer_id);
+    this.load();
+  },
+  methods: {
+    showView(key) {
+      this.view = key;
+      this.actionError = null;
+      this.load();
+    },
+    money(value) {
+      return "INR " + Number(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2
+      });
+    },
+    query() {
+      const params = [];
+      Object.entries(this.filters).forEach(([key, value]) => {
+        if (value !== "" && value !== null && (key !== "sort" || this.view === "jobs")) {
+          params.push(key + "=" + encodeURIComponent(value));
+        }
+      });
+      return params.length ? "?" + params.join("&") : "";
+    },
+    load() {
+      this.loading = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/profitability/${this.view}${this.query()}`).then(({
+        data
+      }) => {
+        this.jobs = data.jobs || [];
+        this.groups = data.groups || [];
+        this.totals = data.totals;
+        this.branches = data.branches || this.branches;
+        this.clients = data.clients || this.clients;
+        this.modes = data.modes || this.modes;
+        this.error = null;
+      }).catch(e => {
+        this.error = this.messageFor(e);
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    /** A roll-up row opens the shipments underneath it — the same calculation, filtered. */
+    drillInto(group) {
+      if (this.view === "clients") {
+        this.filters.customer_id = group.customer_id;
+      } else {
+        this.filters.origin = group.origin || "";
+        this.filters.dest = group.dest || "";
+        this.filters.mode = group.mode || "";
+      }
+      this.showView("jobs");
+    },
+    exportCsv() {
+      this.busy = true;
+      const by = {
+        clients: "client",
+        lanes: "lane"
+      }[this.view] || "job";
+      const params = this.query();
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query(`/profitability/export${params}${params ? "&" : "?"}by=${by}`, {
+        responseType: "blob"
+      }).then(({
+        data
+      }) => {
+        const url = window.URL.createObjectURL(new Blob([data], {
+          type: "text/csv"
+        }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `profitability-${by}.csv`;
+        link.click();
+        setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+      }).catch(() => {
+        this.actionError = "The export could not be built.";
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    /*
+     * The server's own words, whatever shape the refusal takes.
+     *
+     * 🔴 It used to read only `data.error`, so a Laravel VALIDATION failure — which answers with `message` and
+     * `errors`, never `error` — fell through to "Something went wrong. Try again." on a screen that moves money.
+     * A refusal nobody can read is a refusal nobody can act on, and it wasted an afternoon.
+     */
+    messageFor(e) {
+      const response = e.response;
+      const data = response && response.data;
+      if (data && data.error) return data.error;
+
+      // A 422 carries the field errors; show the first, which is the one the person has to fix.
+      if (data && data.errors) {
+        const first = Object.values(data.errors)[0];
+        return Array.isArray(first) ? first[0] : String(first);
+      }
+      if (data && data.message) return data.message;
+
+      // Nothing readable came back: say what actually happened rather than "something".
+      return response ? `The server refused that (${response.status}).` : "Could not reach the server. Check your connection and try again.";
     }
   }
 });
@@ -1016,6 +2407,14 @@ const TONE = {
   within_limit: "success",
   // Collections (user, 2026-09-20). A BROKEN promise is the strongest signal on that screen: they were asked, they
   // committed to a date, and the date passed. "Nobody has called" is a warning about US, not about them.
+  // The bank account a new receipt or payment starts on.
+  default: "info",
+  // A month-end step that is done. Neutral, not green: being clear is the normal state, and a wall of green
+  // trains the eye past the one step that is not.
+  clear: "neutral",
+  // Today's exceptions: one stops work, the other is worth a look before it does.
+  blocking: "critical",
+  check_this: "warning",
   // Profitability. A shipment billed with nothing costed reads as a 100% margin that is not real.
   no_cost_booked: "warning",
   not_billed: "info",
@@ -1931,6 +3330,3621 @@ render._withStripped = true;
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Billing.vue?vue&type=template&id=6b6c45e3":
+/*!************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Billing.vue?vue&type=template&id=6b6c45e3 ***!
+  \************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", [!_vm.embedded ? _c("header", {
+    staticClass: "fx-page-head"
+  }, [_c("h1", {
+    staticClass: "fx-page-title"
+  }, [_vm._v("Billing")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-page-sub"
+  }, [_vm._v("\n      " + _vm._s(_vm.subtitleForView) + "\n      "), _c("router-link", {
+    attrs: {
+      to: "/financials"
+    }
+  }, [_vm._v("Financials →")])], 1)]) : _vm._e(), _vm._v(" "), !_vm.embedded ? _c("div", {
+    staticClass: "fx-toolbar fx-financials__views"
+  }, _vm._l(_vm.VIEWS, function (v) {
+    return _c("button", {
+      key: v.key,
+      staticClass: "fx-btn",
+      class: {
+        "fx-btn--primary": _vm.view === v.key
+      },
+      on: {
+        click: function ($event) {
+          return _vm.showView(v.key);
+        }
+      }
+    }, [_vm._v(_vm._s(v.label))]);
+  }), 0) : _vm._e(), _vm._v(" "), _vm.isRegister ? [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_vm.branches.length > 1 ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Location")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.agent_id,
+      expression: "filters.agent_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "agent_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("All branches")]), _vm._v(" "), _vm._l(_vm.branches, function (b) {
+    return _c("option", {
+      key: b.id,
+      domProps: {
+        value: b.id
+      }
+    }, [_vm._v(_vm._s(b.name))]);
+  })], 2)]) : _vm._e(), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("From")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.from,
+      expression: "filters.from"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.filters.from
+    },
+    on: {
+      change: _vm.load,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "from", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.to,
+      expression: "filters.to"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.filters.to
+    },
+    on: {
+      change: _vm.load,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "to", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Organization or number")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.q,
+      expression: "filters.q"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "client, agent, INV-…, job"
+    },
+    domProps: {
+      value: _vm.filters.q
+    },
+    on: {
+      keyup: function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        return _vm.load.apply(null, arguments);
+      },
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "q", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Status")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.status,
+      expression: "filters.status"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "status", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("All")]), _vm._v(" "), _vm._l(_vm.STATUSES, function (s) {
+    return _c("option", {
+      key: s,
+      domProps: {
+        value: s
+      }
+    }, [_vm._v(_vm._s(s.replace(/_/g, " ")))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Currency")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.currency,
+      expression: "filters.currency"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "currency", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("All")]), _vm._v(" "), _vm._l(_vm.currencies, function (c) {
+    return _c("option", {
+      key: c,
+      domProps: {
+        value: c
+      }
+    }, [_vm._v(_vm._s(c))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Raised by")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.created_by,
+      expression: "filters.created_by"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "created_by", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Anyone")]), _vm._v(" "), _vm._l(_vm.raisedBy, function (u) {
+    return _c("option", {
+      key: u.id,
+      domProps: {
+        value: u.id
+      }
+    }, [_vm._v(_vm._s(u.name))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Sort on")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.sort,
+      expression: "filters.sort"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "sort", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "date"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "transaction_no"
+    }
+  }, [_vm._v("Transaction no.")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "organization"
+    }
+  }, [_vm._v("Organization")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "amount"
+    }
+  }, [_vm._v("Amount")])])]), _vm._v(" "), _c("label", {
+    staticClass: "fx-checkbox"
+  }, [_c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.outstanding,
+      expression: "filters.outstanding"
+    }],
+    attrs: {
+      type: "checkbox"
+    },
+    domProps: {
+      checked: Array.isArray(_vm.filters.outstanding) ? _vm._i(_vm.filters.outstanding, null) > -1 : _vm.filters.outstanding
+    },
+    on: {
+      change: [function ($event) {
+        var $$a = _vm.filters.outstanding,
+          $$el = $event.target,
+          $$c = $$el.checked ? true : false;
+        if (Array.isArray($$a)) {
+          var $$v = null,
+            $$i = _vm._i($$a, $$v);
+          if ($$el.checked) {
+            $$i < 0 && _vm.$set(_vm.filters, "outstanding", $$a.concat([$$v]));
+          } else {
+            $$i > -1 && _vm.$set(_vm.filters, "outstanding", $$a.slice(0, $$i).concat($$a.slice($$i + 1)));
+          }
+        } else {
+          _vm.$set(_vm.filters, "outstanding", $$c);
+        }
+      }, _vm.load]
+    }
+  }), _vm._v("\n        Outstanding only\n      ")]), _vm._v(" "), _vm.view === "all" ? _c("label", {
+    staticClass: "fx-checkbox"
+  }, [_c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.exclude_credit_notes,
+      expression: "filters.exclude_credit_notes"
+    }],
+    attrs: {
+      type: "checkbox"
+    },
+    domProps: {
+      checked: Array.isArray(_vm.filters.exclude_credit_notes) ? _vm._i(_vm.filters.exclude_credit_notes, null) > -1 : _vm.filters.exclude_credit_notes
+    },
+    on: {
+      change: [function ($event) {
+        var $$a = _vm.filters.exclude_credit_notes,
+          $$el = $event.target,
+          $$c = $$el.checked ? true : false;
+        if (Array.isArray($$a)) {
+          var $$v = null,
+            $$i = _vm._i($$a, $$v);
+          if ($$el.checked) {
+            $$i < 0 && _vm.$set(_vm.filters, "exclude_credit_notes", $$a.concat([$$v]));
+          } else {
+            $$i > -1 && _vm.$set(_vm.filters, "exclude_credit_notes", $$a.slice(0, $$i).concat($$a.slice($$i + 1)));
+          }
+        } else {
+          _vm.$set(_vm.filters, "exclude_credit_notes", $$c);
+        }
+      }, _vm.load]
+    }
+  }), _vm._v("\n        Exclude credit notes\n      ")]) : _vm._e()]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_vm.canPost ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    on: {
+      click: function ($event) {
+        return _vm.openRaise(_vm.newDocumentType);
+      }
+    }
+  }, [_vm._v("\n        New " + _vm._s(_vm.typeLabel(_vm.newDocumentType).toLowerCase()) + "\n      ")]) : _vm._e(), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy || !_vm.rows.length
+    },
+    on: {
+      click: _vm.toggleAll
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.allChosen ? "Clear selection" : "Check all") + "\n      ")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy || !_vm.chosen.length
+    },
+    on: {
+      click: _vm.printBills
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.busy ? "Working…" : `Print ${_vm.chosen.length || ""}`.trim()) + "\n      ")]), _vm._v(" "), _vm.canPost ? _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy || !_vm.chosen.length
+    },
+    on: {
+      click: _vm.mailBills
+    }
+  }, [_vm._v("Send mail")]) : _vm._e(), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.exportCsv
+    }
+  }, [_vm._v("Data export")])]), _vm._v(" "), _vm.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.error))]) : !_vm.rows.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No document matches.")]) : [_c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Trans No.")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _vm.view === "all" ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Type")]) : _vm._e(), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Organization")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipment")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Curr")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount (INR)")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Outstanding")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Status")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Narration")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+    return _c("tr", {
+      key: "d-" + row.id,
+      staticClass: "is-clickable",
+      class: {
+        "is-selected": _vm.document && _vm.document.id === row.id || _vm.picked[row.id]
+      },
+      attrs: {
+        tabindex: "0"
+      },
+      on: {
+        click: function ($event) {
+          return _vm.open(row);
+        },
+        keydown: function ($event) {
+          if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+          return _vm.open(row);
+        }
+      }
+    }, [_c("td", {
+      on: {
+        click: function ($event) {
+          $event.stopPropagation();
+        }
+      }
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.picked[row.id],
+        expression: "picked[row.id]"
+      }],
+      attrs: {
+        type: "checkbox",
+        "aria-label": "Choose " + row.invoice_no
+      },
+      domProps: {
+        checked: Array.isArray(_vm.picked[row.id]) ? _vm._i(_vm.picked[row.id], null) > -1 : _vm.picked[row.id]
+      },
+      on: {
+        change: function ($event) {
+          var $$a = _vm.picked[row.id],
+            $$el = $event.target,
+            $$c = $$el.checked ? true : false;
+          if (Array.isArray($$a)) {
+            var $$v = null,
+              $$i = _vm._i($$a, $$v);
+            if ($$el.checked) {
+              $$i < 0 && _vm.$set(_vm.picked, row.id, $$a.concat([$$v]));
+            } else {
+              $$i > -1 && _vm.$set(_vm.picked, row.id, $$a.slice(0, $$i).concat($$a.slice($$i + 1)));
+            }
+          } else {
+            _vm.$set(_vm.picked, row.id, $$c);
+          }
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(row.invoice_no))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: row.document_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _vm.view === "all" ? _c("td", [_vm._v(_vm._s(_vm.typeLabel(row.type)))]) : _vm._e(), _vm._v(" "), _c("td", [_vm._v(_vm._s(row.organization || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(row.job_no || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(row.currency))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: row.amount,
+        kind: "currency",
+        "currency-code": row.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: row.amount_inr,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: row.outstanding_inr,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: row.status
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(row.narration || "—"))])]);
+  }), 0), _vm._v(" "), _c("tfoot", [_c("tr", [_c("td", {
+    staticClass: "fx-num",
+    attrs: {
+      colspan: _vm.view === "all" ? 8 : 7
+    }
+  }, [_c("strong", [_vm._v(_vm._s(_vm.totals.count) + " document(s)")])]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.totals.amount_inr,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.totals.outstanding_inr,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _c("td", {
+    attrs: {
+      colspan: "2"
+    }
+  })])])]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Totalled in INR at each document's own exchange rate.\n        "), _vm.totals.credited_inr ? _c("span", [_vm._v("\n          Credit notes count against the total; " + _vm._s(_vm.money(_vm.totals.credited_inr)) + " has been credited back.\n        ")]) : _vm._e()])], _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), _vm.mailResult ? _c("p", {
+    staticClass: "fx-notice",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n      " + _vm._s(_vm.mailResult.sent.length) + " sent from " + _vm._s(_vm.mailResult.from)), _vm.mailResult.skipped.length ? _c("span", [_vm._v(";\n      " + _vm._s(_vm.mailResult.skipped.length) + " not sent: " + _vm._s(_vm.mailResult.skipped.map(s => s.invoice_no + " — " + s.why).join("; ")))]) : _vm._e(), _vm._v(".\n    ")]) : _vm._e()] : _vm.view === "receipts" ? [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_vm.canPost ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    on: {
+      click: _vm.openReceipt
+    }
+  }, [_vm._v("Record a receipt")]) : _vm._e()]), _vm._v(" "), _vm.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : !_vm.receipts.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No receipt has been recorded.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Receipt no.")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Organization")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Mode")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Reference")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Placed")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("On account")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Settles")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Posted")]), _vm._v(" "), _vm.canPost ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.receipts, function (r) {
+    return _c("tr", {
+      key: "r-" + r.id
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.receipt_no))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: r.receipt_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.organization || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s((r.mode || "").replace(/_/g, " ")))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.reference || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.amount,
+        kind: "currency",
+        "currency-code": r.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.allocated,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.unallocated,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(r.allocations.map(a => a.invoice_no).join(", ") || "Not placed yet"))]), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: r.is_posted ? "posted" : "unposted"
+      }
+    })], 1), _vm._v(" "), _vm.canPost ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [!r.is_posted ? _c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.postReceipt(r);
+        }
+      }
+    }, [_vm._v("Post")]) : _vm._e()]) : _vm._e()]);
+  }), 0)]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm.view === "einvoice" ? [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v(_vm._s(_vm.eInvoiceNote))]), _vm._v(" "), _vm.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : !_vm.eInvoices.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing is numbered yet.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Trans No.")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Type")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Organization")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Their GSTIN")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("IRN")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Where it stands")]), _vm._v(" "), _vm.canPost ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.eInvoices, function (e) {
+    return _c("tr", {
+      key: "e-" + e.id
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(e.invoice_no))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: e.document_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.typeLabel(e.type)))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(e.organization || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(e.gst_no || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: e.grand_total,
+        kind: "currency",
+        "currency-code": e.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(e.irn ? e.irn.slice(0, 16) + "…" : "—"))]), _vm._v(" "), _c("td", [e.state === "generated" ? _c("span", [_vm._v("Registered " + _vm._s(e.ack_no ? "(ack " + e.ack_no + ")" : ""))]) : e.state === "pending" ? _c("span", [_vm._v("Waiting for the portal")]) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("Not required — they have no GSTIN")])]), _vm._v(" "), _vm.canPost ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [e.state === "pending" ? _c("button", {
+      staticClass: "fx-btn",
+      on: {
+        click: function ($event) {
+          _vm.irnFor = {
+            id: e.id,
+            invoice_no: e.invoice_no,
+            irn: "",
+            ack_no: ""
+          };
+        }
+      }
+    }, [_vm._v("\n              Record the IRN\n            ")]) : _vm._e()]) : _vm._e()]);
+  }), 0)]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e(), _vm._v(" "), _c("FxDrawer", {
+    attrs: {
+      open: !!_vm.document,
+      title: _vm.document ? _vm.document.invoice_no || "Draft" : "",
+      subtitle: _vm.document ? _vm.document.label + (_vm.document.organization ? " — " + _vm.document.organization.name : "") : "",
+      tabs: _vm.DOC_TABS,
+      "active-tab": _vm.tab
+    },
+    on: {
+      tab: function ($event) {
+        _vm.tab = $event;
+      },
+      close: function ($event) {
+        _vm.document = null;
+      }
+    },
+    scopedSlots: _vm._u([{
+      key: "meta",
+      fn: function () {
+        return [_vm.document ? _c("dl", {
+          staticClass: "fx-defs"
+        }, [_c("dt", [_vm._v("Date")]), _vm._v(" "), _c("dd", [_c("Figure", {
+          attrs: {
+            value: _vm.document.document_date,
+            kind: "date"
+          }
+        })], 1), _vm._v(" "), _c("dt", [_vm._v("Due")]), _vm._v(" "), _c("dd", [_vm.document.due_date ? _c("Figure", {
+          attrs: {
+            value: _vm.document.due_date,
+            kind: "date"
+          }
+        }) : _c("span", {
+          staticClass: "fx-muted"
+        }, [_vm._v("—")])], 1), _vm._v(" "), _c("dt", [_vm._v("Shipment")]), _vm._v(" "), _c("dd", {
+          staticClass: "identifier"
+        }, [_vm._v(_vm._s(_vm.document.job ? _vm.document.job.execution_job_no : "—"))]), _vm._v(" "), _c("dt", [_vm._v("Total")]), _vm._v(" "), _c("dd", [_c("Figure", {
+          attrs: {
+            value: _vm.document.grand_total,
+            kind: "currency",
+            "currency-code": _vm.document.currency || "INR"
+          }
+        })], 1), _vm._v(" "), _c("dt", [_vm._v("Status")]), _vm._v(" "), _c("dd", [_c("StatusChip", {
+          attrs: {
+            value: _vm.document.status
+          }
+        }), _vm._v(" "), _c("StatusChip", {
+          attrs: {
+            value: _vm.document.is_posted ? "posted" : "unposted"
+          }
+        })], 1)]) : _vm._e()];
+      },
+      proxy: true
+    }, {
+      key: "footer",
+      fn: function () {
+        return [_vm.document ? [_c("button", {
+          staticClass: "fx-btn",
+          attrs: {
+            disabled: _vm.busy
+          },
+          on: {
+            click: _vm.printOne
+          }
+        }, [_vm._v("Print")]), _vm._v(" "), _vm.canPost && _vm.can.note ? _c("button", {
+          staticClass: "fx-btn",
+          on: {
+            click: function ($event) {
+              return _vm.openRaise("credit_note", _vm.document);
+            }
+          }
+        }, [_vm._v("Raise a note")]) : _vm._e(), _vm._v(" "), _vm.canPost && _vm.can.void ? _c("button", {
+          staticClass: "fx-btn fx-btn--ghost",
+          on: {
+            click: function ($event) {
+              _vm.voidFor = {
+                reason: ""
+              };
+            }
+          }
+        }, [_vm._v("Void")]) : _vm._e(), _vm._v(" "), _vm.canPost && _vm.can.finalize ? _c("button", {
+          staticClass: "fx-btn fx-btn--primary",
+          attrs: {
+            disabled: _vm.busy || !_vm.items.length
+          },
+          on: {
+            click: function ($event) {
+              return _vm.finalize();
+            }
+          }
+        }, [_vm._v("\n          Finalize\n        ")]) : _vm._e(), _vm._v(" "), _vm.canPost && _vm.can.post ? _c("button", {
+          staticClass: "fx-btn fx-btn--primary",
+          attrs: {
+            disabled: _vm.busy
+          },
+          on: {
+            click: _vm.postDocument
+          }
+        }, [_vm._v("Post to ledger")]) : _vm._e()] : _vm._e()];
+      },
+      proxy: true
+    }])
+  }, [_vm._v(" "), _vm.document ? [_vm.tab === "document" ? _c("section", {
+    staticClass: "fx-section"
+  }, [_vm.document.parent ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          Raised against "), _c("strong", [_vm._v(_vm._s(_vm.document.parent.invoice_no))]), _vm._v("\n          (" + _vm._s(_vm.money(_vm.document.parent.grand_total)) + ").\n          "), _vm.document.reason ? _c("span", [_vm._v("Reason: " + _vm._s(_vm.document.reason))]) : _vm._e()]) : _vm.document.reason ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Reason: " + _vm._s(_vm.document.reason))]) : _vm._e(), _vm._v(" "), _vm.document.credit_override_reason ? _c("p", {
+    staticClass: "fx-notice",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n          Issued over the client's credit limit: " + _vm._s(_vm.document.credit_override_reason) + "\n        ")]) : _vm._e(), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Description")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("HSN/SAC")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Qty")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rate")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Tax %")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Net")]), _vm._v(" "), _vm.can.edit ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.items, function (item) {
+    return _c("tr", {
+      key: "i-" + item.id
+    }, [_vm.can.edit && _vm.editingLine === item.id ? [_c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.lineDraft.description,
+        expression: "lineDraft.description"
+      }],
+      staticClass: "fx-input",
+      domProps: {
+        value: _vm.lineDraft.description
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.lineDraft, "description", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.lineDraft.hsn_sac_code,
+        expression: "lineDraft.hsn_sac_code"
+      }],
+      staticClass: "fx-input",
+      domProps: {
+        value: _vm.lineDraft.hsn_sac_code
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.lineDraft, "hsn_sac_code", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.lineDraft.quantity,
+        expression: "lineDraft.quantity",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.001"
+      },
+      domProps: {
+        value: _vm.lineDraft.quantity
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.lineDraft, "quantity", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.lineDraft.rate,
+        expression: "lineDraft.rate",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01"
+      },
+      domProps: {
+        value: _vm.lineDraft.rate
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.lineDraft, "rate", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.money(_vm.lineDraft.quantity * _vm.lineDraft.rate)))]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.lineDraft.tax_percentage,
+        expression: "lineDraft.tax_percentage",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01"
+      },
+      domProps: {
+        value: _vm.lineDraft.tax_percentage
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.lineDraft, "tax_percentage", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.money(_vm.lineNet(_vm.lineDraft))))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.saveLine(item.id);
+        }
+      }
+    }, [_vm._v("Save")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          _vm.editingLine = null;
+        }
+      }
+    }, [_vm._v("Cancel")])])] : [_c("td", [_vm._v(_vm._s(item.description))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(item.hsn_sac_code || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.trim(item.quantity)))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: item.rate,
+        kind: "currency",
+        "currency-code": _vm.document.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: item.amount,
+        kind: "currency",
+        "currency-code": _vm.document.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.trim(item.tax_percentage)))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: item.net_amount,
+        kind: "currency",
+        "currency-code": _vm.document.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _vm.can.edit ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn",
+      on: {
+        click: function ($event) {
+          return _vm.editLine(item);
+        }
+      }
+    }, [_vm._v("Edit")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy || _vm.items.length < 2
+      },
+      on: {
+        click: function ($event) {
+          return _vm.deleteLine(item);
+        }
+      }
+    }, [_vm._v("Remove")])]) : _vm._e()]], 2);
+  }), 0), _vm._v(" "), _c("tfoot", [_c("tr", [_c("td", {
+    staticClass: "fx-num",
+    attrs: {
+      colspan: "4"
+    }
+  }, [_c("strong", [_vm._v("Total")])]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.document.subtotal,
+      kind: "currency",
+      "currency-code": _vm.document.currency || "INR"
+    }
+  })], 1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.document.tax_amount,
+      kind: "currency",
+      "currency-code": _vm.document.currency || "INR"
+    }
+  })], 1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.document.grand_total,
+      kind: "currency",
+      "currency-code": _vm.document.currency || "INR"
+    }
+  })], 1)]), _vm._v(" "), _vm.can.edit ? _c("td") : _vm._e()])])]), _vm._v(" "), _vm.can.edit ? [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Add a line")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Description")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.newLine.description,
+      expression: "newLine.description"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.newLine.description
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newLine, "description", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("HSN/SAC")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.newLine.hsn_sac_code,
+      expression: "newLine.hsn_sac_code"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.newLine.hsn_sac_code
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newLine, "hsn_sac_code", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Qty")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.newLine.quantity,
+      expression: "newLine.quantity",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input fx-num",
+    attrs: {
+      type: "number",
+      step: "0.001"
+    },
+    domProps: {
+      value: _vm.newLine.quantity
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newLine, "quantity", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Rate")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.newLine.rate,
+      expression: "newLine.rate",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input fx-num",
+    attrs: {
+      type: "number",
+      step: "0.01"
+    },
+    domProps: {
+      value: _vm.newLine.rate
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newLine, "rate", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Tax %")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.newLine.tax_percentage,
+      expression: "newLine.tax_percentage",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input fx-num",
+    attrs: {
+      type: "number",
+      step: "0.01"
+    },
+    domProps: {
+      value: _vm.newLine.tax_percentage
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.newLine, "tax_percentage", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy || !_vm.newLine.description || !_vm.newLine.rate
+    },
+    on: {
+      click: _vm.addLine
+    }
+  }, [_vm._v("Add")])]), _vm._v(" "), _c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Header")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Document date")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.header.document_date,
+      expression: "header.document_date"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.header.document_date
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.header, "document_date", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Due date")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.header.due_date,
+      expression: "header.due_date"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.header.due_date
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.header, "due_date", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Currency")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.header.currency,
+      expression: "header.currency"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      maxlength: "3"
+    },
+    domProps: {
+      value: _vm.header.currency
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.header, "currency", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Exchange rate")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.header.exchange_rate,
+      expression: "header.exchange_rate",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input fx-num",
+    attrs: {
+      type: "number",
+      step: "0.0001"
+    },
+    domProps: {
+      value: _vm.header.exchange_rate
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.header, "exchange_rate", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Narration")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.header.narration,
+      expression: "header.narration"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.header.narration
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.header, "narration", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.saveHeader
+    }
+  }, [_vm._v("Save header")])])] : _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          " + _vm._s(_vm.document.status === "void" ? "This document is void." : "Finalized documents are not edited — raise a note against it.") + "\n        ")])], 2) : _vm.tab === "activity" ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Notes raised against it")]), _vm._v(" "), !_vm.notes.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("None.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Note")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Type")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Status")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Reason")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.notes, function (n) {
+    return _c("tr", {
+      key: "n-" + n.id,
+      staticClass: "is-clickable",
+      on: {
+        click: function ($event) {
+          return _vm.openById(n.id);
+        }
+      }
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(n.invoice_no))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.typeLabel(n.type)))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: n.document_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: n.grand_total,
+        kind: "currency",
+        "currency-code": _vm.document.currency || "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: n.status
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(n.reason || "—"))])]);
+  }), 0)]), _vm._v(" "), _c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Money received against it")]), _vm._v(" "), !_vm.receiptsOn.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing yet. Outstanding " + _vm._s(_vm.money(_vm.document.outstanding)) + ".")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Receipt")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("How")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Reference")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Placed")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shortfall")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.receiptsOn, function (r, i) {
+    return _c("tr", {
+      key: "ra-" + i
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.receipt_no))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: r.receipt_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s((r.mode || "").replace(/_/g, " ")))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.reference || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.resolution ? r.resolution.replace(/_/g, " ") : "—"))])]);
+  }), 0)])]) : _vm.tab === "journal" ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          " + _vm._s(_vm.document.is_posted ? "This is what was posted." : "This is what posting would write.") + "\n        ")]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Account")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Debit")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Credit")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.journal.lines, function (l, i) {
+    return _c("tr", {
+      key: "j-" + i
+    }, [_c("td", [_vm._v(_vm._s(l.code) + " — " + _vm._s(l.name))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [l.debit ? _c("Figure", {
+      attrs: {
+        value: l.debit,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", [_vm._v("—")])], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [l.credit ? _c("Figure", {
+      attrs: {
+        value: l.credit,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", [_vm._v("—")])], 1)]);
+  }), 0), _vm._v(" "), _c("tfoot", [_c("tr", [_c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_vm._v(_vm._s(_vm.journal.balanced ? "Balanced" : "NOT BALANCED"))])]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.journal.debits,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.journal.credits,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])])])])]) : _vm._e(), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), _vm.creditBlock ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("This is over their credit limit")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          They owe " + _vm._s(_vm.money(_vm.creditBlock.exposure)) + " already; this invoice takes them to\n          " + _vm._s(_vm.money(_vm.creditBlock.projected)) + " against a limit of " + _vm._s(_vm.money(_vm.creditBlock.limit)) + ".\n        ")]), _vm._v(" "), _vm.canOverride ? [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Why are you issuing it anyway?")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.overrideReason,
+      expression: "overrideReason"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "the Boss agreed it on the phone"
+    },
+    domProps: {
+      value: _vm.overrideReason
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.overrideReason = $event.target.value;
+      }
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.overrideReason.trim()
+    },
+    on: {
+      click: function ($event) {
+        return _vm.finalize(true);
+      }
+    }
+  }, [_vm._v("\n            Issue it over the limit\n          ")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("It is recorded on the invoice, with your name and this reason.")])] : _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Raise the client's limit in Clients, or ask somebody who can override it.")])], 2) : _vm._e()] : _vm._e()], 2), _vm._v(" "), _vm.raise ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "raise-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "raise-title"
+    }
+  }, [_vm._v("New " + _vm._s(_vm.typeLabel(_vm.raise.type).toLowerCase()))])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Document")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.type,
+      expression: "raise.type"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.raise, "type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, function ($event) {
+        _vm.raise.parent_invoice_id = null;
+      }]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "invoice"
+    }
+  }, [_vm._v("Invoice — bill a client for a shipment")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "debit_note"
+    }
+  }, [_vm._v("Revenue Debit Note — charge more after the bill went out")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "credit_note"
+    }
+  }, [_vm._v("Revenue Credit Note — give some of it back")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "brokerage"
+    }
+  }, [_vm._v("Brokerage Invoice — commission from a carrier or agent")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "consol_invoice"
+    }
+  }, [_vm._v("Consol Invoice — settle a consolidation with an agent")])])]), _vm._v(" "), _vm.isNote ? [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Against which invoice")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.parent_invoice_id,
+      expression: "raise.parent_invoice_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.raise, "parent_invoice_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.loadCreditRoom]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.billable, function (p) {
+    return _c("option", {
+      key: p.id,
+      domProps: {
+        value: p.id
+      }
+    }, [_vm._v("\n                " + _vm._s(p.invoice_no) + " — " + _vm._s(p.organization) + " — " + _vm._s(p.currency) + " " + _vm._s(p.amount) + "\n              ")]);
+  })], 2)]), _vm._v(" "), _vm.creditRoom && _vm.raise.type === "credit_note" ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n            " + _vm._s(_vm.creditRoom.invoice_no) + " is for " + _vm._s(_vm.money(_vm.creditRoom.grand_total)) + ";\n            " + _vm._s(_vm.money(_vm.creditRoom.already_credited)) + " has been credited, so\n            "), _c("strong", [_vm._v(_vm._s(_vm.money(_vm.creditRoom.room)))]), _vm._v(" is left.\n          ")]) : _vm._e(), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Reason")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.reason,
+      expression: "raise.reason"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "weight corrected at acceptance"
+    },
+    domProps: {
+      value: _vm.raise.reason
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.raise, "reason", $event.target.value);
+      }
+    }
+  })])] : [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Shipment")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.job_id,
+      expression: "raise.job_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.raise, "job_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.jobs, function (j) {
+    return _c("option", {
+      key: j.id,
+      domProps: {
+        value: j.id
+      }
+    }, [_vm._v(_vm._s(j.execution_job_no))]);
+  })], 2)]), _vm._v(" "), _vm.raise.type === "invoice" ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Client")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.customer_id,
+      expression: "raise.customer_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.raise, "customer_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.clients, function (c) {
+    return _c("option", {
+      key: c.id,
+      domProps: {
+        value: c.id
+      }
+    }, [_vm._v(_vm._s(c.name))]);
+  })], 2)]) : [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Billed to")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.partner_id,
+      expression: "raise.partner_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.raise, "partner_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.partners, function (p) {
+    return _c("option", {
+      key: p.id,
+      domProps: {
+        value: p.id
+      }
+    }, [_vm._v(_vm._s(p.name) + " (" + _vm._s(p.partner_type) + ")")]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Basis")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.basis,
+      expression: "raise.basis"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.raise, "basis", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "flat_rate"
+    }
+  }, [_vm._v("Flat rate")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "percentage_of_freight"
+    }
+  }, [_vm._v("Percentage of freight")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "per_kg"
+    }
+  }, [_vm._v("Per kg")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "per_container"
+    }
+  }, [_vm._v("Per container")])])])]], _vm._v(" "), _c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Lines")]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.raise.lines, function (line, i) {
+    return _c("tr", {
+      key: "l-" + i
+    }, [_c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: line.description,
+        expression: "line.description"
+      }],
+      staticClass: "fx-input",
+      domProps: {
+        value: line.description
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(line, "description", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: line.hsn_sac_code,
+        expression: "line.hsn_sac_code"
+      }],
+      staticClass: "fx-input",
+      domProps: {
+        value: line.hsn_sac_code
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(line, "hsn_sac_code", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: line.quantity,
+        expression: "line.quantity",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        min: "0",
+        step: "0.001"
+      },
+      domProps: {
+        value: line.quantity
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(line, "quantity", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: line.rate,
+        expression: "line.rate",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01"
+      },
+      domProps: {
+        value: line.rate
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(line, "rate", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: line.tax_percentage,
+        expression: "line.tax_percentage",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        min: "0",
+        max: "100",
+        step: "0.01"
+      },
+      domProps: {
+        value: line.tax_percentage
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(line, "tax_percentage", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(_vm.money(_vm.lineNet(line))))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.raise.lines.length < 2
+      },
+      on: {
+        click: function ($event) {
+          return _vm.raise.lines.splice(i, 1);
+        }
+      }
+    }, [_vm._v("Remove")])])]);
+  }), 0)]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    on: {
+      click: function ($event) {
+        _vm.raise.lines.push(_vm.blankLine());
+      }
+    }
+  }, [_vm._v("Add a line")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Narration")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.narration,
+      expression: "raise.narration"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "what this document is for, in one line"
+    },
+    domProps: {
+      value: _vm.raise.narration
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.raise, "narration", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Total " + _vm._s(_vm.money(_vm.raiseTotal)) + ". It is raised as a draft — finalize it to give it a number.")]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()], 2), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.raise = null;
+      }
+    }
+  }, [_vm._v("Cancel")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.raiseValid
+    },
+    on: {
+      click: _vm.saveRaise
+    }
+  }, [_vm._v("\n          " + _vm._s(_vm.busy ? "Raising…" : "Raise it") + "\n        ")])])])]) : _vm._e(), _vm._v(" "), _vm.receipt ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "receipt-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_vm._m(1), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body"
+  }, [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_vm.branches.length > 1 ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.receipt.agent_id,
+      expression: "receipt.agent_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.receipt, "agent_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, _vm._l(_vm.branches, function (b) {
+    return _c("option", {
+      key: b.id,
+      domProps: {
+        value: b.id
+      }
+    }, [_vm._v(_vm._s(b.name))]);
+  }), 0)]) : _vm._e(), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("From")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.receipt.payer_id,
+      expression: "receipt.payer_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.receipt, "payer_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.loadOpenDocuments]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.clients, function (c) {
+    return _c("option", {
+      key: c.id,
+      domProps: {
+        value: c.id
+      }
+    }, [_vm._v(_vm._s(c.name))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Date")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.receipt.receipt_date,
+      expression: "receipt.receipt_date"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.receipt.receipt_date
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.receipt, "receipt_date", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("How")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.receipt.mode,
+      expression: "receipt.mode"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.receipt, "mode", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, _vm._l(_vm.modes, function (m) {
+    return _c("option", {
+      key: m,
+      domProps: {
+        value: m
+      }
+    }, [_vm._v(_vm._s(m.replace(/_/g, " ")))]);
+  }), 0)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Their reference")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.receipt.reference,
+      expression: "receipt.reference"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "UTR, cheque no."
+    },
+    domProps: {
+      value: _vm.receipt.reference
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.receipt, "reference", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Amount")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.receipt.amount,
+      expression: "receipt.amount",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input fx-num",
+    attrs: {
+      type: "number",
+      step: "0.01"
+    },
+    domProps: {
+      value: _vm.receipt.amount
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.receipt, "amount", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })])]), _vm._v(" "), _c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("What it settles")]), _vm._v(" "), !_vm.openDocuments.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Choose who it came from; anything they still owe appears here.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.openDocuments, function (d) {
+    return _c("tr", {
+      key: "o-" + d.id
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(d.invoice_no))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: d.document_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [d.due_date ? _c("Figure", {
+      attrs: {
+        value: d.due_date,
+        kind: "date"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: d.outstanding,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.allocation[d.id],
+        expression: "allocation[d.id]",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.allocation[d.id]
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.allocation, d.id, _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("select", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.resolution[d.id],
+        expression: "resolution[d.id]"
+      }],
+      staticClass: "fx-input",
+      on: {
+        change: function ($event) {
+          var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+            return o.selected;
+          }).map(function (o) {
+            var val = "_value" in o ? o._value : o.value;
+            return val;
+          });
+          _vm.$set(_vm.resolution, d.id, $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+        }
+      }
+    }, [_c("option", {
+      attrs: {
+        value: ""
+      }
+    }, [_vm._v("Still owed")]), _vm._v(" "), _c("option", {
+      attrs: {
+        value: "write_off"
+      }
+    }, [_vm._v("Write it off")]), _vm._v(" "), _c("option", {
+      attrs: {
+        value: "discount"
+      }
+    }, [_vm._v("Treat it as a discount")])])])]);
+  }), 0)]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          Placed " + _vm._s(_vm.money(_vm.placedTotal)) + " of " + _vm._s(_vm.money(_vm.receipt.amount || 0)) + ".\n          "), _vm.placedTotal > (_vm.receipt.amount || 0) ? _c("span", [_vm._v("That is more than arrived.")]) : _vm.placedTotal < (_vm.receipt.amount || 0) ? _c("span", [_vm._v("The rest sits on account.")]) : _vm._e()]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()]), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.receipt = null;
+      }
+    }
+  }, [_vm._v("Cancel")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.receiptValid
+    },
+    on: {
+      click: _vm.saveReceipt
+    }
+  }, [_vm._v("\n          " + _vm._s(_vm.busy ? "Recording…" : "Record it") + "\n        ")])])])]) : _vm._e(), _vm._v(" "), _vm.voidFor ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "void-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "void-title"
+    }
+  }, [_vm._v("Void " + _vm._s(_vm.document.invoice_no))])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body"
+  }, [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          It stays in the register and in the audit trail, marked void — the number is never reused and never\n          disappears.\n        ")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Why")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.voidFor.reason,
+      expression: "voidFor.reason"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "raised on the wrong shipment"
+    },
+    domProps: {
+      value: _vm.voidFor.reason
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.voidFor, "reason", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()]), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.voidFor = null;
+      }
+    }
+  }, [_vm._v("Cancel")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.voidFor.reason.trim()
+    },
+    on: {
+      click: _vm.voidDocument
+    }
+  }, [_vm._v("Void it")])])])]) : _vm._e(), _vm._v(" "), _vm.irnFor ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "irn-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "irn-title"
+    }
+  }, [_vm._v("Record the IRN for " + _vm._s(_vm.irnFor.invoice_no))])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("IRN")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.irnFor.irn,
+      expression: "irnFor.irn"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.irnFor.irn
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.irnFor, "irn", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Acknowledgement no.")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.irnFor.ack_no,
+      expression: "irnFor.ack_no"
+    }],
+    staticClass: "fx-input",
+    domProps: {
+      value: _vm.irnFor.ack_no
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.irnFor, "ack_no", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()]), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.irnFor = null;
+      }
+    }
+  }, [_vm._v("Cancel")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.irnFor.irn.trim()
+    },
+    on: {
+      click: _vm.saveIrn
+    }
+  }, [_vm._v("Record it")])])])]) : _vm._e()], 2);
+};
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Description")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("HSN/SAC")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Qty")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rate")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Tax %")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Net")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  })])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "receipt-title"
+    }
+  }, [_vm._v("Record a receipt")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Document")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Due")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Outstanding")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Place against it")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("If it is short")])])]);
+}];
+render._withStripped = true;
+
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Collections.vue?vue&type=template&id=7b9183fd&scoped=true":
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Collections.vue?vue&type=template&id=7b9183fd&scoped=true ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", [!_vm.embedded ? _c("header", {
+    staticClass: "fx-page-head"
+  }, [_c("h1", {
+    staticClass: "fx-page-title"
+  }, [_vm._v("Ageing & collections")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-page-sub"
+  }, [_vm._v("\n      " + _vm._s(_vm.subtitleForView) + "\n      "), _c("router-link", {
+    attrs: {
+      to: "/billing"
+    }
+  }, [_vm._v("Billing →")])], 1)]) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar fx-financials__views"
+  }, _vm._l(_vm.VIEWS, function (v) {
+    return _c("button", {
+      key: v.key,
+      staticClass: "fx-btn",
+      class: {
+        "fx-btn--primary": _vm.view === v.key
+      },
+      on: {
+        click: function ($event) {
+          return _vm.showView(v.key);
+        }
+      }
+    }, [_vm._v(_vm._s(v.label))]);
+  }), 0), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_vm.branches.length > 1 ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.agent_id,
+      expression: "filters.agent_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "agent_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("All branches")]), _vm._v(" "), _vm._l(_vm.branches, function (b) {
+    return _c("option", {
+      key: b.id,
+      domProps: {
+        value: b.id
+      }
+    }, [_vm._v(_vm._s(b.name))]);
+  })], 2)]) : _vm._e(), _vm._v(" "), _vm.view === "ageing" ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("As of")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.as_of,
+      expression: "filters.as_of"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.filters.as_of
+    },
+    on: {
+      change: _vm.load,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "as_of", $event.target.value);
+      }
+    }
+  })]) : _vm._e(), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Who")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.party_type,
+      expression: "filters.party_type"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "party_type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("Clients and agents")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "customer"
+    }
+  }, [_vm._v("Clients")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "partner"
+    }
+  }, [_vm._v("Agents and partners")])])]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Search")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.q,
+      expression: "filters.q"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "organization or number"
+    },
+    domProps: {
+      value: _vm.filters.q
+    },
+    on: {
+      keyup: function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        return _vm.load.apply(null, arguments);
+      },
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "q", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _vm.view === "ageing" ? _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.exportCsv
+    }
+  }, [_vm._v("Export")]) : _vm._e()]), _vm._v(" "), _vm.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.error))]) : _vm.view === "ageing" ? [!_vm.parties.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nobody owes anything.")]) : [_c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Organization")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Docs")]), _vm._v(" "), _vm._l(_vm.buckets, function (label, key) {
+    return _c("th", {
+      key: key,
+      staticClass: "fx-num",
+      attrs: {
+        scope: "col"
+      }
+    }, [_vm._v(_vm._s(label))]);
+  }), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Total")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Overdue")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Oldest")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Being chased")])], 2)]), _vm._v(" "), _c("tbody", _vm._l(_vm.parties, function (p) {
+    return _c("tr", {
+      key: p.party_type + p.party_id,
+      staticClass: "is-clickable",
+      class: {
+        "is-selected": _vm.isOpen(p)
+      },
+      attrs: {
+        tabindex: "0"
+      },
+      on: {
+        click: function ($event) {
+          return _vm.openParty(p);
+        },
+        keydown: function ($event) {
+          if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+          return _vm.openParty(p);
+        }
+      }
+    }, [_c("td", [_vm._v("\n              " + _vm._s(p.name) + "\n              "), p.party_type === "partner" ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("(agent)")]) : _vm._e()]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(p.documents))]), _vm._v(" "), _vm._l(_vm.buckets, function (label, key) {
+      return _c("td", {
+        key: key,
+        staticClass: "fx-num",
+        class: {
+          "is-late": key === "d90_plus" && p[key] > 0
+        }
+      }, [p[key] ? _c("Figure", {
+        attrs: {
+          value: p[key],
+          kind: "currency",
+          "currency-code": "INR"
+        }
+      }) : _c("span", {
+        staticClass: "fx-muted"
+      }, [_vm._v("—")])], 1);
+    }), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: p.total,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("strong", [_c("Figure", {
+      attrs: {
+        value: p.overdue,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]), _vm._v(" "), _c("td", [_vm._v(_vm._s(p.oldest_days ? p.oldest_days + " days" : "—"))]), _vm._v(" "), _c("td", [p.being_chased ? _c("span", [_vm._v("\n                " + _vm._s(_vm.money(p.promised))), p.promised_by ? _c("span", [_vm._v(" by " + _vm._s(p.promised_by))]) : _vm._e()]) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("Not yet")])])], 2);
+  }), 0), _vm._v(" "), _c("tfoot", [_c("tr", [_c("td", {
+    attrs: {
+      colspan: "2"
+    }
+  }, [_c("strong", [_vm._v(_vm._s(_vm.parties.length) + " organization(s)")])]), _vm._v(" "), _vm._l(_vm.buckets, function (label, key) {
+    return _c("td", {
+      key: key,
+      staticClass: "fx-num"
+    }, [_c("strong", [_c("Figure", {
+      attrs: {
+        value: _vm.totals[key],
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.totals.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.totals.overdue,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _c("td", {
+    attrs: {
+      colspan: "2"
+    }
+  })], 2)])]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        As of " + _vm._s(_vm.asOf) + ", in INR at each document's own exchange rate. Age runs from the due date; a credit note\n        takes money off what they owe.\n      ")])]] : [_vm.summary ? _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("p", {
+    staticClass: "fx-muted"
+  }, [_c("strong", [_vm._v(_vm._s(_vm.money(_vm.summary.overdue)))]), _vm._v(" overdue across " + _vm._s(_vm.summary.parties) + " organization(s).\n        " + _vm._s(_vm.summary.broken_promises) + " broken promise(s), " + _vm._s(_vm.summary.never_chased) + " nobody has called,\n        " + _vm._s(_vm.money(_vm.summary.promised)) + " promised.\n      ")])]) : _vm._e(), _vm._v(" "), !_vm.queue.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing is overdue. Nobody to chase today.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.queue, function (p) {
+    return _c("tr", {
+      key: "q-" + p.party_type + p.party_id,
+      staticClass: "is-clickable",
+      class: {
+        "is-selected": _vm.isOpen(p)
+      },
+      attrs: {
+        tabindex: "0"
+      },
+      on: {
+        click: function ($event) {
+          return _vm.openParty(p);
+        },
+        keydown: function ($event) {
+          if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+          return _vm.openParty(p);
+        }
+      }
+    }, [_c("td", [_vm._v(_vm._s(p.name))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: p.overdue,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(p.oldest_days ? p.oldest_days + " days" : "—"))]), _vm._v(" "), _c("td", [p.promise_broken ? _c("span", [_c("StatusChip", {
+      attrs: {
+        value: "promise_broken"
+      }
+    }), _vm._v(" They said they would pay")], 1) : p.never_chased ? _c("span", [_c("StatusChip", {
+      attrs: {
+        value: "not_chased"
+      }
+    }), _vm._v(" Nobody has called")], 1) : p.due_today ? _c("span", [_vm._v("Due to be chased")]) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("Waiting on their date")])]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [p.promised ? _c("Figure", {
+      attrs: {
+        value: p.promised,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(p.promised_by || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(p.next_action || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(p.last_note || "—"))])]);
+  }), 0)])], _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), _c("FxDrawer", {
+    attrs: {
+      open: !!_vm.party,
+      title: _vm.party ? _vm.party.party.name : "",
+      subtitle: _vm.partySubtitle,
+      tabs: _vm.PARTY_TABS,
+      "active-tab": _vm.tab
+    },
+    on: {
+      tab: function ($event) {
+        _vm.tab = $event;
+      },
+      close: function ($event) {
+        _vm.party = null;
+      }
+    },
+    scopedSlots: _vm._u([{
+      key: "meta",
+      fn: function () {
+        return [_vm.party ? _c("dl", {
+          staticClass: "fx-defs"
+        }, [_c("dt", [_vm._v("Owed")]), _vm._v(" "), _c("dd", [_c("Figure", {
+          attrs: {
+            value: _vm.party.total,
+            kind: "currency",
+            "currency-code": "INR"
+          }
+        })], 1), _vm._v(" "), _c("dt", [_vm._v("Overdue")]), _vm._v(" "), _c("dd", [_c("strong", [_c("Figure", {
+          attrs: {
+            value: _vm.party.overdue,
+            kind: "currency",
+            "currency-code": "INR"
+          }
+        })], 1)]), _vm._v(" "), _c("dt", [_vm._v("Credit limit")]), _vm._v(" "), _c("dd", [_vm.party.party.credit_limit === null ? _c("span", {
+          staticClass: "fx-muted"
+        }, [_vm._v("Not configured")]) : _c("Figure", {
+          attrs: {
+            value: _vm.party.party.credit_limit,
+            kind: "currency",
+            "currency-code": "INR"
+          }
+        })], 1), _vm._v(" "), _c("dt", [_vm._v("Chase goes to")]), _vm._v(" "), _c("dd", {
+          staticClass: "fx-muted"
+        }, [_vm._v(_vm._s(_vm.party.contacts.join(", ") || "No address on file"))])]) : _vm._e()];
+      },
+      proxy: true
+    }])
+  }, [_vm._v(" "), _vm.party ? [_vm.tab === "documents" ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Document")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Type")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Raised")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Due")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Age")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Outstanding")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.party.documents, function (d) {
+    return _c("tr", {
+      key: "pd-" + d.id
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(d.invoice_no))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(d.label))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: d.document_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v("\n                " + _vm._s(d.due_on) + "\n                "), _vm._v(" "), d.due_assumed ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("(assumed)")]) : _vm._e()]), _vm._v(" "), _c("td", {
+      class: {
+        "is-late": d.days_overdue > 90
+      }
+    }, [_vm._v("\n                " + _vm._s(d.days_overdue ? d.days_overdue + " days over" : "Not due") + "\n              ")]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: d.outstanding_inr,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), 0)])]) : _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Log a chase")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_vm.branches.length > 1 ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.chase.agent_id,
+      expression: "chase.agent_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.chase, "agent_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, _vm._l(_vm.branches, function (b) {
+    return _c("option", {
+      key: b.id,
+      domProps: {
+        value: b.id
+      }
+    }, [_vm._v(_vm._s(b.name))]);
+  }), 0)]) : _vm._e(), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("How")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.chase.channel,
+      expression: "chase.channel"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.chase, "channel", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "email"
+    }
+  }, [_vm._v("Email")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "call"
+    }
+  }, [_vm._v("Call")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "whatsapp"
+    }
+  }, [_vm._v("WhatsApp")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "visit"
+    }
+  }, [_vm._v("Visit")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "other"
+    }
+  }, [_vm._v("Other")])])]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("They promised")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.chase.promised_amount,
+      expression: "chase.promised_amount",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input fx-num",
+    attrs: {
+      type: "number",
+      step: "0.01"
+    },
+    domProps: {
+      value: _vm.chase.promised_amount
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.chase, "promised_amount", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("By when")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.chase.promised_date,
+      expression: "chase.promised_date"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.chase.promised_date
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.chase, "promised_date", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Ask again on")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.chase.next_action_date,
+      expression: "chase.next_action_date"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.chase.next_action_date
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.chase, "next_action_date", $event.target.value);
+      }
+    }
+  })])]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("What was said")]), _vm._v(" "), _c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.chase.note,
+      expression: "chase.note"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      rows: "3",
+      placeholder: "who you spoke to, and what they said"
+    },
+    domProps: {
+      value: _vm.chase.note
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.chase, "note", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.chase.note.trim()
+    },
+    on: {
+      click: _vm.logChase
+    }
+  }, [_vm._v("Log it")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy || !_vm.party.overdue
+    },
+    on: {
+      click: _vm.draftChase
+    }
+  }, [_vm._v("Draft a chasing mail")])]), _vm._v(" "), _c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("What has been done")]), _vm._v(" "), !_vm.party.follow_ups.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nobody has chased them yet.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("When")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("How")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("What was said")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Promised")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("By when")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Where it stands")]), _vm._v(" "), _vm.canChase ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.party.follow_ups, function (f) {
+    return _c("tr", {
+      key: "f-" + f.id
+    }, [_c("td", [_c("Figure", {
+      attrs: {
+        value: f.created_at,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(f.channel))]), _vm._v(" "), _c("td", [_vm._v("\n                " + _vm._s(f.note) + "\n                "), f.outcome_note ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" — " + _vm._s(f.outcome_note))]) : _vm._e(), _vm._v(" "), f.invoice_no ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" (" + _vm._s(f.invoice_no) + ")")]) : _vm._e()]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [f.promised_amount ? _c("Figure", {
+      attrs: {
+        value: f.promised_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(f.promised_date || "—"))]), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: f.state
+      }
+    })], 1), _vm._v(" "), _vm.canChase ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [f.state === "open" ? [_c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.close(f, "kept");
+        }
+      }
+    }, [_vm._v("They paid")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.close(f, "broken");
+        }
+      }
+    }, [_vm._v("They did not")])] : _vm._e()], 2) : _vm._e()]);
+  }), 0)])]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm._e()], 2), _vm._v(" "), _vm.chaseDraft ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "chase-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "chase-title"
+    }
+  }, [_vm._v("Chase " + _vm._s(_vm.party ? _vm.party.party.name : ""))])]), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body fx-newmail"
+  }, [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          Written from what they owe" + _vm._s(_vm.chaseDraft.written_by === "ai" ? " by the model" : "") + "; every figure comes\n          from the ageing. Edit anything before it goes.\n        ")]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field",
+    attrs: {
+      for: "chase-to"
+    }
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.chaseDraft.toLine,
+      expression: "chaseDraft.toLine"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      id: "chase-to",
+      placeholder: "comma separated"
+    },
+    domProps: {
+      value: _vm.chaseDraft.toLine
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.chaseDraft, "toLine", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field",
+    attrs: {
+      for: "chase-subject"
+    }
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Subject")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.chaseDraft.subject,
+      expression: "chaseDraft.subject"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      id: "chase-subject"
+    },
+    domProps: {
+      value: _vm.chaseDraft.subject
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.chaseDraft, "subject", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("MailEditor", {
+    model: {
+      value: _vm.chaseDraft.body,
+      callback: function ($$v) {
+        _vm.$set(_vm.chaseDraft, "body", $$v);
+      },
+      expression: "chaseDraft.body"
+    }
+  }), _vm._v(" "), _vm.chaseDraft.sent ? _c("p", {
+    staticClass: "fx-notice",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("Sent, and logged against them.")]) : _vm._e(), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()], 1), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.chaseDraft = null;
+      }
+    }
+  }, [_vm._v("Close")]), _vm._v(" "), !_vm.chaseDraft.sent ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.chaseDraft.toLine.trim()
+    },
+    on: {
+      click: _vm.sendChase
+    }
+  }, [_vm._v("\n          " + _vm._s(_vm.busy ? "Sending…" : "Send from my mailbox") + "\n        ")]) : _vm._e()])])]) : _vm._e()], 2);
+};
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Organization")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Overdue")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Oldest")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Where it stands")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Promised")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("By when")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Next action")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Last note")])])]);
+}];
+render._withStripped = true;
+
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/DirectoryTable.vue?vue&type=template&id=f9a939ae":
 /*!*******************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/DirectoryTable.vue?vue&type=template&id=f9a939ae ***!
@@ -2556,6 +7570,1215 @@ var staticRenderFns = [function () {
       scope: "col"
     }
   }, [_vm._v("Last mail")])])]);
+}];
+render._withStripped = true;
+
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Journal.vue?vue&type=template&id=6490149f":
+/*!************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Journal.vue?vue&type=template&id=6490149f ***!
+  \************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", [!_vm.embedded ? _c("header", {
+    staticClass: "fx-page-head"
+  }, [_c("h1", {
+    staticClass: "fx-page-title"
+  }, [_vm._v(_vm._s(_vm.account ? _vm.account.account_name : "Journal"))]), _vm._v(" "), _c("p", {
+    staticClass: "fx-page-sub"
+  }, [_vm._v("\n      " + _vm._s(_vm.subtitle) + "\n      "), _c("router-link", {
+    attrs: {
+      to: "/financials"
+    }
+  }, [_vm._v("Financials →")])], 1)]) : _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v(_vm._s(_vm.subtitle))]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Account")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.account,
+      expression: "filters.account"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "account", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("Every account")]), _vm._v(" "), _vm._l(_vm.accounts, function (a) {
+    return _c("option", {
+      key: a.account_code,
+      domProps: {
+        value: a.account_code
+      }
+    }, [_vm._v("\n          " + _vm._s(a.account_code) + " — " + _vm._s(a.account_name) + "\n        ")]);
+  })], 2)]), _vm._v(" "), _vm.branches.length > 1 ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.agent_id,
+      expression: "filters.agent_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "agent_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("All branches")]), _vm._v(" "), _vm._l(_vm.branches, function (b) {
+    return _c("option", {
+      key: b.id,
+      domProps: {
+        value: b.id
+      }
+    }, [_vm._v(_vm._s(b.name))]);
+  })], 2)]) : _vm._e(), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Period")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.period_id,
+      expression: "filters.period_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "period_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("All periods")]), _vm._v(" "), _vm._l(_vm.periods, function (p) {
+    return _c("option", {
+      key: p.id,
+      domProps: {
+        value: p.id
+      }
+    }, [_vm._v(_vm._s(p.period_name) + " (" + _vm._s(p.status) + ")")]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("From")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.from,
+      expression: "filters.from"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.filters.from
+    },
+    on: {
+      change: _vm.load,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "from", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.to,
+      expression: "filters.to"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.filters.to
+    },
+    on: {
+      change: _vm.load,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "to", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Document")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.source_type,
+      expression: "filters.source_type"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "source_type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("Everything")]), _vm._v(" "), _vm._l(_vm.sources, function (label, key) {
+    return _c("option", {
+      key: key,
+      domProps: {
+        value: key
+      }
+    }, [_vm._v(_vm._s(label))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Side")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.side,
+      expression: "filters.side"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "side", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("Both")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "debit"
+    }
+  }, [_vm._v("Debits")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "credit"
+    }
+  }, [_vm._v("Credits")])])]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.exportCsv
+    }
+  }, [_vm._v("Export")])]), _vm._v(" "), _vm.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.error))]) : !_vm.entries.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing has been posted here.")]) : [_c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Date")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Account")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Document")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Organization")]), _vm._v(" "), _vm.branches.length > 1 ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]) : _vm._e(), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Debit")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Credit")]), _vm._v(" "), _vm.account ? _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Balance")]) : _vm._e()])]), _vm._v(" "), _c("tbody", [_vm.account ? _c("tr", {
+    staticClass: "fx-row--quiet"
+  }, [_c("td", {
+    attrs: {
+      colspan: _vm.branches.length > 1 ? 5 : 4
+    }
+  }, [_c("strong", [_vm._v("Opening balance")])]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.opening,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])]) : _vm._e(), _vm._v(" "), _vm._l(_vm.entries, function (e) {
+    return _c("tr", {
+      key: "e-" + e.id,
+      staticClass: "is-clickable",
+      class: {
+        "is-selected": _vm.drill && _vm.drill.entry.id === e.id
+      },
+      attrs: {
+        tabindex: "0"
+      },
+      on: {
+        click: function ($event) {
+          return _vm.open(e);
+        },
+        keydown: function ($event) {
+          if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+          return _vm.open(e);
+        }
+      }
+    }, [_c("td", [_c("Figure", {
+      attrs: {
+        value: e.posting_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("span", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(e.account_code))]), _vm._v(" "), _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" " + _vm._s(e.account_name))])]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(e.document_no || "—")), _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" " + _vm._s(e.source_label))])]), _vm._v(" "), _c("td", [_vm._v(_vm._s(e.organization || "—"))]), _vm._v(" "), _vm.branches.length > 1 ? _c("td", [_vm._v(_vm._s(e.branch))]) : _vm._e(), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [Number(e.debit_amount) ? _c("Figure", {
+      attrs: {
+        value: e.debit_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [Number(e.credit_amount) ? _c("Figure", {
+      attrs: {
+        value: e.credit_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1), _vm._v(" "), _vm.account ? _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: e.balance,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1) : _vm._e()]);
+  })], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_c("td", {
+    attrs: {
+      colspan: _vm.branches.length > 1 ? 5 : 4
+    }
+  }, [_c("strong", [_vm._v(_vm._s(_vm.account ? "Movements" : _vm.totals.count + " posting(s)"))])]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.debits,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.credits,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _vm.account ? _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.closing,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]) : _vm._e()])])]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm.account ? _c("span", [_vm._v("\n        Closing balance " + _vm._s(_vm.money(_vm.closing)) + ". This is the figure the trial balance carries for\n        " + _vm._s(_vm.account.account_code) + ".\n      ")]) : _vm.totals.debits === _vm.totals.credits ? _c("span", [_vm._v("Debits and credits agree.")]) : _c("span", {
+    staticClass: "fx-error"
+  }, [_vm._v("\n        Debits and credits do not agree — there is a one-sided entry in this selection.\n      ")])])], _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e(), _vm._v(" "), _c("FxDrawer", {
+    attrs: {
+      open: !!_vm.drill,
+      title: _vm.drill ? _vm.drill.document ? _vm.drill.document.number : "Posting" : "",
+      subtitle: _vm.drillSubtitle,
+      tabs: _vm.DRILL_TABS,
+      "active-tab": _vm.tab
+    },
+    on: {
+      tab: function ($event) {
+        _vm.tab = $event;
+      },
+      close: function ($event) {
+        _vm.drill = null;
+      }
+    },
+    scopedSlots: _vm._u([{
+      key: "meta",
+      fn: function () {
+        return [_vm.drill ? _c("dl", {
+          staticClass: "fx-defs"
+        }, [_c("dt", [_vm._v("Posted")]), _vm._v(" "), _c("dd", [_c("Figure", {
+          attrs: {
+            value: _vm.drill.entry.posting_date,
+            kind: "date"
+          }
+        })], 1), _vm._v(" "), _c("dt", [_vm._v("Period")]), _vm._v(" "), _c("dd", [_vm._v(_vm._s(_vm.drill.period ? _vm.drill.period.period_name : "—"))]), _vm._v(" "), _c("dt", [_vm._v("This line")]), _vm._v(" "), _c("dd", [_vm._v("\n          " + _vm._s(_vm.drill.entry.account_code) + " —\n          " + _vm._s(Number(_vm.drill.entry.debit_amount) ? "Dr " + _vm.money(_vm.drill.entry.debit_amount) : "Cr " + _vm.money(_vm.drill.entry.credit_amount)) + "\n        ")])]) : _vm._e()];
+      },
+      proxy: true
+    }, {
+      key: "footer",
+      fn: function () {
+        return [_vm.drill && _vm.drill.document && _vm.drill.document.type === "invoice" ? [_c("router-link", {
+          staticClass: "fx-btn",
+          attrs: {
+            to: {
+              path: "/billing",
+              query: {
+                open: _vm.drill.entry.source_id
+              }
+            }
+          }
+        }, [_vm._v("\n          Open it in Billing\n        ")])] : _vm._e()];
+      },
+      proxy: true
+    }])
+  }, [_vm._v(" "), _vm.drill ? [_vm.tab === "journal" ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Account")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Debit")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Credit")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.drill.journal.lines, function (l) {
+    return _c("tr", {
+      key: "jl-" + l.id,
+      class: {
+        "is-selected": l.id === _vm.drill.entry.id
+      }
+    }, [_c("td", [_c("a", {
+      attrs: {
+        href: "#"
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          return _vm.openAccount(l.account_code);
+        }
+      }
+    }, [_vm._v(_vm._s(l.account_code))]), _vm._v(" "), _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" " + _vm._s(l.account_name))])]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [Number(l.debit_amount) ? _c("Figure", {
+      attrs: {
+        value: l.debit_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [Number(l.credit_amount) ? _c("Figure", {
+      attrs: {
+        value: l.credit_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1)]);
+  }), 0), _vm._v(" "), _c("tfoot", [_c("tr", [_c("td", [_c("strong", [_vm._v(_vm._s(_vm.drill.journal.balanced ? "Balanced" : "NOT BALANCED"))])]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.drill.journal.debits,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("strong", [_c("Figure", {
+    attrs: {
+      value: _vm.drill.journal.credits,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])])])]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("An account opens its own ledger; the document below is what wrote all of these.")])]) : _c("section", {
+    staticClass: "fx-section"
+  }, [!_vm.drill.document ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("The document behind this posting no longer exists.")]) : [_c("dl", {
+    staticClass: "fx-defs"
+  }, [_c("dt", [_vm._v("Document")]), _vm._v(" "), _c("dd", {
+    staticClass: "identifier"
+  }, [_vm._v(_vm._s(_vm.drill.document.number) + " "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(_vm._s(_vm.drill.document.document_type || _vm.drill.document.label))])]), _vm._v(" "), _c("dt", [_vm._v("Organization")]), _vm._v(" "), _c("dd", [_vm._v(_vm._s(_vm.drill.document.organization || "—"))]), _vm._v(" "), _c("dt", [_vm._v("Shipment")]), _vm._v(" "), _c("dd", {
+    staticClass: "identifier"
+  }, [_vm._v(_vm._s(_vm.drill.document.job_no || "—"))]), _vm._v(" "), _c("dt", [_vm._v("Total")]), _vm._v(" "), _c("dd", [_c("Figure", {
+    attrs: {
+      value: _vm.drill.document.total,
+      kind: "currency",
+      "currency-code": _vm.drill.document.currency || "INR"
+    }
+  })], 1)]), _vm._v(" "), _c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v(_vm._s(_vm.drill.document.type === "receipt" ? "What it settled" : "Its lines"))]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v(_vm._s(_vm.drill.document.type === "receipt" ? "Document" : "Description"))]), _vm._v(" "), _vm.drill.document.type !== "receipt" ? _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Qty")]) : _vm._e(), _vm._v(" "), _vm.drill.document.type !== "receipt" ? _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rate")]) : _vm._e(), _vm._v(" "), _vm.drill.document.type !== "receipt" ? _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Tax")]) : _vm._e(), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Net")])])]), _vm._v(" "), _c("tbody", _vm._l(_vm.drill.document.lines, function (l, i) {
+    return _c("tr", {
+      key: "dl-" + i
+    }, [_c("td", [_vm._v("\n                  " + _vm._s(l.description) + "\n                  "), l.resolution ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("(" + _vm._s(l.resolution.replace(/_/g, " ")) + ")")]) : _vm._e()]), _vm._v(" "), _vm.drill.document.type !== "receipt" ? _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(Number(l.quantity)))]) : _vm._e(), _vm._v(" "), _vm.drill.document.type !== "receipt" ? _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.rate,
+        kind: "currency",
+        "currency-code": _vm.drill.document.currency || "INR"
+      }
+    })], 1) : _vm._e(), _vm._v(" "), _vm.drill.document.type !== "receipt" ? _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.tax_amount,
+        kind: "currency",
+        "currency-code": _vm.drill.document.currency || "INR"
+      }
+    })], 1) : _vm._e(), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.net_amount,
+        kind: "currency",
+        "currency-code": _vm.drill.document.currency || "INR"
+      }
+    })], 1)]);
+  }), 0)])]], 2)] : _vm._e()], 2)], 2);
+};
+var staticRenderFns = [];
+render._withStripped = true;
+
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Profitability.vue?vue&type=template&id=08164764&scoped=true":
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Profitability.vue?vue&type=template&id=08164764&scoped=true ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", [!_vm.embedded ? _c("header", {
+    staticClass: "fx-page-head"
+  }, [_c("h1", {
+    staticClass: "fx-page-title"
+  }, [_vm._v("Profitability")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-page-sub"
+  }, [_vm._v("\n      " + _vm._s(_vm.subtitleForView) + "\n      "), _c("router-link", {
+    attrs: {
+      to: "/financials"
+    }
+  }, [_vm._v("Financials →")])], 1)]) : _vm._e(), _vm._v(" "), !_vm.embedded ? _c("div", {
+    staticClass: "fx-toolbar fx-financials__views"
+  }, _vm._l(_vm.VIEWS, function (v) {
+    return _c("button", {
+      key: v.key,
+      staticClass: "fx-btn",
+      class: {
+        "fx-btn--primary": _vm.view === v.key
+      },
+      on: {
+        click: function ($event) {
+          return _vm.showView(v.key);
+        }
+      }
+    }, [_vm._v(_vm._s(v.label))]);
+  }), 0) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_vm.branches.length > 1 ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.agent_id,
+      expression: "filters.agent_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "agent_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("All branches")]), _vm._v(" "), _vm._l(_vm.branches, function (b) {
+    return _c("option", {
+      key: b.id,
+      domProps: {
+        value: b.id
+      }
+    }, [_vm._v(_vm._s(b.name))]);
+  })], 2)]) : _vm._e(), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Client")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.customer_id,
+      expression: "filters.customer_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "customer_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Every client")]), _vm._v(" "), _vm._l(_vm.clients, function (c) {
+    return _c("option", {
+      key: c.id,
+      domProps: {
+        value: c.id
+      }
+    }, [_vm._v(_vm._s(c.name))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Mode")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.mode,
+      expression: "filters.mode"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "mode", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v("All")]), _vm._v(" "), _vm._l(_vm.modes, function (m) {
+    return _c("option", {
+      key: m,
+      domProps: {
+        value: m
+      }
+    }, [_vm._v(_vm._s(m))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("From")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.origin,
+      expression: "filters.origin"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "BOM",
+      maxlength: "5"
+    },
+    domProps: {
+      value: _vm.filters.origin
+    },
+    on: {
+      keyup: function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        return _vm.load.apply(null, arguments);
+      },
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "origin", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("To")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.dest,
+      expression: "filters.dest"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "FRA",
+      maxlength: "5"
+    },
+    domProps: {
+      value: _vm.filters.dest
+    },
+    on: {
+      keyup: function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        return _vm.load.apply(null, arguments);
+      },
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "dest", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Shipped after")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.from,
+      expression: "filters.from"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.filters.from
+    },
+    on: {
+      change: _vm.load,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "from", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Shipped before")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.to,
+      expression: "filters.to"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "date"
+    },
+    domProps: {
+      value: _vm.filters.to
+    },
+    on: {
+      change: _vm.load,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "to", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _vm.view === "jobs" ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Search")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.q,
+      expression: "filters.q"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      placeholder: "job, AWB or client"
+    },
+    domProps: {
+      value: _vm.filters.q
+    },
+    on: {
+      keyup: function ($event) {
+        if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+        return _vm.load.apply(null, arguments);
+      },
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.filters, "q", $event.target.value);
+      }
+    }
+  })]) : _vm._e(), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.exportCsv
+    }
+  }, [_vm._v("Export")])]), _vm._v(" "), _vm.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.error))]) : [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("p", {
+    staticClass: "fx-muted"
+  }, [_c("strong", [_vm._v(_vm._s(_vm.totals.count))]), _vm._v(" shipment(s) ·\n        revenue "), _c("strong", [_vm._v(_vm._s(_vm.money(_vm.totals.revenue)))]), _vm._v(" ·\n        cost "), _c("strong", [_vm._v(_vm._s(_vm.money(_vm.totals.cost)))]), _vm._v(" ·\n        margin "), _c("strong", {
+    class: {
+      "is-loss": _vm.totals.margin < 0
+    }
+  }, [_vm._v(_vm._s(_vm.money(_vm.totals.margin)))]), _vm._v(" "), _vm.totals.margin_pct !== null ? _c("span", [_vm._v(" (" + _vm._s(_vm.totals.margin_pct) + "%)")]) : _vm._e()])]), _vm._v(" "), _vm.totals.no_cost_booked || _vm.totals.not_billed ? _c("p", {
+    staticClass: "fx-notice",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm.totals.no_cost_booked ? _c("span", [_vm._v("\n        " + _vm._s(_vm.totals.no_cost_booked) + " shipment(s) have been billed with no cost booked, so their margin reads far\n        higher than it is.\n      ")]) : _vm._e(), _vm._v(" "), _vm.totals.not_billed ? _c("span", [_vm._v("\n        " + _vm._s(_vm.totals.not_billed) + " have costs booked and nothing billed yet.\n      ")]) : _vm._e()]) : _vm._e(), _vm._v(" "), _vm.view === "jobs" ? [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Sort on")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.filters.sort,
+      expression: "filters.sort"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.filters, "sort", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }, _vm.load]
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "margin"
+    }
+  }, [_vm._v("Worst margin first")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "margin_pct"
+    }
+  }, [_vm._v("Worst margin % first")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "revenue"
+    }
+  }, [_vm._v("Biggest revenue first")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "date"
+    }
+  }, [_vm._v("Most recent first")])])])]), _vm._v(" "), !_vm.jobs.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No shipment has been billed or costed in this selection.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", _vm._l(_vm.jobs, function (j) {
+    return _c("tr", {
+      key: "j-" + j.id,
+      class: {
+        "is-loss-row": j.margin < 0
+      }
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(j.job_no))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: j.job_date,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(j.customer || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(j.lane))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(j.mode))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: j.revenue,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: j.cost,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num",
+      class: {
+        "is-loss": j.margin < 0
+      }
+    }, [_c("Figure", {
+      attrs: {
+        value: j.margin,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(j.margin_pct === null ? "—" : j.margin_pct + "%"))]), _vm._v(" "), _c("td", [j.no_cost_booked ? _c("StatusChip", {
+      attrs: {
+        value: "no_cost_booked"
+      }
+    }) : j.not_billed ? _c("StatusChip", {
+      attrs: {
+        value: "not_billed"
+      }
+    }) : _vm._e()], 1)]);
+  }), 0)])] : [!_vm.groups.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing to roll up in this selection.")]) : _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v(_vm._s(_vm.view === "clients" ? "Client" : "Lane"))]), _vm._v(" "), _vm.view === "lanes" ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Route")]) : _vm._e(), _vm._v(" "), _vm.view === "lanes" ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Mode")]) : _vm._e(), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipments")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Revenue")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Cost")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Margin")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("%")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Each")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  })])]), _vm._v(" "), _c("tbody", _vm._l(_vm.groups, function (g) {
+    return _c("tr", {
+      key: g.key,
+      staticClass: "is-clickable",
+      class: {
+        "is-loss-row": g.margin < 0
+      },
+      attrs: {
+        tabindex: "0"
+      },
+      on: {
+        click: function ($event) {
+          return _vm.drillInto(g);
+        },
+        keydown: function ($event) {
+          if (!$event.type.indexOf("key") && _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")) return null;
+          return _vm.drillInto(g);
+        }
+      }
+    }, [_c("td", [_vm._v(_vm._s(g.name))]), _vm._v(" "), _vm.view === "lanes" ? _c("td", {
+      staticClass: "fx-muted"
+    }, [_vm._v("\n              " + _vm._s(g.origin_name || g.origin) + " → " + _vm._s(g.dest_name || g.dest) + "\n            ")]) : _vm._e(), _vm._v(" "), _vm.view === "lanes" ? _c("td", [_vm._v(_vm._s(g.mode))]) : _vm._e(), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(g.shipments))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: g.revenue,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: g.cost,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num",
+      class: {
+        "is-loss": g.margin < 0
+      }
+    }, [_c("Figure", {
+      attrs: {
+        value: g.margin,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(g.margin_pct === null ? "—" : g.margin_pct + "%"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: g.margin_each,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-muted"
+    }, [g.no_cost_booked ? _c("span", [_vm._v(_vm._s(g.no_cost_booked) + " uncosted")]) : _vm._e()])]);
+  }), 0)]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v('\n        Open a row to see the shipments behind it. "Each" is what one shipment\n        ' + _vm._s(_vm.view === "clients" ? "for this client" : "on this lane") + " is worth on average.\n      ")])]], _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()], 2);
+};
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipment")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipped")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Client")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Lane")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Mode")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Revenue")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Cost")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Margin")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("%")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  })])]);
 }];
 render._withStripped = true;
 
@@ -12040,6 +18263,32 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Collections.vue?vue&type=style&index=0&id=7b9183fd&scoped=true&lang=css":
+/*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Collections.vue?vue&type=style&index=0&id=7b9183fd&scoped=true&lang=css ***!
+  \********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ }),
+
+/***/ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Profitability.vue?vue&type=style&index=0&id=08164764&scoped=true&lang=css":
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Profitability.vue?vue&type=style&index=0&id=08164764&scoped=true&lang=css ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ }),
+
 /***/ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ClientUpdateEditor.vue?vue&type=style&index=0&id=b7a57a7c&scoped=true&lang=css":
 /*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ClientUpdateEditor.vue?vue&type=style&index=0&id=b7a57a7c&scoped=true&lang=css ***!
@@ -20024,6 +26273,86 @@ component.options.__file = "resources/js/src/view/layouts/public/SideBar.vue"
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/Billing.vue":
+/*!*********************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Billing.vue ***!
+  \*********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _Billing_vue_vue_type_template_id_6b6c45e3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Billing.vue?vue&type=template&id=6b6c45e3 */ "./resources/js/src/view/pages/freight/Billing.vue?vue&type=template&id=6b6c45e3");
+/* harmony import */ var _Billing_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Billing.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/Billing.vue?vue&type=script&lang=js");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+;
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _Billing_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _Billing_vue_vue_type_template_id_6b6c45e3__WEBPACK_IMPORTED_MODULE_0__.render,
+  _Billing_vue_vue_type_template_id_6b6c45e3__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/freight/Billing.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Collections.vue":
+/*!*************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Collections.vue ***!
+  \*************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _Collections_vue_vue_type_template_id_7b9183fd_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Collections.vue?vue&type=template&id=7b9183fd&scoped=true */ "./resources/js/src/view/pages/freight/Collections.vue?vue&type=template&id=7b9183fd&scoped=true");
+/* harmony import */ var _Collections_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Collections.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/Collections.vue?vue&type=script&lang=js");
+/* harmony import */ var _Collections_vue_vue_type_style_index_0_id_7b9183fd_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Collections.vue?vue&type=style&index=0&id=7b9183fd&scoped=true&lang=css */ "./resources/js/src/view/pages/freight/Collections.vue?vue&type=style&index=0&id=7b9183fd&scoped=true&lang=css");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+;
+
+
+/* normalize component */
+
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+  _Collections_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _Collections_vue_vue_type_template_id_7b9183fd_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
+  _Collections_vue_vue_type_template_id_7b9183fd_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  "7b9183fd",
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/freight/Collections.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/DirectoryTable.vue":
 /*!****************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/DirectoryTable.vue ***!
@@ -20059,6 +26388,86 @@ var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__
 /* hot reload */
 if (false) { var api; }
 component.options.__file = "resources/js/src/view/pages/freight/DirectoryTable.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Journal.vue":
+/*!*********************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Journal.vue ***!
+  \*********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _Journal_vue_vue_type_template_id_6490149f__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Journal.vue?vue&type=template&id=6490149f */ "./resources/js/src/view/pages/freight/Journal.vue?vue&type=template&id=6490149f");
+/* harmony import */ var _Journal_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Journal.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/Journal.vue?vue&type=script&lang=js");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+;
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _Journal_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _Journal_vue_vue_type_template_id_6490149f__WEBPACK_IMPORTED_MODULE_0__.render,
+  _Journal_vue_vue_type_template_id_6490149f__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/freight/Journal.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Profitability.vue":
+/*!***************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Profitability.vue ***!
+  \***************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _Profitability_vue_vue_type_template_id_08164764_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Profitability.vue?vue&type=template&id=08164764&scoped=true */ "./resources/js/src/view/pages/freight/Profitability.vue?vue&type=template&id=08164764&scoped=true");
+/* harmony import */ var _Profitability_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Profitability.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/Profitability.vue?vue&type=script&lang=js");
+/* harmony import */ var _Profitability_vue_vue_type_style_index_0_id_08164764_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Profitability.vue?vue&type=style&index=0&id=08164764&scoped=true&lang=css */ "./resources/js/src/view/pages/freight/Profitability.vue?vue&type=style&index=0&id=08164764&scoped=true&lang=css");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+;
+
+
+/* normalize component */
+
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+  _Profitability_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _Profitability_vue_vue_type_template_id_08164764_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
+  _Profitability_vue_vue_type_template_id_08164764_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  "08164764",
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/freight/Profitability.vue"
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
 
 /***/ }),
@@ -20480,6 +26889,38 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/Billing.vue?vue&type=script&lang=js":
+/*!*********************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Billing.vue?vue&type=script&lang=js ***!
+  \*********************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Billing_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Billing.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Billing.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Billing_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Collections.vue?vue&type=script&lang=js":
+/*!*************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Collections.vue?vue&type=script&lang=js ***!
+  \*************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Collections_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Collections.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Collections.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Collections_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/DirectoryTable.vue?vue&type=script&lang=js":
 /*!****************************************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/DirectoryTable.vue?vue&type=script&lang=js ***!
@@ -20493,6 +26934,38 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_DirectoryTable_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./DirectoryTable.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/DirectoryTable.vue?vue&type=script&lang=js");
  /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_DirectoryTable_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Journal.vue?vue&type=script&lang=js":
+/*!*********************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Journal.vue?vue&type=script&lang=js ***!
+  \*********************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Journal_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Journal.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Journal.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Journal_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Profitability.vue?vue&type=script&lang=js":
+/*!***************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Profitability.vue?vue&type=script&lang=js ***!
+  \***************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Profitability_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Profitability.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Profitability.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Profitability_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
 
 /***/ }),
 
@@ -20708,6 +27181,40 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/Billing.vue?vue&type=template&id=6b6c45e3":
+/*!***************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Billing.vue?vue&type=template&id=6b6c45e3 ***!
+  \***************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Billing_vue_vue_type_template_id_6b6c45e3__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Billing_vue_vue_type_template_id_6b6c45e3__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Billing_vue_vue_type_template_id_6b6c45e3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Billing.vue?vue&type=template&id=6b6c45e3 */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Billing.vue?vue&type=template&id=6b6c45e3");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Collections.vue?vue&type=template&id=7b9183fd&scoped=true":
+/*!*******************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Collections.vue?vue&type=template&id=7b9183fd&scoped=true ***!
+  \*******************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Collections_vue_vue_type_template_id_7b9183fd_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Collections_vue_vue_type_template_id_7b9183fd_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Collections_vue_vue_type_template_id_7b9183fd_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Collections.vue?vue&type=template&id=7b9183fd&scoped=true */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Collections.vue?vue&type=template&id=7b9183fd&scoped=true");
+
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/DirectoryTable.vue?vue&type=template&id=f9a939ae":
 /*!**********************************************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/DirectoryTable.vue?vue&type=template&id=f9a939ae ***!
@@ -20721,6 +27228,40 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_DirectoryTable_vue_vue_type_template_id_f9a939ae__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_DirectoryTable_vue_vue_type_template_id_f9a939ae__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./DirectoryTable.vue?vue&type=template&id=f9a939ae */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/DirectoryTable.vue?vue&type=template&id=f9a939ae");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Journal.vue?vue&type=template&id=6490149f":
+/*!***************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Journal.vue?vue&type=template&id=6490149f ***!
+  \***************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Journal_vue_vue_type_template_id_6490149f__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Journal_vue_vue_type_template_id_6490149f__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Journal_vue_vue_type_template_id_6490149f__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Journal.vue?vue&type=template&id=6490149f */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Journal.vue?vue&type=template&id=6490149f");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Profitability.vue?vue&type=template&id=08164764&scoped=true":
+/*!*********************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Profitability.vue?vue&type=template&id=08164764&scoped=true ***!
+  \*********************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Profitability_vue_vue_type_template_id_08164764_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Profitability_vue_vue_type_template_id_08164764_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Profitability_vue_vue_type_template_id_08164764_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Profitability.vue?vue&type=template&id=08164764&scoped=true */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Profitability.vue?vue&type=template&id=08164764&scoped=true");
 
 
 /***/ }),
@@ -20939,6 +27480,32 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_clonedRuleSet_9_use_0_node_modules_laravel_mix_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_SideBar_vue_vue_type_style_index_0_id_5801612d_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!../../../../../../node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./SideBar.vue?vue&type=style&index=0&id=5801612d&scoped=true&lang=css */ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/layouts/public/SideBar.vue?vue&type=style&index=0&id=5801612d&scoped=true&lang=css");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Collections.vue?vue&type=style&index=0&id=7b9183fd&scoped=true&lang=css":
+/*!*********************************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Collections.vue?vue&type=style&index=0&id=7b9183fd&scoped=true&lang=css ***!
+  \*********************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_clonedRuleSet_9_use_0_node_modules_laravel_mix_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Collections_vue_vue_type_style_index_0_id_7b9183fd_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!../../../../../../node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Collections.vue?vue&type=style&index=0&id=7b9183fd&scoped=true&lang=css */ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Collections.vue?vue&type=style&index=0&id=7b9183fd&scoped=true&lang=css");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/Profitability.vue?vue&type=style&index=0&id=08164764&scoped=true&lang=css":
+/*!***********************************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/Profitability.vue?vue&type=style&index=0&id=08164764&scoped=true&lang=css ***!
+  \***********************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_clonedRuleSet_9_use_0_node_modules_laravel_mix_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Profitability_vue_vue_type_style_index_0_id_08164764_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!../../../../../../node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Profitability.vue?vue&type=style&index=0&id=08164764&scoped=true&lang=css */ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/Profitability.vue?vue&type=style&index=0&id=08164764&scoped=true&lang=css");
 
 
 /***/ }),

@@ -202,6 +202,7 @@ class AccountsRegressionSeeder extends Seeder
         $jobs = DB::table('jobs')->whereIn('agent_id', $branches)->pluck('id');
         $statements = DB::table('vendor_statements')->whereIn('agent_id', $branches)->pluck('id');
         $receipts = DB::table('accounts_receipts')->whereIn('agent_id', $branches)->pluck('id');
+        $payments = DB::table('accounts_payments')->whereIn('agent_id', $branches)->pluck('id');
         $emails = DB::table('users')->where('company_name', $company->id)->pluck('email');
 
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
@@ -213,6 +214,7 @@ class AccountsRegressionSeeder extends Seeder
                       ['accounts_invoice_consol_details', 'invoice_id', $invoices],
                       ['accounts_receipt_allocations', 'invoice_id', $invoices],
                       ['accounts_receipt_allocations', 'receipt_id', $receipts],
+                      ['accounts_payment_allocations', 'payment_id', $payments],
                       ['accounts_purchase_items', 'purchase_voucher_id', $vouchers],
                       ['vendor_statement_lines', 'vendor_statement_id', $statements],
                       ['job_entities', 'job_id', $jobs],
@@ -220,8 +222,11 @@ class AccountsRegressionSeeder extends Seeder
                 DB::table($table)->whereIn($column, $ids)->delete();
             }
 
-            // Everything scoped to a branch.
+            // Everything scoped to a branch. ⚠️ With checks off, a table missing from this list is not refused —
+            // its rows are left behind on a branch that no longer exists. Payments, their allocations and both
+            // TDS tables were missing until 2026-09-26, and every reseed left one more of each (GAPS #397).
             foreach (['accounts_ledger_entries', 'gst_ledger_entries', 'unposted_transactions_queue',
+                      'accounts_payments', 'tds_entries', 'tds_rates',
                       'accounts_receipts', 'accounts_invoices', 'accounts_purchase_vouchers',
                       'vendor_statements', 'collection_follow_ups', 'bank_transactions', 'bank_accounts',
                       'chart_of_accounts',

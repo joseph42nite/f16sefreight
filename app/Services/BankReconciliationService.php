@@ -128,12 +128,21 @@ class BankReconciliationService
      * are decisions with a P&L consequence, which is why they are three explicit
      * choices rather than one "close it" button.
      */
-    public const RESOLUTIONS = ['short_paid', 'write_off', 'discount'];
+    public const RESOLUTIONS = ['short_paid', 'write_off', 'discount', 'tds'];
 
-    /** The account a resolution debits, or NULL when nothing is written off. */
+    /**
+     * The account a resolution debits, or NULL when nothing is written off.
+     *
+     * 🔴 **`tds` is an ASSET, and that is the whole reason it is a fourth choice rather than a write-off.**
+     * A client who deducted tax at source has paid in full; the difference went to the government in our name
+     * and comes back to us against our own liability. Closing it as a write-off or a discount loses it twice
+     * — once out of this year's profit and again as a credit nobody claims — and leaving it `short_paid` sets
+     * the ageing chasing a client who did nothing wrong.
+     */
     public function adjustmentAccountFor(string $resolution): ?array
     {
         return match ($resolution) {
+            'tds'       => \App\Services\TdsService::RECEIVABLE,
             'write_off' => LedgerPostingService::BANK_CHARGES,
             'discount'  => LedgerPostingService::SALES_ADJUSTMENTS,
             default     => null,

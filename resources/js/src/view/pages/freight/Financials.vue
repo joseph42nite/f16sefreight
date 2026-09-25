@@ -189,6 +189,135 @@
         </table>
       </section>
     </template>
+    <!-- ── TDS register, both directions (user, 2026-09-25) ──────────────── -->
+    <template v-else-if="view === 'tds'">
+      <div class="fx-toolbar">
+        <label class="fx-field">
+          <span class="fx-field__label">Financial year</span>
+          <input v-model="tdsYear" class="fx-input" placeholder="2026-27" style="width: 6em" @change="loadTds" />
+        </label>
+        <label class="fx-field">
+          <span class="fx-field__label">Quarter</span>
+          <select v-model="tdsQuarter" class="fx-input" @change="loadTds">
+            <option v-for="q in ['Q1', 'Q2', 'Q3', 'Q4']" :key="q" :value="q">{{ q }}</option>
+          </select>
+        </label>
+        <button class="fx-btn" :disabled="busy" @click="downloadForm26q">Form 26Q (CSV)</button>
+      </div>
+
+      <template v-if="tds">
+        <dl class="fx-defs">
+          <dt>Withheld last month ({{ tds.deposit_due.month }})</dt>
+          <dd><Figure :value="tds.deposit_due.amount" kind="currency" currency-code="INR" /></dd>
+          <dt>Due to the government</dt>
+          <dd>
+            <Figure :value="tds.deposit_due.due_on" kind="date" />
+            <StatusChip v-if="tds.deposit_due.overdue" value="overdue" />
+          </dd>
+        </dl>
+
+        <!-- 🔴 NEVER netted: a liability owed by the 7th, and an asset with no deadline. -->
+        <section class="fx-section">
+          <h3 class="fx-section__title">
+            Deducted BY us — payable <span class="fx-muted">2300-TDS-Payable</span>
+          </h3>
+          <p class="fx-muted">
+            <Figure :value="tds.payable.total" kind="currency" currency-code="INR" /> across {{ tds.payable.deductions }}
+            deduction(s), on <Figure :value="tds.payable.base" kind="currency" currency-code="INR" /> of base.
+            <span v-if="tds.payable.without_pan"> {{ tds.payable.without_pan }} with no PAN on record — deducted at 20% under s.206AA.</span>
+            <span v-if="Math.abs(tds.ledger.payable - tds.payable.total) > 0.01" class="fx-error">
+              Ledger shows {{ money(tds.ledger.payable) }} — a posting went somewhere else.
+            </span>
+          </p>
+          <table v-if="tds.payable.rows.length" class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Vendor</th>
+                <th scope="col">PAN</th>
+                <th scope="col">Section</th>
+                <th class="fx-num" scope="col">Rate %</th>
+                <th class="fx-num" scope="col">Base</th>
+                <th class="fx-num" scope="col">TDS</th>
+                <th scope="col">Deducted</th>
+                <th scope="col">Document</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in tds.payable.rows" :key="'p-' + r.id">
+                <td>{{ r.counterparty || "—" }}</td>
+                <td class="identifier">
+                  <span v-if="r.counterparty_pan">{{ r.counterparty_pan }}</span>
+                  <span v-else class="fx-error">No PAN — 20%</span>
+                </td>
+                <td class="identifier">{{ r.section }}</td>
+                <td class="fx-num">{{ r.rate }}</td>
+                <td class="fx-num"><Figure :value="r.base_amount" kind="currency" currency-code="INR" /></td>
+                <td class="fx-num"><Figure :value="r.tds_amount" kind="currency" currency-code="INR" /></td>
+                <td><Figure :value="r.deducted_on" kind="date" /></td>
+                <td class="identifier">{{ r.document_no || "—" }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-else class="fx-muted">Nothing withheld this quarter.</p>
+        </section>
+
+        <section class="fx-section">
+          <h3 class="fx-section__title">
+            Deducted FROM us — receivable <span class="fx-muted">1400-TDS-Receivable</span>
+          </h3>
+          <p class="fx-muted">
+            <Figure :value="tds.receivable.total" kind="currency" currency-code="INR" /> across {{ tds.receivable.deductions }}
+            deduction(s) — claimed against Form 26AS, no deadline.
+            <span v-if="Math.abs(tds.ledger.receivable - tds.receivable.total) > 0.01" class="fx-error">
+              Ledger shows {{ money(tds.ledger.receivable) }} — a posting went somewhere else.
+            </span>
+          </p>
+          <table v-if="tds.receivable.rows.length" class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Client</th>
+                <th scope="col">Section</th>
+                <th class="fx-num" scope="col">Rate %</th>
+                <th class="fx-num" scope="col">Base</th>
+                <th class="fx-num" scope="col">TDS</th>
+                <th scope="col">Deducted</th>
+                <th scope="col">Document</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in tds.receivable.rows" :key="'r-' + r.id">
+                <td>{{ r.counterparty || "—" }}</td>
+                <td class="identifier">{{ r.section }}</td>
+                <td class="fx-num">{{ r.rate }}</td>
+                <td class="fx-num"><Figure :value="r.base_amount" kind="currency" currency-code="INR" /></td>
+                <td class="fx-num"><Figure :value="r.tds_amount" kind="currency" currency-code="INR" /></td>
+                <td><Figure :value="r.deducted_on" kind="date" /></td>
+                <td class="identifier">{{ r.document_no || "—" }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-else class="fx-muted">Nothing deducted from us this quarter.</p>
+        </section>
+
+        <section v-if="tds.unclassified_vendors.length" class="fx-section">
+          <h3 class="fx-section__title">Vendors paid this year with no TDS section set</h3>
+          <p class="fx-muted">
+            Not an error — plenty of payees are legitimately outside TDS. Set one on the vendor in the
+            directory if they should be deducted from.
+          </p>
+          <table class="fx-table">
+            <thead><tr><th scope="col">Vendor</th><th class="fx-num" scope="col">Payments</th><th class="fx-num" scope="col">Paid</th></tr></thead>
+            <tbody>
+              <tr v-for="v in tds.unclassified_vendors" :key="'u-' + v.id">
+                <td>{{ v.name }}</td>
+                <td class="fx-num">{{ v.payments }}</td>
+                <td class="fx-num"><Figure :value="v.paid" kind="currency" currency-code="INR" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </template>
+    </template>
 
     <p v-else-if="!rows.length" class="fx-muted">No documents match.</p>
 
@@ -520,7 +649,6 @@
         it is what was charged.
       </p>
     </template>
-
     <!-- ── Drafted, not yet in the ledger (PRD §6.2.8) ───────────────────── -->
     <template v-else-if="view === 'unposted'">
       <table class="fx-table">
@@ -839,6 +967,7 @@ const VIEWS = [
   { key: "invoices", label: "Invoices" },
   { key: "vouchers", label: "What we owe" },
   { key: "gst", label: "GST register" },
+  { key: "tds", label: "TDS register" },
   { key: "unposted", label: "Not yet posted" },
   { key: "reports", label: "Reports" },
   { key: "periods", label: "Periods" },
@@ -881,6 +1010,8 @@ export default {
     vendorStatements: [], vendorTypes: [], vendorStates: {}, vendors: [],
     vendorStatement: null, vendorLines: [], vendorTotals: { theirs: 0, ours: 0, difference: 0 },
     importingVendor: false, vendorForm: { vendor_type: "", vendor_id: null, period: "", statement_no: "", csv: "" },
+    /** TDS register: both directions, for one quarter (user, 2026-09-25). */
+    tds: null, tdsYear: "", tdsQuarter: "",
     selected: null, tab: "credit",
     credit: null, creditLoading: false,
     preview: null, previewLoading: false,
@@ -922,6 +1053,7 @@ export default {
       return {
         awaiting: "Cost sheets pricing has sent across, with what each shipment sells for and what it cost. Finalize one to bill it.",
         gst: "The tax charged on every finalized document, for GSTR-1. Read-only — it is what was charged.",
+        tds: "What was withheld, both ways, for one quarter. Never netted — a liability owed by the 7th, and an asset with no deadline.",
         reports: "What the ledger proves, over one period of one branch.",
         periods: "The months the ledger is open for. Nothing posts into a month without an open period.",
         bank: "Money in the bank, and the invoice each payment settles.",
@@ -933,6 +1065,15 @@ export default {
     },
   },
   created() {
+    // A link from another screen (Money out's voucher register, Close the month's TDS step) names the
+    // view it means to open — without this, every one of those links landed on "Waiting to be billed"
+    // regardless of what it said.
+    const requested = this.$route.query.view;
+    if (requested && VIEWS.some((v) => v.key === requested)) {
+      this.showView(requested);
+      return;
+    }
+
     this.load();
   },
   methods: {
@@ -957,6 +1098,11 @@ export default {
       if (key === "vendors") {
         this.vendorStatement = null;
         this.loadVendorStatements();
+        return;
+      }
+
+      if (key === "tds") {
+        this.loadTds();
         return;
       }
 
@@ -1123,6 +1269,46 @@ export default {
       this.vendorTotals = data.totals || { theirs: 0, ours: 0, difference: 0 };
       this.vendorStates = data.states || this.vendorStates;
     },
+    /** The TDS register: both directions, one quarter. With no year/quarter chosen yet, the server picks today's. */
+    loadTds() {
+      this.loading = true;
+      const params = [];
+      if (this.branchId) params.push("agent_id=" + this.branchId);
+      if (this.tdsYear) params.push("financial_year=" + encodeURIComponent(this.tdsYear));
+      if (this.tdsQuarter) params.push("quarter=" + this.tdsQuarter);
+
+      ApiService.get("/reports/tds" + (params.length ? "?" + params.join("&") : ""))
+        .then(({ data }) => {
+          this.tds = data;
+          this.tdsYear = data.financial_year;
+          this.tdsQuarter = data.quarter;
+          if (data.branches) this.branches = data.branches;
+          this.error = null;
+        })
+        .catch((e) => { this.error = this.messageFor(e); })
+        .finally(() => { this.loading = false; });
+    },
+    downloadForm26q() {
+      if (!this.tds) return;
+
+      const params = [];
+      if (this.branchId) params.push("agent_id=" + this.branchId);
+      params.push("financial_year=" + encodeURIComponent(this.tdsYear));
+      params.push("quarter=" + this.tdsQuarter);
+
+      this.busy = true;
+      ApiService.query("/reports/tds/form-26q?" + params.join("&"), { responseType: "blob" })
+        .then(({ data }) => {
+          const url = window.URL.createObjectURL(new Blob([data], { type: "text/csv" }));
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `Form26Q-${this.tdsYear}-${this.tdsQuarter}.csv`;
+          link.click();
+          setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+        })
+        .catch(() => { this.error = "The return could not be built."; })
+        .finally(() => { this.busy = false; });
+    },
     loadDifferences() {
       this.busy = true;
       ApiService.get("/reconciliation/differences" + (this.branchId ? "?agent_id=" + this.branchId : ""))
@@ -1165,6 +1351,11 @@ export default {
     load() {
       if (this.view === "vendors") {
         this.loadVendorStatements();
+        return;
+      }
+
+      if (this.view === "tds") {
+        this.loadTds();
         return;
       }
 

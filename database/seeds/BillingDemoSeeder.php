@@ -42,7 +42,7 @@ class BillingDemoSeeder extends Seeder
         $this->openPeriods($branches);
 
         $agent = $this->overseasAgent($company->id, $branches[0]);
-        $made = ['debit_note' => 0, 'credit_note' => 0, 'brokerage' => 0, 'consol_invoice' => 0, 'receipts' => 0, 'chases' => 0, 'vouchers' => 0, 'costsheets' => 0, 'postings' => 0];
+        $made = ['debit_note' => 0, 'credit_note' => 0, 'brokerage' => 0, 'consol_invoice' => 0, 'receipts' => 0, 'chases' => 0, 'vouchers' => 0, 'payments' => 0, 'costsheets' => 0, 'postings' => 0];
 
         foreach ($branches as $branch) {
             // Give the invoices already there the columns a bill register prints.
@@ -85,6 +85,7 @@ class BillingDemoSeeder extends Seeder
             $made['receipts'] += $this->receipts($branch, $billed);
             $made['chases'] += $this->chases($branch);
             $made['vouchers'] += $this->costSome($branch);
+            $made['payments'] += $this->paySome($branch);
             $made['costsheets'] += $this->costSheets($branch);
             $made['postings'] += $this->postSome($branch);
         }
@@ -100,9 +101,11 @@ class BillingDemoSeeder extends Seeder
 
         $this->command->info(sprintf(
             'Billing demo: %d debit notes, %d credit notes, %d brokerage, %d consol, %d receipts, %d chases, '
-                . '%d purchase vouchers, %d cost sheets waiting, %d documents posted to the ledger across %d branches.',
+                . '%d purchase vouchers, %d supplier payments, %d cost sheets waiting, %d documents posted to the ledger '
+                . 'across %d branches.',
             $made['debit_note'], $made['credit_note'], $made['brokerage'], $made['consol_invoice'],
-            $made['receipts'], $made['chases'], $made['vouchers'], $made['costsheets'], $made['postings'],
+            $made['receipts'], $made['chases'], $made['vouchers'], $made['payments'], $made['costsheets'],
+            $made['postings'],
             count($branches)
         ));
     }
@@ -172,6 +175,12 @@ class BillingDemoSeeder extends Seeder
             $receipts = DB::table('accounts_receipts')->whereIn('agent_id', $branches)->pluck('id');
             $payments = DB::table('accounts_payments')->whereIn('agent_id', $branches)->pluck('id');
             $vouchers = DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branches)->pluck('id');
+
+            // 🔴 Branch-scoped like the ledger it feeds: left behind, a stale deduction is one the register
+            // still counts against a ledger this reseed is about to empty and rebuild — exactly the "ledger
+            // disagrees with the register" the TDS screen warns about, except here the disagreement is the
+            // seeder's own doing, not a posting that went missing.
+            DB::table('tds_entries')->whereIn('agent_id', $branches)->delete();
 
             DB::table('accounts_receipt_allocations')->whereIn('receipt_id', $receipts)->delete();
             DB::table('accounts_receipts')->whereIn('agent_id', $branches)->delete();
@@ -401,6 +410,103 @@ class BillingDemoSeeder extends Seeder
      * and clearance — and one shipment in six is deliberately a LOSS, because a report where nothing ever loses
      * money is one nobody opens twice.
      */
+    /**
+     * Settle some of what we owe, withholding TDS where a vendor is classified for it.
+     *
+     * 🔴 **Without this the demo has 66 unpaid vouchers and no payments at all**, so the TDS register is
+     * empty, step ⑤ reads "nothing was withheld", and neither the deduction nor the 20% no-PAN case is
+     * visible anywhere a person can look. The whole point of the demo is that the cases exist.
+     *
+     * ⚠️ It goes through `TdsService` rather than hardcoding a figure, so what the demo shows is what the
+     * code would actually do — a seeded number that agreed with nothing would be worse than no demo.
+     */
+    private function paySome(int $branch): int
+    {
+        $tds = app(\App\Services\TdsService::class);
+        $tds->seedRatesFor($branch);
+
+        $bank = \App\BankAccount::withoutGlobalScopes()->where('agent_id', $branch)->orderBy('id')->first();
+        $made = 0;
+
+        // A handful per vendor, so each classification shows up: 194J with a PAN, 194C with one, and 194C
+        // without — which is the 20% s.206AA rate, visible rather than described.
+        foreach (\App\AccountsPurchaseVoucher::withoutGlobalScopes()->where('agent_id', $branch)
+            ->where('status', 'unpaid')->orderBy('id')->limit(9)->get()->groupBy('vendor_id') as $vendorId => $group) {
+
+            $vendor = DB::table('partners')->where('id', $vendorId)
+                ->first(['id', 'name', 'pan_no', 'tds_section', 'tds_rate_override']);
+
+            if ($vendor === null) {
+                continue;
+            }
+
+            $date = now()->subDays(6)->toDateString();
+            $gross = 0.0;
+            $net = 0.0;
+
+            foreach ($group as $voucher) {
+                $gross = round($gross + (float) $voucher->items()->sum('net_amount'), 2);
+                $net = round($net + (float) $voucher->items()->sum('amount'), 2);
+            }
+
+            if ($gross <= 0) {
+                continue;
+            }
+
+            $decision = $tds->forVendor($vendor, $branch, $net,
+                $tds->paidThisYear($branch, (int) $vendorId, $date),
+                $tds->deductedThisYear($branch, (int) $vendorId, $date, $vendor->tds_section));
+
+            $payment = \App\AccountsPayment::withoutGlobalScopes()->create([
+                'agent_id' => $branch, 'payee_type' => 'partner', 'payee_id' => (int) $vendorId,
+                'payment_no' => $this->sequences->next($branch, 'PAY'),
+                'payment_date' => $date, 'mode' => 'bank_transfer',
+                'reference' => 'UTR-DEMO-' . $vendorId, 'amount' => $gross,
+                'tds_amount' => $decision['amount'], 'tds_section' => $decision['section'],
+                'tds_rate' => $decision['deduct'] ? $decision['rate'] : null,
+                'currency' => 'INR', 'exchange_rate' => 1, 'run_ref' => 'RUN-DEMO',
+                'bank_account_id' => $bank?->id, 'is_posted' => true,
+                'created_by' => DB::table('users')->where('branch_name', $branch)
+                    ->where('designation', 'accounts')->value('id'),
+            ]);
+
+            foreach ($group as $voucher) {
+                $amount = round((float) $voucher->items()->sum('net_amount'), 2);
+                $payment->allocations()->create(['purchase_voucher_id' => $voucher->id, 'amount' => $amount]);
+                $voucher->update(['amount_paid' => $amount, 'status' => 'paid']);
+            }
+
+            $ledger = app(\App\Services\LedgerPostingService::class);
+            $period = $ledger->openPeriodFor($branch, $date);
+
+            if ($period === null) {
+                // Dated outside every open period — the posting gate doing its job, not a seeder failure.
+                $payment->update(['is_posted' => false]);
+
+                continue;
+            }
+
+            $ledger->write($ledger->linesForPayment($gross, $bank, $decision['amount']),
+                $branch, $period->id, $payment->id, 'payment');
+
+            if ($decision['amount'] > 0) {
+                $tds->record([
+                    'agent_id' => $branch,
+                    'company_id' => DB::table('agents_info')->where('id', $branch)->value('company_id'),
+                    'direction' => \App\Services\TdsService::OUTWARD,
+                    'counterparty_type' => 'partner', 'counterparty_id' => (int) $vendorId,
+                    'counterparty_pan' => $vendor->pan_no, 'section' => $decision['section'],
+                    'rate' => $decision['rate'], 'base_amount' => $net, 'tds_amount' => $decision['amount'],
+                    'source_id' => $payment->id, 'source_type' => 'payment', 'deducted_on' => $date,
+                ]);
+            }
+
+            $made++;
+        }
+
+        return $made;
+    }
+
     private function costSome(int $branch): int
     {
         $company = DB::table('agents_info')->where('id', $branch)->value('company_id');

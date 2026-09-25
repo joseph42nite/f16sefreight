@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
+use App\Services\TdsService;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,11 +21,27 @@ use Illuminate\Support\Facades\DB;
  */
 class FinanceSettingsController extends Controller
 {
+    public function __construct(private readonly TdsService $tds) {}
+
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewFinancials');
         [$branches, $picked] = $this->branches($request);
         $ids = $picked ? [$picked] : $branches->pluck('id')->all();
+
+        // ⚠️ The seeded rates are defaults to be checked against the current Finance Act, not law — the
+        // screen says so. `seedRatesFor` is idempotent (insertOrIgnore on branch+section), so a branch that
+        // has already edited its rates keeps every edit; this only fills in sections it does not yet have.
+        foreach ($ids as $id) {
+            $this->tds->seedRatesFor($id);
+        }
+
+        $tdsRates = DB::table('tds_rates as t')
+            ->join('agents_info as a', 'a.id', '=', 't.agent_id')
+            ->whereIn('t.agent_id', $ids)
+            ->orderBy('a.agent_name')->orderBy('t.section')
+            ->get(['t.id', 't.agent_id', 'a.agent_name as branch', 't.section', 't.description', 't.rate',
+                   't.rate_no_pan', 't.threshold_single', 't.threshold_annual', 't.is_active']);
 
         $accounts = DB::table('chart_of_accounts as c')
             ->join('agents_info as a', 'a.id', '=', 'c.agent_id')
@@ -45,7 +62,8 @@ class FinanceSettingsController extends Controller
                    'r.rate', 'r.currency', 'r.valid_from', 'r.valid_to', 'r.agent_id', 'a.agent_name as branch',
                    DB::raw('COALESCE(p.name, cu.name) AS party')]);
 
-        return response()->json(['accounts' => $accounts, 'rate_cards' => $rates, 'branches' => $branches, 'branch_picked' => $picked]);
+        return response()->json(['accounts' => $accounts, 'rate_cards' => $rates, 'tds_rates' => $tdsRates,
+                                  'branches' => $branches, 'branch_picked' => $picked]);
     }
 
     /** Name an account that does not exist yet, or rename one. Codes are never changed: the ledger points at them. */
@@ -162,6 +180,45 @@ class FinanceSettingsController extends Controller
         }
 
         DB::table('rate_cards')->where('id', $id)->delete();
+
+        return $this->index($request);
+    }
+
+    /**
+     * Edit a branch's TDS rate for one section — the rate, the no-PAN rate (s.206AA), and the thresholds.
+     *
+     * 🔴 Never changes a `tds_entries` row already written. `TdsService` copies the rate onto the entry at
+     * the moment it deducts, precisely so that editing the rate table here does not restate a quarter
+     * already filed. This only changes what the NEXT payment uses.
+     */
+    public function saveTdsRate(Request $request): JsonResponse
+    {
+        $this->authorize('manageFinanceSettings');
+        $context = UserContext::for(auth()->user());
+
+        $data = $request->validate([
+            'agent_id' => 'required|integer',
+            'section' => 'required|string|max:20',
+            'description' => 'required|string|max:120',
+            'rate' => 'required|numeric|min:0|max:100',
+            'rate_no_pan' => 'required|numeric|min:0|max:100',
+            'threshold_single' => 'nullable|numeric|min:0',
+            'threshold_annual' => 'nullable|numeric|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        if (! $this->ownBranch($context, (int) $data['agent_id'])) {
+            return response()->json(['error' => 'That branch is not one of yours.', 'reason' => 'branch_not_found'], 404);
+        }
+
+        DB::table('tds_rates')->updateOrInsert(
+            ['agent_id' => $data['agent_id'], 'section' => $data['section']],
+            [
+                'description' => $data['description'], 'rate' => $data['rate'], 'rate_no_pan' => $data['rate_no_pan'],
+                'threshold_single' => $data['threshold_single'] ?? null, 'threshold_annual' => $data['threshold_annual'] ?? null,
+                'is_active' => $data['is_active'] ?? true, 'updated_at' => now(), 'created_at' => now(),
+            ]
+        );
 
         return $this->index($request);
     }

@@ -191,23 +191,43 @@
       <thead>
         <tr>
           <th v-for="c in columns" :key="c.key" :class="{ 'fx-num': c.numeric }" scope="col">{{ c.label }}</th>
-          <th v-if="endpoint === '/customers' && canEditClients" scope="col"></th>
+          <th v-if="(endpoint === '/customers' && canEditClients) || (endpoint === '/partners' && canManageTds)" scope="col"></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="row.id">
           <td v-for="c in columns" :key="c.key" :class="[{ 'fx-num': c.numeric }, c.mono ? 'identifier' : '']">
-            <Figure v-if="c.kind" :value="row[c.key]" :kind="c.kind" :currency-code="c.kind === 'currency' ? 'INR' : null" />
-            <span v-else-if="row[c.key]">{{ row[c.key] }}</span>
-            <!-- §4.1 NULL is not zero, and an absent value is not an empty string. -->
-            <span v-else class="is-empty" aria-label="Not recorded"></span>
+            <template v-if="c.key === 'tds_section' && tdsEditing === row.id">
+              <input v-model="tdsForm.tds_section" class="fx-input" list="tds-sections" placeholder="194C" />
+            </template>
+            <template v-else-if="c.key === 'tds_rate_override' && tdsEditing === row.id">
+              <input v-model.number="tdsForm.tds_rate_override" class="fx-input" type="number" step="0.01" min="0" max="100" placeholder="s.197 rate, if any" />
+            </template>
+            <template v-else>
+              <Figure v-if="c.kind" :value="row[c.key]" :kind="c.kind" :currency-code="c.kind === 'currency' ? 'INR' : null" />
+              <span v-else-if="row[c.key] !== null && row[c.key] !== undefined && row[c.key] !== ''">{{ row[c.key] }}</span>
+              <!-- §4.1 NULL is not zero, and an absent value is not an empty string. -->
+              <span v-else class="is-empty" aria-label="Not recorded"></span>
+            </template>
           </td>
           <td v-if="endpoint === '/customers' && canEditClients" class="fx-row-actions">
             <button class="fx-btn fx-btn--ghost" @click="editClient(row)">Edit</button>
           </td>
+          <td v-else-if="endpoint === '/partners' && canManageTds" class="fx-row-actions">
+            <template v-if="tdsEditing === row.id">
+              <button class="fx-btn fx-btn--primary" :disabled="tdsSaving" @click="saveTds(row)">Save</button>
+              <button class="fx-btn fx-btn--ghost" @click="tdsEditing = null">Cancel</button>
+            </template>
+            <button v-else class="fx-btn fx-btn--ghost" @click="editTds(row)">Edit TDS</button>
+          </td>
         </tr>
       </tbody>
     </table>
+    <p v-if="tdsError" class="fx-error" role="alert">{{ tdsError }}</p>
+
+    <datalist id="tds-sections">
+      <option v-for="s in TDS_SECTIONS" :key="s" :value="s" />
+    </datalist>
   </div>
 </template>
 
@@ -244,9 +264,15 @@ const SHAPES = {
       { key: "email", label: "Email" },
       { key: "phone", label: "Phone", mono: true },
       { key: "gst_no", label: "GSTIN", mono: true },
+      { key: "tds_section", label: "TDS section", mono: true },
+      { key: "tds_rate_override", label: "s.197 rate %", numeric: true },
     ],
   },
 };
+
+/** The sections a freight forwarder actually uses, as suggestions — TdsService::DEFAULT_RATES. A branch may
+    have edited or added to these in Settings → Finance, so this is a hint, never a closed list. */
+const TDS_SECTIONS = ["194C", "194C-IND", "194J", "194H", "194I", "194I-B"];
 
 export default {
   name: "DirectoryTable",
@@ -258,12 +284,19 @@ export default {
     /* The client being added or edited, and whether this company has accounts (Command) — the server says. */
     client: null, withAccounts: false, contacts: [],
     form: { name: "", partner_type: "customs_broker", email: "", phone: "", address: "", gst_no: "", pan_no: "" },
+    /** Which vendor's TDS classification is being edited, and the row's own suggestions (user, 2026-09-25). */
+    TDS_SECTIONS, tdsEditing: null, tdsSaving: false, tdsError: null,
+    tdsForm: { tds_section: "", tds_rate_override: null },
   }),
   computed: {
     ...mapGetters(["designation"]),
     /** Mirrors the server's `editClients`. */
     canEditClients() {
       return ["pricing", "sales", "accounts", "boss"].indexOf(this.designation) !== -1;
+    },
+    /** Mirrors the server's `manageFinanceSettings` — the same desk that sets the rate table. */
+    canManageTds() {
+      return this.designation === "accounts" || this.designation === "boss";
     },
     shape() {
       return SHAPES[this.endpoint];
@@ -340,6 +373,31 @@ export default {
             : (d.error || d.message || "Could not save.");
         })
         .finally(() => { this.saving = false; });
+    },
+    editTds(row) {
+      this.tdsEditing = row.id;
+      this.tdsError = null;
+      this.tdsForm = { tds_section: row.tds_section || "", tds_rate_override: row.tds_rate_override };
+    },
+    saveTds(row) {
+      this.tdsSaving = true;
+      this.tdsError = null;
+      const body = {
+        tds_section: this.tdsForm.tds_section ? this.tdsForm.tds_section.trim().toUpperCase() : null,
+        tds_rate_override: this.tdsForm.tds_rate_override === "" ? null : this.tdsForm.tds_rate_override,
+      };
+
+      ApiService.post(`/partners/${row.id}/tds`, body)
+        .then(({ data }) => {
+          const i = this.rows.findIndex((r) => r.id === row.id);
+          if (i !== -1) this.$set(this.rows, i, { ...this.rows[i], ...data });
+          this.tdsEditing = null;
+        })
+        .catch((e) => {
+          const d = (e.response && e.response.data) || {};
+          this.tdsError = d.errors ? Object.values(d.errors).flat().join(" ") : (d.error || d.message || "Could not save.");
+        })
+        .finally(() => { this.tdsSaving = false; });
     },
     editClient(row) {
       this.saveError = null;

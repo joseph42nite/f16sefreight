@@ -224,6 +224,69 @@
         </div>
       </section>
 
+      <!-- ── TDS rates ─────────────────────────────────────────────────── -->
+      <section class="fx-section">
+        <h2 class="fx-section__title">TDS rates</h2>
+        <p class="fx-muted">
+          ⚠️ <strong>These are editable defaults, checked against the current Finance Act as it stood when
+          this screen was built — not law.</strong> Section 194H alone has moved twice in recent years; check
+          each rate before relying on it, and correct it here the day it changes.
+        </p>
+
+        <table class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Section</th>
+              <th scope="col">Description</th>
+              <th v-if="branches.length > 1" scope="col">Branch</th>
+              <th class="fx-num" scope="col">Rate %</th>
+              <th class="fx-num" scope="col">No PAN %</th>
+              <th class="fx-num" scope="col">Per payment</th>
+              <th class="fx-num" scope="col">Annual</th>
+              <th scope="col">Active</th>
+              <th v-if="canEdit" scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in tdsRates" :key="'t-' + r.id">
+              <td class="identifier">{{ r.section }}</td>
+              <template v-if="tdsEditing === r.id">
+                <td><input v-model="tdsForm.description" class="fx-input" /></td>
+                <td v-if="branches.length > 1">{{ r.branch }}</td>
+                <td class="fx-num"><input v-model.number="tdsForm.rate" class="fx-input" type="number" step="0.01" min="0" max="100" /></td>
+                <td class="fx-num"><input v-model.number="tdsForm.rate_no_pan" class="fx-input" type="number" step="0.01" min="0" max="100" /></td>
+                <td class="fx-num"><input v-model.number="tdsForm.threshold_single" class="fx-input" type="number" min="0" /></td>
+                <td class="fx-num"><input v-model.number="tdsForm.threshold_annual" class="fx-input" type="number" min="0" /></td>
+                <td>
+                  <label class="fx-checkbox">
+                    <input v-model="tdsForm.is_active" type="checkbox" />
+                  </label>
+                </td>
+                <td class="fx-row-actions">
+                  <button class="fx-btn fx-btn--primary" :disabled="busy" @click="saveTdsRate(r)">Save</button>
+                  <button class="fx-btn fx-btn--ghost" @click="tdsEditing = null">Cancel</button>
+                </td>
+              </template>
+              <template v-else>
+                <td>{{ r.description }}</td>
+                <td v-if="branches.length > 1">{{ r.branch }}</td>
+                <td class="fx-num">{{ r.rate }}</td>
+                <td class="fx-num">{{ r.rate_no_pan }}</td>
+                <td class="fx-num">{{ r.threshold_single !== null ? money(r.threshold_single) : "—" }}</td>
+                <td class="fx-num">{{ r.threshold_annual !== null ? money(r.threshold_annual) : "—" }}</td>
+                <td><StatusChip :value="r.is_active ? 'active' : 'inactive'" /></td>
+                <td v-if="canEdit" class="fx-row-actions">
+                  <button class="fx-btn fx-btn--ghost" @click="editTdsRate(r)">Edit</button>
+                </td>
+              </template>
+            </tr>
+            <tr v-if="!tdsRates.length">
+              <td colspan="9" class="fx-muted">No TDS rates yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
       <!-- ── Rate cards ────────────────────────────────────────────────── -->
       <section class="fx-section">
         <h2 class="fx-section__title">Rate cards</h2>
@@ -327,6 +390,9 @@ export default {
   components: { Figure, StatusChip },
   data: () => ({
     accounts: [], rateCards: [], branches: [], branchId: null,
+    /** TDS rate table: editable defaults, per branch (user, 2026-09-25). */
+    tdsRates: [], tdsEditing: null,
+    tdsForm: { description: "", rate: 0, rate_no_pan: 20, threshold_single: null, threshold_annual: null, is_active: true },
     /** The bank accounts master (user, 2026-09-21). */
     banks: [], legacyBalance: 0,
     bankForm: { id: null, agent_id: null, name: "", bank_name: "", account_no: "", ifsc_code: "", is_default: false },
@@ -436,6 +502,7 @@ export default {
     take(data) {
       this.accounts = data.accounts || [];
       this.rateCards = data.rate_cards || [];
+      this.tdsRates = data.tds_rates || [];
       this.branches = data.branches || [];
       if (!this.newAccount.agent_id && this.branches.length) {
         this.newAccount.agent_id = this.branches[0].id;
@@ -455,6 +522,24 @@ export default {
       this.save("/finance-settings/accounts", this.newAccount, () => {
         this.newAccount = { ...this.newAccount, account_code: "", account_name: "" };
       });
+    },
+    editTdsRate(rate) {
+      this.tdsEditing = rate.id;
+      this.tdsForm = {
+        description: rate.description, rate: rate.rate, rate_no_pan: rate.rate_no_pan,
+        threshold_single: rate.threshold_single, threshold_annual: rate.threshold_annual, is_active: !!rate.is_active,
+      };
+      this.actionError = null;
+    },
+    saveTdsRate(rate) {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post("/finance-settings/tds-rates", {
+        agent_id: rate.agent_id, section: rate.section, ...this.tdsForm,
+      })
+        .then(({ data }) => { this.take(data); this.tdsEditing = null; })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
     },
     addRate() {
       this.save("/finance-settings/rate-cards", this.newRate, () => {

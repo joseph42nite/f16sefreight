@@ -362,6 +362,9 @@ class FreightDemoSeeder extends Seeder
 
         $this->seedPeriod($branches->first());
 
+        // Every branch needs the standard TDS sections before anything can be withheld under one.
+        $branches->each(fn ($b) => app(\App\Services\TdsService::class)->seedRatesFor($b->id));
+
         // Globex Chennai is managed from Chennai, so the Boss's branch comparison has two branches to compare.
         DB::table('customers')->where('id', $customers[3]->id)->update(['branch_id' => $branches[1]->id]);
 
@@ -721,20 +724,27 @@ class FreightDemoSeeder extends Seeder
             default => '27',
         };
 
+        // 🔴 TDS sections, chosen so the demo contains every case worth seeing rather than one:
+        //   • a broker on 194J at 10% (professional services) with a PAN
+        //   • a trucker on 194C at 2% with a PAN — the ordinary case
+        //   • a second broker on 194C with NO PAN, so the 20% s.206AA rate appears somewhere visible
+        // The airline gets no section at all and is left unclassified, which is both realistic for
+        // international air freight and the case the register has to be able to NAME rather than assume.
         foreach ([
-            ['name' => 'Sharma CHA & Co',   'partner_type' => 'customs_broker'],
-            ['name' => 'BlueDart Trucking', 'partner_type' => 'transporter'],
-            ['name' => 'Konkan Clearing',   'partner_type' => 'customs_broker'],
+            ['name' => 'Sharma CHA & Co',   'partner_type' => 'customs_broker', 'tds_section' => '194J', 'pan' => true],
+            ['name' => 'BlueDart Trucking', 'partner_type' => 'transporter',    'tds_section' => '194C', 'pan' => true],
+            ['name' => 'Konkan Clearing',   'partner_type' => 'customs_broker', 'tds_section' => '194C', 'pan' => false],
         ] as $i => $p) {
             $slug = strtolower(explode(' ', $p['name'])[0]);
 
-            Partner::create($p + [
+            Partner::create(collect($p)->except('pan')->all() + [
                 'company_id' => $company->id,
                 'agent_id'   => $branch->id,
                 'email' => 'bookings@' . $slug . '.test',
                 'phone' => '+91 22 5000 ' . (2000 + $i),
                 // The whole reason partners are per branch.
                 'gst_no' => $stateCode . 'AAACG' . (1000 + $i) . 'A1Z5',
+                'pan_no' => $p['pan'] ? 'AAACG' . (1000 + $i) . 'A' : null,
             ]);
         }
 

@@ -46,6 +46,11 @@ class AccountsRegressionSeeder extends Seeder
         'gstin' => '27AAACR1000A1Z5',
         // The carrier we buy from is registered in 27 too, so input credit splits CGST + SGST.
         'vendor_gstin' => '27AAACR9001A1Z5',
+        // 🔴 TDS: the carrier is a contractor under 194C at 2%, and has a PAN — so the ordinary rate applies
+        // rather than the 20% s.206AA penalty. j1's voucher is 70,000 net, so 1,400 is withheld from the
+        // 82,600 paid, the airline's payable still clears in full, and 81,200 actually leaves the bank.
+        'vendor_pan' => 'AAACR9001F',
+        'vendor_tds_section' => '194C',
         'clients' => [
             // limit 500,000 — comfortably inside it
             ['key' => 'northstar', 'name' => 'Northstar Exports', 'domain' => 'northstar.test', 'limit' => 500000,
@@ -95,7 +100,11 @@ class AccountsRegressionSeeder extends Seeder
             ['key' => 'payouts', 'name' => 'Payouts', 'bank' => 'ICICI Bank', 'number' => '00112233449876'],
         ],
         'receipts' => [
-            ['key' => 'r1', 'client' => 'northstar', 'amount' => 118000, 'against' => 'inv1'],   // settles it in full
+            // 🔴 Settled NET OF TDS: 2% of the 1,00,000 service value withheld, so 1,16,000 arrives against a
+            // 1,18,000 invoice — and the invoice is nonetheless PAID IN FULL, because the missing 2,000 went
+            // to the government in our name and comes back to us. The one case all three old resolutions got
+            // wrong. Note the assets total does not move: cash 2,000 lower, TDS receivable 2,000 higher.
+            ['key' => 'r1', 'client' => 'northstar', 'amount' => 116000, 'against' => 'inv1', 'tds' => 2000],
             ['key' => 'r2', 'client' => 'northstar', 'amount' => 100000, 'against' => 'inv2'],   // part payment
             ['key' => 'r3', 'client' => 'cashflow', 'amount' => 50000, 'against' => null],       // on account
         ],
@@ -231,7 +240,11 @@ class AccountsRegressionSeeder extends Seeder
 
         $carrier = Partner::withoutGlobalScopes()->create(['company_id' => $company->id, 'agent_id' => $branch->id,
             'name' => 'Regression Air', 'partner_type' => 'airline', 'email' => 'cass@regression-air.test',
-            'gst_no' => $f['vendor_gstin']]);
+            'gst_no' => $f['vendor_gstin'], 'pan_no' => $f['vendor_pan'],
+            'tds_section' => $f['vendor_tds_section']]);
+
+        // The branch needs the standard sections before anything can be withheld under one.
+        app(\App\Services\TdsService::class)->seedRatesFor($branch->id);
 
         $banks = [];
         foreach ($f['banks'] as $b) {
@@ -309,7 +322,8 @@ class AccountsRegressionSeeder extends Seeder
         // Every rupee in lands in Collections; the payment goes out of Payouts.
         foreach ($f['receipts'] as $r) {
             $this->receive($branch, $clients[$r['client']], $r['amount'],
-                $r['against'] ? $documents[$r['against']] : null, $period, $accounts, $banks['collections']);
+                $r['against'] ? $documents[$r['against']] : null, $period, $accounts, $banks['collections'],
+                (float) ($r['tds'] ?? 0));
         }
 
         DB::table('bank_transactions')->insert([
@@ -431,12 +445,24 @@ class AccountsRegressionSeeder extends Seeder
         ?\App\BankAccount $from = null): void
     {
         $gross = round((float) $voucher->items()->sum('net_amount'), 2);
+        $net = round((float) $voucher->items()->sum('amount'), 2);
+        $date = now()->subDays(2)->toDateString();
+
+        // 🔴 TDS is withheld from the CASH, never from the payable: the vendor's invoice is settled in full
+        // because the withheld part went to the government in their name. 2% of 70,000 = 1,400, so 81,200
+        // leaves the bank against an 82,600 payable.
+        $tds = app(\App\Services\TdsService::class);
+        $decision = $tds->forVendor($vendor, $branch->id, $net,
+            $tds->paidThisYear($branch->id, $vendor->id, $date),
+            $tds->deductedThisYear($branch->id, $vendor->id, $date, $vendor->tds_section));
 
         $payment = \App\AccountsPayment::withoutGlobalScopes()->create([
             'agent_id' => $branch->id, 'payee_type' => 'partner', 'payee_id' => $vendor->id,
             'payment_no' => $this->sequences->next($branch->id, 'PAY'),
-            'payment_date' => now()->subDays(2)->toDateString(), 'mode' => 'bank_transfer',
+            'payment_date' => $date, 'mode' => 'bank_transfer',
             'reference' => 'UTR-REG-PAYOUT', 'amount' => $gross, 'currency' => 'INR', 'exchange_rate' => 1,
+            'tds_amount' => $decision['amount'], 'tds_section' => $decision['section'],
+            'tds_rate' => $decision['deduct'] ? $decision['rate'] : null,
             'run_ref' => 'RUN-FIXTURE', 'is_posted' => true, 'created_by' => $by->id,
             'bank_account_id' => $from?->id,
         ]);
@@ -444,12 +470,23 @@ class AccountsRegressionSeeder extends Seeder
         $payment->allocations()->create(['purchase_voucher_id' => $voucher->id, 'amount' => $gross]);
         $voucher->update(['amount_paid' => $gross, 'status' => 'paid']);
 
-        $this->post($this->ledger->linesForPayment($gross, $from), $branch->id,
+        $this->post($this->ledger->linesForPayment($gross, $from, $decision['amount']), $branch->id,
             $payment->payment_date, $payment->id, 'payment');
+
+        if ($decision['amount'] > 0) {
+            $tds->record([
+                'agent_id' => $branch->id, 'company_id' => $branch->company_id,
+                'direction' => \App\Services\TdsService::OUTWARD,
+                'counterparty_type' => 'partner', 'counterparty_id' => $vendor->id,
+                'counterparty_pan' => $vendor->pan_no, 'section' => $decision['section'],
+                'rate' => $decision['rate'], 'base_amount' => $net, 'tds_amount' => $decision['amount'],
+                'source_id' => $payment->id, 'source_type' => 'payment', 'deducted_on' => $date,
+            ]);
+        }
     }
 
     private function receive(Agent $branch, Customer $client, float $amount, ?AccountsInvoice $against,
-        int $period, User $by, ?\App\BankAccount $into = null): void
+        int $period, User $by, ?\App\BankAccount $into = null, float $tdsDeducted = 0.0): void
     {
         $receipt = AccountsReceipt::withoutGlobalScopes()->create([
             'agent_id' => $branch->id, 'payer_type' => 'customer', 'payer_id' => $client->id,
@@ -461,15 +498,29 @@ class AccountsRegressionSeeder extends Seeder
         ]);
 
         if ($against !== null) {
-            $receipt->allocations()->create(['invoice_id' => $against->id, 'amount' => $amount]);
+            $receipt->allocations()->create(['invoice_id' => $against->id, 'amount' => $amount,
+                'resolution' => $tdsDeducted > 0 ? 'tds' : null]);
 
             $paid = round((float) DB::table('accounts_receipt_allocations')->where('invoice_id', $against->id)->sum('amount'), 2);
             $against->update(['amount_paid' => $paid,
-                'status' => $paid + 0.009 >= (float) $against->grand_total ? 'paid' : 'partially_paid']);
+                // 🔴 A client who deducted TDS has PAID IN FULL. Marking this `partially_paid` is what sets
+                // the ageing chasing somebody who did nothing wrong.
+                'status' => $paid + $tdsDeducted + 0.009 >= (float) $against->grand_total ? 'paid' : 'partially_paid']);
         }
 
-        $this->post($this->ledger->linesForReceipt($amount, into: $into), $branch->id,
+        // 🔴 The asset leg, not a write-off: the withheld money is ours to claim back, and the receivable
+        // clears in full because the invoice really was settled.
+        $adjustments = $tdsDeducted > 0
+            ? [['account' => \App\Services\TdsService::RECEIVABLE, 'amount' => round($tdsDeducted, 2)]]
+            : [];
+
+        $this->post($this->ledger->linesForReceipt($amount, $adjustments, into: $into), $branch->id,
             $receipt->receipt_date, $receipt->id, 'receipt');
+
+        if ($tdsDeducted > 0 && $against !== null) {
+            app(\App\Services\TdsService::class)
+                ->recordInward($against, $tdsDeducted, 'receipt', (int) $receipt->id, $receipt->receipt_date);
+        }
     }
 
     /** Post through the SAME service the controllers use — a seeder writing its own journal proves nothing. */

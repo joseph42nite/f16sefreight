@@ -21,6 +21,10 @@ class AccountsPayment extends Model
         'agent_id', 'payee_type', 'payee_id', 'payment_no', 'payment_date', 'mode', 'reference',
         'bank_account_id',
         'amount', 'currency', 'exchange_rate', 'run_ref', 'bank_transaction_id', 'narration',
+        // 🔴 `amount` stays the GROSS the payable is reduced by; these three say what was withheld from the
+        // cash leg. Listed here deliberately: this is the fifth place on this desk where a value passed to
+        // `create()` would have been dropped on the floor by an unlisted column, silently.
+        'tds_amount', 'tds_section', 'tds_rate',
         'is_posted', 'created_by',
     ];
 

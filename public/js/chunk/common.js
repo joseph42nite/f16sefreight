@@ -1405,9 +1405,21 @@ const SHAPES = {
       key: "gst_no",
       label: "GSTIN",
       mono: true
+    }, {
+      key: "tds_section",
+      label: "TDS section",
+      mono: true
+    }, {
+      key: "tds_rate_override",
+      label: "s.197 rate %",
+      numeric: true
     }]
   }
 };
+
+/** The sections a freight forwarder actually uses, as suggestions — TdsService::DEFAULT_RATES. A branch may
+    have edited or added to these in Settings → Finance, so this is a hint, never a closed list. */
+const TDS_SECTIONS = ["194C", "194C-IND", "194J", "194H", "194I", "194I-B"];
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "DirectoryTable",
   components: {
@@ -1444,12 +1456,25 @@ const SHAPES = {
       address: "",
       gst_no: "",
       pan_no: ""
+    },
+    /** Which vendor's TDS classification is being edited, and the row's own suggestions (user, 2026-09-25). */
+    TDS_SECTIONS,
+    tdsEditing: null,
+    tdsSaving: false,
+    tdsError: null,
+    tdsForm: {
+      tds_section: "",
+      tds_rate_override: null
     }
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["designation"])), {}, {
     /** Mirrors the server's `editClients`. */
     canEditClients() {
       return ["pricing", "sales", "accounts", "boss"].indexOf(this.designation) !== -1;
+    },
+    /** Mirrors the server's `manageFinanceSettings` — the same desk that sets the rate table. */
+    canManageTds() {
+      return this.designation === "accounts" || this.designation === "boss";
     },
     shape() {
       return SHAPES[this.endpoint];
@@ -1536,6 +1561,34 @@ const SHAPES = {
         this.saveError = d.errors ? Object.values(d.errors).flat().join(" ") : d.error || d.message || "Could not save.";
       }).finally(() => {
         this.saving = false;
+      });
+    },
+    editTds(row) {
+      this.tdsEditing = row.id;
+      this.tdsError = null;
+      this.tdsForm = {
+        tds_section: row.tds_section || "",
+        tds_rate_override: row.tds_rate_override
+      };
+    },
+    saveTds(row) {
+      this.tdsSaving = true;
+      this.tdsError = null;
+      const body = {
+        tds_section: this.tdsForm.tds_section ? this.tdsForm.tds_section.trim().toUpperCase() : null,
+        tds_rate_override: this.tdsForm.tds_rate_override === "" ? null : this.tdsForm.tds_rate_override
+      };
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/partners/${row.id}/tds`, body).then(({
+        data
+      }) => {
+        const i = this.rows.findIndex(r => r.id === row.id);
+        if (i !== -1) this.$set(this.rows, i, _objectSpread(_objectSpread({}, this.rows[i]), data));
+        this.tdsEditing = null;
+      }).catch(e => {
+        const d = e.response && e.response.data || {};
+        this.tdsError = d.errors ? Object.values(d.errors).flat().join(" ") : d.error || d.message || "Could not save.";
+      }).finally(() => {
+        this.tdsSaving = false;
       });
     },
     editClient(row) {
@@ -7516,7 +7569,7 @@ var render = function render() {
         scope: "col"
       }
     }, [_vm._v(_vm._s(c.label))]);
-  }), _vm._v(" "), _vm.endpoint === "/customers" && _vm.canEditClients ? _c("th", {
+  }), _vm._v(" "), _vm.endpoint === "/customers" && _vm.canEditClients || _vm.endpoint === "/partners" && _vm.canManageTds ? _c("th", {
     attrs: {
       scope: "col"
     }
@@ -7529,18 +7582,69 @@ var render = function render() {
         class: [{
           "fx-num": c.numeric
         }, c.mono ? "identifier" : ""]
-      }, [c.kind ? _c("Figure", {
+      }, [c.key === "tds_section" && _vm.tdsEditing === row.id ? [_c("input", {
+        directives: [{
+          name: "model",
+          rawName: "v-model",
+          value: _vm.tdsForm.tds_section,
+          expression: "tdsForm.tds_section"
+        }],
+        staticClass: "fx-input",
+        attrs: {
+          list: "tds-sections",
+          placeholder: "194C"
+        },
+        domProps: {
+          value: _vm.tdsForm.tds_section
+        },
+        on: {
+          input: function ($event) {
+            if ($event.target.composing) return;
+            _vm.$set(_vm.tdsForm, "tds_section", $event.target.value);
+          }
+        }
+      })] : c.key === "tds_rate_override" && _vm.tdsEditing === row.id ? [_c("input", {
+        directives: [{
+          name: "model",
+          rawName: "v-model.number",
+          value: _vm.tdsForm.tds_rate_override,
+          expression: "tdsForm.tds_rate_override",
+          modifiers: {
+            number: true
+          }
+        }],
+        staticClass: "fx-input",
+        attrs: {
+          type: "number",
+          step: "0.01",
+          min: "0",
+          max: "100",
+          placeholder: "s.197 rate, if any"
+        },
+        domProps: {
+          value: _vm.tdsForm.tds_rate_override
+        },
+        on: {
+          input: function ($event) {
+            if ($event.target.composing) return;
+            _vm.$set(_vm.tdsForm, "tds_rate_override", _vm._n($event.target.value));
+          },
+          blur: function ($event) {
+            return _vm.$forceUpdate();
+          }
+        }
+      })] : [c.kind ? _c("Figure", {
         attrs: {
           value: row[c.key],
           kind: c.kind,
           "currency-code": c.kind === "currency" ? "INR" : null
         }
-      }) : row[c.key] ? _c("span", [_vm._v(_vm._s(row[c.key]))]) : _c("span", {
+      }) : row[c.key] !== null && row[c.key] !== undefined && row[c.key] !== "" ? _c("span", [_vm._v(_vm._s(row[c.key]))]) : _c("span", {
         staticClass: "is-empty",
         attrs: {
           "aria-label": "Not recorded"
         }
-      })], 1);
+      })]], 2);
     }), _vm._v(" "), _vm.endpoint === "/customers" && _vm.canEditClients ? _c("td", {
       staticClass: "fx-row-actions"
     }, [_c("button", {
@@ -7550,8 +7654,50 @@ var render = function render() {
           return _vm.editClient(row);
         }
       }
-    }, [_vm._v("Edit")])]) : _vm._e()], 2);
-  }), 0)])]);
+    }, [_vm._v("Edit")])]) : _vm.endpoint === "/partners" && _vm.canManageTds ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_vm.tdsEditing === row.id ? [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      attrs: {
+        disabled: _vm.tdsSaving
+      },
+      on: {
+        click: function ($event) {
+          return _vm.saveTds(row);
+        }
+      }
+    }, [_vm._v("Save")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          _vm.tdsEditing = null;
+        }
+      }
+    }, [_vm._v("Cancel")])] : _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.editTds(row);
+        }
+      }
+    }, [_vm._v("Edit TDS")])], 2) : _vm._e()], 2);
+  }), 0)]), _vm._v(" "), _vm.tdsError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.tdsError))]) : _vm._e(), _vm._v(" "), _c("datalist", {
+    attrs: {
+      id: "tds-sections"
+    }
+  }, _vm._l(_vm.TDS_SECTIONS, function (s) {
+    return _c("option", {
+      key: s,
+      domProps: {
+        value: s
+      }
+    });
+  }), 0)]);
 };
 var staticRenderFns = [function () {
   var _vm = this,

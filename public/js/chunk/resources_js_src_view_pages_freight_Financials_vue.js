@@ -44,6 +44,9 @@ const VIEWS = [{
   key: "gst",
   label: "GST register"
 }, {
+  key: "tds",
+  label: "TDS register"
+}, {
   key: "unposted",
   label: "Not yet posted"
 }, {
@@ -145,6 +148,10 @@ const TABS = [{
       statement_no: "",
       csv: ""
     },
+    /** TDS register: both directions, for one quarter (user, 2026-09-25). */
+    tds: null,
+    tdsYear: "",
+    tdsQuarter: "",
     selected: null,
     tab: "credit",
     credit: null,
@@ -192,6 +199,7 @@ const TABS = [{
       return {
         awaiting: "Cost sheets pricing has sent across, with what each shipment sells for and what it cost. Finalize one to bill it.",
         gst: "The tax charged on every finalized document, for GSTR-1. Read-only — it is what was charged.",
+        tds: "What was withheld, both ways, for one quarter. Never netted — a liability owed by the 7th, and an asset with no deadline.",
         reports: "What the ledger proves, over one period of one branch.",
         periods: "The months the ledger is open for. Nothing posts into a month without an open period.",
         bank: "Money in the bank, and the invoice each payment settles.",
@@ -203,6 +211,14 @@ const TABS = [{
     }
   }),
   created() {
+    // A link from another screen (Money out's voucher register, Close the month's TDS step) names the
+    // view it means to open — without this, every one of those links landed on "Waiting to be billed"
+    // regardless of what it said.
+    const requested = this.$route.query.view;
+    if (requested && VIEWS.some(v => v.key === requested)) {
+      this.showView(requested);
+      return;
+    }
     this.load();
   },
   methods: {
@@ -231,6 +247,10 @@ const TABS = [{
       if (key === "vendors") {
         this.vendorStatement = null;
         this.loadVendorStatements();
+        return;
+      }
+      if (key === "tds") {
+        this.loadTds();
         return;
       }
       this.load();
@@ -467,6 +487,53 @@ const TABS = [{
       };
       this.vendorStates = data.states || this.vendorStates;
     },
+    /** The TDS register: both directions, one quarter. With no year/quarter chosen yet, the server picks today's. */
+    loadTds() {
+      this.loading = true;
+      const params = [];
+      if (this.branchId) params.push("agent_id=" + this.branchId);
+      if (this.tdsYear) params.push("financial_year=" + encodeURIComponent(this.tdsYear));
+      if (this.tdsQuarter) params.push("quarter=" + this.tdsQuarter);
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/reports/tds" + (params.length ? "?" + params.join("&") : "")).then(({
+        data
+      }) => {
+        this.tds = data;
+        this.tdsYear = data.financial_year;
+        this.tdsQuarter = data.quarter;
+        if (data.branches) this.branches = data.branches;
+        this.error = null;
+      }).catch(e => {
+        this.error = this.messageFor(e);
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    downloadForm26q() {
+      if (!this.tds) return;
+      const params = [];
+      if (this.branchId) params.push("agent_id=" + this.branchId);
+      params.push("financial_year=" + encodeURIComponent(this.tdsYear));
+      params.push("quarter=" + this.tdsQuarter);
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query("/reports/tds/form-26q?" + params.join("&"), {
+        responseType: "blob"
+      }).then(({
+        data
+      }) => {
+        const url = window.URL.createObjectURL(new Blob([data], {
+          type: "text/csv"
+        }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Form26Q-${this.tdsYear}-${this.tdsQuarter}.csv`;
+        link.click();
+        setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+      }).catch(() => {
+        this.error = "The return could not be built.";
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
     loadDifferences() {
       this.busy = true;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/reconciliation/differences" + (this.branchId ? "?agent_id=" + this.branchId : "")).then(({
@@ -529,6 +596,10 @@ const TABS = [{
     load() {
       if (this.view === "vendors") {
         this.loadVendorStatements();
+        return;
+      }
+      if (this.view === "tds") {
+        this.loadTds();
         return;
       }
       this.loading = true;
@@ -1144,7 +1215,218 @@ var render = function render() {
         }
       }
     })]) : _vm._e()]);
-  }), 0)])]) : _vm._e()] : !_vm.rows.length ? _c("p", {
+  }), 0)])]) : _vm._e()] : _vm.view === "tds" ? [_c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Financial year")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.tdsYear,
+      expression: "tdsYear"
+    }],
+    staticClass: "fx-input",
+    staticStyle: {
+      width: "6em"
+    },
+    attrs: {
+      placeholder: "2026-27"
+    },
+    domProps: {
+      value: _vm.tdsYear
+    },
+    on: {
+      change: _vm.loadTds,
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.tdsYear = $event.target.value;
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Quarter")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.tdsQuarter,
+      expression: "tdsQuarter"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: [function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.tdsQuarter = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
+      }, _vm.loadTds]
+    }
+  }, _vm._l(["Q1", "Q2", "Q3", "Q4"], function (q) {
+    return _c("option", {
+      key: q,
+      domProps: {
+        value: q
+      }
+    }, [_vm._v(_vm._s(q))]);
+  }), 0)]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.downloadForm26q
+    }
+  }, [_vm._v("Form 26Q (CSV)")])]), _vm._v(" "), _vm.tds ? [_c("dl", {
+    staticClass: "fx-defs"
+  }, [_c("dt", [_vm._v("Withheld last month (" + _vm._s(_vm.tds.deposit_due.month) + ")")]), _vm._v(" "), _c("dd", [_c("Figure", {
+    attrs: {
+      value: _vm.tds.deposit_due.amount,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1), _vm._v(" "), _c("dt", [_vm._v("Due to the government")]), _vm._v(" "), _c("dd", [_c("Figure", {
+    attrs: {
+      value: _vm.tds.deposit_due.due_on,
+      kind: "date"
+    }
+  }), _vm._v(" "), _vm.tds.deposit_due.overdue ? _c("StatusChip", {
+    attrs: {
+      value: "overdue"
+    }
+  }) : _vm._e()], 1)]), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_vm._m(1), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.tds.payable.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  }), _vm._v(" across " + _vm._s(_vm.tds.payable.deductions) + "\n          deduction(s), on "), _c("Figure", {
+    attrs: {
+      value: _vm.tds.payable.base,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  }), _vm._v(" of base.\n          "), _vm.tds.payable.without_pan ? _c("span", [_vm._v(" " + _vm._s(_vm.tds.payable.without_pan) + " with no PAN on record — deducted at 20% under s.206AA.")]) : _vm._e(), _vm._v(" "), Math.abs(_vm.tds.ledger.payable - _vm.tds.payable.total) > 0.01 ? _c("span", {
+    staticClass: "fx-error"
+  }, [_vm._v("\n            Ledger shows " + _vm._s(_vm.money(_vm.tds.ledger.payable)) + " — a posting went somewhere else.\n          ")]) : _vm._e()], 1), _vm._v(" "), _vm.tds.payable.rows.length ? _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.tds.payable.rows, function (r) {
+    return _c("tr", {
+      key: "p-" + r.id
+    }, [_c("td", [_vm._v(_vm._s(r.counterparty || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [r.counterparty_pan ? _c("span", [_vm._v(_vm._s(r.counterparty_pan))]) : _c("span", {
+      staticClass: "fx-error"
+    }, [_vm._v("No PAN — 20%")])]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.section))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(r.rate))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.base_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.tds_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: r.deducted_on,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.document_no || "—"))])]);
+  }), 0)]) : _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing withheld this quarter.")])]), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_vm._m(3), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.tds.receivable.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  }), _vm._v(" across " + _vm._s(_vm.tds.receivable.deductions) + "\n          deduction(s) — claimed against Form 26AS, no deadline.\n          "), Math.abs(_vm.tds.ledger.receivable - _vm.tds.receivable.total) > 0.01 ? _c("span", {
+    staticClass: "fx-error"
+  }, [_vm._v("\n            Ledger shows " + _vm._s(_vm.money(_vm.tds.ledger.receivable)) + " — a posting went somewhere else.\n          ")]) : _vm._e()], 1), _vm._v(" "), _vm.tds.receivable.rows.length ? _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(4), _vm._v(" "), _c("tbody", _vm._l(_vm.tds.receivable.rows, function (r) {
+    return _c("tr", {
+      key: "r-" + r.id
+    }, [_c("td", [_vm._v(_vm._s(r.counterparty || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.section))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(r.rate))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.base_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.tds_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: r.deducted_on,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.document_no || "—"))])]);
+  }), 0)]) : _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Nothing deducted from us this quarter.")])]), _vm._v(" "), _vm.tds.unclassified_vendors.length ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Vendors paid this year with no TDS section set")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          Not an error — plenty of payees are legitimately outside TDS. Set one on the vendor in the\n          directory if they should be deducted from.\n        ")]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(5), _vm._v(" "), _c("tbody", _vm._l(_vm.tds.unclassified_vendors, function (v) {
+    return _c("tr", {
+      key: "u-" + v.id
+    }, [_c("td", [_vm._v(_vm._s(v.name))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(v.payments))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: v.paid,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), 0)])]) : _vm._e()] : _vm._e()] : !_vm.rows.length ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("No documents match.")]) : _vm.view === "bank" ? [_c("div", {
     staticClass: "fx-toolbar"
@@ -1716,7 +1998,7 @@ var render = function render() {
     }
   }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm.view === "gst" ? [_c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(1), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
+  }, [_vm._m(6), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
     return _c("tr", {
       key: "g-" + r.id
     }, [_c("td", {
@@ -1751,7 +2033,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), 0), _vm._v(" "), _vm.totals ? _c("tfoot", [_c("tr", [_vm._m(2), _vm._v(" "), _c("td", {
+  }), 0), _vm._v(" "), _vm.totals ? _c("tfoot", [_c("tr", [_vm._m(7), _vm._v(" "), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -1779,7 +2061,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("\n      Written when a document is finalized: CGST and SGST within the state, IGST across it. Nothing here is edited —\n      it is what was charged.\n    ")])] : _vm.view === "unposted" ? [_c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(3), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
+  }, [_vm._m(8), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
     return _c("tr", {
       key: "u-" + r.id
     }, [_c("td", {
@@ -1803,7 +2085,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), 0), _vm._v(" "), _vm.totals !== null ? _c("tfoot", [_c("tr", [_vm._m(4), _c("td", {
+  }), 0), _vm._v(" "), _vm.totals !== null ? _c("tfoot", [_c("tr", [_vm._m(9), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -1815,7 +2097,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("Each stays here until it is posted; posting removes it from this list.")])] : _vm.view === "vouchers" ? _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(5), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+  }, [_vm._m(10), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
     return _c("tr", {
       key: "v-" + row.id,
       staticClass: "is-clickable",
@@ -2288,6 +2570,114 @@ var staticRenderFns = [function () {
       scope: "col"
     }
   })])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("\n          Deducted BY us — payable "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("2300-TDS-Payable")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Vendor")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("PAN")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Section")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rate %")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Base")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("TDS")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Deducted")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Document")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("\n          Deducted FROM us — receivable "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("1400-TDS-Receivable")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Client")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Section")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rate %")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Base")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("TDS")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Deducted")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Document")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Vendor")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Payments")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Paid")])])]);
 }, function () {
   var _vm = this,
     _c = _vm._self._c;

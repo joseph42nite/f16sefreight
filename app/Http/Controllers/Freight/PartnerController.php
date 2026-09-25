@@ -103,4 +103,26 @@ class PartnerController extends Controller
     {
         return response()->json(['types' => Partner::TYPES]);
     }
+
+    /**
+     * Which section this vendor is deducted under, and a s.197 certificate rate if they hold one.
+     *
+     * 🔴 `manageFinanceSettings`, not `triage` — a classification that decides how much a vendor is actually
+     * paid belongs to the same desk that sets the rate table, not to whoever added the vendor's name and
+     * phone number.
+     */
+    public function updateTds(Request $request, Partner $partner): JsonResponse
+    {
+        $this->authorize('manageFinanceSettings');
+
+        $data = $request->validate([
+            'tds_section' => ['nullable', 'string', 'max:20'],
+            // A s.197 certificate: a lower rate, or nil (0). NULL means no certificate — the section's own rate applies.
+            'tds_rate_override' => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ]);
+
+        $partner->update($data);
+
+        return response()->json($partner->fresh());
+    }
 }

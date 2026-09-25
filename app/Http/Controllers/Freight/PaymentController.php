@@ -32,6 +32,7 @@ class PaymentController extends Controller
         private readonly EnquirySequenceService $sequences,
         private readonly LedgerPostingService $ledger,
         private readonly AuditLogger $audit,
+        private readonly \App\Services\TdsService $tds,
     ) {}
 
     /** What has been paid. */
@@ -184,11 +185,20 @@ class PaymentController extends Controller
             foreach (collect($data['allocations'])->groupBy(fn ($a) => $vouchers[$a['purchase_voucher_id']]->vendor_id) as $vendorId => $lines) {
                 $amount = round(collect($lines)->sum(fn ($l) => (float) $l['amount']), 2);
 
+                // 🔴 **WITHHOLD BEFORE THE MONEY LEAVES.** Paying a trucker gross under 194C is not a
+                // reporting gap, it is a default on a statutory obligation — interest, penalty, and
+                // disallowance of 30% of the expense itself. Decided here, at the run, because it changes
+                // the transfer the desk is about to execute; it cannot be discovered at posting time.
+                $withheld = $this->withholding((int) $data['agent_id'], (int) $vendorId, $lines,
+                    $vouchers, (string) $data['payment_date']);
+
                 $payment = AccountsPayment::create([
                     'agent_id' => $data['agent_id'], 'payee_type' => 'partner', 'payee_id' => (int) $vendorId,
                     'payment_no' => $this->sequences->next((int) $data['agent_id'], 'PAY'),
                     'payment_date' => $data['payment_date'], 'mode' => $data['mode'],
                     'reference' => $data['reference'] ?? null, 'amount' => $amount,
+                    'tds_amount' => $withheld['amount'], 'tds_section' => $withheld['section'],
+                    'tds_rate' => $withheld['deduct'] ? $withheld['rate'] : null,
                     'currency' => 'INR', 'exchange_rate' => 1, 'run_ref' => $runRef,
                     'bank_account_id' => $this->bankAccount($data['bank_account_id'] ?? null)?->id,
                     'narration' => $data['narration'] ?? null, 'created_by' => auth()->id(),
@@ -214,7 +224,53 @@ class PaymentController extends Controller
             'run_ref' => $runRef,
             'payments' => $payments,
             'total' => round(collect($payments)->sum('amount'), 2),
+            // ⚠️ Three figures, not one. The desk transfers `to_transfer`; the vendors' books are settled by
+            // `total`; the difference is owed to the government by the 7th. Showing only the total is how a
+            // payment run gets executed at the gross and the deduction becomes a correction next month.
+            'tds_withheld' => round(collect($payments)->sum('tds_amount'), 2),
+            'to_transfer' => round(collect($payments)->sum(fn ($p) => (float) $p->amount - (float) $p->tds_amount), 2),
         ], 201);
+    }
+
+    /**
+     * What to withhold from one supplier on this run.
+     *
+     * 🔴 **One decision per SUPPLIER, not per voucher.** The threshold is a property of the payee and the
+     * year, so four vouchers of ₹10,000 paid together are a ₹40,000 payment that crosses 194C's ₹30,000
+     * single-payment threshold — while four separate decisions would each see ₹10,000 and deduct nothing.
+     *
+     * @return array{deduct: bool, section: ?string, rate: float, amount: float, reason: ?string, base: float}
+     */
+    private function withholding(int $agentId, int $vendorId, $lines, $vouchers, string $paymentDate): array
+    {
+        $vendor = DB::table('partners')->where('id', $vendorId)
+            ->first(['id', 'name', 'pan_no', 'tds_section', 'tds_rate_override']);
+
+        $base = 0.0;
+
+        foreach ($lines as $line) {
+            $voucher = $vouchers[$line['purchase_voucher_id']];
+            $totals = DB::table('accounts_purchase_items')->where('purchase_voucher_id', $voucher->id)
+                ->selectRaw('COALESCE(SUM(amount),0) AS net, COALESCE(SUM(net_amount),0) AS gross')->first();
+
+            $base = round($base + $this->tds->baseOf((float) $line['amount'],
+                (float) $totals->net, (float) $totals->gross), 2);
+        }
+
+        if ($vendor === null) {
+            return ['deduct' => false, 'section' => null, 'rate' => 0.0, 'amount' => 0.0,
+                    'reason' => 'no_section', 'base' => $base];
+        }
+
+        $decision = $this->tds->forVendor(
+            $vendor, $agentId, $base,
+            $this->tds->paidThisYear($agentId, $vendorId, $paymentDate),
+            // What has already been withheld this year, so crossing the annual threshold catches up on the
+            // payments that lawfully escaped deduction rather than double-deducting the ones that did not.
+            $this->tds->deductedThisYear($agentId, $vendorId, $paymentDate, $vendor->tds_section)
+        );
+
+        return $decision + ['base' => $base];
     }
 
     /** Post the payment: payable down, cash out. */
@@ -237,8 +293,36 @@ class PaymentController extends Controller
 
         DB::transaction(function () use ($payment, $period) {
             $this->ledger->write(
-                $this->ledger->linesForPayment((float) $payment->amount, $this->bankAccount($payment->bank_account_id)),
+                $this->ledger->linesForPayment((float) $payment->amount,
+                    $this->bankAccount($payment->bank_account_id), (float) $payment->tds_amount),
                 $payment->agent_id, $period->id, $payment->id, 'payment');
+
+            // ⚠️ The register row is cut inside the posting transaction, like the inward one, so the ledger's
+            // `2300-TDS-Payable` credit and the register that explains it can never exist without each other.
+            if ((float) $payment->tds_amount > 0) {
+                $vendor = DB::table('partners')->where('id', $payment->payee_id)->first(['pan_no']);
+                $base = (float) $payment->tds_rate > 0
+                    ? round((float) $payment->tds_amount / (float) $payment->tds_rate * 100, 2)
+                    : 0.0;
+
+                $this->tds->record([
+                    'agent_id' => $payment->agent_id,
+                    'company_id' => DB::table('agents_info')->where('id', $payment->agent_id)->value('company_id'),
+                    'direction' => \App\Services\TdsService::OUTWARD,
+                    'counterparty_type' => 'partner',
+                    'counterparty_id' => (int) $payment->payee_id,
+                    'counterparty_pan' => $vendor->pan_no ?? null,
+                    'section' => $payment->tds_section,
+                    'rate' => (float) $payment->tds_rate,
+                    'base_amount' => $base,
+                    'tds_amount' => (float) $payment->tds_amount,
+                    'source_id' => (int) $payment->id,
+                    'source_type' => 'payment',
+                    'deducted_on' => $payment->payment_date instanceof \DateTimeInterface
+                        ? $payment->payment_date->format('Y-m-d')
+                        : (string) $payment->payment_date,
+                ]);
+            }
 
             $payment->update(['is_posted' => true]);
             $this->audit->record($payment->agent_id, 'payment.posted', 'payment', $payment->id, auth()->id());
@@ -255,7 +339,8 @@ class PaymentController extends Controller
         $payment = $this->own($id);
 
         return response()->json($this->ledger->summarise(
-            $this->ledger->linesForPayment((float) $payment->amount, $this->bankAccount($payment->bank_account_id))
+            $this->ledger->linesForPayment((float) $payment->amount,
+                $this->bankAccount($payment->bank_account_id), (float) $payment->tds_amount)
         ));
     }
 

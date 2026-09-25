@@ -444,7 +444,34 @@ var render = function render() {
           return _vm.download("gstr3b", "csv");
         }
       }
-    }, [_vm._v("\n                  GSTR-3B (CSV)\n                ")])])] : _vm._e()] : s.rows && s.rows.length ? [_c("button", {
+    }, [_vm._v("\n                  GSTR-3B (CSV)\n                ")])])] : _vm._e()] : s.key === "tds" ? [_c("dl", {
+      staticClass: "fx-defs"
+    }, [_c("dt", [_vm._v("Withheld in " + _vm._s(s.month))]), _vm._v(" "), _c("dd", [_c("strong", [_c("Figure", {
+      attrs: {
+        value: s.withheld,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]), _vm._v(" "), _c("dt", [_vm._v("Due to the government")]), _vm._v(" "), _c("dd", [_c("Figure", {
+      attrs: {
+        value: s.due_on,
+        kind: "date"
+      }
+    }), _vm._v(" "), s.overdue ? _c("StatusChip", {
+      attrs: {
+        value: "overdue"
+      }
+    }) : _vm._e()], 1), _vm._v(" "), _c("dt", [_vm._v("Deducted from us this period")]), _vm._v(" "), _c("dd", [_c("Figure", {
+      attrs: {
+        value: s.claimable,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }), _vm._v(" "), _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("ours to claim, no deadline")])], 1)]), _vm._v(" "), s.unclassified_vendors ? _c("p", {
+      staticClass: "fx-muted"
+    }, [_vm._v("\n              " + _vm._s(s.unclassified_vendors) + " vendor(s) paid this period have no TDS section set, so nothing\n              was withheld from them. That is correct for most payees and a missed deduction for a\n              contractor — the register names them.\n            ")]) : _vm._e()] : s.rows && s.rows.length ? [_c("button", {
       staticClass: "fx-btn fx-btn--ghost",
       on: {
         click: function ($event) {

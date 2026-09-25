@@ -62,6 +62,7 @@ class CloseMonthController extends Controller
             $this->costed($period),
             $this->posted($period),
             $this->gst($period),
+            $this->tdsStep($period),
         ];
 
         // ⚠️ `can_close` is the BLOCKING steps only — see the class docblock.
@@ -74,7 +75,7 @@ class CloseMonthController extends Controller
             : null;
 
         $steps[] = [
-            'step' => 5, 'key' => 'close', 'label' => 'Close the period', 'blocking' => false,
+            'step' => 6, 'key' => 'close', 'label' => 'Close the period', 'blocking' => false,
             'clear' => $period->status !== 'open', 'count' => 0,
             'can_reopen' => $period->status !== 'open' && $laterClosed === null,
             'reopen_blocked_by' => $laterClosed,
@@ -294,7 +295,77 @@ class CloseMonthController extends Controller
         ];
     }
 
-    /** ⑥ What the ledger proves for the period — and whether it proves anything at all. */
+    /**
+     * ⑤ TDS — the other tax with a month-end deadline (user, 2026-09-22).
+     *
+     * 🔴 **It sits beside GST because it is the same kind of obligation, and NOT inside it because the two
+     * directions are a liability and an asset.** What we withheld from vendors is due to the government by
+     * the **7th of next month** — the 30th of April for March, which is the exception everybody misses. What
+     * clients withheld from us is a credit to claim, and it has no deadline at all.
+     *
+     * ⚠️ Advisory, never blocking. A month can close with TDS undeposited: the deposit is a bank errand with
+     * its own calendar, not a condition of the ledger being complete. Step ③ remains the only one that stops
+     * a close.
+     */
+    private function tdsStep(object $period): array
+    {
+        $month = date('Y-m', strtotime((string) $period->end_date)) < now()->format('Y-m')
+            ? date('Y-m', strtotime((string) $period->end_date))
+            : now()->format('Y-m');
+
+        $withheld = round((float) DB::table('tds_entries')
+            ->where('agent_id', $period->agent_id)
+            ->where('direction', \App\Services\TdsService::OUTWARD)
+            ->whereBetween('deducted_on', [$month . '-01', date('Y-m-t', strtotime($month . '-01'))])
+            ->sum('tds_amount'), 2);
+
+        $claimable = round((float) DB::table('tds_entries')
+            ->where('agent_id', $period->agent_id)
+            ->where('direction', \App\Services\TdsService::INWARD)
+            ->whereBetween('deducted_on', [$period->start_date, $period->end_date])
+            ->sum('tds_amount'), 2);
+
+        // 🔴 Deducted in March deposits by 30 April; every other month by the 7th of the next.
+        $deducted = \Illuminate\Support\Carbon::parse($month . '-01');
+        $due = (int) $deducted->format('n') === 3
+            ? $deducted->copy()->addMonthNoOverflow()->setDay(30)
+            : $deducted->copy()->addMonthNoOverflow()->setDay(7);
+
+        // ⚠️ Vendors paid this year with no section: every one is a deduction not being made, and the only
+        // moment anybody would otherwise notice is a notice.
+        $unclassified = DB::table('accounts_payments as p')
+            ->join('partners as v', 'v.id', '=', 'p.payee_id')
+            ->where('p.agent_id', $period->agent_id)->where('p.payee_type', 'partner')
+            ->whereBetween('p.payment_date', [$period->start_date, $period->end_date])
+            ->where(fn ($q) => $q->whereNull('v.tds_section')->orWhere('v.tds_section', ''))
+            ->distinct()->count('v.id');
+
+        return [
+            'step' => 5, 'key' => 'tds', 'label' => 'TDS', 'blocking' => false,
+            'count' => $unclassified,
+            'clear' => $unclassified === 0,
+            'rows' => [],
+            'month' => $month,
+            'withheld' => $withheld,
+            'claimable' => $claimable,
+            'due_on' => $due->toDateString(),
+            'overdue' => $withheld > 0 && now()->gt($due),
+            'unclassified_vendors' => $unclassified,
+            'note' => $withheld > 0
+                ? '₹' . number_format($withheld, 2) . ' was withheld in ' . $month
+                    . ' and is due to the government by ' . $due->toDateString() . '.'
+                    . ($unclassified > 0 ? ' ' . $unclassified . ' vendor(s) paid this period have no section set.' : '')
+                : ($unclassified > 0
+                    ? $unclassified . ' vendor(s) paid this period have no TDS section set, so nothing was withheld from them.'
+                    : 'Nothing was withheld this month.'),
+            // The register lives beside GST's (user, 2026-09-25): both are read-only, filed on their own
+            // schedule, and "what we owe suppliers" already lives on Money out — a payment-run pipeline is
+            // not where a register belongs.
+            'to' => ['path' => '/financials', 'query' => ['view' => 'tds']],
+        ];
+    }
+
+    /** ⑦ What the ledger proves for the period — and whether it proves anything at all. */
     private function statements(object $period): array
     {
         $balances = DB::table('accounts_ledger_entries as l')
@@ -313,7 +384,7 @@ class CloseMonthController extends Controller
         $expense = $signed('5', false);
 
         return [
-            'step' => 6, 'key' => 'statements', 'label' => 'The statements', 'blocking' => false,
+            'step' => 7, 'key' => 'statements', 'label' => 'The statements', 'blocking' => false,
             'count' => 0, 'clear' => $debits === $credits && $balances->isNotEmpty(),
             'balanced' => $debits === $credits,
             'figures' => ['revenue' => $revenue, 'expense' => $expense, 'net' => round($revenue - $expense, 2),

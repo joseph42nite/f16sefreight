@@ -31,6 +31,7 @@ class ReconciliationController extends Controller
         private readonly LedgerPostingService $ledger,
         private readonly \App\Services\EnquirySequenceService $sequences,
         private readonly AuditLogger $audit,
+        private readonly \App\Services\TdsService $tds,
     ) {}
 
     /** The left pane: bank rows still waiting. */
@@ -297,12 +298,26 @@ class ReconciliationController extends Controller
             ]);
 
             $this->ledger->write(
-                $this->ledger->linesForReceipt($received, $adjustmentAccount, $shortfall,
+                $this->ledger->linesForReceipt(
+                    $received,
+                    $adjustmentAccount !== null && $shortfall > 0
+                        ? [['account' => $adjustmentAccount, 'amount' => round($shortfall, 2)]]
+                        : [],
                     into: $transaction->bank_account_id
                         ? \App\BankAccount::withoutTenantScope()->find($transaction->bank_account_id)
-                        : null),
+                        : null
+                ),
                 $transaction->agent_id, $period->id, $receipt->id, 'receipt'
             );
+
+            // 🔴 The same deduction, recorded from whichever screen closed it. Which path the desk happened
+            // to take must not decide whether a claimable credit reaches the register at all.
+            if ($resolution === 'tds' && $shortfall > 0) {
+                // The same date the receipt itself was given, so the register's quarter and the ledger's
+                // period cannot disagree about when the deduction happened.
+                $this->tds->recordInward($invoice, (float) $shortfall, 'receipt', (int) $receipt->id,
+                    (string) ($transaction->value_date ?? now()->toDateString()));
+            }
 
             // The invoice is closed when nothing is left owing — which, after a
             // write-off or a discount, is true even though less cash arrived.

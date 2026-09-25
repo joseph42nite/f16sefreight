@@ -161,18 +161,32 @@ class LedgerPostingService
      * smaller AR credit, because the receivable really did clear in full and the
      * difference really was an expense: netting them hides the cost entirely.
      */
-    public function linesForReceipt(float $received, ?array $adjustmentAccount = null, float $adjustment = 0.0,
-        ?\App\BankAccount $into = null): array
+    public function linesForReceipt(float $received, array $adjustments = [], ?\App\BankAccount $into = null): array
     {
         $lines = [
             $this->bank($into) + ['debit' => round($received, 2), 'credit' => 0.0],
         ];
 
-        if ($adjustmentAccount !== null && $adjustment > 0) {
-            $lines[] = $adjustmentAccount + ['debit' => round($adjustment, 2), 'credit' => 0.0];
+        // 🔴 **ONE LEG PER RESOLUTION, not one lump.** A receipt can close three invoices three different
+        // ways at once — one short-paid and written off as a bank charge, one discounted, one settled net of
+        // the TDS the client deducted — and those are an expense, a reduction of revenue, and an asset. They
+        // land in three different places on the P&L and the balance sheet. Summing them into a single
+        // adjustment account, which is what this did, put a bank charge into Sales Adjustments and would have
+        // put recoverable tax there too.
+        $adjusted = 0.0;
+
+        foreach ($adjustments as $adjustment) {
+            $amount = round((float) $adjustment['amount'], 2);
+
+            if ($amount <= 0.0) {
+                continue;
+            }
+
+            $lines[] = $adjustment['account'] + ['debit' => $amount, 'credit' => 0.0];
+            $adjusted = round($adjusted + $amount, 2);
         }
 
-        $lines[] = self::AR + ['debit' => 0.0, 'credit' => round($received + ($adjustmentAccount !== null ? $adjustment : 0.0), 2)];
+        $lines[] = self::AR + ['debit' => 0.0, 'credit' => round($received + $adjusted, 2)];
 
         return $lines;
     }
@@ -186,12 +200,24 @@ class LedgerPostingService
      * ⚠️ No adjustment leg. A supplier settled SHORT is a dispute, not a write-off we take silently — it stays on
      * the voucher as an outstanding balance and goes through the statement comparison, where somebody argues it.
      */
-    public function linesForPayment(float $paid, ?\App\BankAccount $from = null): array
+    public function linesForPayment(float $paid, ?\App\BankAccount $from = null, float $tds = 0.0): array
     {
-        return [
+        $tds = round(max(0.0, $tds), 2);
+
+        $lines = [
+            // 🔴 The payable comes down by the GROSS. The supplier's invoice really is settled in full — the
+            // withheld part was paid to the government in their name, not kept — so crediting AP with only
+            // the cash would leave every voucher we deduct from looking part-paid forever.
             self::AP + ['debit' => round($paid, 2), 'credit' => 0.0],
-            $this->bank($from) + ['debit' => 0.0, 'credit' => round($paid, 2)],
+            $this->bank($from) + ['debit' => 0.0, 'credit' => round($paid - $tds, 2)],
         ];
+
+        if ($tds > 0.0) {
+            // A LIABILITY, not an expense: we are holding the government's money until the challan is paid.
+            $lines[] = \App\Services\TdsService::PAYABLE + ['debit' => 0.0, 'credit' => $tds];
+        }
+
+        return $lines;
     }
 
     /**

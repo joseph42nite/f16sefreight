@@ -138,6 +138,35 @@
               </template>
             </template>
 
+            <!--
+              ⑤ TDS. Beside GST because it is the same kind of obligation with the same kind of deadline;
+              NOT inside it, because the two directions are a liability and an asset and netting them would
+              describe a position nobody holds.
+            -->
+            <template v-else-if="s.key === 'tds'">
+              <dl class="fx-defs">
+                <dt>Withheld in {{ s.month }}</dt>
+                <dd><strong><Figure :value="s.withheld" kind="currency" currency-code="INR" /></strong></dd>
+                <dt>Due to the government</dt>
+                <dd>
+                  <Figure :value="s.due_on" kind="date" />
+                  <StatusChip v-if="s.overdue" value="overdue" />
+                </dd>
+                <dt>Deducted from us this period</dt>
+                <dd>
+                  <Figure :value="s.claimable" kind="currency" currency-code="INR" />
+                  <span class="fx-muted">ours to claim, no deadline</span>
+                </dd>
+              </dl>
+
+              <p v-if="s.unclassified_vendors" class="fx-muted">
+                {{ s.unclassified_vendors }} vendor(s) paid this period have no TDS section set, so nothing
+                was withheld from them. That is correct for most payees and a missed deduction for a
+                contractor — the register names them.
+              </p>
+              <!-- The "Open the TDS register" link is the generic s.to button below, same as every other step. -->
+            </template>
+
             <template v-else-if="s.rows && s.rows.length">
               <button class="fx-btn fx-btn--ghost" @click="open === s.key ? (open = null) : (open = s.key)">
                 {{ open === s.key ? "Hide" : "Show" }} {{ s.rows.length }}{{ s.count > s.rows.length ? " of " + s.count : "" }}

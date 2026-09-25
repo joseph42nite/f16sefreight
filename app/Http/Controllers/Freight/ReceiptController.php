@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Services\AuditLogger;
 use App\Services\EnquirySequenceService;
 use App\Services\LedgerPostingService;
+use App\Services\TdsService;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class ReceiptController extends Controller
         private readonly EnquirySequenceService $sequences,
         private readonly LedgerPostingService $ledger,
         private readonly AuditLogger $audit,
+        private readonly TdsService $tds,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -124,7 +126,9 @@ class ReceiptController extends Controller
             'allocations' => 'nullable|array',
             'allocations.*.invoice_id' => 'required|integer',
             'allocations.*.amount' => 'required|numeric|min:0.01',
-            'allocations.*.resolution' => 'nullable|in:write_off,discount',
+            // 🔴 `tds` is the fourth, and the one the other three were being misused for: a client who
+            // deducted tax at source has PAID IN FULL, and the difference is an asset, not a cost.
+            'allocations.*.resolution' => 'nullable|in:write_off,discount,tds',
         ]);
 
         if (! $this->branches()->contains('id', (int) $data['agent_id'])) {
@@ -216,10 +220,12 @@ class ReceiptController extends Controller
 
         DB::transaction(function () use ($receipt, $period) {
             $this->ledger->write(
-                $this->ledger->linesForReceipt((float) $receipt->amount, ...$this->adjustment($receipt),
+                $this->ledger->linesForReceipt((float) $receipt->amount, $this->adjustments($receipt),
                     into: $this->bankAccount($receipt->bank_account_id)),
                 $receipt->agent_id, $period->id, $receipt->id, 'receipt'
             );
+
+            $this->recordTds($receipt);
 
             $receipt->update(['is_posted' => true]);
             $this->audit->record($receipt->agent_id, 'receipt.posted', 'receipt', $receipt->id, auth()->id());
@@ -236,18 +242,68 @@ class ReceiptController extends Controller
         $receipt = $this->own($id);
 
         return response()->json($this->ledger->summarise(
-            $this->ledger->linesForReceipt((float) $receipt->amount, ...$this->adjustment($receipt),
+            $this->ledger->linesForReceipt((float) $receipt->amount, $this->adjustments($receipt),
                 into: $this->bankAccount($receipt->bank_account_id))
         ));
     }
 
-    /** What was written off or discounted on this receipt, as the ledger service wants it. */
-    private function adjustment(AccountsReceipt $receipt): array
+    /**
+     * Where each resolved shortfall goes — one leg per resolution.
+     *
+     * 🔴 **This ignored the resolution entirely and sent everything to Sales Adjustments.** A write-off is an
+     * expense we absorbed (`5100-Bank-Charges`); a discount is revenue we gave up (`4900-Sales-Adjustments`);
+     * they belong in different halves of the P&L, and `BankReconciliationService::adjustmentAccountFor()` had
+     * said so since the beginning — this path just never asked it. The bank-matching path did, so the same
+     * write-off posted to two different accounts depending on which screen closed it.
+     *
+     * 🔴 And TDS is the one that made it urgent: sent to Sales Adjustments it would have reduced revenue by
+     * tax we are entitled to reclaim, losing the money twice.
+     *
+     * @return list<array{account: array, amount: float}>
+     */
+    private function adjustments(AccountsReceipt $receipt): array
     {
-        $written = (float) $receipt->allocations()->whereNotNull('resolution')->get()
-            ->sum(fn ($a) => $this->shortfall((int) $a->invoice_id));
+        $legs = [];
 
-        return $written > 0 ? [LedgerPostingService::SALES_ADJUSTMENTS, round($written, 2)] : [null, 0.0];
+        foreach ($receipt->allocations()->whereNotNull('resolution')->get() as $allocation) {
+            $shortfall = $this->shortfall((int) $allocation->invoice_id);
+
+            if ($shortfall <= 0.0) {
+                continue;
+            }
+
+            $account = match ($allocation->resolution) {
+                'tds' => TdsService::RECEIVABLE,
+                'write_off' => LedgerPostingService::BANK_CHARGES,
+                default => LedgerPostingService::SALES_ADJUSTMENTS,
+            };
+
+            $legs[] = ['account' => $account, 'amount' => round($shortfall, 2), 'resolution' => $allocation->resolution,
+                       'invoice_id' => (int) $allocation->invoice_id];
+        }
+
+        return $legs;
+    }
+
+    /** The register row for every invoice on this receipt that a client settled net of TDS. */
+    private function recordTds(AccountsReceipt $receipt): void
+    {
+        foreach ($this->adjustments($receipt) as $leg) {
+            if ($leg['resolution'] !== 'tds') {
+                continue;
+            }
+
+            $invoice = AccountsInvoice::withoutTenantScope()->find($leg['invoice_id']);
+
+            if ($invoice !== null) {
+                // ⚠️ Inside the post's transaction, so the register and the ledger can never disagree about
+                // what was deducted: either both rows exist or neither does.
+                $this->tds->recordInward($invoice, $leg['amount'], 'receipt', (int) $receipt->id,
+                    $receipt->receipt_date instanceof \DateTimeInterface
+                        ? $receipt->receipt_date->format('Y-m-d')
+                        : (string) $receipt->receipt_date);
+            }
+        }
     }
 
     private function shortfall(int $invoiceId): float

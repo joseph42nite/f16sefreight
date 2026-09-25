@@ -375,6 +375,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
 
     Route::get('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'index']);
     Route::post('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'store']);
+    // Which section a vendor is deducted under, and any s.197 certificate rate — accounts/boss only (user, 2026-09-25).
+    Route::post('/partners/{partner}/tds', [\App\Http\Controllers\Freight\PartnerController::class, 'updateTds']);
     // Partners a sibling branch already has — name and address only, never their GSTIN.
     Route::get('/partners/siblings', [\App\Http\Controllers\Freight\PartnerController::class, 'siblings']);
     Route::get('/partner-types', [\App\Http\Controllers\Freight\PartnerController::class, 'types']);
@@ -504,6 +506,11 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         // reconcile by eye, `?format=gstn` for the offline utility's JSON (user, 2026-09-22).
         Route::get('/reports/gstr1', [\App\Http\Controllers\Freight\GstReturnController::class, 'gstr1']);
         Route::get('/reports/gstr3b', [\App\Http\Controllers\Freight\GstReturnController::class, 'gstr3b']);
+        // 🔴 TDS runs BOTH ways and the two are never netted: what we withheld from vendors is a liability
+        // due by the 7th, what clients withheld from us is an asset to claim (user, 2026-09-22). Quarterly,
+        // on the Indian financial year, which starts in April.
+        Route::get('/reports/tds', [\App\Http\Controllers\Freight\TdsController::class, 'index']);
+        Route::get('/reports/tds/form-26q', [\App\Http\Controllers\Freight\TdsController::class, 'form26q']);
 
         Route::get('/customers/{customer}/credit', [\App\Http\Controllers\Freight\InvoiceController::class, 'creditStanding']);
 
@@ -523,6 +530,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/finance-settings/gstin', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveGstin']);
         Route::post('/finance-settings/rate-cards', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveRateCard']);
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
+        // The TDS rate table — editable defaults, not law (user, 2026-09-25).
+        Route::post('/finance-settings/tds-rates', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveTdsRate']);
 
         // ── The bank accounts master (user, 2026-09-21). Each posts to its own ledger code.
         Route::get('/bank-accounts', [\App\Http\Controllers\Freight\BankAccountController::class, 'index']);

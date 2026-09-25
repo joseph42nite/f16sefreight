@@ -1527,7 +1527,7 @@ address) · **who owns them** (our branch, salesperson, their usual port) · **t
 | ~~**Bank accounts master**~~ | ✅ **Built 2026-09-21** — `bank_accounts`, each posting to its own `1100-Bank-<slug>` code, with receipts, payments and statement lines all naming the account they moved through (GAPS #386) |
 | **"Cost to book" as a queue** | Shipments billed with nothing costed exist only as a warning on a report |
 | ~~**GSTR-1 / 3B as files**~~ | ✅ **Built 2026-09-22** — `GstReturnService` builds B2B, CDNR, HSN and the document series from the documents (not the register, which was structurally empty until `agents_info.gst_no` landed the same day), as a CSV and as the offline utility's JSON, on Close-the-month ④. 🔴 The window is a **calendar month**, the one report here that is not period-scoped — a return is filed monthly and every period in this system spans a year. 🔴 B2CL/B2CS/EXP are deliberately not written: they need a place of supply and a shipping bill that nothing stores, so those documents are **named as exceptions** instead of guessed (GAPS #394, #36) |
-| **TDS** | Not started |
+| ~~**TDS**~~ | ✅ **Built 2026-09-25** — both directions, never netted: outward (we withhold from vendors) is a liability due by the 7th of next month, inward (clients withhold from us) is an asset claimed via Form 26AS. Register at Financials → TDS register, Form 26Q CSV export, rates editable in Settings → Finance, `tds_section`/s.197 override editable on each partner. TDS is Close-the-month's advisory step ⑤ (GAPS #395) |
 
 ## 📌 Conventions
 

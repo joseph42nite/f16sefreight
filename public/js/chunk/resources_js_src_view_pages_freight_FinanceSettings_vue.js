@@ -37,6 +37,17 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     rateCards: [],
     branches: [],
     branchId: null,
+    /** TDS rate table: editable defaults, per branch (user, 2026-09-25). */
+    tdsRates: [],
+    tdsEditing: null,
+    tdsForm: {
+      description: "",
+      rate: 0,
+      rate_no_pan: 20,
+      threshold_single: null,
+      threshold_annual: null,
+      is_active: true
+    },
     /** The bank accounts master (user, 2026-09-21). */
     banks: [],
     legacyBalance: 0,
@@ -212,6 +223,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     take(data) {
       this.accounts = data.accounts || [];
       this.rateCards = data.rate_cards || [];
+      this.tdsRates = data.tds_rates || [];
       this.branches = data.branches || [];
       if (!this.newAccount.agent_id && this.branches.length) {
         this.newAccount.agent_id = this.branches[0].id;
@@ -237,6 +249,35 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
           account_code: "",
           account_name: ""
         });
+      });
+    },
+    editTdsRate(rate) {
+      this.tdsEditing = rate.id;
+      this.tdsForm = {
+        description: rate.description,
+        rate: rate.rate,
+        rate_no_pan: rate.rate_no_pan,
+        threshold_single: rate.threshold_single,
+        threshold_annual: rate.threshold_annual,
+        is_active: !!rate.is_active
+      };
+      this.actionError = null;
+    },
+    saveTdsRate(rate) {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/finance-settings/tds-rates", _objectSpread({
+        agent_id: rate.agent_id,
+        section: rate.section
+      }, this.tdsForm)).then(({
+        data
+      }) => {
+        this.take(data);
+        this.tdsEditing = null;
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
       });
     },
     addRate() {
@@ -860,6 +901,273 @@ var render = function render() {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"
+  }, [_vm._v("TDS rates")]), _vm._v(" "), _vm._m(3), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Section")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Description")]), _vm._v(" "), _vm.branches.length > 1 ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]) : _vm._e(), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rate %")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("No PAN %")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Per payment")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Annual")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Active")]), _vm._v(" "), _vm.canEdit ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", [_vm._l(_vm.tdsRates, function (r) {
+    return _c("tr", {
+      key: "t-" + r.id
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.section))]), _vm._v(" "), _vm.tdsEditing === r.id ? [_c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.tdsForm.description,
+        expression: "tdsForm.description"
+      }],
+      staticClass: "fx-input",
+      domProps: {
+        value: _vm.tdsForm.description
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.tdsForm, "description", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _vm.branches.length > 1 ? _c("td", [_vm._v(_vm._s(r.branch))]) : _vm._e(), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.tdsForm.rate,
+        expression: "tdsForm.rate",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0",
+        max: "100"
+      },
+      domProps: {
+        value: _vm.tdsForm.rate
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.tdsForm, "rate", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.tdsForm.rate_no_pan,
+        expression: "tdsForm.rate_no_pan",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0",
+        max: "100"
+      },
+      domProps: {
+        value: _vm.tdsForm.rate_no_pan
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.tdsForm, "rate_no_pan", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.tdsForm.threshold_single,
+        expression: "tdsForm.threshold_single",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        type: "number",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.tdsForm.threshold_single
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.tdsForm, "threshold_single", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.tdsForm.threshold_annual,
+        expression: "tdsForm.threshold_annual",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        type: "number",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.tdsForm.threshold_annual
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.tdsForm, "threshold_annual", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", [_c("label", {
+      staticClass: "fx-checkbox"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.tdsForm.is_active,
+        expression: "tdsForm.is_active"
+      }],
+      attrs: {
+        type: "checkbox"
+      },
+      domProps: {
+        checked: Array.isArray(_vm.tdsForm.is_active) ? _vm._i(_vm.tdsForm.is_active, null) > -1 : _vm.tdsForm.is_active
+      },
+      on: {
+        change: function ($event) {
+          var $$a = _vm.tdsForm.is_active,
+            $$el = $event.target,
+            $$c = $$el.checked ? true : false;
+          if (Array.isArray($$a)) {
+            var $$v = null,
+              $$i = _vm._i($$a, $$v);
+            if ($$el.checked) {
+              $$i < 0 && _vm.$set(_vm.tdsForm, "is_active", $$a.concat([$$v]));
+            } else {
+              $$i > -1 && _vm.$set(_vm.tdsForm, "is_active", $$a.slice(0, $$i).concat($$a.slice($$i + 1)));
+            }
+          } else {
+            _vm.$set(_vm.tdsForm, "is_active", $$c);
+          }
+        }
+      }
+    })])]), _vm._v(" "), _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          return _vm.saveTdsRate(r);
+        }
+      }
+    }, [_vm._v("Save")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          _vm.tdsEditing = null;
+        }
+      }
+    }, [_vm._v("Cancel")])])] : [_c("td", [_vm._v(_vm._s(r.description))]), _vm._v(" "), _vm.branches.length > 1 ? _c("td", [_vm._v(_vm._s(r.branch))]) : _vm._e(), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(r.rate))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(r.rate_no_pan))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(r.threshold_single !== null ? _vm.money(r.threshold_single) : "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(r.threshold_annual !== null ? _vm.money(r.threshold_annual) : "—"))]), _vm._v(" "), _c("td", [_c("StatusChip", {
+      attrs: {
+        value: r.is_active ? "active" : "inactive"
+      }
+    })], 1), _vm._v(" "), _vm.canEdit ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.editTdsRate(r);
+        }
+      }
+    }, [_vm._v("Edit")])]) : _vm._e()]], 2);
+  }), _vm._v(" "), !_vm.tdsRates.length ? _c("tr", [_c("td", {
+    staticClass: "fx-muted",
+    attrs: {
+      colspan: "8"
+    }
+  }, [_vm._v("No TDS rates yet.")])]) : _vm._e()], 2)])]), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
   }, [_vm._v("Rate cards")]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("A rate agreed with one client or supplier, for a kind of charge and a weight break.")]), _vm._v(" "), _c("table", {
@@ -1234,6 +1542,12 @@ var staticRenderFns = [function () {
   return _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n        🔴 Each account posts to its "), _c("strong", [_vm._v("own")]), _vm._v(" ledger code, so the trial balance tells them apart.\n        The code is issued once when the account is added and never changes — renaming it must not move where\n        its history is posted.\n      ")]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        ⚠️ "), _c("strong", [_vm._v("These are editable defaults, checked against the current Finance Act as it stood when\n        this screen was built — not law.")]), _vm._v(" Section 194H alone has moved twice in recent years; check\n        each rate before relying on it, and correct it here the day it changes.\n      ")]);
 }];
 render._withStripped = true;
 

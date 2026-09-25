@@ -69,6 +69,7 @@ class VerifyAccounts extends Command
         $this->moneyIn();
         $this->closeMonth();
         $this->gstReturns();
+        $this->tds();
         $this->moneyOut();
         $this->banks();
         $this->ledger();
@@ -226,7 +227,7 @@ class VerifyAccounts extends Command
         $this->check('money in ③: issued', 724800.0, $stages['issued']['amount']);
         $this->check('money in ③: issued count', 6, $stages['issued']['count']);
         // ④ Three receipts totalling 268,000, and one bank line nobody has placed.
-        $this->check('money in ④: received', 268000.0, $stages['money_in']['amount']);
+        $this->check('money in ④: received', 266000.0, $stages['money_in']['amount']);
         $this->check('money in ④: still to place', 40000.0, $stages['money_in']['unplaced']['amount']);
         // ⑤ The same overdue figure the ageing, the queue and the Today card report.
         $this->check('money in ⑤: overdue', 206800.0, $stages['overdue']['amount']);
@@ -374,6 +375,52 @@ class VerifyAccounts extends Command
         $this->check('gstr3b: names what GSTR-1 left out', 300000.0, $r3['excluded']['value']);
     }
 
+    /**
+     * TDS, both directions, every figure worked out on paper first.
+     *
+     * 🔴 **The two directions are a LIABILITY and an ASSET and are never netted.** We withheld 1,400 from
+     * the airline and owe it to the government; a client withheld 2,000 from us and we claim it back. A
+     * system that reported one "TDS" figure of 600 would be describing a position nobody holds.
+     */
+    private function tds(): void
+    {
+        [$financialYear, $quarter] = \App\Services\TdsService::period(now()->toDateString());
+
+        $body = json_decode(app(\App\Http\Controllers\Freight\TdsController::class)
+            ->index(new Request(['financial_year' => $financialYear, 'quarter' => $quarter]))->getContent(), true);
+
+        // 🔴 OUTWARD. j1's voucher is 70,000 net of GST; the carrier is 194C at 2% and has a PAN, so the
+        // ordinary rate applies rather than the 20% s.206AA penalty. 2% of 70,000 = 1,400.
+        $this->check('tds: withheld from vendors', 1400.0, $body['payable']['total']);
+        $this->check('tds: on a base net of GST', 70000.0, $body['payable']['base']);
+        $this->check('tds: one deduction made', 1, $body['payable']['deductions']);
+        $this->check('tds: under 194C', '194C', $body['payable']['by_section'][0]['section'] ?? null);
+        $this->check('tds: every deductee has a PAN', 0, $body['payable']['without_pan']);
+
+        // 🔴 INWARD. The client deducted 2% of inv1's 1,00,000 SUBTOTAL — not of the 1,18,000 they paid
+        // against, because tax is deducted on the service and never on the GST charged on it.
+        $this->check('tds: withheld from us', 2000.0, $body['receivable']['total']);
+        $this->check('tds: on the invoice subtotal', 100000.0, $body['receivable']['base']);
+
+        // 🔴 The register and the ledger are written in one transaction, so a difference is not a lag.
+        $this->check('tds: ledger payable agrees', 1400.0, $body['ledger']['payable']);
+        $this->check('tds: ledger receivable agrees', 2000.0, $body['ledger']['receivable']);
+
+        // ⚠️ NEVER netted: 1,400 owed and 2,000 claimable are not 600 of anything.
+        $this->check('tds: the two are not netted', true,
+            $body['payable']['total'] !== $body['receivable']['total']);
+
+        // The invoice the client deducted from is PAID, not part-paid — they did nothing wrong.
+        $this->check('tds: the deducted invoice is settled', 'paid',
+            DB::table('accounts_invoices')->whereIn('agent_id', $this->branchIds())
+                ->where('type', 'invoice')->orderBy('id')->value('status'));
+
+        // And the vendor's payable cleared by the GROSS, so nothing is left owing on that voucher.
+        $this->check('tds: the paid voucher owes nothing', 'paid',
+            DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $this->branchIds())
+                ->orderBy('id')->value('status'));
+    }
+
     private function banks(): void
     {
         $body = json_decode(app(\App\Http\Controllers\Freight\BankAccountController::class)
@@ -381,15 +428,15 @@ class VerifyAccounts extends Command
         $accounts = collect($body['accounts'])->keyBy('name');
 
         $this->check('banks: accounts on the master', 2, count($body['accounts']));
-        $this->check('banks: Collections balance', 268000.0, $accounts['Collections']['balance'] ?? null);
-        $this->check('banks: Payouts balance', -82600.0, $accounts['Payouts']['balance'] ?? null);
+        $this->check('banks: Collections balance', 266000.0, $accounts['Collections']['balance'] ?? null);
+        $this->check('banks: Payouts balance', -81200.0, $accounts['Payouts']['balance'] ?? null);
         // ⚠️ Nothing was posted before the master existed in this fixture, so the legacy account is empty.
         $this->check('banks: nothing left undifferentiated', 0.0, $body['legacy_balance']);
         // 🔐 The number is encrypted and never returned; the last four are, so a statement can be matched by eye.
         $this->check('banks: account number withheld', false, array_key_exists('account_no', $accounts['Collections']));
         $this->check('banks: last four shown', '4321', $accounts['Collections']['last_four'] ?? null);
-        // 692,600 of assets, of which the two banks hold 185,400 between them.
-        $this->check('banks: the two together', 185400.0,
+        // 694,000 of assets, of which the two banks hold 184,800 between them.
+        $this->check('banks: the two together', 184800.0,
             round((float) $accounts['Collections']['balance'] + (float) $accounts['Payouts']['balance'], 2));
     }
 
@@ -426,8 +473,8 @@ class VerifyAccounts extends Command
         $this->check('ledger: payables settled', 82600.0, $accounts['2100-AP']['debit'] ?? null);
         // 🔴 TWO bank accounts, told apart — the whole reason the master exists. Money in lands in Collections;
         // the payment leaves Payouts. On a single `1100-Bank` these were one indistinguishable balance.
-        $this->check('ledger: into Collections', 268000.0, $accounts['1100-Bank-HDFCBANK-4321']['debit'] ?? null);
-        $this->check('ledger: out of Payouts', 82600.0, $accounts['1100-Bank-ICICIBANK-9876']['credit'] ?? null);
+        $this->check('ledger: into Collections', 266000.0, $accounts['1100-Bank-HDFCBANK-4321']['debit'] ?? null);
+        $this->check('ledger: out of Payouts', 81200.0, $accounts['1100-Bank-ICICIBANK-9876']['credit'] ?? null);
         $this->check('ledger: nothing on the undifferentiated bank', null, $accounts['1100-Bank'] ?? null);
 
         $pl = json_decode($reports->profitAndLoss(new Request(['period_id' => $period]))->getContent(), true);
@@ -436,10 +483,14 @@ class VerifyAccounts extends Command
         $this->check('P&L: net', 170000.0, $pl['net']);
 
         $bs = json_decode($reports->balanceSheet(new Request(['period_id' => $period]))->getContent(), true);
-        // AR 456,800 + GST input 50,400 + bank (268,000 − 82,600).
-        $this->check('balance sheet: assets', 692600.0, $bs['assets']['total']);
-        // GST output 64,800 + payables (540,400 − 82,600).
-        $this->check('balance sheet: liabilities', 522600.0, $bs['liabilities']['total']);
+        // AR 456,800 + GST input 50,400 + bank (266,000 − 81,200 = 184,800) + TDS receivable 2,000.
+        // ⚠️ TDS moves NOTHING here in total: the 2,000 a client withheld is 2,000 less cash and 2,000 more
+        // receivable, which is exactly what makes it an asset rather than a loss.
+        $this->check('balance sheet: assets', 694000.0, $bs['assets']['total']);
+        // GST output 64,800 + payables (540,400 − 82,600 = 457,800) + TDS payable 1,400.
+        // 🔴 The payable came down by the GROSS 82,600 even though only 81,200 left the bank: the airline's
+        // invoice really is settled in full, and the 1,400 is now owed to the government instead.
+        $this->check('balance sheet: liabilities', 524000.0, $bs['liabilities']['total']);
         $this->check('balance sheet: retained earnings', 170000.0, $bs['equity']);
 
         $book = json_decode(app(\App\Http\Controllers\Freight\JournalController::class)
@@ -448,7 +499,7 @@ class VerifyAccounts extends Command
         // 17 sales lines (three documents with tax, one export without, plus both notes), 11 purchase lines
         // (three with input tax, one without) and 6 receipt lines — 34.
         // 34, plus the payment's two.
-        $this->check('journal: postings', 36, $book['totals']['count']);
+        $this->check('journal: postings', 38, $book['totals']['count']);
     }
 
     /**

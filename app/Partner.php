@@ -50,6 +50,11 @@ class Partner extends Model
     protected $fillable = [
         'company_id', 'agent_id', 'name', 'partner_type', 'email', 'phone', 'address',
         'gst_no', 'pan_no', 'bank_name', 'bank_account_no', 'bank_ifsc_code',
+        // 🔴 The TDS section this vendor is deducted under, and a s.197 certificate's rate if they hold one.
+        // Listed here deliberately: the SIXTH place on this desk where a new column left off `$fillable`
+        // would have been dropped on the floor by `create()` in silence — and here that silence is a
+        // deduction never made.
+        'tds_section', 'tds_rate_override',
     ];
 
     protected $casts = [

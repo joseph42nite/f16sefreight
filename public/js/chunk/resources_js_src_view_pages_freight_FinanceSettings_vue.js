@@ -1162,7 +1162,7 @@ var render = function render() {
   }), _vm._v(" "), !_vm.tdsRates.length ? _c("tr", [_c("td", {
     staticClass: "fx-muted",
     attrs: {
-      colspan: "8"
+      colspan: "9"
     }
   }, [_vm._v("No TDS rates yet.")])]) : _vm._e()], 2)])]), _vm._v(" "), _c("section", {
     staticClass: "fx-section"

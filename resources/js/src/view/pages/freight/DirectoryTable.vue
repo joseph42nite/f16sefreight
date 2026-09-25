@@ -198,7 +198,12 @@
         <tr v-for="row in rows" :key="row.id">
           <td v-for="c in columns" :key="c.key" :class="[{ 'fx-num': c.numeric }, c.mono ? 'identifier' : '']">
             <template v-if="c.key === 'tds_section' && tdsEditing === row.id">
-              <input v-model="tdsForm.tds_section" class="fx-input" list="tds-sections" placeholder="194C" />
+              <select v-model="tdsForm.tds_section" class="fx-input">
+                <option value="">None</option>
+                <option v-for="s in tdsSectionOptions" :key="s.section" :value="s.section">
+                  {{ s.section }} — {{ s.description }}
+                </option>
+              </select>
             </template>
             <template v-else-if="c.key === 'tds_rate_override' && tdsEditing === row.id">
               <input v-model.number="tdsForm.tds_rate_override" class="fx-input" type="number" step="0.01" min="0" max="100" placeholder="s.197 rate, if any" />
@@ -224,10 +229,6 @@
       </tbody>
     </table>
     <p v-if="tdsError" class="fx-error" role="alert">{{ tdsError }}</p>
-
-    <datalist id="tds-sections">
-      <option v-for="s in TDS_SECTIONS" :key="s" :value="s" />
-    </datalist>
   </div>
 </template>
 
@@ -270,10 +271,6 @@ const SHAPES = {
   },
 };
 
-/** The sections a freight forwarder actually uses, as suggestions — TdsService::DEFAULT_RATES. A branch may
-    have edited or added to these in Settings → Finance, so this is a hint, never a closed list. */
-const TDS_SECTIONS = ["194C", "194C-IND", "194J", "194H", "194I", "194I-B"];
-
 export default {
   name: "DirectoryTable",
   components: { Figure },
@@ -284,9 +281,12 @@ export default {
     /* The client being added or edited, and whether this company has accounts (Command) — the server says. */
     client: null, withAccounts: false, contacts: [],
     form: { name: "", partner_type: "customs_broker", email: "", phone: "", address: "", gst_no: "", pan_no: "" },
-    /** Which vendor's TDS classification is being edited, and the row's own suggestions (user, 2026-09-25). */
-    TDS_SECTIONS, tdsEditing: null, tdsSaving: false, tdsError: null,
+    /** Which vendor's TDS classification is being edited (user, 2026-09-25). */
+    tdsEditing: null, tdsSaving: false, tdsError: null,
     tdsForm: { tds_section: "", tds_rate_override: null },
+    /* Each branch's own active TDS sections, keyed by agent_id — a vendor is deducted under a section
+       THAT BRANCH has a rate for, never a company-wide list a sibling branch happens to use. */
+    tdsRatesByBranch: {}, tdsSectionOptions: [],
   }),
   computed: {
     ...mapGetters(["designation"]),
@@ -323,6 +323,20 @@ export default {
       ApiService.get("/partners/siblings")
         .then(({ data }) => { this.siblings = data.partners || []; })
         .catch(() => { this.siblings = []; });
+
+      /* The TDS section picker: only accounts/boss can edit it, and `/finance-settings` is gated the
+         same way — asking as anyone else would just 403. */
+      if (this.canManageTds) {
+        ApiService.get("/finance-settings")
+          .then(({ data }) => {
+            const byBranch = {};
+            (data.tds_rates || []).filter((r) => r.is_active).forEach((r) => {
+              (byBranch[r.agent_id] = byBranch[r.agent_id] || []).push({ section: r.section, description: r.description });
+            });
+            this.tdsRatesByBranch = byBranch;
+          })
+          .catch(() => { this.tdsRatesByBranch = {}; });
+      }
     }
   },
   methods: {
@@ -378,12 +392,21 @@ export default {
       this.tdsEditing = row.id;
       this.tdsError = null;
       this.tdsForm = { tds_section: row.tds_section || "", tds_rate_override: row.tds_rate_override };
+
+      // Options are this branch's own active rate table — not a company-wide list, and not a sibling
+      // branch's. If the vendor already carries a section this branch has since deactivated or never had
+      // (moved branch, rate retired), it stays visible and selected rather than silently blanking out.
+      const options = (this.tdsRatesByBranch[row.agent_id] || []).slice();
+      if (row.tds_section && !options.some((s) => s.section === row.tds_section)) {
+        options.push({ section: row.tds_section, description: "not in this branch's current rate table" });
+      }
+      this.tdsSectionOptions = options;
     },
     saveTds(row) {
       this.tdsSaving = true;
       this.tdsError = null;
       const body = {
-        tds_section: this.tdsForm.tds_section ? this.tdsForm.tds_section.trim().toUpperCase() : null,
+        tds_section: this.tdsForm.tds_section || null,
         tds_rate_override: this.tdsForm.tds_rate_override === "" ? null : this.tdsForm.tds_rate_override,
       };
 

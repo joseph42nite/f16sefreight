@@ -1416,10 +1416,6 @@ const SHAPES = {
     }]
   }
 };
-
-/** The sections a freight forwarder actually uses, as suggestions — TdsService::DEFAULT_RATES. A branch may
-    have edited or added to these in Settings → Finance, so this is a hint, never a closed list. */
-const TDS_SECTIONS = ["194C", "194C-IND", "194J", "194H", "194I", "194I-B"];
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "DirectoryTable",
   components: {
@@ -1457,15 +1453,18 @@ const TDS_SECTIONS = ["194C", "194C-IND", "194J", "194H", "194I", "194I-B"];
       gst_no: "",
       pan_no: ""
     },
-    /** Which vendor's TDS classification is being edited, and the row's own suggestions (user, 2026-09-25). */
-    TDS_SECTIONS,
+    /** Which vendor's TDS classification is being edited (user, 2026-09-25). */
     tdsEditing: null,
     tdsSaving: false,
     tdsError: null,
     tdsForm: {
       tds_section: "",
       tds_rate_override: null
-    }
+    },
+    /* Each branch's own active TDS sections, keyed by agent_id — a vendor is deducted under a section
+       THAT BRANCH has a rate for, never a company-wide list a sibling branch happens to use. */
+    tdsRatesByBranch: {},
+    tdsSectionOptions: []
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["designation"])), {}, {
     /** Mirrors the server's `editClients`. */
@@ -1512,6 +1511,25 @@ const TDS_SECTIONS = ["194C", "194C-IND", "194J", "194H", "194I", "194I-B"];
       }).catch(() => {
         this.siblings = [];
       });
+
+      /* The TDS section picker: only accounts/boss can edit it, and `/finance-settings` is gated the
+         same way — asking as anyone else would just 403. */
+      if (this.canManageTds) {
+        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/finance-settings").then(({
+          data
+        }) => {
+          const byBranch = {};
+          (data.tds_rates || []).filter(r => r.is_active).forEach(r => {
+            (byBranch[r.agent_id] = byBranch[r.agent_id] || []).push({
+              section: r.section,
+              description: r.description
+            });
+          });
+          this.tdsRatesByBranch = byBranch;
+        }).catch(() => {
+          this.tdsRatesByBranch = {};
+        });
+      }
     }
   },
   methods: {
@@ -1570,12 +1588,24 @@ const TDS_SECTIONS = ["194C", "194C-IND", "194J", "194H", "194I", "194I-B"];
         tds_section: row.tds_section || "",
         tds_rate_override: row.tds_rate_override
       };
+
+      // Options are this branch's own active rate table — not a company-wide list, and not a sibling
+      // branch's. If the vendor already carries a section this branch has since deactivated or never had
+      // (moved branch, rate retired), it stays visible and selected rather than silently blanking out.
+      const options = (this.tdsRatesByBranch[row.agent_id] || []).slice();
+      if (row.tds_section && !options.some(s => s.section === row.tds_section)) {
+        options.push({
+          section: row.tds_section,
+          description: "not in this branch's current rate table"
+        });
+      }
+      this.tdsSectionOptions = options;
     },
     saveTds(row) {
       this.tdsSaving = true;
       this.tdsError = null;
       const body = {
-        tds_section: this.tdsForm.tds_section ? this.tdsForm.tds_section.trim().toUpperCase() : null,
+        tds_section: this.tdsForm.tds_section || null,
         tds_rate_override: this.tdsForm.tds_rate_override === "" ? null : this.tdsForm.tds_rate_override
       };
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/partners/${row.id}/tds`, body).then(({
@@ -7582,7 +7612,7 @@ var render = function render() {
         class: [{
           "fx-num": c.numeric
         }, c.mono ? "identifier" : ""]
-      }, [c.key === "tds_section" && _vm.tdsEditing === row.id ? [_c("input", {
+      }, [c.key === "tds_section" && _vm.tdsEditing === row.id ? [_c("select", {
         directives: [{
           name: "model",
           rawName: "v-model",
@@ -7590,20 +7620,29 @@ var render = function render() {
           expression: "tdsForm.tds_section"
         }],
         staticClass: "fx-input",
-        attrs: {
-          list: "tds-sections",
-          placeholder: "194C"
-        },
-        domProps: {
-          value: _vm.tdsForm.tds_section
-        },
         on: {
-          input: function ($event) {
-            if ($event.target.composing) return;
-            _vm.$set(_vm.tdsForm, "tds_section", $event.target.value);
+          change: function ($event) {
+            var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+              return o.selected;
+            }).map(function (o) {
+              var val = "_value" in o ? o._value : o.value;
+              return val;
+            });
+            _vm.$set(_vm.tdsForm, "tds_section", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
           }
         }
-      })] : c.key === "tds_rate_override" && _vm.tdsEditing === row.id ? [_c("input", {
+      }, [_c("option", {
+        attrs: {
+          value: ""
+        }
+      }, [_vm._v("None")]), _vm._v(" "), _vm._l(_vm.tdsSectionOptions, function (s) {
+        return _c("option", {
+          key: s.section,
+          domProps: {
+            value: s.section
+          }
+        }, [_vm._v("\n                " + _vm._s(s.section) + " — " + _vm._s(s.description) + "\n              ")]);
+      })], 2)] : c.key === "tds_rate_override" && _vm.tdsEditing === row.id ? [_c("input", {
         directives: [{
           name: "model",
           rawName: "v-model.number",
@@ -7686,18 +7725,7 @@ var render = function render() {
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.tdsError))]) : _vm._e(), _vm._v(" "), _c("datalist", {
-    attrs: {
-      id: "tds-sections"
-    }
-  }, _vm._l(_vm.TDS_SECTIONS, function (s) {
-    return _c("option", {
-      key: s,
-      domProps: {
-        value: s
-      }
-    });
-  }), 0)]);
+  }, [_vm._v(_vm._s(_vm.tdsError))]) : _vm._e()]);
 };
 var staticRenderFns = [function () {
   var _vm = this,

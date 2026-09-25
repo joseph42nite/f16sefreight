@@ -146,6 +146,10 @@
                 <th scope="col">How</th>
                 <th scope="col">Settles</th>
                 <th class="fx-num" scope="col">Amount</th>
+                <!-- 🔴 The vendor's own book is settled at `amount`, but that is not what the bank moves —
+                     TDS withheld here never leaves this desk's account at all. Two figures, not one. -->
+                <th class="fx-num" scope="col">TDS withheld</th>
+                <th class="fx-num" scope="col">Transfer</th>
                 <th scope="col">Posted</th>
                 <th v-if="canPay" scope="col"></th>
               </tr>
@@ -158,6 +162,11 @@
                 <td>{{ (p.mode || "").replace(/_/g, " ") }}</td>
                 <td class="fx-muted">{{ p.allocations.map((a) => a.voucher_no).join(", ") || "—" }}</td>
                 <td class="fx-num"><Figure :value="p.amount" kind="currency" currency-code="INR" /></td>
+                <td class="fx-num">
+                  <Figure v-if="Number(p.tds_amount) > 0" :value="p.tds_amount" kind="currency" currency-code="INR" />
+                  <span v-else class="fx-muted">—</span>
+                </td>
+                <td class="fx-num"><Figure :value="Number(p.amount) - Number(p.tds_amount || 0)" kind="currency" currency-code="INR" /></td>
                 <td><StatusChip :value="p.is_posted ? 'posted' : 'unposted'" /></td>
                 <td v-if="canPay" class="fx-row-actions">
                   <button v-if="!p.is_posted" class="fx-btn" :disabled="busy" @click="post(p)">Post</button>
@@ -171,6 +180,12 @@
         <p v-if="lastRun" class="fx-notice" role="status">
           {{ lastRun.payments.length }} payment(s) raised as {{ lastRun.run_ref }},
           {{ money(lastRun.total) }} in total. Post each one to move it through the ledger.
+          <!-- 🔴 The desk transfers `to_transfer`, not `total` — the difference is `tds_withheld`, owed to
+               the government by the 7th, not to any supplier here. Said every time it is not zero, because
+               the one place this run should be silent about it is nowhere. -->
+          <template v-if="lastRun.tds_withheld > 0">
+            {{ money(lastRun.tds_withheld) }} of that is TDS withheld — transfer {{ money(lastRun.to_transfer) }}, not the total.
+          </template>
         </p>
       </template>
     </template>
@@ -197,6 +212,13 @@
           <p class="fx-muted">
             One payment each. Nothing leaves a bank account from here — this records what you are paying, and each
             payment posts to the ledger separately.
+          </p>
+          <!-- 🔴 Said, not computed here: withholding depends on each vendor's section, thresholds already
+               crossed this year and any s.197 certificate, which only the server can work out correctly —
+               and the figure it actually withholds is shown once the run is raised, below. -->
+          <p class="fx-muted">
+            A vendor with a TDS section set may have tax withheld from this payment; the exact amount is set
+            when the run is raised, not before.
           </p>
           <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
         </div>

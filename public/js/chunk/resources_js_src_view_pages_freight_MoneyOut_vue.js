@@ -530,6 +530,16 @@ var render = function render() {
       scope: "col"
     }
   }, [_vm._v("Amount")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("TDS withheld")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Transfer")]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }
@@ -554,6 +564,24 @@ var render = function render() {
     }, [_c("Figure", {
       attrs: {
         value: p.amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [Number(p.tds_amount) > 0 ? _c("Figure", {
+      attrs: {
+        value: p.tds_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: Number(p.amount) - Number(p.tds_amount || 0),
         kind: "currency",
         "currency-code": "INR"
       }
@@ -584,7 +612,7 @@ var render = function render() {
     attrs: {
       role: "status"
     }
-  }, [_vm._v("\n        " + _vm._s(_vm.lastRun.payments.length) + " payment(s) raised as " + _vm._s(_vm.lastRun.run_ref) + ",\n        " + _vm._s(_vm.money(_vm.lastRun.total)) + " in total. Post each one to move it through the ledger.\n      ")]) : _vm._e()]], _vm._v(" "), _vm.confirming ? _c("div", {
+  }, [_vm._v("\n        " + _vm._s(_vm.lastRun.payments.length) + " payment(s) raised as " + _vm._s(_vm.lastRun.run_ref) + ",\n        " + _vm._s(_vm.money(_vm.lastRun.total)) + " in total. Post each one to move it through the ledger.\n        "), _vm._v(" "), _vm.lastRun.tds_withheld > 0 ? [_vm._v("\n          " + _vm._s(_vm.money(_vm.lastRun.tds_withheld)) + " of that is TDS withheld — transfer " + _vm._s(_vm.money(_vm.lastRun.to_transfer)) + ", not the total.\n        ")] : _vm._e()], 2) : _vm._e()]], _vm._v(" "), _vm.confirming ? _c("div", {
     staticClass: "fx-modal",
     attrs: {
       role: "dialog",
@@ -620,7 +648,9 @@ var render = function render() {
     })], 1)]);
   }), 0)]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("\n          One payment each. Nothing leaves a bank account from here — this records what you are paying, and each\n          payment posts to the ledger separately.\n        ")]), _vm._v(" "), _vm.actionError ? _c("p", {
+  }, [_vm._v("\n          One payment each. Nothing leaves a bank account from here — this records what you are paying, and each\n          payment posts to the ledger separately.\n        ")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          A vendor with a TDS section set may have tax withheld from this payment; the exact amount is set\n          when the run is raised, not before.\n        ")]), _vm._v(" "), _vm.actionError ? _c("p", {
     staticClass: "fx-error",
     attrs: {
       role: "alert"

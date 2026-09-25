@@ -248,26 +248,91 @@ class FreightDemoSeeder extends Seeder
         $jobIds = Job::withoutGlobalScopes()->whereIn('agent_id', $branchIds)->pluck('id');
         $invoiceIds = AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branchIds)->pluck('id');
 
-        // Children first — several of these FKs are RESTRICT precisely so a real
-        // liability cannot be orphaned, and they will refuse a parent-first delete.
-        // 🔴 Purchase vouchers FIRST. `accounts_purchase_vouchers.job_id` is one of the
+        // 🔴 Foreign-key checks OFF for the purge (2026-09-26), for the reason `BillingDemoSeeder` and the
+        // regression seeder already give (GAPS #380, #391): every new financial table adds another pointer at
+        // the rows this deletes, and a hand-kept order is wrong the first time one arrives. This purge predated
+        // the whole billing layer and broke exactly that way — `accounts_payment_allocations` pointed at a
+        // voucher, the delete was refused halfway, and every demo voucher was left with its lines already gone.
+        // ⚠️ Checks off is safe ONLY because every table below is listed: nothing is left pointing at a row
+        // that no longer exists. A new table still needs a line here — it just no longer aborts the reseed
+        // halfway when it does not have one.
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
+        try {
+            $this->purgeRows($company, $branchIds, $jobIds, $invoiceIds);
+        } finally {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
+
+        // audit_logs, users, roles, agents_info and companies are NOT deleted —
+        // see the docblock. audit_logs.user_id and .agent_id are real foreign keys,
+        // so the append-only trail also pins the identities it refers to.
+    }
+
+    private function purgeRows(Company $company, $branchIds, $jobIds, $invoiceIds): void
+    {
+        // 🔴 With checks off, ON DELETE CASCADE and SET NULL do not fire either. What the database used to do
+        // when `jobs`, `accounting_periods` and vouchers were deleted is therefore done here by hand, with the
+        // same effect — so switching checks off changes nothing about what this purge removes or keeps.
+        // Cascades from `jobs`:
+        DB::table('document_share_links')->whereIn('job_id', $jobIds)->delete();
+        DB::table('job_documents')->whereIn('job_id', $jobIds)->delete();
+        DB::table('job_entities')->whereIn('job_id', $jobIds)->delete();
+        DB::table('approved_drafts_queue')->whereIn('job_id', $jobIds)->delete();
+        DB::table('operational_cover_letters')->whereIn('job_id', $jobIds)->delete();
+        // No action on `jobs` — these used to make the purge refuse outright whenever they had rows.
+        DB::table('cargo_arrival_notices')->whereIn('job_id', $jobIds)->delete();
+        DB::table('sea_container_items')->whereIn('job_id', $jobIds)->delete();
+        // Set null — a house waybill is a real issued document and outlives its job (GAPS #17); a CASS
+        // statement outlives the voucher it was matched to; a financial snapshot outlives its period.
+        DB::table('house_way_bills')->whereIn('job_id', $jobIds)->update(['job_id' => null]);
+        DB::table('accounts_cass_statements')->whereIn('agent_id', $branchIds)->update(['matched_voucher_id' => null]);
+        DB::table('financial_snapshots')->whereIn('agent_id', $branchIds)->update(['accounting_period_id' => null]);
+
+        // The money layer `BillingDemoSeeder` adds on top of this demo: supplier payments, client receipts and
+        // what each settled, the chases, the bank master, supplier statements, the rate tables.
+        $paymentIds = DB::table('accounts_payments')->whereIn('agent_id', $branchIds)->pluck('id');
+        DB::table('accounts_payment_allocations')->whereIn('payment_id', $paymentIds)->delete();
+        DB::table('accounts_payments')->whereIn('agent_id', $branchIds)->delete();
+
+        $receiptIds = DB::table('accounts_receipts')->whereIn('agent_id', $branchIds)->pluck('id');
+        DB::table('accounts_receipt_allocations')->whereIn('receipt_id', $receiptIds)->delete();
+        DB::table('accounts_receipt_allocations')->whereIn('invoice_id', $invoiceIds)->delete();
+        DB::table('accounts_receipts')->whereIn('agent_id', $branchIds)->delete();
+        DB::table('collection_follow_ups')->whereIn('agent_id', $branchIds)->delete();
+
+        $statementIds = DB::table('vendor_statements')->whereIn('agent_id', $branchIds)->pluck('id');
+        DB::table('vendor_statement_lines')->whereIn('vendor_statement_id', $statementIds)->delete();
+        DB::table('vendor_statements')->whereIn('agent_id', $branchIds)->delete();
+
+        DB::table('rate_cards')->whereIn('agent_id', $branchIds)->delete();
+        DB::table('tds_rates')->whereIn('agent_id', $branchIds)->delete();
+
+        // 🔴 Purchase vouchers before jobs. `accounts_purchase_vouchers.job_id` is one of the
         // schema's three ON DELETE RESTRICT keys — a voucher is money owed to a vendor
         // against a shipment, so the database refuses to let a job be deleted out from
-        // under one. It caught this purge the moment the cost sheet started creating
-        // vouchers, which is the constraint doing exactly its job.
+        // under one.
         $voucherIds = DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branchIds)->pluck('id');
         DB::table('accounts_purchase_items')->whereIn('purchase_voucher_id', $voucherIds)->delete();
         DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branchIds)->delete();
 
         DB::table('accounts_invoice_items')->whereIn('invoice_id', $invoiceIds)->delete();
+        DB::table('accounts_invoice_brokerage_details')->whereIn('invoice_id', $invoiceIds)->delete();
+        DB::table('accounts_invoice_consol_details')->whereIn('invoice_id', $invoiceIds)->delete();
         DB::table('llm_usage_logs')->where('company_id', $company->id)->where('model', 'demo-seed')->delete();
         // Bells point at threads and jobs that are about to be re-made.
         DB::table('notifications')->whereIn('agent_id', $branchIds)->delete();
         DB::table('sales_targets')->where('company_id', $company->id)->delete();
         DB::table('boss_mail_suggestions')->where('company_id', $company->id)->delete();
         DB::table('accounts_ledger_entries')->whereIn('agent_id', $branchIds)->delete();
+        // Every invoice and voucher it points at is deleted here, so the register rows go with them.
+        DB::table('gst_ledger_entries')->whereIn('agent_id', $branchIds)->delete();
+        DB::table('tds_entries')->whereIn('agent_id', $branchIds)->delete();
         DB::table('unposted_transactions_queue')->whereIn('agent_id', $branchIds)->delete();
         DB::table('bank_transactions')->whereIn('agent_id', $branchIds)->delete();
+        DB::table('bank_accounts')->whereIn('agent_id', $branchIds)->delete();
+        // A credit or debit note points back at its parent invoice — with checks on, one DELETE over both
+        // could refuse depending on the order MySQL happens to visit them in.
         DB::table('accounts_invoices')->whereIn('agent_id', $branchIds)->delete();
         DB::table('accounting_periods')->whereIn('agent_id', $branchIds)->delete();
         DB::table('chart_of_accounts')->whereIn('agent_id', $branchIds)->delete();
@@ -319,10 +384,6 @@ class FreightDemoSeeder extends Seeder
         DB::table('customers')->where('company_id', $company->id)->delete();
         DB::table('partners')->where('company_id', $company->id)->delete();
         DB::table('sequence_counters')->whereIn('agent_id', $branchIds)->delete();
-
-        // audit_logs, users, roles, agents_info and companies are NOT deleted —
-        // see the docblock. audit_logs.user_id and .agent_id are real foreign keys,
-        // so the append-only trail also pins the identities it refers to.
     }
 
     private function seedTenant(array $tenant): void

@@ -198,7 +198,7 @@ const TABS = [{
     subtitleForView() {
       return {
         awaiting: "Cost sheets pricing has sent across, with what each shipment sells for and what it cost. Finalize one to bill it.",
-        gst: "The tax charged on every finalized document, for GSTR-1. Read-only — it is what was charged.",
+        gst: "The tax on every posted document, charged and paid. Read-only — it is what was charged.",
         tds: "What was withheld, both ways, for one quarter. Never netted — a liability owed by the 7th, and an asset with no deadline.",
         reports: "What the ledger proves, over one period of one branch.",
         periods: "The months the ledger is open for. Nothing posts into a month without an open period.",
@@ -2007,7 +2007,7 @@ var render = function render() {
       key: "g-" + r.id
     }, [_c("td", {
       staticClass: "identifier"
-    }, [_vm._v(_vm._s(r.invoice_no || r.voucher_type))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.customer || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.branch))]), _vm._v(" "), _c("td", [_c("Figure", {
+    }, [_vm._v(_vm._s(r.invoice_no || r.voucher_type))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.direction === "input" ? "Paid (input credit)" : "Charged"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.customer || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.branch))]), _vm._v(" "), _c("td", [_c("Figure", {
       attrs: {
         value: r.document_date || r.created_at,
         kind: "date"
@@ -2037,11 +2037,11 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), 0), _vm._v(" "), _vm.totals ? _c("tfoot", [_c("tr", [_vm._m(7), _vm._v(" "), _c("td", {
+  }), 0), _vm._v(" "), _vm.totals && _vm.totals.output ? _c("tfoot", [_c("tr", [_vm._m(7), _vm._v(" "), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
-      value: _vm.totals.cgst,
+      value: _vm.totals.output.cgst,
       kind: "currency",
       "currency-code": "INR"
     }
@@ -2049,7 +2049,7 @@ var render = function render() {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
-      value: _vm.totals.sgst,
+      value: _vm.totals.output.sgst,
       kind: "currency",
       "currency-code": "INR"
     }
@@ -2057,15 +2057,39 @@ var render = function render() {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
-      value: _vm.totals.igst,
+      value: _vm.totals.output.igst,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _c("tr", [_vm._m(8), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.totals.input.cgst,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.totals.input.sgst,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.totals.input.igst,
       kind: "currency",
       "currency-code": "INR"
     }
   })], 1)])]) : _vm._e()]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v("\n      Written when a document is finalized: CGST and SGST within the state, IGST across it. Nothing here is edited —\n      it is what was charged.\n    ")])] : _vm.view === "unposted" ? [_c("table", {
+  }, [_vm._v("\n      Written when a document is posted — sales and purchases both: CGST and SGST within the state, IGST across it.\n      Nothing here is edited — it is what was charged.\n    ")])] : _vm.view === "unposted" ? [_c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(8), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
+  }, [_vm._m(9), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (r) {
     return _c("tr", {
       key: "u-" + r.id
     }, [_c("td", {
@@ -2089,7 +2113,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), 0), _vm._v(" "), _vm.totals !== null ? _c("tfoot", [_c("tr", [_vm._m(9), _c("td", {
+  }), 0), _vm._v(" "), _vm.totals !== null ? _c("tfoot", [_c("tr", [_vm._m(10), _c("td", {
     staticClass: "fx-num"
   }, [_c("Figure", {
     attrs: {
@@ -2101,7 +2125,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("Each stays here until it is posted; posting removes it from this list.")])] : _vm.view === "vouchers" ? _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(10), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
+  }, [_vm._m(11), _vm._v(" "), _c("tbody", _vm._l(_vm.rows, function (row) {
     return _c("tr", {
       key: "v-" + row.id,
       staticClass: "is-clickable",
@@ -2693,7 +2717,11 @@ var staticRenderFns = [function () {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Client")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Tax")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Client or supplier")]), _vm._v(" "), _c("th", {
     attrs: {
       scope: "col"
     }
@@ -2722,9 +2750,19 @@ var staticRenderFns = [function () {
     _c = _vm._self._c;
   return _c("td", {
     attrs: {
-      colspan: "4"
+      colspan: "5"
     }
-  }, [_c("strong", [_vm._v("Total")])]);
+  }, [_c("strong", [_vm._v("Tax charged")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v("credit notes subtracted")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "5"
+    }
+  }, [_c("strong", [_vm._v("Input credit")])]);
 }, function () {
   var _vm = this,
     _c = _vm._self._c;

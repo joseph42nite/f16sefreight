@@ -310,24 +310,7 @@ class InvoiceController extends Controller
 
         $split = $this->gst->split($tax, $counterparty, $supplier);
 
-        if (! $split['determinable'] || $split['kind'] === 'none') {
-            return;
-        }
-
-        $companyId = DB::table('agents_info')->where('id', $invoice->agent_id)->value('company_id');
-
-        DB::table('gst_ledger_entries')->insert([
-            'agent_id'     => $invoice->agent_id,
-            // GSTR-1 is filed per GSTIN, which is a COMPANY concept — the ledger stays
-            // per branch. Both columns exist precisely because they differ.
-            'company_id'   => $companyId,
-            'voucher_id'   => $invoice->id,
-            'voucher_type' => 'invoice',
-            'cgst_amount'  => $split['cgst'],
-            'sgst_amount'  => $split['sgst'],
-            'igst_amount'  => $split['igst'],
-            'created_at'   => now(), 'updated_at' => now(),
-        ]);
+        $this->ledger->writeGstRegisterRow($invoice->agent_id, 'invoice', $invoice->id, $split);
     }
 
     /**

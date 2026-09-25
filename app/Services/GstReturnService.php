@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\DB;
  * artefact the tax authority ever sees. A register you can read on screen is not a return you can file.
  *
  * ═══ 🔴 THE RETURN IS DERIVED FROM THE DOCUMENTS, NOT READ OUT OF THE REGISTER ══
- * The register row is written once, when a document is finalized, and only when the split was determinable —
+ * The register row is written once, when a document is POSTED (PRD §1555 says finalized; kept on post by decision,
+ * 2026-09-26, GAPS #396), and only when the split was determinable —
  * which, until `agents_info.gst_no` landed today, was never (GAPS #36). Reading the return out of it would mean
  * every month before today files as empty. So the return recomputes the split from the documents through the
  * same `GstSplitService` that wrote the register, which makes the rule single-sourced and the whole history
@@ -569,7 +570,7 @@ class GstReturnService
     }
 
     /**
-     * Where the register row written at finalization disagrees with what the documents imply now.
+     * Where the register row written at posting disagrees with what the documents imply now.
      *
      * ⚠️ Reported, never corrected. The usual cause is a counterparty GSTIN edited after we invoiced them, and
      * which version is the truth — the heads we charged on the paper the client holds, or the heads their

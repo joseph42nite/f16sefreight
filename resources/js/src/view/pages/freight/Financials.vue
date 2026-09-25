@@ -623,7 +623,8 @@
         <thead>
           <tr>
             <th scope="col">Document</th>
-            <th scope="col">Client</th>
+            <th scope="col">Tax</th>
+            <th scope="col">Client or supplier</th>
             <th scope="col">Branch</th>
             <th scope="col">Date</th>
             <th class="fx-num" scope="col">CGST</th>
@@ -634,6 +635,7 @@
         <tbody>
           <tr v-for="r in rows" :key="'g-' + r.id">
             <td class="identifier">{{ r.invoice_no || r.voucher_type }}</td>
+            <td>{{ r.direction === "input" ? "Paid (input credit)" : "Charged" }}</td>
             <td>{{ r.customer || "—" }}</td>
             <td>{{ r.branch }}</td>
             <td><Figure :value="r.document_date || r.created_at" kind="date" /></td>
@@ -642,18 +644,25 @@
             <td class="fx-num"><Figure :value="r.igst_amount" kind="currency" currency-code="INR" /></td>
           </tr>
         </tbody>
-        <tfoot v-if="totals">
+        <!-- 🔴 Two totals, never one: tax charged is owed to the government, input credit is claimed back. -->
+        <tfoot v-if="totals && totals.output">
           <tr>
-            <td colspan="4"><strong>Total</strong></td>
-            <td class="fx-num"><Figure :value="totals.cgst" kind="currency" currency-code="INR" /></td>
-            <td class="fx-num"><Figure :value="totals.sgst" kind="currency" currency-code="INR" /></td>
-            <td class="fx-num"><Figure :value="totals.igst" kind="currency" currency-code="INR" /></td>
+            <td colspan="5"><strong>Tax charged</strong> <span class="fx-muted">credit notes subtracted</span></td>
+            <td class="fx-num"><Figure :value="totals.output.cgst" kind="currency" currency-code="INR" /></td>
+            <td class="fx-num"><Figure :value="totals.output.sgst" kind="currency" currency-code="INR" /></td>
+            <td class="fx-num"><Figure :value="totals.output.igst" kind="currency" currency-code="INR" /></td>
+          </tr>
+          <tr>
+            <td colspan="5"><strong>Input credit</strong></td>
+            <td class="fx-num"><Figure :value="totals.input.cgst" kind="currency" currency-code="INR" /></td>
+            <td class="fx-num"><Figure :value="totals.input.sgst" kind="currency" currency-code="INR" /></td>
+            <td class="fx-num"><Figure :value="totals.input.igst" kind="currency" currency-code="INR" /></td>
           </tr>
         </tfoot>
       </table>
       <p class="fx-muted">
-        Written when a document is finalized: CGST and SGST within the state, IGST across it. Nothing here is edited —
-        it is what was charged.
+        Written when a document is posted — sales and purchases both: CGST and SGST within the state, IGST across it.
+        Nothing here is edited — it is what was charged.
       </p>
     </template>
     <!-- ── Drafted, not yet in the ledger (PRD §6.2.8) ───────────────────── -->
@@ -1059,7 +1068,7 @@ export default {
     subtitleForView() {
       return {
         awaiting: "Cost sheets pricing has sent across, with what each shipment sells for and what it cost. Finalize one to bill it.",
-        gst: "The tax charged on every finalized document, for GSTR-1. Read-only — it is what was charged.",
+        gst: "The tax on every posted document, charged and paid. Read-only — it is what was charged.",
         tds: "What was withheld, both ways, for one quarter. Never netted — a liability owed by the 7th, and an asset with no deadline.",
         reports: "What the ledger proves, over one period of one branch.",
         periods: "The months the ledger is open for. Nothing posts into a month without an open period.",

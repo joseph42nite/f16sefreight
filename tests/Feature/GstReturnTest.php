@@ -559,10 +559,11 @@ class GstReturnTest extends TestCase
      * `supplier_gstin_missing`, so it returned early every time and the register the return is filed from was
      * structurally empty with nothing saying so.
      *
-     * ❓ **It is written on POST, not on finalize** — PRD §1555 says *"written whenever a parent document
-     * reaches finalized status"*. Flagged rather than changed: when a tax register row is cut is a decision,
-     * not a tidy-up. It does not affect what is FILED, because `GstReturnService` reads the documents and a
-     * finalized invoice is a supply whether or not the ledger has caught up with it.
+     * 🟢 **It is written on POST, not on finalize** — PRD §1555 says *"written whenever a parent document
+     * reaches finalized status"*; the user decided to keep it on post (2026-09-26, GAPS #396): post is the one
+     * irreversible commit, the same moment the ledger and the TDS register are written. It does not affect what
+     * is FILED, because `GstReturnService` reads the documents and a finalized invoice is a supply whether or
+     * not the ledger has caught up with it.
      */
     public function test_posting_now_writes_the_gst_register_row_it_never_could(): void
     {
@@ -631,6 +632,114 @@ class GstReturnTest extends TestCase
         $filed = collect($this->gstr1()['b2b'])->firstWhere('document_no', 'BRK-RTNBOM-26-0001');
         $this->assertSame('27AAACV1003A1Z5', $filed['counterparty_gstin']);
         $this->assertSame([], $this->gstr1()['warnings'], 'the register and the return agree');
+    }
+
+    private function openSeptember(): void
+    {
+        DB::table('accounting_periods')->insert(['agent_id' => $this->branch->id, 'period_name' => 'September',
+            'start_date' => '2026-09-01', 'end_date' => '2026-09-30', 'status' => 'open',
+            'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    /**
+     * 🔴 The buy side writes the register too (2026-09-26, GAPS #396). PRD §1555 always said it should; it
+     * never did, so the register was outward-only. 3B's ITC never depended on it — it is computed from the
+     * vouchers — which is why the filed figure was right all along and only the register was one-sided.
+     */
+    public function test_posting_a_purchase_voucher_writes_the_input_side_of_the_register(): void
+    {
+        $this->openSeptember();
+        $local = $this->cost('PV-RTNBOM-26-0001', 50000, 9000);
+        $faraway = $this->cost('PV-RTNBOM-26-0002', 20000, 3600, Partner::create([
+            'company_id' => $this->branch->company_id, 'agent_id' => $this->branch->id,
+            'name' => 'Chennai Trucking', 'partner_type' => 'transporter', 'gst_no' => '33AAACT1004A1Z5']));
+
+        $this->as($this->accounts)->postJson("http://accounts.localhost/api/vouchers/{$local}/post")->assertOk();
+        $this->as($this->accounts)->postJson("http://accounts.localhost/api/vouchers/{$faraway}/post")->assertOk();
+
+        $row = DB::table('gst_ledger_entries')->where('voucher_type', 'purchase_voucher')->where('voucher_id', $local)->first();
+        $this->assertNotNull($row, 'a vendor in our own state is determinable');
+        $this->assertEquals([4500, 4500, 0], [(float) $row->cgst_amount, (float) $row->sgst_amount, (float) $row->igst_amount]);
+
+        $row = DB::table('gst_ledger_entries')->where('voucher_type', 'purchase_voucher')->where('voucher_id', $faraway)->first();
+        $this->assertEquals([0, 0, 3600], [(float) $row->cgst_amount, (float) $row->sgst_amount, (float) $row->igst_amount]);
+    }
+
+    /** ⚠️ An unregistered vendor is undeterminable on the buy side exactly as an unregistered client is on the sell side. */
+    public function test_a_voucher_from_an_unregistered_vendor_writes_no_register_row(): void
+    {
+        $this->openSeptember();
+        $id = $this->cost('PV-RTNBOM-26-0001', 50000, 9000, Partner::create([
+            'company_id' => $this->branch->company_id, 'agent_id' => $this->branch->id,
+            'name' => 'Cash Trucker', 'partner_type' => 'transporter', 'gst_no' => null]));
+
+        $this->as($this->accounts)->postJson("http://accounts.localhost/api/vouchers/{$id}/post")->assertOk();
+
+        $this->assertDatabaseMissing('gst_ledger_entries', ['voucher_type' => 'purchase_voucher', 'voucher_id' => $id]);
+    }
+
+    /**
+     * 🔴 Two totals, never one — tax charged is owed, input credit is claimed back — and a credit note SUBTRACTS.
+     * The register total used to add every row regardless, so a credit note's reversed tax was counted as more
+     * tax charged, and once purchases landed here the paid side would have been added to it too.
+     */
+    public function test_the_register_keeps_charged_and_paid_apart_and_a_credit_note_subtracts(): void
+    {
+        $invoice = $this->bill('INV-RTNBOM-26-0001', 'invoice', $this->local, [[100000, 18000, '996531']]);
+        $credit = $this->bill('CN-RTNBOM-26-0001', 'credit_note', $this->local, [[10000, 1800, '996531']]);
+        $voucher = $this->cost('PV-RTNBOM-26-0001', 50000, 9000);
+
+        foreach ([[$invoice, 'invoice', 9000], [$credit, 'invoice', 900], [$voucher, 'purchase_voucher', 4500]] as [$id, $type, $half]) {
+            DB::table('gst_ledger_entries')->insert(['agent_id' => $this->branch->id, 'company_id' => $this->branch->company_id,
+                'voucher_id' => $id, 'voucher_type' => $type, 'cgst_amount' => $half, 'sgst_amount' => $half,
+                'igst_amount' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        }
+
+        $register = $this->as($this->accounts)->getJson('http://accounts.localhost/api/registers/gst')->assertOk()->json();
+
+        $this->assertEquals(['cgst' => 8100, 'sgst' => 8100, 'igst' => 0], $register['totals']['output']);
+        $this->assertEquals(['cgst' => 4500, 'sgst' => 4500, 'igst' => 0], $register['totals']['input']);
+
+        $row = collect($register['rows'])->firstWhere('invoice_no', 'CN-RTNBOM-26-0001');
+        $this->assertEquals(-900, $row['cgst_amount'], 'shown signed, so the column adds up to the total under it');
+
+        $row = collect($register['rows'])->firstWhere('invoice_no', 'PV-RTNBOM-26-0001');
+        $this->assertSame(['input', 'Local Air'], [$row['direction'], $row['customer']]);
+    }
+
+    /**
+     * 🔴 The backfill writes what posting missed — anything posted before `gst_no` landed, and every voucher
+     * before vouchers wrote a row at all — through the same `writeGstRegister()` posting calls, and a second run
+     * writes nothing.
+     */
+    public function test_the_backfill_writes_what_posting_missed_and_writes_nothing_twice(): void
+    {
+        $this->openSeptember();
+        $ledger = app(\App\Services\LedgerPostingService::class);
+        $period = DB::table('accounting_periods')->where('agent_id', $this->branch->id)->value('id');
+
+        // Posted the way everything was before today: ledger written, register not.
+        $invoice = $this->bill('INV-RTNBOM-26-0001', 'invoice', $this->faraway, [[100000, 18000, '996531']]);
+        $ledger->write($ledger->linesForInvoice(\App\AccountsInvoice::withoutGlobalScopes()->find($invoice)),
+            $this->branch->id, $period, $invoice, 'invoice');
+        DB::table('accounts_invoices')->where('id', $invoice)->update(['is_posted' => true]);
+
+        $voucher = $this->cost('PV-RTNBOM-26-0001', 50000, 9000);
+        $ledger->write($ledger->linesForVoucher(\App\AccountsPurchaseVoucher::withoutGlobalScopes()->find($voucher)),
+            $this->branch->id, $period, $voucher, 'purchase_voucher');
+
+        // Never posted — the backfill must not touch it.
+        $unposted = $this->cost('PV-RTNBOM-26-0002', 20000, 3600);
+
+        $this->artisan('accounts:backfill-gst-register')->assertSuccessful();
+
+        $this->assertDatabaseHas('gst_ledger_entries', ['voucher_type' => 'invoice', 'voucher_id' => $invoice, 'igst_amount' => 18000]);
+        $this->assertDatabaseHas('gst_ledger_entries', ['voucher_type' => 'purchase_voucher', 'voucher_id' => $voucher, 'cgst_amount' => 4500]);
+        $this->assertDatabaseMissing('gst_ledger_entries', ['voucher_type' => 'purchase_voucher', 'voucher_id' => $unposted]);
+
+        $count = DB::table('gst_ledger_entries')->count();
+        $this->artisan('accounts:backfill-gst-register')->assertSuccessful();
+        $this->assertSame($count, DB::table('gst_ledger_entries')->count(), 'a second run writes nothing');
     }
 
     public function test_sales_cannot_read_a_gst_return(): void

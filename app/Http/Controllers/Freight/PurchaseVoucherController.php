@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Freight;
 use App\AccountsPurchaseVoucher;
 use App\Http\Controllers\Controller;
 use App\Services\AuditLogger;
+use App\Services\GstSplitService;
 use App\Services\LedgerPostingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ class PurchaseVoucherController extends Controller
 {
     public function __construct(
         private readonly LedgerPostingService $ledger,
+        private readonly GstSplitService $gst,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -98,10 +100,36 @@ class PurchaseVoucherController extends Controller
                 $voucher->agent_id, $period->id, $voucher->id, 'purchase_voucher'
             );
 
+            $this->writeGstRegister($voucher);
+
             $this->audit->record($voucher->agent_id, 'voucher.posted', 'purchase_voucher', $voucher->id, auth()->id());
         });
 
         return response()->json($this->shape($voucher->fresh(['vendor', 'items'])));
+    }
+
+    /**
+     * The GST register row — the buy-side mirror of `InvoiceController::writeGstRegister`, and public for
+     * the same reason (2026-09-26, GAPS #396): this used to not exist at all — 3B's ITC is computed from
+     * vouchers directly so the filed figure was already right, but the register was outward-only, and the
+     * decision on checking was to complete it rather than leave it one-sided.
+     *
+     * 🔴 **The roles are reversed from the sell side.** The vendor is the one issuing us a tax invoice, so
+     * THEY are the supplier and WE are the counterparty — the opposite of `InvoiceController`, where we bill
+     * and the customer is the counterparty. `GstSplitService::split()` only compares two state codes, so
+     * which argument is named "supplier" doesn't change the arithmetic, but keeping OUR OWN GSTIN in that
+     * slot on both sides keeps `supplier_gstin_missing` meaning the same thing — ours absent — everywhere it
+     * is raised, rather than flipping meaning between the two document types.
+     */
+    public function writeGstRegister(AccountsPurchaseVoucher $voucher): void
+    {
+        $tax = round((float) $voucher->items->sum('tax_amount'), 2);
+        $vendorGstin = $voucher->vendor?->gst_no;
+        $ourGstin = DB::table('agents_info')->where('id', $voucher->agent_id)->value('gst_no');
+
+        $split = $this->gst->split($tax, $vendorGstin, $ourGstin);
+
+        $this->ledger->writeGstRegisterRow($voucher->agent_id, 'purchase_voucher', $voucher->id, $split);
     }
 
     /** The journal this posting writes — the same lines, from the same method. */

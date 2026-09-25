@@ -308,6 +308,41 @@ class LedgerPostingService
     }
 
     /**
+     * The GST register row itself — PRD.md §7. Both directions call this with a split
+     * already worked out by `GstSplitService`: `InvoiceController` resolves the
+     * counterparty from the billed party, `PurchaseVoucherController` from the vendor —
+     * this only writes what they decided, the same "dumb executor" split as `write()`
+     * above (2026-09-26, GAPS #396: purchase vouchers previously never wrote a row at
+     * all, though PRD §1555 says they should — 3B's ITC was computed from the vouchers
+     * directly so the figure was right, but the register was outward-only).
+     *
+     * 🔴 Written only when the split is DETERMINABLE. See `GstSplitService`: an
+     * undeterminable split does not affect what anybody is billed, but filing it under
+     * the wrong heads — or under invented heads — means a counterparty cannot claim the
+     * credit they paid, so a row is better absent (visible, fixable before filing) than
+     * present and guessed.
+     */
+    public function writeGstRegisterRow(int $agentId, string $voucherType, int $voucherId, array $split): void
+    {
+        if (! $split['determinable'] || $split['kind'] === 'none') {
+            return;
+        }
+
+        $companyId = DB::table('agents_info')->where('id', $agentId)->value('company_id');
+
+        DB::table('gst_ledger_entries')->insert([
+            'agent_id'     => $agentId,
+            'company_id'   => $companyId,
+            'voucher_id'   => $voucherId,
+            'voucher_type' => $voucherType,
+            'cgst_amount'  => $split['cgst'],
+            'sgst_amount'  => $split['sgst'],
+            'igst_amount'  => $split['igst'],
+            'created_at'   => now(), 'updated_at' => now(),
+        ]);
+    }
+
+    /**
      * Resolve one account, creating it on first use so posting is never blocked by
      * missing setup. A real chart is configured in /settings/finance by accounts.
      */

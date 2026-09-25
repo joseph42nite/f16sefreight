@@ -124,11 +124,11 @@ class AccountsWorkQueueTest extends TestCase
         }
 
         $all = $this->getJson('http://accounts.localhost/api/registers/gst')->assertOk()->json();
-        $this->assertSame([90.0, 90.0, 360.0], array_map('floatval', [$all['totals']['cgst'], $all['totals']['sgst'], $all['totals']['igst']]));
+        $this->assertSame([90.0, 90.0, 360.0], array_map('floatval', [$all['totals']['output']['cgst'], $all['totals']['output']['sgst'], $all['totals']['output']['igst']]));
         $this->assertSame(['BOM', 'Chennai'], collect($all['branches'])->pluck('name')->sort()->values()->all());
 
         $justChennai = $this->getJson("http://accounts.localhost/api/registers/gst?agent_id={$chennai->id}")->assertOk()->json();
-        $this->assertSame([0.0, 0.0, 360.0], array_map('floatval', [$justChennai['totals']['cgst'], $justChennai['totals']['sgst'], $justChennai['totals']['igst']]));
+        $this->assertSame([0.0, 0.0, 360.0], array_map('floatval', [$justChennai['totals']['output']['cgst'], $justChennai['totals']['output']['sgst'], $justChennai['totals']['output']['igst']]));
 
         // What has not reached the ledger, and what each is waiting for.
         DB::table('unposted_transactions_queue')->insert(['agent_id' => $this->branch->id, 'company_id' => $this->branch->company_id,

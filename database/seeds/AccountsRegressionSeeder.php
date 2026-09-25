@@ -125,12 +125,16 @@ class AccountsRegressionSeeder extends Seeder
     // checking Financials → GST register against a freshly reseeded fixture and finding zero rows anywhere
     // in the system (2026-09-26). `accounts:verify` never checked the register, so nothing caught it.
     private \App\Http\Controllers\Freight\InvoiceController $invoices;
+    // The buy-side mirror — purchase vouchers write a register row too now (GAPS #396, "complete the
+    // register" was the decision), so `buy()` needs the same call `PurchaseVoucherController::post()` makes.
+    private \App\Http\Controllers\Freight\PurchaseVoucherController $vouchers;
 
     public function run(): void
     {
         $this->sequences = app(EnquirySequenceService::class);
         $this->ledger = app(LedgerPostingService::class);
         $this->invoices = app(\App\Http\Controllers\Freight\InvoiceController::class);
+        $this->vouchers = app(\App\Http\Controllers\Freight\PurchaseVoucherController::class);
 
         $this->places();
         $this->wipe(self::FIXTURE['code']);
@@ -443,6 +447,7 @@ class AccountsRegressionSeeder extends Seeder
 
         $this->post($this->ledger->linesForVoucher($voucher->fresh()), $branch->id,
             $voucher->document_date, $voucher->id, 'purchase_voucher');
+        $this->vouchers->writeGstRegister($voucher->fresh());
 
         return $voucher->fresh();
     }

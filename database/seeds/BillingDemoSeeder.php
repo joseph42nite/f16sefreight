@@ -201,6 +201,9 @@ class BillingDemoSeeder extends Seeder
 
             // The ledger of a DEMO tenant is the seeder's to rebuild; on a live one it would never be touched.
             DB::table('accounts_ledger_entries')->whereIn('agent_id', $branches)->delete();
+            // The register is rebuilt with the ledger it mirrors. Left behind, every reseed re-posts the same
+            // invoices and doubles their rows — harmless only for as long as nothing ever wrote one.
+            DB::table('gst_ledger_entries')->whereIn('agent_id', $branches)->delete();
             DB::table('unposted_transactions_queue')->whereIn('agent_id', $branches)->delete();
         } finally {
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
@@ -586,6 +589,8 @@ class BillingDemoSeeder extends Seeder
         // — found by checking Financials → GST register on a freshly reseeded demo and finding it empty
         // everywhere, because this loop never called it (2026-09-26).
         $invoices = app(\App\Http\Controllers\Freight\InvoiceController::class);
+        // The buy-side mirror — vouchers write a register row too now (GAPS #396).
+        $vouchers = app(\App\Http\Controllers\Freight\PurchaseVoucherController::class);
         $posted = 0;
 
         $post = function ($lines, $date, $sourceId, $type) use ($ledger, $branch, &$posted) {
@@ -611,7 +616,9 @@ class BillingDemoSeeder extends Seeder
 
         foreach (\App\AccountsPurchaseVoucher::withoutGlobalScopes()->where('agent_id', $branch)
             ->orderByDesc('id')->limit(6)->get() as $voucher) {
-            $post($ledger->linesForVoucher($voucher), $voucher->document_date, $voucher->id, 'purchase_voucher');
+            if ($post($ledger->linesForVoucher($voucher), $voucher->document_date, $voucher->id, 'purchase_voucher')) {
+                $vouchers->writeGstRegister($voucher);
+            }
         }
 
         foreach (AccountsReceipt::withoutGlobalScopes()->where('agent_id', $branch)->get() as $receipt) {

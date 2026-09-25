@@ -51,7 +51,10 @@ class JobCostSheetController extends Controller
 
     public const TAX_STATUSES = ['taxable', 'exempt', 'zero_rated'];
 
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly \App\Services\EnquirySequenceService $sequences,
+    ) {}
 
     /**
      * The sheet for one job.
@@ -198,7 +201,9 @@ class JobCostSheetController extends Controller
                 'tax_amount'     => $tax,
                 'net_amount'     => round($amount + $tax, 2),
             ]);
-        });
+        // A new voucher mints a sequence number, and a transaction that mints one replays on deadlock — the retry
+        // belongs to the caller, see EnquirySequenceService::DEADLOCK_ATTEMPTS.
+        }, \App\Services\EnquirySequenceService::DEADLOCK_ATTEMPTS);
 
         // A cost booked after billing is its own event in the trail: it moves the margin of a shipment already billed.
         $this->audit->record($job->agent_id, $late ? 'costsheet.late_cost_booked' : "costsheet.{$data['side']}_line_added",
@@ -478,9 +483,14 @@ class JobCostSheetController extends Controller
      * The carrier this shipment flies on, as a vendor to owe money to — from `jobs.awb_number`'s prefix and the
      * platform's airline list (user, 2026-09-18).
      *
-     * ⚠️ A purchase voucher points at `partners`, so the airline is kept as this company's partner row the first time
+     * ⚠️ A purchase voucher points at `partners`, so the airline is kept as this BRANCH's partner row the first time
      * it is owed anything: found by name, created as an `airline` partner otherwise. Nothing is invented — the name is
      * the directory's — and a prefix the directory does not know returns NULL, leaving the old "name a vendor" error.
+     *
+     * 🔴 Per BRANCH, not per company (user, 2026-09-26, GAPS #399). A partner row carries a GSTIN, and a GSTIN is a
+     * state registration — see `Partner::$tenantColumn`. This used to find the airline company-wide, so a Chennai cost
+     * landed on the Emirates row registered in Mumbai (27), and the voucher's input credit was split against another
+     * state's registration: IGST where Chennai's own registration would have made it CGST + SGST.
      */
     private function airlineVendor(Job $job): ?int
     {
@@ -497,7 +507,7 @@ class JobCostSheetController extends Controller
         }
 
         $companyId = DB::table('agents_info')->where('id', $job->agent_id)->value('company_id');
-        $existing = DB::table('partners')->where('company_id', $companyId)->whereRaw('LOWER(name) = ?', [strtolower($airline->name)])->value('id');
+        $existing = DB::table('partners')->where('agent_id', $job->agent_id)->whereRaw('LOWER(name) = ?', [strtolower($airline->name)])->value('id');
 
         return $existing ?? DB::table('partners')->insertGetId([
             'company_id' => $companyId, 'agent_id' => $job->agent_id, 'name' => $airline->name,
@@ -529,8 +539,12 @@ class JobCostSheetController extends Controller
             'agent_id' => $job->agent_id, 'job_id' => $job->id,
             'transport_mode' => $job->transport_mode, 'vendor_id' => $vendorId,
             'created_by' => auth()->id(),
-            // One per supplier on this shipment, so two vouchers created in the same second cannot collide.
-            'voucher_no' => 'PV-' . $job->id . '-' . $vendorId . '-' . now()->format('YmdHis'),
+            // 🔴 A real number from the branch's own PV sequence (user, 2026-09-26, GAPS #400). This was a placeholder
+            // — `PV-{job}-{vendor}-{timestamp}` — that no step ever replaced, unlike an invoice's at finalize, so a
+            // voucher raised from the sheet carried it for life into the register, the payment run and the supplier's
+            // remittance. Minted at creation, as a payment is at the run: a number consumed by a voucher later emptied
+            // is a gap, and gaps are acceptable — a number is never recycled (implementation_guide, Conventions).
+            'voucher_no' => $this->sequences->next($job->agent_id, 'PV'),
             'document_date' => now()->toDateString(), 'status' => 'unpaid',
         ]);
     }

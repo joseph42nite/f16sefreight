@@ -121,6 +121,8 @@ class CostToBookTest extends TestCase
 
         $voucher = DB::table('accounts_purchase_vouchers')->where('job_id', $this->job->id)->first();
         $this->assertSame('Emirates SkyCargo', DB::table('partners')->where('id', $voucher->vendor_id)->value('name'));
+        // A real number from the branch's PV sequence — never the old `PV-{job}-{vendor}-{timestamp}` placeholder.
+        $this->assertMatchesRegularExpression('/^PV-BKCBOM-\d{2}-0001$/', $voucher->voucher_no);
         $item = DB::table('accounts_purchase_items')->where('purchase_voucher_id', $voucher->id)->first();
         $this->assertEquals([60000, 10800, 70800], [(float) $item->amount, (float) $item->tax_amount, (float) $item->net_amount]);
 
@@ -166,6 +168,33 @@ class CostToBookTest extends TestCase
         // The Boss works from the admin portal; the accounts portal admits accounts only.
         $this->assertFalse($this->queue($this->boss, 'admin.localhost')['can_book']);
         $this->book($this->boss, $this->job, [], 'admin.localhost')->assertForbidden();
+    }
+
+    /**
+     * 🔴 The airline is resolved per BRANCH (GAPS #399). A partner row carries a GSTIN, a state registration, so the
+     * Chennai branch's cost must land on Chennai's Emirates row — never on Mumbai's, which it used to find company-wide.
+     */
+    public function test_the_airline_is_resolved_per_branch_not_company_wide(): void
+    {
+        $mumbai = Partner::create(['company_id' => $this->branch->company_id, 'agent_id' => $this->branch->id,
+            'name' => 'Emirates SkyCargo', 'partner_type' => 'airline', 'gst_no' => '27AAACE1700A1Z5']);
+
+        $chennai = Agent::create(['company_id' => $this->branch->company_id, 'agent_name' => 'Chennai', 'branch_code' => 'MAA']);
+        $there = $this->shipment('0002', '176-22345671', $chennai);
+        $this->bill($there);
+
+        $this->book($this->accounts, $there)->assertCreated();
+
+        $vendorId = DB::table('accounts_purchase_vouchers')->where('job_id', $there->id)->value('vendor_id');
+        $this->assertNotSame($mumbai->id, (int) $vendorId, "never Mumbai's registration");
+        $this->assertSame([$chennai->id, 'Emirates SkyCargo'],
+            [(int) DB::table('partners')->where('id', $vendorId)->value('agent_id'), DB::table('partners')->where('id', $vendorId)->value('name')]);
+
+        // And the Mumbai shipment still uses Mumbai's own row — resolved, not duplicated.
+        $this->bill($this->job);
+        $this->book($this->accounts, $this->job)->assertCreated();
+        $this->assertSame($mumbai->id, (int) DB::table('accounts_purchase_vouchers')->where('job_id', $this->job->id)->value('vendor_id'));
+        $this->assertSame(2, DB::table('partners')->where('company_id', $this->branch->company_id)->where('name', 'Emirates SkyCargo')->count());
     }
 
     public function test_another_companys_billed_shipment_is_never_listed(): void

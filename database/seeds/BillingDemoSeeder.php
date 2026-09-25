@@ -345,7 +345,8 @@ class BillingDemoSeeder extends Seeder
     {
         $company = DB::table('agents_info')->where('id', $branch)->value('company_id');
         $customers = DB::table('customers')->where('company_id', $company)->pluck('id')->all();
-        $carrier = Partner::withoutGlobalScopes()->where('company_id', $company)
+        // This branch's own carrier row — see costSome() and GAPS #399.
+        $carrier = Partner::withoutGlobalScopes()->where('agent_id', $branch)
             ->where('partner_type', 'airline')->value('id');
         $pricing = DB::table('users')->where('branch_name', $branch)->where('designation', 'pricing')->value('id');
 
@@ -516,19 +517,24 @@ class BillingDemoSeeder extends Seeder
 
         // ⚠️ The carrier needs a GSTIN of its own or every voucher against it claims NO input credit, and
         // 15 vouchers of unclaimed credit in a demo reads as a defect in GSTR-3B rather than as reference
-        // data nobody filled in. A carrier flying out of Mumbai is registered in 27 like the branch.
+        // data nobody filled in.
+        // 🔴 PER BRANCH (GAPS #399): a GSTIN is a state registration, so the carrier this branch owes is the
+        // carrier's registration in THIS branch's state — 27 for Mumbai, 33 for Chennai, same PAN. It was found
+        // company-wide, so every Chennai voucher was raised against Mumbai's registration, and so were the
+        // trucker's and the broker's, though the demo already had a Chennai row for each.
+        $state = substr((string) DB::table('agents_info')->where('id', $branch)->value('gst_no'), 0, 2) ?: '27';
         $carrier = Partner::withoutGlobalScopes()->firstOrCreate(
-            ['company_id' => $company, 'name' => 'Emirates SkyCargo'],
-            ['agent_id' => $branch, 'partner_type' => 'airline', 'email' => 'cass@emirates-skycargo.test',
-             'gst_no' => '27AAACE1700A1Z5']
+            ['agent_id' => $branch, 'name' => 'Emirates SkyCargo'],
+            ['company_id' => $company, 'partner_type' => 'airline', 'email' => 'cass@emirates-skycargo.test',
+             'gst_no' => $state . 'AAACE1700A1Z5']
         );
 
         if ($carrier->gst_no === null) {
-            $carrier->update(['gst_no' => '27AAACE1700A1Z5']);
+            $carrier->update(['gst_no' => $state . 'AAACE1700A1Z5']);
         }
-        $trucker = Partner::withoutGlobalScopes()->where('company_id', $company)
+        $trucker = Partner::withoutGlobalScopes()->where('agent_id', $branch)
             ->where('partner_type', 'transporter')->first() ?? $carrier;
-        $broker = Partner::withoutGlobalScopes()->where('company_id', $company)
+        $broker = Partner::withoutGlobalScopes()->where('agent_id', $branch)
             ->where('partner_type', 'customs_broker')->first() ?? $carrier;
 
         // Only shipments that have actually been billed: a cost against an unbilled job is work in progress.

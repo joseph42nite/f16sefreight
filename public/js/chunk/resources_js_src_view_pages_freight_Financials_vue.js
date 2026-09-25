@@ -1717,6 +1717,10 @@ var render = function render() {
       }
     }, [_vm._v("Still owed (short paid)")]), _vm._v(" "), _c("option", {
       attrs: {
+        value: "tds"
+      }
+    }, [_vm._v("The client deducted TDS")]), _vm._v(" "), _c("option", {
+      attrs: {
         value: "write_off"
       }
     }, [_vm._v("Write the difference off")]), _vm._v(" "), _c("option", {

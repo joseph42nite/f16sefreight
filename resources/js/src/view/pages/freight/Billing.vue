@@ -727,8 +727,11 @@
                 <td class="fx-num"><Figure :value="d.outstanding" kind="currency" currency-code="INR" /></td>
                 <td><input v-model.number="allocation[d.id]" type="number" step="0.01" min="0" class="fx-input fx-num" /></td>
                 <td>
+                  <!-- 🔴 A client who deducted TDS paid correctly and in full: tax already paid on our own
+                       behalf, an ASSET (1400-TDS-Receivable) — not owed, not a write-off, not a discount. -->
                   <select v-model="resolution[d.id]" class="fx-input">
                     <option value="">Still owed</option>
+                    <option value="tds">The client deducted TDS</option>
                     <option value="write_off">Write it off</option>
                     <option value="discount">Treat it as a discount</option>
                   </select>

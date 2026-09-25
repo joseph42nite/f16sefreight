@@ -436,9 +436,16 @@
               <td><StatusChip :value="c.confidence" /></td>
               <td>{{ c.reason }}</td>
               <td v-if="canPost" class="fx-row-actions">
-                <!-- A short payment has to say what the difference IS: written off, discounted, or still owed. -->
+                <!--
+                  A short payment has to say what the difference IS. 🔴 A client who deducted TDS paid
+                  correctly and in full — the difference is tax already paid on our own behalf, recoverable
+                  against our own income-tax liability, an ASSET (1400-TDS-Receivable). It is none of the
+                  other three: "still owed" ages a client who owes nothing, "write off" books an expense we
+                  never incurred, "discount" books revenue we never gave up.
+                -->
                 <select v-if="c.variance < 0" v-model="resolution" class="fx-input">
                   <option value="">Still owed (short paid)</option>
+                  <option value="tds">The client deducted TDS</option>
                   <option value="write_off">Write the difference off</option>
                   <option value="discount">Treat it as a discount</option>
                 </select>

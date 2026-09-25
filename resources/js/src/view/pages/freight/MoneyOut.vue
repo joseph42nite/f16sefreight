@@ -30,12 +30,93 @@
     <template v-else>
       <p class="fx-muted">{{ current ? current.note : "" }}</p>
 
-      <!-- ①②③ are read on the screens that own them; ④ is the one that does something. -->
-      <div v-if="stage !== 'due'" class="fx-toolbar">
-        <router-link v-if="stage === 'to_cost'" class="fx-btn fx-btn--primary" to="/profitability">
-          See which shipments
-        </router-link>
-        <router-link v-else-if="stage === 'vouchers'" class="fx-btn fx-btn--primary"
+      <!--
+        ── ① Cost to book, as a queue (user, 2026-09-26) ─────────────────────
+        🔴 A billed shipment with no cost reads as pure profit. This used to be a count linking to a report; now the
+        cost is booked right here, through the cost sheet's own endpoint, so there is still one path that raises a
+        voucher. Accounts only — pricing's sheet stays locked once a shipment is billed.
+      -->
+      <template v-if="stage === 'to_cost'">
+        <p v-if="queueLoading" class="fx-muted">Loading…</p>
+        <p v-else-if="!queue.rows.length" class="fx-muted">Every billed shipment has its cost booked.</p>
+        <template v-else>
+          <table class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Shipment</th>
+                <th scope="col">Client</th>
+                <th v-if="branches.length > 1" scope="col">Branch</th>
+                <th scope="col">Billed as</th>
+                <th scope="col">Billed on</th>
+                <th class="fx-num" scope="col">Billed (net of tax)</th>
+                <th v-if="queue.can_book" scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="r in queue.rows">
+                <tr :key="'q-' + r.job_id" :class="{ 'is-selected': booking && booking.job_id === r.job_id }">
+                  <td class="identifier">{{ r.job_no || r.job_id }}</td>
+                  <td>{{ r.customer || "—" }}</td>
+                  <td v-if="branches.length > 1">{{ r.branch }}</td>
+                  <td class="identifier">{{ r.invoices }}</td>
+                  <td><Figure :value="r.billed_on" kind="date" /></td>
+                  <td class="fx-num"><Figure :value="r.billed" kind="currency" currency-code="INR" /></td>
+                  <td v-if="queue.can_book" class="fx-row-actions">
+                    <button v-if="!booking || booking.job_id !== r.job_id" class="fx-btn" @click="startBooking(r)">Book cost</button>
+                  </td>
+                </tr>
+                <tr v-if="booking && booking.job_id === r.job_id" :key="'qf-' + r.job_id">
+                  <td :colspan="branches.length > 1 ? 7 : 6">
+                    <div class="fx-toolbar">
+                      <label class="fx-field">
+                        <span class="fx-field__label">Supplier</span>
+                        <select v-model="booking.vendor_id" class="fx-input">
+                          <!-- The airline the AWB names: sent as no vendor, so the cost sheet resolves it itself. -->
+                          <option v-if="r.default_supplier" :value="null">{{ r.default_supplier }} (from the AWB)</option>
+                          <option v-else :value="null" disabled>Choose…</option>
+                          <option v-for="s in (queue.suppliers[r.agent_id] || [])" :key="s.id" :value="s.id">{{ s.name }}</option>
+                        </select>
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-field__label">Charge</span>
+                        <select v-model="booking.charge_type" class="fx-input">
+                          <option v-for="c in queue.charge_types" :key="c" :value="c">{{ c.replace(/_/g, " ") }}</option>
+                        </select>
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-field__label">Description</span>
+                        <input v-model="booking.description" class="fx-input" />
+                      </label>
+                      <label class="fx-field">
+                        <span class="fx-field__label">Amount (net of GST)</span>
+                        <input v-model.number="booking.amount" type="number" step="0.01" min="0" class="fx-input fx-num" />
+                      </label>
+                      <!-- Required, never defaulted: a guessed rate books input credit nobody was charged. -->
+                      <label class="fx-field">
+                        <span class="fx-field__label">GST %</span>
+                        <input v-model="booking.tax_percentage" type="number" step="0.01" min="0" max="100" class="fx-input fx-num" />
+                      </label>
+                      <button class="fx-btn fx-btn--primary" :disabled="busy || !bookingValid" @click="bookCost">
+                        {{ busy ? "Booking…" : "Book it" }}
+                      </button>
+                      <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="booking = null">Cancel</button>
+                    </div>
+                    <p class="fx-muted">
+                      Raises the supplier's voucher for this shipment, unposted — post it from ② Vouchers. It adds a cost
+                      to a shipment already billed; nothing on the client's invoice changes.
+                    </p>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </template>
+        <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
+      </template>
+
+      <!-- ②③ are read on the screens that own them; ④ is the one that pays. -->
+      <div v-else-if="stage !== 'due'" class="fx-toolbar">
+        <router-link v-if="stage === 'vouchers'" class="fx-btn fx-btn--primary"
                      :to="{ path: '/financials', query: { view: 'vouchers' } }">Open the voucher register</router-link>
         <router-link v-else class="fx-btn fx-btn--primary"
                      :to="{ path: '/financials', query: { view: 'vendors' } }">Open the supplier statements</router-link>
@@ -246,6 +327,8 @@ export default {
     picked: {}, amounts: {},
     form: { agent_id: null, payment_date: new Date().toISOString().slice(0, 10), mode: "bank_transfer", reference: "" },
     showPaid: false, confirming: false, lastRun: null,
+    /** ① Cost to book, and the one shipment whose cost is being booked (user, 2026-09-26). */
+    queue: { rows: [], suppliers: {}, charge_types: [], can_book: false }, queueLoading: false, booking: null,
     loading: true, busy: false, error: null, actionError: null,
   }),
   computed: {
@@ -277,6 +360,16 @@ export default {
 
       return Object.values(byVendor);
     },
+    /** A supplier (named, or the AWB's airline), a description, an amount, and a GST rate somebody actually typed. */
+    bookingValid() {
+      const b = this.booking;
+      if (!b) return false;
+      const row = this.queue.rows.find((r) => r.job_id === b.job_id);
+      const hasSupplier = b.vendor_id !== null || !!(row && row.default_supplier);
+
+      return hasSupplier && b.description.trim() !== "" && Number(b.amount) > 0
+        && b.tax_percentage !== "" && Number(b.tax_percentage) >= 0 && Number(b.tax_percentage) <= 100;
+    },
     payeeCount() {
       return this.payees.length;
     },
@@ -297,7 +390,7 @@ export default {
           if (!this.form.agent_id && this.branches.length) this.form.agent_id = this.branches[0].id;
           this.error = null;
 
-          return Promise.all([this.loadDue(), this.loadPayments()]);
+          return Promise.all([this.loadDue(), this.loadPayments(), this.loadQueue()]);
         })
         .catch((e) => {
           this.error = (e.response && e.response.data && e.response.data.error) || "Money out could not be loaded.";
@@ -320,6 +413,40 @@ export default {
         .catch(() => {});
     },
     /** Ticking a voucher fills in its full balance — the common case is paying it off. */
+    loadQueue() {
+      this.queueLoading = true;
+      return ApiService.get("/money-out/to-cost")
+        .then(({ data }) => {
+          this.queue = { rows: data.rows || [], suppliers: data.suppliers || {},
+                         charge_types: data.charge_types || [], can_book: !!data.can_book };
+        })
+        .catch(() => {})
+        .finally(() => { this.queueLoading = false; });
+    },
+    startBooking(row) {
+      const charge = row.transport_mode === "air" ? "air_freight" : (row.transport_mode === "sea" ? "ocean_freight" : "miscellaneous");
+      this.actionError = null;
+      this.booking = { job_id: row.job_id, vendor_id: null, charge_type: charge,
+                       description: charge.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()),
+                       amount: null, tax_percentage: "" };
+    },
+    /** Through the cost sheet's own endpoint — one path raises a voucher, whoever calls it. */
+    bookCost() {
+      const b = this.booking;
+      const body = { side: "buy", charge_type: b.charge_type, description: b.description.trim(),
+                     quantity: 1, rate: Number(b.amount), tax_percentage: Number(b.tax_percentage) };
+      if (b.vendor_id !== null) body.vendor_id = b.vendor_id;
+
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/jobs/${b.job_id}/cost-sheet/lines`, body)
+        .then(() => { this.booking = null; this.load(); })
+        .catch((e) => {
+          const d = (e.response && e.response.data) || {};
+          this.actionError = d.error || d.message || "The cost could not be booked.";
+        })
+        .finally(() => { this.busy = false; });
+    },
     toggle(voucher, on) {
       this.$set(this.picked, voucher.id, on);
       this.$set(this.amounts, voucher.id, on ? Number(voucher.outstanding) : 0);

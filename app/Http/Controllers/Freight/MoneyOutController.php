@@ -97,6 +97,72 @@ class MoneyOutController extends Controller
         ]);
     }
 
+    /**
+     * ① as a queue, not a count (user, 2026-09-26): every billed shipment with no cost booked, oldest billed first,
+     * each with what it was billed at and the supplier its cost most likely belongs to.
+     *
+     * ⚠️ READ-ONLY. The default supplier is the airline the AWB prefix names — the same rule the cost sheet applies —
+     * but only LOOKED UP here. The cost sheet creates the airline as a partner the first time it is owed money; a
+     * list that did that would write a partner row every time somebody opened Money out.
+     *
+     * Booking goes through the cost sheet's own `POST /jobs/{job}/cost-sheet/lines` with `side=buy`, so there is one
+     * path that creates a voucher — see `JobCostSheetController::storeLine` for the after-billing rule.
+     */
+    public function toCost(Request $request): JsonResponse
+    {
+        $this->authorize('viewFinancials');
+
+        $branches = $this->branches();
+        $picked = $request->integer('agent_id') ?: null;
+        $scope = $picked && $branches->contains('id', $picked) ? [$picked] : $branches->pluck('id')->all();
+
+        // The same definition as the ① count above, so the list and the number on the pipeline always agree.
+        $rows = DB::table('accounts_invoices as i')
+            ->join('jobs as j', 'j.id', '=', 'i.job_id')
+            ->join('agents_info as a', 'a.id', '=', 'i.agent_id')
+            ->leftJoin('customers as c', 'c.id', '=', 'j.customer_id')
+            ->whereIn('i.agent_id', $scope)->where('i.type', 'invoice')->whereNotIn('i.status', ['draft', 'void'])
+            ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('accounts_purchase_vouchers as v')
+                ->whereColumn('v.job_id', 'i.job_id'))
+            ->groupBy('j.id', 'j.execution_job_no', 'j.transport_mode', 'j.awb_number', 'c.name', 'i.agent_id', 'a.agent_name')
+            ->orderByRaw('MIN(i.document_date), j.id')
+            ->get(['j.id as job_id', 'j.execution_job_no as job_no', 'j.transport_mode', 'j.awb_number',
+                   'c.name as customer', 'i.agent_id', 'a.agent_name as branch',
+                   DB::raw("GROUP_CONCAT(i.invoice_no ORDER BY i.invoice_no SEPARATOR ', ') AS invoices"),
+                   // Net of tax: the margin at stake is on the subtotal, never the grand total.
+                   DB::raw('ROUND(SUM(i.subtotal * i.exchange_rate), 2) AS billed'),
+                   DB::raw('MIN(i.document_date) AS billed_on')]);
+
+        $airlines = DB::table('airlines')->where('is_active', true)
+            ->whereIn('prefix', $rows->map(fn ($r) => $this->awbPrefix($r))->filter()->unique())
+            ->pluck('name', 'prefix');
+
+        $suppliers = DB::table('partners')->whereIn('agent_id', $scope)->orderBy('name')
+            ->get(['id', 'agent_id', 'name', 'partner_type']);
+
+        // A NAME only. Booking with the default sends no vendor, and the cost sheet resolves the airline exactly as it
+        // always does — so what is shown here and what is booked cannot come from two different lookups.
+        $rows->each(function ($row) use ($airlines) {
+            $row->default_supplier = $row->transport_mode === 'air' ? ($airlines[$this->awbPrefix($row)] ?? null) : null;
+        });
+
+        return response()->json([
+            'rows' => $rows,
+            'total' => round((float) $rows->sum('billed'), 2),
+            // Per branch: a supplier's GSTIN is a state registration, so a voucher is raised against the branch's own.
+            'suppliers' => $suppliers->groupBy('agent_id'),
+            'charge_types' => JobCostSheetController::CHARGE_TYPES,
+            'can_book' => \Illuminate\Support\Facades\Gate::allows('bookLateCost'),
+        ]);
+    }
+
+    private function awbPrefix(object $row): ?string
+    {
+        $prefix = substr(preg_replace('/\D/', '', (string) $row->awb_number), 0, 3);
+
+        return strlen($prefix) === 3 ? $prefix : null;
+    }
+
     private function branches()
     {
         $context = UserContext::for(auth()->user());

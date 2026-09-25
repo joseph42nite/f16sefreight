@@ -85,6 +85,9 @@ class AuthServiceProvider extends ServiceProvider
         // Tactical has no accounts — a Tactical cost sheet would be figures that go nowhere.
         $this->define('viewCostSheet', ['pricing', 'accounts', 'boss'], 'command');
         $this->define('editCostSheet', ['pricing', 'accounts'],         'command');
+        // A cost booked AFTER the shipment is billed — a supplier invoice that arrived late (user, 2026-09-26).
+        // Accounts alone: the invoice lands with them, and pricing's sheet stays locked once it has been billed.
+        $this->define('bookLateCost',  ['accounts'],                    'command');
 
         // 🔴 The margin is sell − buy, so seeing it IS seeing the buy rate. Sales is
         // excluded at every tier — PRD.md §7.2 marks that row "❌ never".

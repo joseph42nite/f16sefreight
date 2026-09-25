@@ -536,12 +536,19 @@ class BillingDemoSeeder extends Seeder
             ->whereNotIn('status', ['draft', 'void'])->where('type', 'invoice')
             ->selectRaw('job_id, SUM(subtotal * exchange_rate) AS revenue')->groupBy('job_id')->get();
 
+        // The most recently billed shipment's supplier invoice has not arrived yet (user, 2026-09-26) — the ordinary
+        // way a billed shipment ends up with no cost, and what Money out ① "Cost to book" exists to catch. Left
+        // uncosted so the queue has something real in it, and Close-the-month ② says so too.
+        $waiting = AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)
+            ->whereNotIn('status', ['draft', 'void'])->where('type', 'invoice')
+            ->orderByDesc('document_date')->orderByDesc('id')->value('job_id');
+
         $made = 0;
 
         foreach ($billed as $index => $job) {
             $revenue = (float) $job->revenue;
 
-            if ($revenue <= 0) {
+            if ($revenue <= 0 || (int) $job->job_id === (int) $waiting) {
                 continue;
             }
 

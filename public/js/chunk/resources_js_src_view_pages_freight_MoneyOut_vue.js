@@ -49,6 +49,15 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     showPaid: false,
     confirming: false,
     lastRun: null,
+    /** ① Cost to book, and the one shipment whose cost is being booked (user, 2026-09-26). */
+    queue: {
+      rows: [],
+      suppliers: {},
+      charge_types: [],
+      can_book: false
+    },
+    queueLoading: false,
+    booking: null,
     loading: true,
     busy: false,
     error: null,
@@ -86,6 +95,14 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       });
       return Object.values(byVendor);
     },
+    /** A supplier (named, or the AWB's airline), a description, an amount, and a GST rate somebody actually typed. */
+    bookingValid() {
+      const b = this.booking;
+      if (!b) return false;
+      const row = this.queue.rows.find(r => r.job_id === b.job_id);
+      const hasSupplier = b.vendor_id !== null || !!(row && row.default_supplier);
+      return hasSupplier && b.description.trim() !== "" && Number(b.amount) > 0 && b.tax_percentage !== "" && Number(b.tax_percentage) >= 0 && Number(b.tax_percentage) <= 100;
+    },
     payeeCount() {
       return this.payees.length;
     }
@@ -108,7 +125,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         this.branches = data.branches || [];
         if (!this.form.agent_id && this.branches.length) this.form.agent_id = this.branches[0].id;
         this.error = null;
-        return Promise.all([this.loadDue(), this.loadPayments()]);
+        return Promise.all([this.loadDue(), this.loadPayments(), this.loadQueue()]);
       }).catch(e => {
         this.error = e.response && e.response.data && e.response.data.error || "Money out could not be loaded.";
       }).finally(() => {
@@ -134,6 +151,57 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       }).catch(() => {});
     },
     /** Ticking a voucher fills in its full balance — the common case is paying it off. */
+    loadQueue() {
+      this.queueLoading = true;
+      return _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/money-out/to-cost").then(({
+        data
+      }) => {
+        this.queue = {
+          rows: data.rows || [],
+          suppliers: data.suppliers || {},
+          charge_types: data.charge_types || [],
+          can_book: !!data.can_book
+        };
+      }).catch(() => {}).finally(() => {
+        this.queueLoading = false;
+      });
+    },
+    startBooking(row) {
+      const charge = row.transport_mode === "air" ? "air_freight" : row.transport_mode === "sea" ? "ocean_freight" : "miscellaneous";
+      this.actionError = null;
+      this.booking = {
+        job_id: row.job_id,
+        vendor_id: null,
+        charge_type: charge,
+        description: charge.replace(/_/g, " ").replace(/^./, c => c.toUpperCase()),
+        amount: null,
+        tax_percentage: ""
+      };
+    },
+    /** Through the cost sheet's own endpoint — one path raises a voucher, whoever calls it. */
+    bookCost() {
+      const b = this.booking;
+      const body = {
+        side: "buy",
+        charge_type: b.charge_type,
+        description: b.description.trim(),
+        quantity: 1,
+        rate: Number(b.amount),
+        tax_percentage: Number(b.tax_percentage)
+      };
+      if (b.vendor_id !== null) body.vendor_id = b.vendor_id;
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/jobs/${b.job_id}/cost-sheet/lines`, body).then(() => {
+        this.booking = null;
+        this.load();
+      }).catch(e => {
+        const d = e.response && e.response.data || {};
+        this.actionError = d.error || d.message || "The cost could not be booked.";
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
     toggle(voucher, on) {
       this.$set(this.picked, voucher.id, on);
       this.$set(this.amounts, voucher.id, on ? Number(voucher.outstanding) : 0);
@@ -242,14 +310,261 @@ var render = function render() {
     }
   }, [_vm._v(_vm._s(_vm.error))]) : [_c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v(_vm._s(_vm.current ? _vm.current.note : ""))]), _vm._v(" "), _vm.stage !== "due" ? _c("div", {
-    staticClass: "fx-toolbar"
-  }, [_vm.stage === "to_cost" ? _c("router-link", {
-    staticClass: "fx-btn fx-btn--primary",
+  }, [_vm._v(_vm._s(_vm.current ? _vm.current.note : ""))]), _vm._v(" "), _vm.stage === "to_cost" ? [_vm.queueLoading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : !_vm.queue.rows.length ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Every billed shipment has its cost booked.")]) : [_c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
     attrs: {
-      to: "/profitability"
+      scope: "col"
     }
-  }, [_vm._v("\n        See which shipments\n      ")]) : _vm.stage === "vouchers" ? _c("router-link", {
+  }, [_vm._v("Shipment")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Client")]), _vm._v(" "), _vm.branches.length > 1 ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]) : _vm._e(), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Billed as")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Billed on")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Billed (net of tax)")]), _vm._v(" "), _vm.queue.can_book ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", [_vm._l(_vm.queue.rows, function (r) {
+    return [_c("tr", {
+      key: "q-" + r.job_id,
+      class: {
+        "is-selected": _vm.booking && _vm.booking.job_id === r.job_id
+      }
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.job_no || r.job_id))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.customer || "—"))]), _vm._v(" "), _vm.branches.length > 1 ? _c("td", [_vm._v(_vm._s(r.branch))]) : _vm._e(), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.invoices))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: r.billed_on,
+        kind: "date"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: r.billed,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _vm.queue.can_book ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [!_vm.booking || _vm.booking.job_id !== r.job_id ? _c("button", {
+      staticClass: "fx-btn",
+      on: {
+        click: function ($event) {
+          return _vm.startBooking(r);
+        }
+      }
+    }, [_vm._v("Book cost")]) : _vm._e()]) : _vm._e()]), _vm._v(" "), _vm.booking && _vm.booking.job_id === r.job_id ? _c("tr", {
+      key: "qf-" + r.job_id
+    }, [_c("td", {
+      attrs: {
+        colspan: _vm.branches.length > 1 ? 7 : 6
+      }
+    }, [_c("div", {
+      staticClass: "fx-toolbar"
+    }, [_c("label", {
+      staticClass: "fx-field"
+    }, [_c("span", {
+      staticClass: "fx-field__label"
+    }, [_vm._v("Supplier")]), _vm._v(" "), _c("select", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.booking.vendor_id,
+        expression: "booking.vendor_id"
+      }],
+      staticClass: "fx-input",
+      on: {
+        change: function ($event) {
+          var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+            return o.selected;
+          }).map(function (o) {
+            var val = "_value" in o ? o._value : o.value;
+            return val;
+          });
+          _vm.$set(_vm.booking, "vendor_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+        }
+      }
+    }, [r.default_supplier ? _c("option", {
+      domProps: {
+        value: null
+      }
+    }, [_vm._v(_vm._s(r.default_supplier) + " (from the AWB)")]) : _c("option", {
+      attrs: {
+        disabled: ""
+      },
+      domProps: {
+        value: null
+      }
+    }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.queue.suppliers[r.agent_id] || [], function (s) {
+      return _c("option", {
+        key: s.id,
+        domProps: {
+          value: s.id
+        }
+      }, [_vm._v(_vm._s(s.name))]);
+    })], 2)]), _vm._v(" "), _c("label", {
+      staticClass: "fx-field"
+    }, [_c("span", {
+      staticClass: "fx-field__label"
+    }, [_vm._v("Charge")]), _vm._v(" "), _c("select", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.booking.charge_type,
+        expression: "booking.charge_type"
+      }],
+      staticClass: "fx-input",
+      on: {
+        change: function ($event) {
+          var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+            return o.selected;
+          }).map(function (o) {
+            var val = "_value" in o ? o._value : o.value;
+            return val;
+          });
+          _vm.$set(_vm.booking, "charge_type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+        }
+      }
+    }, _vm._l(_vm.queue.charge_types, function (c) {
+      return _c("option", {
+        key: c,
+        domProps: {
+          value: c
+        }
+      }, [_vm._v(_vm._s(c.replace(/_/g, " ")))]);
+    }), 0)]), _vm._v(" "), _c("label", {
+      staticClass: "fx-field"
+    }, [_c("span", {
+      staticClass: "fx-field__label"
+    }, [_vm._v("Description")]), _vm._v(" "), _c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.booking.description,
+        expression: "booking.description"
+      }],
+      staticClass: "fx-input",
+      domProps: {
+        value: _vm.booking.description
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.booking, "description", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("label", {
+      staticClass: "fx-field"
+    }, [_c("span", {
+      staticClass: "fx-field__label"
+    }, [_vm._v("Amount (net of GST)")]), _vm._v(" "), _c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.booking.amount,
+        expression: "booking.amount",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.booking.amount
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.booking, "amount", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("label", {
+      staticClass: "fx-field"
+    }, [_c("span", {
+      staticClass: "fx-field__label"
+    }, [_vm._v("GST %")]), _vm._v(" "), _c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.booking.tax_percentage,
+        expression: "booking.tax_percentage"
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0",
+        max: "100"
+      },
+      domProps: {
+        value: _vm.booking.tax_percentage
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.booking, "tax_percentage", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      attrs: {
+        disabled: _vm.busy || !_vm.bookingValid
+      },
+      on: {
+        click: _vm.bookCost
+      }
+    }, [_vm._v("\n                      " + _vm._s(_vm.busy ? "Booking…" : "Book it") + "\n                    ")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          _vm.booking = null;
+        }
+      }
+    }, [_vm._v("Cancel")])]), _vm._v(" "), _c("p", {
+      staticClass: "fx-muted"
+    }, [_vm._v("\n                    Raises the supplier's voucher for this shipment, unposted — post it from ② Vouchers. It adds a cost\n                    to a shipment already billed; nothing on the client's invoice changes.\n                  ")])])]) : _vm._e()];
+  })], 2)])], _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()] : _vm.stage !== "due" ? _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_vm.stage === "vouchers" ? _c("router-link", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
       to: {

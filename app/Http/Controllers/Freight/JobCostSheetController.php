@@ -114,13 +114,6 @@ class JobCostSheetController extends Controller
     {
         $this->authorize('editCostSheet');
 
-        if ($this->isLocked($job)) {
-            return response()->json([
-                'error'  => 'This cost sheet has been finalized and posted. Corrections need a credit note.',
-                'reason' => 'locked',
-            ], 422);
-        }
-
         $data = $request->validate([
             'side'           => 'required|string|in:sell,buy',
             'charge_type'    => 'required|string|in:' . implode(',', self::CHARGE_TYPES),
@@ -132,6 +125,19 @@ class JobCostSheetController extends Controller
             'tax_percentage' => 'nullable|numeric|min:0|max:100',
             'vendor_id'      => 'nullable|integer|exists:partners,id',
         ]);
+
+        // 🔴 Billing locks the sheet — but a supplier invoice routinely arrives AFTER the shipment is billed, and a
+        // billed shipment with no cost reads as pure profit. So once billed (user, 2026-09-26): the sell side stays
+        // locked (corrections are a credit note), and ACCOUNTS may still ADD a cost — never change or remove one.
+        // That is the Money out ① "Cost to book" queue. Pricing's sheet stays locked after billing, as before.
+        $late = $this->isLocked($job);
+
+        if ($late && ! ($data['side'] === 'buy' && \Illuminate\Support\Facades\Gate::allows('bookLateCost'))) {
+            return response()->json([
+                'error'  => 'This cost sheet has been finalized and posted. Corrections need a credit note.',
+                'reason' => 'locked',
+            ], 422);
+        }
 
         // Derived, never posted by the client: a caller that could send its own amount
         // could send one that does not equal quantity × rate, and the sheet would show
@@ -145,6 +151,23 @@ class JobCostSheetController extends Controller
         // airline it is"). A buy line with no vendor takes the airline off the waybill.
         if ($data['side'] === 'buy' && empty($data['vendor_id'])) {
             $data['vendor_id'] = $this->airlineVendor($job);
+        }
+
+        // 🔴 Never add to a POSTED voucher (user, 2026-09-26). A line appended to one changes the total of a document
+        // whose journal is already written, so the ledger and the voucher stop agreeing without anything saying so.
+        // This held before billing too — the sheet would happily append to a voucher posted the day before.
+        if ($data['side'] === 'buy' && ! empty($data['vendor_id'])) {
+            $existing = AccountsPurchaseVoucher::withoutTenantScope()
+                ->where('job_id', $job->id)->where('vendor_id', $data['vendor_id'])->first();
+
+            if ($existing && DB::table('accounts_ledger_entries')->where('source_type', 'purchase_voucher')
+                ->where('source_id', $existing->id)->exists()) {
+                return response()->json([
+                    'error'  => "{$existing->voucher_no} to this supplier is already posted, so nothing can be added to it "
+                        . '— it would change a document the ledger has already recorded.',
+                    'reason' => 'voucher_posted',
+                ], 422);
+            }
         }
 
         $line = DB::transaction(function () use ($job, $data, $amount, $tax, $taxPct) {
@@ -177,7 +200,9 @@ class JobCostSheetController extends Controller
             ]);
         });
 
-        $this->audit->record($job->agent_id, "costsheet.{$data['side']}_line_added", 'job', $job->id, auth()->id());
+        // A cost booked after billing is its own event in the trail: it moves the margin of a shipment already billed.
+        $this->audit->record($job->agent_id, $late ? 'costsheet.late_cost_booked' : "costsheet.{$data['side']}_line_added",
+            'job', $job->id, auth()->id());
 
         return response()->json($this->show($job)->getData(true), 201);
     }

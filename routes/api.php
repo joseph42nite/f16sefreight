@@ -546,6 +546,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::get('/payments/{id}/posting-preview', [\App\Http\Controllers\Freight\PaymentController::class, 'postingPreview'])->whereNumber('id');
         Route::post('/payments/{id}/post', [\App\Http\Controllers\Freight\PaymentController::class, 'post'])->whereNumber('id');
         Route::get('/money-out/stages', [\App\Http\Controllers\Freight\MoneyOutController::class, 'stages']);
+        // ① as a queue: billed shipments with no cost booked. Booking itself goes through the cost sheet (user, 2026-09-26).
+        Route::get('/money-out/to-cost', [\App\Http\Controllers\Freight\MoneyOutController::class, 'toCost']);
 
         // ── Close the month: six steps that know where you are (guide §11.2).
         Route::get('/close-month', [\App\Http\Controllers\Freight\CloseMonthController::class, 'index']);

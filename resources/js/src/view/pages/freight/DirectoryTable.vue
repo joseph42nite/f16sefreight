@@ -76,17 +76,20 @@
           <input v-model="form.phone" class="fx-input" />
         </label>
 
-        <label class="fx-field">
-          <!-- ⚠️ The reason this record is per branch. A copied partner arrives without
-               one, because the other branch's number is another state's registration. -->
-          <span class="fx-field__label">GSTIN (this state)</span>
-          <input v-model="form.gst_no" class="fx-input" />
-        </label>
+        <!-- Tax numbers only where there are accounts to use them (Command) — never on Tactical. -->
+        <template v-if="withAccounts">
+          <label class="fx-field">
+            <!-- ⚠️ The reason this record is per branch. A copied partner arrives without
+                 one, because the other branch's number is another state's registration. -->
+            <span class="fx-field__label">GSTIN (this state)</span>
+            <input v-model="form.gst_no" class="fx-input" />
+          </label>
 
-        <label class="fx-field">
-          <span class="fx-field__label">PAN</span>
-          <input v-model="form.pan_no" class="fx-input" />
-        </label>
+          <label class="fx-field">
+            <span class="fx-field__label">PAN</span>
+            <input v-model="form.pan_no" class="fx-input" />
+          </label>
+        </template>
       </div>
 
       <label class="fx-field">
@@ -94,7 +97,7 @@
         <input v-model="form.address" class="fx-input" />
       </label>
 
-      <p v-if="copied" class="fx-muted">
+      <p v-if="copied && withAccounts" class="fx-muted">
         Copied from another branch — <strong>enter this branch's own GSTIN</strong>; the
         other branch's is a different state registration.
       </p>
@@ -264,9 +267,10 @@ const SHAPES = {
       { key: "branch", label: "Branch", bossOnly: true },
       { key: "email", label: "Email" },
       { key: "phone", label: "Phone", mono: true },
-      { key: "gst_no", label: "GSTIN", mono: true },
-      { key: "tds_section", label: "TDS section", mono: true },
-      { key: "tds_rate_override", label: "s.197 rate %", numeric: true },
+      // Accounts figures — Command only, as for clients: the server does not send them on Tactical at all.
+      { key: "gst_no", label: "GSTIN", mono: true, accounts: true },
+      { key: "tds_section", label: "TDS section", mono: true, accounts: true },
+      { key: "tds_rate_override", label: "s.197 rate %", numeric: true, accounts: true },
     ],
   },
 };
@@ -286,7 +290,7 @@ export default {
     tdsForm: { tds_section: "", tds_rate_override: null },
     /* Each branch's own active TDS sections, keyed by agent_id — a vendor is deducted under a section
        THAT BRANCH has a rate for, never a company-wide list a sibling branch happens to use. */
-    tdsRatesByBranch: {}, tdsSectionOptions: [],
+    tdsRatesByBranch: {}, tdsSectionOptions: [], tdsSectionsLoaded: false,
   }),
   computed: {
     ...mapGetters(["designation"]),
@@ -296,7 +300,7 @@ export default {
     },
     /** Mirrors the server's `manageFinanceSettings` — the same desk that sets the rate table. */
     canManageTds() {
-      return this.designation === "accounts" || this.designation === "boss";
+      return this.withAccounts && (this.designation === "accounts" || this.designation === "boss");
     },
     shape() {
       return SHAPES[this.endpoint];
@@ -323,20 +327,6 @@ export default {
       ApiService.get("/partners/siblings")
         .then(({ data }) => { this.siblings = data.partners || []; })
         .catch(() => { this.siblings = []; });
-
-      /* The TDS section picker: only accounts/boss can edit it, and `/finance-settings` is gated the
-         same way — asking as anyone else would just 403. */
-      if (this.canManageTds) {
-        ApiService.get("/finance-settings")
-          .then(({ data }) => {
-            const byBranch = {};
-            (data.tds_rates || []).filter((r) => r.is_active).forEach((r) => {
-              (byBranch[r.agent_id] = byBranch[r.agent_id] || []).push({ section: r.section, description: r.description });
-            });
-            this.tdsRatesByBranch = byBranch;
-          })
-          .catch(() => { this.tdsRatesByBranch = {}; });
-      }
     }
   },
   methods: {
@@ -387,6 +377,25 @@ export default {
             : (d.error || d.message || "Could not save.");
         })
         .finally(() => { this.saving = false; });
+    },
+    /*
+     * The TDS section picker's options — once, and only once the server has said this tier has accounts: whether a
+     * partner can be classified at all is known from the list response, not at mount. `/finance-settings` is gated
+     * like the button, so asking on Tactical, or as anyone but accounts and the Boss, would only 403.
+     */
+    loadTdsSections() {
+      if (!this.canManageTds || this.tdsSectionsLoaded) return;
+      this.tdsSectionsLoaded = true;
+
+      ApiService.get("/finance-settings")
+        .then(({ data }) => {
+          const byBranch = {};
+          (data.tds_rates || []).filter((r) => r.is_active).forEach((r) => {
+            (byBranch[r.agent_id] = byBranch[r.agent_id] || []).push({ section: r.section, description: r.description });
+          });
+          this.tdsRatesByBranch = byBranch;
+        })
+        .catch(() => { this.tdsRatesByBranch = {}; });
     },
     editTds(row) {
       this.tdsEditing = row.id;
@@ -464,7 +473,12 @@ export default {
       if (this.type) params.push("type=" + encodeURIComponent(this.type));
 
       ApiService.get(this.endpoint + (params.length ? "?" + params.join("&") : ""))
-        .then(({ data }) => { this.rows = data.data || []; this.withAccounts = !!data.with_accounts; this.error = null; })
+        .then(({ data }) => {
+          this.rows = data.data || [];
+          this.withAccounts = !!data.with_accounts;
+          this.error = null;
+          if (this.endpoint === "/partners") this.loadTdsSections();
+        })
         .catch((e) => {
           const d = (e.response && e.response.data) || {};
           this.error = d.error || d.message || "Something went wrong.";

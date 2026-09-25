@@ -1401,18 +1401,23 @@ const SHAPES = {
       key: "phone",
       label: "Phone",
       mono: true
-    }, {
+    },
+    // Accounts figures — Command only, as for clients: the server does not send them on Tactical at all.
+    {
       key: "gst_no",
       label: "GSTIN",
-      mono: true
+      mono: true,
+      accounts: true
     }, {
       key: "tds_section",
       label: "TDS section",
-      mono: true
+      mono: true,
+      accounts: true
     }, {
       key: "tds_rate_override",
       label: "s.197 rate %",
-      numeric: true
+      numeric: true,
+      accounts: true
     }]
   }
 };
@@ -1464,7 +1469,8 @@ const SHAPES = {
     /* Each branch's own active TDS sections, keyed by agent_id — a vendor is deducted under a section
        THAT BRANCH has a rate for, never a company-wide list a sibling branch happens to use. */
     tdsRatesByBranch: {},
-    tdsSectionOptions: []
+    tdsSectionOptions: [],
+    tdsSectionsLoaded: false
   }),
   computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["designation"])), {}, {
     /** Mirrors the server's `editClients`. */
@@ -1473,7 +1479,7 @@ const SHAPES = {
     },
     /** Mirrors the server's `manageFinanceSettings` — the same desk that sets the rate table. */
     canManageTds() {
-      return this.designation === "accounts" || this.designation === "boss";
+      return this.withAccounts && (this.designation === "accounts" || this.designation === "boss");
     },
     shape() {
       return SHAPES[this.endpoint];
@@ -1511,25 +1517,6 @@ const SHAPES = {
       }).catch(() => {
         this.siblings = [];
       });
-
-      /* The TDS section picker: only accounts/boss can edit it, and `/finance-settings` is gated the
-         same way — asking as anyone else would just 403. */
-      if (this.canManageTds) {
-        _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/finance-settings").then(({
-          data
-        }) => {
-          const byBranch = {};
-          (data.tds_rates || []).filter(r => r.is_active).forEach(r => {
-            (byBranch[r.agent_id] = byBranch[r.agent_id] || []).push({
-              section: r.section,
-              description: r.description
-            });
-          });
-          this.tdsRatesByBranch = byBranch;
-        }).catch(() => {
-          this.tdsRatesByBranch = {};
-        });
-      }
     }
   },
   methods: {
@@ -1579,6 +1566,29 @@ const SHAPES = {
         this.saveError = d.errors ? Object.values(d.errors).flat().join(" ") : d.error || d.message || "Could not save.";
       }).finally(() => {
         this.saving = false;
+      });
+    },
+    /*
+     * The TDS section picker's options — once, and only once the server has said this tier has accounts: whether a
+     * partner can be classified at all is known from the list response, not at mount. `/finance-settings` is gated
+     * like the button, so asking on Tactical, or as anyone but accounts and the Boss, would only 403.
+     */
+    loadTdsSections() {
+      if (!this.canManageTds || this.tdsSectionsLoaded) return;
+      this.tdsSectionsLoaded = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/finance-settings").then(({
+        data
+      }) => {
+        const byBranch = {};
+        (data.tds_rates || []).filter(r => r.is_active).forEach(r => {
+          (byBranch[r.agent_id] = byBranch[r.agent_id] || []).push({
+            section: r.section,
+            description: r.description
+          });
+        });
+        this.tdsRatesByBranch = byBranch;
+      }).catch(() => {
+        this.tdsRatesByBranch = {};
       });
     },
     editTds(row) {
@@ -1678,6 +1688,7 @@ const SHAPES = {
         this.rows = data.data || [];
         this.withAccounts = !!data.with_accounts;
         this.error = null;
+        if (this.endpoint === "/partners") this.loadTdsSections();
       }).catch(e => {
         const d = e.response && e.response.data || {};
         this.error = d.error || d.message || "Something went wrong.";
@@ -7246,7 +7257,7 @@ var render = function render() {
         _vm.$set(_vm.form, "phone", $event.target.value);
       }
     }
-  })]), _vm._v(" "), _c("label", {
+  })]), _vm._v(" "), _vm.withAccounts ? [_c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
@@ -7288,7 +7299,7 @@ var render = function render() {
         _vm.$set(_vm.form, "pan_no", $event.target.value);
       }
     }
-  })])]), _vm._v(" "), _c("label", {
+  })])] : _vm._e()], 2), _vm._v(" "), _c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
@@ -7309,7 +7320,7 @@ var render = function render() {
         _vm.$set(_vm.form, "address", $event.target.value);
       }
     }
-  })]), _vm._v(" "), _vm.copied ? _c("p", {
+  })]), _vm._v(" "), _vm.copied && _vm.withAccounts ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n      Copied from another branch — "), _c("strong", [_vm._v("enter this branch's own GSTIN")]), _vm._v("; the\n      other branch's is a different state registration.\n    ")]) : _vm._e(), _vm._v(" "), _vm.saveError ? _c("p", {
     staticClass: "fx-error",

@@ -20,6 +20,14 @@ use Illuminate\Validation\Rule;
  */
 class PartnerController extends Controller
 {
+    /**
+     * 🔒 Accounts figures — Command only (user, 2026-09-26), exactly as for clients (`CustomerController`): Tactical
+     * has no accounts, so a partner there is a name, a type and contact details — never a GSTIN, a PAN, or the TDS
+     * section and s.197 rate that decide what is withheld from a payment it will never make. Stripped HERE, not in the
+     * component: a column left out of a template still arrives in the JSON.
+     */
+    private const ACCOUNTS_FIELDS = ['gst_no', 'pan_no', 'tds_section', 'tds_rate_override'];
+
     public function __construct(private readonly AuditLogger $audit) {}
 
     public function index(Request $request): JsonResponse
@@ -35,7 +43,11 @@ class PartnerController extends Controller
             ->whereIn('id', $partners->getCollection()->pluck('agent_id')->unique())->pluck('agent_name', 'id');
         $partners->getCollection()->each(fn ($p) => $p->setAttribute('branch', $branches[$p->agent_id] ?? null));
 
-        return response()->json($partners);
+        if (! $this->withAccounts()) {
+            $partners->getCollection()->each->makeHidden(self::ACCOUNTS_FIELDS);
+        }
+
+        return response()->json(array_merge($partners->toArray(), ['with_accounts' => $this->withAccounts()]));
     }
 
     /**
@@ -79,9 +91,11 @@ class PartnerController extends Controller
             'email'        => ['nullable', 'email', 'max:100'],
             'phone'        => ['nullable', 'string', 'max:30'],
             'address'      => ['nullable', 'string'],
+        ] + ($this->withAccounts() ? [
+            // Only where there are accounts to use them — on Tactical a GSTIN sent anyway is not stored.
             'gst_no'       => ['nullable', 'string', 'max:30'],
             'pan_no'       => ['nullable', 'string', 'max:20'],
-        ]);
+        ] : []));
 
         $context = \App\Support\UserContext::for(auth()->user());
 
@@ -95,7 +109,7 @@ class PartnerController extends Controller
 
         $this->audit->record((int) auth()->user()->branch_name, 'partner.created', 'partner', $partner->id, auth()->id());
 
-        return response()->json($partner, 201);
+        return response()->json($this->withAccounts() ? $partner : $partner->makeHidden(self::ACCOUNTS_FIELDS), 201);
     }
 
     /** The closed value set, so the UI never invents a type the validator will refuse. */
@@ -124,5 +138,10 @@ class PartnerController extends Controller
         $partner->update($data);
 
         return response()->json($partner->fresh());
+    }
+
+    private function withAccounts(): bool
+    {
+        return \App\Support\UserContext::for(auth()->user())->tierAtLeast('command');
     }
 }

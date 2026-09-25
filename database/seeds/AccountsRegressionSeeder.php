@@ -120,11 +120,17 @@ class AccountsRegressionSeeder extends Seeder
 
     private EnquirySequenceService $sequences;
     private LedgerPostingService $ledger;
+    // 🔴 `LedgerPostingService::write()` posts the ledger only. `InvoiceController::post()` also writes the
+    // GST register row, which this fixture's own `sell()` bypassed by calling `write()` directly — found by
+    // checking Financials → GST register against a freshly reseeded fixture and finding zero rows anywhere
+    // in the system (2026-09-26). `accounts:verify` never checked the register, so nothing caught it.
+    private \App\Http\Controllers\Freight\InvoiceController $invoices;
 
     public function run(): void
     {
         $this->sequences = app(EnquirySequenceService::class);
         $this->ledger = app(LedgerPostingService::class);
+        $this->invoices = app(\App\Http\Controllers\Freight\InvoiceController::class);
 
         $this->places();
         $this->wipe(self::FIXTURE['code']);
@@ -418,6 +424,7 @@ class AccountsRegressionSeeder extends Seeder
 
         $this->post($this->ledger->linesForInvoice($invoice), $branch->id, $invoice->document_date, $invoice->id, 'invoice');
         $invoice->update(['is_posted' => true]);
+        $this->invoices->writeGstRegister($invoice);
 
         return $invoice->fresh();
     }

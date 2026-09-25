@@ -277,8 +277,16 @@ class InvoiceController extends Controller
      *
      * The blocker is that our own GSTIN has no column anywhere in the schema — see
      * GstSplitService and GAPS.md #36.
+     *
+     * 🔴 Public, and called from `AccountsRegressionSeeder`/`BillingDemoSeeder` too (2026-09-26) — both
+     * post through `LedgerPostingService::write()` directly rather than this controller's own `post()`,
+     * which is the one place this used to run. Found by checking the Financials → GST register screen
+     * against a freshly reseeded demo: `gst_ledger_entries` had zero rows anywhere in the system, because
+     * every seeded invoice reached the ledger by a shortcut that never called this. The return itself was
+     * unaffected — `GstReturnService` derives from documents, never from this table — but the one screen
+     * built to show this register, and the ledger-vs-register cross-check both rely on, had nothing to show.
      */
-    private function writeGstRegister(AccountsInvoice $invoice): void
+    public function writeGstRegister(AccountsInvoice $invoice): void
     {
         $tax = round((float) $invoice->tax_amount, 2);
 

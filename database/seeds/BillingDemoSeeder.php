@@ -582,6 +582,10 @@ class BillingDemoSeeder extends Seeder
     private function postSome(int $branch): int
     {
         $ledger = app(\App\Services\LedgerPostingService::class);
+        // 🔴 `write()` alone is the ledger only. `InvoiceController::post()` also writes the GST register row
+        // — found by checking Financials → GST register on a freshly reseeded demo and finding it empty
+        // everywhere, because this loop never called it (2026-09-26).
+        $invoices = app(\App\Http\Controllers\Freight\InvoiceController::class);
         $posted = 0;
 
         $post = function ($lines, $date, $sourceId, $type) use ($ledger, $branch, &$posted) {
@@ -601,6 +605,7 @@ class BillingDemoSeeder extends Seeder
             ->whereNotIn('status', ['draft', 'void'])->orderByDesc('id')->limit(10)->get() as $invoice) {
             if ($post($ledger->linesForInvoice($invoice), $invoice->document_date, $invoice->id, 'invoice')) {
                 $invoice->update(['is_posted' => true]);
+                $invoices->writeGstRegister($invoice);
             }
         }
 

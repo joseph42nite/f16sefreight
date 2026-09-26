@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Sales\ClientFindings;
 use App\Services\Sales\ClientHistory;
+use App\Support\BillingDocuments;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -134,9 +135,13 @@ class ComputeSalesSnapshots extends Command
         $invoices = DB::table('accounts_invoices')
             ->whereIn('agent_id', $branchIds)->where('customer_id', $customerId)->where('transport_mode', $mode)
             ->get();
+        // Brokerage and consol earned on this client's shipments — their revenue, not their debt (GAPS #408).
+        $earned = BillingDocuments::earnedFromPartners()
+            ->whereIn('i.agent_id', $branchIds)->where('j.customer_id', $customerId)->where('i.transport_mode', $mode)
+            ->get(['i.type', 'i.subtotal', 'i.exchange_rate', 'i.document_date']);
 
         $funnel = $this->funnel($enquiries);
-        $money = $this->money($invoices, $customer, $date);
+        $money = $this->money($invoices, $earned, $customer, $date);
         $momentum = $this->momentum($shipments, $date);
         $monthStart = $date->copy()->startOfMonth();
         $yearStart = ClientHistory::financialYearStart($date);
@@ -312,11 +317,13 @@ class ComputeSalesSnapshots extends Command
 
     // ─── F: money ───────────────────────────────────────────────────────────
 
-    private function money(Collection $invoices, object $customer, Carbon $date): array
+    private function money(Collection $invoices, Collection $earned, object $customer, Carbon $date): array
     {
         $monthStart = $date->copy()->startOfMonth();
         $yearStart = ClientHistory::financialYearStart($date);
         $billed = $invoices->whereNotIn('status', ['draft', 'void']);
+        // Revenue counts brokerage and consol too; everything owed below reads the client's own bills alone.
+        $sold = $billed->merge($earned);
         $outstanding = $invoices->whereIn('status', self::OUTSTANDING);
         // 🔴 By the standing rules (user, 2026-09-26): a credit note SUBTRACTS — from revenue and from what is owed —
         // and everything is in INR at the document's own rate. This added every credit note (a client given money
@@ -337,8 +344,8 @@ class ComputeSalesSnapshots extends Command
         $exposure = $outstanding->sum($owed);
 
         return array_map(fn ($v) => round($v, 2), $aging) + [
-            'revenue_mtd' => round($billed->filter(fn ($i) => Carbon::parse($i->document_date)->gte($monthStart))->sum($revenue), 2),
-            'revenue_ytd' => round($billed->filter(fn ($i) => Carbon::parse($i->document_date)->gte($yearStart))->sum($revenue), 2),
+            'revenue_mtd' => round($sold->filter(fn ($i) => Carbon::parse($i->document_date)->gte($monthStart))->sum($revenue), 2),
+            'revenue_ytd' => round($sold->filter(fn ($i) => Carbon::parse($i->document_date)->gte($yearStart))->sum($revenue), 2),
             'dso_days' => $dso,
             'payment_drift_days' => $dso === null ? null : $dso - (int) ($customer->payment_terms_days ?? self::DEFAULT_TERMS_DAYS),
             // No limit on file is NULL ("not set"), not 0% used — and never a division by zero.

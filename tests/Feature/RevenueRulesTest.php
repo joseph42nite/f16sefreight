@@ -130,6 +130,56 @@ class RevenueRulesTest extends TestCase
         $this->assertEquals(21.0, (float) $snapshot->credit_utilization);
     }
 
+    /**
+     * 🔴 Brokerage and consol count toward sales revenue (user, 2026-09-26; GAPS #408) — through the shipment's client,
+     * since they are billed to a partner — and never toward what the client owes. On top of the set above:
+     *
+     *   B1  brokerage      USD 200 @ 83         = ₹16,600
+     *   K1  consol         ₹20,000
+     *   KC  credit note against K1 ₹5,000       subtracts
+     *   BD  DRAFT brokerage ₹9,999              never counted
+     *   BO  brokerage on ANOTHER client's job   ₹7,000, theirs
+     *
+     *   revenue  178,000 + 16,600 + 20,000 − 5,000 = 209,600     owed still 210,040 — the partner owes these
+     */
+    public function test_brokerage_and_consol_count_as_the_clients_revenue_not_their_debt(): void
+    {
+        $this->theSet();
+        $agent = Partner::create(['company_id' => $this->company->id, 'agent_id' => $this->branch->id,
+            'name' => 'Overseas Agent', 'partner_type' => 'agent']);
+        $partnerDoc = fn (string $no, string $type, float $net, int $job, string $status = 'finalized', string $currency = 'INR',
+            float $rate = 1, ?int $parent = null) => DB::table('accounts_invoices')->insertGetId(['agent_id' => $this->branch->id,
+                'job_id' => $job, 'transport_mode' => 'air', 'customer_id' => null, 'billed_party_type' => 'partner',
+                'billed_party_id' => $agent->id, 'parent_invoice_id' => $parent, 'invoice_no' => $no, 'type' => $type,
+                'document_date' => now()->toDateString(), 'status' => $status, 'currency' => $currency, 'exchange_rate' => $rate,
+                'subtotal' => $net, 'tax_amount' => 0, 'grand_total' => $net, 'created_at' => now(), 'updated_at' => now()]);
+
+        $partnerDoc('BRK-RUL-1', 'brokerage', 200, $this->job->id, 'sent', 'USD', 83);
+        $k1 = $partnerDoc('CSINV-RUL-1', 'consol_invoice', 20000, $this->job->id);
+        $partnerDoc('CN-RUL-K', 'credit_note', 5000, $this->job->id, 'finalized', 'INR', 1, $k1);
+        $partnerDoc('BRK-RUL-D', 'brokerage', 9999, $this->job->id, 'draft');
+
+        $other = Customer::create(['company_id' => $this->company->id, 'name' => 'Initech', 'email_domain' => 'initech.test']);
+        $enquiry = Enquiry::create(['agent_id' => $this->branch->id, 'transport_mode' => 'air', 'status' => 'converted',
+            'enquiry_no' => 'ENQA-RULBOM-26-0002', 'customer_id' => $other->id]);
+        $otherJob = Job::create(['agent_id' => $this->branch->id, 'enquiry_id' => $enquiry->id, 'transport_mode' => 'air',
+            'execution_job_no' => 'JOBA-RULBOM-26-0002', 'customer_id' => $other->id]);
+        $partnerDoc('BRK-RUL-O', 'brokerage', 7000, $otherJob->id);
+
+        $this->artisan('sales:compute-snapshots', ['--date' => now()->toDateString()])->assertSuccessful();
+        $snapshot = fn (Customer $c) => DB::table('customer_performance_snapshots')->where('customer_id', $c->id)
+            ->where('transport_mode', 'air')->first();
+
+        $this->assertEquals([209600, 209600], [(float) $snapshot($this->client)->revenue_mtd, (float) $snapshot($this->client)->revenue_ytd]);
+        // What the client owes, and so their credit use, are their own bills alone.
+        $this->assertEquals([210040, 21.0], [(float) $snapshot($this->client)->outstanding_0_30, (float) $snapshot($this->client)->credit_utilization]);
+        $this->assertEquals(7000, (float) $snapshot($other)->revenue_mtd);
+
+        // The rep's figure on the Sales page agrees.
+        $staff = $this->as($this->boss)->getJson('http://admin.f16sefreight.com/api/sales/staff?grain=month')->assertOk()->json();
+        $this->assertEquals(209600, collect($staff['sales'])->firstWhere('id', $this->rep->id)['revenue']);
+    }
+
     // ─── The credit gate ─────────────────────────────────────────────────────
 
     public function test_the_credit_gate_counts_a_foreign_currency_bill_in_rupees(): void

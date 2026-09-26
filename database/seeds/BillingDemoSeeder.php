@@ -75,14 +75,18 @@ class BillingDemoSeeder extends Seeder
                 $made['credit_note']++;
             }
 
-            // Commission we bill an overseas agent, and the consol settlement with them.
+            // Commission we bill an overseas agent, and the consol settlement with them — in DOLLARS, sized as dollars.
+            // 🔴 They were 18,500 and 42,000, rupee-sized figures later labelled USD: at 83.25 that is ₹15 lakh of
+            // "5% commission" on a ₹50,000 shipment, and once they counted as sales revenue (GAPS #408) Mumbai air
+            // read 494% of target. Now 5% of the shipment's bill, and a USD 500 profit share (≈ ₹41,625).
             if ($job = $billed->first()?->job_id) {
                 $this->partnerBill($branch, $job, $agent, 'brokerage', 'percentage_of_freight',
-                    'Booking commission 5% on nomination', 'Sales commission — nominated shipment', 18500);
+                    'Booking commission 5% on nomination', 'Sales commission — nominated shipment',
+                    round((float) $billed->first()->subtotal * 0.05 / 83.25, 2));
                 $made['brokerage']++;
 
                 $this->partnerBill($branch, $job, $agent, 'consol_invoice', 'flat_rate',
-                    'Profit share, consol MAA-DXB week 38', 'Consol profit share', 42000);
+                    'Profit share, consol MAA-DXB week 38', 'Consol profit share', 500);
                 $made['consol_invoice']++;
             }
 

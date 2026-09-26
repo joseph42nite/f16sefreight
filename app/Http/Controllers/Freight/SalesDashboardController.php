@@ -378,6 +378,13 @@ class SalesDashboardController extends Controller
             ->groupBy('c.sales_id')
             ->selectRaw("c.sales_id, SUM(CASE WHEN i.type = 'credit_note' THEN -1 ELSE 1 END * i.subtotal * i.exchange_rate) AS revenue")
             ->pluck('revenue', 'sales_id') : collect();
+        // And brokerage and consol earned on the rep's clients' shipments (GAPS #408).
+        $earned = $withMoney ? \App\Support\BillingDocuments::earnedFromPartners()->join('customers as c', 'c.id', '=', 'j.customer_id')
+            ->whereIn('c.sales_id', $sales->keys())
+            ->where('i.document_date', '>=', $from->toDateString())
+            ->groupBy('c.sales_id')
+            ->selectRaw("c.sales_id, SUM(CASE WHEN i.type = 'credit_note' THEN -1 ELSE 1 END * i.subtotal * i.exchange_rate) AS revenue")
+            ->pluck('revenue', 'sales_id') : collect();
         // At risk: the rhythm says they have gone quiet, or the latest snapshot shows volume down by a quarter or more.
         $latest = DB::table('customer_performance_snapshots')->max('snapshot_date');
         $atRisk = DB::table('customers as c')
@@ -414,7 +421,7 @@ class SalesDashboardController extends Controller
                 'clients' => (int) ($clients[$u->id] ?? 0),
                 'tonnage' => round((float) ($volume[$u->id]->tonnage ?? 0), 1),
                 'shipments' => (int) ($volume[$u->id]->shipments ?? 0),
-                'revenue' => $withMoney ? round((float) ($revenue[$u->id] ?? 0), 2) : null,
+                'revenue' => $withMoney ? round((float) ($revenue[$u->id] ?? 0) + (float) ($earned[$u->id] ?? 0), 2) : null,
                 'at_risk' => (int) ($atRisk[$u->id] ?? 0),
                 'target' => $targets[$u->agent_id] ?? null,
             ]),

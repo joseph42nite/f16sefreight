@@ -2,6 +2,9 @@
 
 namespace App\Support;
 
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\DB;
+
 /**
  * The five sales documents the billing desk raises (PRD §6.2), in ONE place.
  *
@@ -21,6 +24,26 @@ class BillingDocuments
 
     /** A note amends an invoice; the other three stand on their own. */
     public const NOTES = ['debit_note', 'credit_note'];
+
+    /** Billed to a partner but earned on a client's shipment. */
+    public const PARTNER_BILLED = ['brokerage', 'consol_invoice'];
+
+    /**
+     * Brokerage, consol, and the notes that amend them, on a shipment — each with the shipment's client as
+     * `j.customer_id` (user, 2026-09-26: "count brokerage and consol toward sales revenue"; GAPS #408).
+     *
+     * 🔴 **Revenue ONLY, never what the client owes.** They are billed to a partner (`customer_id` is NULL), so the
+     * client's ageing, credit use and days-to-pay never see them; the job is the only link to the client, and so to
+     * the rep. A note follows its parent here as everywhere: a credit note against a brokerage bill subtracts.
+     */
+    public static function earnedFromPartners(): Builder
+    {
+        return DB::table('accounts_invoices as i')
+            ->join('jobs as j', 'j.id', '=', 'i.job_id')
+            ->leftJoin('accounts_invoices as p', 'p.id', '=', 'i.parent_invoice_id')
+            ->where(fn ($q) => $q->whereIn('i.type', self::PARTNER_BILLED)->orWhereIn('p.type', self::PARTNER_BILLED))
+            ->whereNotIn('i.status', ['draft', 'void']);
+    }
 
     public static function prefix(string $type): string
     {

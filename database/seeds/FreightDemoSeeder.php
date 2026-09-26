@@ -426,8 +426,10 @@ class FreightDemoSeeder extends Seeder
         // Every branch needs the standard TDS sections before anything can be withheld under one.
         $branches->each(fn ($b) => app(\App\Services\TdsService::class)->seedRatesFor($b->id));
 
-        // Globex Chennai is managed from Chennai, so the Boss's branch comparison has two branches to compare.
-        DB::table('customers')->where('id', $customers[3]->id)->update(['branch_id' => $branches[1]->id]);
+        // Globex Chennai is managed from Chennai, so the Boss's branch comparison has two branches to compare — and by
+        // Chennai's rep, or the Chennai sales login has an empty book and Mumbai's rep carries the whole company.
+        DB::table('customers')->where('id', $customers[3]->id)->update(['branch_id' => $branches[1]->id,
+            'sales_id' => User::where('email', strtolower($tenant['code']) . '-maa-sales@demo.test')->value('id')]);
 
         foreach ($branches as $branch) {
             $this->seedLifecycle($branch, $customers, $users, $tenant['scale']);
@@ -563,10 +565,12 @@ class FreightDemoSeeder extends Seeder
         [$mumbai, $chennai] = [$branches[0], $branches[1]];
         $command = $tenant['tier'] === 'command';
 
+        // Revenue at about what the demo bills a shipment — ₹52,000 air, ₹95,000 sea — so it reads like shipments do.
+        // At ₹1,80,000 for 45 air shipments, a demo billing ~₹52,000 each showed Mumbai at 800% of target.
         foreach ([
-            [$mumbai, 'air', 45, 22000, 180000],
-            [$mumbai, 'sea', 10, 9000, 60000],
-            [$chennai, 'air', 12, 6000, 120000],
+            [$mumbai, 'air', 45, 22000, 2340000],
+            [$mumbai, 'sea', 10, 9000, 950000],
+            [$chennai, 'air', 12, 6000, 624000],
         ] as [$branch, $mode, $shipments, $kg, $revenue]) {
             DB::table('sales_targets')->insert([
                 'company_id' => $company->id, 'agent_id' => $branch->id, 'transport_mode' => $mode,

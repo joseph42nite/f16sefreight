@@ -103,6 +103,10 @@ class BillingDemoSeeder extends Seeder
         $registered?->update(['irn' => hash('sha256', $registered->invoice_no), 'irn_status' => 'generated',
             'ack_no' => '112' . random_int(100000000, 999999999), 'ack_date' => now()->subDays(2)]);
 
+        // The Sales page, the targets and the Boss's mails read the nightly rollup, which FreightDemoSeeder ran before
+        // any of these documents existed: run it again, or every note, and general billing, is missing until tonight.
+        $this->command->call('sales:compute-snapshots');
+
         $this->command->info(sprintf(
             'Billing demo: %d debit notes, %d credit notes, %d brokerage, %d consol, %d receipts, %d chases, '
                 . '%d purchase vouchers, %d supplier payments, %d cost sheets waiting, %d documents posted to the ledger '
@@ -637,8 +641,13 @@ class BillingDemoSeeder extends Seeder
             }
         }
 
-        foreach (\App\AccountsPurchaseVoucher::withoutGlobalScopes()->where('agent_id', $branch)
-            ->orderByDesc('id')->limit(6)->get() as $voucher) {
+        // 🔴 Every voucher paySome() settled, as well as the latest six. Its payments are posted, so a paid voucher
+        // left unposted took Accounts Payable DOWN for bills it never went UP for — Mumbai's AP read −₹2,99,115.
+        $vouchersToPost = \App\AccountsPurchaseVoucher::withoutGlobalScopes()->where('agent_id', $branch)->where('amount_paid', '>', 0)->pluck('id')
+            ->merge(\App\AccountsPurchaseVoucher::withoutGlobalScopes()->where('agent_id', $branch)->orderByDesc('id')->limit(6)->pluck('id'))
+            ->unique();
+
+        foreach (\App\AccountsPurchaseVoucher::withoutGlobalScopes()->whereIn('id', $vouchersToPost)->orderByDesc('id')->get() as $voucher) {
             if ($post($ledger->linesForVoucher($voucher), $voucher->document_date, $voucher->id, 'purchase_voucher')) {
                 $vouchers->writeGstRegister($voucher);
             }

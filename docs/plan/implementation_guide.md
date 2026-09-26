@@ -1529,6 +1529,70 @@ address) · **who owns them** (our branch, salesperson, their usual port) · **t
 | ~~**GSTR-1 / 3B as files**~~ | ✅ **Built 2026-09-22** — `GstReturnService` builds B2B, CDNR, HSN and the document series from the documents (not the register, which was structurally empty until `agents_info.gst_no` landed the same day), as a CSV and as the offline utility's JSON, on Close-the-month ④. 🔴 The window is a **calendar month**, the one report here that is not period-scoped — a return is filed monthly and every period in this system spans a year. 🔴 B2CL/B2CS/EXP are deliberately not written: they need a place of supply and a shipping bill that nothing stores, so those documents are **named as exceptions** instead of guessed (GAPS #394, #36) |
 | ~~**TDS**~~ | ✅ **Built 2026-09-25** — both directions, never netted: outward (we withhold from vendors) is a liability due by the 7th of next month, inward (clients withhold from us) is an asset claimed via Form 26AS. Register at Financials → TDS register, Form 26Q CSV export, rates editable in Settings → Finance, `tds_section`/s.197 override editable on each partner. TDS is Close-the-month's advisory step ⑤ (GAPS #395) |
 
+### 11.7 Jev in accounts — suggestions, never postings 📝 *planned 2026-09-26, awaiting the owner's go*
+
+> Owner, 2026-09-26: *"use Jev in the entire accounts section with safety in mind … think of the best way to do it."*
+
+Jev (`typesafe/jev-1.13`, `JevClient`) files the inbox today. It answers **typed questions about a state** — a Choice
+among named options, with a confidence — and produces no text and no numbers (it is deliberately bad at both). That
+decides where it belongs in accounts: wherever a person today **reads something and picks one of a few options the
+system already knows**. It never belongs where a figure is computed or money is committed.
+
+#### The safety rules — every decision point obeys all of them
+
+1. **Jev chooses; PHP computes and commits.** Jev never produces an amount, a date, a rate, a GSTIN or a tax head. It
+   picks among options PHP has already built — *these three bills fit the amount* — plus an explicit *none of these*.
+2. **A suggestion, never an action.** Nothing Jev answers posts, finalizes, allocates, pays, writes off or edits a
+   figure. It **pre-selects** a choice on a screen the accounts user already confirms, and every existing check —
+   period gate, credit gate, no-rate refusal, over-allocation, unposted-voucher block — runs unchanged on what is
+   confirmed.
+3. **Under its floor, silence.** Each question carries its own confidence floor (never shared between questions —
+   the lesson of the mail rubric, where one shared floor threw away six correct answers). Below it the screen shows
+   no suggestion, not a weak one.
+4. **Every decision is recorded.** One table, `ai_decisions` — subject, question, answer, confidence,
+   `rubric_version`, and what the person did (accepted · changed to X · ignored). "Why did it say that?" and "how
+   often is it right?" are both queries. No floor is lowered without that acceptance rate.
+5. **Asked once.** Cached by (subject, question, rubric version): reopening a bank line never re-asks or re-bills.
+6. **The tenant's own data, and as little of it as the question needs.** Names, references and amounts as text;
+   never account numbers or bank details. `data_collection: deny` is already on every call.
+7. **Priced honestly, and optional.** Charged to the company's credits like mail filing, from measured tokens (the
+   way `MAIL_COST` was derived); at the credit floor the screens work exactly as they do today. Off by default in
+   tests (`ACCOUNTS_AI=false`), switchable per company and per decision point.
+
+#### Where — the decision points, by value and risk
+
+| # | Where | The question Jev answers | Options built by | Confirmed with | Risk |
+|---|---|---|---|---|---|
+| 1 | Money in ④ bank matching | *Which of these open bills is this money for?* | `BankReconciliationService::candidates()` — amount within 2%, foreign bills at the day's rate (#411) | the existing **Match** | Low: pre-selects a row the desk already checks |
+| 2 | Money in ④ unidentified money | *What is this money?* — a client paying · a refund to us · bank interest · a bank reversal · capital or a loan · can't tell | fixed list | where it is filed; nothing posts | Low |
+| 3 | Money in ④ a short payment | *Why is it short?* — client deducted TDS · bank charges · a disputed charge · an agreed discount · can't tell | fixed list; PHP supplies the facts (short by 1.00% / 2.00%, the memo) | the existing resolution select, default **still owed** | Medium — decides a P&L line, so a high floor |
+| 4 | Inbox → Money in | *Which of this client's open bills does this remittance advice pay?* (mail already filed as `sending_money`) | the client's open bill numbers | pre-fills the receipt when the money lands | Low |
+| 5 | Money out ③ supplier statements | *Which of our vouchers is this line?* | vouchers of that supplier within tolerance | the existing statement check | Low |
+| 6 | Directory → partner TDS | *Which section do these services fall under?* — 194C · 194J · 194H · 194I · none | the section list | the partner's TDS select | Medium — a legal classification: suggestion only, labelled *check their certificate* |
+
+**Not for Jev, by rule:** amounts, exchange rates, tax computation, posting, finalizing, paying, writing off, credit
+overrides, closing a period, and the order of any work queue (§11.3 stays deterministic). **GST zero-rated
+classification** (export / SEZ / deemed export) is left out: it decides what is filed with the government, and a
+confident wrong answer there costs more than the desk's minute.
+
+#### Where it is managed
+
+| What | Lives in |
+|---|---|
+| The plan | here, §11.7; each piece a GAPS entry as it lands |
+| The rubric — each question's prose, options, floor | `config/accounts_decisions.php`, versioned like `config/mail_intent.php`; edits to English, not code |
+| The switches | Settings → Finance → **Jev suggestions**: per decision point, per company, for accounts and the Boss. Floors are config only — never a screen control |
+| The record | `ai_decisions`; one "right N of M times" line per decision point in the same settings panel — no separate admin page (the mail precedent) |
+| The acceptance set | `accounts:rubric-check`, like `mail:rubric-check`, re-run on every rubric edit |
+
+#### Build order
+
+1. **The frame + ①, as a pilot** — `ai_decisions`, the switches, pricing, caching, the rubric file, and bank
+   matching. Measured on real lines before anything else is built on it.
+2. ③ short payments · ② unidentified money — the same screen, the same frame.
+3. ④ remittance advice · ⑤ supplier statements.
+4. ⑥ vendor TDS sections — last, because it is the one legal classification.
+
 ## 📌 Conventions
 
 - **Sequence gaps are acceptable** — a consumed number is never recycled, not on demotion, cancellation, or re-initiation

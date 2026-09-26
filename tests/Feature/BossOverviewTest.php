@@ -174,8 +174,71 @@ class BossOverviewTest extends TestCase
         $this->assertSame([40.0, 12000.0], [(float) $row['measures']['tonnage']['percent'], (float) $row['measures']['tonnage']['month_end']]);
         $this->assertSame(40.0, (float) $row['measures']['revenue']['percent']);
 
-        // Every branch and mode is listed so a target can be set where nothing has shipped yet.
-        $this->assertCount(4, $body['rows']);
+        // Every branch and mode is listed so a target can be set where nothing has shipped yet — and each branch's total.
+        $this->assertCount(6, $body['rows']);
+        \Illuminate\Support\Carbon::setTestNow();
+    }
+
+    /**
+     * 🔴 General billing counts toward the branch's revenue target (user, 2026-09-26). It has no mode, so it counts
+     * toward the branch total — the sum of its mode targets — and never toward air or sea. Fixed at 10 September:
+     *
+     *   Mumbai targets     air ₹15,00,000 + sea ₹5,00,000                 = ₹20,00,000
+     *   rollup so far      air ₹6,00,000 + sea ₹2,00,000                  = ₹8,00,000
+     *   general billing    ₹3,47,000 + USD 1,000 @ 83 − credit note ₹30,000 = ₹4,00,000   (net of tax)
+     *                      not a draft, not a void, not August's, not Chennai's
+     *   branch             ₹12,00,000 of ₹20,00,000 = 60% · month end ₹12,00,000 ÷ 10 × 30 = ₹36,00,000
+     */
+    public function test_general_billing_counts_toward_the_branch_revenue_target(): void
+    {
+        \Illuminate\Support\Carbon::setTestNow('2026-09-10 12:00:00');
+        $this->snapshot($this->bom, 'air', ['shipment_count_mtd' => 12, 'revenue_mtd' => 600000]);
+        $this->snapshot($this->bom, 'sea', ['shipment_count_mtd' => 3, 'revenue_mtd' => 200000]);
+        $client = Customer::create(['company_id' => $this->company->id, 'name' => 'Warehousing client', 'email_domain' => 'w.test']);
+
+        $bill = fn (Agent $branch, string $type, float $net, string $date, string $status = 'finalized', string $currency = 'INR', float $rate = 1)
+            => DB::table('accounts_invoices')->insert(['agent_id' => $branch->id, 'job_id' => null, 'transport_mode' => null,
+                'customer_id' => $client->id, 'billed_party_type' => 'customer', 'billed_party_id' => $client->id,
+                'invoice_no' => 'G-' . random_int(1, 999999), 'type' => $type, 'document_date' => $date, 'status' => $status,
+                'currency' => $currency, 'exchange_rate' => $rate, 'subtotal' => $net, 'tax_amount' => round($net * 0.18, 2),
+                'grand_total' => round($net * 1.18, 2), 'created_at' => now(), 'updated_at' => now()]);
+        $bill($this->bom, 'invoice', 347000, '2026-09-05');
+        $bill($this->bom, 'invoice', 1000, '2026-09-08', 'sent', 'USD', 83);
+        $bill($this->bom, 'credit_note', 30000, '2026-09-09');
+        $bill($this->bom, 'invoice', 99000, '2026-09-06', 'draft');
+        $bill($this->bom, 'invoice', 55000, '2026-09-06', 'void');
+        $bill($this->bom, 'invoice', 77000, '2026-08-31');
+        $bill($this->maa, 'invoice', 66000, '2026-09-04');
+
+        $body = $this->api($this->boss)->putJson($this->url('/api/sales/targets'), ['month' => '2026-09', 'targets' => [
+            ['agent_id' => $this->bom->id, 'mode' => 'air', 'shipments' => 40, 'revenue' => 1500000],
+            ['agent_id' => $this->bom->id, 'mode' => 'sea', 'shipments' => 10, 'revenue' => 500000],
+        ]])->assertOk()->json();
+        $row = fn (string $mode) => collect($body['rows'])->first(fn ($r) => $r['agent_id'] === $this->bom->id && $r['mode'] === $mode);
+
+        // Air and sea are what they shipped — a bill not for a shipment is neither.
+        $this->assertEquals([600000, 40], [$row('air')['measures']['revenue']['actual'], $row('air')['measures']['revenue']['percent']]);
+        $this->assertEquals([200000, 40], [$row('sea')['measures']['revenue']['actual'], $row('sea')['measures']['revenue']['percent']]);
+
+        $total = $row('total');
+        $this->assertEquals(400000, $total['general']);
+        $this->assertEquals([2000000, 1200000, 60, 3600000], array_values($total['measures']['revenue']));
+        $this->assertEquals([50, 15, 30], [$total['measures']['shipments']['target'], $total['measures']['shipments']['actual'],
+            $total['measures']['shipments']['percent']]);
+
+        // Chennai billed ₹66,000 not for a shipment and set no target: the figure shows, a percentage does not.
+        $chennai = collect($body['rows'])->first(fn ($r) => $r['agent_id'] === $this->maa->id && $r['mode'] === 'total');
+        $this->assertEquals([null, 66000, null], [$chennai['measures']['revenue']['target'], $chennai['measures']['revenue']['actual'],
+            $chennai['measures']['revenue']['percent']]);
+
+        // A saved target is only ever a mode's — the total is their sum, not a row of its own.
+        $this->assertSame(['air', 'sea'], DB::table('sales_targets')->where('agent_id', $this->bom->id)->orderBy('transport_mode')
+            ->pluck('transport_mode')->all());
+
+        // The rep's card on the Sales page reads the same 60%.
+        $rep = $this->user('sales', $this->bom, '-rep');
+        $staff = $this->api($this->boss)->getJson($this->url('/api/sales/staff?grain=month'))->assertOk()->json();
+        $this->assertEquals(60, collect($staff['sales'])->firstWhere('id', $rep->id)['target']['revenue_pct']);
         \Illuminate\Support\Carbon::setTestNow();
     }
 

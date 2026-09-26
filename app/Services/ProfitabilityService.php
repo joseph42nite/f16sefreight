@@ -162,6 +162,24 @@ class ProfitabilityService
         ];
     }
 
+    /**
+     * General billing's revenue per branch between two dates, for the branch revenue targets (user, 2026-09-26).
+     * Targets are set per mode and a bill not for a shipment has none, so it counts toward the branch's total —
+     * the sum of its mode targets — and never toward air or sea. Same rules as general(): net of tax, in INR,
+     * a credit note subtracting.
+     *
+     * @return array<int, float> agent_id => revenue
+     */
+    public function generalByBranch(array $branchIds, string $from, string $to): array
+    {
+        return DB::table('accounts_invoices')
+            ->whereIn('agent_id', $branchIds)->whereNull('job_id')->whereIn('status', self::BILLED)
+            ->whereBetween('document_date', [$from, $to])
+            ->groupBy('agent_id')
+            ->selectRaw('agent_id, SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * subtotal * exchange_rate) AS revenue', ['credit_note'])
+            ->pluck('revenue', 'agent_id')->map(fn ($r) => round((float) $r, 2))->all();
+    }
+
     /** The figures under the table. */
     public function totals($rows): array
     {

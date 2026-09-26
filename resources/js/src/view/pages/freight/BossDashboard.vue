@@ -191,12 +191,21 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in targets.rows" :key="r.agent_id + r.mode">
+            <tr v-for="r in targets.rows" :key="r.agent_id + r.mode" :class="{ 'fx-target__total': r.mode === 'total' }">
               <th scope="row">{{ r.branch }} <span class="fx-muted identifier">{{ r.code }}</span></th>
-              <td>{{ r.mode }}</td>
+              <td>
+                <template v-if="r.mode === 'total'">
+                  All modes
+                  <!-- General billing has no mode: it counts here, toward the branch, and nowhere else. -->
+                  <div v-if="r.general" class="fx-muted fx-target__meta">
+                    incl. <Figure :value="r.general" kind="currency" currency-code="INR" /> not for a shipment
+                  </div>
+                </template>
+                <template v-else>{{ r.mode }}</template>
+              </td>
               <td v-for="m in measures" :key="m.key">
                 <input
-                  v-if="editingTargets"
+                  v-if="editingTargets && r.mode !== 'total'"
                   v-model="targetForm[r.agent_id + '|' + r.mode][m.key]"
                   type="number" min="0" class="fx-input fx-target__input" :placeholder="'No target'"
                 />
@@ -416,8 +425,12 @@ export default {
         .then(({ data }) => { this.targets = data; this.targetsError = null; })
         .catch(() => { this.targets = null; });
     },
+    /** The rows a target is set on — the branch total is their sum, not a target of its own. */
+    modeRows() {
+      return this.targets.rows.filter((r) => r.mode !== "total");
+    },
     editTargets() {
-      this.targetForm = Object.fromEntries(this.targets.rows.map((r) => [
+      this.targetForm = Object.fromEntries(this.modeRows().map((r) => [
         r.agent_id + "|" + r.mode,
         Object.fromEntries(this.measures.map((m) => [m.key, r.measures[m.key].target === null ? "" : r.measures[m.key].target])),
       ]));
@@ -426,7 +439,7 @@ export default {
     saveTargets() {
       this.savingTargets = true;
       const blank = (v) => (v === "" || v === null ? null : Number(v));
-      const targets = this.targets.rows.map((r) => {
+      const targets = this.modeRows().map((r) => {
         const f = this.targetForm[r.agent_id + "|" + r.mode];
         return { agent_id: r.agent_id, mode: r.mode, shipments: blank(f.shipments), tonnage: blank(f.tonnage), revenue: blank(f.revenue) };
       });

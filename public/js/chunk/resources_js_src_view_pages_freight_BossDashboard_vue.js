@@ -210,14 +210,18 @@ const list = text => String(text || "").split(",").map(x => x.trim()).filter(Boo
         this.targets = null;
       });
     },
+    /** The rows a target is set on — the branch total is their sum, not a target of its own. */
+    modeRows() {
+      return this.targets.rows.filter(r => r.mode !== "total");
+    },
     editTargets() {
-      this.targetForm = Object.fromEntries(this.targets.rows.map(r => [r.agent_id + "|" + r.mode, Object.fromEntries(this.measures.map(m => [m.key, r.measures[m.key].target === null ? "" : r.measures[m.key].target]))]));
+      this.targetForm = Object.fromEntries(this.modeRows().map(r => [r.agent_id + "|" + r.mode, Object.fromEntries(this.measures.map(m => [m.key, r.measures[m.key].target === null ? "" : r.measures[m.key].target]))]));
       this.editingTargets = true;
     },
     saveTargets() {
       this.savingTargets = true;
       const blank = v => v === "" || v === null ? null : Number(v);
-      const targets = this.targets.rows.map(r => {
+      const targets = this.modeRows().map(r => {
         const f = this.targetForm[r.agent_id + "|" + r.mode];
         return {
           agent_id: r.agent_id,
@@ -756,17 +760,28 @@ var render = function render() {
     }, [_vm._v(_vm._s(m.label))]);
   })], 2)]), _vm._v(" "), _c("tbody", _vm._l(_vm.targets.rows, function (r) {
     return _c("tr", {
-      key: r.agent_id + r.mode
+      key: r.agent_id + r.mode,
+      class: {
+        "fx-target__total": r.mode === "total"
+      }
     }, [_c("th", {
       attrs: {
         scope: "row"
       }
     }, [_vm._v(_vm._s(r.branch) + " "), _c("span", {
       staticClass: "fx-muted identifier"
-    }, [_vm._v(_vm._s(r.code))])]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.mode))]), _vm._v(" "), _vm._l(_vm.measures, function (m) {
+    }, [_vm._v(_vm._s(r.code))])]), _vm._v(" "), _c("td", [r.mode === "total" ? [_vm._v("\n                All modes\n                "), _vm._v(" "), r.general ? _c("div", {
+      staticClass: "fx-muted fx-target__meta"
+    }, [_vm._v("\n                  incl. "), _c("Figure", {
+      attrs: {
+        value: r.general,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }), _vm._v(" not for a shipment\n                ")], 1) : _vm._e()] : [_vm._v(_vm._s(r.mode))]], 2), _vm._v(" "), _vm._l(_vm.measures, function (m) {
       return _c("td", {
         key: m.key
-      }, [_vm.editingTargets ? _c("input", {
+      }, [_vm.editingTargets && r.mode !== "total" ? _c("input", {
         directives: [{
           name: "model",
           rawName: "v-model",

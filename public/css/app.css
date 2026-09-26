@@ -5767,6 +5767,7 @@ body {
 .fx-target__bar span { display: block; height: 100%; background: var(--portal-accent); }
 .fx-target__bar span.is-met { background: var(--status-success); }
 .fx-target__meta { font-size: .75rem; margin-top: 2px; }
+.fx-target__total { font-weight: 600; background: var(--bg-sunken); }
 
 .fx-convo__assign { width: auto; max-width: 16rem; }
 

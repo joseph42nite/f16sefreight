@@ -441,12 +441,18 @@ class SalesDashboardController extends Controller
             ->selectRaw('agent_id, SUM(shipment_count_mtd) AS shipments, SUM(tonnage_mtd) AS tonnage, SUM(revenue_mtd) AS revenue')
             ->get()->keyBy('agent_id');
 
+        // General billing counts toward the branch's revenue — the rollup is per mode and never sees it. To the
+        // rollup's day, so the two halves are the same month to date.
+        $general = $withMoney ? app(\App\Services\ProfitabilityService::class)->generalByBranch($branchIds,
+            $month->toDateString(), $asOf ?? $month->copy()->endOfMonth()->toDateString()) : [];
+
         $pct = fn ($done, $target) => $target > 0 ? round((float) $done * 100 / (float) $target, 1) : null;
 
         return collect($branchIds)->mapWithKeys(fn ($id) => [$id => [
             'shipments_pct' => $pct($actual[$id]->shipments ?? 0, $targets[$id]->shipments ?? 0),
             'tonnage_pct' => $pct($actual[$id]->tonnage ?? 0, $targets[$id]->tonnage ?? 0),
-            'revenue_pct' => $withMoney ? $pct($actual[$id]->revenue ?? 0, $targets[$id]->revenue ?? 0) : null,
+            'revenue_pct' => $withMoney
+                ? $pct((float) ($actual[$id]->revenue ?? 0) + ($general[$id] ?? 0), $targets[$id]->revenue ?? 0) : null,
         ]])->all();
     }
 

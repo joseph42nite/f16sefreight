@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
+use App\Services\ProfitabilityService;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\DB;
  *
  * Actuals are the rollup's month-to-date for the clients each branch manages, the same figures as the branch
  * comparison above it. Revenue is a Command figure: Tactical has no invoicing, so it has no revenue target.
+ * Each branch also gets an "all modes" total, where general billing — no shipment, so no mode — counts (GAPS #404).
  * 🔒 Only the Boss sets targets — "the role that sets targets must not book the revenue they are measured in".
  */
 class SalesTargetController extends Controller
@@ -47,29 +49,53 @@ class SalesTargetController extends Controller
             ? $month->daysInMonth / Carbon::parse($asOf)->day
             : null;
 
+        // General billing — a bill not for a shipment — has no mode, so it counts toward the branch total below and
+        // never toward air or sea (user, 2026-09-26). To the rollup's day, the same month to date as the rest.
+        $general = $withRevenue ? app(ProfitabilityService::class)->generalByBranch($branches->pluck('id')->all(),
+            $month->toDateString(), $asOf ?? $month->copy()->endOfMonth()->toDateString()) : [];
+
+        $columns = collect(['shipments' => 'shipments', 'tonnage' => 'tonnage_kg', 'revenue' => 'revenue_inr'])
+            ->reject(fn ($col, $key) => $key === 'revenue' && ! $withRevenue);
+        $measure = fn (?float $target, ?float $actual) => [
+            'target' => $target,
+            'actual' => $actual,
+            'percent' => $target && $actual !== null ? round($actual * 100 / $target, 1) : null,
+            'month_end' => $pace !== null && $actual !== null ? round($actual * $pace, 2) : null,
+        ];
+
         $rows = [];
         foreach ($branches as $b) {
+            $byMode = [];
             foreach (self::MODES as $mode) {
                 $t = $targets[$b->id . '|' . $mode] ?? null;
                 $a = $actuals[$b->id . '|' . $mode] ?? null;
 
-                $rows[] = [
+                $byMode[] = $rows[] = [
                     'agent_id' => $b->id, 'branch' => $b->agent_name, 'code' => $b->branch_code, 'mode' => $mode,
-                    'measures' => collect(['shipments' => 'shipments', 'tonnage' => 'tonnage_kg', 'revenue' => 'revenue_inr'])
-                        ->reject(fn ($col, $key) => $key === 'revenue' && ! $withRevenue)
-                        ->map(function ($col, $key) use ($t, $a, $pace) {
-                            $target = $t && $t->{$col} !== null ? (float) $t->{$col} : null;
-                            $actual = $a ? round((float) $a->{$key}, 2) : null;
-
-                            return [
-                                'target' => $target,
-                                'actual' => $actual,
-                                'percent' => $target && $actual !== null ? round($actual * 100 / $target, 1) : null,
-                                'month_end' => $pace !== null && $actual !== null ? round($actual * $pace, 2) : null,
-                            ];
-                        }),
+                    'measures' => $columns->map(fn ($col, $key) => $measure(
+                        $t && $t->{$col} !== null ? (float) $t->{$col} : null,
+                        $a ? round((float) $a->{$key}, 2) : null,
+                    )),
                 ];
             }
+
+            // The branch as a whole: its mode targets summed, and on revenue what it billed not for a shipment.
+            $billedGeneral = $general[$b->id] ?? 0.0;
+            $rows[] = [
+                'agent_id' => $b->id, 'branch' => $b->agent_name, 'code' => $b->branch_code, 'mode' => 'total',
+                'general' => $withRevenue ? $billedGeneral : null,
+                'measures' => $columns->map(function ($col, $key) use ($byMode, $measure, $billedGeneral) {
+                    $parts = collect($byMode)->pluck("measures.{$key}");
+                    $targets = $parts->pluck('target')->filter(fn ($v) => $v !== null);
+                    $actuals = $parts->pluck('actual')->filter(fn ($v) => $v !== null);
+                    $extra = $key === 'revenue' ? $billedGeneral : 0.0;
+
+                    return $measure(
+                        $targets->isEmpty() ? null : (float) $targets->sum(),
+                        $actuals->isEmpty() && $extra == 0 ? null : round($actuals->sum() + $extra, 2),
+                    );
+                }),
+            ];
         }
 
         return response()->json(['month' => $month->format('Y-m'), 'as_of' => $asOf, 'with_revenue' => $withRevenue, 'rows' => $rows]);

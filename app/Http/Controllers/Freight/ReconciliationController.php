@@ -32,6 +32,7 @@ class ReconciliationController extends Controller
         private readonly \App\Services\EnquirySequenceService $sequences,
         private readonly AuditLogger $audit,
         private readonly \App\Services\TdsService $tds,
+        private readonly \App\Services\ExchangeRateService $fx,
     ) {}
 
     /** The left pane: bank rows still waiting. */
@@ -242,7 +243,17 @@ class ReconciliationController extends Controller
             ], 422);
         }
 
-        if ($received > $due) {
+        // 🔴 The bank line is rupees; the invoice may be dollars (GAPS #411). What those rupees settle of it, at the
+        // day the money arrived — the same rule as a receipt typed by hand, so the screen that closes a bill cannot
+        // change what it settles.
+        $valueDate = $transaction->value_date ?? now()->toDateString();
+        $settles = $this->fx->settle($invoice, $received, $valueDate);
+
+        if ($settles === null) {
+            return response()->json(\App\Services\ExchangeRateService::noRate($invoice->currency, $valueDate), 422);
+        }
+
+        if ($settles['invoice_amount'] > $due + 0.009) {
             return response()->json([
                 'error'  => sprintf(
                     'The receipt of %s exceeds the %s outstanding. Overpayments are handled as a credit note, not a match.',
@@ -253,7 +264,8 @@ class ReconciliationController extends Controller
         }
 
         $resolution = $data['resolution'] ?? 'short_paid';
-        $shortfall = round($due - $received, 2);
+        // In the invoice's currency; its rupee value, at the invoice's own rate, is what a write-off posts.
+        $shortfall = round($due - $settles['invoice_amount'], 2);
         $adjustmentAccount = $shortfall > 0 ? $this->matcher->adjustmentAccountFor($resolution) : null;
 
         $period = $this->ledger->openPeriodFor($transaction->agent_id, now()->toDateString());
@@ -266,8 +278,10 @@ class ReconciliationController extends Controller
         }
 
         $result = DB::transaction(function () use (
-            $transaction, $invoice, $received, $shortfall, $adjustmentAccount, $resolution, $period
+            $transaction, $invoice, $received, $shortfall, $adjustmentAccount, $resolution, $period, $settles
         ) {
+            $foreign = $settles['rate'] !== 1.0;
+            $shortfallInr = $this->fx->booked($invoice, $shortfall);
             /* One receipt per match, numbered off the same counter as one typed by hand. */
             // The race is decided in the database — see BankReconciliationService::claim.
             if (! $this->matcher->claim($transaction, $invoice)) {
@@ -294,6 +308,8 @@ class ReconciliationController extends Controller
 
             $receipt->allocations()->create([
                 'invoice_id' => $invoice->id, 'amount' => $received,
+                'invoice_amount' => $foreign ? $settles['invoice_amount'] : null,
+                'exchange_rate' => $foreign ? $settles['rate'] : null,
                 'resolution' => $shortfall > 0 && $adjustmentAccount !== null ? $resolution : null,
             ]);
 
@@ -301,11 +317,12 @@ class ReconciliationController extends Controller
                 $this->ledger->linesForReceipt(
                     $received,
                     $adjustmentAccount !== null && $shortfall > 0
-                        ? [['account' => $adjustmentAccount, 'amount' => round($shortfall, 2)]]
+                        ? [['account' => $adjustmentAccount, 'amount' => $shortfallInr]]
                         : [],
                     into: $transaction->bank_account_id
                         ? \App\BankAccount::withoutTenantScope()->find($transaction->bank_account_id)
-                        : null
+                        : null,
+                    forex: $settles['forex']
                 ),
                 $transaction->agent_id, $period->id, $receipt->id, 'receipt'
             );
@@ -315,13 +332,13 @@ class ReconciliationController extends Controller
             if ($resolution === 'tds' && $shortfall > 0) {
                 // The same date the receipt itself was given, so the register's quarter and the ledger's
                 // period cannot disagree about when the deduction happened.
-                $this->tds->recordInward($invoice, (float) $shortfall, 'receipt', (int) $receipt->id,
+                $this->tds->recordInward($invoice, $shortfallInr, 'receipt', (int) $receipt->id,
                     (string) ($transaction->value_date ?? now()->toDateString()));
             }
 
             // The invoice is closed when nothing is left owing — which, after a
             // write-off or a discount, is true even though less cash arrived.
-            $paid = round((float) $invoice->amount_paid + $received, 2);
+            $paid = round((float) $invoice->amount_paid + $settles['invoice_amount'], 2);
             $closed = $adjustmentAccount !== null || $paid >= (float) $invoice->grand_total;
 
             $invoice->update([

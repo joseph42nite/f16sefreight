@@ -116,7 +116,7 @@ class GstReturnService
                 'counterparty_gstin' => $doc->counterparty_gstin,
                 'place_of_supply' => $this->split->stateCode($doc->counterparty_gstin),
                 'supply' => $placed['kind'],
-                'document_total' => round((float) $doc->grand_total, 2),
+                'document_total' => $this->inr($doc, (float) $doc->grand_total),
                 'rates' => $placed['rates'],
                 'taxable_value' => $placed['taxable_value'],
                 'cgst' => $placed['cgst'],
@@ -220,6 +220,7 @@ class GstReturnService
             ->orderBy('i.document_date')->orderBy('i.invoice_no')
             ->get([
                 'i.id', 'i.invoice_no', 'i.type', 'i.document_date', 'i.subtotal', 'i.tax_amount', 'i.grand_total',
+                'i.exchange_rate',
                 DB::raw('COALESCE(c.name, p.name) AS counterparty'),
                 DB::raw('COALESCE(c.gst_no, p.gst_no) AS counterparty_gstin'),
             ]);
@@ -306,18 +307,30 @@ class GstReturnService
             $rates[$key]['igst'] = round($rates[$key]['igst'] + $split['igst'], 2);
         }
 
-        $rates = array_values($rates);
+        // 🔴 Worked in the document's currency above — the line-vs-header check must compare like with like — and
+        // turned into rupees HERE, once, at the document's own rate (GAPS #411). A return files rupees; a USD bill's
+        // face value filed as rupees understates the tax on it eighty-fold. Each total converts from its own
+        // document-currency sum, as the register does, so the two agree to the paisa.
+        $heads = ['taxable_value', 'cgst', 'sgst', 'igst'];
+        $totals = [];
+        foreach ($heads as $head) {
+            $totals[$head] = $this->inr($doc, array_sum(array_column($rates, $head)));
+        }
+
+        $rates = array_map(function ($r) use ($doc, $heads) {
+            foreach ($heads as $head) {
+                $r[$head] = $this->inr($doc, $r[$head]);
+            }
+
+            return $r;
+        }, array_values($rates));
 
         return [
             'rates' => $rates,
             // A document whose every line is nil-rated has no intrastate/interstate character to report.
             'kind' => $kind,
-            'taxable_value' => round(array_sum(array_column($rates, 'taxable_value')), 2),
-            'cgst' => round(array_sum(array_column($rates, 'cgst')), 2),
-            'sgst' => round(array_sum(array_column($rates, 'sgst')), 2),
-            'igst' => round(array_sum(array_column($rates, 'igst')), 2),
             'reason' => null, 'detail' => null,
-        ];
+        ] + $totals;
     }
 
     /**
@@ -609,11 +622,17 @@ class GstReturnService
             'date' => $doc->document_date,
             'counterparty' => $doc->counterparty,
             'counterparty_gstin' => $doc->counterparty_gstin,
-            'taxable_value' => round((float) $doc->subtotal, 2),
-            'tax' => round((float) $doc->tax_amount, 2),
+            'taxable_value' => $this->inr($doc, (float) $doc->subtotal),
+            'tax' => $this->inr($doc, (float) $doc->tax_amount),
             'reason' => $reason,
             'detail' => $detail ?? self::REASONS[$reason] ?? null,
         ];
+    }
+
+    /** An amount of the document's currency in rupees, at its own rate. */
+    private function inr(object $doc, float $amount): float
+    {
+        return round($amount * (float) (($doc->exchange_rate ?? 1) ?: 1), 2);
     }
 
     /** The portal's own period format: MMYYYY, taken from the month the window ENDS in. */

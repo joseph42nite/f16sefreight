@@ -44,6 +44,13 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer();
 
+        // Today's exchange rates (GAPS #411). Once a day: the free plan has no history, so a day missed is a day
+        // whose foreign receipts wait for a rate — and 30 calls a month sit well inside its request limit.
+        $schedule->command('fx:fetch-rates')
+            ->dailyAt('09:30')
+            ->withoutOverlapping()
+            ->onOneServer();
+
         // Mail is kept three months after a conversation's last message; the figures stay (user, 2026-09-16).
         $schedule->command('mail:prune')
             ->dailyAt('02:30')

@@ -66,9 +66,27 @@ class BankReconciliationService
 
         $scored = [];
 
+        $fx = app(ExchangeRateService::class);
+        $day = $transaction->value_date ?? now()->toDateString();
+
         foreach ($open as $invoice) {
             $due = round((float) $invoice->grand_total - (float) $invoice->amount_paid, 2);
             if ($due <= 0) {
+                continue;
+            }
+
+            // 🔴 The bank line is rupees (GAPS #411): a foreign balance is compared at the day's rate, and never
+            // "exactly" — a conversion is never to the paisa. No rate that week, no suggestion rather than a guess.
+            if (strtoupper($invoice->currency ?: 'INR') !== ExchangeRateService::BASE) {
+                $rate = $fx->rate($invoice->currency, $day);
+                $dueInr = $rate === null ? 0.0 : round($due * $rate, 2);
+
+                if ($dueInr > 0 && abs($amount - $dueInr) <= round($dueInr * self::TOLERANCE, 2)) {
+                    $scored[] = ['invoice' => $invoice, 'confidence' => 'medium', 'variance' => round($amount - $dueInr, 2),
+                                 'reason' => sprintf('%s %s at the day\'s rate of %s is ₹%s.', $invoice->currency,
+                                     number_format($due, 2), rtrim(rtrim(number_format($rate, 4), '0'), '.'), number_format($dueInr, 2))];
+                }
+
                 continue;
             }
 

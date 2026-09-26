@@ -224,6 +224,40 @@
         </div>
       </section>
 
+      <!--
+        ── Exchange rates (GAPS #411) ── Rupees per unit, fetched daily from CurrencyFreaks. A foreign bill is booked
+        at its document date's rate; rupees that arrive settle it at theirs, and the difference is realised exchange.
+        Read-only: the table is shared by every company, so nobody here types a rate in.
+      -->
+      <section class="fx-section">
+        <h2 class="fx-section__title">Exchange rates</h2>
+        <p class="fx-muted">
+          Rupees per unit, fetched every morning. A day's rate stands for {{ ratesMaxAge }} days; a foreign bill or
+          receipt dated after that is refused until a newer rate is on file — never posted at a guessed one.
+        </p>
+        <p v-if="!ratesConfigured" class="fx-warn" role="status">
+          No rate key is set on the server (RATE_TOKEN), so nothing is fetched. Foreign-currency bills cannot be
+          finalized without a rate.
+        </p>
+        <p v-if="ratesError" class="fx-error" role="alert">{{ ratesError }}</p>
+        <div v-if="canManage && ratesConfigured" class="fx-toolbar">
+          <button class="fx-btn" :disabled="busy" @click="fetchRates">Fetch today's rates</button>
+        </div>
+        <table v-if="exchangeRates.length" class="fx-table">
+          <thead>
+            <tr><th scope="col">Currency</th><th class="fx-num" scope="col">Rupees per unit</th><th scope="col">As of</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in exchangeRates" :key="'fx-' + r.currency">
+              <td class="identifier">{{ r.currency }}</td>
+              <td class="fx-num">{{ Number(r.rate).toFixed(4) }}</td>
+              <td><Figure :value="r.rate_date" kind="date" /></td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else class="fx-muted">No rates stored yet.</p>
+      </section>
+
       <!-- ── TDS rates ─────────────────────────────────────────────────── -->
       <section class="fx-section">
         <h2 class="fx-section__title">TDS rates</h2>
@@ -392,6 +426,8 @@ export default {
     accounts: [], rateCards: [], branches: [], branchId: null,
     /** TDS rate table: editable defaults, per branch (user, 2026-09-25). */
     tdsRates: [], tdsEditing: null,
+    /** Exchange rates, read-only (GAPS #411). */
+    exchangeRates: [], ratesConfigured: false, ratesMaxAge: 7, ratesError: null,
     tdsForm: { description: "", rate: 0, rate_no_pan: 20, threshold_single: null, threshold_annual: null, is_active: true },
     /** The bank accounts master (user, 2026-09-21). */
     banks: [], legacyBalance: 0,
@@ -503,11 +539,29 @@ export default {
       this.accounts = data.accounts || [];
       this.rateCards = data.rate_cards || [];
       this.tdsRates = data.tds_rates || [];
+      this.takeRates(data);
       this.branches = data.branches || [];
       if (!this.newAccount.agent_id && this.branches.length) {
         this.newAccount.agent_id = this.branches[0].id;
         this.newRate.agent_id = this.branches[0].id;
       }
+    },
+    takeRates(data) {
+      this.exchangeRates = data.exchange_rates || [];
+      this.ratesConfigured = !!data.exchange_rates_configured;
+      this.ratesMaxAge = data.exchange_rates_max_age_days || 7;
+    },
+    fetchRates() {
+      this.busy = true;
+      this.ratesError = null;
+      ApiService.post("/finance-settings/exchange-rates/fetch", {})
+        .then(({ data }) => { this.takeRates(data); })
+        .catch((e) => {
+          const d = (e.response && e.response.data) || {};
+          if (d.exchange_rates) this.takeRates(d);
+          this.ratesError = d.error || "Rates were not fetched.";
+        })
+        .finally(() => { this.busy = false; });
     },
     startRename(account) {
       this.editing = account.id;

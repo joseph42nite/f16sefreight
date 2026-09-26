@@ -532,6 +532,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::delete('/finance-settings/rate-cards/{id}', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'destroyRateCard'])->whereNumber('id');
         // The TDS rate table — editable defaults, not law (user, 2026-09-25).
         Route::post('/finance-settings/tds-rates', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveTdsRate']);
+        Route::post('/finance-settings/exchange-rates/fetch', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'fetchExchangeRates']);
 
         // ── The bank accounts master (user, 2026-09-21). Each posts to its own ledger code.
         Route::get('/bank-accounts', [\App\Http\Controllers\Freight\BankAccountController::class, 'index']);

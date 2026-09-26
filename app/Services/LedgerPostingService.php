@@ -85,9 +85,13 @@ class LedgerPostingService
      */
     public function linesForInvoice(AccountsInvoice $invoice): array
     {
-        $gross = round((float) $invoice->grand_total, 2);
-        $net = round((float) $invoice->subtotal, 2);
-        $tax = round((float) $invoice->tax_amount, 2);
+        // 🔴 IN RUPEES, at the document's own rate (GAPS #411). This posted a USD bill's face value into an INR
+        // ledger — USD 42,000 of consol as ₹42,000. The gross is the SUM of the converted parts, never converted on
+        // its own: rounded separately, the three can miss by a paisa and `write()` rightly refuses the journal.
+        $rate = (float) ($invoice->exchange_rate ?: 1);
+        $net = round((float) $invoice->subtotal * $rate, 2);
+        $tax = round((float) $invoice->tax_amount * $rate, 2);
+        $gross = round($net + $tax, 2);
 
         // 🔴 A CREDIT NOTE IS THE MIRROR, NOT A NEGATIVE INVOICE. Posting it as an invoice with minus signs
         // balances just as well and reports as negative revenue, which is not what happened: the sale stood and
@@ -170,14 +174,16 @@ class LedgerPostingService
      * A receipt: cash in, receivable down.
      *
      *   Dr  1100-Bank              amount received
-     *   Cr  1200-AR                amount received
+     *   Cr  1200-AR                amount received            (what foreign invoices were BOOKED at)
+     *   Cr/Dr 5500-Forex-Gain-Loss the difference              (a foreign invoice only)
      *
      * `$adjustment` closes the REST of an invoice that was settled short — a
      * write-off to bank charges, or a discount. It is a separate debit rather than a
      * smaller AR credit, because the receivable really did clear in full and the
      * difference really was an expense: netting them hides the cost entirely.
      */
-    public function linesForReceipt(float $received, array $adjustments = [], ?\App\BankAccount $into = null): array
+    public function linesForReceipt(float $received, array $adjustments = [], ?\App\BankAccount $into = null,
+        float $forex = 0.0): array
     {
         $lines = [
             $this->bank($into) + ['debit' => round($received, 2), 'credit' => 0.0],
@@ -202,7 +208,17 @@ class LedgerPostingService
             $adjusted = round($adjusted + $amount, 2);
         }
 
-        $lines[] = self::AR + ['debit' => 0.0, 'credit' => round($received + $adjusted, 2)];
+        // 🔴 Realised exchange (GAPS #411; PRD §6.4). The receivable comes down by what the foreign invoices were
+        // BOOKED at; rupees beyond that are a gain, rupees short of it a loss — never left in AR, where a settled
+        // invoice would carry a balance for ever. `$forex` is signed: positive is a gain.
+        $forex = round($forex, 2);
+        $lines[] = self::AR + ['debit' => 0.0, 'credit' => round($received + $adjusted - $forex, 2)];
+
+        if ($forex > 0.0) {
+            $lines[] = self::FOREX + ['debit' => 0.0, 'credit' => $forex];
+        } elseif ($forex < 0.0) {
+            $lines[] = self::FOREX + ['debit' => -$forex, 'credit' => 0.0];
+        }
 
         return $lines;
     }

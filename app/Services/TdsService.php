@@ -176,7 +176,9 @@ class TdsService
             return null;
         }
 
-        $base = round((float) $invoice->subtotal, 2);
+        // In rupees, like `$deducted` (GAPS #411): a USD bill's face value against a rupee deduction read a 1% TDS
+        // as 83%.
+        $base = round((float) $invoice->subtotal * (float) (($invoice->exchange_rate ?? 1) ?: 1), 2);
 
         return $this->record([
             'agent_id' => $invoice->agent_id,

@@ -119,6 +119,20 @@ class InvoiceController extends Controller
         $tax = (float) $invoice->items()->sum('tax_amount');
         $grandTotal = round($subtotal + $tax, 2);
 
+        // 🔴 A foreign bill is booked at its document date's rate (GAPS #411). Still on the default of 1 — which no
+        // currency trades at — means nobody set one, so it is LOOKED UP; a rate the desk typed (an agreed rate) stands.
+        // None on file for that week refuses: finalized at 1, a USD 1,000 bill would post as ₹1,000.
+        if (strtoupper($invoice->currency ?: 'INR') !== \App\Services\ExchangeRateService::BASE
+            && (float) $invoice->exchange_rate === 1.0) {
+            $rate = app(\App\Services\ExchangeRateService::class)->rate($invoice->currency, $invoice->document_date ?? now());
+
+            if ($rate === null) {
+                return response()->json(\App\Services\ExchangeRateService::noRate($invoice->currency, $invoice->document_date ?? now()), 422);
+            }
+
+            $invoice->forceFill(['exchange_rate' => $rate])->save();
+        }
+
         // 🔴 A credit note is never gated (user, 2026-09-26): it REDUCES what the client owes, yet it was checked as
         // if it added its total — so a client already over their limit could be refused the money they were owed
         // back. And the rest are checked in INR, at the document's own rate, because the limit is in rupees.
@@ -328,6 +342,13 @@ class InvoiceController extends Controller
         $supplier = DB::table('agents_info')->where('id', $invoice->agent_id)->value('gst_no');
 
         $split = $this->gst->split($tax, $counterparty, $supplier);
+
+        // In rupees, as the return reports it (GAPS #411): heads split in the document's currency, each converted
+        // once at its own rate — the same arithmetic `GstReturnService` does, so the two agree to the paisa.
+        $rate = (float) ($invoice->exchange_rate ?: 1);
+        foreach (['cgst', 'sgst', 'igst'] as $head) {
+            $split[$head] = round($split[$head] * $rate, 2);
+        }
 
         $this->ledger->writeGstRegisterRow($invoice->agent_id, 'invoice', $invoice->id, $split);
     }

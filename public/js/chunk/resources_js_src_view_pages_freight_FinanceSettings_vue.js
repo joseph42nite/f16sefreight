@@ -40,6 +40,11 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     /** TDS rate table: editable defaults, per branch (user, 2026-09-25). */
     tdsRates: [],
     tdsEditing: null,
+    /** Exchange rates, read-only (GAPS #411). */
+    exchangeRates: [],
+    ratesConfigured: false,
+    ratesMaxAge: 7,
+    ratesError: null,
     tdsForm: {
       description: "",
       rate: 0,
@@ -224,11 +229,32 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       this.accounts = data.accounts || [];
       this.rateCards = data.rate_cards || [];
       this.tdsRates = data.tds_rates || [];
+      this.takeRates(data);
       this.branches = data.branches || [];
       if (!this.newAccount.agent_id && this.branches.length) {
         this.newAccount.agent_id = this.branches[0].id;
         this.newRate.agent_id = this.branches[0].id;
       }
+    },
+    takeRates(data) {
+      this.exchangeRates = data.exchange_rates || [];
+      this.ratesConfigured = !!data.exchange_rates_configured;
+      this.ratesMaxAge = data.exchange_rates_max_age_days || 7;
+    },
+    fetchRates() {
+      this.busy = true;
+      this.ratesError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/finance-settings/exchange-rates/fetch", {}).then(({
+        data
+      }) => {
+        this.takeRates(data);
+      }).catch(e => {
+        const d = e.response && e.response.data || {};
+        if (d.exchange_rates) this.takeRates(d);
+        this.ratesError = d.error || "Rates were not fetched.";
+      }).finally(() => {
+        this.busy = false;
+      });
     },
     startRename(account) {
       this.editing = account.id;
@@ -901,7 +927,50 @@ var render = function render() {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"
-  }, [_vm._v("TDS rates")]), _vm._v(" "), _vm._m(3), _vm._v(" "), _c("table", {
+  }, [_vm._v("Exchange rates")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Rupees per unit, fetched every morning. A day's rate stands for " + _vm._s(_vm.ratesMaxAge) + " days; a foreign bill or\n        receipt dated after that is refused until a newer rate is on file — never posted at a guessed one.\n      ")]), _vm._v(" "), !_vm.ratesConfigured ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n        No rate key is set on the server (RATE_TOKEN), so nothing is fetched. Foreign-currency bills cannot be\n        finalized without a rate.\n      ")]) : _vm._e(), _vm._v(" "), _vm.ratesError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.ratesError))]) : _vm._e(), _vm._v(" "), _vm.canManage && _vm.ratesConfigured ? _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.fetchRates
+    }
+  }, [_vm._v("Fetch today's rates")])]) : _vm._e(), _vm._v(" "), _vm.exchangeRates.length ? _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(3), _vm._v(" "), _c("tbody", _vm._l(_vm.exchangeRates, function (r) {
+    return _c("tr", {
+      key: "fx-" + r.currency
+    }, [_c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.currency))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(Number(r.rate).toFixed(4)))]), _vm._v(" "), _c("td", [_c("Figure", {
+      attrs: {
+        value: r.rate_date,
+        kind: "date"
+      }
+    })], 1)]);
+  }), 0)]) : _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("No rates stored yet.")])]), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("TDS rates")]), _vm._v(" "), _vm._m(4), _vm._v(" "), _c("table", {
     staticClass: "fx-table"
   }, [_c("thead", [_c("tr", [_c("th", {
     attrs: {
@@ -1542,6 +1611,23 @@ var staticRenderFns = [function () {
   return _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("\n        🔴 Each account posts to its "), _c("strong", [_vm._v("own")]), _vm._v(" ledger code, so the trial balance tells them apart.\n        The code is issued once when the account is added and never changes — renaming it must not move where\n        its history is posted.\n      ")]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Currency")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rupees per unit")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("As of")])])]);
 }, function () {
   var _vm = this,
     _c = _vm._self._c;

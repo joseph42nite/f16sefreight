@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
+use App\Services\ExchangeRateService;
 use App\Services\TdsService;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
@@ -63,7 +64,49 @@ class FinanceSettingsController extends Controller
                    DB::raw('COALESCE(p.name, cu.name) AS party')]);
 
         return response()->json(['accounts' => $accounts, 'rate_cards' => $rates, 'tds_rates' => $tdsRates,
-                                  'branches' => $branches, 'branch_picked' => $picked]);
+                                  'branches' => $branches, 'branch_picked' => $picked] + $this->exchangeRates());
+    }
+
+    /**
+     * Fetch today's exchange rates now, rather than waiting for the 09:30 run (GAPS #411).
+     *
+     * ⚠️ Only when today's are not yet stored: `exchange_rates` is shared by every company, and so is the provider's
+     * request limit — a button any accounts desk can press must not be one that spends it. There is no typing a rate
+     * in for the same reason: one tenant's number would become every tenant's posting.
+     */
+    public function fetchExchangeRates(ExchangeRateService $fx): JsonResponse
+    {
+        $this->authorize('manageFinanceSettings');
+
+        $today = DB::table('exchange_rates')->where('rate_date', now()->toDateString())->exists();
+
+        if (! $today && $fx->fetchLatest() === 0) {
+            return response()->json([
+                'error' => blank(config('services.currency_rate.token'))
+                    ? 'No rate key is set (RATE_TOKEN), so rates cannot be fetched. Ask whoever manages the server.'
+                    : 'The rate provider did not answer. Try again later; yesterday\'s rates still stand for a week.',
+                'reason' => blank(config('services.currency_rate.token')) ? 'no_rate_key' : 'provider_failed',
+            ] + $this->exchangeRates(), 422);
+        }
+
+        return response()->json($this->exchangeRates());
+    }
+
+    /** The latest stored rate for each currency, and whether rates can be fetched at all — never the key itself. */
+    private function exchangeRates(): array
+    {
+        $latest = DB::table('exchange_rates')->where('to_currency', ExchangeRateService::BASE)
+            ->groupBy('from_currency')->selectRaw('from_currency, MAX(rate_date) AS rate_date');
+
+        return [
+            'exchange_rates' => DB::table('exchange_rates as r')
+                ->joinSub($latest, 'l', fn ($j) => $j->on('l.from_currency', '=', 'r.from_currency')->on('l.rate_date', '=', 'r.rate_date'))
+                ->where('r.to_currency', ExchangeRateService::BASE)
+                ->orderBy('r.from_currency')
+                ->get(['r.from_currency as currency', 'r.rate', 'r.rate_date']),
+            'exchange_rates_configured' => ! blank(config('services.currency_rate.token')),
+            'exchange_rates_max_age_days' => ExchangeRateService::MAX_AGE_DAYS,
+        ];
     }
 
     /** Name an account that does not exist yet, or rename one. Codes are never changed: the ledger points at them. */

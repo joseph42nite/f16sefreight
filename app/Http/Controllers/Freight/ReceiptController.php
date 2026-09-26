@@ -30,6 +30,7 @@ class ReceiptController extends Controller
         private readonly LedgerPostingService $ledger,
         private readonly AuditLogger $audit,
         private readonly TdsService $tds,
+        private readonly \App\Services\ExchangeRateService $fx,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -144,20 +145,31 @@ class ReceiptController extends Controller
             ], 422);
         }
 
-        foreach ($allocations as $allocation) {
+        foreach ($allocations as $i => $allocation) {
             $invoice = AccountsInvoice::withoutTenantScope()->find($allocation['invoice_id']);
 
             if ($invoice === null || ! $this->branches()->contains('id', $invoice->agent_id)) {
                 return response()->json(['error' => 'One of those documents is not one of yours.', 'reason' => 'invoice_not_found'], 404);
             }
 
-            if (round((float) $allocation['amount'], 2) > $invoice->outstanding() + 0.009) {
+            // 🔴 The rupees placed against it, in ITS currency (GAPS #411): a USD bill is owed in dollars, and ₹84,000
+            // against a USD 1,000 balance is not "₹83,000 over-allocated". No rate for the day refuses the receipt.
+            $settles = $this->fx->settle($invoice, round((float) $allocation['amount'], 2), $data['receipt_date']);
+
+            if ($settles === null) {
+                return response()->json(\App\Services\ExchangeRateService::noRate($invoice->currency, $data['receipt_date']), 422);
+            }
+
+            if ($settles['invoice_amount'] > $invoice->outstanding() + 0.009) {
                 return response()->json([
-                    'error' => sprintf('%s has only %s outstanding; you have placed %s against it.',
-                        $invoice->invoice_no, number_format($invoice->outstanding(), 2), number_format((float) $allocation['amount'], 2)),
+                    'error' => sprintf('%s has only %s %s outstanding; you have placed %s %s against it.',
+                        $invoice->invoice_no, $invoice->currency ?: 'INR', number_format($invoice->outstanding(), 2),
+                        $invoice->currency ?: 'INR', number_format($settles['invoice_amount'], 2)),
                     'reason' => 'over_allocated_invoice',
                 ], 422);
             }
+
+            $allocations[$i]['settles'] = $settles;
         }
 
         $receipt = DB::transaction(function () use ($data, $allocations) {
@@ -179,9 +191,13 @@ class ReceiptController extends Controller
             ]);
 
             foreach ($allocations as $allocation) {
+                $foreign = $allocation['settles']['rate'] !== 1.0;
                 $receipt->allocations()->create([
                     'invoice_id' => $allocation['invoice_id'],
                     'amount' => round((float) $allocation['amount'], 2),
+                    // Left NULL for rupees: `amount` IS the invoice amount then.
+                    'invoice_amount' => $foreign ? $allocation['settles']['invoice_amount'] : null,
+                    'exchange_rate' => $foreign ? $allocation['settles']['rate'] : null,
                     'resolution' => $allocation['resolution'] ?? null,
                 ]);
 
@@ -221,7 +237,7 @@ class ReceiptController extends Controller
         DB::transaction(function () use ($receipt, $period) {
             $this->ledger->write(
                 $this->ledger->linesForReceipt((float) $receipt->amount, $this->adjustments($receipt),
-                    into: $this->bankAccount($receipt->bank_account_id)),
+                    into: $this->bankAccount($receipt->bank_account_id), forex: $this->forex($receipt)),
                 $receipt->agent_id, $period->id, $receipt->id, 'receipt'
             );
 
@@ -243,7 +259,7 @@ class ReceiptController extends Controller
 
         return response()->json($this->ledger->summarise(
             $this->ledger->linesForReceipt((float) $receipt->amount, $this->adjustments($receipt),
-                into: $this->bankAccount($receipt->bank_account_id))
+                into: $this->bankAccount($receipt->bank_account_id), forex: $this->forex($receipt))
         ));
     }
 
@@ -278,7 +294,9 @@ class ReceiptController extends Controller
                 default => LedgerPostingService::SALES_ADJUSTMENTS,
             };
 
-            $legs[] = ['account' => $account, 'amount' => round($shortfall, 2), 'resolution' => $allocation->resolution,
+            // In rupees at the invoice's own rate: the part written off was never received, so it carries no exchange.
+            $invoice = AccountsInvoice::withoutTenantScope()->find($allocation->invoice_id);
+            $legs[] = ['account' => $account, 'amount' => $this->fx->booked($invoice, $shortfall), 'resolution' => $allocation->resolution,
                        'invoice_id' => (int) $allocation->invoice_id];
         }
 
@@ -306,6 +324,18 @@ class ReceiptController extends Controller
         }
     }
 
+    /**
+     * Realised exchange on this receipt: rupees received against foreign invoices less what those invoices were
+     * booked at (GAPS #411). Signed — positive is a gain. Nothing on a rupee allocation, whose `invoice_amount` is NULL.
+     */
+    private function forex(AccountsReceipt $receipt): float
+    {
+        return round((float) DB::table('accounts_receipt_allocations as a')
+            ->join('accounts_invoices as i', 'i.id', '=', 'a.invoice_id')
+            ->where('a.receipt_id', $receipt->id)->whereNotNull('a.invoice_amount')
+            ->sum(DB::raw('a.amount - ROUND(a.invoice_amount * i.exchange_rate, 2)')), 2);
+    }
+
     private function shortfall(int $invoiceId): float
     {
         $invoice = AccountsInvoice::withoutTenantScope()->find($invoiceId);
@@ -327,7 +357,9 @@ class ReceiptController extends Controller
             return;
         }
 
-        $paid = round((float) DB::table('accounts_receipt_allocations')->where('invoice_id', $invoiceId)->sum('amount'), 2);
+        // In the invoice's own currency: what each allocation SETTLED, not the rupees that arrived (GAPS #411).
+        $paid = round((float) DB::table('accounts_receipt_allocations')->where('invoice_id', $invoiceId)
+            ->sum(DB::raw('COALESCE(invoice_amount, amount)')), 2);
         $resolved = DB::table('accounts_receipt_allocations')->where('invoice_id', $invoiceId)->whereNotNull('resolution')->exists();
         $total = round((float) $invoice->grand_total, 2);
 

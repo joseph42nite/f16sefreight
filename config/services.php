@@ -71,7 +71,15 @@ return [
     ],
     // The GLN/IATA status feed posts to /api/gln-response?token=… (or the X-GLN-Token header).
     'gln' => ['token' => env('GLN_WEBHOOK_TOKEN')],
-    'currency_rate' => ['token' => env('RATE_TOKEN')],
+    // CurrencyFreaks — the provider this key has always been for (legacy CurrencyRateController, 2024). The free plan
+    // serves TODAY's rates only (USD base; historical needs a paid plan), so `fx:fetch-rates` stores each day's into
+    // `exchange_rates` and postings read them back (GAPS #411).
+    'currency_rate' => [
+        'token' => env('RATE_TOKEN'),
+        'base' => env('RATE_BASE', 'https://api.currencyfreaks.com/v2.0'),
+        // What the desk bills in besides rupees. INR is always fetched too: every rate is derived through it.
+        'symbols' => explode(',', env('RATE_SYMBOLS', 'USD,EUR,GBP,AED,SGD,HKD,CNY,JPY,AUD,CAD,CHF,SAR')),
+    ],
 
     // Gemma 4 on OpenRouter, called from Laravel for the help copilot (the parser calls it itself).
     // The key is the same one the ai-server container reads.

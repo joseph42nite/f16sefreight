@@ -68,6 +68,13 @@ class LedgerPostingService
     public const FOREX = ['code' => '5500-Forex-Gain-Loss', 'name' => 'Forex Gain / Loss'];
 
     /**
+     * The owners' money in the business — the first EQUITY account (user, 2026-09-26; GAPS #409). ❓ Like `1100-Bank`
+     * above, OUR default: PRD §1685 gives the balance sheet an equity section ("reinvested earnings") but names no
+     * capital account, and `3000` is the band the chart leaves free between liabilities and revenue.
+     */
+    public const OWNERS_CAPITAL = ['code' => '3000-Owners-Capital', 'name' => "Owners' Capital"];
+
+    /**
      * The journal for a sales document.
      *
      *   Dr  1200-AR                grand total
@@ -227,6 +234,22 @@ class LedgerPostingService
         }
 
         return $lines;
+    }
+
+    /**
+     * An opening balance: the money the bank held before the first document was posted, put in by the owners.
+     *
+     *   Dr  1100-Bank              amount
+     *   Cr  3000-Owners-Capital    amount
+     *
+     * Posted with the accounting period as its source (`opening_balance`): it opens a period, not a document.
+     */
+    public function linesForOpeningBalance(float $amount, ?\App\BankAccount $into = null): array
+    {
+        return [
+            $this->bank($into) + ['debit' => round($amount, 2), 'credit' => 0.0],
+            self::OWNERS_CAPITAL + ['debit' => 0.0, 'credit' => round($amount, 2)],
+        ];
     }
 
     /**

@@ -251,6 +251,36 @@ class FinancialReportsTest extends TestCase
         $this->assertSame(40000.0, (float) $body['equity'], 'The residual matches the P&L net.');
     }
 
+    /**
+     * 🔴 An opening balance is the owners' capital, not earnings (user, 2026-09-26; GAPS #409). On the ledger above,
+     * ₹10,00,000 put in: assets 1,18,000 + 10,00,000 = 11,18,000; liabilities 78,000; equity 10,40,000 — of which
+     * capital 10,00,000 and earnings 40,000, still the P&L net. Before, the whole 10,40,000 read as earnings.
+     */
+    public function test_an_opening_balance_is_capital_not_earnings(): void
+    {
+        $this->seedLedger();
+        $ledger = app(\App\Services\LedgerPostingService::class);
+        $ledger->write($ledger->linesForOpeningBalance(1000000), $this->branch->id, $this->periodId, $this->periodId, 'opening_balance');
+
+        $body = $this->api($this->accounts)
+            ->getJson($this->url("/api/reports/balance-sheet?period_id={$this->periodId}"))
+            ->assertOk()->json();
+
+        $this->assertSame([1118000.0, 78000.0], [(float) $body['assets']['total'], (float) $body['liabilities']['total']]);
+        $this->assertEquals([['code' => '3000-Owners-Capital', 'name' => "Owners' Capital", 'amount' => 1000000]],
+            $body['capital']['lines']);
+        $this->assertSame([1000000.0, 40000.0, 1040000.0],
+            [(float) $body['capital']['total'], (float) $body['earnings'], (float) $body['equity']]);
+
+        // Not revenue: the P&L is untouched, and the ledger still balances.
+        $this->assertSame(40000.0, (float) $this->getJson($this->url("/api/reports/profit-and-loss?period_id={$this->periodId}"))->json('net'));
+        $this->assertTrue($this->getJson($this->url("/api/reports/trial-balance?period_id={$this->periodId}"))->json('balanced'));
+
+        // The day book names it, and the period it opens.
+        $entry = collect($this->getJson($this->url('/api/journal'))->assertOk()->json('entries'))->firstWhere('source_type', 'opening_balance');
+        $this->assertSame(['Opening balance', 'FY26 Q1'], [$entry['source_label'], $entry['document_no']]);
+    }
+
     // ─── Trial balance ───────────────────────────────────────────────────────
 
     /** 🔴 `balanced` IS THE WHOLE REPORT — the one question it exists to answer. */

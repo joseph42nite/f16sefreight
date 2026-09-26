@@ -37,6 +37,7 @@ class FinancialReportController extends Controller
     private const EXPENSE = '5';
     private const ASSET = '1';
     private const LIABILITY = '2';
+    private const EQUITY = '3';
 
     public function periods(): JsonResponse
     {
@@ -117,16 +118,25 @@ class FinancialReportController extends Controller
                               'amount' => round((float) $r->cr - (float) $r->dr, 2)])
             ->values();
 
+        // What the owners put in (GAPS #409) — named, so it is never read as earnings.
+        $capital = $rows->filter(fn ($r) => str_starts_with($r->account_code, self::EQUITY))
+            ->map(fn ($r) => ['code' => $r->account_code, 'name' => $r->account_name,
+                              'amount' => round((float) $r->cr - (float) $r->dr, 2)])
+            ->values();
+
         $totalAssets = round($assets->sum('amount'), 2);
         $totalLiabilities = round($liabilities->sum('amount'), 2);
+        $equity = round($totalAssets - $totalLiabilities, 2);
 
         return response()->json([
             'period'      => $period,
             'assets'      => ['lines' => $assets, 'total' => $totalAssets],
             'liabilities' => ['lines' => $liabilities, 'total' => $totalLiabilities],
-            // Retained earnings as the residual — this is the accounting identity, not
-            // an equity ledger, and calling it that would overstate what it is.
-            'equity'      => round($totalAssets - $totalLiabilities, 2),
+            // Total equity is still the identity, assets − liabilities. Of it, capital is the ledger's; earnings are the
+            // residual — the accounting identity, not an earnings ledger, and calling it that would overstate it.
+            'capital'     => ['lines' => $capital, 'total' => round($capital->sum('amount'), 2)],
+            'earnings'    => round($equity - $capital->sum('amount'), 2),
+            'equity'      => $equity,
         ]);
     }
 

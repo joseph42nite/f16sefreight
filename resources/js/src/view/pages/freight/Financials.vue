@@ -482,10 +482,14 @@
         A report runs over a period, never a date range — half a period is a figure nobody can reconcile against
         anything they have filed.
       </p>
-      <!-- 🔴 Every figure below opens. A number you cannot take apart is a number you have to take on faith. -->
-      <p v-else class="fx-muted">Click any account to see the postings behind it, and the documents behind those.</p>
+      <!--
+        🔴 The hint sat HERE as a plain `v-else`, which ends the chain: Vue drops every `v-else-if` after it without a
+        word, so from 2026-09-20 the P&L, balance sheet and trial balance never rendered (GAPS #409). It lives inside.
+      -->
       <p v-else-if="reportLoading" class="fx-muted">Loading…</p>
       <template v-else-if="reportData">
+        <!-- 🔴 Every figure below opens. A number you cannot take apart is a number you have to take on faith. -->
+        <p class="fx-muted">Click any account to see the postings behind it, and the documents behind those.</p>
         <!-- Profit & loss -->
         <table v-if="report === 'profit-and-loss'" class="fx-table">
           <tbody>
@@ -529,9 +533,15 @@
               <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
             </tr>
             <tr><td><strong>Total liabilities</strong></td><td class="fx-num"><Figure :value="reportData.liabilities.total" kind="currency" currency-code="INR" /></td></tr>
+            <tr><td colspan="2"><strong>Equity</strong></td></tr>
+            <tr v-for="l in (reportData.capital || { lines: [] }).lines" :key="'e-' + l.code">
+              <td><router-link :to="drillTo(l.code)">{{ l.code }} {{ l.name }}</router-link></td>
+              <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
+            </tr>
+            <tr><td>Retained earnings (the residual)</td><td class="fx-num"><Figure :value="reportData.earnings" kind="currency" currency-code="INR" /></td></tr>
           </tbody>
           <tfoot>
-            <tr><td><strong>Retained earnings (the residual)</strong></td><td class="fx-num"><Figure :value="reportData.equity" kind="currency" currency-code="INR" /></td></tr>
+            <tr><td><strong>Total equity</strong></td><td class="fx-num"><Figure :value="reportData.equity" kind="currency" currency-code="INR" /></td></tr>
           </tfoot>
         </table>
 

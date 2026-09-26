@@ -27,6 +27,8 @@ class JournalController extends Controller
         'invoice' => ['table' => 'accounts_invoices', 'number' => 'invoice_no', 'label' => 'Sales document'],
         'purchase_voucher' => ['table' => 'accounts_purchase_vouchers', 'number' => 'voucher_no', 'label' => 'Purchase voucher'],
         'receipt' => ['table' => 'accounts_receipts', 'number' => 'receipt_no', 'label' => 'Receipt'],
+        // It opens a period, not a document (GAPS #409).
+        'opening_balance' => ['table' => 'accounting_periods', 'number' => 'period_name', 'label' => 'Opening balance'],
     ];
 
     /** The day book: every posting, newest first, with the document that wrote it. */
@@ -318,6 +320,10 @@ class JournalController extends Controller
                 ->join('accounts_invoices as i', 'i.id', '=', 'a.invoice_id')
                 ->where('a.receipt_id', $id)
                 ->get(['i.invoice_no as description', 'a.amount as net_amount', 'a.resolution']),
+            'opening_balance' => DB::table('accounts_ledger_entries as l')
+                ->join('chart_of_accounts as c', 'c.id', '=', 'l.chart_of_account_id')
+                ->where('l.source_type', 'opening_balance')->where('l.source_id', $id)->where('l.debit_amount', '>', 0)
+                ->get(['c.account_name as description', 'l.debit_amount as net_amount']),
             default => collect(),
         };
 
@@ -325,7 +331,7 @@ class JournalController extends Controller
             'type' => $type,
             'label' => $source['label'],
             'number' => $row->{$source['number']},
-            'date' => $row->document_date ?? $row->receipt_date ?? null,
+            'date' => $row->document_date ?? $row->receipt_date ?? $row->start_date ?? null,
             'organization' => $this->partyNames([$type => collect([$row])])[$this->partyKey($type, $row)] ?? null,
             'total' => (float) ($row->grand_total ?? $row->amount ?? $lines->sum('net_amount')),
             'currency' => $row->currency ?? 'INR',

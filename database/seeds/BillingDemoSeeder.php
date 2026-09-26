@@ -96,6 +96,7 @@ class BillingDemoSeeder extends Seeder
             $made['payments'] += $this->paySome($branch);
             $made['costsheets'] += $this->costSheets($branch);
             $made['postings'] += $this->postSome($branch);
+            $made['postings'] += $this->openingBalance($branch);
         }
 
         $this->creditLimits($branches);
@@ -613,6 +614,25 @@ class BillingDemoSeeder extends Seeder
      * ⚠️ Through the same service the controllers use. A seeder that wrote its own journal lines would put figures
      * in the ledger that the product itself would never produce — and the trial balance would prove nothing.
      */
+    /**
+     * ₹10,00,000 in the bank before the first document, put in by the owners (GAPS #409). Without it Mumbai's bank
+     * read −₹5.63 lakh: the demo pays suppliers more than it has yet collected, and a demo with no opening balance
+     * reads that as an overdraft.
+     */
+    private function openingBalance(int $branch): int
+    {
+        $ledger = app(\App\Services\LedgerPostingService::class);
+        $period = DB::table('accounting_periods')->where('agent_id', $branch)->where('status', 'open')->orderBy('start_date')->first();
+
+        if ($period === null) {
+            return 0;
+        }
+
+        $ledger->write($ledger->linesForOpeningBalance(1000000), $branch, $period->id, $period->id, 'opening_balance');
+
+        return 1;
+    }
+
     private function postSome(int $branch): int
     {
         $ledger = app(\App\Services\LedgerPostingService::class);
@@ -637,19 +657,27 @@ class BillingDemoSeeder extends Seeder
             return true;
         };
 
-        foreach (AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)
-            ->whereNotIn('status', ['draft', 'void'])->orderByDesc('id')->limit(10)->get() as $invoice) {
-            if ($post($ledger->linesForInvoice($invoice), $invoice->document_date, $invoice->id, 'invoice')) {
-                $invoice->update(['is_posted' => true]);
-                $invoices->writeGstRegister($invoice);
-            }
-        }
-
         // 🔴 Every voucher paySome() settled, as well as the latest six. Its payments are posted, so a paid voucher
         // left unposted took Accounts Payable DOWN for bills it never went UP for — Mumbai's AP read −₹2,99,115.
         $vouchersToPost = \App\AccountsPurchaseVoucher::withoutGlobalScopes()->where('agent_id', $branch)->where('amount_paid', '>', 0)->pluck('id')
             ->merge(\App\AccountsPurchaseVoucher::withoutGlobalScopes()->where('agent_id', $branch)->orderByDesc('id')->limit(6)->pluck('id'))
             ->unique();
+
+        // And the sales side of those same shipments: costs posted without the revenue they were bought for put the
+        // demo's P&L at a loss (Mumbai −₹7.34 lakh) that no desk would ever have produced (GAPS #409).
+        $jobsCosted = \App\AccountsPurchaseVoucher::withoutGlobalScopes()->whereIn('id', $vouchersToPost)->pluck('job_id')->filter();
+        $invoicesToPost = AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)->whereNotIn('status', ['draft', 'void'])
+            ->orderByDesc('id')->limit(10)->pluck('id')
+            ->merge(AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)->whereNotIn('status', ['draft', 'void'])
+                ->whereIn('job_id', $jobsCosted)->pluck('id'))
+            ->unique();
+
+        foreach (AccountsInvoice::withoutGlobalScopes()->whereIn('id', $invoicesToPost)->orderByDesc('id')->get() as $invoice) {
+            if ($post($ledger->linesForInvoice($invoice), $invoice->document_date, $invoice->id, 'invoice')) {
+                $invoice->update(['is_posted' => true]);
+                $invoices->writeGstRegister($invoice);
+            }
+        }
 
         foreach (\App\AccountsPurchaseVoucher::withoutGlobalScopes()->whereIn('id', $vouchersToPost)->orderByDesc('id')->get() as $voucher) {
             if ($post($ledger->linesForVoucher($voucher), $voucher->document_date, $voucher->id, 'purchase_voucher')) {

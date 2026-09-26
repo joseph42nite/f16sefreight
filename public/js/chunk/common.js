@@ -387,6 +387,11 @@ const VIEWS = [{
 }, {
   key: "consol_invoice",
   label: "Consol"
+},
+// Logi-Sys's Billing → General (user, 2026-09-26): billing with no shipment, and the notes raised against it.
+{
+  key: "general",
+  label: "General"
 }, {
   key: "receipts",
   label: "Receipts"
@@ -404,7 +409,7 @@ const DOC_TABS = [{
   key: "journal",
   label: "Journal"
 }];
-const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "consol_invoice"];
+const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "consol_invoice", "general"];
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "Billing",
   components: {
@@ -511,7 +516,7 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
     },
     /** The "New …" button raises what this view is showing; on All documents, an invoice. */
     newDocumentType() {
-      return this.view === "all" ? "invoice" : this.view;
+      return this.view === "all" || this.view === "general" ? "invoice" : this.view;
     },
     subtitleForView() {
       if (this.view === "receipts") return "Money received, and the documents each payment settled.";
@@ -522,7 +527,8 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
         debit_note: "Charges raised after the invoice went out — demurrage, a weight correction, an examination.",
         credit_note: "What has been given back — a rate dispute, an invoicing error, goodwill.",
         brokerage: "Commission billed to carriers and overseas agents.",
-        consol_invoice: "Consolidations settled with the counterpart agent."
+        consol_invoice: "Consolidations settled with the counterpart agent.",
+        general: "Billing with no shipment behind it — warehousing, a service sold on its own — and the notes raised against it."
       }[this.view];
     },
     chosen() {
@@ -545,7 +551,9 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
       if (!this.raise) return false;
       const linesOk = this.raise.lines.every(l => l.description && Number(l.rate) > 0);
       if (this.isNote) return linesOk && !!this.raise.parent_invoice_id && !!(this.raise.reason || "").trim();
-      if (this.raise.type === "invoice") return linesOk && !!this.raise.job_id && !!this.raise.customer_id;
+      if (this.raise.type === "invoice") {
+        return linesOk && !!this.raise.customer_id && (this.raise.general ? !!this.raise.agent_id : !!this.raise.job_id);
+      }
       return linesOk && !!this.raise.job_id && !!this.raise.partner_id;
     },
     placedTotal() {
@@ -610,7 +618,13 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
     },
     query() {
       const params = [];
-      if (this.view !== "all") params.push("types[]=" + this.view);
+      if (this.view === "general") {
+        // An invoice with no shipment, and the debit and credit notes against it — which carry its NULL job.
+        ["invoice", "debit_note", "credit_note"].forEach(t => params.push("types[]=" + t));
+        params.push("general=1");
+      } else if (this.view !== "all") {
+        params.push("types[]=" + this.view);
+      }
       ["agent_id", "from", "to", "q", "status", "currency", "created_by", "sort"].forEach(key => {
         if (this.filters[key]) params.push(key + "=" + encodeURIComponent(this.filters[key]));
       });
@@ -847,6 +861,9 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
       this.raise = {
         type,
         parent_invoice_id: against ? against.id : null,
+        // Raised from the General tab, an invoice starts as not-for-a-shipment; a note follows its parent.
+        general: !against && this.view === "general",
+        agent_id: this.branches.length === 1 ? this.branches[0].id : null,
         job_id: null,
         customer_id: null,
         partner_id: null,
@@ -1967,6 +1984,11 @@ const VIEWS = [{
       margin: 0,
       margin_pct: null
     },
+    /** Billing with no shipment behind it, reported beside the shipments (2026-09-26). */
+    general: {
+      revenue: 0,
+      documents: 0
+    },
     branches: [],
     clients: [],
     modes: [],
@@ -2040,6 +2062,10 @@ const VIEWS = [{
         this.jobs = data.jobs || [];
         this.groups = data.groups || [];
         this.totals = data.totals;
+        this.general = data.general || {
+          revenue: 0,
+          documents: 0
+        };
         this.branches = data.branches || this.branches;
         this.clients = data.clients || this.clients;
         this.modes = data.modes || this.modes;
@@ -3954,7 +3980,7 @@ var render = function render() {
       }
     })], 1), _vm._v(" "), _vm.view === "all" ? _c("td", [_vm._v(_vm._s(_vm.typeLabel(row.type)))]) : _vm._e(), _vm._v(" "), _c("td", [_vm._v(_vm._s(row.organization || "—"))]), _vm._v(" "), _c("td", {
       staticClass: "identifier"
-    }, [_vm._v(_vm._s(row.job_no || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(row.currency))]), _vm._v(" "), _c("td", {
+    }, [_vm._v(_vm._s(row.job_no || (row.general ? "Not a shipment" : "—")))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(row.currency))]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
     }, [_c("Figure", {
       attrs: {
@@ -4266,7 +4292,7 @@ var render = function render() {
           staticClass: "fx-muted"
         }, [_vm._v("—")])], 1), _vm._v(" "), _c("dt", [_vm._v("Shipment")]), _vm._v(" "), _c("dd", {
           staticClass: "identifier"
-        }, [_vm._v(_vm._s(_vm.document.job ? _vm.document.job.execution_job_no : "—"))]), _vm._v(" "), _c("dt", [_vm._v("Total")]), _vm._v(" "), _c("dd", [_c("Figure", {
+        }, [_vm._v(_vm._s(_vm.document.job ? _vm.document.job.execution_job_no : _vm.document.general ? "Not for a shipment" : "—"))]), _vm._v(" "), _c("dt", [_vm._v("Total")]), _vm._v(" "), _c("dd", [_c("Figure", {
           attrs: {
             value: _vm.document.grand_total,
             kind: "currency",
@@ -5231,7 +5257,76 @@ var render = function render() {
         _vm.$set(_vm.raise, "reason", $event.target.value);
       }
     }
-  })])] : [_c("label", {
+  })])] : [_vm.raise.type === "invoice" ? _c("label", {
+    staticClass: "fx-checkbox"
+  }, [_c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.general,
+      expression: "raise.general"
+    }],
+    attrs: {
+      type: "checkbox"
+    },
+    domProps: {
+      checked: Array.isArray(_vm.raise.general) ? _vm._i(_vm.raise.general, null) > -1 : _vm.raise.general
+    },
+    on: {
+      change: [function ($event) {
+        var $$a = _vm.raise.general,
+          $$el = $event.target,
+          $$c = $$el.checked ? true : false;
+        if (Array.isArray($$a)) {
+          var $$v = null,
+            $$i = _vm._i($$a, $$v);
+          if ($$el.checked) {
+            $$i < 0 && _vm.$set(_vm.raise, "general", $$a.concat([$$v]));
+          } else {
+            $$i > -1 && _vm.$set(_vm.raise, "general", $$a.slice(0, $$i).concat($$a.slice($$i + 1)));
+          }
+        } else {
+          _vm.$set(_vm.raise, "general", $$c);
+        }
+      }, function ($event) {
+        _vm.raise.job_id = null;
+      }]
+    }
+  }), _vm._v("\n            Not for a shipment\n          ")]) : _vm._e(), _vm._v(" "), _vm.raise.type === "invoice" && _vm.raise.general ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Branch billing it")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.raise.agent_id,
+      expression: "raise.agent_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.raise, "agent_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.branches, function (b) {
+    return _c("option", {
+      key: b.id,
+      domProps: {
+        value: b.id
+      }
+    }, [_vm._v(_vm._s(b.name))]);
+  })], 2)]) : _c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
@@ -8695,7 +8790,9 @@ var render = function render() {
     class: {
       "is-loss": _vm.totals.margin < 0
     }
-  }, [_vm._v(_vm._s(_vm.money(_vm.totals.margin)))]), _vm._v(" "), _vm.totals.margin_pct !== null ? _c("span", [_vm._v(" (" + _vm._s(_vm.totals.margin_pct) + "%)")]) : _vm._e()])]), _vm._v(" "), _vm.totals.no_cost_booked || _vm.totals.not_billed ? _c("p", {
+  }, [_vm._v(_vm._s(_vm.money(_vm.totals.margin)))]), _vm._v(" "), _vm.totals.margin_pct !== null ? _c("span", [_vm._v(" (" + _vm._s(_vm.totals.margin_pct) + "%)")]) : _vm._e()]), _vm._v(" "), _vm.general.documents ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Plus "), _c("strong", [_vm._v(_vm._s(_vm.money(_vm.general.revenue)))]), _vm._v(" billed not for a shipment, across " + _vm._s(_vm.general.documents) + "\n        document(s), credit notes subtracted — not in the figures above, which are shipments only.\n      ")]) : _vm._e()]), _vm._v(" "), _vm.totals.no_cost_booked || _vm.totals.not_billed ? _c("p", {
     staticClass: "fx-notice",
     attrs: {
       role: "status"

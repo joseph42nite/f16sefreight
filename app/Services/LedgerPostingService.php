@@ -41,6 +41,12 @@ class LedgerPostingService
     public const COMMISSION_REVENUE = ['code' => '4800-Commission-Revenue', 'name' => 'Commission Revenue'];
     public const AR_AGENTS = ['code' => '1220-AR-Agents', 'name' => 'Accounts Receivable — Agents'];
     public const CONSOL_REVENUE = ['code' => '4050-Consol-Revenue', 'name' => 'Consol Revenue'];
+    /**
+     * General billing — revenue with no shipment behind it (user, 2026-09-26). Kept out of `4000-Freight-Revenue` so
+     * the P&L shows freight as freight, and so the revenue profitability explains by shipment can be told apart
+     * from the revenue it cannot.
+     */
+    public const OTHER_REVENUE = ['code' => '4100-Other-Operating-Revenue', 'name' => 'Other Operating Revenue'];
 
     /** Buy side. */
     public const AP = ['code' => '2100-AP', 'name' => 'Accounts Payable'];
@@ -88,9 +94,12 @@ class LedgerPostingService
         }
 
         // Who owes it and what earned it differ by document; the shape does not.
-        [$receivable, $revenue] = match ($invoice->type) {
-            'brokerage' => [self::COMMISSION_RECEIVABLE, self::COMMISSION_REVENUE],
-            'consol_invoice' => [self::AR_AGENTS, self::CONSOL_REVENUE],
+        [$receivable, $revenue] = match (true) {
+            $invoice->type === 'brokerage' => [self::COMMISSION_RECEIVABLE, self::COMMISSION_REVENUE],
+            $invoice->type === 'consol_invoice' => [self::AR_AGENTS, self::CONSOL_REVENUE],
+            // No shipment behind it: the same client receivable, a different revenue line. A debit note on a
+            // general invoice carries the parent's NULL job, so it lands here too.
+            $invoice->job_id === null => [self::AR, self::OTHER_REVENUE],
             default => [self::AR, self::REVENUE],   // invoice and debit note both bill the client
         };
 

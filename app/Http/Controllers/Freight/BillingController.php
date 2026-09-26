@@ -251,7 +251,11 @@ class BillingController extends Controller
         $data = $request->validate([
             'type' => 'required|in:invoice,debit_note,credit_note,brokerage,consol_invoice',
             'parent_invoice_id' => 'required_if:type,debit_note,credit_note|nullable|integer',
-            'job_id' => 'required_if:type,invoice,brokerage,consol_invoice|nullable|integer',
+            // General billing — no shipment behind it (user, 2026-09-26). An INVOICE may be general; a note follows
+            // its parent, and brokerage and consol are always on a shipment (the database refuses otherwise).
+            'general' => 'nullable|boolean',
+            'agent_id' => 'nullable|integer',
+            'job_id' => 'nullable|integer|required_if:type,brokerage,consol_invoice',
             'customer_id' => 'required_if:type,invoice|nullable|integer|exists:customers,id',
             'partner_id' => 'required_if:type,brokerage,consol_invoice|nullable|integer|exists:partners,id',
             'basis' => 'nullable|string|max:30',
@@ -282,13 +286,30 @@ class BillingController extends Controller
             }
         }
 
-        $agentId = $parent?->agent_id ?? $this->jobBranch((int) $data['job_id']);
+        $general = (bool) ($data['general'] ?? false);
 
-        if ($agentId === null || ! $this->branches()->contains('id', $agentId)) {
-            return response()->json(['error' => 'That shipment is not one of yours.', 'reason' => 'job_not_found'], 404);
+        if ($general && $data['type'] !== 'invoice') {
+            return response()->json(['error' => 'Only an invoice can be raised without a shipment; a note follows the '
+                . 'invoice it amends, and brokerage and consol are always on a shipment.', 'reason' => 'general_type'], 422);
         }
 
-        $invoice = DB::transaction(function () use ($data, $parent, $agentId) {
+        if ($data['type'] === 'invoice' && ! $general && empty($data['job_id'])) {
+            return response()->json(['error' => 'Choose the shipment this invoice is for, or raise it as not for a shipment.',
+                'reason' => 'job_required'], 422);
+        }
+
+        // A general invoice names its branch outright — there is no shipment to take it from.
+        $agentId = $parent?->agent_id ?? ($general ? (int) ($data['agent_id'] ?? 0) : $this->jobBranch((int) $data['job_id']));
+
+        if (! $agentId || ! $this->branches()->contains('id', $agentId)) {
+            return response()->json($general
+                ? ['error' => 'Choose which of your branches is billing this.', 'reason' => 'branch_not_found']
+                : ['error' => 'That shipment is not one of yours.', 'reason' => 'job_not_found'], $general ? 422 : 404);
+        }
+
+        $jobId = $parent ? $parent->job_id : ($general ? null : (int) $data['job_id']);
+
+        $invoice = DB::transaction(function () use ($data, $parent, $agentId, $jobId) {
             // Who the document is addressed to, by type: a note follows its parent, an invoice bills the client, and
             // brokerage and consol bill a partner with NO customer debtor at all (PRD §6.2).
             [$billedType, $billedId, $role, $customerId] = match (true) {
@@ -299,15 +320,16 @@ class BillingController extends Controller
 
             $invoice = AccountsInvoice::create([
                 'agent_id' => $agentId,
-                'job_id' => $parent?->job_id ?? $data['job_id'],
-                'transport_mode' => $parent?->transport_mode ?? DB::table('jobs')->where('id', $data['job_id'])->value('transport_mode'),
+                'job_id' => $jobId,
+                'transport_mode' => $parent ? $parent->transport_mode
+                    : ($jobId === null ? null : DB::table('jobs')->where('id', $jobId)->value('transport_mode')),
                 'customer_id' => $customerId,
                 'billed_party_type' => $billedType,
                 'billed_party_id' => $billedId,
                 'billed_party_role' => $role,
                 'parent_invoice_id' => $parent?->id,
                 'created_by' => auth()->id(),
-                'invoice_no' => AccountsInvoice::placeholderNumber($parent?->job_id ?? (int) $data['job_id']),
+                'invoice_no' => AccountsInvoice::placeholderNumber($jobId),
                 'type' => $data['type'],
                 'document_date' => $data['document_date'] ?? now()->toDateString(),
                 'due_date' => $data['due_date'] ?? null,
@@ -381,6 +403,8 @@ class BillingController extends Controller
                 'label' => BillingDocuments::label($invoice->type),
                 'organization' => $this->organisation($invoice),
                 'job' => $job,
+                // No shipment behind it — said outright, rather than a blank where the job would be.
+                'general' => $invoice->isGeneral(),
                 'outstanding' => $invoice->outstanding(),
                 'amount_inr' => round((float) $invoice->grand_total * (float) ($invoice->exchange_rate ?: 1), 2),
                 'parent' => $invoice->parent_invoice_id
@@ -637,6 +661,8 @@ class BillingController extends Controller
             ->when($request->boolean('own_drafts'), fn ($q) => $q->whereNull('i.sent_to_accounts_at')->where('i.status', 'draft'))
             // Logi-Sys calls it "Exclude Reverse Txns": the credit notes that give money back.
             ->when($request->boolean('exclude_credit_notes'), fn ($q) => $q->where('i.type', '!=', 'credit_note'))
+            // General billing — no shipment behind it, and the notes raised against it (user, 2026-09-26).
+            ->when($request->boolean('general'), fn ($q) => $q->whereNull('i.job_id'))
             ->when($request->filled('q'), function ($q) use ($request) {
                 $term = '%' . $request->string('q') . '%';
                 $q->where(fn ($w) => $w->where('c.name', 'like', $term)->orWhere('p.name', 'like', $term)
@@ -648,6 +674,7 @@ class BillingController extends Controller
                 'i.id', 'i.invoice_no', 'i.document_date', 'i.due_date', 'i.type', 'i.status', 'i.currency',
                 'i.grand_total as amount', 'i.amount_paid', 'i.narration', 'i.is_posted', 'i.irn',
                 'j.execution_job_no as job_no', 'i.exchange_rate',
+                DB::raw('i.job_id IS NULL AS general'),
                 DB::raw('COALESCE(c.name, p.name) AS organization'),
                 DB::raw('ROUND(i.grand_total * i.exchange_rate, 2) AS amount_inr'),
                 DB::raw('ROUND((i.grand_total - i.amount_paid) * i.exchange_rate, 2) AS outstanding_inr'),

@@ -3,6 +3,7 @@
 use App\AccountsInvoice;
 use App\AccountsReceipt;
 use App\Company;
+use App\Customer;
 use App\Partner;
 use App\Services\EnquirySequenceService;
 use App\Support\BillingDocuments;
@@ -51,9 +52,12 @@ class BillingDemoSeeder extends Seeder
             // A branch with no bills of its own has an empty register, which demonstrates nothing.
             $this->billSomeShipments($branch);
             $this->billOneSeaShipment($branch);
+            $this->billGeneral($branch);
 
+            // Shipment invoices: the notes, brokerage and consol below are all shipment events. General billing gets
+            // its own credit note in billGeneral(), and brokerage and consol are refused without a job anyway.
             $billed = AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)->where('type', 'invoice')
-                ->whereNotIn('status', ['draft', 'void'])->orderByDesc('id')->limit(6)->get();
+                ->whereNotNull('job_id')->whereNotIn('status', ['draft', 'void'])->orderByDesc('id')->limit(6)->get();
 
             if ($billed->isEmpty()) {
                 continue;
@@ -159,7 +163,9 @@ class BillingDemoSeeder extends Seeder
         // ⚠️ Drafts are safe to drop wholesale: no client has ever seen one, and nothing points at them.
         $ids = AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branches)
             ->where(fn ($q) => $q->whereIn('type', ['debit_note', 'credit_note', 'brokerage', 'consol_invoice'])
-                ->orWhere('status', 'draft'))
+                ->orWhere('status', 'draft')
+                // General billing is this seeder's own too (2026-09-26), or every rebuild would add another.
+                ->orWhereNull('job_id'))
             ->pluck('id');
 
         // 🔴 Foreign-key checks OFF for the clear, for the reason the regression seeder does it (GAPS #380):
@@ -255,7 +261,9 @@ class BillingDemoSeeder extends Seeder
         $job = DB::table('jobs as j')->join('enquiries as e', 'e.id', '=', 'j.enquiry_id')
             ->where('j.agent_id', $branch)->where('j.transport_mode', 'sea')
             ->whereNotNull('e.origin_code')
-            ->whereNotIn('j.id', AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)->select('job_id'))
+            // 🔴 whereNotNull in the subquery: one general invoice's NULL job makes `NOT IN (…, NULL)` unknown for
+            // EVERY row, and the query silently returns nothing (GAPS #402).
+            ->whereNotIn('j.id', AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)->whereNotNull('job_id')->select('job_id'))
             ->orderByDesc('j.id')->first(['j.id', 'e.customer_id']);
 
         if ($job === null) {
@@ -356,7 +364,8 @@ class BillingDemoSeeder extends Seeder
 
         // Shipments that nobody has billed at all — a cost sheet belongs to a job with no invoice yet.
         $jobs = DB::table('jobs')->where('agent_id', $branch)->whereNull('deleted_at')
-            ->whereNotIn('id', AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)->select('job_id'))
+            // 🔴 whereNotNull in the subquery — see billOneSeaShipment(): NOT IN over a NULL returns nothing at all.
+            ->whereNotIn('id', AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)->whereNotNull('job_id')->select('job_id'))
             ->orderByDesc('id')->limit(3)->pluck('id')->all();
 
         $made = 0;
@@ -538,15 +547,16 @@ class BillingDemoSeeder extends Seeder
             ->where('partner_type', 'customs_broker')->first() ?? $carrier;
 
         // Only shipments that have actually been billed: a cost against an unbilled job is work in progress.
+        // Shipments only: general billing has no job, so nothing to cost and no voucher to raise against it.
         $billed = AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)
-            ->whereNotIn('status', ['draft', 'void'])->where('type', 'invoice')
+            ->whereNotIn('status', ['draft', 'void'])->where('type', 'invoice')->whereNotNull('job_id')
             ->selectRaw('job_id, SUM(subtotal * exchange_rate) AS revenue')->groupBy('job_id')->get();
 
         // The most recently billed shipment's supplier invoice has not arrived yet (user, 2026-09-26) — the ordinary
         // way a billed shipment ends up with no cost, and what Money out ① "Cost to book" exists to catch. Left
         // uncosted so the queue has something real in it, and Close-the-month ② says so too.
         $waiting = AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)
-            ->whereNotIn('status', ['draft', 'void'])->where('type', 'invoice')
+            ->whereNotIn('status', ['draft', 'void'])->where('type', 'invoice')->whereNotNull('job_id')
             ->orderByDesc('document_date')->orderByDesc('id')->value('job_id');
 
         $made = 0;
@@ -659,7 +669,42 @@ class BillingDemoSeeder extends Seeder
     }
 
     /** A debit or credit note against a real invoice, finalized so it carries a real number. */
-    private function note(AccountsInvoice $parent, string $type, string $reason, string $line, float $amount, float $taxPercent): void
+    /**
+     * General billing — an invoice with no shipment behind it (user, 2026-09-26), and a credit note against it, so
+     * the demo shows the General tab, the Other Operating Revenue line and profitability's "not for a shipment"
+     * figure with a credit note already subtracted. Warehousing, to the branch's own client (same state, so
+     * CGST + SGST); `postSome()` posts both with everything else.
+     */
+    private function billGeneral(int $branch): void
+    {
+        $client = Customer::withoutGlobalScopes()->where('branch_id', $branch)->whereNotNull('gst_no')->orderBy('id')->first()
+            ?? Customer::withoutGlobalScopes()->where('company_id', DB::table('agents_info')->where('id', $branch)->value('company_id'))
+                ->orderBy('id')->first();
+
+        if ($client === null) {
+            return;
+        }
+
+        $amount = 45000.0;
+        $tax = round($amount * 0.18, 2);
+        $invoice = AccountsInvoice::withoutGlobalScopes()->create([
+            'agent_id' => $branch, 'job_id' => null, 'transport_mode' => null, 'customer_id' => $client->id,
+            'billed_party_type' => 'customer', 'billed_party_id' => $client->id, 'billed_party_role' => 'client',
+            'invoice_no' => $this->sequences->next($branch, BillingDocuments::prefix('invoice')),
+            'type' => 'invoice', 'document_date' => now()->subDays(9)->toDateString(),
+            'due_date' => now()->addDays(21)->toDateString(), 'status' => 'sent',
+            'narration' => 'Warehousing — bonded storage, September', 'currency' => 'INR', 'exchange_rate' => 1,
+            'subtotal' => $amount, 'tax_amount' => $tax, 'grand_total' => round($amount + $tax, 2),
+        ]);
+        $invoice->items()->create(['charge_type' => 'other', 'description' => 'Bonded warehouse storage — September',
+            'hsn_sac_code' => '996729', 'quantity' => 1, 'rate' => $amount, 'amount' => $amount, 'tax_percentage' => 18,
+            'tax_amount' => $tax, 'net_amount' => round($amount + $tax, 2)]);
+
+        $this->note($invoice, 'credit_note', 'Five days not used — storage released early', 'Storage credit', 7500, 18, '996729');
+    }
+
+    private function note(AccountsInvoice $parent, string $type, string $reason, string $line, float $amount, float $taxPercent,
+        string $sac = '996531'): void
     {
         $amount = round($amount, 2);
         $tax = round($amount * $taxPercent / 100, 2);
@@ -679,7 +724,7 @@ class BillingDemoSeeder extends Seeder
             'subtotal' => $amount, 'tax_amount' => $tax, 'grand_total' => round($amount + $tax, 2),
         ]);
 
-        $note->items()->create(['charge_type' => 'other', 'description' => $line, 'hsn_sac_code' => '996531',
+        $note->items()->create(['charge_type' => 'other', 'description' => $line, 'hsn_sac_code' => $sac,
             'quantity' => 1, 'rate' => $amount, 'amount' => $amount, 'tax_percentage' => $taxPercent,
             'tax_amount' => $tax, 'net_amount' => round($amount + $tax, 2)]);
     }

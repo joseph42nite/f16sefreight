@@ -32,6 +32,9 @@ class MoneyOutController extends Controller
         // ① Billed shipments with no purchase voucher at all — their margin is not real.
         $toCost = DB::table('accounts_invoices as i')
             ->whereIn('i.agent_id', $scope)->where('i.type', 'invoice')->whereNotIn('i.status', ['draft', 'void'])
+            // 🔴 Shipments only. General billing (2026-09-26) has no shipment and so no cost to book; COUNT(DISTINCT)
+            // skipped its NULL job, but the SUM did not, and ① showed rupees the list beside it could not account for.
+            ->whereNotNull('i.job_id')
             ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('accounts_purchase_vouchers as v')
                 ->whereColumn('v.job_id', 'i.job_id'))
             ->selectRaw('COUNT(DISTINCT i.job_id) AS n, COALESCE(SUM(i.subtotal * i.exchange_rate), 0) AS total')

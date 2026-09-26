@@ -82,6 +82,14 @@
           margin <strong :class="{ 'is-loss': totals.margin < 0 }">{{ money(totals.margin) }}</strong>
           <span v-if="totals.margin_pct !== null"> ({{ totals.margin_pct }}%)</span>
         </p>
+        <!--
+          🔴 General billing (user, 2026-09-26): revenue with no shipment behind it, so no cost side and no margin.
+          Beside the shipments, never among them — but stated, or this page would not add up to the ledger.
+        -->
+        <p v-if="general.documents" class="fx-muted">
+          Plus <strong>{{ money(general.revenue) }}</strong> billed not for a shipment, across {{ general.documents }}
+          document(s), credit notes subtracted — not in the figures above, which are shipments only.
+        </p>
       </div>
       <!--
         🔴 Said out loud, above the table. A shipment billed with nothing costed shows a margin that is not real,
@@ -229,6 +237,8 @@ export default {
   data: () => ({
     view: "jobs", VIEWS,
     jobs: [], groups: [], totals: { count: 0, revenue: 0, cost: 0, margin: 0, margin_pct: null },
+    /** Billing with no shipment behind it, reported beside the shipments (2026-09-26). */
+    general: { revenue: 0, documents: 0 },
     branches: [], clients: [], modes: [],
     filters: { agent_id: null, customer_id: null, mode: "", origin: "", dest: "", from: "", to: "", q: "", sort: "margin" },
     loading: true, busy: false, error: null, actionError: null,
@@ -286,6 +296,7 @@ export default {
           this.jobs = data.jobs || [];
           this.groups = data.groups || [];
           this.totals = data.totals;
+          this.general = data.general || { revenue: 0, documents: 0 };
           this.branches = data.branches || this.branches;
           this.clients = data.clients || this.clients;
           this.modes = data.modes || this.modes;

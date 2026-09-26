@@ -49,6 +49,17 @@ class InvoiceController extends Controller
         // What each document is worth, and what the shipment cost — the figures accounts decide on.
         $invoices->getCollection()->transform(function (AccountsInvoice $invoice) {
             $sell = (float) $invoice->items()->sum('net_amount');
+
+            // 🔴 General billing has no shipment, so no cost side and no margin — NULL, never the whole sale shown
+            // as 100% margin, which is what a cost lookup on a NULL job would have produced.
+            if ($invoice->isGeneral()) {
+                return array_merge($invoice->toArray(), [
+                    'job_no' => null, 'general' => true, 'sell_total' => round($sell, 2), 'buy_total' => null,
+                    'margin' => null, 'sent_to_accounts_at' => $invoice->sent_to_accounts_at,
+                    'sent_to_accounts_by' => DB::table('users')->where('id', $invoice->sent_to_accounts_by)->value('name'),
+                ]);
+            }
+
             $buy = (float) DB::table('accounts_purchase_items as i')
                 ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
                 ->where('v.job_id', $invoice->job_id)->sum('i.net_amount');

@@ -128,6 +128,40 @@ class ProfitabilityService
         })->sortByDesc('margin')->values();
     }
 
+    /**
+     * General billing — revenue with no shipment behind it (user, 2026-09-26).
+     *
+     * 🔴 **Beside the shipments, never among them.** It has no cost side, so folding it into a shipment's or a lane's
+     * figures would lift every margin by revenue that nothing was spent to earn. But it is real revenue in the P&L,
+     * and a profitability report that left it out would not add up to the ledger — so it is reported next to the
+     * shipments, on the same rules: net of tax, a credit note SUBTRACTS, a debit note adds, drafts and voids never.
+     *
+     * ⚠️ Filtered by branch, client and DOCUMENT date — there is no shipment date to use. A mode or lane filter
+     * leaves nothing, because a general invoice has neither.
+     */
+    public function general(array $branchIds, array $filters = []): array
+    {
+        if (! empty($filters['mode']) || ! empty($filters['origin']) || ! empty($filters['dest'])) {
+            return ['revenue' => 0.0, 'documents' => 0, 'by_customer' => []];
+        }
+
+        $rows = DB::table('accounts_invoices')
+            ->whereIn('agent_id', $branchIds)->whereNull('job_id')->whereIn('status', self::BILLED)
+            ->when(! empty($filters['agent_id']), fn ($q) => $q->where('agent_id', $filters['agent_id']))
+            ->when(! empty($filters['customer_id']), fn ($q) => $q->where('customer_id', $filters['customer_id']))
+            ->when(! empty($filters['from']), fn ($q) => $q->whereDate('document_date', '>=', $filters['from']))
+            ->when(! empty($filters['to']), fn ($q) => $q->whereDate('document_date', '<=', $filters['to']))
+            ->selectRaw('customer_id, COUNT(*) AS documents,
+                         SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * subtotal * exchange_rate) AS revenue', ['credit_note'])
+            ->groupBy('customer_id')->get();
+
+        return [
+            'revenue' => round((float) $rows->sum('revenue'), 2),
+            'documents' => (int) $rows->sum('documents'),
+            'by_customer' => $rows->mapWithKeys(fn ($r) => [(int) $r->customer_id => round((float) $r->revenue, 2)])->all(),
+        ];
+    }
+
     /** The figures under the table. */
     public function totals($rows): array
     {

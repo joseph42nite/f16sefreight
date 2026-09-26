@@ -41,10 +41,19 @@ class AccountsInvoice extends Model
             || str_starts_with($this->invoice_no, self::DRAFT_NUMBER_PREFIX);
     }
 
-    /** The placeholder a new draft is created with — unique per job. */
-    public static function placeholderNumber(int $jobId): string
+    /**
+     * The placeholder a new draft is created with — unique per job. A GENERAL draft has no job to key it by, so it
+     * takes a random tag instead: two raised in the same second must not collide on the per-branch unique number.
+     */
+    public static function placeholderNumber(?int $jobId): string
     {
-        return self::DRAFT_NUMBER_PREFIX . $jobId . '-' . now()->format('YmdHis');
+        return self::DRAFT_NUMBER_PREFIX . ($jobId ?? 'G' . bin2hex(random_bytes(4))) . '-' . now()->format('YmdHis');
+    }
+
+    /** Billing with no shipment behind it (user, 2026-09-26) — an invoice, or a note raised against one. */
+    public function isGeneral(): bool
+    {
+        return $this->job_id === null;
     }
 
     protected $fillable = [

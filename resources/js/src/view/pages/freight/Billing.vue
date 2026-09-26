@@ -148,7 +148,7 @@
               <td><Figure :value="row.document_date" kind="date" /></td>
               <td v-if="view === 'all'">{{ typeLabel(row.type) }}</td>
               <td>{{ row.organization || "—" }}</td>
-              <td class="identifier">{{ row.job_no || "—" }}</td>
+              <td class="identifier">{{ row.job_no || (row.general ? "Not a shipment" : "—") }}</td>
               <td>{{ row.currency }}</td>
               <td class="fx-num"><Figure :value="row.amount" kind="currency" :currency-code="row.currency || 'INR'" /></td>
               <td class="fx-num"><Figure :value="row.amount_inr" kind="currency" currency-code="INR" /></td>
@@ -287,7 +287,7 @@
           <dt>Due</dt>
           <dd><Figure v-if="document.due_date" :value="document.due_date" kind="date" /><span v-else class="fx-muted">—</span></dd>
           <dt>Shipment</dt>
-          <dd class="identifier">{{ document.job ? document.job.execution_job_no : "—" }}</dd>
+          <dd class="identifier">{{ document.job ? document.job.execution_job_no : (document.general ? "Not for a shipment" : "—") }}</dd>
           <dt>Total</dt>
           <dd><Figure :value="document.grand_total" kind="currency" :currency-code="document.currency || 'INR'" /></dd>
           <dt>Status</dt>
@@ -585,7 +585,22 @@
           </template>
 
           <template v-else>
-            <label class="fx-field">
+            <!--
+              General billing (user, 2026-09-26): an invoice with no shipment behind it. It names the branch billing
+              it instead, posts to Other Operating Revenue, and is reported beside the shipments, never among them.
+            -->
+            <label v-if="raise.type === 'invoice'" class="fx-checkbox">
+              <input v-model="raise.general" type="checkbox" @change="raise.job_id = null" />
+              Not for a shipment
+            </label>
+            <label v-if="raise.type === 'invoice' && raise.general" class="fx-field">
+              <span class="fx-field__label">Branch billing it</span>
+              <select v-model="raise.agent_id" class="fx-input">
+                <option :value="null">Choose…</option>
+                <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
+              </select>
+            </label>
+            <label v-else class="fx-field">
               <span class="fx-field__label">Shipment</span>
               <select v-model="raise.job_id" class="fx-input">
                 <option :value="null">Choose…</option>
@@ -823,6 +838,8 @@ const VIEWS = [
   { key: "credit_note", label: "Credit notes" },
   { key: "brokerage", label: "Brokerage" },
   { key: "consol_invoice", label: "Consol" },
+  // Logi-Sys's Billing → General (user, 2026-09-26): billing with no shipment, and the notes raised against it.
+  { key: "general", label: "General" },
   { key: "receipts", label: "Receipts" },
   { key: "einvoice", label: "E-Invoice" },
 ];
@@ -833,7 +850,7 @@ const DOC_TABS = [
   { key: "journal", label: "Journal" },
 ];
 
-const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "consol_invoice"];
+const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "consol_invoice", "general"];
 
 export default {
   name: "Billing",
@@ -878,7 +895,7 @@ export default {
     },
     /** The "New …" button raises what this view is showing; on All documents, an invoice. */
     newDocumentType() {
-      return this.view === "all" ? "invoice" : this.view;
+      return this.view === "all" || this.view === "general" ? "invoice" : this.view;
     },
     subtitleForView() {
       if (this.view === "receipts") return "Money received, and the documents each payment settled.";
@@ -891,6 +908,7 @@ export default {
         credit_note: "What has been given back — a rate dispute, an invoicing error, goodwill.",
         brokerage: "Commission billed to carriers and overseas agents.",
         consol_invoice: "Consolidations settled with the counterpart agent.",
+        general: "Billing with no shipment behind it — warehousing, a service sold on its own — and the notes raised against it.",
       }[this.view];
     },
     chosen() {
@@ -914,7 +932,9 @@ export default {
       const linesOk = this.raise.lines.every((l) => l.description && Number(l.rate) > 0);
 
       if (this.isNote) return linesOk && !!this.raise.parent_invoice_id && !!(this.raise.reason || "").trim();
-      if (this.raise.type === "invoice") return linesOk && !!this.raise.job_id && !!this.raise.customer_id;
+      if (this.raise.type === "invoice") {
+        return linesOk && !!this.raise.customer_id && (this.raise.general ? !!this.raise.agent_id : !!this.raise.job_id);
+      }
 
       return linesOk && !!this.raise.job_id && !!this.raise.partner_id;
     },
@@ -972,7 +992,13 @@ export default {
     },
     query() {
       const params = [];
-      if (this.view !== "all") params.push("types[]=" + this.view);
+      if (this.view === "general") {
+        // An invoice with no shipment, and the debit and credit notes against it — which carry its NULL job.
+        ["invoice", "debit_note", "credit_note"].forEach((t) => params.push("types[]=" + t));
+        params.push("general=1");
+      } else if (this.view !== "all") {
+        params.push("types[]=" + this.view);
+      }
       ["agent_id", "from", "to", "q", "status", "currency", "created_by", "sort"].forEach((key) => {
         if (this.filters[key]) params.push(key + "=" + encodeURIComponent(this.filters[key]));
       });
@@ -1172,6 +1198,9 @@ export default {
       this.actionError = null;
       this.creditRoom = null;
       this.raise = { type, parent_invoice_id: against ? against.id : null,
+                     // Raised from the General tab, an invoice starts as not-for-a-shipment; a note follows its parent.
+                     general: !against && this.view === "general",
+                     agent_id: this.branches.length === 1 ? this.branches[0].id : null,
                      job_id: null, customer_id: null, partner_id: null, basis: "flat_rate",
                      reason: "", narration: "", lines: [this.blankLine()] };
 

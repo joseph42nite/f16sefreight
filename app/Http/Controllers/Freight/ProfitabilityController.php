@@ -33,6 +33,7 @@ class ProfitabilityController extends Controller
         return response()->json(array_merge([
             'jobs' => $this->sort($rows, $request)->take(500)->values(),
             'totals' => $this->profit->totals($rows),
+            'general' => $this->general($request),
         ], $this->context()));
     }
 
@@ -46,6 +47,7 @@ class ProfitabilityController extends Controller
         return response()->json(array_merge([
             'groups' => $this->profit->rollUp($rows, 'client'),
             'totals' => $this->profit->totals($rows),
+            'general' => $this->general($request),
         ], $this->context()));
     }
 
@@ -70,6 +72,7 @@ class ProfitabilityController extends Controller
         return response()->json(array_merge([
             'groups' => $groups,
             'totals' => $this->profit->totals($rows),
+            'general' => $this->general($request),
         ], $this->context()));
     }
 
@@ -113,7 +116,21 @@ class ProfitabilityController extends Controller
 
     private function rows(Request $request)
     {
-        return $this->profit->jobs($this->branches()->pluck('id')->all(), array_filter([
+        return $this->profit->jobs($this->branches()->pluck('id')->all(), $this->filters($request));
+    }
+
+    /**
+     * General billing beside the shipments (user, 2026-09-26) — revenue with no shipment behind it, on the same
+     * filters. Not in the rows or their totals: it has no cost side. See ProfitabilityService::general().
+     */
+    private function general(Request $request): array
+    {
+        return $this->profit->general($this->branches()->pluck('id')->all(), $this->filters($request));
+    }
+
+    private function filters(Request $request): array
+    {
+        return array_filter([
             'agent_id' => $request->integer('agent_id') ?: null,
             'customer_id' => $request->integer('customer_id') ?: null,
             'mode' => $request->string('mode')->toString() ?: null,
@@ -122,7 +139,7 @@ class ProfitabilityController extends Controller
             'from' => $request->string('from')->toString() ?: null,
             'to' => $request->string('to')->toString() ?: null,
             'q' => $request->string('q')->toString() ?: null,
-        ]));
+        ]);
     }
 
     /**

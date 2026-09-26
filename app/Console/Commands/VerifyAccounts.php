@@ -519,8 +519,13 @@ class VerifyAccounts extends Command
             ->jobs(new Request())->getContent(), true);
 
         // The ledger and the margin report are built from different tables by different code.
-        $this->check('cross: P&L net == profitability margin', $pl['net'], $profit['totals']['margin']);
-        $this->check('cross: P&L revenue == profitability revenue', $pl['revenue']['total'], $profit['totals']['revenue']);
+        // 🔴 General billing (2026-09-26) is revenue with no shipment, so profitability reports it BESIDE the
+        // shipments, never among them: the ledger's revenue is the shipments' plus the general, and so is its net.
+        $general = $profit['general']['revenue'];
+        $this->check('cross: P&L net == profitability margin + general',
+            $pl['net'], round($profit['totals']['margin'] + $general, 2));
+        $this->check('cross: P&L revenue == profitability revenue + general',
+            $pl['revenue']['total'], round($profit['totals']['revenue'] + $general, 2));
         $this->check('cross: P&L expense == profitability cost', $pl['expense']['total'], $profit['totals']['cost']);
 
         $bs = json_decode($reports->balanceSheet(new Request(['period_id' => $period]))->getContent(), true);

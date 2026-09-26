@@ -113,7 +113,8 @@ class BossMailDrafter
             )],
             'behind_target' => ["{$b}: behind target for {$facts['month']}", array_merge(
                 ["With {$facts['days_left']} days left, {$b} is pacing behind this month's targets:"],
-                array_map(fn ($s) => strtoupper($s['mode']) . " {$s['measure']}: target {$s['target']}, so far {$s['so_far']}, month-end pace {$s['month_end_pace_percent']}%.", $facts['behind']),
+                array_map(fn ($s) => strtoupper($s['mode']) . " {$s['measure']}: target {$s['target']}, so far {$s['so_far']}, month-end pace {$s['month_end_pace_percent']}%."
+                    . (isset($s['of_which_general_billing']) ? " (So far includes {$s['of_which_general_billing']} billed not for a shipment.)" : ''), $facts['behind']),
                 ['What is the plan to close the gap in the days left?']
             )],
             'losing_on_price' => ["{$b}: quotes lost on price", array_merge(

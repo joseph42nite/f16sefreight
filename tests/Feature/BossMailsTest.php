@@ -116,7 +116,54 @@ class BossMailsTest extends TestCase
         $f = $this->findings('2026-09-10');
 
         $this->assertSame(['mode' => 'air', 'measure' => 'shipments', 'target' => 30, 'so_far' => 6, 'month_end_pace_percent' => 60], $f['behind_target']['facts']['behind'][0]);
+        // One mode targeted and nothing else done: the branch total would repeat that line word for word, so it is left out.
+        $this->assertCount(1, $f['behind_target']['facts']['behind']);
         $this->assertSame(['lane' => 'BOM → FRA', 'lost_on_price' => 6, 'closed' => 8, 'share_percent' => 75], $f['losing_on_price']['facts']['lanes'][0]);
+    }
+
+    /**
+     * 🔴 The branch's total is checked too (user, 2026-09-26), revenue with general billing, which has no mode.
+     * On the 10th, pace = so far × 30 ÷ 10:
+     *
+     *   air revenue    ₹4,00,000 of ₹15,00,000 → ₹12,00,000 = 80%       behind
+     *   sea revenue    ₹1,00,000 of  ₹5,00,000 →  ₹3,00,000 = 60%       behind
+     *   all modes      ₹5,00,000 of ₹20,00,000 → ₹15,00,000 = 75%       behind
+     *   + general      ₹1,00,000 (a draft of ₹5,00,000 does not count) → ₹6,00,000 → ₹18,00,000 = 90%   on pace
+     *
+     * Shipments: only air has a target (30); air 6, sea 3 → the branch 9 → 27 = 90%, on pace, while air alone is 60%.
+     */
+    public function test_behind_target_checks_the_branch_total_with_general_billing(): void
+    {
+        foreach (['air' => [1500000, 30], 'sea' => [500000, null]] as $mode => [$revenue, $shipments]) {
+            DB::table('sales_targets')->insert(['company_id' => $this->company->id, 'agent_id' => $this->branch->id, 'transport_mode' => $mode,
+                'period_month' => '2026-09-01', 'revenue_inr' => $revenue, 'shipments' => $shipments, 'created_at' => now(), 'updated_at' => now()]);
+        }
+        foreach (['air' => [400000, 6], 'sea' => [100000, 3]] as $mode => [$revenue, $shipments]) {
+            DB::table('customer_performance_snapshots')->insert(['agent_id' => $this->branch->id, 'customer_id' => $this->client->id,
+                'transport_mode' => $mode, 'snapshot_date' => '2026-09-10', 'revenue_mtd' => $revenue, 'shipment_count_mtd' => $shipments,
+                'tonnage_mtd' => 100, 'last_computed_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        }
+        $behind = fn () => collect($this->findings('2026-09-10')['behind_target']['facts']['behind'])
+            ->mapWithKeys(fn ($b) => ["{$b['mode']} {$b['measure']}" => $b['month_end_pace_percent']])->all();
+
+        $this->assertSame(['air shipments' => 60, 'air revenue' => 80, 'sea revenue' => 60, 'all modes revenue' => 75], $behind());
+
+        $bill = fn (float $net, string $status) => DB::table('accounts_invoices')->insert(['agent_id' => $this->branch->id, 'job_id' => null,
+            'customer_id' => $this->client->id, 'billed_party_type' => 'customer', 'billed_party_id' => $this->client->id,
+            'invoice_no' => 'G-BML-' . random_int(1, 99999), 'type' => 'invoice', 'document_date' => '2026-09-05', 'status' => $status,
+            'currency' => 'INR', 'exchange_rate' => 1, 'subtotal' => $net, 'tax_amount' => $net * 0.18, 'grand_total' => $net * 1.18,
+            'created_at' => now(), 'updated_at' => now()]);
+        $bill(100000, 'finalized');
+        $bill(500000, 'draft');
+
+        // General billing carries the branch to 90%; air and sea are still behind on their own.
+        $this->assertSame(['air shipments' => 60, 'air revenue' => 80, 'sea revenue' => 60], $behind());
+
+        // Short of 85% with it, the line says how much of "so far" was billed not for a shipment.
+        DB::table('sales_targets')->where('transport_mode', 'sea')->where('agent_id', $this->branch->id)->update(['revenue_inr' => 1000000]);
+        $total = collect($this->findings('2026-09-10')['behind_target']['facts']['behind'])->firstWhere('mode', 'all modes');
+        $this->assertSame(['mode' => 'all modes', 'measure' => 'revenue', 'target' => 2500000, 'so_far' => 600000,
+            'month_end_pace_percent' => 72, 'of_which_general_billing' => 100000], $total);
     }
 
     /** 🔴 A dismissed suggestion rests 30 days; the Boss drafts, and cannot send without his own mailbox. Only the Boss. */

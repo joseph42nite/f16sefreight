@@ -2,6 +2,7 @@
 
 namespace App\Services\Sales;
 
+use App\Services\ProfitabilityService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,8 @@ use Illuminate\Support\Facades\DB;
  *   top_clients_quiet   the 10 biggest clients by tonnage in the 12 months that ended 3 months ago; quiet = their last
  *                       3 months under a quarter of their usual quarter (those 12 months ÷ 4), from at least 300 kg
  *   behind_target       days 8–25 of the month: month-end pace (so far ÷ days gone × days in month) under 85% of a
- *                       target that is set
+ *                       target that is set — each mode's, and the branch's across modes (their targets summed; its
+ *                       revenue with general billing, which has no mode)
  *   losing_on_price     last 90 days, per lane: at least 5 enquiries lost because the rate was high, and that is at
  *                       least 40% of the lane's closed enquiries
  *   slow_replies        median hours to the first reply over the last 30 days at least 1.5× the 60 days before, and
@@ -228,6 +230,30 @@ class BossMails
                     $short[] = ['mode' => $mode, 'measure' => $measure, 'target' => (int) round($t->{$column}),
                         'so_far' => (int) round($soFar), 'month_end_pace_percent' => (int) round($pace * 100)];
                 }
+            }
+        }
+
+        // The branch as a whole (user, 2026-09-26; GAPS #405): its mode targets summed against everything it did —
+        // on revenue, general billing too, which has no mode (#404). Sea can carry a soft air month, and a bill not
+        // for a shipment can carry both. Left out where it would only repeat a mode's line word for word.
+        $general = $command ? (app(ProfitabilityService::class)->generalByBranch([$branch->id], $month->toDateString(), $asOf)[$branch->id] ?? 0.0) : 0.0;
+
+        foreach (['shipments' => 'shipments', 'tonnage_kg' => 'tonnage', 'revenue_inr' => 'revenue'] as $column => $measure) {
+            $targeted = $targets->filter(fn ($t) => $t->{$column} !== null && (float) $t->{$column} > 0);
+            if ($targeted->isEmpty() || ($measure === 'revenue' && ! $command)) {
+                continue;
+            }
+
+            $target = (float) $targeted->sum($column);
+            $extra = $measure === 'revenue' ? $general : 0.0;
+            $soFar = (float) $actual->sum($measure) + $extra;
+            $repeats = $targeted->count() === 1 && abs($soFar - (float) ($actual[$targeted->keys()->first()]->{$measure} ?? 0)) < 0.005;
+            $pace = $soFar * $factor / $target;
+
+            if ($pace < 0.85 && ! $repeats) {
+                $short[] = array_filter(['mode' => 'all modes', 'measure' => $measure, 'target' => (int) round($target),
+                    'so_far' => (int) round($soFar), 'month_end_pace_percent' => (int) round($pace * 100),
+                    'of_which_general_billing' => $extra > 0 ? (int) round($extra) : null], fn ($v) => $v !== null);
             }
         }
 

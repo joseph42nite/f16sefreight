@@ -100,10 +100,14 @@ class PaymentController extends Controller
             ->orderBy('v.document_date')
             ->get(['v.id', 'v.voucher_no', 'v.document_date', 'v.due_date', 'v.amount_paid', 'v.vendor_id',
                    'p.name as vendor', 'p.email as vendor_email', 'j.execution_job_no as job_no',
-                   DB::raw('COALESCE(i.gross, 0) AS gross')]);
+                   DB::raw('COALESCE(i.gross, 0) AS gross'),
+                   // Still owed, so still listed — but not payable until it is posted (see unposted()).
+                   DB::raw("EXISTS (SELECT 1 FROM accounts_ledger_entries l WHERE l.source_type = 'purchase_voucher'
+                            AND l.source_id = v.id) AS posted")]);
 
         foreach ($rows as $row) {
             $row->outstanding = round((float) $row->gross - (float) $row->amount_paid, 2);
+            $row->posted = (bool) $row->posted;
             $row->due_assumed = $row->due_date === null;
             $row->due_on = $row->due_date ?: $row->document_date;
             $row->days_old = max(0, \Illuminate\Support\Carbon::parse($row->due_on)->diffInDays(now(), false));
@@ -174,6 +178,10 @@ class PaymentController extends Controller
                     'reason' => 'over_allocated_voucher',
                 ], 422);
             }
+        }
+
+        if ($blocked = $this->unposted($vouchers->keys()->all())) {
+            return $blocked;
         }
 
         $runRef = 'RUN-' . now()->format('Ymd-His');
@@ -291,6 +299,11 @@ class PaymentController extends Controller
                 'reason' => 'no_open_period'], 422);
         }
 
+        // A payment raised before the rule below existed is held to it here, where the payable actually comes down.
+        if ($blocked = $this->unposted($payment->allocations()->pluck('purchase_voucher_id')->all())) {
+            return $blocked;
+        }
+
         DB::transaction(function () use ($payment, $period) {
             $this->ledger->write(
                 $this->ledger->linesForPayment((float) $payment->amount,
@@ -352,6 +365,26 @@ class PaymentController extends Controller
     }
 
     /** What a voucher still owes: its lines, less everything placed against it. */
+    /**
+     * 🔴 **A voucher is paid only once it is posted** (user, 2026-09-26; GAPS #407). A payment takes `2100-AP` DOWN;
+     * a voucher that was never posted never put it UP, so paying one drove the payable negative — the demo's Mumbai
+     * read −₹2,99,115. Refused, not posted for them: posting is its own reviewed step (the preview, the period gate).
+     */
+    private function unposted(array $voucherIds): ?JsonResponse
+    {
+        $unposted = DB::table('accounts_purchase_vouchers as v')->whereIn('v.id', $voucherIds)
+            ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('accounts_ledger_entries as l')
+                ->where('l.source_type', 'purchase_voucher')->whereColumn('l.source_id', 'v.id'))
+            ->orderBy('v.voucher_no')->pluck('v.voucher_no');
+
+        return $unposted->isEmpty() ? null : response()->json([
+            'error' => sprintf('%s %s not posted yet. Post %s before paying.', $unposted->implode(', '),
+                $unposted->count() === 1 ? 'is' : 'are', $unposted->count() === 1 ? 'it' : 'them'),
+            'reason' => 'voucher_not_posted',
+            'vouchers' => $unposted->all(),
+        ], 422);
+    }
+
     private function outstanding(AccountsPurchaseVoucher $voucher): float
     {
         $gross = round((float) $voucher->items()->sum('net_amount'), 2);

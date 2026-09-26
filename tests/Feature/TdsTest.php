@@ -423,6 +423,11 @@ class TdsTest extends TestCase
             'tax_percentage' => $net > 0 ? round($tax / $net * 100, 2) : 0, 'tax_amount' => $tax,
             'net_amount' => $net + $tax, 'created_at' => now(), 'updated_at' => now()]);
 
+        // Posted: a voucher is paid only once it is (GAPS #407).
+        $ledger = app(\App\Services\LedgerPostingService::class);
+        $ledger->write($ledger->linesForVoucher(\App\AccountsPurchaseVoucher::withoutGlobalScopes()->findOrFail($id)),
+            $this->branch->id, $ledger->openPeriodFor($this->branch->id, '2026-09-12')->id, $id, 'purchase_voucher');
+
         return $id;
     }
 

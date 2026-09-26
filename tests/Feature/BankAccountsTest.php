@@ -80,6 +80,10 @@ class BankAccountsTest extends TestCase
         $voucher->items()->create(['charge_type' => 'freight', 'description' => 'Freight', 'quantity' => 1,
             'rate' => $net, 'amount' => $net, 'tax_percentage' => 0, 'tax_amount' => 0, 'net_amount' => $net]);
 
+        // Posted: a voucher is paid only once it is (GAPS #407).
+        $ledger = app(\App\Services\LedgerPostingService::class);
+        $ledger->write($ledger->linesForVoucher($voucher), $this->branch->id, $this->periodId, $voucher->id, 'purchase_voucher');
+
         return $voucher->fresh();
     }
 

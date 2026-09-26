@@ -155,10 +155,17 @@
               <tbody>
                 <tr v-for="v in vouchers" :key="'v-' + v.id" :class="{ 'is-selected': picked[v.id] }">
                   <td>
+                    <!-- 🔴 Paid only once posted: paying an unposted voucher takes the payable below zero. -->
                     <input type="checkbox" :checked="!!picked[v.id]" :aria-label="'Pay ' + v.voucher_no"
-                           @change="toggle(v, $event.target.checked)" />
+                           :disabled="!v.posted" @change="toggle(v, $event.target.checked)" />
                   </td>
-                  <td class="identifier">{{ v.voucher_no }}</td>
+                  <td class="identifier">
+                    {{ v.voucher_no }}
+                    <div v-if="!v.posted" class="fx-muted">
+                      Not posted —
+                      <router-link :to="{ path: '/financials', query: { view: 'vouchers' } }">post it first</router-link>
+                    </div>
+                  </td>
                   <td>{{ v.vendor }}</td>
                   <td class="identifier">{{ v.job_no || "—" }}</td>
                   <td>

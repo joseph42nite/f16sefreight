@@ -58,7 +58,7 @@ class PaymentRunTest extends TestCase
     }
 
     /** A posted voucher: `$net` of cost plus `$tax` of input credit, so it owes the gross. */
-    private function voucher(Partner $vendor, float $net, float $tax = 0, int $daysAgo = 20): AccountsPurchaseVoucher
+    private function voucher(Partner $vendor, float $net, float $tax = 0, int $daysAgo = 20, bool $posted = true): AccountsPurchaseVoucher
     {
         $enquiry = Enquiry::create(['agent_id' => $this->branch->id, 'transport_mode' => 'air', 'status' => 'converted',
             'enquiry_no' => 'ENQA-PAYBOM-26-' . random_int(1000, 9999)]);
@@ -73,6 +73,10 @@ class PaymentRunTest extends TestCase
         $voucher->items()->create(['charge_type' => 'freight', 'description' => 'Freight', 'quantity' => 1,
             'rate' => $net, 'amount' => $net, 'tax_percentage' => $net > 0 ? round($tax / $net * 100, 2) : 0,
             'tax_amount' => $tax, 'net_amount' => $net + $tax]);
+
+        // Posted: a voucher is paid only once it is (GAPS #407).
+        $ledger = app(\App\Services\LedgerPostingService::class);
+        $posted && $ledger->write($ledger->linesForVoucher($voucher), $this->branch->id, $this->periodId, $voucher->id, 'purchase_voucher');
 
         return $voucher->fresh();
     }
@@ -171,6 +175,57 @@ class PaymentRunTest extends TestCase
 
         $this->postJson($this->url("/payments/{$payment['id']}/post"))
             ->assertStatus(422)->assertJsonPath('reason', 'already_posted');
+    }
+
+    /**
+     * 🔴 A voucher is paid only once it is posted (user, 2026-09-26; GAPS #407). A payment takes the payable down;
+     * one that was never posted never put it up, so paying it drove Accounts Payable negative.
+     */
+    public function test_an_unposted_voucher_is_owed_but_cannot_be_paid(): void
+    {
+        $posted = $this->voucher($this->carrier, 70000, 12600);
+        $unposted = $this->voucher($this->trucker, 10000, 1800, 20, false);
+
+        // Still listed — the money is owed — but marked, and counted in Money out ④'s note.
+        $due = collect($this->as($this->accounts)->getJson($this->url('/payments/due'))->assertOk()->json('vouchers'))->keyBy('id');
+        $this->assertSame([true, false], [$due[$posted->id]['posted'], $due[$unposted->id]['posted']]);
+        $stage = collect($this->getJson($this->url('/money-out/stages'))->assertOk()->json('stages'))->firstWhere('key', 'due');
+        $this->assertStringContainsString('1 not posted yet — post before paying.', $stage['note']);
+
+        // Refused as a whole, naming it — the posted one in the same run is not paid either.
+        $this->postJson($this->url('/payments/run'), [
+            'agent_id' => $this->branch->id, 'payment_date' => now()->toDateString(), 'mode' => 'bank_transfer',
+            'allocations' => [['purchase_voucher_id' => $posted->id, 'amount' => 82600],
+                              ['purchase_voucher_id' => $unposted->id, 'amount' => 11800]],
+        ])->assertStatus(422)->assertJsonPath('reason', 'voucher_not_posted')
+            ->assertJsonPath('vouchers', [$unposted->voucher_no]);
+
+        $this->assertSame(0, DB::table('accounts_payments')->where('agent_id', $this->branch->id)->count());
+        $this->assertSame([0.0, 0.0], [(float) $posted->fresh()->amount_paid, (float) $unposted->fresh()->amount_paid]);
+    }
+
+    /** A payment raised before the rule, against a voucher still unposted, cannot be posted either. */
+    public function test_a_payment_against_an_unposted_voucher_cannot_be_posted(): void
+    {
+        $voucher = $this->voucher($this->trucker, 10000, 1800, 20, false);
+        $payment = \App\AccountsPayment::create(['agent_id' => $this->branch->id, 'payee_type' => 'partner',
+            'payee_id' => $this->trucker->id, 'payment_no' => 'PAY-OLD-1', 'payment_date' => now()->toDateString(),
+            'mode' => 'bank_transfer', 'amount' => 11800, 'currency' => 'INR', 'exchange_rate' => 1]);
+        $payment->allocations()->create(['purchase_voucher_id' => $voucher->id, 'amount' => 11800]);
+
+        $this->as($this->accounts)->postJson($this->url("/payments/{$payment->id}/post"))
+            ->assertStatus(422)->assertJsonPath('reason', 'voucher_not_posted');
+        $this->assertFalse(DB::table('accounts_ledger_entries')->where('source_type', 'payment')->where('source_id', $payment->id)->exists());
+
+        // Once the voucher is posted, the same payment posts — and the payable nets to nothing, not below it.
+        $ledger = app(\App\Services\LedgerPostingService::class);
+        $ledger->write($ledger->linesForVoucher($voucher), $this->branch->id, $this->periodId, $voucher->id, 'purchase_voucher');
+        $this->postJson($this->url("/payments/{$payment->id}/post"))->assertOk();
+
+        $ap = DB::table('accounts_ledger_entries as l')->join('chart_of_accounts as c', 'c.id', '=', 'l.chart_of_account_id')
+            ->where('l.agent_id', $this->branch->id)->where('c.account_code', '2100-AP')
+            ->selectRaw('SUM(l.credit_amount - l.debit_amount) AS balance')->value('balance');
+        $this->assertEquals(0, (float) $ap);
     }
 
     public function test_another_company_cannot_pay_our_vouchers(): void

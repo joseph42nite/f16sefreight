@@ -639,7 +639,8 @@ var render = function render() {
     }, [_c("td", [_c("input", {
       attrs: {
         type: "checkbox",
-        "aria-label": "Pay " + v.voucher_no
+        "aria-label": "Pay " + v.voucher_no,
+        disabled: !v.posted
       },
       domProps: {
         checked: !!_vm.picked[v.id]
@@ -651,7 +652,18 @@ var render = function render() {
       }
     })]), _vm._v(" "), _c("td", {
       staticClass: "identifier"
-    }, [_vm._v(_vm._s(v.voucher_no))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(v.vendor))]), _vm._v(" "), _c("td", {
+    }, [_vm._v("\n                  " + _vm._s(v.voucher_no) + "\n                  "), !v.posted ? _c("div", {
+      staticClass: "fx-muted"
+    }, [_vm._v("\n                    Not posted —\n                    "), _c("router-link", {
+      attrs: {
+        to: {
+          path: "/financials",
+          query: {
+            view: "vouchers"
+          }
+        }
+      }
+    }, [_vm._v("post it first")])], 1) : _vm._e()]), _vm._v(" "), _c("td", [_vm._v(_vm._s(v.vendor))]), _vm._v(" "), _c("td", {
       staticClass: "identifier"
     }, [_vm._v(_vm._s(v.job_no || "—"))]), _vm._v(" "), _c("td", [_c("Figure", {
       attrs: {

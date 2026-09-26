@@ -67,8 +67,10 @@ class MoneyOutController extends Controller
             )
             ->whereIn('v.agent_id', $scope)
             ->whereRaw('COALESCE(i.gross, 0) - v.amount_paid > 0.009')
-            ->selectRaw('COUNT(DISTINCT v.vendor_id) AS vendors, COUNT(*) AS n,
-                         COALESCE(SUM(COALESCE(i.gross, 0) - v.amount_paid), 0) AS total')
+            ->selectRaw("COUNT(DISTINCT v.vendor_id) AS vendors, COUNT(*) AS n,
+                         COALESCE(SUM(COALESCE(i.gross, 0) - v.amount_paid), 0) AS total,
+                         SUM(NOT EXISTS (SELECT 1 FROM accounts_ledger_entries l WHERE l.source_type = 'purchase_voucher'
+                             AND l.source_id = v.id)) AS unposted")
             ->first();
 
         return response()->json([
@@ -93,6 +95,8 @@ class MoneyOutController extends Controller
                  'vouchers' => (int) $due->n,
                  'note' => (int) $due->n > 0
                      ? (int) $due->n . ' voucher(s) across ' . (int) $due->vendors . ' supplier(s).'
+                         // Owed, but not payable until posted (GAPS #407).
+                         . ((int) $due->unposted > 0 ? ' ' . (int) $due->unposted . ' not posted yet — post before paying.' : '')
                      : 'Nothing is owed to suppliers.'],
             ],
             'paid' => round((float) $vouchers->paid, 2),

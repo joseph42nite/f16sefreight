@@ -743,9 +743,10 @@
           <th scope="col">Date</th>
           <th scope="col">Status</th>
           <th scope="col">Posted</th>
-          <th class="fx-num" scope="col">Total</th>
+          <!-- Waiting to be billed shows the margin, so all three are NET OF TAX — sell − cost = margin, on screen. -->
+          <th class="fx-num" scope="col">{{ view === 'awaiting' ? 'Sell (net of tax)' : 'Total' }}</th>
           <template v-if="view === 'awaiting'">
-            <th class="fx-num" scope="col">Cost</th>
+            <th class="fx-num" scope="col">Cost (net of tax)</th>
             <th class="fx-num" scope="col">Margin</th>
             <th scope="col">Sent by</th>
           </template>
@@ -782,7 +783,8 @@
             <StatusChip :value="row.is_posted ? 'posted' : 'unposted'" />
           </td>
           <td class="fx-num">
-            <Figure :value="view === 'awaiting' ? row.sell_total : row.grand_total" kind="currency" :currency-code="row.currency || 'INR'" />
+            <Figure :value="view === 'awaiting' ? row.sell_total : row.grand_total" kind="currency"
+                    :currency-code="view === 'awaiting' ? 'INR' : (row.currency || 'INR')" />
           </td>
           <template v-if="view === 'awaiting'">
             <td class="fx-num"><Figure :value="row.buy_total" kind="currency" currency-code="INR" /></td>

@@ -41,12 +41,15 @@ class CreditGateService
         $rows = AccountsInvoice::withoutTenantScope()
             ->where('customer_id', $customer->id)
             ->whereIn('status', self::OUTSTANDING_STATUSES)
-            ->get(['type', 'grand_total', 'amount_paid']);
+            ->get(['type', 'grand_total', 'amount_paid', 'exchange_rate']);
 
         // 🔴 A CREDIT NOTE SUBTRACTS. Its face is positive, but it reduces what they owe — counted the other way,
         // giving a client money back TIGHTENED their credit gate by twice the credit.
+        // 🔴 IN INR, at each document's own rate (user, 2026-09-26). The limit is rupees; a USD 10,000 invoice
+        // counted at face value used up ₹10,000 of it, not ~₹8,30,000 — so a client billed in dollars could run
+        // up many times their limit. Converted as the ageing converts, so the two agree on what is owed.
         return round($rows->sum(fn ($i) => ($i->type === 'credit_note' ? -1 : 1)
-            * ((float) $i->grand_total - (float) $i->amount_paid)), 2);
+            * ((float) $i->grand_total - (float) $i->amount_paid) * (float) ($i->exchange_rate ?: 1)), 2);
     }
 
     /**

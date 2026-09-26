@@ -47,8 +47,13 @@ class InvoiceController extends Controller
             ->paginate(50);
 
         // What each document is worth, and what the shipment cost — the figures accounts decide on.
+        // 🔴 NET OF TAX on both sides (user, 2026-09-26): profit is the line AMOUNT, never the tax-inclusive
+        // `net_amount`. Sell and buy both carried their GST, so the margin shown was off by the difference in tax
+        // — a shipment at 18% on a zero-rated cost read 18% of the sale better than it was.
         $invoices->getCollection()->transform(function (AccountsInvoice $invoice) {
-            $sell = (float) $invoice->items()->sum('net_amount');
+            // In INR at the document's own rate — cost is booked in rupees, and a dollar sale less a rupee cost is
+            // not a margin in anything.
+            $sell = (float) $invoice->items()->sum('amount') * (float) ($invoice->exchange_rate ?: 1);
 
             // 🔴 General billing has no shipment, so no cost side and no margin — NULL, never the whole sale shown
             // as 100% margin, which is what a cost lookup on a NULL job would have produced.
@@ -62,7 +67,7 @@ class InvoiceController extends Controller
 
             $buy = (float) DB::table('accounts_purchase_items as i')
                 ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
-                ->where('v.job_id', $invoice->job_id)->sum('i.net_amount');
+                ->where('v.job_id', $invoice->job_id)->sum('i.amount');
 
             // array_merge, never `+`: with `+` the model's own `sent_to_accounts_by` (an id) would win over the name.
             return array_merge($invoice->toArray(), [
@@ -114,9 +119,12 @@ class InvoiceController extends Controller
         $tax = (float) $invoice->items()->sum('tax_amount');
         $grandTotal = round($subtotal + $tax, 2);
 
-        if ($invoice->customer_id !== null) {
+        // 🔴 A credit note is never gated (user, 2026-09-26): it REDUCES what the client owes, yet it was checked as
+        // if it added its total — so a client already over their limit could be refused the money they were owed
+        // back. And the rest are checked in INR, at the document's own rate, because the limit is in rupees.
+        if ($invoice->customer_id !== null && $invoice->type !== 'credit_note') {
             $customer = Customer::withoutTenantScope()->find($invoice->customer_id);
-            $check = $this->credit->check($customer, $grandTotal);
+            $check = $this->credit->check($customer, round($grandTotal * (float) ($invoice->exchange_rate ?: 1), 2));
 
             if ($check['blocked']) {
                 $wanted = (bool) ($override['override_credit_hold'] ?? false);

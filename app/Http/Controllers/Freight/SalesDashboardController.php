@@ -366,10 +366,18 @@ class SalesDashboardController extends Controller
             ->groupBy('c.sales_id')
             ->selectRaw('c.sales_id, SUM(l.tonnage) AS tonnage, SUM(l.shipment_count) AS shipments')
             ->get()->keyBy('sales_id');
+        // 🔴 Revenue by the standing rules (user, 2026-09-26): NET OF TAX (the subtotal — GST is the government's,
+        // not the rep's), in INR at each document's rate, a credit note SUBTRACTS and a debit note adds, and a
+        // void never stood. This summed grand totals of invoices alone, VOIDS INCLUDED (`status != draft`), and
+        // left credit notes out — so a rep's revenue carried 18% of tax, kept every cancelled bill, and never fell
+        // when a client was given money back. General billing to the rep's client counts: it is their revenue.
         $revenue = $withMoney ? DB::table('accounts_invoices as i')->join('customers as c', 'c.id', '=', 'i.customer_id')
-            ->whereIn('c.sales_id', $sales->keys())->where('i.type', 'invoice')->where('i.status', '!=', 'draft')
+            ->whereIn('c.sales_id', $sales->keys())->whereIn('i.type', ['invoice', 'debit_note', 'credit_note'])
+            ->whereNotIn('i.status', ['draft', 'void'])
             ->where('i.document_date', '>=', $from->toDateString())
-            ->groupBy('c.sales_id')->selectRaw('c.sales_id, SUM(i.grand_total) AS revenue')->pluck('revenue', 'sales_id') : collect();
+            ->groupBy('c.sales_id')
+            ->selectRaw("c.sales_id, SUM(CASE WHEN i.type = 'credit_note' THEN -1 ELSE 1 END * i.subtotal * i.exchange_rate) AS revenue")
+            ->pluck('revenue', 'sales_id') : collect();
         // At risk: the rhythm says they have gone quiet, or the latest snapshot shows volume down by a quarter or more.
         $latest = DB::table('customer_performance_snapshots')->max('snapshot_date');
         $atRisk = DB::table('customers as c')

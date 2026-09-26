@@ -318,7 +318,14 @@ class ComputeSalesSnapshots extends Command
         $yearStart = ClientHistory::financialYearStart($date);
         $billed = $invoices->whereNotIn('status', ['draft', 'void']);
         $outstanding = $invoices->whereIn('status', self::OUTSTANDING);
-        $owed = fn ($i) => round((float) $i->grand_total - (float) $i->amount_paid, 2);
+        // 🔴 By the standing rules (user, 2026-09-26): a credit note SUBTRACTS — from revenue and from what is owed —
+        // and everything is in INR at the document's own rate. This added every credit note (a client given money
+        // back read as owing MORE, and as having bought more) and summed foreign-currency bills at face value.
+        $sign = fn ($i) => $i->type === 'credit_note' ? -1 : 1;
+        $inr = fn ($i) => (float) ($i->exchange_rate ?: 1);
+        $owed = fn ($i) => round($sign($i) * ((float) $i->grand_total - (float) $i->amount_paid) * $inr($i), 2);
+        // Revenue is NET OF TAX — the subtotal — never the grand total: GST is the government's, not the client's spend.
+        $revenue = fn ($i) => $sign($i) * (float) $i->subtotal * $inr($i);
 
         $aging = ['outstanding_0_30' => 0.0, 'outstanding_31_60' => 0.0, 'outstanding_60_plus' => 0.0];
         foreach ($outstanding as $i) {
@@ -330,8 +337,8 @@ class ComputeSalesSnapshots extends Command
         $exposure = $outstanding->sum($owed);
 
         return array_map(fn ($v) => round($v, 2), $aging) + [
-            'revenue_mtd' => round($billed->filter(fn ($i) => Carbon::parse($i->document_date)->gte($monthStart))->sum('grand_total'), 2),
-            'revenue_ytd' => round($billed->filter(fn ($i) => Carbon::parse($i->document_date)->gte($yearStart))->sum('grand_total'), 2),
+            'revenue_mtd' => round($billed->filter(fn ($i) => Carbon::parse($i->document_date)->gte($monthStart))->sum($revenue), 2),
+            'revenue_ytd' => round($billed->filter(fn ($i) => Carbon::parse($i->document_date)->gte($yearStart))->sum($revenue), 2),
             'dso_days' => $dso,
             'payment_drift_days' => $dso === null ? null : $dso - (int) ($customer->payment_terms_days ?? self::DEFAULT_TERMS_DAYS),
             // No limit on file is NULL ("not set"), not 0% used — and never a division by zero.

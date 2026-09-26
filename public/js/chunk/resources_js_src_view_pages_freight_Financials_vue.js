@@ -2201,12 +2201,12 @@ var render = function render() {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Total")]), _vm._v(" "), _vm.view === "awaiting" ? [_c("th", {
+  }, [_vm._v(_vm._s(_vm.view === "awaiting" ? "Sell (net of tax)" : "Total"))]), _vm._v(" "), _vm.view === "awaiting" ? [_c("th", {
     staticClass: "fx-num",
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Cost")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Cost (net of tax)")]), _vm._v(" "), _c("th", {
     staticClass: "fx-num",
     attrs: {
       scope: "col"
@@ -2274,7 +2274,7 @@ var render = function render() {
       attrs: {
         value: _vm.view === "awaiting" ? row.sell_total : row.grand_total,
         kind: "currency",
-        "currency-code": row.currency || "INR"
+        "currency-code": _vm.view === "awaiting" ? "INR" : row.currency || "INR"
       }
     })], 1), _vm._v(" "), _vm.view === "awaiting" ? [_c("td", {
       staticClass: "fx-num"

@@ -130,6 +130,12 @@ class BankReconciliationService
                 'grand_total' => $c['invoice']->grand_total,
                 'amount_paid' => $c['invoice']->amount_paid,
                 'balance'     => round((float) $c['invoice']->grand_total - (float) $c['invoice']->amount_paid, 2),
+                // What a person — and Jev (GAPS #412) — needs to tell two bills of one amount apart.
+                'currency'    => $c['invoice']->currency ?: 'INR',
+                'document_date' => $c['invoice']->document_date instanceof \DateTimeInterface
+                    ? $c['invoice']->document_date->format('Y-m-d') : $c['invoice']->document_date,
+                'subtotal'    => $c['invoice']->subtotal,
+                'exchange_rate' => $c['invoice']->exchange_rate,
             ],
             'confidence' => $c['confidence'],
             'reason'     => $c['reason'],

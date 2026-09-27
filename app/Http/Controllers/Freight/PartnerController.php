@@ -7,6 +7,7 @@ use App\Partner;
 use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -133,11 +134,52 @@ class PartnerController extends Controller
             'tds_section' => ['nullable', 'string', 'max:20'],
             // A s.197 certificate: a lower rate, or nil (0). NULL means no certificate — the section's own rate applies.
             'tds_rate_override' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            // Jev's suggestion, if one was shown, so the section saved is recorded against it (GAPS #415).
+            'decision_id' => ['nullable', 'integer'],
         ]);
 
-        $partner->update($data);
+        $partner->update(\Illuminate\Support\Arr::except($data, ['decision_id']));
+
+        app(\App\Services\Accounts\JevDecisions::class)->record($data['decision_id'] ?? null, (int) $partner->company_id,
+            $data['tds_section'] ?? 'none', (int) auth()->id());
 
         return response()->json($partner->fresh());
+    }
+
+    /**
+     * ⑥ Which TDS section this supplier's services fall under (GAPS #415) — asked ON DEMAND, from the edit, never for
+     * every row a list shows. The options are the branch's OWN rate table, as accounts describe each section, plus
+     * none and not sure: no tax law is written into the question. A legal classification, so it only pre-fills the
+     * select, labelled to be checked against their certificate; Save is still the person's.
+     */
+    public function suggestTds(Partner $partner): JsonResponse
+    {
+        $this->authorize('manageFinanceSettings');
+
+        $sections = DB::table('tds_rates')->where('agent_id', $partner->agent_id)->where('is_active', 1)
+            ->orderBy('section')->pluck('description', 'section');
+
+        $options = $sections->map(fn ($d, $s) => "{$s}: {$d}")->all() + [
+            'none' => config('accounts_decisions.questions.vendor_tds.none'),
+            'not_sure' => config('accounts_decisions.questions.vendor_tds.not_sure'),
+        ];
+
+        // Facts PHP can state. The PAN's fourth letter IS the holder's type — the difference between two sections.
+        $holder = ['P' => 'an individual', 'C' => 'a company', 'H' => 'a Hindu undivided family', 'F' => 'a firm or LLP',
+                   'A' => 'an association of persons', 'T' => 'a trust', 'B' => 'a body of individuals', 'G' => 'a government body',
+                   'L' => 'a local authority', 'J' => 'an artificial juridical person'];
+        $pan = strtoupper((string) $partner->pan_no);
+
+        $jev = app(\App\Services\Accounts\JevDecisions::class)->ask('vendor_tds', (int) $partner->agent_id, 'partner', (int) $partner->id, [
+            'supplier' => $partner->name,
+            'kind_of_partner' => str_replace('_', ' ', (string) $partner->partner_type),
+            'pan_holder_is' => strlen($pan) === 10 ? ($holder[$pan[3]] ?? 'not stated by the PAN') : 'unknown — no PAN on file',
+            'what_we_have_booked_from_them' => DB::table('accounts_purchase_items as i')
+                ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
+                ->where('v.vendor_id', $partner->id)->distinct()->limit(8)->pluck('i.description')->filter()->implode('; ') ?: 'nothing yet',
+        ], $options);
+
+        return response()->json(['jev' => $jev, 'sections' => $sections]);
     }
 
     private function withAccounts(): bool

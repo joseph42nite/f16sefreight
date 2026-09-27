@@ -434,6 +434,8 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
     }
   },
   data: () => ({
+    /** ④ The payment mail's reading this receipt was opened from (GAPS #416). */
+    remittanceDecisionId: null,
     view: "all",
     VIEWS,
     STATUSES,
@@ -570,6 +572,8 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
 
     // Arrived from the journal's drill-through: open that document straight away.
     if (this.$route.query.open) this.openById(Number(this.$route.query.open));
+    // Arrived from a client's payment mail (GAPS #416): the receipt form on that client, Jev's bills pre-ticked.
+    if (this.$route.query.receipt_for) this.receiptFromMail();
   },
   watch: {
     // The pipeline changed stage: swap the register under it without remounting the drawer state.
@@ -938,13 +942,30 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
     loadOpenDocuments() {
       this.openDocuments = [];
       this.allocation = {};
-      if (!this.receipt.payer_id) return;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/receipts/open-documents?customer_id=${this.receipt.payer_id}`).then(({
+      if (!this.receipt.payer_id) return Promise.resolve();
+      return _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/receipts/open-documents?customer_id=${this.receipt.payer_id}`).then(({
         data
       }) => {
         this.openDocuments = data.rows || [];
       }).catch(e => {
         this.actionError = this.messageFor(e);
+      });
+    },
+    /**
+     * The form opened from a payment mail. Bills Jev read as paid are pre-filled at their balance — rupee bills
+     * only: a foreign bill's rupees are whatever arrived, which only the person knows. Nothing is saved here.
+     */
+    receiptFromMail() {
+      const q = this.$route.query;
+      const bills = String(q.bills || "").split(",").map(Number).filter(Boolean);
+      this.openReceipt();
+      this.receipt.payer_id = Number(q.receipt_for);
+      this.remittanceDecisionId = q.remittance ? Number(q.remittance) : null;
+      this.loadOpenDocuments().then(() => {
+        this.openDocuments.filter(d => bills.includes(d.id) && (d.currency || "INR") === "INR").forEach(d => {
+          this.$set(this.allocation, d.id, Number(d.outstanding));
+        });
+        this.receipt.amount = Object.values(this.allocation).reduce((s, v) => s + Number(v || 0), 0);
       });
     },
     saveReceipt() {
@@ -958,7 +979,9 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
       this.actionError = null;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/receipts", _objectSpread(_objectSpread({}, this.receipt), {}, {
         allocations
-      })).then(() => {
+      }, this.remittanceDecisionId ? {
+        remittance_decision_id: this.remittanceDecisionId
+      } : {})).then(() => {
         this.receipt = null;
         this.showView("receipts");
       }).catch(e => {
@@ -1483,6 +1506,8 @@ const SHAPES = {
       tds_section: "",
       tds_rate_override: null
     },
+    /** Jev's suggestion for the partner being edited (GAPS #415). */
+    tdsJev: null,
     /* Each branch's own active TDS sections, keyed by agent_id — a vendor is deducted under a section
        THAT BRANCH has a rate for, never a company-wide list a sibling branch happens to use. */
     tdsRatesByBranch: {},
@@ -1615,6 +1640,7 @@ const SHAPES = {
         tds_section: row.tds_section || "",
         tds_rate_override: row.tds_rate_override
       };
+      this.tdsJev = null;
 
       // Options are this branch's own active rate table — not a company-wide list, and not a sibling
       // branch's. If the vendor already carries a section this branch has since deactivated or never had
@@ -1628,13 +1654,36 @@ const SHAPES = {
       }
       this.tdsSectionOptions = options;
     },
+    askJevTds(row) {
+      this.tdsSaving = true;
+      this.tdsError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/partners/${row.id}/tds-suggestion`, {}).then(({
+        data
+      }) => {
+        this.tdsJev = data.jev || {
+          suggested: false
+        };
+        // Pre-filled, never saved: only a section this branch actually has, or "none".
+        if (this.tdsJev.suggested && this.tdsJev.answer === "none") this.tdsForm.tds_section = "";else if (this.tdsJev.suggested && this.tdsSectionOptions.some(s => s.section === this.tdsJev.answer)) {
+          this.tdsForm.tds_section = this.tdsJev.answer;
+        }
+      }).catch(() => {
+        this.tdsJev = {
+          suggested: false
+        };
+      }).finally(() => {
+        this.tdsSaving = false;
+      });
+    },
     saveTds(row) {
       this.tdsSaving = true;
       this.tdsError = null;
-      const body = {
+      const body = _objectSpread({
         tds_section: this.tdsForm.tds_section || null,
         tds_rate_override: this.tdsForm.tds_rate_override === "" ? null : this.tdsForm.tds_rate_override
-      };
+      }, this.tdsJev && this.tdsJev.id ? {
+        decision_id: this.tdsJev.id
+      } : {});
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/partners/${row.id}/tds`, body).then(({
         data
       }) => {
@@ -2538,6 +2587,8 @@ const TONE = {
   // Profitability. A shipment billed with nothing costed reads as a 100% margin that is not real.
   no_cost_booked: "warning",
   not_billed: "info",
+  // Jev's pick (GAPS #412). Info, not success: a suggestion is something to check, never something done.
+  suggested: "info",
   promise_broken: "critical",
   not_chased: "warning",
   open: "info",
@@ -5880,7 +5931,7 @@ var render = function render() {
       attrs: {
         value: d.outstanding,
         kind: "currency",
-        "currency-code": "INR"
+        "currency-code": d.currency || "INR"
       }
     })], 1), _vm._v(" "), _c("td", [_c("input", {
       directives: [{
@@ -7752,7 +7803,9 @@ var render = function render() {
             value: s.section
           }
         }, [_vm._v("\n                " + _vm._s(s.section) + " — " + _vm._s(s.description) + "\n              ")]);
-      })], 2)] : c.key === "tds_rate_override" && _vm.tdsEditing === row.id ? [_c("input", {
+      })], 2), _vm._v(" "), _vm.tdsJev ? _c("div", {
+        staticClass: "fx-muted"
+      }, [_vm.tdsJev.suggested && _vm.tdsJev.answer === "none" ? [_vm._v("Jev: no deduction on this supplier")] : _vm.tdsJev.suggested ? [_vm._v("Jev suggests " + _vm._s(_vm.tdsJev.answer))] : [_vm._v("Jev is not sure")], _vm._v(" "), _vm.tdsJev.suggested ? [_vm._v(" (" + _vm._s(Math.round(_vm.tdsJev.confidence * 100)) + "% sure) — check their certificate.")] : _vm._e()], 2) : _vm._e()] : c.key === "tds_rate_override" && _vm.tdsEditing === row.id ? [_c("input", {
         directives: [{
           name: "model",
           rawName: "v-model.number",
@@ -7815,7 +7868,17 @@ var render = function render() {
           return _vm.saveTds(row);
         }
       }
-    }, [_vm._v("Save")]), _vm._v(" "), _c("button", {
+    }, [_vm._v("Save")]), _vm._v(" "), !_vm.tdsJev ? _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.tdsSaving
+      },
+      on: {
+        click: function ($event) {
+          return _vm.askJevTds(row);
+        }
+      }
+    }, [_vm._v("Ask Jev")]) : _vm._e(), _vm._v(" "), _c("button", {
       staticClass: "fx-btn fx-btn--ghost",
       on: {
         click: function ($event) {

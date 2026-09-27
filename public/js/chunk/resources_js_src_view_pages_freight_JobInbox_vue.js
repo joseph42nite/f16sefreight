@@ -201,6 +201,8 @@ const WORKSPACE_TABS = [{
     sentOk: false,
     /** Suggested client mails that were skipped or replaced — kept in the conversation. */
     notSent: [],
+    /** ④ The payment mail's reading, when this is one (GAPS #416). */
+    remittance: null,
     /** Who the open conversation can be handed to — its own branch's pricing staff. */
     assignees: [],
     cargoBusy: false,
@@ -236,7 +238,30 @@ const WORKSPACE_TABS = [{
     WORKSPACE_TABS,
     CANCELLATION_REASONS
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_12__.mapGetters)(["designation", "currentUser", "tierAtLeast"])), {}, {
+  computed: _objectSpread(_objectSpread({
+    remittanceBillNos() {
+      const ids = this.remittance && this.remittance.jev && this.remittance.jev.bill_ids || [];
+      return this.remittance.bills.filter(b => ids.includes(b.id)).map(b => b.invoice_no).join(", ");
+    },
+    /** Money in's receipt form, opened on this client with Jev's bills pre-ticked. */
+    remittanceLink() {
+      const r = this.remittance;
+      const jev = r.jev || {};
+      const bills = jev.bill_ids || [];
+      const clientId = bills.length ? r.bills.find(b => b.id === bills[0]).customer_id : r.clients[0].id;
+      return {
+        path: "/money-in",
+        query: _objectSpread(_objectSpread({
+          stage: "money_in",
+          receipt_for: String(clientId)
+        }, bills.length ? {
+          bills: bills.join(",")
+        } : {}), jev.id ? {
+          remittance: String(jev.id)
+        } : {})
+      };
+    }
+  }, (0,vuex__WEBPACK_IMPORTED_MODULE_12__.mapGetters)(["designation", "currentUser", "tierAtLeast"])), {}, {
     /* Only pricing owns triage — re-classification mints or strands an enquiry. */
     canTriage() {
       return this.designation === "pricing";
@@ -1026,6 +1051,7 @@ const WORKSPACE_TABS = [{
         this.pending = data.thread.classification;
         this.messages = data.messages || [];
         this.notSent = data.not_sent || [];
+        this.remittance = data.remittance || null;
         this.loadAssignees(data.thread.id);
         this.signature = data.signature || null;
         /* The cost sheet hangs off the JOB, not the thread, and extraction wants the
@@ -3391,7 +3417,28 @@ var render = function render() {
       value: _vm.active.first_response_at,
       kind: "dateTime"
     }
-  })], 1)]), _vm._v(" "), _c("ol", {
+  })], 1)]), _vm._v(" "), _vm.remittance && _vm.remittance.bills.length ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Their open bills")]), _vm._v(" "), _vm.remittance.jev && _vm.remittance.jev.suggested ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          Jev reads this mail as paying " + _vm._s(_vm.remittanceBillNos) + " (" + _vm._s(Math.round(_vm.remittance.jev.confidence * 100)) + "% sure).\n        ")]) : _vm.remittance.jev ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Jev could not tell which bills this mail pays.")]) : _vm._e(), _vm._v(" "), _c("ul", {
+    staticClass: "fx-muted"
+  }, _vm._l(_vm.remittance.bills, function (b) {
+    return _c("li", {
+      key: "rb-" + b.id
+    }, [_c("span", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(b.invoice_no))]), _vm._v(" · " + _vm._s(b.currency || "INR") + " " + _vm._s(b.balance) + " outstanding\n          ")]);
+  }), 0), _vm._v(" "), _c("router-link", {
+    staticClass: "fx-btn",
+    attrs: {
+      to: _vm.remittanceLink
+    }
+  }, [_vm._v("Record the receipt")])], 1) : _vm._e(), _vm._v(" "), _c("ol", {
     ref: "messages",
     staticClass: "fx-messages"
   }, [_vm._l(_vm.notSent, function (u) {

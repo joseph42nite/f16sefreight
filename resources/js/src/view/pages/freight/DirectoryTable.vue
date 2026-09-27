@@ -207,6 +207,13 @@
                   {{ s.section }} — {{ s.description }}
                 </option>
               </select>
+              <!-- ⑥ On demand (GAPS #415): a legal classification, so Jev only pre-fills; Save is the person's. -->
+              <div v-if="tdsJev" class="fx-muted">
+                <template v-if="tdsJev.suggested && tdsJev.answer === 'none'">Jev: no deduction on this supplier</template>
+                <template v-else-if="tdsJev.suggested">Jev suggests {{ tdsJev.answer }}</template>
+                <template v-else>Jev is not sure</template>
+                <template v-if="tdsJev.suggested"> ({{ Math.round(tdsJev.confidence * 100) }}% sure) — check their certificate.</template>
+              </div>
             </template>
             <template v-else-if="c.key === 'tds_rate_override' && tdsEditing === row.id">
               <input v-model.number="tdsForm.tds_rate_override" class="fx-input" type="number" step="0.01" min="0" max="100" placeholder="s.197 rate, if any" />
@@ -224,6 +231,7 @@
           <td v-else-if="endpoint === '/partners' && canManageTds" class="fx-row-actions">
             <template v-if="tdsEditing === row.id">
               <button class="fx-btn fx-btn--primary" :disabled="tdsSaving" @click="saveTds(row)">Save</button>
+              <button v-if="!tdsJev" class="fx-btn fx-btn--ghost" :disabled="tdsSaving" @click="askJevTds(row)">Ask Jev</button>
               <button class="fx-btn fx-btn--ghost" @click="tdsEditing = null">Cancel</button>
             </template>
             <button v-else class="fx-btn fx-btn--ghost" @click="editTds(row)">Edit TDS</button>
@@ -288,6 +296,8 @@ export default {
     /** Which vendor's TDS classification is being edited (user, 2026-09-25). */
     tdsEditing: null, tdsSaving: false, tdsError: null,
     tdsForm: { tds_section: "", tds_rate_override: null },
+    /** Jev's suggestion for the partner being edited (GAPS #415). */
+    tdsJev: null,
     /* Each branch's own active TDS sections, keyed by agent_id — a vendor is deducted under a section
        THAT BRANCH has a rate for, never a company-wide list a sibling branch happens to use. */
     tdsRatesByBranch: {}, tdsSectionOptions: [], tdsSectionsLoaded: false,
@@ -401,6 +411,7 @@ export default {
       this.tdsEditing = row.id;
       this.tdsError = null;
       this.tdsForm = { tds_section: row.tds_section || "", tds_rate_override: row.tds_rate_override };
+      this.tdsJev = null;
 
       // Options are this branch's own active rate table — not a company-wide list, and not a sibling
       // branch's. If the vendor already carries a section this branch has since deactivated or never had
@@ -411,12 +422,28 @@ export default {
       }
       this.tdsSectionOptions = options;
     },
+    askJevTds(row) {
+      this.tdsSaving = true;
+      this.tdsError = null;
+      ApiService.post(`/partners/${row.id}/tds-suggestion`, {})
+        .then(({ data }) => {
+          this.tdsJev = data.jev || { suggested: false };
+          // Pre-filled, never saved: only a section this branch actually has, or "none".
+          if (this.tdsJev.suggested && this.tdsJev.answer === "none") this.tdsForm.tds_section = "";
+          else if (this.tdsJev.suggested && this.tdsSectionOptions.some((s) => s.section === this.tdsJev.answer)) {
+            this.tdsForm.tds_section = this.tdsJev.answer;
+          }
+        })
+        .catch(() => { this.tdsJev = { suggested: false }; })
+        .finally(() => { this.tdsSaving = false; });
+    },
     saveTds(row) {
       this.tdsSaving = true;
       this.tdsError = null;
       const body = {
         tds_section: this.tdsForm.tds_section || null,
         tds_rate_override: this.tdsForm.tds_rate_override === "" ? null : this.tdsForm.tds_rate_override,
+        ...(this.tdsJev && this.tdsJev.id ? { decision_id: this.tdsJev.id } : {}),
       };
 
       ApiService.post(`/partners/${row.id}/tds`, body)

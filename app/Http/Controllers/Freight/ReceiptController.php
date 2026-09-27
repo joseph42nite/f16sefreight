@@ -130,6 +130,8 @@ class ReceiptController extends Controller
             // 🔴 `tds` is the fourth, and the one the other three were being misused for: a client who
             // deducted tax at source has PAID IN FULL, and the difference is an asset, not a cost.
             'allocations.*.resolution' => 'nullable|in:write_off,discount,tds',
+            // ④ Jev's reading of the client's payment mail, when the form was opened from it (GAPS #416).
+            'remittance_decision_id' => 'nullable|integer',
         ]);
 
         if (! $this->branches()->contains('id', (int) $data['agent_id'])) {
@@ -205,6 +207,11 @@ class ReceiptController extends Controller
             }
 
             $this->audit->record((int) $data['agent_id'], 'receipt.recorded', 'receipt', $receipt->id, auth()->id());
+
+            // The bills the person placed money against, in the same shape as Jev's answer: taken, or changed.
+            app(\App\Services\Accounts\JevDecisions::class)->record($data['remittance_decision_id'] ?? null,
+                (int) DB::table('agents_info')->where('id', $data['agent_id'])->value('company_id'),
+                collect($allocations)->pluck('invoice_id')->map(fn ($id) => (int) $id)->unique()->sort()->implode(','), (int) auth()->id());
 
             return $receipt;
         }, EnquirySequenceService::DEADLOCK_ATTEMPTS);

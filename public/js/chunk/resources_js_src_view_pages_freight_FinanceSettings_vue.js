@@ -45,6 +45,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     ratesConfigured: false,
     ratesMaxAge: 7,
     ratesError: null,
+    /** Jev's decision points and how each has done (GAPS #412). */
+    jevPoints: [],
     tdsForm: {
       description: "",
       rate: 0,
@@ -230,6 +232,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       this.rateCards = data.rate_cards || [];
       this.tdsRates = data.tds_rates || [];
       this.takeRates(data);
+      this.jevPoints = data.jev || [];
       this.branches = data.branches || [];
       if (!this.newAccount.agent_id && this.branches.length) {
         this.newAccount.agent_id = this.branches[0].id;
@@ -240,6 +243,21 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       this.exchangeRates = data.exchange_rates || [];
       this.ratesConfigured = !!data.exchange_rates_configured;
       this.ratesMaxAge = data.exchange_rates_max_age_days || 7;
+    },
+    setJev(point, enabled) {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/finance-settings/jev", {
+        question: point.question,
+        enabled
+      }).then(({
+        data
+      }) => {
+        this.jevPoints = data.jev || [];
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
     },
     fetchRates() {
       this.busy = true;
@@ -970,7 +988,43 @@ var render = function render() {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"
-  }, [_vm._v("TDS rates")]), _vm._v(" "), _vm._m(4), _vm._v(" "), _c("table", {
+  }, [_vm._v("Jev suggestions")]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Jev reads who paid, what the bank wrote and what a mail says, and pre-selects one of the options the screen\n        already offers. You confirm every one; nothing is posted, paid or written off by it. Each suggestion costs\n        0.1 credit and is asked once. When it is not sure, it says nothing.\n      ")]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(4), _vm._v(" "), _c("tbody", _vm._l(_vm.jevPoints, function (q) {
+    return _c("tr", {
+      key: "jev-" + q.question
+    }, [_c("td", [_vm._v(_vm._s(q.label))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(q.where))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(q.asked))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(q.suggested))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v(_vm._s(q.accepted + q.changed ? q.accepted + " of " + (q.accepted + q.changed) : "—"))]), _vm._v(" "), _c("td", [_c("label", {
+      staticClass: "fx-checkbox"
+    }, [_c("input", {
+      attrs: {
+        type: "checkbox",
+        disabled: !_vm.canManage || _vm.busy,
+        "aria-label": "Jev: " + q.label
+      },
+      domProps: {
+        checked: q.enabled
+      },
+      on: {
+        change: function ($event) {
+          return _vm.setJev(q, $event.target.checked);
+        }
+      }
+    })])])]);
+  }), 0)])]), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("TDS rates")]), _vm._v(" "), _vm._m(5), _vm._v(" "), _c("table", {
     staticClass: "fx-table"
   }, [_c("thead", [_c("tr", [_c("th", {
     attrs: {
@@ -1628,6 +1682,37 @@ var staticRenderFns = [function () {
       scope: "col"
     }
   }, [_vm._v("As of")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Suggests")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Where")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Asked")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Suggested")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Right")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("On")])])]);
 }, function () {
   var _vm = this,
     _c = _vm._self._c;

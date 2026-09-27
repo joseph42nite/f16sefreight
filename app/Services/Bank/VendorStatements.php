@@ -94,7 +94,10 @@ class VendorStatements
         $counts = array_fill_keys(array_keys(self::STATES), 0);
 
         foreach (DB::table('vendor_statement_lines')->where('vendor_statement_id', $statementId)->get() as $line) {
-            $jobId = $this->shipmentFor($statement->agent_id, (string) $line->reference);
+            // A line a PERSON linked to a voucher (link(), GAPS #414) keeps that link while its reference still names
+            // nothing — comparing again must not undo a decision somebody made.
+            $jobId = $this->shipmentFor($statement->agent_id, (string) $line->reference)
+                ?? ($line->matched_voucher_id ? DB::table('accounts_purchase_vouchers')->where('id', $line->matched_voucher_id)->value('job_id') : null);
             $ours = $jobId === null ? null : $this->ourCost((int) $jobId, (int) $statement->vendor_id);
             $voucherId = $jobId === null ? null : DB::table('accounts_purchase_vouchers')
                 ->where('job_id', $jobId)->where('vendor_id', $statement->vendor_id)->value('id');
@@ -119,6 +122,51 @@ class VendorStatements
         }
 
         return $counts;
+    }
+
+    /**
+     * A person says which of our vouchers an unmatched line is (GAPS #414) — confirmed by them, never by the model
+     * that may have suggested it. The voucher must be THIS supplier's and this branch's; the line is then compared
+     * exactly as any other.
+     */
+    public function link(int $statementId, int $lineId, int $voucherId): bool
+    {
+        $statement = DB::table('vendor_statements')->where('id', $statementId)->first();
+        $ok = $statement !== null
+            && DB::table('vendor_statement_lines')->where('id', $lineId)->where('vendor_statement_id', $statementId)->exists()
+            && DB::table('accounts_purchase_vouchers')->where('id', $voucherId)->where('vendor_id', $statement->vendor_id)
+                ->where('agent_id', $statement->agent_id)->whereNotNull('job_id')->exists();
+
+        if (! $ok) {
+            return false;
+        }
+
+        DB::table('vendor_statement_lines')->where('id', $lineId)->update(['matched_voucher_id' => $voucherId, 'updated_at' => now()]);
+        $this->compare($statementId);
+
+        return true;
+    }
+
+    /**
+     * The supplier's vouchers an unmatched line could be: from the 120 days up to the statement, not claimed by another
+     * line of it, closest in amount first — an ORDER for the shortlist only; an amount decides nothing (see below).
+     */
+    public function voucherCandidates(object $statement, object $line, int $limit): \Illuminate\Support\Collection
+    {
+        $until = $statement->statement_date ?? now()->toDateString();
+        $claimed = DB::table('vendor_statement_lines')->where('vendor_statement_id', $statement->id)
+            ->where('id', '!=', $line->id)->whereNotNull('matched_voucher_id')->pluck('matched_voucher_id');
+
+        return DB::table('accounts_purchase_vouchers as v')
+            ->leftJoin('jobs as j', 'j.id', '=', 'v.job_id')
+            ->leftJoinSub(DB::table('accounts_purchase_items')->selectRaw('purchase_voucher_id, SUM(net_amount) AS gross')
+                ->groupBy('purchase_voucher_id'), 'i', 'i.purchase_voucher_id', '=', 'v.id')
+            ->where('v.vendor_id', $statement->vendor_id)->where('v.agent_id', $statement->agent_id)->whereNotNull('v.job_id')
+            ->whereBetween('v.document_date', [\Illuminate\Support\Carbon::parse($until)->subDays(120)->toDateString(), $until])
+            ->whereNotIn('v.id', $claimed)
+            ->orderByRaw('ABS(COALESCE(i.gross, 0) - ?)', [(float) $line->their_amount])
+            ->limit($limit)
+            ->get(['v.id', 'v.voucher_no', 'v.document_date', 'j.execution_job_no as job_no', 'j.awb_number', DB::raw('COALESCE(i.gross, 0) AS gross')]);
     }
 
     /**

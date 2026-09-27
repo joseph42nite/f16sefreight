@@ -74,6 +74,23 @@ const REPORTS = [{
   key: "trial-balance",
   label: "Trial balance"
 }];
+/** Jev's reasons for a short payment, as the desk reads them (config/accounts_decisions.php). */
+const SHORT_REASONS = {
+  client_deducted_tds: "the client deducted TDS",
+  bank_charges: "a bank took its charges",
+  agreed_discount: "a discount the client says was agreed",
+  disputed: "the client is disputing part of it — left as still owed",
+  cannot_tell: "can't tell"
+};
+
+/** Jev's reading of money that fits no bill (config/accounts_decisions.php). */
+const UNMATCHED_READS = {
+  client_payment: "a client paying — for a bill not raised yet, an advance, or several bills",
+  refund_to_us: "a refund to us from a supplier, airline or authority",
+  bank_interest: "interest from our own bank",
+  bank_reversal: "our bank reversing a charge or a failed transfer",
+  capital_or_loan: "money from the owners, a group company or a lender"
+};
 const TABS = [{
   key: "credit",
   label: "Credit standing"
@@ -105,6 +122,8 @@ const TABS = [{
     totals: null,
     /** Reports: which one, over which period, and what came back. */
     REPORTS,
+    SHORT_REASONS,
+    UNMATCHED_READS,
     report: "profit-and-loss",
     periodId: null,
     periods: [],
@@ -122,6 +141,13 @@ const TABS = [{
     candidates: [],
     candidateNote: "",
     resolution: "",
+    /** Jev's suggestions for the open bank line (GAPS #412). */
+    jev: {
+      bill: null,
+      short: null
+    },
+    /** The voucher chosen for each unmatched statement line — Jev's pick pre-filled (GAPS #414). */
+    lineLinks: {},
     /** Statement import, the credited-vs-billed list, and the query mail being written. */
     importing: false,
     csv: "",
@@ -168,7 +194,16 @@ const TABS = [{
       label: "Journal"
     }]
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_5__.mapGetters)(["designation"])), {}, {
+  computed: _objectSpread(_objectSpread({
+    /** Jev's pick first, the rest as the matcher ordered them. */
+    orderedCandidates() {
+      return [...this.candidates].sort((a, b) => (this.isJevPick(b) ? 1 : 0) - (this.isJevPick(a) ? 1 : 0));
+    },
+    jevBillNo() {
+      const pick = this.candidates.find(c => this.isJevPick(c));
+      return pick ? pick.invoice.invoice_no : "";
+    }
+  }, (0,vuex__WEBPACK_IMPORTED_MODULE_5__.mapGetters)(["designation"])), {}, {
     /* Only accounts commits. The Boss reads the register and the journal, and that
        asymmetry is the segregation of duties, not a UI convenience. */
     canPost() {
@@ -310,16 +345,29 @@ const TABS = [{
         this.busy = false;
       });
     },
+    isJevPick(c) {
+      return !!(this.jev.bill && this.jev.bill.suggested && this.jev.bill.invoice_id === c.invoice.id);
+    },
     findCandidates(row) {
       this.bankRow = row;
       this.candidates = [];
       this.actionError = null;
       this.resolution = "";
+      this.jev = {
+        bill: null,
+        short: null
+      };
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/reconciliation/${row.id}/candidates`).then(({
         data
       }) => {
         this.candidates = data.candidates || [];
         this.candidateNote = data.limitation || "";
+        this.jev = data.jev || {
+          bill: null,
+          short: null
+        };
+        // Pre-selected, never applied: the person still chooses and presses Settle.
+        if (this.jev.short && this.jev.short.suggested && this.jev.short.resolution) this.resolution = this.jev.short.resolution;
       }).catch(e => {
         this.actionError = this.messageFor(e);
       });
@@ -327,10 +375,14 @@ const TABS = [{
     matchTo(candidate) {
       this.busy = true;
       this.actionError = null;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/reconciliation/${this.bankRow.id}/match`, _objectSpread({
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/reconciliation/${this.bankRow.id}/match`, _objectSpread(_objectSpread(_objectSpread({
         invoice_id: candidate.invoice.id
       }, this.resolution ? {
         resolution: this.resolution
+      } : {}), this.jev.bill ? {
+        bill_decision_id: this.jev.bill.id
+      } : {}), this.jev.short && candidate.variance < 0 ? {
+        short_decision_id: this.jev.short.id
       } : {})).then(() => {
         this.bankRow = null;
         this.candidates = [];
@@ -451,6 +503,24 @@ const TABS = [{
         this.busy = false;
       });
     },
+    linkLine(line) {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/vendor-statements/${this.vendorStatement.id}/lines/${line.id}/link`, _objectSpread({
+        voucher_id: Number(String(this.lineLinks[line.id]).replace("voucher_", ""))
+      }, line.jev ? {
+        decision_id: line.jev.id
+      } : {})).then(({
+        data
+      }) => {
+        this.showStatement(data);
+        this.loadVendorStatements();
+      }).catch(e => {
+        this.actionError = this.messageFor(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
     dispute(line, note) {
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/vendor-statements/${this.vendorStatement.id}/lines/${line.id}/dispute`, {
         dispute_note: note
@@ -486,6 +556,8 @@ const TABS = [{
         difference: 0
       };
       this.vendorStates = data.states || this.vendorStates;
+      // Jev's pick pre-filled where it is sure; the person still presses "This is it".
+      this.lineLinks = Object.fromEntries(this.vendorLines.map(l => [l.id, l.jev && l.jev.suggested ? l.jev.answer : ""]));
     },
     /** The TDS register: both directions, one quarter. With no year/quarter chosen yet, the server picks today's. */
     loadTds() {
@@ -1201,7 +1273,54 @@ var render = function render() {
       }
     }) : _c("span", {
       staticClass: "fx-muted"
-    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.vendorStates[l.state] || l.state))]), _vm._v(" "), _vm.canPost ? _c("td", [_c("input", {
+    }, [_vm._v("—")])], 1), _vm._v(" "), _c("td", [_vm._v("\n              " + _vm._s(_vm.vendorStates[l.state] || l.state) + "\n              "), _vm._v(" "), _vm.canPost && l.state === "unmatched" && l.jev_options && Object.keys(l.jev_options).length ? _c("div", {
+      staticClass: "fx-toolbar"
+    }, [_c("select", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.lineLinks[l.id],
+        expression: "lineLinks[l.id]"
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        "aria-label": "Voucher for " + (l.reference || "this line")
+      },
+      on: {
+        change: function ($event) {
+          var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+            return o.selected;
+          }).map(function (o) {
+            var val = "_value" in o ? o._value : o.value;
+            return val;
+          });
+          _vm.$set(_vm.lineLinks, l.id, $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+        }
+      }
+    }, [_c("option", {
+      attrs: {
+        value: ""
+      }
+    }, [_vm._v("Which voucher is it?")]), _vm._v(" "), _vm._l(l.jev_options, function (text, key) {
+      return _c("option", {
+        key: key,
+        domProps: {
+          value: key
+        }
+      }, [_vm._v(_vm._s(text))]);
+    })], 2), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn",
+      attrs: {
+        disabled: _vm.busy || !_vm.lineLinks[l.id]
+      },
+      on: {
+        click: function ($event) {
+          return _vm.linkLine(l);
+        }
+      }
+    }, [_vm._v("This is it")]), _vm._v(" "), l.jev && l.jev.suggested ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("Jev's pick (" + _vm._s(Math.round(l.jev.confidence * 100)) + "% sure)")]) : _vm._e()]) : _vm._e()]), _vm._v(" "), _vm.canPost ? _c("td", [_c("input", {
       staticClass: "fx-input",
       attrs: {
         placeholder: "what we asked them"
@@ -1527,7 +1646,9 @@ var render = function render() {
   }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.differences, function (d) {
     return _c("tr", {
       key: "d-" + d.transaction_id + d.kind
-    }, [_c("td", [d.kind === "short" ? _c("span", [_vm._v("Paid short")]) : d.kind === "over" ? _c("span", [_vm._v("Paid more than billed")]) : _c("span", [_vm._v("Cannot be placed")])]), _vm._v(" "), _c("td", {
+    }, [_c("td", [d.kind === "short" ? _c("span", [_vm._v("Paid short")]) : d.kind === "over" ? _c("span", [_vm._v("Paid more than billed")]) : _c("span", [_vm._v("Cannot be placed")]), _vm._v(" "), d.jev && d.jev.suggested ? _c("div", {
+      staticClass: "fx-muted"
+    }, [_vm._v("Jev: probably " + _vm._s(_vm.UNMATCHED_READS[d.jev.answer]))]) : _vm._e()]), _vm._v(" "), _c("td", {
       staticClass: "identifier"
     }, [_vm._v(_vm._s(d.invoice_no || "—"))]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
@@ -1567,7 +1688,7 @@ var render = function render() {
           return _vm.draftQuery(d);
         }
       }
-    }, [_vm._v("Ask the client")])]) : _vm._e()]);
+    }, [_vm._v("\n                " + _vm._s(d.jev && d.jev.suggested && d.jev.answer !== "client_payment" ? "Ask the client anyway" : "Ask the client") + "\n              ")])]) : _vm._e()]);
   }), 0)])]) : _vm._e(), _vm._v(" "), _c("table", {
     staticClass: "fx-table"
   }, [_c("thead", [_c("tr", [_c("th", {
@@ -1644,7 +1765,11 @@ var render = function render() {
     staticClass: "fx-section__title"
   }, [_vm._v("\n        What this " + _vm._s(_vm.money(_vm.bankRow.amount)) + " could settle\n      ")]), _vm._v(" "), _c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v(_vm._s(_vm.candidateNote))]), _vm._v(" "), !_vm.candidates.length ? _c("p", {
+  }, [_vm._v(_vm._s(_vm.candidateNote))]), _vm._v(" "), _vm.jev.bill && _vm.jev.bill.suggested ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_c("strong", [_vm._v("Jev suggests " + _vm._s(_vm.jevBillNo))]), _vm._v(" from who paid and what the bank wrote\n        (" + _vm._s(Math.round(_vm.jev.bill.confidence * 100)) + "% sure). Check it before settling.\n      ")]) : _vm.jev.bill ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Jev could not tell which bill this is.")]) : _vm._e(), _vm._v(" "), !_vm.candidates.length ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("No open invoice matches this amount.")]) : _c("table", {
     staticClass: "fx-table"
@@ -1673,18 +1798,25 @@ var render = function render() {
     attrs: {
       scope: "col"
     }
-  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.candidates, function (c) {
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", _vm._l(_vm.orderedCandidates, function (c) {
     return _c("tr", {
-      key: "c-" + c.invoice.id
+      key: "c-" + c.invoice.id,
+      class: {
+        "is-selected": _vm.isJevPick(c)
+      }
     }, [_c("td", {
       staticClass: "identifier"
-    }, [_vm._v(_vm._s(c.invoice.invoice_no))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(c.invoice.customer ? c.invoice.customer.name : "—"))]), _vm._v(" "), _c("td", {
+    }, [_vm._v("\n              " + _vm._s(c.invoice.invoice_no) + "\n              "), _vm.isJevPick(c) ? _c("StatusChip", {
+      attrs: {
+        value: "suggested"
+      }
+    }) : _vm._e()], 1), _vm._v(" "), _c("td", [_vm._v(_vm._s(c.invoice.customer || "—"))]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
     }, [_c("Figure", {
       attrs: {
-        value: c.invoice.outstanding,
+        value: c.invoice.balance,
         kind: "currency",
-        "currency-code": "INR"
+        "currency-code": c.invoice.currency || "INR"
       }
     })], 1), _vm._v(" "), _c("td", [_c("StatusChip", {
       attrs: {
@@ -1727,7 +1859,9 @@ var render = function render() {
       attrs: {
         value: "discount"
       }
-    }, [_vm._v("Treat it as a discount")])]) : _vm._e(), _vm._v(" "), _c("button", {
+    }, [_vm._v("Treat it as a discount")])]) : _vm._e(), _vm._v(" "), c.variance < 0 && _vm.isJevPick(c) && _vm.jev.short && _vm.jev.short.suggested ? _c("div", {
+      staticClass: "fx-muted"
+    }, [_vm._v("\n                Jev: " + _vm._s(_vm.SHORT_REASONS[_vm.jev.short.answer]) + " (" + _vm._s(Math.round(_vm.jev.short.confidence * 100)) + "% sure)\n              ")]) : _vm._e(), _vm._v(" "), _c("button", {
       staticClass: "fx-btn fx-btn--primary",
       attrs: {
         disabled: _vm.busy

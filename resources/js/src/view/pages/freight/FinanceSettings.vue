@@ -258,6 +258,48 @@
         <p v-else class="fx-muted">No rates stored yet.</p>
       </section>
 
+      <!--
+        ── Jev suggestions (GAPS #412; implementation_guide §11.7) ── Where Jev pre-selects a choice in accounts, and
+        how it has done. It never posts, pays or writes anything off: a person confirms every suggestion, and the
+        screen's own checks run on what they confirm. Only the switch is here — how sure it must be is not a setting.
+      -->
+      <section class="fx-section">
+        <h2 class="fx-section__title">Jev suggestions</h2>
+        <p class="fx-muted">
+          Jev reads who paid, what the bank wrote and what a mail says, and pre-selects one of the options the screen
+          already offers. You confirm every one; nothing is posted, paid or written off by it. Each suggestion costs
+          0.1 credit and is asked once. When it is not sure, it says nothing.
+        </p>
+        <table class="fx-table">
+          <thead>
+            <tr>
+              <th scope="col">Suggests</th>
+              <th scope="col">Where</th>
+              <th class="fx-num" scope="col">Asked</th>
+              <th class="fx-num" scope="col">Suggested</th>
+              <th class="fx-num" scope="col">Right</th>
+              <th scope="col">On</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="q in jevPoints" :key="'jev-' + q.question">
+              <td>{{ q.label }}</td>
+              <td class="fx-muted">{{ q.where }}</td>
+              <td class="fx-num">{{ q.asked }}</td>
+              <td class="fx-num">{{ q.suggested }}</td>
+              <!-- Of the suggestions somebody acted on, how many they took. Nothing acted on yet reads "—", not 0%. -->
+              <td class="fx-num">{{ q.accepted + q.changed ? q.accepted + " of " + (q.accepted + q.changed) : "—" }}</td>
+              <td>
+                <label class="fx-checkbox">
+                  <input type="checkbox" :checked="q.enabled" :disabled="!canManage || busy"
+                         :aria-label="'Jev: ' + q.label" @change="setJev(q, $event.target.checked)" />
+                </label>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
       <!-- ── TDS rates ─────────────────────────────────────────────────── -->
       <section class="fx-section">
         <h2 class="fx-section__title">TDS rates</h2>
@@ -428,6 +470,8 @@ export default {
     tdsRates: [], tdsEditing: null,
     /** Exchange rates, read-only (GAPS #411). */
     exchangeRates: [], ratesConfigured: false, ratesMaxAge: 7, ratesError: null,
+    /** Jev's decision points and how each has done (GAPS #412). */
+    jevPoints: [],
     tdsForm: { description: "", rate: 0, rate_no_pan: 20, threshold_single: null, threshold_annual: null, is_active: true },
     /** The bank accounts master (user, 2026-09-21). */
     banks: [], legacyBalance: 0,
@@ -540,6 +584,7 @@ export default {
       this.rateCards = data.rate_cards || [];
       this.tdsRates = data.tds_rates || [];
       this.takeRates(data);
+      this.jevPoints = data.jev || [];
       this.branches = data.branches || [];
       if (!this.newAccount.agent_id && this.branches.length) {
         this.newAccount.agent_id = this.branches[0].id;
@@ -550,6 +595,13 @@ export default {
       this.exchangeRates = data.exchange_rates || [];
       this.ratesConfigured = !!data.exchange_rates_configured;
       this.ratesMaxAge = data.exchange_rates_max_age_days || 7;
+    },
+    setJev(point, enabled) {
+      this.busy = true;
+      ApiService.post("/finance-settings/jev", { question: point.question, enabled })
+        .then(({ data }) => { this.jevPoints = data.jev || []; })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
     },
     fetchRates() {
       this.busy = true;

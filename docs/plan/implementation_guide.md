@@ -1529,7 +1529,7 @@ address) · **who owns them** (our branch, salesperson, their usual port) · **t
 | ~~**GSTR-1 / 3B as files**~~ | ✅ **Built 2026-09-22** — `GstReturnService` builds B2B, CDNR, HSN and the document series from the documents (not the register, which was structurally empty until `agents_info.gst_no` landed the same day), as a CSV and as the offline utility's JSON, on Close-the-month ④. 🔴 The window is a **calendar month**, the one report here that is not period-scoped — a return is filed monthly and every period in this system spans a year. 🔴 B2CL/B2CS/EXP are deliberately not written: they need a place of supply and a shipping bill that nothing stores, so those documents are **named as exceptions** instead of guessed (GAPS #394, #36) |
 | ~~**TDS**~~ | ✅ **Built 2026-09-25** — both directions, never netted: outward (we withhold from vendors) is a liability due by the 7th of next month, inward (clients withhold from us) is an asset claimed via Form 26AS. Register at Financials → TDS register, Form 26Q CSV export, rates editable in Settings → Finance, `tds_section`/s.197 override editable on each partner. TDS is Close-the-month's advisory step ⑤ (GAPS #395) |
 
-### 11.7 Jev in accounts — suggestions, never postings 📝 *planned 2026-09-26, awaiting the owner's go*
+### 11.7 Jev in accounts — suggestions, never postings 🟢 *built 2026-09-27 — all six points (GAPS #412–#416)*
 
 > Owner, 2026-09-26: *"use Jev in the entire accounts section with safety in mind … think of the best way to do it."*
 
@@ -1586,6 +1586,10 @@ confident wrong answer there costs more than the desk's minute.
 | The acceptance set | `accounts:rubric-check`, like `mail:rubric-check`, re-run on every rubric edit |
 
 #### Build order
+
+> Owner, 2026-09-26, on the pilot: *"what we are trying to build is the Jev-driven accounts system, safe with correct
+> encryption if need be"* — so all six were built on the frame together, not piloted one at a time. The acceptance
+> counts in Settings → Finance are now the measure each point is judged by.
 
 1. **The frame + ①, as a pilot** — `ai_decisions`, the switches, pricing, caching, the rubric file, and bank
    matching. Measured on real lines before anything else is built on it.

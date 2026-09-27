@@ -64,7 +64,32 @@ class FinanceSettingsController extends Controller
                    DB::raw('COALESCE(p.name, cu.name) AS party')]);
 
         return response()->json(['accounts' => $accounts, 'rate_cards' => $rates, 'tds_rates' => $tdsRates,
-                                  'branches' => $branches, 'branch_picked' => $picked] + $this->exchangeRates());
+                                  'branches' => $branches, 'branch_picked' => $picked] + $this->exchangeRates()
+                                  + ['jev' => app(\App\Services\Accounts\JevDecisions::class)->overview($this->companyId())]);
+    }
+
+    /**
+     * Switch one of Jev's decision points on or off for the company (GAPS #412) — accounts and the Boss, the same
+     * two roles as every other finance setting. Only the switch: confidence floors live in config, never on a screen.
+     */
+    public function setJevSwitch(Request $request): JsonResponse
+    {
+        $this->authorize('manageFinanceSettings');
+
+        $data = $request->validate([
+            'question' => 'required|string|in:' . implode(',', array_keys(config('accounts_decisions.questions'))),
+            'enabled' => 'required|boolean',
+        ]);
+
+        $jev = app(\App\Services\Accounts\JevDecisions::class);
+        $jev->setSwitch($this->companyId(), $data['question'], (bool) $data['enabled'], (int) auth()->id());
+
+        return response()->json(['jev' => $jev->overview($this->companyId())]);
+    }
+
+    private function companyId(): int
+    {
+        return (int) UserContext::for(auth()->user())->companyId;
     }
 
     /**

@@ -66,6 +66,24 @@ class VendorStatementController extends Controller
             ->orderByRaw("FIELD(l.state, 'different', 'not_booked', 'unmatched', 'agreed')")
             ->get(['l.*', 'j.execution_job_no as job_no']);
 
+        // ⑤ Which voucher an unmatched line is (GAPS #414): Jev's pick among this supplier's vouchers, confirmed with
+        // "This is it" — the first ten unmatched lines, each asked once.
+        $jev = app(\App\Services\Accounts\JevDecisions::class);
+        foreach ($lines->where('state', 'unmatched')->take(10) as $line) {
+            $options = [];
+            foreach ($this->statements->voucherCandidates($statement, $line, (int) config('accounts_decisions.max_options')) as $v) {
+                $options['voucher_' . $v->id] = sprintf('Voucher %s for shipment %s (air waybill %s), dated %s — ₹%s.',
+                    $v->voucher_no, $v->job_no ?? '—', $v->awb_number ?? '—', $v->document_date, number_format((float) $v->gross, 2));
+            }
+
+            $line->jev = $options === [] ? null : $jev->ask('statement_line', (int) $statement->agent_id, 'vendor_statement_line', (int) $line->id, [
+                'supplier' => $statement->vendor, 'their_reference' => (string) $line->reference,
+                'their_description' => (string) $line->description, 'their_date' => (string) $line->charge_date,
+                'their_amount_inr' => number_format((float) $line->their_amount, 2),
+            ], $options + ['none_of_these' => config('accounts_decisions.questions.statement_line.none')]);
+            $line->jev_options = $options;
+        }
+
         return response()->json([
             'statement' => $statement,
             'lines' => $lines,
@@ -110,6 +128,29 @@ class VendorStatementController extends Controller
         $this->authorize('viewFinancials');
         $this->own($id);
         $this->statements->compare($id);
+
+        return $this->show($id);
+    }
+
+    /**
+     * "This line is voucher X" — a person's decision (GAPS #414), whether or not Jev suggested it; what they chose is
+     * recorded against the suggestion.
+     */
+    public function linkLine(Request $request, int $id, int $lineId): JsonResponse
+    {
+        $this->authorize('reconcile');
+        $statement = $this->own($id);
+
+        $data = $request->validate(['voucher_id' => 'required|integer', 'decision_id' => 'nullable|integer']);
+
+        if (! $this->statements->link($id, $lineId, (int) $data['voucher_id'])) {
+            return response()->json(['error' => "That voucher is not this supplier's, or the line is not on this statement.",
+                'reason' => 'voucher_not_found'], 422);
+        }
+
+        app(\App\Services\Accounts\JevDecisions::class)->record($data['decision_id'] ?? null,
+            (int) DB::table('agents_info')->where('id', $statement->agent_id)->value('company_id'),
+            'voucher_' . $data['voucher_id'], (int) auth()->id());
 
         return $this->show($id);
     }

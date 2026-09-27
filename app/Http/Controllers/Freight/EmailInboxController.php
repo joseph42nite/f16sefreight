@@ -183,7 +183,60 @@ class EmailInboxController extends Controller
             'not_sent' => $this->clientUpdates->notSent($thread),
             // What "Add signature" will put under a reply, shown greyed in the composer.
             'signature' => $this->threadSignature($thread),
+            // ④ A client's payment mail, read for which of their bills it pays (GAPS #416). Accounts and the Boss only.
+            'remittance' => $this->remittance($thread, $messages),
         ]);
+    }
+
+    /**
+     * ④ Which of this client's open bills a payment mail says are being paid (GAPS #416). One yes/no per bill in ONE
+     * request, asked once per thread. It pre-ticks the receipt form behind "Record the receipt"; the person enters
+     * what arrived and saves — this reads a mail and allocates nothing.
+     *
+     * The client is the sender's domain, as an enquiry's is (EnquiryMinter::customerFor) — every client row sharing
+     * it, since one group can hold several GSTINs. Their five newest open bills are the options.
+     */
+    private function remittance(EmailThread $thread, $messages): ?array
+    {
+        if ($thread->classification !== 'payment_advice' || ! \Illuminate\Support\Facades\Gate::allows('viewFinancials')) {
+            return null;
+        }
+
+        $inbound = $messages->where('direction', 'inbound')->last();
+        $at = $inbound === null ? false : strrpos((string) $inbound->from, '@');
+
+        if ($at === false) {
+            return null;
+        }
+
+        $companyId = DB::table('agents_info')->where('id', $thread->agent_id)->value('company_id');
+        $clients = DB::table('customers')->where('company_id', $companyId)
+            ->whereRaw('LOWER(email_domain) = ?', [strtolower(trim(substr((string) $inbound->from, $at + 1), " >"))])
+            ->get(['id', 'name']);
+
+        if ($clients->isEmpty()) {
+            return null;
+        }
+
+        $bills = DB::table('accounts_invoices')->whereIn('customer_id', $clients->pluck('id'))
+            ->whereIn('status', ['finalized', 'sent', 'partially_paid'])->whereRaw('grand_total - amount_paid > 0.009')
+            ->orderByDesc('document_date')->limit((int) config('accounts_decisions.max_options'))
+            ->get(['id', 'customer_id', 'invoice_no', 'document_date', 'currency', DB::raw('ROUND(grand_total - amount_paid, 2) AS balance')]);
+
+        $jev = $bills->isEmpty() ? null : app(\App\Services\Accounts\JevDecisions::class)->askEach('remittance', (int) $thread->agent_id,
+            'email_thread', (int) $thread->id, [
+                'from' => (string) $inbound->from, 'subject' => (string) $inbound->subject,
+                'body' => mb_substr((string) $inbound->body_snippet, 0, 2000),
+            ], $bills->mapWithKeys(fn ($b) => [$b->id => sprintf('%s dated %s, %s %s outstanding.', $b->invoice_no,
+                $b->document_date, $b->currency ?: 'INR', number_format((float) $b->balance, 2))])->all(), 'paid');
+
+        return [
+            'clients' => $clients,
+            'bills' => $bills,
+            'jev' => $jev === null ? null : $jev + [
+                'bill_ids' => $jev['suggested'] ? array_map('intval', explode(',', (string) $jev['answer'])) : [],
+            ],
+        ];
     }
 
     /**

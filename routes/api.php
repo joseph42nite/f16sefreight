@@ -377,6 +377,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'store']);
     // Which section a vendor is deducted under, and any s.197 certificate rate — accounts/boss only (user, 2026-09-25).
     Route::post('/partners/{partner}/tds', [\App\Http\Controllers\Freight\PartnerController::class, 'updateTds']);
+    Route::post('/partners/{partner}/tds-suggestion', [\App\Http\Controllers\Freight\PartnerController::class, 'suggestTds']);
     // Partners a sibling branch already has — name and address only, never their GSTIN.
     Route::get('/partners/siblings', [\App\Http\Controllers\Freight\PartnerController::class, 'siblings']);
     Route::get('/partner-types', [\App\Http\Controllers\Freight\PartnerController::class, 'types']);
@@ -533,6 +534,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         // The TDS rate table — editable defaults, not law (user, 2026-09-25).
         Route::post('/finance-settings/tds-rates', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'saveTdsRate']);
         Route::post('/finance-settings/exchange-rates/fetch', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'fetchExchangeRates']);
+        Route::post('/finance-settings/jev', [\App\Http\Controllers\Freight\FinanceSettingsController::class, 'setJevSwitch']);
 
         // ── The bank accounts master (user, 2026-09-21). Each posts to its own ledger code.
         Route::get('/bank-accounts', [\App\Http\Controllers\Freight\BankAccountController::class, 'index']);
@@ -610,6 +612,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::get('/vendor-statements/{id}', [\App\Http\Controllers\Freight\VendorStatementController::class, 'show'])->whereNumber('id');
         Route::post('/vendor-statements/{id}/compare', [\App\Http\Controllers\Freight\VendorStatementController::class, 'recompare'])->whereNumber('id');
         Route::post('/vendor-statements/{id}/lines/{lineId}/dispute', [\App\Http\Controllers\Freight\VendorStatementController::class, 'dispute'])->whereNumber('id');
+        Route::post('/vendor-statements/{id}/lines/{lineId}/link', [\App\Http\Controllers\Freight\VendorStatementController::class, 'linkLine'])->whereNumber('id')->whereNumber('lineId');
         Route::post('/vendor-statements/{id}/draft-query', [\App\Http\Controllers\Freight\VendorStatementController::class, 'draftQuery'])->whereNumber('id');
 
         Route::get('/reconciliation', [\App\Http\Controllers\Freight\ReconciliationController::class, 'index']);

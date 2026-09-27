@@ -33,6 +33,7 @@ class ReconciliationController extends Controller
         private readonly AuditLogger $audit,
         private readonly \App\Services\TdsService $tds,
         private readonly \App\Services\ExchangeRateService $fx,
+        private readonly \App\Services\Accounts\JevDecisions $jev,
     ) {}
 
     /** The left pane: bank rows still waiting. */
@@ -95,6 +96,21 @@ class ReconciliationController extends Controller
             }
         }
 
+        // ② What money that fits no bill probably is (GAPS #413) — so a client is not asked about bank interest or a
+        // supplier's refund. The newest 20 only: each is asked once and costs a tenth of a credit the first time.
+        $asked = 0;
+        foreach ($differences as $i => $d) {
+            if ($d['kind'] !== 'unidentified' || $asked++ >= 20) {
+                continue;
+            }
+
+            $row = $rows->firstWhere('id', $d['transaction_id']);
+            $differences[$i]['jev'] = $this->jev->ask('unidentified', (int) $row->agent_id, 'bank_transaction', (int) $row->id, [
+                'amount_received_inr' => number_format((float) $row->amount, 2), 'date' => (string) $row->value_date,
+                'payer' => (string) $row->counterparty, 'narration' => (string) $row->narration, 'reference' => (string) $row->reference,
+            ], config('accounts_decisions.questions.unidentified.criteria'));
+        }
+
         return response()->json(['differences' => $differences, 'total' => count($differences)]);
     }
 
@@ -104,6 +120,11 @@ class ReconciliationController extends Controller
         $this->authorize('viewFinancials');
 
         $data = $request->validate(['kind' => 'required|in:short,over,unidentified']);
+
+        // Asking the client is treating it as a client's payment: that is the outcome of Jev's reading, if it made one.
+        if ($data['kind'] === 'unidentified') {
+            $this->recordUnidentified($transaction, 'client_payment');
+        }
         $invoice = $transaction->matchedInvoice;
         $customer = $invoice?->customer_id ? \App\Customer::withoutTenantScope()->find($invoice->customer_id) : null;
 
@@ -167,6 +188,17 @@ class ReconciliationController extends Controller
         return response()->json($importer->import((int) $data['agent_id'], $lines, 'manual', $account?->id));
     }
 
+    /** The outcome of Jev's "what is this money?" for a line, if it was asked. */
+    private function recordUnidentified(BankTransaction $transaction, string $chosen): void
+    {
+        $decision = $this->jev->existing('bank_transaction', (int) $transaction->id, 'unidentified');
+
+        if ($decision !== null) {
+            $this->jev->record($decision['id'], (int) DB::table('agents_info')->where('id', $transaction->agent_id)->value('company_id'),
+                $chosen, (int) auth()->id());
+        }
+    }
+
     /** One row of the comparison, in the shape both the list and the drafter read. */
     private function difference(string $kind, BankTransaction $row, ?\App\AccountsInvoice $invoice, float $received, float $difference): array
     {
@@ -189,13 +221,79 @@ class ReconciliationController extends Controller
     {
         $this->authorize('viewFinancials');
 
+        $candidates = $this->matcher->candidates($transaction);
+
         return response()->json([
             'transaction' => $transaction->only(['id', 'amount', 'reconciliation_status', 'plaid_transaction_id']),
-            'candidates'  => $this->matcher->candidates($transaction),
+            'candidates'  => $candidates,
+            // Jev's reading of the payer and narration (GAPS #412): a pre-selection, confirmed with Settle as before.
+            'jev'         => $this->jevSuggests($transaction, $candidates),
             // The UI must state WHY suggestions are thin rather than look broken.
-            'limitation'  => 'The bank feed carries no memo or counterparty, so amount is '
-                           . 'the only signal available. Identical amounts cannot be separated.',
+            'limitation'  => 'Candidates are the open bills whose balance fits the amount. '
+                           . 'Identical amounts are separated only by who paid and what the bank wrote.',
         ]);
+    }
+
+    /**
+     * ① Which bill this money is for, and ③ if that bill is short, why (§11.7). Jev chooses among the bills the
+     * matcher already found by amount — it cannot add one — and the reason only pre-selects the resolution; "can't
+     * tell" and "disputed" leave it STILL OWED, because a guess is never a write-off.
+     *
+     * @return array{bill: ?array, short: ?array}
+     */
+    private function jevSuggests(BankTransaction $transaction, array $candidates): array
+    {
+        $shortlist = array_slice($candidates, 0, (int) config('accounts_decisions.max_options'));
+        $bills = [];
+
+        foreach ($shortlist as $c) {
+            $i = $c['invoice'];
+            $bills['bill_' . $i['id']] = sprintf('Bill %s to %s, dated %s — %s %s outstanding.', $i['invoice_no'],
+                $i['customer'] ?? 'no client named', $i['document_date'] ?? 'undated', $i['currency'], number_format((float) $i['balance'], 2));
+        }
+
+        if ($bills === []) {
+            return ['bill' => null, 'short' => null];
+        }
+
+        $state = [
+            'amount_received_inr' => number_format((float) $transaction->amount, 2),
+            'date' => (string) $transaction->value_date,
+            'payer' => (string) $transaction->counterparty,
+            'narration' => (string) $transaction->narration,
+            'reference' => (string) $transaction->reference,
+        ];
+
+        $bill = $this->jev->ask('bank_match', (int) $transaction->agent_id, 'bank_transaction', (int) $transaction->id,
+            $state, $bills + ['none_of_these' => config('accounts_decisions.questions.bank_match.none')]);
+
+        $picked = $bill && $bill['suggested'] ? collect($shortlist)->firstWhere('invoice.id', (int) substr($bill['answer'], 5)) : null;
+        $short = null;
+
+        if ($picked !== null && (float) $picked['variance'] < 0) {
+            $i = $picked['invoice'];
+            $rate = (float) ($i['exchange_rate'] ?: 1);
+            $pretax = round((float) $i['subtotal'] * $rate, 2);
+            $shortBy = abs((float) $picked['variance']);
+
+            $reason = $this->jev->ask('short_payment', (int) $transaction->agent_id, 'bank_transaction', (int) $transaction->id,
+                $state + [
+                    'bill' => $i['invoice_no'],
+                    'bill_value_before_tax_inr' => number_format($pretax, 2),
+                    'short_by_inr' => number_format($shortBy, 2),
+                    // Computed here, never by the model: the one fact that most separates TDS from everything else.
+                    'short_by_share_of_bill_before_tax' => $pretax > 0 ? number_format($shortBy / $pretax * 100, 2) . '%' : 'unknown',
+                ], config('accounts_decisions.questions.short_payment.criteria'));
+
+            $short = $reason === null ? null : $reason + [
+                'resolution' => $reason['suggested'] ? (config('accounts_decisions.questions.short_payment.resolution')[$reason['answer']] ?? null) : null,
+            ];
+        }
+
+        return [
+            'bill' => $bill === null ? null : $bill + ['invoice_id' => $picked['invoice']['id'] ?? null],
+            'short' => $short,
+        ];
     }
 
     /**
@@ -214,6 +312,9 @@ class ReconciliationController extends Controller
         $data = $request->validate([
             'invoice_id' => 'required|integer',
             'resolution' => 'nullable|string|in:' . implode(',', BankReconciliationService::RESOLUTIONS),
+            // Jev's decisions shown with the candidates, so what the person chose is recorded against them (§11.7).
+            'bill_decision_id' => 'nullable|integer',
+            'short_decision_id' => 'nullable|integer',
         ]);
 
         if ($this->matcher->isSettled($transaction)) {
@@ -363,6 +464,21 @@ class ReconciliationController extends Controller
                 'error'  => 'Another user reconciled this transaction first.',
                 'reason' => 'already_reconciled',
             ], 409);
+        }
+
+        // What the person did with Jev's suggestions — the measure of whether they are any good (§11.7).
+        $companyId = (int) DB::table('agents_info')->where('id', $transaction->agent_id)->value('company_id');
+        // Money it could not place, now placed against a client's bill: it was a client's payment.
+        $this->recordUnidentified($transaction, 'client_payment');
+        $this->jev->record($data['bill_decision_id'] ?? null, $companyId, 'bill_' . $invoice->id, (int) auth()->id());
+
+        if (! empty($data['short_decision_id'])) {
+            // Taken if the resolution chosen is the one its answer pre-selected ("still owed" for disputed / can't tell).
+            $answer = DB::table('ai_decisions')->where('id', $data['short_decision_id'])->value('answer');
+            $chosen = $shortfall > 0 && $adjustmentAccount !== null ? $resolution : null;
+            $expected = config('accounts_decisions.questions.short_payment.resolution')[$answer] ?? null;
+            $this->jev->record((int) $data['short_decision_id'], $companyId,
+                $expected === $chosen ? $answer : 'resolution:' . ($chosen ?? 'still_owed'), (int) auth()->id());
         }
 
         return response()->json([

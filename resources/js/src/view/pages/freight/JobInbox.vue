@@ -213,6 +213,24 @@
           <dd><Figure :value="active.first_response_at" kind="dateTime" /></dd>
         </dl>
 
+        <!--
+          ④ A client's payment mail (GAPS #416): which of their open bills it says are being paid, for accounts and the
+          Boss. It only pre-ticks the receipt form — the money that arrived is entered and saved by a person.
+        -->
+        <section v-if="remittance && remittance.bills.length" class="fx-section">
+          <h3 class="fx-section__title">Their open bills</h3>
+          <p v-if="remittance.jev && remittance.jev.suggested" class="fx-muted">
+            Jev reads this mail as paying {{ remittanceBillNos }} ({{ Math.round(remittance.jev.confidence * 100) }}% sure).
+          </p>
+          <p v-else-if="remittance.jev" class="fx-muted">Jev could not tell which bills this mail pays.</p>
+          <ul class="fx-muted">
+            <li v-for="b in remittance.bills" :key="'rb-' + b.id">
+              <span class="identifier">{{ b.invoice_no }}</span> · {{ b.currency || "INR" }} {{ b.balance }} outstanding
+            </li>
+          </ul>
+          <router-link class="fx-btn" :to="remittanceLink">Record the receipt</router-link>
+        </section>
+
         <ol ref="messages" class="fx-messages">
           <!--
             A suggested mail that was skipped (or replaced by a later moment) stays in the conversation, in its place
@@ -807,6 +825,8 @@ export default {
     composing: false, sending: false, sendError: null, sentOk: false,
     /** Suggested client mails that were skipped or replaced — kept in the conversation. */
     notSent: [],
+    /** ④ The payment mail's reading, when this is one (GAPS #416). */
+    remittance: null,
     /** Who the open conversation can be handed to — its own branch's pricing staff. */
     assignees: [],
     cargoBusy: false, cargoError: null, cargoSaved: false,
@@ -825,6 +845,23 @@ export default {
     CLASSIFICATIONS, WORKSPACE_TABS, CANCELLATION_REASONS,
   }),
   computed: {
+    remittanceBillNos() {
+      const ids = (this.remittance && this.remittance.jev && this.remittance.jev.bill_ids) || [];
+      return this.remittance.bills.filter((b) => ids.includes(b.id)).map((b) => b.invoice_no).join(", ");
+    },
+    /** Money in's receipt form, opened on this client with Jev's bills pre-ticked. */
+    remittanceLink() {
+      const r = this.remittance;
+      const jev = r.jev || {};
+      const bills = jev.bill_ids || [];
+      const clientId = bills.length ? r.bills.find((b) => b.id === bills[0]).customer_id : r.clients[0].id;
+      return { path: "/money-in", query: {
+        stage: "money_in",
+        receipt_for: String(clientId),
+        ...(bills.length ? { bills: bills.join(",") } : {}),
+        ...(jev.id ? { remittance: String(jev.id) } : {}),
+      } };
+    },
     ...mapGetters(["designation", "currentUser", "tierAtLeast"]),
     /* Only pricing owns triage — re-classification mints or strands an enquiry. */
     canTriage() {
@@ -1583,6 +1620,7 @@ export default {
           this.pending = data.thread.classification;
           this.messages = data.messages || [];
           this.notSent = data.not_sent || [];
+          this.remittance = data.remittance || null;
           this.loadAssignees(data.thread.id);
           this.signature = data.signature || null;
           /* The cost sheet hangs off the JOB, not the thread, and extraction wants the

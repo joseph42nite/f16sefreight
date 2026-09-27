@@ -85,6 +85,9 @@ const TONE = {
   no_cost_booked: "warning",
   not_billed: "info",
 
+  // Jev's pick (GAPS #412). Info, not success: a suggestion is something to check, never something done.
+  suggested: "info",
+
   promise_broken: "critical",
   not_chased: "warning",
   open: "info",

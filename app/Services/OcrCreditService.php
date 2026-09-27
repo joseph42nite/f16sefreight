@@ -74,6 +74,15 @@ class OcrCreditService
     public const MAIL_COST = 0.2;
 
     /**
+     * One accounts decision by Jev (GAPS #412) — a bank line, a short payment, a statement line.
+     *
+     * 🔴 Derived the same way as MAIL_COST: the state is a bank line or a partner (~150 tokens) plus one question's
+     * rubric and up to five options (~500), so ~650 input tokens, about half a mail — US$0.000027, near ₹0.0025, a
+     * tenth of a document. Measure again when `config/accounts_decisions.php` changes.
+     */
+    public const DECISION_COST = 0.1;
+
+    /**
      * Reserve credits for reading one document, atomically.
      *
      * @return int|null the consumption transaction id, or NULL when the balance is
@@ -103,6 +112,12 @@ class OcrCreditService
     public function chargeMail(Company $company, int $emailMessageId): ?int
     {
         return $this->consume($company, self::MAIL_COST, ['email_message_id' => $emailMessageId], 'Inbound mail filed by AI');
+    }
+
+    /** One accounts decision, reserved before the call like a mail. NULL: the tenant cannot afford it — ask nothing. */
+    public function chargeDecision(Company $company, int $aiDecisionId): ?int
+    {
+        return $this->consume($company, self::DECISION_COST, ['ai_decision_id' => $aiDecisionId], 'Accounts decision by AI');
     }
 
     /**
@@ -174,12 +189,15 @@ class OcrCreditService
                     'job_id'                  => $consumption->job_id,
                     'pdf_processing_job_id'   => $consumption->pdf_processing_job_id,
                     'email_message_id'        => $consumption->email_message_id,
+                    'ai_decision_id'          => $consumption->ai_decision_id,
                     'amount'                  => abs((float) $consumption->amount),
                     'transaction_type'        => 'refund',
                     'reverses_transaction_id' => $consumption->id,
-                    'notes'                   => $consumption->email_message_id
-                        ? 'Mail filing call failed after reservation'
-                        : 'Vision call failed after reservation',
+                    'notes'                   => match (true) {
+                        $consumption->email_message_id !== null => 'Mail filing call failed after reservation',
+                        $consumption->ai_decision_id !== null => 'Accounts decision call failed after reservation',
+                        default => 'Vision call failed after reservation',
+                    },
                     'created_at'              => now(),
                 ]);
 

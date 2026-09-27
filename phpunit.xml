@@ -53,6 +53,7 @@
             A test that wants the model turns it on and fakes the HTTP itself; see EnquiryPatternsTest.
         -->
         <server name="MAIL_INTENT_AI" value="false"/>
+        <server name="ACCOUNTS_AI" value="false"/>
         <server name="OPENROUTER_FREE_FROM_HOUR" value="24"/>
         <server name="OPENROUTER_FREE_UNTIL_HOUR" value="0"/>
         <server name="DB_USERNAME" value="f16s"/>

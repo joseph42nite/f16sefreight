@@ -739,7 +739,7 @@
                 <td class="identifier">{{ d.invoice_no }}</td>
                 <td><Figure :value="d.document_date" kind="date" /></td>
                 <td><Figure v-if="d.due_date" :value="d.due_date" kind="date" /><span v-else class="fx-muted">—</span></td>
-                <td class="fx-num"><Figure :value="d.outstanding" kind="currency" currency-code="INR" /></td>
+                <td class="fx-num"><Figure :value="d.outstanding" kind="currency" :currency-code="d.currency || 'INR'" /></td>
                 <td><input v-model.number="allocation[d.id]" type="number" step="0.01" min="0" class="fx-input fx-num" /></td>
                 <td>
                   <!-- 🔴 A client who deducted TDS paid correctly and in full: tax already paid on our own
@@ -863,6 +863,8 @@ export default {
     stageFilter: { type: Object, default: null },
   },
   data: () => ({
+    /** ④ The payment mail's reading this receipt was opened from (GAPS #416). */
+    remittanceDecisionId: null,
     view: "all", VIEWS, STATUSES, DOC_TABS,
     rows: [], totals: { count: 0, amount_inr: 0, outstanding_inr: 0, credited_inr: 0 },
     branches: [], types: {}, currencies: [], raisedBy: [],
@@ -954,6 +956,8 @@ export default {
 
     // Arrived from the journal's drill-through: open that document straight away.
     if (this.$route.query.open) this.openById(Number(this.$route.query.open));
+    // Arrived from a client's payment mail (GAPS #416): the receipt form on that client, Jev's bills pre-ticked.
+    if (this.$route.query.receipt_for) this.receiptFromMail();
   },
   watch: {
     // The pipeline changed stage: swap the register under it without remounting the drawer state.
@@ -1249,11 +1253,27 @@ export default {
     loadOpenDocuments() {
       this.openDocuments = [];
       this.allocation = {};
-      if (!this.receipt.payer_id) return;
+      if (!this.receipt.payer_id) return Promise.resolve();
 
-      ApiService.get(`/receipts/open-documents?customer_id=${this.receipt.payer_id}`)
+      return ApiService.get(`/receipts/open-documents?customer_id=${this.receipt.payer_id}`)
         .then(({ data }) => { this.openDocuments = data.rows || []; })
         .catch((e) => { this.actionError = this.messageFor(e); });
+    },
+    /**
+     * The form opened from a payment mail. Bills Jev read as paid are pre-filled at their balance — rupee bills
+     * only: a foreign bill's rupees are whatever arrived, which only the person knows. Nothing is saved here.
+     */
+    receiptFromMail() {
+      const q = this.$route.query;
+      const bills = String(q.bills || "").split(",").map(Number).filter(Boolean);
+      this.openReceipt();
+      this.receipt.payer_id = Number(q.receipt_for);
+      this.remittanceDecisionId = q.remittance ? Number(q.remittance) : null;
+      this.loadOpenDocuments().then(() => {
+        this.openDocuments.filter((d) => bills.includes(d.id) && (d.currency || "INR") === "INR")
+          .forEach((d) => { this.$set(this.allocation, d.id, Number(d.outstanding)); });
+        this.receipt.amount = Object.values(this.allocation).reduce((s, v) => s + Number(v || 0), 0);
+      });
     },
     saveReceipt() {
       const allocations = this.openDocuments
@@ -1263,7 +1283,8 @@ export default {
 
       this.busy = true;
       this.actionError = null;
-      ApiService.post("/receipts", { ...this.receipt, allocations })
+      ApiService.post("/receipts", { ...this.receipt, allocations,
+        ...(this.remittanceDecisionId ? { remittance_decision_id: this.remittanceDecisionId } : {}) })
         .then(() => { this.receipt = null; this.showView("receipts"); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });

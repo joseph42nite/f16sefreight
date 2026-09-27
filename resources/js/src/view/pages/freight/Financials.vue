@@ -175,7 +175,21 @@
                 <Figure v-if="l.difference !== null" :value="l.difference" kind="currency" currency-code="INR" />
                 <span v-else class="fx-muted">—</span>
               </td>
-              <td>{{ vendorStates[l.state] || l.state }}</td>
+              <td>
+                {{ vendorStates[l.state] || l.state }}
+                <!--
+                  ⑤ A line whose reference names no shipment (GAPS #414): which of this supplier's vouchers it is. Jev's
+                  pick is pre-selected when it is sure; a person presses "This is it" — nothing links on its own.
+                -->
+                <div v-if="canPost && l.state === 'unmatched' && l.jev_options && Object.keys(l.jev_options).length" class="fx-toolbar">
+                  <select v-model="lineLinks[l.id]" class="fx-input" :aria-label="'Voucher for ' + (l.reference || 'this line')">
+                    <option value="">Which voucher is it?</option>
+                    <option v-for="(text, key) in l.jev_options" :key="key" :value="key">{{ text }}</option>
+                  </select>
+                  <button class="fx-btn" :disabled="busy || !lineLinks[l.id]" @click="linkLine(l)">This is it</button>
+                  <span v-if="l.jev && l.jev.suggested" class="fx-muted">Jev's pick ({{ Math.round(l.jev.confidence * 100) }}% sure)</span>
+                </div>
+              </td>
               <td v-if="canPost">
                 <input
                   class="fx-input"
@@ -369,6 +383,8 @@
                 <span v-if="d.kind === 'short'">Paid short</span>
                 <span v-else-if="d.kind === 'over'">Paid more than billed</span>
                 <span v-else>Cannot be placed</span>
+                <!-- ② Jev's reading of money that fits no bill (GAPS #413): a hint before anyone mails a client. -->
+                <div v-if="d.jev && d.jev.suggested" class="fx-muted">Jev: probably {{ UNMATCHED_READS[d.jev.answer] }}</div>
               </td>
               <td class="identifier">{{ d.invoice_no || "—" }}</td>
               <td class="fx-num"><Figure v-if="d.billed" :value="d.billed" kind="currency" currency-code="INR" /><span v-else>—</span></td>
@@ -376,7 +392,9 @@
               <td class="fx-num"><Figure :value="d.difference" kind="currency" currency-code="INR" /></td>
               <td class="fx-muted">{{ d.narration || d.reference || "—" }}</td>
               <td v-if="canPost" class="fx-row-actions">
-                <button class="fx-btn" :disabled="busy" @click="draftQuery(d)">Ask the client</button>
+                <button class="fx-btn" :disabled="busy" @click="draftQuery(d)">
+                  {{ d.jev && d.jev.suggested && d.jev.answer !== 'client_payment' ? "Ask the client anyway" : "Ask the client" }}
+                </button>
               </td>
             </tr>
           </tbody>
@@ -416,6 +434,15 @@
           What this {{ money(bankRow.amount) }} could settle
         </h3>
         <p class="fx-muted">{{ candidateNote }}</p>
+        <!--
+          Jev's reading of the payer and the narration (GAPS #412): a pre-selection among the bills the amount already
+          found — it cannot add one — confirmed with Settle exactly as before. Silent when it is not sure.
+        -->
+        <p v-if="jev.bill && jev.bill.suggested" class="fx-muted">
+          <strong>Jev suggests {{ jevBillNo }}</strong> from who paid and what the bank wrote
+          ({{ Math.round(jev.bill.confidence * 100) }}% sure). Check it before settling.
+        </p>
+        <p v-else-if="jev.bill" class="fx-muted">Jev could not tell which bill this is.</p>
         <p v-if="!candidates.length" class="fx-muted">No open invoice matches this amount.</p>
         <table v-else class="fx-table">
           <thead>
@@ -429,10 +456,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="c in candidates" :key="'c-' + c.invoice.id">
-              <td class="identifier">{{ c.invoice.invoice_no }}</td>
-              <td>{{ c.invoice.customer ? c.invoice.customer.name : "—" }}</td>
-              <td class="fx-num"><Figure :value="c.invoice.outstanding" kind="currency" currency-code="INR" /></td>
+            <tr v-for="c in orderedCandidates" :key="'c-' + c.invoice.id" :class="{ 'is-selected': isJevPick(c) }">
+              <td class="identifier">
+                {{ c.invoice.invoice_no }}
+                <StatusChip v-if="isJevPick(c)" value="suggested" />
+              </td>
+              <td>{{ c.invoice.customer || "—" }}</td>
+              <td class="fx-num"><Figure :value="c.invoice.balance" kind="currency" :currency-code="c.invoice.currency || 'INR'" /></td>
               <td><StatusChip :value="c.confidence" /></td>
               <td>{{ c.reason }}</td>
               <td v-if="canPost" class="fx-row-actions">
@@ -449,6 +479,10 @@
                   <option value="write_off">Write the difference off</option>
                   <option value="discount">Treat it as a discount</option>
                 </select>
+                <!-- ③ Why it is short, pre-selected above; "can't tell" and "disputed" leave it still owed. -->
+                <div v-if="c.variance < 0 && isJevPick(c) && jev.short && jev.short.suggested" class="fx-muted">
+                  Jev: {{ SHORT_REASONS[jev.short.answer] }} ({{ Math.round(jev.short.confidence * 100) }}% sure)
+                </div>
                 <button class="fx-btn fx-btn--primary" :disabled="busy" @click="matchTo(c)">Settle</button>
               </td>
             </tr>
@@ -1009,6 +1043,24 @@ const REPORTS = [
   { key: "balance-sheet", label: "Balance sheet" },
   { key: "trial-balance", label: "Trial balance" },
 ];
+/** Jev's reasons for a short payment, as the desk reads them (config/accounts_decisions.php). */
+const SHORT_REASONS = {
+  client_deducted_tds: "the client deducted TDS",
+  bank_charges: "a bank took its charges",
+  agreed_discount: "a discount the client says was agreed",
+  disputed: "the client is disputing part of it — left as still owed",
+  cannot_tell: "can't tell",
+};
+
+/** Jev's reading of money that fits no bill (config/accounts_decisions.php). */
+const UNMATCHED_READS = {
+  client_payment: "a client paying — for a bill not raised yet, an advance, or several bills",
+  refund_to_us: "a refund to us from a supplier, airline or authority",
+  bank_interest: "interest from our own bank",
+  bank_reversal: "our bank reversing a charge or a failed transfer",
+  capital_or_loan: "money from the owners, a group company or a lender",
+};
+
 const TABS = [
   { key: "credit", label: "Credit standing" },
   { key: "journal", label: "Journal" },
@@ -1027,11 +1079,15 @@ export default {
     /** The totals row of whichever register is open. */
     totals: null,
     /** Reports: which one, over which period, and what came back. */
-    REPORTS, report: "profit-and-loss", periodId: null, periods: [], reportData: null, reportLoading: false,
+    REPORTS, SHORT_REASONS, UNMATCHED_READS, report: "profit-and-loss", periodId: null, periods: [], reportData: null, reportLoading: false,
     /** A period being opened. */
     newPeriod: { agent_id: null, period_name: "", start_date: "", end_date: "" },
     /** Bank reconciliation: the row being settled, what it could settle, and how a short payment is treated. */
     bankRow: null, candidates: [], candidateNote: "", resolution: "",
+    /** Jev's suggestions for the open bank line (GAPS #412). */
+    jev: { bill: null, short: null },
+    /** The voucher chosen for each unmatched statement line — Jev's pick pre-filled (GAPS #414). */
+    lineLinks: {},
     /** Statement import, the credited-vs-billed list, and the query mail being written. */
     importing: false, csv: "", importResult: null, differences: [], queryDraft: null,
     /** Supplier statements: the list, the one open, and the import being typed (user, 2026-09-19). */
@@ -1049,6 +1105,14 @@ export default {
     VOUCHER_TABS: [{ key: "journal", label: "Journal" }],
   }),
   computed: {
+    /** Jev's pick first, the rest as the matcher ordered them. */
+    orderedCandidates() {
+      return [...this.candidates].sort((a, b) => (this.isJevPick(b) ? 1 : 0) - (this.isJevPick(a) ? 1 : 0));
+    },
+    jevBillNo() {
+      const pick = this.candidates.find((c) => this.isJevPick(c));
+      return pick ? pick.invoice.invoice_no : "";
+    },
     ...mapGetters(["designation"]),
     /* Only accounts commits. The Boss reads the register and the journal, and that
        asymmetry is the segregation of duties, not a UI convenience. */
@@ -1177,14 +1241,25 @@ export default {
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
+    isJevPick(c) {
+      return !!(this.jev.bill && this.jev.bill.suggested && this.jev.bill.invoice_id === c.invoice.id);
+    },
     findCandidates(row) {
       this.bankRow = row;
       this.candidates = [];
       this.actionError = null;
       this.resolution = "";
 
+      this.jev = { bill: null, short: null };
+
       ApiService.get(`/reconciliation/${row.id}/candidates`)
-        .then(({ data }) => { this.candidates = data.candidates || []; this.candidateNote = data.limitation || ""; })
+        .then(({ data }) => {
+          this.candidates = data.candidates || [];
+          this.candidateNote = data.limitation || "";
+          this.jev = data.jev || { bill: null, short: null };
+          // Pre-selected, never applied: the person still chooses and presses Settle.
+          if (this.jev.short && this.jev.short.suggested && this.jev.short.resolution) this.resolution = this.jev.short.resolution;
+        })
         .catch((e) => { this.actionError = this.messageFor(e); });
     },
     matchTo(candidate) {
@@ -1194,6 +1269,9 @@ export default {
       ApiService.post(`/reconciliation/${this.bankRow.id}/match`, {
         invoice_id: candidate.invoice.id,
         ...(this.resolution ? { resolution: this.resolution } : {}),
+        // So what was chosen is recorded against what Jev suggested.
+        ...(this.jev.bill ? { bill_decision_id: this.jev.bill.id } : {}),
+        ...(this.jev.short && candidate.variance < 0 ? { short_decision_id: this.jev.short.id } : {}),
       })
         .then(() => { this.bankRow = null; this.candidates = []; this.load(); })
         .catch((e) => { this.actionError = this.messageFor(e); })
@@ -1276,6 +1354,17 @@ export default {
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
+    linkLine(line) {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/vendor-statements/${this.vendorStatement.id}/lines/${line.id}/link`, {
+        voucher_id: Number(String(this.lineLinks[line.id]).replace("voucher_", "")),
+        ...(line.jev ? { decision_id: line.jev.id } : {}),
+      })
+        .then(({ data }) => { this.showStatement(data); this.loadVendorStatements(); })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
     dispute(line, note) {
       ApiService.post(`/vendor-statements/${this.vendorStatement.id}/lines/${line.id}/dispute`, { dispute_note: note })
         .then(({ data }) => this.showStatement(data))
@@ -1296,6 +1385,9 @@ export default {
       this.vendorLines = data.lines || [];
       this.vendorTotals = data.totals || { theirs: 0, ours: 0, difference: 0 };
       this.vendorStates = data.states || this.vendorStates;
+      // Jev's pick pre-filled where it is sure; the person still presses "This is it".
+      this.lineLinks = Object.fromEntries(this.vendorLines.map((l) => [l.id,
+        l.jev && l.jev.suggested ? l.jev.answer : ""]));
     },
     /** The TDS register: both directions, one quarter. With no year/quarter chosen yet, the server picks today's. */
     loadTds() {

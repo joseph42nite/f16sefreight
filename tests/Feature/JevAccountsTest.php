@@ -216,6 +216,19 @@ class JevAccountsTest extends TestCase
         $this->assertSame(['changed', 'client_payment'], [$this->decision('unidentified')->outcome, $this->decision('unidentified')->outcome_value]);
     }
 
+    /** Money that fits an open bill is bank matching's question — never asked "what is this?", never billed twice. */
+    public function test_a_line_that_fits_a_bill_is_not_read_as_unmatched_money(): void
+    {
+        $this->reply = ['unidentified' => ['client_payment', 0.9]];
+        $line = $this->bankLine(50000);   // fits INV-A and INV-B
+
+        $row = collect($this->as($this->accounts)->getJson($this->url('/reconciliation/differences'))->json('differences'))
+            ->firstWhere('transaction_id', $line);
+
+        $this->assertArrayNotHasKey('jev', $row);
+        Http::assertNothingSent();
+    }
+
     // ─── ④ A remittance advice ───────────────────────────────────────────────
 
     public function test_a_payment_mail_is_read_for_which_bills_it_pays_and_the_receipt_is_the_persons(): void
@@ -232,10 +245,15 @@ class JevAccountsTest extends TestCase
             'body_snippet' => 'We have transferred INR 50,000 today against your invoice INV-A.', 'received_at' => now(),
             'created_at' => now(), 'updated_at' => now()]);
         $this->reply = ["item_{$this->billA}" => ['paid', 0.9]];
+        $globex = DB::table('accounts_invoices')->where('id', $this->billA)->value('customer_id');
+        DB::table('accounts_invoices')->insert(['agent_id' => $this->branch->id, 'customer_id' => $globex, 'parent_invoice_id' => $this->billA,
+            'billed_party_type' => 'customer', 'billed_party_id' => $globex, 'invoice_no' => 'CN-A', 'type' => 'credit_note',
+            'document_date' => now()->toDateString(), 'status' => 'sent', 'currency' => 'INR', 'exchange_rate' => 1,
+            'subtotal' => 5000, 'tax_amount' => 0, 'grand_total' => 5000, 'created_at' => now(), 'updated_at' => now()]);
 
         $remittance = $this->as($this->accounts)->getJson($this->url("/inbox/threads/{$thread}"))->assertOk()->json('remittance');
 
-        // Only Globex's bills — the sender's domain — and Jev read INV-A as the one being paid.
+        // Only Globex's bills — the sender's domain — and never a credit note, which is money WE owe them.
         $this->assertSame([$this->billA], collect($remittance['bills'])->pluck('id')->all());
         $this->assertSame([$this->billA], $remittance['jev']['bill_ids']);
 

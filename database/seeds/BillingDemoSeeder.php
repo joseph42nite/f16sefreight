@@ -99,6 +99,9 @@ class BillingDemoSeeder extends Seeder
             $made['postings'] += $this->openingBalance($branch);
         }
 
+        // Something for Jev to read on every screen it suggests on (GAPS #417) — Mumbai, where the bank lines are.
+        $this->jevCases($branches[0], $company->id);
+
         $this->creditLimits($branches);
 
         // One invoice through the IRP and the rest waiting, so the e-invoice register shows both states.
@@ -220,6 +223,13 @@ class BillingDemoSeeder extends Seeder
             // invoices and doubles their rows — harmless only for as long as nothing ever wrote one.
             DB::table('gst_ledger_entries')->whereIn('agent_id', $branches)->delete();
             DB::table('unposted_transactions_queue')->whereIn('agent_id', $branches)->delete();
+
+            // jevCases(): its own bank line, the payment mail, and every decision Jev made about the demo — the
+            // subjects are rebuilt, so the answers about them are too.
+            DB::table('bank_transactions')->whereIn('agent_id', $branches)->where('plaid_transaction_id', 'like', 'demo_jev_%')->delete();
+            DB::table('email_messages')->where('thread_key', 'like', 'demo-remit-%')->delete();
+            DB::table('email_threads')->where('thread_key', 'like', 'demo-remit-%')->delete();
+            DB::table('ai_decisions')->whereIn('agent_id', $branches)->delete();
         } finally {
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
         }
@@ -692,6 +702,77 @@ class BillingDemoSeeder extends Seeder
         }
 
         return $posted;
+    }
+
+    /**
+     * What Jev reads, on each screen it suggests on (implementation_guide §11.7; GAPS #417). The demo's bank lines
+     * carried an amount and nothing else — no payer, no narration — so there was nothing to tell two bills apart by,
+     * and there was no supplier statement and no payment mail at all: four of the six suggestions could not appear.
+     *
+     *   ① ③  the two waiting bank lines, as a statement import writes them: Contoso paying its bill, and paying it
+     *        ₹500 short "net of bank charges"
+     *   ②    a credit that fits no bill: our own bank's interest
+     *   ⑤    Emirates' statement: one line by air waybill (matched), one whose reference names nothing
+     *   ④    Northwind's payment advice, naming their newest bill, cc'd to accounts
+     *
+     * ⚠️ Everything here is what a bank, an airline or a client would really send — nothing is Jev's answer. Whether it
+     * reads them rightly is what the Settings → Finance counts are for.
+     */
+    private function jevCases(int $branch, int $companyId): void
+    {
+        $bill = DB::table('accounts_invoices as i')->join('customers as c', 'c.id', '=', 'i.customer_id')
+            ->where('i.agent_id', $branch)->whereIn('i.status', ['finalized', 'sent', 'partially_paid'])
+            ->whereRaw('i.grand_total - i.amount_paid = 212400')->first(['i.invoice_no', 'c.name']);
+
+        if ($bill !== null) {
+            $payer = strtoupper($bill->name) . ' PVT LTD';
+            foreach (["demo_txn_{$branch}_0" => ['NEFT', "NEFT-{$payer}-{$bill->invoice_no}"],
+                      "demo_txn_{$branch}_1" => ['RTGS', "RTGS {$payer} {$bill->invoice_no} NET OF BANK CHGS"]] as $id => [$mode, $narration]) {
+                DB::table('bank_transactions')->where('plaid_transaction_id', $id)->update([
+                    'value_date' => now()->subDays(2)->toDateString(), 'direction' => 'credit', 'counterparty' => $payer,
+                    'narration' => $narration, 'reference' => $mode . 'N' . substr(md5($id), 0, 10), 'updated_at' => now(),
+                ]);
+            }
+        }
+
+        DB::table('bank_transactions')->insert(['agent_id' => $branch, 'provider' => 'manual', 'plaid_transaction_id' => "demo_jev_interest_{$branch}",
+            'amount' => 3412.50, 'value_date' => now()->subDay()->toDateString(), 'direction' => 'credit', 'counterparty' => 'HDFC BANK LTD',
+            'narration' => 'INT.CREDIT FOR QTR ENDED ' . now()->format('d-m-Y'), 'reference' => 'INTCR' . now()->format('md'),
+            'reconciliation_status' => 'unreconciled', 'currency' => 'INR', 'created_at' => now(), 'updated_at' => now()]);
+
+        // ⑤ Two of Emirates' vouchers: one line names its air waybill, one names a booking reference we do not use.
+        $vouchers = DB::table('accounts_purchase_vouchers as v')->join('partners as p', 'p.id', '=', 'v.vendor_id')
+            ->join('jobs as j', 'j.id', '=', 'v.job_id')->where('v.agent_id', $branch)->where('p.partner_type', 'airline')
+            ->whereNotNull('j.awb_number')->orderBy('v.id')->limit(2)
+            ->get(['v.id', 'v.vendor_id', 'j.awb_number', DB::raw('(SELECT SUM(net_amount) FROM accounts_purchase_items WHERE purchase_voucher_id = v.id) AS gross')]);
+
+        if ($vouchers->count() === 2) {
+            [$byAwb, $byBooking] = [$vouchers[0], $vouchers[1]];
+            app(\App\Services\Bank\VendorStatements::class)->import($branch, (int) $byAwb->vendor_id, now()->format('F Y'), [
+                ['reference' => $byAwb->awb_number, 'description' => 'Air freight BOM-DXB', 'amount' => $byAwb->gross, 'charge_date' => now()->subDays(8)],
+                ['reference' => 'EK/BOM/' . now()->format('md') . '/' . substr($byBooking->awb_number, -4),
+                 'description' => 'AWB ' . $byBooking->awb_number . ' BOM-DXB, freight and fuel', 'amount' => $byBooking->gross, 'charge_date' => now()->subDays(6)],
+            ], ['statement_no' => 'DEMO-EK-' . now()->format('ym'), 'statement_date' => now()->toDateString()]);
+        }
+
+        // ④ Northwind tells us they have paid — naming their newest open bill — with accounts in copy.
+        $client = DB::table('customers')->where('company_id', $companyId)->where('email_domain', 'northwind.test')->first(['id', 'name']);
+        $newest = $client === null ? null : DB::table('accounts_invoices')->where('customer_id', $client->id)
+            ->whereIn('type', ['invoice', 'debit_note'])->whereIn('status', ['finalized', 'sent', 'partially_paid'])->orderByDesc('document_date')->first(['invoice_no', 'grand_total', 'amount_paid']);
+        $mailbox = DB::table('mailbox_connections')->where('agent_id', $branch)->orderBy('id')->first(['id', 'email_address']);
+
+        if ($newest !== null && $mailbox !== null) {
+            $key = "demo-remit-{$branch}";
+            DB::table('email_threads')->insert(['agent_id' => $branch, 'thread_key' => $key, 'classification' => 'payment_advice',
+                'status' => 'open', 'latest_message_received_at' => now()->subHours(3), 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('email_messages')->insert(['agent_id' => $branch, 'mailbox_connection_id' => $mailbox->id, 'thread_key' => $key,
+                'message_id' => "<{$key}@northwind.test>", 'direction' => 'inbound', 'from' => 'Northwind Payables <payables@northwind.test>',
+                'to' => $mailbox->email_address, 'cc' => 'demo-accounts@demo.test', 'subject' => 'Remittance advice — ' . $newest->invoice_no,
+                'body_snippet' => sprintf("Dear team,\n\nPlease note we have released INR %s today by NEFT towards your invoice %s. "
+                    . "Kindly acknowledge receipt.\n\nRegards,\nAccounts Payable, %s", number_format((float) $newest->grand_total - (float) $newest->amount_paid, 2),
+                    $newest->invoice_no, $client->name),
+                'received_at' => now()->subHours(3), 'created_at' => now(), 'updated_at' => now()]);
+        }
     }
 
     /** A due date and a narration on the invoices already there — the columns the register prints. */

@@ -105,6 +105,13 @@ class ReconciliationController extends Controller
             }
 
             $row = $rows->firstWhere('id', $d['transaction_id']);
+
+            // Only money that fits NO open bill: a line with a candidate is bank matching's question, not this one —
+            // asking here spent a credit on the demo's two Contoso lines, which fit INV-0001 (GAPS #417).
+            if ($this->matcher->candidates($row, 1) !== []) {
+                continue;
+            }
+
             $differences[$i]['jev'] = $this->jev->ask('unidentified', (int) $row->agent_id, 'bank_transaction', (int) $row->id, [
                 'amount_received_inr' => number_format((float) $row->amount, 2), 'date' => (string) $row->value_date,
                 'payer' => (string) $row->counterparty, 'narration' => (string) $row->narration, 'reference' => (string) $row->reference,

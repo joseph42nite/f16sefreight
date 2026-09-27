@@ -218,8 +218,10 @@ class EmailInboxController extends Controller
             return null;
         }
 
+        // Bills they OWE — invoices and debit notes. A credit note is money we owe them; offered as a bill, a mail
+        // naming one read as "paying" it (found on the demo, GAPS #417).
         $bills = DB::table('accounts_invoices')->whereIn('customer_id', $clients->pluck('id'))
-            ->whereIn('status', ['finalized', 'sent', 'partially_paid'])->whereRaw('grand_total - amount_paid > 0.009')
+            ->whereIn('type', ['invoice', 'debit_note'])->whereIn('status', ['finalized', 'sent', 'partially_paid'])->whereRaw('grand_total - amount_paid > 0.009')
             ->orderByDesc('document_date')->limit((int) config('accounts_decisions.max_options'))
             ->get(['id', 'customer_id', 'invoice_no', 'document_date', 'currency', DB::raw('ROUND(grand_total - amount_paid, 2) AS balance')]);
 

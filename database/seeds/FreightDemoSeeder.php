@@ -544,6 +544,15 @@ class FreightDemoSeeder extends Seeder
                     'created_at' => $date, 'updated_at' => $date,
                 ]);
 
+                // The line it bills. Without one, every month of this history was unfileable in GSTR-1 ("no line
+                // items") — the return reports lines, because only lines carry a rate and a SAC code (GAPS #418).
+                DB::table('accounts_invoice_items')->insert([
+                    'invoice_id' => $id, 'charge_type' => 'air_freight', 'description' => 'Air freight — ' . $job->execution_job_no,
+                    'hsn_sac_code' => '996531', 'quantity' => 1, 'rate' => $amount, 'amount' => $amount,
+                    'tax_percentage' => 18.00, 'tax_amount' => round($amount * 0.18, 2), 'net_amount' => $total,
+                    'created_at' => $date, 'updated_at' => $date,
+                ]);
+
                 if (! $unpaid) {
                     $paidOn = $date->copy()->addDays((int) ($customer->payment_terms_days ?? 30) + ($ci * 3));
                     DB::table('bank_transactions')->insert([
@@ -1727,6 +1736,9 @@ class FreightDemoSeeder extends Seeder
                 'invoice_id' => $invoice->id,
                 'charge_type' => $job->transport_mode === 'air' ? 'air_freight' : 'ocean_freight',
                 'description' => 'Freight charges — ' . $job->execution_job_no,
+                // The code the demo bills air freight under everywhere else; without it these were filed but missing
+                // from GSTR-1's HSN summary (GAPS #418). Sea is left uncoded: the demo codes sea at 5%, not this 18%.
+                'hsn_sac_code' => $job->transport_mode === 'air' ? '996531' : null,
                 'quantity' => 1, 'rate' => $amount, 'amount' => $amount,
                 'tax_percentage' => 18.00, 'tax_amount' => $tax,
                 'net_amount' => round($amount + $tax, 2),

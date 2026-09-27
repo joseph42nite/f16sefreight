@@ -216,6 +216,25 @@ class RevenueRulesTest extends TestCase
         $this->postJson("http://accounts.localhost/api/invoices/{$note['id']}/finalize")->assertOk();
     }
 
+    /**
+     * 🔴 The client book and Today's credit-hold card count what is owed as the gate does — in rupees (GAPS #418).
+     * At face value the dollar bill counted 1,180 instead of 97,940: the book showed 1,13,280 and, against a
+     * ₹2,00,000 limit, Today said nothing while the gate would stop this client's cargo.
+     */
+    public function test_the_client_book_and_todays_credit_hold_count_in_rupees_like_the_gate(): void
+    {
+        $this->theSet();
+        $this->client->update(['credit_limit' => 200000]);
+
+        $row = collect($this->as($this->accounts)->getJson('http://accounts.localhost/api/customers')->assertOk()->json('data'))
+            ->firstWhere('id', $this->client->id);
+        $this->assertEquals([210040, true], [$row['exposure'], $row['on_hold']]);
+
+        $held = collect($this->getJson('http://accounts.localhost/api/accounts/today')->assertOk()->json('exceptions'))->firstWhere('kind', 'credit_hold');
+        $this->assertNotNull($held);
+        $this->assertStringContainsString('Globex', $held['text']);
+    }
+
     // ─── The margin preview ──────────────────────────────────────────────────
 
     public function test_the_margin_preview_is_net_of_tax_and_in_rupees(): void

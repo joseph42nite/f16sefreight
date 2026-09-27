@@ -210,8 +210,13 @@ class GstReturnService
     private function documents(int $agentId, string $from, string $to): Collection
     {
         return DB::table('accounts_invoices as i')
-            ->leftJoin('customers as c', fn ($j) => $j->on('c.id', '=', 'i.billed_party_id')
-                ->where('i.billed_party_type', '=', 'customer'))
+            // 🔴 No billed party means THE CLIENT (GAPS #418) — the rule the GST register, the ageing and the bill
+            // already follow. Shipment invoices raised from the cost sheet or a waybill carry only `customer_id`, and
+            // reading the billed party alone dropped every one of them from the return as "place of supply unknown":
+            // on the demo, 11 of Mumbai's 15 documents.
+            ->leftJoin('customers as c', fn ($j) => $j->where(fn ($on) => $on
+                ->where(fn ($x) => $x->where('i.billed_party_type', '=', 'customer')->whereColumn('c.id', 'i.billed_party_id'))
+                ->orWhere(fn ($x) => $x->whereNull('i.billed_party_type')->whereColumn('c.id', 'i.customer_id'))))
             ->leftJoin('partners as p', fn ($j) => $j->on('p.id', '=', 'i.billed_party_id')
                 ->where('i.billed_party_type', '=', 'partner'))
             ->where('i.agent_id', $agentId)

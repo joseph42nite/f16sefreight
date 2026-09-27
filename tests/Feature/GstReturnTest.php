@@ -153,6 +153,28 @@ class GstReturnTest extends TestCase
         $this->assertSame(150000.0, $return['totals']['taxable_value']);
     }
 
+    /**
+     * 🔴 A shipment invoice from the cost sheet or a waybill carries only `customer_id` — no billed party — and so does
+     * a note raised against it. No billed party means the client, as the register, the ageing and the bill all read
+     * it; the return read the billed party alone and dropped every such document as "place of supply unknown" (on the
+     * demo, 11 of Mumbai's 15 — GAPS #418).
+     */
+    public function test_a_shipment_invoice_with_no_billed_party_is_filed_under_its_client(): void
+    {
+        $invoice = $this->bill('INV-RTNBOM-26-0021', 'invoice', $this->faraway, [[100000, 18000, '996531']]);
+        $note = $this->bill('CN-RTNBOM-26-0021', 'credit_note', $this->faraway, [[10000, 1800, '996531']]);
+        DB::table('accounts_invoices')->whereIn('id', [$invoice, $note])
+            ->update(['billed_party_type' => null, 'billed_party_id' => null]);
+
+        $return = $this->gstr1();
+
+        $this->assertSame([], collect($return['exceptions'])->pluck('document_no')->all());
+        $this->assertSame(['33', 18000.0], [$return['b2b'][0]['place_of_supply'], $return['b2b'][0]['igst']]);
+        $this->assertSame('CN-RTNBOM-26-0021', $return['cdnr'][0]['document_no']);
+        // 1,00,000 − 10,000 and 18,000 − 1,800: the note subtracts, filed under the same client.
+        $this->assertSame([90000.0, 16200.0], [$return['totals']['taxable_value'], $return['totals']['tax']]);
+    }
+
     /** 🔴 The same signing rule as the ageing, the credit gate and the P&L: a credit note subtracts. */
     public function test_a_credit_note_subtracts_and_a_debit_note_adds(): void
     {

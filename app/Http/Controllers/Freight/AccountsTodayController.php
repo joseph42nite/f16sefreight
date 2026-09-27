@@ -47,7 +47,7 @@ class AccountsTodayController extends Controller
         // ① Pricing has handed these over and nobody has billed them.
         $toBill = DB::table('accounts_invoices')->whereIn('agent_id', $scope)
             ->whereNotNull('sent_to_accounts_at')->where('status', 'draft')
-            ->selectRaw('COUNT(*) AS n, COALESCE(SUM(grand_total), 0) AS total')->first();
+            ->selectRaw('COUNT(*) AS n, COALESCE(SUM(grand_total * exchange_rate), 0) AS total')->first();   // rupees (GAPS #418)
 
         // ④ Money sitting in the bank that nobody has placed against an invoice.
         $toPlace = DB::table('bank_transactions')->whereIn('agent_id', $scope)
@@ -129,7 +129,8 @@ class AccountsTodayController extends Controller
             ->whereIn('i.agent_id', $scope)
             ->whereIn('i.status', AgeingService::OWED)
             ->groupBy('c.id', 'c.name', 'c.credit_limit')
-            ->havingRaw('SUM(CASE WHEN i.type = ? THEN -1 ELSE 1 END * (i.grand_total - i.amount_paid)) > c.credit_limit', ['credit_note'])
+            // In rupees, as CreditGateService counts it: the card must name exactly the clients the gate would stop.
+            ->havingRaw('SUM(CASE WHEN i.type = ? THEN -1 ELSE 1 END * (i.grand_total - i.amount_paid) * i.exchange_rate) > c.credit_limit', ['credit_note'])
             ->get(['c.id', 'c.name']);
 
         if ($held->isNotEmpty()) {

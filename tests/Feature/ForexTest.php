@@ -136,6 +136,10 @@ class ForexTest extends TestCase
         $row = collect($this->getJson($this->url('/reports/gstr1?agent_id=' . $this->branch->id . '&month=2026-09'))
             ->assertOk()->json('b2b'))->firstWhere('document_id', $id);
         $this->assertEquals([83000, 14940, 97940], [$row['taxable_value'], $row['igst'], $row['document_total']]);
+
+        // Close the month says the same tax was charged — ₹14,940, not USD 180 read as ₹180 (GAPS #418).
+        $gst = collect($this->getJson($this->url("/close-month?period_id={$this->periodId}"))->assertOk()->json('steps'))->firstWhere('key', 'gst');
+        $this->assertEquals(14940, $gst['tax_charged']);
     }
 
     public function test_a_rate_the_desk_typed_stands(): void

@@ -112,7 +112,8 @@ class CustomerController extends Controller
         $owed = \App\AccountsInvoice::withoutGlobalScopes()
             ->whereIn('customer_id', $customers->pluck('id'))
             ->whereIn('status', \App\Services\AgeingService::OWED)
-            ->selectRaw('customer_id, SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * (grand_total - amount_paid)) AS owed', ['credit_note'])
+            // In rupees at each bill's own rate, as the gate counts it (GAPS #418) — or the book and the gate disagree.
+            ->selectRaw('customer_id, SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * (grand_total - amount_paid) * exchange_rate) AS owed', ['credit_note'])
             ->groupBy('customer_id')->pluck('owed', 'customer_id');
 
         foreach ($customers as $customer) {

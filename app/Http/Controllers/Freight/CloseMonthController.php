@@ -227,11 +227,13 @@ class CloseMonthController extends Controller
         $rows = (clone $base)->orderBy('i.document_date')->limit(self::PREVIEW)
             ->get(['i.id', 'i.invoice_no', 'i.type', 'i.document_date', 'i.grand_total', 'c.name as customer', 'c.gst_no']);
 
-        // What the register says was charged in this period — the figure GSTR-1 is filed from.
+        // What the register says was charged in this period — the figure GSTR-1 is filed from. In rupees, at each
+        // document's own rate, as the register and the return are (GAPS #411, #418): a USD bill's face value read
+        // as rupees understated its tax eighty-fold here.
         $tax = DB::table('accounts_invoices')->where('agent_id', $period->agent_id)
             ->whereNotIn('status', ['draft', 'void'])
             ->whereBetween('document_date', [$period->start_date, $period->end_date])
-            ->selectRaw('COALESCE(SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * tax_amount), 0) AS tax', ['credit_note'])
+            ->selectRaw('COALESCE(SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * ROUND(tax_amount * exchange_rate, 2)), 0) AS tax', ['credit_note'])
             ->value('tax');
 
         // ── The return itself (user, 2026-09-22) ────────────────────────────

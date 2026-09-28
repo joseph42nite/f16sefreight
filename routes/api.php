@@ -423,6 +423,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/sales/branches', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'branches']);
     // The Boss's mails to his team, suggested from the figures (user, 2026-09-16).
     Route::get('/boss/mails', [\App\Http\Controllers\Freight\BossMailController::class, 'index']);
+    // The Boss's money at a glance, from financial_snapshots (PRD §6.8, GAPS #419).
+    Route::get('/boss/financials', [\App\Http\Controllers\Freight\BossFinancialsController::class, 'index']);
     Route::post('/boss/mails/{id}/draft', [\App\Http\Controllers\Freight\BossMailController::class, 'draft'])->whereNumber('id');
     Route::post('/boss/mails/{id}/send', [\App\Http\Controllers\Freight\BossMailController::class, 'send'])->whereNumber('id');
     Route::post('/boss/mails/{id}/dismiss', [\App\Http\Controllers\Freight\BossMailController::class, 'dismiss'])->whereNumber('id');

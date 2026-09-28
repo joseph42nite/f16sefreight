@@ -32,8 +32,8 @@ class ComputeFinancialSnapshots extends Command
 
     protected $description = 'Pre-aggregate daily financial indicators so dashboards never scan the ledger';
 
-    /** Money genuinely owed. A draft is not a receivable; a void never was one. */
-    private const OUTSTANDING = ['finalized', 'sent', 'partially_paid'];
+    /** Money genuinely owed — the ageing's own list, so the two can never disagree about what is owed. */
+    private const OUTSTANDING = \App\Services\AgeingService::OWED;
 
     public function handle(): int
     {
@@ -69,7 +69,8 @@ class ComputeFinancialSnapshots extends Command
                 'cash_on_hand'         => $this->cashOnHand($agentId),
                 'net_cash_flow'        => $this->netCashFlow($agentId, $date),
                 'unbilled_revenue'     => $this->unbilledRevenue($agentId),
-                'accrued_expenses'     => $payables,
+                // NULL, "not measured" — never the payables figure again under another name (GAPS #419).
+                'accrued_expenses'     => null,
                 'last_computed_at'     => now(),
                 'updated_at'           => now(),
                 'created_at'           => now(),
@@ -77,14 +78,16 @@ class ComputeFinancialSnapshots extends Command
         );
     }
 
+    /**
+     * What clients and partners owe, in rupees — as the ageing counts it (GAPS #419): a credit note SUBTRACTS (this
+     * added it), and each bill converts at its own rate (this counted USD at face value).
+     */
     private function receivables(int $agentId): float
     {
-        $rows = DB::table('accounts_invoices')
+        return round((float) DB::table('accounts_invoices')
             ->where('agent_id', $agentId)
             ->whereIn('status', self::OUTSTANDING)
-            ->get(['grand_total', 'amount_paid']);
-
-        return round($rows->sum(fn ($i) => (float) $i->grand_total - (float) $i->amount_paid), 2);
+            ->sum(DB::raw("CASE WHEN type = 'credit_note' THEN -1 ELSE 1 END * (grand_total - amount_paid) * exchange_rate")), 2);
     }
 
     /**
@@ -95,11 +98,17 @@ class ComputeFinancialSnapshots extends Command
      */
     private function payables(int $agentId): float
     {
-        return round((float) DB::table('accounts_purchase_items as i')
-            ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
+        // 🔴 What is still OWED on each — gross less what was paid (a part-paid bill counted in full), and under the
+        // status payments actually write: `part_paid`. `partially_paid` is an invoice's word, and no voucher ever
+        // carried it, so part-paid bills vanished from the figure altogether (GAPS #419).
+        $gross = DB::table('accounts_purchase_items')->selectRaw('purchase_voucher_id, SUM(net_amount) AS gross')
+            ->groupBy('purchase_voucher_id');
+
+        return round((float) DB::table('accounts_purchase_vouchers as v')
+            ->joinSub($gross, 'g', 'g.purchase_voucher_id', '=', 'v.id')
             ->where('v.agent_id', $agentId)
-            ->whereIn('v.status', ['unpaid', 'partially_paid'])
-            ->sum('i.net_amount'), 2);
+            ->whereIn('v.status', ['unpaid', 'part_paid'])
+            ->sum(DB::raw('GREATEST(g.gross - v.amount_paid, 0)')), 2);
     }
 
     /** The bank balance as the ledger sees it: debits to cash minus credits. */
@@ -108,7 +117,9 @@ class ComputeFinancialSnapshots extends Command
         $row = DB::table('accounts_ledger_entries as l')
             ->join('chart_of_accounts as c', 'c.id', '=', 'l.chart_of_account_id')
             ->where('l.agent_id', $agentId)
-            ->where('c.account_code', '1100-Bank')
+            // Every bank account — `1100-Bank` and each named one (`1100-Bank-HDFC-4321`, GAPS #386). The exact code
+            // alone missed all money that moved through a named account (GAPS #419).
+            ->where('c.account_code', 'like', '1100-Bank%')
             ->selectRaw('COALESCE(SUM(l.debit_amount),0) AS dr, COALESCE(SUM(l.credit_amount),0) AS cr')
             ->first();
 
@@ -121,7 +132,7 @@ class ComputeFinancialSnapshots extends Command
         $row = DB::table('accounts_ledger_entries as l')
             ->join('chart_of_accounts as c', 'c.id', '=', 'l.chart_of_account_id')
             ->where('l.agent_id', $agentId)
-            ->where('c.account_code', '1100-Bank')
+            ->where('c.account_code', 'like', '1100-Bank%')
             ->whereDate('l.posting_date', '>=', $date->copy()->startOfMonth())
             ->selectRaw('COALESCE(SUM(l.debit_amount),0) AS dr, COALESCE(SUM(l.credit_amount),0) AS cr')
             ->first();
@@ -145,10 +156,13 @@ class ComputeFinancialSnapshots extends Command
             ->where('j.agent_id', $agentId)
             ->where('j.status', 'Completed')
             ->whereNull('j.deleted_at')
+            // Billed means ASKED FOR: a draft is not (GAPS #419) — it sat in "billed" while no client had seen a bill.
             ->whereNotExists(fn ($q) => $q->select(DB::raw(1))
                 ->from('accounts_invoices')
                 ->whereColumn('accounts_invoices.job_id', 'j.id')
-                ->whereNotIn('accounts_invoices.status', ['void']))
+                ->whereNotIn('accounts_invoices.status', ['draft', 'void']))
+            // The quote is in rupees here; a quote in another currency is not added at face value, so it is left out.
+            ->where(fn ($q) => $q->whereNull('e.quoted_currency')->orWhereIn('e.quoted_currency', ['', 'INR']))
             ->sum(DB::raw('COALESCE(e.quoted_amount, 0)')), 2);
     }
 

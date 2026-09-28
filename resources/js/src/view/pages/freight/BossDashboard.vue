@@ -9,6 +9,60 @@
     </header>
 
     <!--
+      💰 Money (PRD §6.8, GAPS #419): each branch's position from financial_snapshots, refreshed every 30 minutes —
+      never summed live from the ledger. Old figures say so; a figure nobody measures says that, not 0.
+    -->
+    <section v-if="money" class="fx-section">
+      <h2 class="fx-section__title">Money</h2>
+      <p v-if="money.reason === 'never_computed'" class="fx-warn" role="status">
+        These figures have not been worked out yet — they refresh every 30 minutes.
+      </p>
+      <template v-else>
+        <p class="fx-muted">
+          As of <Figure :value="money.as_of" kind="dateTime" />.
+          <span v-if="money.stale" class="fx-warn">More than an hour old — the half-hourly refresh has not run.</span>
+        </p>
+        <div class="fx-matrix-wrap">
+          <table class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Branch</th>
+                <th class="fx-num" scope="col">Owed to us</th>
+                <th class="fx-num" scope="col">We owe</th>
+                <th class="fx-num" scope="col">In the bank</th>
+                <th class="fx-num" scope="col">Cash in − out, this month</th>
+                <th class="fx-num" scope="col">Done, not billed</th>
+                <th class="fx-num" scope="col">Costs not yet billed to us</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="b in money.branches" :key="'money-' + b.agent_id">
+                <th scope="row">{{ b.branch }}</th>
+                <td v-for="f in MONEY_FIGURES" :key="f" class="fx-num">
+                  <Figure v-if="b[f] !== null" :value="b[f]" kind="currency" currency-code="INR" />
+                  <span v-else class="fx-muted">not measured</span>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot v-if="money.branches.length > 1">
+              <tr>
+                <th scope="row">All branches</th>
+                <td v-for="f in MONEY_FIGURES" :key="'t-' + f" class="fx-num">
+                  <Figure v-if="money.totals[f] !== null" :value="money.totals[f]" kind="currency" currency-code="INR" />
+                  <span v-else class="fx-muted">not measured</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p class="fx-muted">
+          "Done, not billed" is finished shipments no client has been billed for yet, at their quoted price — money earned
+          and not yet asked for.
+        </p>
+      </template>
+    </section>
+
+    <!--
       ✉ Mails to the team (user, 2026-09-16): worked out nightly from the figures — targets, drops, clients gone quiet,
       a branch behind target, lanes lost on price, slower replies, money overdue. Drafted when opened, sent by the Boss
       from his own mailbox; nothing goes on its own.
@@ -319,6 +373,9 @@ export default {
   name: "BossDashboard",
   components: { Figure, FxDrawer, MailEditor },
   data: () => ({
+    /** The Boss's money figures (GAPS #419); null while loading or on Tactical, where there is no invoicing. */
+    money: null,
+    MONEY_FIGURES: ["total_receivables", "total_payables", "cash_on_hand", "net_cash_flow", "unbilled_revenue", "accrued_expenses"],
     periods: [], loading: true, error: null, grain: "month", basis: "fiscal",
     branches: [], modes: [], asOf: null, targets: null, branchesReason: null,
     ai: null,
@@ -341,6 +398,7 @@ export default {
     },
   },
   created() {
+    this.loadMoney();
     this.loadMails();
     this.load();
     this.loadBranches();
@@ -348,6 +406,12 @@ export default {
     this.loadTargets();
   },
   methods: {
+    loadMoney() {
+      ApiService.get("/boss/financials")
+        .then(({ data }) => { this.money = data; })
+        // Tactical (no invoicing) and a failure alike: the section is left out, never shown empty.
+        .catch(() => { this.money = null; });
+    },
     loadMails() {
       ApiService.get("/boss/mails")
         .then(({ data }) => {

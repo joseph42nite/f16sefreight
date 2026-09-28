@@ -28,6 +28,9 @@ const list = text => String(text || "").split(",").map(x => x.trim()).filter(Boo
     MailEditor: _view_pages_freight_components_MailEditor_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
   },
   data: () => ({
+    /** The Boss's money figures (GAPS #419); null while loading or on Tactical, where there is no invoicing. */
+    money: null,
+    MONEY_FIGURES: ["total_receivables", "total_payables", "cash_on_hand", "net_cash_flow", "unbilled_revenue", "accrued_expenses"],
     periods: [],
     loading: true,
     error: null,
@@ -83,6 +86,7 @@ const list = text => String(text || "").split(",").map(x => x.trim()).filter(Boo
     }
   },
   created() {
+    this.loadMoney();
     this.loadMails();
     this.load();
     this.loadBranches();
@@ -96,6 +100,17 @@ const list = text => String(text || "").split(",").map(x => x.trim()).filter(Boo
     this.loadTargets();
   },
   methods: {
+    loadMoney() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/boss/financials").then(({
+        data
+      }) => {
+        this.money = data;
+      })
+      // Tactical (no invoicing) and a failure alike: the section is left out, never shown empty.
+      .catch(() => {
+        this.money = null;
+      });
+    },
     loadMails() {
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/boss/mails").then(({
         data
@@ -296,7 +311,69 @@ __webpack_require__.r(__webpack_exports__);
 var render = function render() {
   var _vm = this,
     _c = _vm._self._c;
-  return _c("div", [_vm._m(0), _vm._v(" "), _c("section", {
+  return _c("div", [_vm._m(0), _vm._v(" "), _vm.money ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h2", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Money")]), _vm._v(" "), _vm.money.reason === "never_computed" ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n      These figures have not been worked out yet — they refresh every 30 minutes.\n    ")]) : [_c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        As of "), _c("Figure", {
+    attrs: {
+      value: _vm.money.as_of,
+      kind: "dateTime"
+    }
+  }), _vm._v(".\n        "), _vm.money.stale ? _c("span", {
+    staticClass: "fx-warn"
+  }, [_vm._v("More than an hour old — the half-hourly refresh has not run.")]) : _vm._e()], 1), _vm._v(" "), _c("div", {
+    staticClass: "fx-matrix-wrap"
+  }, [_c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(1), _vm._v(" "), _c("tbody", _vm._l(_vm.money.branches, function (b) {
+    return _c("tr", {
+      key: "money-" + b.agent_id
+    }, [_c("th", {
+      attrs: {
+        scope: "row"
+      }
+    }, [_vm._v(_vm._s(b.branch))]), _vm._v(" "), _vm._l(_vm.MONEY_FIGURES, function (f) {
+      return _c("td", {
+        key: f,
+        staticClass: "fx-num"
+      }, [b[f] !== null ? _c("Figure", {
+        attrs: {
+          value: b[f],
+          kind: "currency",
+          "currency-code": "INR"
+        }
+      }) : _c("span", {
+        staticClass: "fx-muted"
+      }, [_vm._v("not measured")])], 1);
+    })], 2);
+  }), 0), _vm._v(" "), _vm.money.branches.length > 1 ? _c("tfoot", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "row"
+    }
+  }, [_vm._v("All branches")]), _vm._v(" "), _vm._l(_vm.MONEY_FIGURES, function (f) {
+    return _c("td", {
+      key: "t-" + f,
+      staticClass: "fx-num"
+    }, [_vm.money.totals[f] !== null ? _c("Figure", {
+      attrs: {
+        value: _vm.money.totals[f],
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    }) : _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("not measured")])], 1);
+  })], 2)]) : _vm._e()])]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v('\n        "Done, not billed" is finished shipments no client has been billed for yet, at their quoted price — money earned\n        and not yet asked for.\n      ')])]], 2) : _vm._e(), _vm._v(" "), _c("section", {
     staticClass: "fx-section"
   }, [_c("h2", {
     staticClass: "fx-section__title"
@@ -925,7 +1002,7 @@ var render = function render() {
     staticClass: "fx-muted"
   }, [_vm._v("\n    No enquiries in this window. A period with none has no conversion rate — that is\n    not a rate of zero.\n  ")]) : _c("table", {
     staticClass: "fx-table"
-  }, [_vm._m(1), _vm._v(" "), _c("tbody", _vm._l(_vm.periods, function (p, i) {
+  }, [_vm._m(2), _vm._v(" "), _c("tbody", _vm._l(_vm.periods, function (p, i) {
     return _c("tr", {
       key: i
     }, [_c("td", [_c("Figure", {
@@ -988,6 +1065,44 @@ var staticRenderFns = [function () {
   }, [_vm._v("Overview")]), _vm._v(" "), _c("p", {
     staticClass: "fx-page-sub"
   }, [_vm._v("\n      Cross-mode oversight. The Boss portal has no transport scope, so air and sea\n      appear side by side rather than one at a time.\n    ")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Branch")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Owed to us")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("We owe")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("In the bank")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Cash in − out, this month")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Done, not billed")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Costs not yet billed to us")])])]);
 }, function () {
   var _vm = this,
     _c = _vm._self._c;

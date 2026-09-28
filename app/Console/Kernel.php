@@ -44,6 +44,13 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer();
 
+        // The Boss's money figures (PRD §6.8, GAPS #419): half-hourly, because receivables move through the working
+        // day and the dashboard warns past one hour. Built in Step 7 and never scheduled — so never run.
+        $schedule->command('snapshots:compute')
+            ->everyThirtyMinutes()
+            ->withoutOverlapping()
+            ->onOneServer();
+
         // Today's exchange rates (GAPS #411). Once a day: the free plan has no history, so a day missed is a day
         // whose foreign receipts wait for a rate — and 30 calls a month sit well inside its request limit.
         $schedule->command('fx:fetch-rates')

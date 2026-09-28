@@ -1658,6 +1658,9 @@ shown. The demo gains one sea consol so every screen has something real on it.
   6. whether calls must come from a registered static IP
 
   With 3–5 in hand, a transmitter is built as a queued job behind the circuit breaker (§4.9), keyed per branch
+- **Air files too** 🟢 *2026-09-28 (GAPS #430)* — the same screen on FocusAir, reading its portal: air offers jobs
+  holding a MAWB and the types CGM · IGM (sea: consol masters, CGM · SCMTR). Air **import** (PRD §8.1) still waits on
+  `air_import_details` being defined and approved
 
 ### 12.4 BL reading in extraction
 The inbox extraction panel reads a BL or booking PDF into the sea form as it reads an AWB into FocusAir — the sea

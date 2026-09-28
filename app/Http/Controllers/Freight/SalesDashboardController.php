@@ -272,6 +272,10 @@ class SalesDashboardController extends Controller
             ->orderBy('a.branch_code')
             ->get();
 
+        // 🔴 Below Command there is no billing, so revenue and overdue are NOT MEASURED — NULL, never ₹0.00, which
+        // reads as a branch that billed nothing and is owed nothing (GAPS #431).
+        $money = $context->tier === 'command';
+
         // Shaped branch-major with a cell per mode, because the question the screen
         // answers is "how is Chennai doing, air versus sea" — not "list every pair".
         $branches = [];
@@ -288,8 +292,8 @@ class SalesDashboardController extends Controller
                 'tonnage_mtd'     => round((float) $r->tonnage_mtd, 3),
                 'tonnage_ytd'     => round((float) $r->tonnage_ytd, 3),
                 'shipments_mtd'   => (int) $r->shipments_mtd,
-                'revenue_mtd'     => round((float) $r->revenue_mtd, 2),
-                'overdue_60_plus' => round((float) $r->overdue_60_plus, 2),
+                'revenue_mtd'     => $money ? round((float) $r->revenue_mtd, 2) : null,
+                'overdue_60_plus' => $money ? round((float) $r->overdue_60_plus, 2) : null,
                 'clients'         => (int) $r->clients,
             ];
 
@@ -301,8 +305,11 @@ class SalesDashboardController extends Controller
         return response()->json([
             'as_of'    => $latest,
             'modes'    => $rows->pluck('transport_mode')->unique()->values(),
-            'branches' => array_values(array_map(function ($b) {
+            'branches' => array_values(array_map(function ($b) use ($money) {
                 $b['totals'] = array_map(fn ($v) => round($v, 2), $b['totals']);
+                if (! $money) {
+                    $b['totals']['revenue_mtd'] = $b['totals']['overdue_60_plus'] = null;
+                }
                 return $b;
             }, $branches)),
         ]);

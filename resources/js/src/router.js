@@ -1,6 +1,7 @@
 import Vue from "vue";
 import store from "@/core/services/store";
 import { LANDING_ROUTE } from "@/core/config/navigation";
+import { LOAD_CONTEXT } from "@/core/services/store/context.module";
 import { mainSiteUrl, portalFromHost } from "@/core/config/portalHosts";
 import { reloadOnChunkError } from "@/core/services/chunkReload";
 import Router from "vue-router";
@@ -587,14 +588,19 @@ router.beforeEach((to, from, next) => {
     return to.name === "portal-sign-in" ? next({ path: "/", query: { signin: "1" } }) : next();
   }
 
-  const home = portal === "superadmin" ? "/superadmin/all-users" : LANDING_ROUTE[store.getters.designation] || "/focus-air";
+  const home = () => portal === "superadmin" ? "/superadmin/all-users" : LANDING_ROUTE[store.getters.designation] || "/focus-air";
+  // Signed in with no role loaded yet (a token, but no stored context): ask the server first. Guessing sent the
+  // accounts desk and the Boss to the air waybill form on every fresh visit to the portal's address (GAPS #431).
+  const toHome = () => (store.getters.designation || portal === "superadmin"
+    ? Promise.resolve()
+    : store.dispatch(LOAD_CONTEXT)).then(() => next(home()));
 
   // Already signed in: the sign-in page is the app.
-  if (to.name === "portal-sign-in") return store.getters.isAuthenticated ? next(home) : next();
+  if (to.name === "portal-sign-in") return store.getters.isAuthenticated ? toHome() : next();
 
   if (!(to.meta && to.meta.site)) return next();
 
-  if (to.path === "/") return store.getters.isAuthenticated ? next(home) : next({ name: "portal-sign-in" });
+  if (to.path === "/") return store.getters.isAuthenticated ? toHome() : next({ name: "portal-sign-in" });
 
   window.location.href = mainSiteUrl(window.location, to.fullPath);
   return next(false);

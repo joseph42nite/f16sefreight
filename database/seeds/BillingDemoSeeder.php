@@ -27,6 +27,9 @@ class BillingDemoSeeder extends Seeder
 {
     private EnquirySequenceService $sequences;
 
+    /** The narration of a receipt standing for FreightDemoSeeder's history, paid through the bank — see postSome(). */
+    private const HISTORY_RECEIPT = 'Settled through the bank';
+
     public function run(): void
     {
         $this->sequences = app(EnquirySequenceService::class);
@@ -114,6 +117,9 @@ class BillingDemoSeeder extends Seeder
         // The Sales page, the targets and the Boss's mails read the nightly rollup, which FreightDemoSeeder ran before
         // any of these documents existed: run it again, or every note, and general billing, is missing until tonight.
         $this->command->call('sales:compute-snapshots');
+        // And the Boss's money strip, which reads financial_snapshots: computed before any of this was posted, it read
+        // ₹0 cash and ₹0 payables until the scheduler ran (GAPS #431).
+        $this->command->call('snapshots:compute');
 
         $this->command->info(sprintf(
             'Billing demo: %d debit notes, %d credit notes, %d brokerage, %d consol, %d receipts, %d chases, '
@@ -192,7 +198,10 @@ class BillingDemoSeeder extends Seeder
 
             $receipts = DB::table('accounts_receipts')->whereIn('agent_id', $branches)->pluck('id');
             // What those receipts settled, and the bank lines they came from — so only THAT goes back (GAPS #420).
-            $settled = DB::table('accounts_receipt_allocations')->whereIn('receipt_id', $receipts)->distinct()->pluck('invoice_id');
+            // ⚠️ Not the history's own receipts (postSome): that history was paid, and stays paid on every rebuild.
+            $settled = DB::table('accounts_receipt_allocations as ra')->join('accounts_receipts as r', 'r.id', '=', 'ra.receipt_id')
+                ->whereIn('ra.receipt_id', $receipts)->whereRaw('COALESCE(r.narration, \'\') <> ?', [self::HISTORY_RECEIPT])
+                ->distinct()->pluck('ra.invoice_id');
             $fromBank = DB::table('accounts_receipts')->whereIn('id', $receipts)->whereNotNull('bank_transaction_id')->pluck('bank_transaction_id');
             $payments = DB::table('accounts_payments')->whereIn('agent_id', $branches)->pluck('id');
             $vouchers = DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branches)->pluck('id');
@@ -338,18 +347,20 @@ class BillingDemoSeeder extends Seeder
             return;
         }
 
-        $jobs = DB::table('jobs')->where('agent_id', $branch)->orderByDesc('id')->limit(4)->get(['id', 'transport_mode', 'awb_number']);
+        $jobs = DB::table('jobs')->where('agent_id', $branch)->orderByDesc('id')->limit(4)->get(['id', 'transport_mode', 'awb_number', 'customer_id']);
 
         foreach ($jobs as $index => $job) {
+            $freightLine = $job->transport_mode === 'sea' ? 'Ocean freight' : 'Air freight';
             $freight = round(random_int(48, 210) * 1000 / 100) * 100;
             $handling = round($freight * 0.08, 2);
             $subtotal = round($freight + $handling, 2);
             $tax = round($subtotal * 0.18, 2);
 
             $invoice = AccountsInvoice::withoutGlobalScopes()->create([
+                // The shipment's own client, as a cost sheet bills it — not whichever client came next (GAPS #431).
                 'agent_id' => $branch, 'job_id' => $job->id, 'transport_mode' => $job->transport_mode ?: 'air',
-                'customer_id' => $customers[$index % count($customers)],
-                'billed_party_type' => 'customer', 'billed_party_id' => $customers[$index % count($customers)],
+                'customer_id' => $job->customer_id ?? $customers[$index % count($customers)],
+                'billed_party_type' => 'customer', 'billed_party_id' => $job->customer_id ?? $customers[$index % count($customers)],
                 'billed_party_role' => 'client',
                 'invoice_no' => $this->sequences->next($branch, 'INV'),
                 'type' => 'invoice', 'document_date' => now()->subDays(30 - $index * 7)->toDateString(),
@@ -361,7 +372,7 @@ class BillingDemoSeeder extends Seeder
                 'subtotal' => $subtotal, 'tax_amount' => $tax, 'grand_total' => round($subtotal + $tax, 2),
             ]);
 
-            foreach ([['Air freight', $freight, '996531'], ['Handling and documentation', $handling, '996719']] as [$what, $amount, $hsn]) {
+            foreach ([[$freightLine, $freight, '996531'], ['Handling and documentation', $handling, '996719']] as [$what, $amount, $hsn]) {
                 $invoice->items()->create(['charge_type' => 'freight', 'description' => $what, 'hsn_sac_code' => $hsn,
                     'quantity' => 1, 'rate' => $amount, 'amount' => $amount, 'tax_percentage' => 18,
                     'tax_amount' => round($amount * 0.18, 2), 'net_amount' => round($amount * 1.18, 2)]);
@@ -398,19 +409,22 @@ class BillingDemoSeeder extends Seeder
         $made = 0;
 
         foreach ($jobs as $index => $jobId) {
+            $job = DB::table('jobs')->where('id', $jobId)->first(['transport_mode', 'customer_id']);
+            $client = $job->customer_id ?? $customers[$index % count($customers)];
+            $freightLine = $job->transport_mode === 'sea' ? 'Ocean freight' : 'Air freight';
             $freight = 120000 + $index * 35000;
             $handling = round($freight * 0.09, 2);
             $cost = round($freight * 0.74, 2);
 
             $invoice = AccountsInvoice::withoutGlobalScopes()->create([
-                'agent_id' => $branch, 'job_id' => $jobId, 'transport_mode' => 'air',
-                'customer_id' => $customers[$index % count($customers)],
-                'billed_party_type' => 'customer', 'billed_party_id' => $customers[$index % count($customers)],
+                'agent_id' => $branch, 'job_id' => $jobId, 'transport_mode' => $job->transport_mode,
+                'customer_id' => $client,
+                'billed_party_type' => 'customer', 'billed_party_id' => $client,
                 'billed_party_role' => 'client', 'created_by' => $pricing,
                 'invoice_no' => AccountsInvoice::placeholderNumber($jobId), 'type' => 'invoice',
                 'document_date' => now()->toDateString(), 'due_date' => now()->addDays(30)->toDateString(),
                 'status' => 'draft', 'currency' => 'INR', 'exchange_rate' => 1,
-                'narration' => 'Air freight and local charges',
+                'narration' => $freightLine . ' and local charges',
                 'subtotal' => $freight + $handling, 'tax_amount' => round(($freight + $handling) * 0.18, 2),
                 'grand_total' => round(($freight + $handling) * 1.18, 2),
                 // ⚠️ The LAST one stays unsent: that is pricing's work in progress, not accounts' queue.
@@ -418,7 +432,7 @@ class BillingDemoSeeder extends Seeder
                 'sent_to_accounts_by' => $index < 2 ? $pricing : null,
             ]);
 
-            foreach ([['Air freight', $freight, '996531'], ['Handling and documentation', $handling, '996719']] as [$what, $amount, $hsn]) {
+            foreach ([[$freightLine, $freight, '996531'], ['Handling and documentation', $handling, '996719']] as [$what, $amount, $hsn]) {
                 $invoice->items()->create(['charge_type' => 'freight', 'description' => $what, 'hsn_sac_code' => $hsn,
                     'quantity' => 1, 'rate' => $amount, 'amount' => $amount, 'tax_percentage' => 18,
                     'tax_amount' => round($amount * 0.18, 2), 'net_amount' => round($amount * 1.18, 2)]);
@@ -426,12 +440,16 @@ class BillingDemoSeeder extends Seeder
 
             // The buy side of the same sheet, so the margin on it is real before it is ever billed.
             $voucherId = DB::table('accounts_purchase_vouchers')->insertGetId([
-                'agent_id' => $branch, 'job_id' => $jobId, 'vendor_id' => $carrier, 'transport_mode' => 'air',
+                // costSome() has made the branch's shipping line by now; a sea job is bought from it.
+                'agent_id' => $branch, 'job_id' => $jobId, 'transport_mode' => $job->transport_mode,
+                'vendor_id' => $job->transport_mode === 'sea'
+                    ? (Partner::withoutGlobalScopes()->where('agent_id', $branch)->where('partner_type', 'shipping_line')->value('id') ?? $carrier)
+                    : $carrier,
                 'voucher_no' => $this->sequences->next($branch, 'PV'), 'document_date' => now()->toDateString(),
                 'status' => 'unpaid', 'created_by' => $pricing, 'created_at' => now(), 'updated_at' => now(),
             ]);
             DB::table('accounts_purchase_items')->insert(['purchase_voucher_id' => $voucherId,
-                'charge_type' => 'freight', 'description' => 'Air freight cost', 'quantity' => 1,
+                'charge_type' => 'freight', 'description' => $freightLine . ' cost', 'quantity' => 1,
                 'rate' => $cost, 'amount' => $cost, 'tax_percentage' => 18,
                 'tax_amount' => round($cost * 0.18, 2), 'net_amount' => round($cost * 1.18, 2),
                 'created_at' => now(), 'updated_at' => now()]);
@@ -568,6 +586,12 @@ class BillingDemoSeeder extends Seeder
         if ($carrier->gst_no === null) {
             $carrier->update(['gst_no' => $state . 'AAACE1700A1Z5']);
         }
+        // A sea shipment's freight is bought from a shipping line, not an airline (GAPS #431).
+        $line = Partner::withoutGlobalScopes()->firstOrCreate(
+            ['agent_id' => $branch, 'name' => 'Maersk Line India'],
+            ['company_id' => $company, 'partner_type' => 'shipping_line', 'email' => 'invoices@maersk-india.test',
+             'gst_no' => $state . 'AAACM5478E1Z2']
+        );
         $trucker = Partner::withoutGlobalScopes()->where('agent_id', $branch)
             ->where('partner_type', 'transporter')->first() ?? $carrier;
         $broker = Partner::withoutGlobalScopes()->where('agent_id', $branch)
@@ -577,7 +601,7 @@ class BillingDemoSeeder extends Seeder
         // Shipments only: general billing has no job, so nothing to cost and no voucher to raise against it.
         $billed = AccountsInvoice::withoutGlobalScopes()->where('agent_id', $branch)
             ->whereNotIn('status', ['draft', 'void'])->where('type', 'invoice')->whereNotNull('job_id')
-            ->selectRaw('job_id, SUM(subtotal * exchange_rate) AS revenue')->groupBy('job_id')->get();
+            ->selectRaw('job_id, MAX(transport_mode) AS mode, SUM(subtotal * exchange_rate) AS revenue')->groupBy('job_id')->get();
 
         // The most recently billed shipment's supplier invoice has not arrived yet (user, 2026-09-26) — the ordinary
         // way a billed shipment ends up with no cost, and what Money out ① "Cost to book" exists to catch. Left
@@ -598,7 +622,9 @@ class BillingDemoSeeder extends Seeder
             // Most shipments earn 12–30%; every fifth one is sold below cost.
             $share = $index % 5 === 4 ? 1.09 : (0.70 + ($index % 4) * 0.055);
 
-            foreach ([[$carrier, 'Air freight', 0.78], [$trucker, 'Pickup and delivery', 0.13],
+            $sea = $job->mode === 'sea';
+
+            foreach ([[$sea ? $line : $carrier, $sea ? 'Ocean freight' : 'Air freight', 0.78], [$trucker, 'Pickup and delivery', 0.13],
                       [$broker, 'Customs clearance', 0.09]] as [$vendor, $what, $slice]) {
                 $amount = round($revenue * $share * $slice, 2);
 
@@ -608,7 +634,7 @@ class BillingDemoSeeder extends Seeder
 
                 $voucherId = DB::table('accounts_purchase_vouchers')->insertGetId([
                     'agent_id' => $branch, 'job_id' => $job->job_id, 'vendor_id' => $vendor->id,
-                    'transport_mode' => 'air', 'voucher_no' => $this->sequences->next($branch, 'PV'),
+                    'transport_mode' => $job->mode, 'voucher_no' => $this->sequences->next($branch, 'PV'),
                     'document_date' => now()->subDays(random_int(5, 40))->toDateString(), 'status' => 'unpaid',
                     'created_at' => now(), 'updated_at' => now(),
                 ]);
@@ -700,6 +726,22 @@ class BillingDemoSeeder extends Seeder
         foreach (\App\AccountsPurchaseVoucher::withoutGlobalScopes()->whereIn('id', $vouchersToPost)->orderByDesc('id')->get() as $voucher) {
             if ($post($ledger->linesForVoucher($voucher), $voucher->document_date, $voucher->id, 'purchase_voucher')) {
                 $vouchers->writeGstRegister($voucher);
+            }
+        }
+
+        // 🔴 FreightDemoSeeder's history is marked paid with no receipt behind it. Posted, those bills sat in Accounts
+        // Receivable as still owed — ₹5.22 lakh the ledger claimed and the register did not (GAPS #431). In the
+        // product a bank match writes a receipt (ReconciliationController); so does this, for what is marked paid.
+        $unreceipted = AccountsInvoice::withoutGlobalScopes()->whereIn('id', $invoicesToPost)->where('is_posted', true)
+            ->whereNotNull('customer_id')->where('amount_paid', '>', 0)->get();
+
+        foreach ($unreceipted as $invoice) {
+            $gap = round((float) $invoice->amount_paid
+                - (float) DB::table('accounts_receipt_allocations')->where('invoice_id', $invoice->id)->sum('amount'), 2);
+
+            if ($gap > 0.009) {
+                $this->receipt($branch, $invoice->customer_id, $gap, 'bank_transfer', 'NEFT ' . $invoice->invoice_no,
+                    self::HISTORY_RECEIPT)->allocations()->create(['invoice_id' => $invoice->id, 'amount' => $gap]);
             }
         }
 
@@ -864,7 +906,8 @@ class BillingDemoSeeder extends Seeder
         string $line, string $narration, float $amount): void
     {
         $invoice = AccountsInvoice::withoutGlobalScopes()->create([
-            'agent_id' => $branch, 'job_id' => $jobId, 'transport_mode' => 'air',
+            // The job's own mode, as BillingController takes it: a sea shipment's commission is sea revenue (GAPS #431).
+            'agent_id' => $branch, 'job_id' => $jobId, 'transport_mode' => DB::table('jobs')->where('id', $jobId)->value('transport_mode'),
             'customer_id' => null, 'billed_party_type' => 'partner', 'billed_party_id' => $partner->id,
             'billed_party_role' => $type === 'brokerage' ? 'broker' : 'agent', 'created_by' => null,
             'invoice_no' => $this->sequences->next($branch, BillingDocuments::prefix($type)),

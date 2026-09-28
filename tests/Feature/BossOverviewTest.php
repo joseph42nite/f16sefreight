@@ -108,6 +108,26 @@ class BossOverviewTest extends TestCase
     }
 
     /**
+     * 🔴 Below Command there is no billing, so money is NOT MEASURED — NULL, not ₹0.00 (GAPS #431). A zero reads as
+     * a branch that billed nothing and is owed nothing.
+     */
+    public function test_a_tactical_boss_sees_money_as_not_measured_not_zero(): void
+    {
+        $this->snapshot($this->bom, 'air', ['revenue_mtd' => 0, 'outstanding_60_plus' => 0]);
+
+        $command = $this->api($this->boss)->getJson($this->url('/api/sales/branches'))->assertOk()->json('branches.0');
+        $this->assertSame(0.0, (float) $command['totals']['revenue_mtd'], 'On Command a zero is a measured zero.');
+
+        $this->company->update(['tier' => 'tactical']);
+
+        $tactical = $this->api($this->boss)->getJson($this->url('/api/sales/branches'))->assertOk()->json('branches.0');
+        $this->assertNull($tactical['totals']['revenue_mtd']);
+        $this->assertNull($tactical['totals']['overdue_60_plus']);
+        $this->assertNull($tactical['modes']['air']['revenue_mtd']);
+        $this->assertSame(100.0, (float) $tactical['totals']['tonnage_ytd'], 'Tonnage is still measured.');
+    }
+
+    /**
      * 🔴 STILL TENANT-BOUND. `admin.` drops the PORTAL scope, never the tenant one.
      * Conflating the two is how a client's Boss reads a competitor's books.
      */

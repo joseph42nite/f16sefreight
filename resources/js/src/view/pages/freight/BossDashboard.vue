@@ -362,6 +362,7 @@
 </template>
 
 <script>
+import { LOAD_CONTEXT } from "@/core/services/store/context.module";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
@@ -407,6 +408,17 @@ export default {
   },
   methods: {
     loadMoney() {
+      // Below Command there is no invoicing to read; asking only earned a 403 on every Tactical visit (GAPS #431).
+      // The tier first, from the server if this load has none yet.
+      (this.$store.getters.tier ? Promise.resolve() : this.$store.dispatch(LOAD_CONTEXT)).then(() => {
+        if (!this.$store.getters.tierAtLeast("command")) {
+          this.money = null;
+          return;
+        }
+        this.fetchMoney();
+      });
+    },
+    fetchMoney() {
       ApiService.get("/boss/financials")
         .then(({ data }) => { this.money = data; })
         // Tactical (no invoicing) and a failure alike: the section is left out, never shown empty.

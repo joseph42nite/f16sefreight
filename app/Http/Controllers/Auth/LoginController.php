@@ -73,6 +73,11 @@ class LoginController extends Controller
             if ($rejection !== null) {
                 return $rejection;
             }
+
+            // The desk this person works: their mailbox's enquiries go to it (owner, 2026-09-28; GAPS #427).
+            if ($user_data instanceof User && $portal->scope() !== null) {
+                \App\Services\Mail\MailboxMode::recordSignIn($user_data, $portal->scope());
+            }
         }
 
         $payload = [

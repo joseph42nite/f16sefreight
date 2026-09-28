@@ -37,6 +37,9 @@ class RealMailboxFixesTest extends TestCase
         $this->branch = Agent::create(['company_id' => $company->id, 'agent_name' => 'BOM', 'branch_code' => 'BOM']);
         $this->pricing = User::create(['name' => 'Joseph', 'email' => 'joseph@forwarder-rlm.test', 'password' => Hash::make('x'),
             'company_name' => $company->id, 'branch_name' => $this->branch->id, 'designation' => 'pricing', 'is_active' => 1]);
+        // Joseph works the AIR desk — his mailbox's enquiries are air (GAPS #427). With no desk the mail is mixed
+        // and a would-be enquiry goes to Other; that case is SeaInboxTest's.
+        \DB::table('users')->where('id', $this->pricing->id)->update(['signed_in_modes' => json_encode(['air'])]);
         $this->mailbox = MailboxConnection::withoutGlobalScopes()->create(['agent_id' => $this->branch->id, 'user_id' => $this->pricing->id,
             'email_address' => 'joseph@forwarder-rlm.test', 'provider' => 'outlook', 'is_active' => 1, 'auth_state' => 'connected', 'backfill_status' => 'completed']);
 

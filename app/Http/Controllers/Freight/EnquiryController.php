@@ -205,6 +205,8 @@ class EnquiryController extends Controller
             'extracted_pieces' => ['nullable', 'integer', 'min:0'],
             'extracted_weight' => ['nullable', 'numeric', 'min:0'],
             'extracted_volume' => ['nullable', 'numeric', 'min:0'],
+            // FCL or LCL, read off a sea mail (GAPS #427) — the job's cargo type starts from it.
+            'cargo_type'       => ['nullable', 'string', 'in:' . implode(',', \App\Http\Controllers\Freight\SeaShipmentController::CARGO_TYPES)],
             'origin_code'      => ['nullable', 'string', 'min:3', 'max:5'],
             'dest_code'        => ['nullable', 'string', 'min:3', 'max:5'],
         ]);

@@ -85,8 +85,11 @@ return [
      * 2026-09-20  — one Choice over 13 folders. 13/13 on the acceptance set.
      * 2026-09-20b — TWO Choices, sender and intent, routed to a folder in PHP. See the note
      *               above `questions` for why, and MailIntentClassifier::route() for the table.
+     * 2026-09-28  — sea (GAPS #427): twelve sea mails added to the acceptance set; one missed — an
+     *               agent's sea pre-alert naming the vessel read as the shipping line (0.43). The agent and
+     *               carrier criteria now say which bill each one issues.
      */
-    'rubric_version' => '2026-09-20b',
+    'rubric_version' => '2026-09-28',
 
     /*
     |--------------------------------------------------------------------------
@@ -134,16 +137,21 @@ return [
             'criteria' => [
                 'client' => 'A shipper, consignee, exporter, importer or manufacturer whose own cargo we move or '
                     . 'might move — including someone writing to us for the first time.',
+                // ⚠️ The pre-alert sentence is measured: a sea pre-alert naming the vessel read as the
+                // shipping line at 0.43 until it said so (2026-09-28).
                 'overseas_agent' => 'A freight forwarder, co-loader or consolidator in another country who works '
                     . 'the other end of our shipments: sending us cargo, receiving ours, or asking our rates to '
-                    . 'quote their own client.',
+                    . 'quote their own client. A pre-alert that gives house bill numbers (HBL or HAWB) for cargo '
+                    . 'they have shipped to us comes from the agent, even when it names the vessel or the carrier.',
                 // ⚠️ The EDI sentence is load-bearing. FNA and FWB/FHL notices quote the
                 // forwarder's name in their payload, and without this the model read two real
                 // ones as `overseas_agent` at 0.36 and 0.39 and both mails fell to Other.
                 'airline' => 'An air cargo carrier, or the cargo handling agent acting for one. A status message '
                     . 'produced by an airline cargo system — FNA, FWB, FHL or FSU — comes from the airline even '
                     . 'when the text of it names a freight forwarder as shipper, agent or consignee.',
-                'shipping_line' => 'An ocean carrier, NVOCC or their liner agent.',
+                'shipping_line' => 'An ocean carrier, NVOCC or their liner agent: the company that owns or operates the '
+                    . 'vessel, issues the master bill of lading (MBL), confirms bookings and sailings, and sends '
+                    . 'arrival notices and freight invoices for its own bills.',
                 'customs_broker' => 'A customs broker or CHA — a firm that clears cargo, not the authority itself.',
                 'transporter' => 'A road haulier, trucking company, transport contractor or driver: vehicle or '
                     . 'trailer placement, lorry and container movement by road, e-way bills, and pickup or '

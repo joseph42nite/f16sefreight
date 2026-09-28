@@ -42,6 +42,8 @@ class RealMailFlowTest extends TestCase
             'company_name' => $company->id, 'branch_name' => $this->branch->id, 'designation' => 'pricing', 'is_active' => 1]);
         $this->ops = User::create(['name' => 'Dhiraj', 'email' => 'dhiraj@flow-fwd.test', 'password' => Hash::make('x'),
             'company_name' => $company->id, 'branch_name' => $this->branch->id, 'designation' => 'operations', 'is_active' => 1]);
+        // Joseph works the air desk: his mailbox's enquiries are air (GAPS #427).
+        \Illuminate\Support\Facades\DB::table('users')->where('id', $this->pricing->id)->update(['signed_in_modes' => json_encode(['air'])]);
         $this->mailbox = MailboxConnection::withoutGlobalScopes()->create(['agent_id' => $this->branch->id, 'user_id' => $this->pricing->id,
             'email_address' => 'joseph@flow-fwd.test', 'provider' => 'outlook', 'access_token' => 't', 'refresh_token' => 'r',
             'expires_at' => now()->addHour(), 'auth_state' => 'connected', 'is_active' => 1, 'backfill_status' => 'completed']);

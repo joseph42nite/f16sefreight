@@ -127,7 +127,7 @@ class MessageIngestor
             // state an operator can file from, and it is recoverable. A lock held across a
             // third party's latency is neither.
             if ($storedId !== null) {
-                $this->stageClassification($message);
+                $this->stageClassification($connection, $message);
             }
         }
 
@@ -182,7 +182,7 @@ class MessageIngestor
      * something the classifier does not get to argue with, and a client's reply arriving
      * afterwards would otherwise silently undo it.
      */
-    private function stageClassification(NormalisedMessage $message): void
+    private function stageClassification(MailboxConnection $connection, NormalisedMessage $message): void
     {
         $stored = EmailMessage::where('message_id', $message->messageId)->first();
 
@@ -190,11 +190,26 @@ class MessageIngestor
             return;
         }
 
-        $result = app(MailFilingService::class)->classify($stored);
+        // The desk this mailbox works — its owner's portal (GAPS #427). It also tells the cargo reader to read
+        // sea units: CBM, containers, ports.
+        $mode = app(MailboxMode::class)->for($connection);
+
+        $result = app(MailFilingService::class)->classify($stored, $mode);
 
         // NULL means the message must not be classified at all — outbound, or backfilled.
         if ($result === null) {
             return;
+        }
+
+        // 🔴 An enquiry needs a desk. A mixed mailbox cannot say which, so the mail goes to Other and a person
+        // files it from their portal — which names the desk (owner, 2026-09-28: "if it's mixed then put it in
+        // others"). Guessing would put a sea enquiry in the air pool, where nobody on the sea desk sees it.
+        // The chain's own reading is kept in auto_classification, so "these went to Other only for want of a desk"
+        // can be counted.
+        $said = $result['classification'];
+        if ($said === 'customer_enquiry' && $mode === null) {
+            $result['classification'] = 'other';
+            $result['source'] = 'mixed_mode';
         }
 
         $filed = DB::table('email_threads')
@@ -202,7 +217,7 @@ class MessageIngestor
             ->where('classification', 'unclassified')
             ->update([
                 // What the classifier said, kept when a person later changes it — Super Admin → Mail filing (2026-09-17).
-                'auto_classification' => $result['classification'],
+                'auto_classification' => $said,
                 // 🔴 And WHO said it: rule | client | directory | model | none. An override
                 // report that cannot name the source cannot tell a bad tenant rule from a bad
                 // rubric, and those have nothing in common but the symptom (2026-09-20).
@@ -220,7 +235,7 @@ class MessageIngestor
 
         // Filed as a customer enquiry: it gets its enquiry number now (user, 2026-09-17), so it is in the Kanban pool.
         if ($filed > 0 && $result['classification'] === 'customer_enquiry') {
-            app(\App\Services\EnquiryMinter::class)->mintForArrivedMail($stored->thread_key);
+            app(\App\Services\EnquiryMinter::class)->mintForArrivedMail($stored->thread_key, $mode);
         }
     }
 

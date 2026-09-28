@@ -20,9 +20,12 @@ class EnquiryMinter
     public function __construct(private readonly EnquirySequenceService $sequences, private readonly AuditLogger $audit) {}
 
     /** Creates the enquiry and links it; the caller runs this in a transaction. */
-    public function mint(EmailThread $thread, ?int $actorId = null): Enquiry
+    /**
+     * @param ?string $mode the desk — the portal a person filed it from, or the mailbox's own for arriving mail.
+     */
+    public function mint(EmailThread $thread, ?int $actorId = null, ?string $mode = null): Enquiry
     {
-        $mode = app()->bound('active_portal_scope') ? app('active_portal_scope') : 'air';
+        $mode ??= app()->bound('active_portal_scope') ? app('active_portal_scope') : 'air';
 
         $enquiry = Enquiry::create([
             'agent_id'          => $thread->agent_id,
@@ -42,7 +45,7 @@ class EnquiryMinter
     }
 
     /** Mail filed as a customer enquiry as it arrives: its enquiry, unless it already has one. */
-    public function mintForArrivedMail(string $threadKey): void
+    public function mintForArrivedMail(string $threadKey, ?string $mode = null): void
     {
         $thread = EmailThread::withoutTenantScope()->where('thread_key', $threadKey)->first();
 
@@ -50,7 +53,7 @@ class EnquiryMinter
             return;
         }
 
-        DB::transaction(fn () => $this->mint($thread), EnquirySequenceService::DEADLOCK_ATTEMPTS);
+        DB::transaction(fn () => $this->mint($thread, null, $mode), EnquirySequenceService::DEADLOCK_ATTEMPTS);
     }
 
     /**

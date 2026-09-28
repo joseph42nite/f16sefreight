@@ -96,7 +96,9 @@
               <span>Filed as</span>
               <select id="thread-classification" v-model="pending" class="fx-input" :disabled="busy" data-help="thread-classification" @change="classify">
                 <option value="unclassified" disabled>Not sorted yet</option>
-                <option v-for="c in CLASSIFICATIONS" :key="c" :value="c">{{ c.replace(/_/g, " ") }}</option>
+                <!-- The portal's own folders, as the folder column lists them: shipping line on sea, airline on air
+                     (GAPS #427 — a fixed five from the first inbox offered "airline" on FocusSea). -->
+                <option v-for="c in fileAs" :key="c" :value="c">{{ FOLDER_LABELS[c] || c.replace(/_/g, " ") }}</option>
               </select>
             </label>
 
@@ -727,7 +729,8 @@ import MailBodyFrame from "@/view/pages/freight/components/MailBodyFrame.vue";
 /** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
 const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
 
-const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road", "other"];
+/* Until the server names the portal's folders — see EmailInboxController::classificationsForMode. */
+const CLASSIFICATIONS = ["customer_enquiry", "clearance", "trucking_road", "other"];
 
 /** PRD §5.4 State 4 — mirrors JobController::CANCELLATION_REASONS. */
 const CANCELLATION_REASONS = {
@@ -858,7 +861,7 @@ export default {
     /** The acknowledgement shown when claiming, and the state of sending a client update. */
     claimDraft: null, updateBusy: false, updateError: null,
     LOST_REASONS,
-    CLASSIFICATIONS, WORKSPACE_TABS, CANCELLATION_REASONS,
+    CLASSIFICATIONS, WORKSPACE_TABS, CANCELLATION_REASONS, FOLDER_LABELS, fileAs: CLASSIFICATIONS,
   }),
   computed: {
     remittanceBillNos() {
@@ -949,6 +952,10 @@ export default {
         chargeable_weight: "Chargeable weight",
         volume_cbm: "Volume (CBM)",
         dimensions: "Dimensions",
+        // Sea's own units, read on a sea mailbox (PRD §5.2.7; GAPS #427).
+        containers: "Containers",
+        teu: "TEU",
+        cargo_type: "FCL / LCL",
         origin: "Origin",
         destination: "Destination",
       };
@@ -1244,6 +1251,7 @@ export default {
         pieces: "extracted_pieces",
         gross_weight: "extracted_weight",
         volume_cbm: "extracted_volume",
+        cargo_type: "cargo_type",
         origin: "origin_code",
         destination: "dest_code",
       };
@@ -1565,6 +1573,7 @@ export default {
 
           /* The portal's own vocabulary — see EmailInboxController::classificationsForMode. */
           if (data.classifications) {
+            this.fileAs = data.classifications;
             this.folders = [
               { key: "all", label: "All" },
               { key: "unassigned", label: "Unassigned pool" },

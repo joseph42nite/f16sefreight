@@ -44,7 +44,7 @@ class ClientNotificationService
      * Blanks the person fills in before sending (user, 2026-09-16: the booking date and airline are entered by hand).
      * A mail still carrying one is refused rather than sent with "[date]" in it.
      */
-    public const BLANKS = '/\[(date|airline)\]/';
+    public const BLANKS = '/\[(date|airline|shipping line)\]/';
 
     public const BELL_TYPE = 'ClientUpdateReady';
 
@@ -66,10 +66,20 @@ class ClientNotificationService
             return null;
         }
 
+        // 🔴 A SEA shipment is never told about an air waybill (GAPS #427). The moments after confirmation follow the
+        // job's status, and sea's own statuses are not decided yet — so a sea client hears "we have your enquiry"
+        // and "confirmed", in sea's words, and nothing an air template would say.
+        if ($f['sea'] && ! in_array($stage, ['claimed', 'confirmed'], true)) {
+            return null;
+        }
+
         $body = match ($stage) {
             'claimed'   => "Thank you for your enquiry. We have received it and {$f['owner']} is looking after it. We will come back to you with our rates shortly.",
-            'confirmed' => "Thank you for confirming. Your shipment{$f['lane']}{$f['cargo']} is booked in with us and we have started the paperwork.{$f['operator']}\n\n"
-                . "Your shipment is booked on [date] with [airline].\n\nWe will send you the draft air waybill to check next.",
+            'confirmed' => $f['sea']
+                ? "Thank you for confirming. Your shipment{$f['lane']}{$f['cargo']} is booked in with us and we have started the paperwork.{$f['operator']}\n\n"
+                    . "Your shipment is booked on [date] with [shipping line].\n\nWe will send you the draft bill of lading to check next."
+                : "Thank you for confirming. Your shipment{$f['lane']}{$f['cargo']} is booked in with us and we have started the paperwork.{$f['operator']}\n\n"
+                    . "Your shipment is booked on [date] with [airline].\n\nWe will send you the draft air waybill to check next.",
             'draft_awb' => "The draft air waybill for your shipment{$f['lane']} is ready. Please check it and approve it, or tell us what to change, here:\n" . self::REVIEW_LINK . "\n\nThe link stays open for 14 days.",
             'booked'    => "Your shipment{$f['lane']} is booked with the airline under AWB {$f['awb']}{$f['flight']}." . ($f['pdf'] ? ' The air waybill is attached.' : ''),
             'departed'  => "Your shipment under AWB {$f['awb']} has departed{$f['from']}{$f['flight']}. We will let you know when it is delivered.",
@@ -292,6 +302,7 @@ class ClientNotificationService
         $owner = $thread->assigned_ops_id ? User::whereKey($thread->assigned_ops_id)->value('name') : null;
 
         return [
+            'sea' => ($job?->transport_mode ?? $enquiry?->transport_mode) === 'sea',
             'owner' => $owner ?: 'our team',
             'lane' => $origin && $destination ? " from {$origin} to {$destination}" : '',
             'cargo' => $pieces && $weight ? ' (' . $pieces . ' pcs, ' . rtrim(rtrim(number_format((float) $weight, 2, '.', ''), '0'), '.') . ' kg)' : '',

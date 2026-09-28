@@ -672,6 +672,11 @@ class FreightDemoSeeder extends Seeder
                 ]
             );
 
+            // The desk: the demo's mail is air (DemoMailLoopSeeder's AWB conversations), so its arriving enquiries
+            // are air. Signing in on FocusSea adds sea — and then the mailbox is mixed (GAPS #427). A query, not
+            // updateOrCreate: only the login writes this column, so it is deliberately not fillable.
+            DB::table('users')->where('id', $users[$designation]->id)->update(['signed_in_modes' => json_encode(['air'])]);
+
             // 🔴 Without this row the login returns 401 with a CORRECT password, because
             // LoginController resolves the auth guard from `roles.email` before it ever
             // looks at `users`. That reads as a bad password, not as missing data.

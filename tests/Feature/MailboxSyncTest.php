@@ -48,6 +48,8 @@ class MailboxSyncTest extends TestCase
             'company_name' => $company->id, 'branch_name' => $this->branch->id,
             'designation' => 'operations', 'is_active' => 1,
         ]);
+        // An air desk: this mailbox's enquiries are air (GAPS #427). A mailbox with no desk is mixed — SeaInboxTest.
+        \Illuminate\Support\Facades\DB::table('users')->where('id', $user->id)->update(['signed_in_modes' => json_encode(['air'])]);
 
         $this->mailbox = MailboxConnection::withoutGlobalScopes()->create([
             'agent_id' => $this->branch->id, 'user_id' => $user->id,

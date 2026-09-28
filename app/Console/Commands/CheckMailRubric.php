@@ -76,6 +76,21 @@ class CheckMailRubric extends Command
         ['client_shipment', 'Update on BOM-JFK?', 'Any update on our shipment BOM-JFK, AWB 176-55667788? Our customer is asking for a delivery date.'],
         ['clearance', 'Docs needed for BE filing', 'Please send the original bill of lading and packing list so we can file the Bill of Entry tomorrow.'],
         ['shipping_line', 'Revised sailing MV Maersk Chennai', 'Vessel MV Maersk Chennai has been rescheduled, new ETD 22/09. Your booking BKG998877 is confirmed on the revised sailing.'],
+
+        // ── Sea (FocusSea, 2026-09-28; GAPS #427). The shapes a sea desk receives all day, so the rubric is
+        // measured on them as it was on air's — not assumed to carry over because a few words are shared.
+        ['customer_enquiry', 'Rate request 2x40HC Nhava Sheva to Jebel Ali', 'Please quote FCL 2x40HC INNSA-AEJEA, ready 5 Oct, general cargo, about 18 MT per box.'],
+        ['customer_enquiry', 'LCL Chennai to Hamburg', 'Need your LCL rate for 3.5 cbm, 6 pallets, 1200 kgs, Chennai to Hamburg, cargo ready next week.'],
+        ['customer_enquiry', 'Import rate DEHAM-INNSA', 'We have a client shipping 1x40HC Hamburg to Nhava Sheva every month. Please quote your destination charges so we can offer.'],
+        ['client_shipment', 'Booking - 1x20GP Mundra to Rotterdam', 'Please book 1x20GP for our shipment Mundra to Rotterdam at the agreed rate. Cargo ready on the 3rd; shipping instructions attached.'],
+        ['client_shipment', 'Draft BL corrections', 'Please find our corrections to the draft bill of lading for container MSKU6874230. Kindly issue the final BL once they are made.'],
+        ['shipping_line', 'Arrival notice MSC Gulsun V.245E', 'Arrival notice: vessel MSC Gulsun V.245E, ETA JNPT 24/09. B/L MEDU1234567, 1x40HC. Please arrange the delivery order before discharge.'],
+        ['vendor_invoice', 'Freight invoice B/L MEDU1234567', 'Please find attached our ocean freight invoice OF-8812 for B/L MEDU1234567, USD 2,450. Kindly remit so the original B/L can be released.'],
+        ['overseas_agent', 'Pre-alert HBL SHNSA7781', 'Pre-alert: HBL SHNSA7781, 2x40HC on CMA CGM Tage V.0AB12, ETA Nhava Sheva 30/09. Documents attached. Please arrange clearance and delivery.'],
+        ['trucking_road', 'Container movement JNPT to Bhiwandi', 'Trailer placed for container TCLU1234567 at JNPT; it will reach the Bhiwandi warehouse by 6 pm. E-way bill attached.'],
+        ['clearance', 'Shipping bill filed 4455667', 'We have filed shipping bill 4455667 for your container MSKU6874230. Please send the VGM declaration and the final invoice copy.'],
+        ['regulatory', 'ICEGATE: IGM 2233445 filed', 'IGM 2233445 for vessel MSC Gulsun V.245E at INNSA has been filed and accepted by customs.'],
+        ['claim', 'Container damaged at Jebel Ali', 'Container TCLU1234567 arrived at Jebel Ali with water damage to 12 cartons. We are lodging a claim; please notify the carrier and your insurer.'],
     ];
 
     public function handle(JevClient $jev, MailIntentClassifier $classifier): int

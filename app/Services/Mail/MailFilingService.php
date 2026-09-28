@@ -66,6 +66,24 @@ class MailFilingService
 
     private const UNLABELLED_WEIGHT = '/(\d+(?:\.\d+)?)\s*(?:kgs?|kilograms?)\b/i';
 
+    /*
+     * ── Sea's own units — PRD §5.2.7 (GAPS #427) ──────────────────────────────
+     * Sea quotes weight in tonnes, counts boxes by size and type, and names ports by UN/LOCODE. Read only on a
+     * sea mailbox: "18 tons" in an air mail is a chargeable weight to check, not a container load.
+     */
+    /** "18 MT", "18.5 metric tons", "22 tonnes" — to kg. */
+    private const TONNES = '/(\d+(?:\.\d+)?)\s*(?:mts?|metric\s*tons?|tonnes?|tons?)\b/i';
+
+    /** "2x40HC", "2 x 40' HC", "1 X 20GP", "3 nos 40 HQ" — the PRD's seven types, HQ being HC. */
+    private const CONTAINERS = '/(\d+)\s*(?:x|×|\*|nos?\.?)?\s*(20|40)\s*\'?\s*(GP|HC|HQ|RF|TK|OT)\b/i';
+
+    private const TEU = '/(\d+)\s*(TEU|FEU)s?\b/i';
+
+    private const FCL_LCL = '/\b(FCL|LCL)\b/i';
+
+    /** "Nhava Sheva to Jebel Ali", "INNSA - AEJEA": up to three words either side; resolved against sea ports. */
+    private const SEA_LANE = '/([A-Za-z][A-Za-z ]{1,40}?)\s*(?:\bto\b|->|→|–|—|\s-\s|\/)\s*([A-Za-z][A-Za-z ]{1,40})/u';
+
     /** Sea quotes volume; air quotes weight. */
     private const CBM_PATTERN = '/(\d+(?:\.\d+)?)\s*(?:cbm|m3|cubic\s*met(?:er|re)s?)\b/i';
 
@@ -447,8 +465,8 @@ class MailFilingService
             $cargo['dimensions'] = ['value' => trim("{$m[1]} x {$m[2]} x {$m[3]} " . strtolower($m[4] ?? '')), 'confidence' => 'high'];
         }
 
-        if ($transportMode === 'sea' && preg_match(self::CBM_PATTERN, $text, $m)) {
-            $cargo['volume_cbm'] = ['value' => (float) $m[1], 'confidence' => 'high'];
+        if ($transportMode === 'sea') {
+            return $cargo + $this->extractSea($text, $cargo);
         }
 
         return $cargo + $this->extractLane($text);
@@ -486,6 +504,97 @@ class MailFilingService
             'origin'      => ['value' => $origin, 'confidence' => 'low'],
             'destination' => ['value' => $dest,   'confidence' => 'low'],
         ];
+    }
+
+    /**
+     * What a sea mail says in sea's own units, and its lane in UN/LOCODE (PRD §5.2.7).
+     *
+     * @param array $cargo what the shared patterns already read — a kg weight outranks a tonnage
+     */
+    private function extractSea(string $text, array $cargo): array
+    {
+        $sea = [];
+
+        if (preg_match(self::CBM_PATTERN, $text, $m)) {
+            $sea['volume_cbm'] = ['value' => (float) $m[1], 'confidence' => 'high'];
+        }
+
+        if (! isset($cargo['gross_weight']) && preg_match(self::TONNES, $text, $m)) {
+            $sea['gross_weight'] = ['value' => round((float) $m[1] * 1000, 3), 'confidence' => 'high'];
+        }
+
+        if (preg_match_all(self::CONTAINERS, $text, $all, PREG_SET_ORDER)) {
+            $boxes = array_map(fn ($m) => $m[1] . ' × ' . $m[2] . str_replace('HQ', 'HC', strtoupper($m[3])), $all);
+            $sea['containers'] = ['value' => implode(', ', array_unique($boxes)), 'confidence' => 'high'];
+        }
+
+        if (preg_match(self::TEU, $text, $m)) {
+            $sea['teu'] = ['value' => (int) $m[1] * (strtoupper($m[2]) === 'FEU' ? 2 : 1), 'confidence' => 'high'];
+        }
+
+        if (preg_match(self::FCL_LCL, $text, $m)) {
+            $sea['cargo_type'] = ['value' => strtolower($m[1]), 'confidence' => 'high'];
+        }
+
+        return $sea + $this->extractSeaLane($text);
+    }
+
+    /** Both ends resolved to sea ports, or neither — a half-lane reads as a whole one. */
+    private function extractSeaLane(string $text): array
+    {
+        if (! preg_match(self::SEA_LANE, $text, $m)) {
+            return [];
+        }
+
+        $words = fn (string $s) => preg_split('/\s+/', trim($s)) ?: [];
+        $left = $words($m[1]);
+        $right = $words($m[2]);
+
+        // The phrase nearest the separator, longest first: "…quote Nhava Sheva" → "Nhava Sheva", then "Sheva".
+        $origin = null;
+        for ($n = min(3, count($left)); $n >= 1 && $origin === null; $n--) {
+            $origin = $this->resolvePort(implode(' ', array_slice($left, -$n)));
+        }
+        $dest = null;
+        for ($n = min(3, count($right)); $n >= 1 && $dest === null; $n--) {
+            $dest = $this->resolvePort(implode(' ', array_slice($right, 0, $n)));
+        }
+
+        if ($origin === null || $dest === null || $origin === $dest) {
+            return [];
+        }
+
+        return [
+            'origin'      => ['value' => $origin, 'confidence' => 'low'],
+            'destination' => ['value' => $dest,   'confidence' => 'low'],
+        ];
+    }
+
+    /**
+     * A sea port's UN/LOCODE, from the code as written or its name — "Chennai" finds "Chennai (ex Madras)",
+     * "Nhava Sheva" finds "Jawaharlal Nehru (Nhava Sheva)". 🔴 Only when exactly ONE port answers: Rotterdam is
+     * in the Netherlands and in the US, and picking one would be a guess on a document's lane.
+     */
+    private function resolvePort(string $phrase): ?string
+    {
+        $phrase = trim($phrase);
+
+        if (strlen($phrase) < 3 || in_array(strtolower($phrase), self::LANE_STOPWORDS, true)) {
+            return null;
+        }
+
+        $sea = fn () => DB::table('ports')->where('is_active', true)->where('port_type', 'sea');
+
+        if (preg_match('/^[A-Za-z]{5}$/', $phrase) && ($code = $sea()->where('locode', strtoupper($phrase))->value('locode'))) {
+            return $code;
+        }
+
+        $matches = $sea()->where(fn ($q) => $q->where('port_name', $phrase)
+                ->orWhere('port_name', 'like', $phrase . ' (%')
+                ->orWhere('port_name', 'like', '%(' . $phrase . ')'))
+            ->limit(2)->pluck('locode');
+
+        return $matches->count() === 1 ? $matches->first() : null;
     }
 
     /** One token — a code as written, or a city name — to an IATA code. */

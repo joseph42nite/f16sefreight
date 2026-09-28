@@ -47,7 +47,9 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 /** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
 const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
-const CLASSIFICATIONS = ["customer_enquiry", "airline", "clearance", "trucking_road", "other"];
+
+/* Until the server names the portal's folders — see EmailInboxController::classificationsForMode. */
+const CLASSIFICATIONS = ["customer_enquiry", "clearance", "trucking_road", "other"];
 
 /** PRD §5.4 State 4 — mirrors JobController::CANCELLATION_REASONS. */
 const CANCELLATION_REASONS = {
@@ -244,7 +246,9 @@ const WORKSPACE_TABS = [{
     LOST_REASONS,
     CLASSIFICATIONS,
     WORKSPACE_TABS,
-    CANCELLATION_REASONS
+    CANCELLATION_REASONS,
+    FOLDER_LABELS,
+    fileAs: CLASSIFICATIONS
   }),
   computed: _objectSpread(_objectSpread({
     remittanceBillNos() {
@@ -334,6 +338,10 @@ const WORKSPACE_TABS = [{
         chargeable_weight: "Chargeable weight",
         volume_cbm: "Volume (CBM)",
         dimensions: "Dimensions",
+        // Sea's own units, read on a sea mailbox (PRD §5.2.7; GAPS #427).
+        containers: "Containers",
+        teu: "TEU",
+        cargo_type: "FCL / LCL",
         origin: "Origin",
         destination: "Destination"
       };
@@ -624,6 +632,7 @@ const WORKSPACE_TABS = [{
         pieces: "extracted_pieces",
         gross_weight: "extracted_weight",
         volume_cbm: "extracted_volume",
+        cargo_type: "cargo_type",
         origin: "origin_code",
         destination: "dest_code"
       };
@@ -979,6 +988,7 @@ const WORKSPACE_TABS = [{
 
         /* The portal's own vocabulary — see EmailInboxController::classificationsForMode. */
         if (data.classifications) {
+          this.fileAs = data.classifications;
           this.folders = [{
             key: "all",
             label: "All"
@@ -2999,13 +3009,13 @@ var render = function render() {
       value: "unclassified",
       disabled: ""
     }
-  }, [_vm._v("Not sorted yet")]), _vm._v(" "), _vm._l(_vm.CLASSIFICATIONS, function (c) {
+  }, [_vm._v("Not sorted yet")]), _vm._v(" "), _vm._l(_vm.fileAs, function (c) {
     return _c("option", {
       key: c,
       domProps: {
         value: c
       }
-    }, [_vm._v(_vm._s(c.replace(/_/g, " ")))]);
+    }, [_vm._v(_vm._s(_vm.FOLDER_LABELS[c] || c.replace(/_/g, " ")))]);
   })], 2)]) : _vm._e(), _vm._v(" "), _vm.canAssign && _vm.assignees.length ? _c("StaffPicker", {
     staticClass: "fx-convo__assign",
     attrs: {

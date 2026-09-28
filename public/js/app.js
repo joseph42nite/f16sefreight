@@ -9464,6 +9464,15 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+/**
+ * To the sign-in page. A guard REDIRECTS this to the portal's own sign-in, which is intended — but vue-router rejects
+ * a redirected push, and unhandled it logged "Uncaught (in promise) Redirected when going from / to /" on every visit
+ * before signing in (GAPS #420).
+ */
+const toSignIn = () => _router__WEBPACK_IMPORTED_MODULE_0__["default"].push({
+  name: "userlogin"
+}).catch(() => {});
+
 // action types
 const VERIFY_AUTH = "verifyAuth";
 const LOGIN = "login";
@@ -9550,18 +9559,14 @@ const actions = {
         response
       }) => {
         if (response.status == 401) {
-          context.dispatch(LOGOUT).then(() => _router__WEBPACK_IMPORTED_MODULE_0__["default"].push({
-            name: `userlogin`
-          }));
+          context.dispatch(LOGOUT).then(() => toSignIn());
         } else {
           context.commit(SET_ERROR, response.data.errors);
         }
       });
     } else {
       context.commit(PURGE_AUTH);
-      _router__WEBPACK_IMPORTED_MODULE_0__["default"].push({
-        name: `userlogin`
-      });
+      toSignIn();
     }
   },
   [UPDATE_PASSWORD](context, payload) {
@@ -10757,7 +10762,9 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
       }
     }, {
       path: "focus-sea/consol",
-      name: "Consolidation",
+      // Not "Consolidation": that name is air's (/consolidation), and two routes sharing one make navigation by
+      // name land on whichever the router kept (GAPS #420).
+      name: "Sea Consolidation",
       component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("resources_js_src_view_pages_freight_FocusSeaConsol_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/FocusSeaConsol */ "./resources/js/src/view/pages/freight/FocusSeaConsol.vue")),
       meta: {
         userType: 'user'

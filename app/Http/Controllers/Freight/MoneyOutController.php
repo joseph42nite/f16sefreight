@@ -51,10 +51,11 @@ class MoneyOutController extends Controller
             ->selectRaw('COUNT(*) AS n, COALESCE(SUM(i.gross), 0) AS total, COALESCE(SUM(v.amount_paid), 0) AS paid')
             ->first();
 
-        // ③ Supplier statement lines that do not agree with our vouchers.
+        // ③ Supplier statement lines that do not agree with our vouchers — or that match NONE of them: a line whose
+        // reference names no shipment is the one most needing a person, and it was not counted (GAPS #420).
         $statements = DB::table('vendor_statement_lines as l')
             ->join('vendor_statements as s', 's.id', '=', 'l.vendor_statement_id')
-            ->whereIn('s.agent_id', $scope)->whereIn('l.state', ['different', 'not_booked'])
+            ->whereIn('s.agent_id', $scope)->whereIn('l.state', ['different', 'not_booked', 'unmatched'])
             ->selectRaw('COUNT(*) AS n, COALESCE(SUM(ABS(COALESCE(l.difference, l.their_amount))), 0) AS total')
             ->first();
 
@@ -88,7 +89,7 @@ class MoneyOutController extends Controller
                  'count' => (int) $statements->n, 'amount' => round((float) $statements->total, 2),
                  'tone' => (int) $statements->n > 0 ? 'warning' : null,
                  'note' => (int) $statements->n > 0
-                     ? (int) $statements->n . ' supplier line(s) do not agree with our vouchers.'
+                     ? (int) $statements->n . ' supplier line(s) do not agree with, or match none of, our vouchers.'
                      : 'Every supplier statement agrees with our vouchers.'],
                 ['key' => 'due', 'step' => 4, 'label' => 'Due to pay',
                  'count' => (int) $due->vendors, 'amount' => round((float) $due->total, 2),

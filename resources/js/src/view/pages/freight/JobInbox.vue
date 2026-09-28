@@ -760,10 +760,18 @@ const CANCELLATION_REASONS = {
 /** What each classification is called in the folder rail. */
 const FOLDER_LABELS = {
   customer_enquiry: "Enquiries",
+  // The seven the rail showed as raw keys — "client_shipment", "payment_advice" — beside named ones (GAPS #420).
+  client_shipment: "Client shipments",
+  overseas_agent: "Overseas agents",
   airline: "Airline",
   shipping_line: "Shipping line",
   clearance: "Clearance",
   trucking_road: "Trucking",
+  cfs_warehouse: "CFS & warehouse",
+  regulatory: "Regulatory",
+  vendor_invoice: "Supplier bills",
+  payment_advice: "Payments",
+  claim: "Claims",
   other: "Other",
 };
 

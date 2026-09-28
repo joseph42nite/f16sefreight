@@ -377,7 +377,9 @@ export default {
         },
         allAirwayBill(page = 1) {
             this.isLoading = true;
-            ApiService.get("/user/all-airway-bill", {
+            // query(), not get(): get() takes a URL slug and glued this object on as "/[object Object]" — a 404, so
+            // the message history never loaded (GAPS #420).
+            ApiService.query("/user/all-airway-bill", {
                 params: {
                     page: page,
                     perPage: this.perPage

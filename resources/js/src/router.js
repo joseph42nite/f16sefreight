@@ -417,7 +417,9 @@ const router = new Router({
         },
         {
           path: "focus-sea/consol",
-          name: "Consolidation",
+          // Not "Consolidation": that name is air's (/consolidation), and two routes sharing one make navigation by
+          // name land on whichever the router kept (GAPS #420).
+          name: "Sea Consolidation",
           component: () => import("@/view/pages/freight/FocusSeaConsol"),
           meta: { userType: 'user' }
         },

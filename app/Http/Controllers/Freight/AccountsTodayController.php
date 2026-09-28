@@ -143,12 +143,13 @@ class AccountsTodayController extends Controller
         // A supplier says we owe something our vouchers do not agree with.
         $disputed = DB::table('vendor_statement_lines as l')
             ->join('vendor_statements as s', 's.id', '=', 'l.vendor_statement_id')
-            ->whereIn('s.agent_id', $scope)->whereIn('l.state', ['different', 'not_booked'])
+            // Unmatched too — a line naming no shipment needs a person as much as one that disagrees (GAPS #420).
+            ->whereIn('s.agent_id', $scope)->whereIn('l.state', ['different', 'not_booked', 'unmatched'])
             ->count();
 
         if ($disputed > 0) {
             $out[] = ['kind' => 'statement_difference', 'tone' => 'warning',
-                'text' => $disputed . ' supplier statement line(s) do not agree with our vouchers.',
+                'text' => $disputed . ' supplier statement line(s) do not agree with, or match none of, our vouchers.',
                 'to' => ['path' => '/financials', 'query' => ['view' => 'vendors']]];
         }
 
@@ -162,7 +163,8 @@ class AccountsTodayController extends Controller
         if ($uncosted > 0) {
             $out[] = ['kind' => 'no_cost_booked', 'tone' => 'warning',
                 'text' => $uncosted . ' billed shipment(s) have no cost booked, so their margin reads far too high.',
-                'to' => ['path' => '/profitability']];
+                // Where the cost is booked, not where the wrong margin is read (GAPS #420).
+                'to' => ['path' => '/money-out', 'query' => ['stage' => 'to_cost']]];
         }
 
         // A draft nobody has finalized is revenue nobody has billed. PRD §6.2 calls seven days the warning line.

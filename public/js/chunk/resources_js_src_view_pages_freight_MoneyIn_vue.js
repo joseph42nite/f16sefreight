@@ -74,6 +74,14 @@ const STAGE_FILTERS = {
     this.load();
   },
   methods: {
+    /** The stage totals again, quietly — without `loading`, which would hide and remount the register (GAPS #420). */
+    refreshStages() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/money-in/stages").then(({
+        data
+      }) => {
+        this.stages = data.stages || [];
+      }).catch(() => {});
+    },
     load() {
       this.loading = true;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/money-in/stages").then(({
@@ -169,11 +177,26 @@ var render = function render() {
     }
   }, [_vm._v(_vm._s(_vm.error))]) : [_c("p", {
     staticClass: "fx-muted"
-  }, [_vm._v(_vm._s(_vm.current ? _vm.current.note : ""))]), _vm._v(" "), _vm.documentStage ? _c("Billing", {
+  }, [_vm._v(_vm._s(_vm.current ? _vm.current.note : ""))]), _vm._v(" "), _vm.stage === "money_in" && _vm.current && _vm.current.unplaced && _vm.current.unplaced.count ? _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("router-link", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      to: {
+        path: "/financials",
+        query: {
+          view: "bank"
+        }
+      }
+    }
+  }, [_vm._v("\n        Place " + _vm._s(_vm.current.unplaced.count) + " payment(s) from the bank\n      ")])], 1) : _vm._e(), _vm._v(" "), _vm.documentStage ? _c("Billing", {
     attrs: {
       embedded: "",
       "initial-view": _vm.stage === "money_in" ? "receipts" : "all",
       "stage-filter": _vm.stageFilter
+    },
+    on: {
+      changed: _vm.refreshStages
     }
   }) : _vm.stage === "overdue" ? _c("Collections", {
     key: "overdue",

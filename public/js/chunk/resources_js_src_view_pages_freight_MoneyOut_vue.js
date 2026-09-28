@@ -108,6 +108,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     }
   }),
   created() {
+    // A link can open a stage, as Money in's do — Today's "no cost booked" lands on ① (GAPS #420).
+    if (this.$route.query.stage) this.stage = this.$route.query.stage;
     this.load();
   },
   methods: {

@@ -389,6 +389,9 @@ body {
                             border-bottom-color: var(--portal-accent); }
 
 .fx-drawer__body { flex: 1 1 auto; overflow-y: auto; padding: var(--space-4); }
+/* A table wider than the drawer scrolls sideways inside its own section, rather than being clipped at the edge: on a
+   phone the bill's tax and total columns were cut off with no way to reach them (GAPS #420). */
+.fx-drawer__body .fx-section { overflow-x: auto; }
 
 /* §10.4 the commit actions never scroll away. */
 .fx-drawer__foot { flex: 0 0 auto; display: flex; justify-content: flex-end; gap: var(--space-2);
@@ -1103,3 +1106,9 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 .fx-steps__body { flex: 1 1 auto; min-width: 0; }
 .fx-steps__title { font-size: .9375rem; margin: 0 0 var(--space-1);
                    display: flex; align-items: center; gap: var(--space-2); }
+
+/* On a phone every register scrolls sideways inside itself, never the whole page: wide tables pushed the page left
+   and took the header and menu with them (GAPS #420). A table as a block keeps its rows as a table inside. */
+@media (max-width: 767px) {
+  .fx-table { display: block; max-width: 100%; overflow-x: auto; }
+}

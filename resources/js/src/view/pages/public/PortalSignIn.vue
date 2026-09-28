@@ -80,6 +80,10 @@ export default {
   created() {
     document.title = this.portalLabel + " · Sign in";
   },
+  // Signed in, the app's pages set no title of their own — so "Accounts · Sign in" stayed on the tab all day (GAPS #420).
+  beforeDestroy() {
+    document.title = this.portalLabel + " · F16s";
+  },
   methods: {
     signIn() {
       this.busy = true;

@@ -91,7 +91,7 @@ class ReceiptController extends Controller
             // A credit note reduces what they owe; it is never something they pay.
             ->where('i.type', '!=', 'credit_note')
             ->orderBy('i.document_date')
-            ->get(['i.id', 'i.invoice_no', 'i.type', 'i.document_date', 'i.due_date', 'i.currency',
+            ->get(['i.id', 'i.agent_id', 'i.invoice_no', 'i.type', 'i.document_date', 'i.due_date', 'i.currency',
                    'i.grand_total', 'i.amount_paid',
                    DB::raw('ROUND(i.grand_total - i.amount_paid, 2) AS outstanding')]);
 

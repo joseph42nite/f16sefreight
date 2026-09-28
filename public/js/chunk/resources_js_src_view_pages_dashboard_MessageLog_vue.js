@@ -184,7 +184,9 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     },
     allAirwayBill(page = 1) {
       this.isLoading = true;
-      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].get("/user/all-airway-bill", {
+      // query(), not get(): get() takes a URL slug and glued this object on as "/[object Object]" — a 404, so
+      // the message history never loaded (GAPS #420).
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_2__["default"].query("/user/all-airway-bill", {
         params: {
           page: page,
           perPage: this.perPage

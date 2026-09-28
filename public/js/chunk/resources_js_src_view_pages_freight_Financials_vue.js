@@ -1545,7 +1545,7 @@ var render = function render() {
         "currency-code": "INR"
       }
     })], 1)]);
-  }), 0)])]) : _vm._e()] : _vm._e()] : !_vm.rows.length ? _c("p", {
+  }), 0)])]) : _vm._e()] : _vm._e()] : !_vm.rows.length && !["reports", "periods", "bank"].includes(_vm.view) ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("No documents match.")]) : _vm.view === "bank" ? [_c("div", {
     staticClass: "fx-toolbar"
@@ -1689,13 +1689,15 @@ var render = function render() {
         }
       }
     }, [_vm._v("\n                " + _vm._s(d.jev && d.jev.suggested && d.jev.answer !== "client_payment" ? "Ask the client anyway" : "Ask the client") + "\n              ")])]) : _vm._e()]);
-  }), 0)])]) : _vm._e(), _vm._v(" "), _c("table", {
+  }), 0)])]) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-matrix-wrap"
+  }, [_c("table", {
     staticClass: "fx-table"
   }, [_c("thead", [_c("tr", [_c("th", {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Bank reference")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("What the bank wrote")]), _vm._v(" "), _c("th", {
     staticClass: "fx-num",
     attrs: {
       scope: "col"
@@ -1718,9 +1720,16 @@ var render = function render() {
       class: {
         "is-selected": _vm.bankRow && _vm.bankRow.id === t.id
       }
-    }, [_c("td", {
-      staticClass: "identifier"
-    }, [_vm._v(_vm._s(t.plaid_transaction_id || t.id))]), _vm._v(" "), _c("td", {
+    }, [_c("td", [_c("div", [_vm._v(_vm._s(t.counterparty || "Payer not given"))]), _vm._v(" "), _c("div", {
+      staticClass: "fx-muted"
+    }, [_vm._v(_vm._s(t.narration || "—"))]), _vm._v(" "), _c("div", {
+      staticClass: "fx-muted identifier"
+    }, [t.value_date ? _c("Figure", {
+      attrs: {
+        value: t.value_date,
+        kind: "date"
+      }
+    }) : _vm._e(), _vm._v(" · " + _vm._s(t.reference || t.plaid_transaction_id || t.id) + "\n            ")], 1)]), _vm._v(" "), _c("td", {
       staticClass: "fx-num"
     }, [_c("Figure", {
       attrs: {
@@ -1757,7 +1766,7 @@ var render = function render() {
         }
       }
     }, [_vm._v("Unmatch")])]) : _vm._e()]);
-  }), 0)]), _vm._v(" "), !_vm.rows.length ? _c("p", {
+  }), 0)])]), _vm._v(" "), !_vm.rows.length ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Nothing is waiting to be reconciled.")]) : _vm._e(), _vm._v(" "), _vm.bankRow ? _c("section", {
     staticClass: "fx-section"

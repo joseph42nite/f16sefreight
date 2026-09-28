@@ -4,6 +4,13 @@ import JwtService from "@/core/services/jwt.service";
 import { SET_CONTEXT, PURGE_CONTEXT } from "./context.module";
 import { LANDING_ROUTE } from "@/core/config/navigation";
 
+/**
+ * To the sign-in page. A guard REDIRECTS this to the portal's own sign-in, which is intended — but vue-router rejects
+ * a redirected push, and unhandled it logged "Uncaught (in promise) Redirected when going from / to /" on every visit
+ * before signing in (GAPS #420).
+ */
+const toSignIn = () => router.push({ name: "userlogin" }).catch(() => {});
+
 // action types
 export const VERIFY_AUTH = "verifyAuth";
 export const LOGIN = "login";
@@ -91,7 +98,7 @@ const actions = {
         .catch(({ response }) => {
           if (response.status == 401) {
               context.dispatch(LOGOUT)
-                  .then(() => router.push({ name: `userlogin` }));
+                  .then(() => toSignIn());
           } else {
               context.commit(SET_ERROR, response.data.errors);
           }
@@ -99,7 +106,7 @@ const actions = {
     } 
     else {
       context.commit(PURGE_AUTH);
-      router.push({ name: `userlogin` });
+      toSignIn();
     }
   },
   [UPDATE_PASSWORD](context, payload) {

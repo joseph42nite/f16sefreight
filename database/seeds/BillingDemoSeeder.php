@@ -191,6 +191,9 @@ class BillingDemoSeeder extends Seeder
             DB::table('collection_follow_ups')->whereIn('agent_id', $branches)->delete();
 
             $receipts = DB::table('accounts_receipts')->whereIn('agent_id', $branches)->pluck('id');
+            // What those receipts settled, and the bank lines they came from — so only THAT goes back (GAPS #420).
+            $settled = DB::table('accounts_receipt_allocations')->whereIn('receipt_id', $receipts)->distinct()->pluck('invoice_id');
+            $fromBank = DB::table('accounts_receipts')->whereIn('id', $receipts)->whereNotNull('bank_transaction_id')->pluck('bank_transaction_id');
             $payments = DB::table('accounts_payments')->whereIn('agent_id', $branches)->pluck('id');
             $vouchers = DB::table('accounts_purchase_vouchers')->whereIn('agent_id', $branches)->pluck('id');
 
@@ -235,9 +238,14 @@ class BillingDemoSeeder extends Seeder
         }
         AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branches)->update(['is_posted' => false]);
 
-        // Whatever those receipts had settled goes back to being owed.
-        AccountsInvoice::withoutGlobalScopes()->whereIn('agent_id', $branches)->where('amount_paid', '>', 0)
+        // Whatever THOSE receipts had settled goes back to being owed — and nothing else. This reset every paid
+        // invoice in the branch, so FreightDemoSeeder's six months of history, paid through the bank, came back
+        // unpaid on every rebuild: ₹16.7 lakh "overdue" and a client over its limit that had paid every bill (GAPS #420).
+        AccountsInvoice::withoutGlobalScopes()->whereIn('id', $settled ?? [])->where('amount_paid', '>', 0)
             ->update(['amount_paid' => 0, 'status' => DB::raw("CASE WHEN status IN ('paid','partially_paid') THEN 'sent' ELSE status END")]);
+        // The bank lines they were matched from are waiting again, as the demo seeds them.
+        DB::table('bank_transactions')->whereIn('id', $fromBank ?? [])
+            ->update(['reconciliation_status' => 'unreconciled', 'matched_invoice_id' => null, 'updated_at' => now()]);
     }
 
     private function openPeriods(array $branches): void

@@ -748,6 +748,7 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
         this.voidFor = null;
         this.showDocument(data);
         this.load();
+        this.changed();
       }).catch(e => {
         this.actionError = this.messageFor(e);
       }).finally(() => {
@@ -772,6 +773,14 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
      * ⚠️ The document is re-read from the server rather than patched in place — finalizing changes the number, the
      * status and what the buttons may do, and a screen that guesses at those shows a stale document as a live one.
      */
+    /**
+     * Something changed a figure the page around this list counts — Money in's stage totals said "4 to bill" after
+     * one had been finalized (GAPS #420). Only after an action, never on a plain load: the page hides this list while
+     * it reloads, so announcing every load would reload it for ever.
+     */
+    changed() {
+      this.$emit("changed");
+    },
     commit(call, refreshRegister = false) {
       this.busy = true;
       this.actionError = null;
@@ -780,6 +789,7 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
       }) => {
         if (data && data.document) this.showDocument(data);else this.openById(this.document.id);
         if (refreshRegister) this.load();
+        this.changed();
       }).catch(e => {
         const data = e.response && e.response.data;
 
@@ -910,6 +920,7 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
       }) => {
         this.raise = null;
         this.load();
+        this.changed();
         // Straight into the drawer: a document raised and then hunted for in the register is a document
         // somebody forgets to finalize.
         this.openById(data.id);
@@ -962,6 +973,10 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
       this.receipt.payer_id = Number(q.receipt_for);
       this.remittanceDecisionId = q.remittance ? Number(q.remittance) : null;
       this.loadOpenDocuments().then(() => {
+        // The branch the money is received into is the bill's own. Opened from a mail, the form exists before this
+        // page has read its branches, so it had none — and "Record it" stayed disabled with no reason given (GAPS #420).
+        const billed = this.openDocuments.find(d => bills.includes(d.id));
+        if (billed && billed.agent_id) this.receipt.agent_id = billed.agent_id;
         this.openDocuments.filter(d => bills.includes(d.id) && (d.currency || "INR") === "INR").forEach(d => {
           this.$set(this.allocation, d.id, Number(d.outstanding));
         });
@@ -984,6 +999,7 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
       } : {})).then(() => {
         this.receipt = null;
         this.showView("receipts");
+        this.changed();
       }).catch(e => {
         this.actionError = this.messageFor(e);
       }).finally(() => {
@@ -1008,6 +1024,7 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
       }).then(() => {
         this.irnFor = null;
         this.load();
+        this.changed();
       }).catch(e => {
         this.actionError = this.messageFor(e);
       }).finally(() => {

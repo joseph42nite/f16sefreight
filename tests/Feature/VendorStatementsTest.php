@@ -114,6 +114,24 @@ class VendorStatementsTest extends TestCase
         $this->assertSame($differs->id, $lines['176-10000002']['matched_job_id']);
     }
 
+    /**
+     * 🔴 A line that matches NONE of our vouchers is the one most needing a person — Money out ③ and Today counted only
+     * the lines that disagree, and showed "0 to check" beside a statement with an unmatched line on it (GAPS #420).
+     */
+    public function test_an_unmatched_line_is_counted_as_one_to_check(): void
+    {
+        $this->shipment('176-10000001', $this->airline, 44000);
+        $this->import($this->airline, "AWB No,Description,Amount\n17610000001,Air freight,44000.00\n176-99999999,Air freight,2000.00\n");
+
+        $stage = collect($this->as($this->accounts)->getJson($this->url('/money-out/stages'))->assertOk()->json('stages'))
+            ->firstWhere('key', 'statements');
+        $this->assertSame([1, 2000.0], [$stage['count'], (float) $stage['amount']]);
+
+        $today = collect($this->getJson($this->url('/accounts/today'))->assertOk()->json('exceptions'))
+            ->first(fn ($e) => str_contains($e['text'], 'supplier statement line'));
+        $this->assertStringStartsWith('1 supplier statement line(s)', $today['text'] ?? '');
+    }
+
     public function test_a_period_sent_again_replaces_it_and_comparing_again_picks_up_a_voucher_booked_since(): void
     {
         $job = $this->shipment('176-20000001');

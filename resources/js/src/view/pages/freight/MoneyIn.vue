@@ -38,6 +38,17 @@
       <p class="fx-muted">{{ current ? current.note : "" }}</p>
 
       <!--
+        ④ counts bank lines nobody has placed, and placing them is bank matching — which had no way in from this desk:
+        it lives on Financials, taken off the accounts rail on the promise that each of its views is reached from one
+        of the five surfaces. This one was not (GAPS #420).
+      -->
+      <div v-if="stage === 'money_in' && current && current.unplaced && current.unplaced.count" class="fx-toolbar">
+        <router-link class="fx-btn fx-btn--primary" :to="{ path: '/financials', query: { view: 'bank' } }">
+          Place {{ current.unplaced.count }} payment(s) from the bank
+        </router-link>
+      </div>
+
+      <!--
         ⚠️ The stage renders the register that ALREADY owns it. Merging the pages was navigation, not a rewrite —
         every figure below is served by the same endpoint it was before, which is what lets the money fixture
         prove the merge changed nothing.
@@ -50,6 +61,7 @@
         embedded
         :initial-view="stage === 'money_in' ? 'receipts' : 'all'"
         :stage-filter="stageFilter"
+        @changed="refreshStages"
       />
       <Collections v-else-if="stage === 'overdue'" key="overdue" embedded />
     </template>
@@ -95,6 +107,12 @@ export default {
     this.load();
   },
   methods: {
+    /** The stage totals again, quietly — without `loading`, which would hide and remount the register (GAPS #420). */
+    refreshStages() {
+      ApiService.get("/money-in/stages")
+        .then(({ data }) => { this.stages = data.stages || []; })
+        .catch(() => {});
+    },
     load() {
       this.loading = true;
       ApiService.get("/money-in/stages")

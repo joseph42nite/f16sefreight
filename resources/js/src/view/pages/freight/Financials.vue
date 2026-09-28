@@ -333,7 +333,12 @@
       </template>
     </template>
 
-    <p v-else-if="!rows.length" class="fx-muted">No documents match.</p>
+    <!--
+      🔴 Only for the views that LIST documents. Reports and periods do not read `rows`, and bank has its own empty
+      message — but this sat in the chain before all three, so whenever the list happened to be empty (the Boss's, on
+      opening Financials) Reports showed "No documents match." and never a P&L (GAPS #420).
+    -->
+    <p v-else-if="!rows.length && !['reports', 'periods', 'bank'].includes(view)" class="fx-muted">No documents match.</p>
 
     <!-- ── Bank reconciliation (PRD §6.5) ────────────────────────────────── -->
     <template v-else-if="view === 'bank'">
@@ -401,10 +406,12 @@
         </table>
       </section>
 
+      <!-- Its own sideways scroll: on a phone the whole page slid left to reach "Find the invoice" (GAPS #420). -->
+      <div class="fx-matrix-wrap">
       <table class="fx-table">
         <thead>
           <tr>
-            <th scope="col">Bank reference</th>
+            <th scope="col">What the bank wrote</th>
             <th class="fx-num" scope="col">Amount</th>
             <th scope="col">Status</th>
             <th scope="col">Settled against</th>
@@ -413,7 +420,14 @@
         </thead>
         <tbody>
           <tr v-for="t in rows" :key="'b-' + t.id" :class="{ 'is-selected': bankRow && bankRow.id === t.id }">
-            <td class="identifier">{{ t.plaid_transaction_id || t.id }}</td>
+            <!-- Who paid and what the bank wrote — what a person matches by. The feed's own id alone said neither. -->
+            <td>
+              <div>{{ t.counterparty || "Payer not given" }}</div>
+              <div class="fx-muted">{{ t.narration || "—" }}</div>
+              <div class="fx-muted identifier">
+                <Figure v-if="t.value_date" :value="t.value_date" kind="date" /> · {{ t.reference || t.plaid_transaction_id || t.id }}
+              </div>
+            </td>
             <td class="fx-num"><Figure :value="t.amount" kind="currency" currency-code="INR" /></td>
             <td><StatusChip :value="t.reconciliation_status" /></td>
             <td>
@@ -427,6 +441,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
       <p v-if="!rows.length" class="fx-muted">Nothing is waiting to be reconciled.</p>
 
       <section v-if="bankRow" class="fx-section">

@@ -204,4 +204,106 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | The SEA rubric — its own, not air's (owner, 2026-09-28)
+    |--------------------------------------------------------------------------
+    |
+    | 🔴 "Those types of emails will be different." A sea desk's day is shipping instructions,
+    | VGM, booking confirmations and rollovers, container release and empty return, arrival
+    | notices and delivery orders, detention and demurrage — none of which the rubric above was
+    | written around. A mailbox whose owner works FocusSea is read against THIS (MailboxMode);
+    | an air mailbox, and a mixed one, against the rubric above.
+    |
+    | ⚠️ Same option KEYS as above, different prose. The keys are the routing vocabulary
+    | (MailIntentClassifier::route()), and the folders are the same folders on both desks; what
+    | differs is what each option means in a sea mail, which is what the model reads. There is
+    | no `airline` sender here: a sea desk has none.
+    |
+    | ⚠️ Measured on its own set: `php artisan mail:rubric-check --mode=sea`. Bump its OWN version
+    | on every wording change — it is stamped on each decision like the air one.
+    |
+    | sea-2026-09-28  — first sea rubric. 25/25 on its own set.
+    | sea-2026-09-28b — the EIR sentence on `transporter` (an empty-return mail read at 0.43).
+    */
+    'sea' => [
+        'rubric_version' => 'sea-2026-09-28b',
+
+        'questions' => [
+
+            'sender' => [
+                // Eight options, so a real reading sits a little higher than across air's nine.
+                'min_confidence' => (float) env('MAIL_INTENT_SEA_SENDER_FLOOR', 0.38),
+
+                'instructions' => 'This email arrived in the mailbox of the ocean freight desk of a freight forwarder '
+                    . '— the people who book containers and LCL cargo on ships for their clients. Who wrote it? Decide '
+                    . 'from their role in the ocean shipping chain, not from the subject.',
+
+                'criteria' => [
+                    'client' => 'An exporter, importer, shipper, consignee or manufacturer whose own cargo we move or '
+                        . 'might move by sea — including someone writing to us for the first time, and their staff '
+                        . 'sending shipping instructions, VGM or corrections to a draft bill of lading.',
+                    'overseas_agent' => 'A freight forwarder or consolidator in another country who works the other '
+                        . 'end of our sea shipments: sending us cargo, receiving ours, or asking our rates to quote '
+                        . 'their own client. A pre-alert giving house bill of lading (HBL) numbers for cargo they '
+                        . 'have shipped to us comes from the agent, even when it names the vessel or the carrier.',
+                    'shipping_line' => 'An ocean carrier, NVOCC or its liner agent: the company that operates the vessel '
+                        . 'and issues the master bill of lading. It confirms or rolls over bookings, sends sailing '
+                        . 'schedules and cut-offs, releases empty containers, and sends arrival notices, delivery '
+                        . 'orders, and freight, detention and demurrage invoices for its own bills.',
+                    'customs_broker' => 'A customs broker or CHA — a firm that files shipping bills and bills of entry '
+                        . 'and clears cargo, not the customs authority itself.',
+                    // ⚠️ The EIR sentence is measured: "empty returned, EIR attached" read as the haulier at only
+                    // 0.43 without it (sea-2026-09-28).
+                    'transporter' => 'A container haulier, trailer or trucking company or driver: placing a trailer, '
+                        . 'moving a container between a factory, CFS, ICD and the port, returning an empty, and the '
+                        . 'e-way bill for the run. A haulier reporting that it returned a box sends the EIR '
+                        . '(equipment interchange receipt) as its proof.',
+                    'cfs_warehouse' => 'A container freight station, ICD, container terminal, empty yard or depot, or '
+                        . 'bonded warehouse — whoever physically holds the container or cargo between legs: gate-in '
+                        . 'and gate-out, stuffing and destuffing, free storage days.',
+                    'authority' => 'A government or regulatory body: customs itself, ICEGATE, a port authority or '
+                        . 'port trust, DGFT, or a tax authority.',
+                    'outsider' => 'Nobody in the shipping chain for our cargo: a company selling us something, a '
+                        . 'newsletter, a recruiter or job applicant, a bank, a software vendor, our own staff, or an '
+                        . 'automated notice from a system we use.',
+                ],
+            ],
+
+            'intent' => [
+                'min_confidence' => (float) env('MAIL_INTENT_SEA_INTENT_FLOOR', 0.50),
+
+                'instructions' => 'What does the sender of this email want from our ocean freight desk? Decide from '
+                    . 'what they are asking for, not from who they are.',
+
+                'criteria' => [
+                    'wants_a_price' => 'To find out what we would charge to move cargo by sea: a rate for FCL containers '
+                        . '(how many and what size) or LCL cargo (volume and weight), between two ports, with a '
+                        . 'commodity or a ready date — or chasing such a quote we have not sent yet. A container '
+                        . 'weight, VGM or volume mentioned about a box already booked is NOT this.',
+                    'wants_to_book' => 'To have us move a specific sea shipment: a booking request, shipping '
+                        . 'instructions (SI), a VGM declaration sent so the box can load, or a nomination of cargo '
+                        . 'to us — the price already settled or not in question.',
+                    'operational_update' => 'To tell us, or ask us, how a sea shipment already underway is going: a '
+                        . 'booking confirmation, a sailing schedule, cut-off, ETD or ETA, a rollover to a later '
+                        . 'vessel, container release or empty pickup, gate-in or loading, a draft bill of lading to '
+                        . 'check or correct, a telex or original release, an arrival notice, a delivery order, or a '
+                        . 'customs query or hold.',
+                    'wants_money' => 'To be paid by us, or to tell us what we owe: an ocean freight invoice, local '
+                        . 'charges or THC, a detention or demurrage bill, delivery order charges, a statement of '
+                        . 'account or a payment reminder.',
+                    'sending_money' => 'To tell us that money has been paid to us, or is about to be: a remittance '
+                        . 'advice, a payment reference or UTR, a cheque or transfer confirmation, a TDS certificate.',
+                    'has_a_problem' => 'To raise something that went wrong and is being held against someone: cargo or '
+                        . 'a container damaged, short or lost, a shipment rolled or delayed with a loss, an insurance '
+                        . 'claim, a penalty, or a dispute over detention, demurrage or an amount already billed.',
+                    'nothing_for_us' => 'Nothing to do with a shipment of ours: marketing, a newsletter, an industry '
+                        . 'bulletin, a survey, a sales pitch, a job application, an internal note, or an automated '
+                        . 'system message. Also a fragment so short that what it is about cannot be told from it.',
+                ],
+            ],
+
+        ],
+    ],
+
 ];

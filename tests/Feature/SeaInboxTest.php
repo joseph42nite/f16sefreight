@@ -151,6 +151,48 @@ class SeaInboxTest extends TestCase
         $this->assertNull($updates->draft($thread->fresh(), 'draft_awb'));
     }
 
+    /**
+     * 🔴 A sea mailbox is read against SEA's rubric, not air's (owner, 2026-09-28: "not copying exactly from air —
+     * those types of emails will be different"). Checked on the request Jev receives, and on the stamp.
+     */
+    public function test_a_sea_mailbox_is_read_against_the_sea_rubric(): void
+    {
+        config(['mail_intent.enabled' => true, 'services.openrouter.key' => 'smc-test-key']);
+        $asked = [];
+        \Illuminate\Support\Facades\Http::preventStrayRequests();
+        \Illuminate\Support\Facades\Http::fake(function ($request) use (&$asked) {
+            $asked[] = $request->data()['questions'];
+
+            return \Illuminate\Support\Facades\Http::response(['model' => 'typesafe/jev-1.13', 'provider' => 'TypeSafe',
+                'answers' => [
+                    'sender' => ['type' => 'choice', 'choice' => 'shipping_line', 'probabilities' => ['shipping_line' => 0.95], 'confidence' => 0.95],
+                    'intent' => ['type' => 'choice', 'choice' => 'operational_update', 'probabilities' => ['operational_update' => 0.95], 'confidence' => 0.95],
+                ],
+                'usage' => ['input_tokens' => 1450, 'output_tokens' => 40, 'cost' => 0.00006]]);
+        });
+        $unknown = function (string $subject): EmailThread {
+            $id = '<' . uniqid('', true) . '@smc.test>';
+            app(MessageIngestor::class)->ingest($this->mailbox, [new NormalisedMessage(
+                messageId: $id, threadId: null, from: 'docs@carrier-smc.test', to: [$this->mailbox->email_address], cc: [], bcc: [],
+                subject: $subject, snippet: 'Your booking has been rolled over to the next vessel.', receivedAt: now(), direction: 'inbound',
+            )]);
+
+            return EmailThread::withoutGlobalScopes()->where('thread_key', DB::table('email_messages')->where('message_id', $id)->value('thread_key'))->first();
+        };
+
+        $this->desk(['sea']);
+        $sea = $unknown('Rollover notice MAEU1');
+        $this->assertSame('shipping_line', $sea->classification);
+        $this->assertSame(config('mail_intent.sea.rubric_version'), $sea->auto_classification_rubric);
+        $this->assertArrayNotHasKey('airline', $asked[0]['sender']['criteria'], 'a sea desk has no airline sender');
+        $this->assertStringContainsString('shipping instructions (SI)', $asked[0]['intent']['criteria']['wants_to_book']);
+
+        $this->desk(['air']);
+        $air = $unknown('Rollover notice MAEU2');
+        $this->assertSame(config('mail_intent.rubric_version'), $air->auto_classification_rubric);
+        $this->assertArrayHasKey('airline', $asked[1]['sender']['criteria']);
+    }
+
     public function test_fcl_or_lcl_can_be_confirmed_onto_the_enquiry(): void
     {
         $this->desk(['sea']);

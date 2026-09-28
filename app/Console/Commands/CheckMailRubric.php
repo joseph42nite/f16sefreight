@@ -39,7 +39,7 @@ use RuntimeException;
  */
 class CheckMailRubric extends Command
 {
-    protected $signature = 'mail:rubric-check {--json : machine-readable output}';
+    protected $signature = 'mail:rubric-check {--mode= : "sea" replays the sea set against the sea rubric} {--json : machine-readable output}';
 
     protected $description = 'Replay the mail-filing acceptance set against the live decision model';
 
@@ -93,8 +93,46 @@ class CheckMailRubric extends Command
         ['claim', 'Container damaged at Jebel Ali', 'Container TCLU1234567 arrived at Jebel Ali with water damage to 12 cartons. We are lodging a claim; please notify the carrier and your insurer.'],
     ];
 
+    /**
+     * The sea desk's set, against the SEA rubric (owner, 2026-09-28: "those types of emails will be different").
+     * Shipping instructions, VGM, rollovers, container release, empty return, arrival notices, delivery orders,
+     * detention and demurrage — the mail a sea desk lives in, which the shared set barely touches.
+     */
+    private const SEA_SAMPLES = [
+        ['customer_enquiry', 'Rate request 2x40HC Nhava Sheva to Jebel Ali', 'Please quote FCL 2x40HC INNSA-AEJEA, ready 5 Oct, general cargo, about 18 MT per box.'],
+        ['customer_enquiry', 'LCL Chennai to Hamburg', 'Need your LCL rate for 3.5 cbm, 6 pallets, 1200 kgs, Chennai to Hamburg, cargo ready next week.'],
+        ['customer_enquiry', 'Import rate DEHAM-INNSA', 'We have a client shipping 1x40HC Hamburg to Nhava Sheva every month. Please quote your destination charges so we can offer.'],
+        ['customer_enquiry', 'Re: FCL quote Mundra-Felixstowe', 'Still waiting for your rate on the 3x40HC Mundra to Felixstowe. Our cargo is ready on the 10th.'],
+        ['client_shipment', 'Booking - 1x20GP Mundra to Rotterdam', 'Please book 1x20GP for our shipment Mundra to Rotterdam at the agreed rate. Cargo ready on the 3rd; shipping instructions attached.'],
+        ['client_shipment', 'SI for booking MAEU261234567', 'Please find our shipping instructions for booking MAEU261234567: shipper, consignee, notify, 20 packages, marks as per invoice.'],
+        // A VGM figure about a booked box is NOT a price request — the sea twin of air's "about 480 kg".
+        ['client_shipment', 'VGM - MSKU6874230', 'VGM for container MSKU6874230 under booking MAEU261234567: 24,380 kg, method 1. Signed declaration attached.'],
+        ['client_shipment', 'Draft BL corrections', 'Please find our corrections to the draft bill of lading for container MSKU6874230. Kindly issue the final BL once they are made.'],
+        ['client_shipment', 'Telex release please', 'Payment is done from our buyer. Please arrange the telex release for BL SHNSA7781 today.'],
+        ['shipping_line', 'Booking confirmation MAEU261234567', 'Booking MAEU261234567 confirmed: 2x40HC, MAERSK KOLKATA V.412W, ETD Nhava Sheva 04/10, SI cut-off 01/10 12:00, VGM cut-off 02/10.'],
+        ['shipping_line', 'Rollover notice MAEU261234567', 'Due to space constraints your booking MAEU261234567 has been rolled over to MAERSK KENSINGTON V.415W, ETD 11/10.'],
+        ['shipping_line', 'Empty release MAEU261234567', 'Empty release issued for booking MAEU261234567: 2x40HC, pick up from Speedy CFS empty yard, valid until 03/10.'],
+        ['shipping_line', 'Arrival notice MSC Gulsun V.245E', 'Arrival notice: vessel MSC Gulsun V.245E, ETA JNPT 24/09. B/L MEDU1234567, 1x40HC. Please arrange the delivery order before discharge.'],
+        ['vendor_invoice', 'Freight invoice B/L MEDU1234567', 'Please find attached our ocean freight invoice OF-8812 for B/L MEDU1234567, USD 2,450. Kindly remit so the original B/L can be released.'],
+        ['vendor_invoice', 'Detention invoice MSKU6874230', 'Container MSKU6874230 returned 6 days after free time. Please find our detention invoice DT-4471 for INR 38,400.'],
+        ['overseas_agent', 'Pre-alert HBL SHNSA7781', 'Pre-alert: HBL SHNSA7781, 2x40HC on CMA CGM Tage V.0AB12, ETA Nhava Sheva 30/09. Documents attached. Please arrange clearance and delivery.'],
+        ['trucking_road', 'Container movement JNPT to Bhiwandi', 'Trailer placed for container TCLU1234567 at JNPT; it will reach the Bhiwandi warehouse by 6 pm. E-way bill attached.'],
+        ['trucking_road', 'Empty returned TCLU1234567', 'Empty container TCLU1234567 returned to the Maersk yard at Nhava Sheva this morning. EIR copy attached.'],
+        ['cfs_warehouse', 'Destuffing done MSKU1234567', 'Container MSKU1234567 destuffed at our CFS today, 40 packages in good order. Free storage till 2 Oct.'],
+        ['clearance', 'Shipping bill filed 4455667', 'We have filed shipping bill 4455667 for your container MSKU6874230. Please send the VGM declaration and the final invoice copy.'],
+        ['regulatory', 'ICEGATE: IGM 2233445 filed', 'IGM 2233445 for vessel MSC Gulsun V.245E at INNSA has been filed and accepted by customs.'],
+        ['payment_advice', 'Payment for BL SHNSA7781', 'We have paid INR 1,86,000 against your invoice INV-DEMOBOM-26-0144 for BL SHNSA7781. UTR ICIC2026092811223.'],
+        ['claim', 'Container damaged at Jebel Ali', 'Container TCLU1234567 arrived at Jebel Ali with water damage to 12 cartons. We are lodging a claim; please notify the carrier and your insurer.'],
+        ['claim', 'Disputing demurrage on BL MEDU1234567', 'We do not accept the demurrage on BL MEDU1234567 — the delay was the terminal congestion, not ours. Please withdraw the charge.'],
+        ['other', 'Webinar: the future of container shipping', 'Join our webinar next week on how digital freight platforms are changing container shipping.'],
+    ];
+
     public function handle(JevClient $jev, MailIntentClassifier $classifier): int
     {
+        $mode = $this->option('mode') === 'sea' ? 'sea' : null;
+        $rubric = MailIntentClassifier::rubricFor($mode);
+        $samples = $mode === 'sea' ? self::SEA_SAMPLES : self::SAMPLES;
+
         if (! $jev->configured()) {
             $this->error('The decision model is not configured (no OPENROUTER_API_KEY).');
 
@@ -103,7 +141,7 @@ class CheckMailRubric extends Command
 
         $questions = array_map(
             fn (array $q) => JevClient::choice($q['instructions'], $q['criteria']),
-            config('mail_intent.questions')
+            $rubric['questions']
         );
         // The real routing and the real confidence floors — measuring anything else would be
         // measuring a copy of the logic that can drift from the one in use.
@@ -115,7 +153,7 @@ class CheckMailRubric extends Command
         $ms = 0;
         $tokens = 0;
 
-        foreach (self::SAMPLES as [$expected, $subject, $body]) {
+        foreach ($samples as [$expected, $subject, $body]) {
             try {
                 $answer = $jev->ask(['from' => 'someone@unknown.test', 'subject' => $subject, 'body' => $body], $questions, 20);
             } catch (RuntimeException $e) {
@@ -124,7 +162,7 @@ class CheckMailRubric extends Command
                 return self::FAILURE;
             }
 
-            $got = $read->invoke($classifier, $answer['answers'])['classification'] ?? '(refused)';
+            $got = $read->invoke($classifier, $answer['answers'], $mode)['classification'] ?? '(refused)';
             $hit = $got === $expected;
             $passed += $hit ? 1 : 0;
             $cost += $answer['usage']['cost_usd'];
@@ -143,11 +181,11 @@ class CheckMailRubric extends Command
             ];
         }
 
-        $n = count(self::SAMPLES);
+        $n = count($samples);
 
         if ($this->option('json')) {
             $this->line(json_encode([
-                'rubric' => config('mail_intent.rubric_version'), 'model' => config('mail_intent.model'),
+                'rubric' => $rubric['version'], 'model' => config('mail_intent.model'),
                 'passed' => $passed, 'total' => $n, 'cost_usd' => round($cost, 6), 'results' => $rows,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
@@ -166,7 +204,7 @@ class CheckMailRubric extends Command
         $this->newLine();
         $this->line(sprintf(
             '<comment>%s</comment> · rubric %s · %d/%d · US$%.6f (%.6f each) · %d tokens in · %dms average',
-            $passed === $n ? 'PASS' : 'FAIL', config('mail_intent.rubric_version'),
+            $passed === $n ? 'PASS' : 'FAIL', $rubric['version'],
             $passed, $n, $cost, $cost / $n, (int) ($tokens / $n), (int) ($ms / $n)
         ));
 

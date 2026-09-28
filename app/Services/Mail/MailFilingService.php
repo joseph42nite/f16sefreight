@@ -215,7 +215,7 @@ class MailFilingService
             : ($this->firstOf($this->knownClientClassification($message), 'client')
                 ?? $this->firstOf($this->globalClassificationFor($message->from), 'directory')
                 ?? $this->firstOf($this->patternClassification($message, $haystack), 'pattern')
-                ?? $this->model($message)
+                ?? $this->model($message, $transportMode)
                 ?? ['classification' => 'other', 'source' => 'none']);
 
         return $decision + [
@@ -307,9 +307,10 @@ class MailFilingService
      * tenant being out of AI budget or credits, and the call not coming back. All of them mean
      * the same thing to this chain: nobody decided, so the mail falls through to `other`.
      */
-    private function model(EmailMessage $message): ?array
+    private function model(EmailMessage $message, ?string $transportMode = null): ?array
     {
-        $answer = app(MailIntentClassifier::class)->classify($message);
+        // The desk chooses the rubric: a sea mailbox is read against sea's own (GAPS #428).
+        $answer = app(MailIntentClassifier::class)->classify($message, $transportMode);
 
         return $answer === null ? null : $answer + ['source' => 'model'];
     }

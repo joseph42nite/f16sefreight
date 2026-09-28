@@ -100,7 +100,21 @@ class MailIntentClassifier
      * @return array{classification: string, confidence: float, rubric: string}|null
      *         NULL when the model was not asked, or could not be used.
      */
-    public function classify(EmailMessage $message): ?array
+    /**
+     * The rubric a mailbox is read against: sea's own on a sea desk (owner, 2026-09-28 — "those types of
+     * emails will be different"), otherwise the shared one. Keyed the same, so route() serves both.
+     *
+     * @return array{version: string, questions: array}
+     */
+    public static function rubricFor(?string $mode): array
+    {
+        return $mode === 'sea' && config('mail_intent.sea')
+            ? ['version' => (string) config('mail_intent.sea.rubric_version'), 'questions' => config('mail_intent.sea.questions')]
+            : ['version' => (string) config('mail_intent.rubric_version'), 'questions' => config('mail_intent.questions')];
+    }
+
+    /** @param ?string $mode the mailbox's desk (MailboxMode) — it chooses the rubric */
+    public function classify(EmailMessage $message, ?string $mode = null): ?array
     {
         if (! config('mail_intent.enabled') || ! $this->jev->configured()) {
             return null;
@@ -131,7 +145,7 @@ class MailIntentClassifier
             // Two separate calls would double the bill and the latency for nothing.
             $answer = $this->jev->ask($this->state($message), array_map(
                 fn (array $q) => JevClient::choice($q['instructions'], $q['criteria']),
-                config('mail_intent.questions')
+                self::rubricFor($mode)['questions']
             ));
         } catch (RuntimeException $e) {
             $this->credits->refund($transaction);
@@ -144,7 +158,7 @@ class MailIntentClassifier
             'agent_id' => $message->agent_id, 'company_id' => $company->id,
         ]);
 
-        return $this->read($answer['answers'] ?? []);
+        return $this->read($answer['answers'] ?? [], $mode);
     }
 
     /**
@@ -169,10 +183,11 @@ class MailIntentClassifier
      *
      * @return array{classification: string, confidence: float, rubric: string}|null
      */
-    private function read(array $answers): ?array
+    private function read(array $answers, ?string $mode = null): ?array
     {
-        [$sender, $senderConfidence] = $this->choiceIn($answers, 'sender');
-        [$intent, $intentConfidence] = $this->choiceIn($answers, 'intent');
+        $rubric = self::rubricFor($mode);
+        [$sender, $senderConfidence] = $this->choiceIn($answers, 'sender', $rubric);
+        [$intent, $intentConfidence] = $this->choiceIn($answers, 'intent', $rubric);
 
         // An option outside the rubric cannot be routed — and a missing answer is a contract
         // change, not a low-confidence one, so it is refused rather than guessed around.
@@ -185,8 +200,8 @@ class MailIntentClassifier
         // across seven intents. One shared floor silently made the longer list the stricter test
         // and dropped six correct, obvious sender readings in a row. TypeSafe say it directly —
         // never carry a threshold tuned on one question over to another.
-        $senderSure = $senderConfidence >= $this->floorFor('sender');
-        $intentSure = $intentConfidence >= $this->floorFor('intent');
+        $senderSure = $senderConfidence >= $this->floorFor('sender', $rubric);
+        $intentSure = $intentConfidence >= $this->floorFor('intent', $rubric);
 
         $folder = match (true) {
             $senderSure && $intentSure => $this->route($sender, $intent),
@@ -198,7 +213,7 @@ class MailIntentClassifier
         return [
             'classification' => $folder,
             'confidence' => round(min($senderConfidence, $intentConfidence), 3),
-            'rubric' => (string) config('mail_intent.rubric_version'),
+            'rubric' => $rubric['version'],
         ];
     }
 
@@ -248,10 +263,9 @@ class MailIntentClassifier
     }
 
     /** A question's own floor, or the shared one when it does not set one. */
-    private function floorFor(string $question): float
+    private function floorFor(string $question, array $rubric): float
     {
-        return (float) (config("mail_intent.questions.{$question}.min_confidence")
-            ?? config('mail_intent.min_confidence'));
+        return (float) ($rubric['questions'][$question]['min_confidence'] ?? config('mail_intent.min_confidence'));
     }
 
     /**
@@ -259,11 +273,11 @@ class MailIntentClassifier
      *
      * @return array{0: ?string, 1: float} the option and its confidence, or [null, 0.0]
      */
-    private function choiceIn(array $answers, string $question): array
+    private function choiceIn(array $answers, string $question, array $rubric): array
     {
         $answer = $answers[$question] ?? [];
         $choice = $answer['choice'] ?? null;
-        $allowed = config("mail_intent.questions.{$question}.criteria");
+        $allowed = $rubric['questions'][$question]['criteria'] ?? [];
 
         return is_string($choice) && array_key_exists($choice, $allowed)
             ? [$choice, (float) ($answer['confidence'] ?? 0)]

@@ -487,6 +487,10 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // A DRY RUN. Read-only and open to everyone who may view the manifest.
     Route::get('/jobs/{job}/manifest-check', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'check']);
     Route::post('/jobs/{job}/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'store']);
+    // What the gateway answered, recorded by the operator — cleared or rejected (GAPS #429).
+    Route::post('/manifest-filings/{filing}/outcome', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'outcome']);
+    // Whether Auto File can run, and what is missing. Key names only, never values.
+    Route::get('/icegate/status', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'connection']);
 
     // 🔒 Gated per action, not per group: viewFinancials admits boss read-only, while
     // finalizeInvoice and postLedger are `accounts` ONLY — not even the Boss. The role

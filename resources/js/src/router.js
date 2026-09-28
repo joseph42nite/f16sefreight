@@ -432,6 +432,13 @@ const router = new Router({
           meta: { userType: 'user' }
         },
         {
+          // CGM / SCMTR filings with ICEGATE — PRD §5.8, ui_ux_guide §9.11 (GAPS #429).
+          path: "manifest-filing",
+          name: "Manifest Filing",
+          component: () => import("@/view/pages/freight/ManifestFiling"),
+          meta: { userType: 'user', designations: ['operations', 'pricing', 'boss'], minTier: 'tactical' }
+        },
+        {
           path: "sales",
           name: "Sales",
           component: () => import("@/view/pages/freight/SalesDashboard"),

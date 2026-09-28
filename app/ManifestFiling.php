@@ -6,20 +6,28 @@ use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * A manifest transmitted to ICEGATE against one job.
+ * A manifest filed with ICEGATE against one job — PRD §5.8 CGM Filing.
  *
- * ❓ **The table is FIVE columns — id, agent_id, job_id, icegate_id, timestamps —
- * and PRD.md §5.8 describes a screen needing far more:** filing type (CGM/SCMTR/IGM),
- * transaction status, custom-house code, submission date/time, amendment number,
- * sending method (Auto File / Manual / Email) and a status log. None of those have
- * columns. Built to the schema doc, which is the authority; raised in GAPS.md #26
- * rather than invented here.
+ * `status` uses tab 11's words (not_filed · submitted · cleared · rejected) and is copied onto the bill's
+ * `sea_shipment_details.filing_status`, so the bill and the filing never disagree. `status_log` is append-only.
  */
 class ManifestFiling extends Model
 {
     use BelongsToTenant;
 
-    protected $fillable = ['agent_id', 'job_id', 'icegate_id'];
+    public const TYPES = ['CGM', 'SCMTR'];
+    public const METHODS = ['auto', 'manual', 'email'];
+    public const OUTCOMES = ['cleared', 'rejected'];
+
+    protected $fillable = [
+        'agent_id', 'job_id', 'icegate_id', 'filing_type', 'custom_house_code', 'amendment_no',
+        'filed_at', 'sending_method', 'status', 'status_log',
+    ];
+
+    protected $casts = [
+        'filed_at'   => 'datetime',
+        'status_log' => 'array',
+    ];
 
     public function job()
     {

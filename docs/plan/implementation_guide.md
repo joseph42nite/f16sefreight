@@ -1640,8 +1640,24 @@ shown. The demo gains one sea consol so every screen has something real on it.
 ### 12.3 Outputs — the BL print and the filing screen
 - **BL print** (House and Master). The PRD gives the fields and limits but no layout; the layout is **proposed** from
   the fields the form holds and shown to the owner before it is called done
-- **ICEGATE filing screen** — PRD §5.8's CGM/SCMTR grid and *Submit CGM Data* modal. ⚠️ **Transmission is not built**:
-  the message format and DSC signing need ICEGATE's own specification and credentials, as the e-invoice needs the GSP's
+- **ICEGATE filing screen** 🟢 *built 2026-09-28 (GAPS #429)* — `/manifest-filing` on FocusSea: PRD §5.8's CGM/SCMTR
+  grid and *Submit CGM Data* modal. `manifest_filings` carries the PRD's fields; the amendment number is given by the
+  system; the operator records ICEGATE's answer (cleared / rejected) and the bill's tab 11 status follows the latest
+  filing. ⚠️ **Transmission is not built**: the message format and DSC signing need ICEGATE's own specification and
+  credentials, as the e-invoice needs the GSP's. *Auto File* is refused (`422 icegate_not_connected`) until both are in
+  hand; *Manual* and *Email* record a filing made on ICEGATE directly
+- **Connecting ICEGATE** (owner, from the developer portal). Put the keys in `.env` — `ICEGATE_ENV`,
+  `ICEGATE_BASE_URL`, `ICEGATE_CLIENT_ID`, `ICEGATE_CLIENT_SECRET` — and run `php artisan icegate:status --ping`
+  (names only, never values). The keys are **guessed from the usual API shape, not from ICEGATE's documentation**:
+  if the portal gives something else, the config changes to match it. Bring back from the portal:
+  1. the sandbox and production base URLs
+  2. how a call is authenticated, and what credentials it needs
+  3. the message specification for the import CGM / SCMTR consol manifest (format, schema, samples)
+  4. how the DSC signs a message (the signature tool, and whether signing happens on the operator's machine)
+  5. how an acknowledgement comes back (polled or pushed to us), and the rejection codes
+  6. whether calls must come from a registered static IP
+
+  With 3–5 in hand, a transmitter is built as a queued job behind the circuit breaker (§4.9), keyed per branch
 
 ### 12.4 BL reading in extraction
 The inbox extraction panel reads a BL or booking PDF into the sea form as it reads an AWB into FocusAir — the sea

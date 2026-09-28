@@ -84,6 +84,15 @@ class IcegateValidationTest extends TestCase
         ], $overrides));
     }
 
+    /** A Submit CGM Data payload — PRD §5.8's modal. */
+    private function filing(array $overrides = []): array
+    {
+        return array_merge([
+            'icegate_id' => 'AAACB1234D', 'filing_type' => 'CGM', 'custom_house_code' => 'INNSA1',
+            'sending_method' => 'manual',
+        ], $overrides);
+    }
+
     private function validator(): IcegateValidator
     {
         return app(IcegateValidator::class);
@@ -276,7 +285,7 @@ class IcegateValidationTest extends TestCase
         $this->seaDetails($job, ['mbl_number' => str_repeat('X', 21)]);
 
         $this->api($this->ops)
-            ->postJson($this->url("/api/jobs/{$job->id}/manifest-filings"), ['icegate_id' => 'AAACB1234D'])
+            ->postJson($this->url("/api/jobs/{$job->id}/manifest-filings"), $this->filing())
             ->assertStatus(422)
             ->assertJsonPath('reason', 'icegate_validation_failed');
 
@@ -289,7 +298,7 @@ class IcegateValidationTest extends TestCase
         $this->seaDetails($job);
 
         $this->api($this->ops)
-            ->postJson($this->url("/api/jobs/{$job->id}/manifest-filings"), ['icegate_id' => 'AAACB1234D'])
+            ->postJson($this->url("/api/jobs/{$job->id}/manifest-filings"), $this->filing())
             ->assertStatus(201)
             ->assertJsonPath('icegate_id', 'AAACB1234D');
 
@@ -305,7 +314,144 @@ class IcegateValidationTest extends TestCase
 
         $this->api($pricing)->getJson($this->url("/api/jobs/{$job->id}/manifest-check"))->assertOk();
         $this->api($pricing)
-            ->postJson($this->url("/api/jobs/{$job->id}/manifest-filings"), ['icegate_id' => 'AAACB1234D'])
+            ->postJson($this->url("/api/jobs/{$job->id}/manifest-filings"), $this->filing())
+            ->assertForbidden();
+    }
+
+    // ─── The connection and the filing screen (GAPS #429) ─────────────────────
+
+    public function test_auto_file_is_refused_while_icegate_is_not_connected(): void
+    {
+        config(['icegate.base_url' => null, 'icegate.client_id' => null, 'icegate.client_secret' => null]);
+        $job = $this->job('sea');
+        $this->seaDetails($job);
+
+        $this->api($this->ops)
+            ->postJson($this->url("/api/jobs/{$job->id}/manifest-filings"), $this->filing(['sending_method' => 'auto']))
+            ->assertStatus(422)
+            ->assertJsonPath('reason', 'icegate_not_connected')
+            ->assertJsonPath('missing', ['ICEGATE_BASE_URL', 'ICEGATE_CLIENT_ID', 'ICEGATE_CLIENT_SECRET']);
+
+        $this->assertDatabaseMissing('manifest_filings', ['job_id' => $job->id]);
+    }
+
+    /** Keys alone are not a connection: nothing is sent until the message format is built from ICEGATE's spec. */
+    public function test_auto_file_is_refused_with_keys_set_but_no_transmitter(): void
+    {
+        config(['icegate.base_url' => 'https://example.test', 'icegate.client_id' => 'id', 'icegate.client_secret' => 'secret']);
+        $job = $this->job('sea');
+        $this->seaDetails($job);
+
+        $this->api($this->ops)
+            ->postJson($this->url("/api/jobs/{$job->id}/manifest-filings"), $this->filing(['sending_method' => 'auto']))
+            ->assertStatus(422)
+            ->assertJsonPath('reason', 'icegate_not_connected')
+            ->assertJsonPath('missing', []);
+    }
+
+    public function test_the_connection_status_names_keys_and_never_values(): void
+    {
+        config(['icegate.base_url' => null, 'icegate.client_id' => 'client-id-value', 'icegate.client_secret' => 'the-secret-value']);
+
+        $response = $this->api($this->ops)->getJson($this->url('/api/icegate/status'))
+            ->assertOk()
+            ->assertJsonPath('can_transmit', false)
+            ->assertJsonPath('missing', ['ICEGATE_BASE_URL']);
+
+        $this->assertStringNotContainsString('the-secret-value', $response->getContent());
+        $this->assertStringNotContainsString('client-id-value', $response->getContent());
+
+        $this->artisan('icegate:status')
+            ->expectsOutputToContain('ICEGATE_BASE_URL       missing')
+            ->doesntExpectOutputToContain('the-secret-value')
+            ->assertSuccessful();
+    }
+
+    public function test_a_custom_house_code_is_six_characters(): void
+    {
+        $job = $this->job('sea');
+        $this->seaDetails($job);
+
+        $this->api($this->ops)
+            ->postJson($this->url("/api/jobs/{$job->id}/manifest-filings"), $this->filing(['custom_house_code' => 'INNSA']))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('custom_house_code');
+    }
+
+    /** A rejection is answered by an amendment with its own number, and the bill's tab 11 follows the latest. */
+    public function test_amendments_number_themselves_and_the_bill_follows_the_latest(): void
+    {
+        $job = $this->job('sea');
+        $this->seaDetails($job);
+        $url = $this->url("/api/jobs/{$job->id}/manifest-filings");
+
+        $first = $this->api($this->ops)->postJson($url, $this->filing(['custom_house_code' => 'innsa1']))
+            ->assertStatus(201)
+            ->assertJsonPath('amendment_no', 0)
+            ->assertJsonPath('custom_house_code', 'INNSA1')
+            ->assertJsonPath('status', 'submitted')
+            ->json();
+        $this->assertSame('submitted', DB::table('sea_shipment_details')->where('job_id', $job->id)->value('filing_status'));
+
+        $this->api($this->ops)->postJson($this->url("/api/manifest-filings/{$first['id']}/outcome"), ['status' => 'rejected', 'note' => 'Line 3 seal'])
+            ->assertOk()
+            ->assertJsonPath('status', 'rejected')
+            ->assertJsonCount(2, 'status_log');
+        $this->assertSame('rejected', DB::table('sea_shipment_details')->where('job_id', $job->id)->value('filing_status'));
+
+        // Answered once; a correction is a new amendment, not an edit.
+        $this->api($this->ops)->postJson($this->url("/api/manifest-filings/{$first['id']}/outcome"), ['status' => 'cleared'])
+            ->assertStatus(422)
+            ->assertJsonPath('reason', 'filing_already_answered');
+
+        $this->api($this->ops)->postJson($url, $this->filing())
+            ->assertStatus(201)
+            ->assertJsonPath('amendment_no', 1);
+        $this->assertSame('submitted', DB::table('sea_shipment_details')->where('job_id', $job->id)->value('filing_status'));
+
+        // A different filing type starts its own count.
+        $this->api($this->ops)->postJson($url, $this->filing(['filing_type' => 'SCMTR']))
+            ->assertStatus(201)
+            ->assertJsonPath('amendment_no', 0);
+    }
+
+    /** An answer to an older amendment does not overwrite the state of the one that replaced it. */
+    public function test_an_answer_to_an_older_amendment_leaves_the_bill_alone(): void
+    {
+        $job = $this->job('sea');
+        $this->seaDetails($job);
+        $url = $this->url("/api/jobs/{$job->id}/manifest-filings");
+
+        $old = $this->api($this->ops)->postJson($url, $this->filing())->assertStatus(201)->json();
+        $this->api($this->ops)->postJson($url, $this->filing())->assertStatus(201);
+
+        $this->api($this->ops)->postJson($this->url("/api/manifest-filings/{$old['id']}/outcome"), ['status' => 'rejected'])->assertOk();
+
+        $this->assertSame('submitted', DB::table('sea_shipment_details')->where('job_id', $job->id)->value('filing_status'));
+    }
+
+    public function test_the_grid_filters_as_the_prd_screen_does(): void
+    {
+        $job = $this->job('sea');
+        $this->seaDetails($job);
+        $url = $this->url("/api/jobs/{$job->id}/manifest-filings");
+        $this->api($this->ops)->postJson($url, $this->filing())->assertStatus(201);
+        $this->api($this->ops)->postJson($url, $this->filing(['filing_type' => 'SCMTR', 'custom_house_code' => 'INMAA1']))->assertStatus(201);
+
+        $this->api($this->ops)->getJson($this->url("/api/manifest-filings?job_id={$job->id}&filing_type=SCMTR"))
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.custom_house_code', 'INMAA1');
+        $this->api($this->ops)->getJson($this->url("/api/manifest-filings?job_id={$job->id}&custom_house_code=innsa1"))
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.filing_type', 'CGM');
+    }
+
+    public function test_pricing_may_not_record_an_outcome(): void
+    {
+        $job = $this->job('sea');
+        $this->seaDetails($job);
+        $filing = $this->api($this->ops)->postJson($this->url("/api/jobs/{$job->id}/manifest-filings"), $this->filing())->json();
+
+        $this->api($this->user('pricing'))
+            ->postJson($this->url("/api/manifest-filings/{$filing['id']}/outcome"), ['status' => 'cleared'])
             ->assertForbidden();
     }
 }

@@ -56,6 +56,8 @@ export const NAV_ITEMS = [
   // correction air got: two rail entries for one document set read as two features.
   { path: "/focus-sea", label: "Bills of Lading", icon: "water", designations: null, portals: ["focussea"] },
   { path: "/focus-sea/consol", label: "Consolidation", icon: "boxes", designations: null, portals: ["focussea"] },
+  // Readers match viewManifest; only operations submits (fileManifest).
+  { path: "/manifest-filing", label: "Manifest Filing", icon: "send", designations: ["operations", "pricing", "boss"], minTier: "tactical", portals: ["focussea"] },
 
   // ── Directories ──────────────────────────────────────────────────────────
   // 🔴 ONE ITEM, not two. Clients are who you invoice and partners are who you pay — two

@@ -1422,10 +1422,19 @@ For production and staging deployments, an independent backup helper container r
   id         | BIGINT      | PK  |
   agent_id   | BIGINT      | FK  | ◄── agents_info.id
   job_id     | BIGINT      | FK  | ◄── jobs.id
-  icegate_id | VARCHAR(50) |     |
-  created_at | TIMESTAMP   |     |
-  updated_at | TIMESTAMP   |     |
+  icegate_id        | VARCHAR(50) |     |
+  filing_type       | VARCHAR(10) |     | 'CGM' · 'SCMTR' (PRD §5.8)
+  custom_house_code | CHAR(6)     |     | 6-char ICEGATE code, e.g. INNSA1
+  amendment_no      | SMALLINT    | UQ  | 0 first, then +1 — UNIQUE (job_id, filing_type, amendment_no)
+  filed_at          | DATETIME    |     |
+  sending_method    | VARCHAR(10) |     | 'auto' · 'manual' · 'email'
+  status            | VARCHAR(20) |     | tab 11's words: submitted · cleared · rejected
+  status_log        | JSON        |     | append-only [{at, by, status, note}]
+  created_at        | TIMESTAMP   |     |
+  updated_at        | TIMESTAMP   |     |
 ```
+*Columns after `icegate_id` added 2026-09-28 (GAPS #429). `status` is copied to `sea_shipment_details.filing_status`
+from the job's latest filing.*
 
 ### 40. `email_classification_rules` (PK: `id`)
 ```text

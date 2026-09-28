@@ -102,8 +102,8 @@ class JobEntityTest extends TestCase
     }
 
     /**
-     * 🔴 On a MASTER, the shipper is the FORWARDER BRANCH — a partner, not the
-     * exporter. Sending the exporter is refused, with the reason stated in words.
+     * 🔴 On a MASTER, the shipper is the FORWARDER BRANCH — the branch itself
+     * (party_type 'branch', owner 2026-09-28), not the exporter. Sending the exporter is refused, with the reason stated in words.
      */
     public function test_a_master_shipper_cannot_be_the_exporter(): void
     {
@@ -115,20 +115,27 @@ class JobEntityTest extends TestCase
             ])
             ->assertStatus(422)
             ->assertJsonPath('reason', 'party_type_mismatch')
-            ->assertJsonPath('expected.party_type', 'partner')
+            ->assertJsonPath('expected.party_type', 'branch')
             ->assertJsonPath('expected.description', 'the forwarder branch itself');
     }
 
-    /** …and the same role with the right party type is accepted. */
-    public function test_a_master_shipper_may_be_a_partner(): void
+    /**
+     * …the branch is accepted — THIS shipment's branch only — and a partner is not: the branch is not a
+     * partner, which is why the owner gave it a party type of its own (GAPS #424).
+     */
+    public function test_a_master_shipper_is_the_branch_itself(): void
     {
         $master = $this->job(true);
+        $post = fn (array $p) => $this->api($this->ops)
+            ->postJson($this->url("/api/jobs/{$master->id}/entities"), ['role' => 'shipper'] + $p);
 
-        $this->api($this->ops)
-            ->postJson($this->url("/api/jobs/{$master->id}/entities"), [
-                'role' => 'shipper', 'party_type' => 'partner', 'party_id' => $this->agent->id,
-            ])
-            ->assertStatus(201);
+        $post(['party_type' => 'partner', 'party_id' => $this->agent->id])->assertStatus(422);
+
+        $other = Agent::create(['company_id' => $this->company->id, 'agent_name' => 'MAA', 'branch_code' => 'MAA']);
+        $post(['party_type' => 'branch', 'party_id' => $other->id])->assertStatus(404);
+
+        $post(['party_type' => 'branch', 'party_id' => $this->branch->id])
+            ->assertStatus(201)->assertJsonPath('entities.0.name', 'BOM');
     }
 
     /** The mirror case: a house consignee is the overseas buyer, not an agent. */
@@ -158,7 +165,7 @@ class JobEntityTest extends TestCase
         $this->api($this->ops)->getJson($this->url("/api/jobs/{$master->id}/entities"))
             ->assertOk()
             ->assertJsonPath('document', 'master')
-            ->assertJsonPath('expected.shipper.party_type', 'partner');
+            ->assertJsonPath('expected.shipper.party_type', 'branch');
     }
 
     /** A job with a parent is a house, whatever else it is flagged as. */

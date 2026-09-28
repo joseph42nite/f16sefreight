@@ -52,10 +52,9 @@ export const NAV_ITEMS = [
   // operator is on them, so an "active" state for it would be code that can never run.
   { path: "/master-airway-bill", label: "Documents", icon: "file-earmark-text", designations: null, portals: ["focusair"] },
   { path: "/message-log", label: "Message Log", icon: "clock-history", designations: null, portals: ["focusair"] },
-  // Sea's master/house/consol forms are not built yet. PRD.md §468 makes FocusSea a
-  // nav GROUP (Master / House / Consol) rather than one item, so this resolves into
-  // three entries when those land — the same correction, applied to sea.
-  { path: "/focus-sea", label: "Master Bill of Lading", icon: "water", designations: null, portals: ["focussea"] },
+  // Houses and masters are ONE list with a Houses/Masters switch on the page — the same
+  // correction air got: two rail entries for one document set read as two features.
+  { path: "/focus-sea", label: "Bills of Lading", icon: "water", designations: null, portals: ["focussea"] },
   { path: "/focus-sea/consol", label: "Consolidation", icon: "boxes", designations: null, portals: ["focussea"] },
 
   // ── Directories ──────────────────────────────────────────────────────────

@@ -409,11 +409,18 @@ const router = new Router({
           meta: { userType: 'user', designations: ['pricing', 'operations', 'accounts', 'boss'], minTier: 'tactical' }
         },
         {
-          // FocusSea's master document. §9.2 makes FocusSea a nav GROUP once the
-          // house and consol forms exist; this is the first of the three.
+          // FocusSea's bills — the branch's list, houses and masters (guide Step 12).
           path: "focus-sea",
-          name: "Master Bill of Lading",
+          name: "Bills of Lading",
           component: () => import("@/view/pages/freight/FocusSeaMaster"),
+          meta: { userType: 'user' }
+        },
+        {
+          // One bill. A house and a master are ONE form reading its own document kind.
+          path: "focus-sea/:jobId(\\d+)",
+          name: "Bill of Lading",
+          component: () => import("@/view/pages/freight/FocusSeaMaster"),
+          props: true,
           meta: { userType: 'user' }
         },
         {

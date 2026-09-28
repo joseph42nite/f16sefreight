@@ -412,9 +412,13 @@ For production and staging deployments, an independent backup helper container r
                              |              |     | ──► enquiries.reinitiated_from_job_id (re-quote lineage:
                              |              |     |     a cancelled job spawns a NEW enquiry)
   agent_id                   | BIGINT       | FK  | ◄── agents_info.id
-  enquiry_id                 | BIGINT       | FK  | ◄── enquiries.id (NOT NULL — every job traces to its
+  enquiry_id                 | BIGINT       | FK  | ◄── enquiries.id (every client job traces to its
                              |              |     |     originating enquiry. "Converted" = a job row exists;
                              |              |     |     do NOT also store enquiries.converted_job_id)
+                             |              |     |     NULL ONLY for a consolidation master created in
+                             |              |     |     FocusSea — CHECK chk_jobs_enquiry_or_master:
+                             |              |     |     enquiry_id IS NOT NULL OR is_consolidation = 1
+                             |              |     |     (owner, 2026-09-28; GAPS #424)
   transport_mode             | VARCHAR(10)  |     | (air, sea, road — denormalized from the enquiry for scoping)
   direction                  | VARCHAR(10)  |     | (export, import)
   execution_job_no           | VARCHAR(30)  | UK  | (JOBA-26-0001 air | JOBS-26-0001 sea; unique per agent)
@@ -463,34 +467,47 @@ For production and staging deployments, an independent backup helper container r
   voyage_no              | VARCHAR(30)   |     |
   vessel_flag            | VARCHAR(50)   |     |
   imo_number             | VARCHAR(20)   |     |
+  service_contract_no    | VARCHAR(30)   |     | (PRD §5.8 tab 2)
   por_code               | CHAR(5)       |     | (LOCODE)
   pol_code               | CHAR(5)       |     | (LOCODE)
   pod_code               | CHAR(5)       |     | (LOCODE)
   del_code               | CHAR(5)       |     | (LOCODE)
+  ts1_code · ts2_code · ts3_code | CHAR(5) |     | (LOCODE — up to 3 transshipment hubs, PRD §5.8 tab 3)
+  etd · eta              | DATE          |     | (transit days are computed, never stored)
+  commodity_description  | VARCHAR(500)  |     | (PRD §5.8 tab 4)
+  hs_code                | VARCHAR(10)   |     | (^\d{6,10}$)
+  marks_numbers          | TEXT          |     |
   transshipment_required | BOOLEAN       |     |
   imdg_class             | VARCHAR(10)   |     | (Hazardous materials class)
   un_number              | VARCHAR(10)   |     | (UN identifier)
   hbl_number             | VARCHAR(30)   |     |
   mbl_number             | VARCHAR(30)   |     |
-  freight_terms          | VARCHAR(20)   |     | (prepaid, collect)
+  bl_type                | VARCHAR(30)   |     | (free text — the PRD names no values)
+  release_type           | VARCHAR(10)   |     | (original, telex, seaway)
+  freight_terms          | VARCHAR(20)   |     | (prepaid, collect — printed on the BL; bills nobody:
+                         |               |     |  the invoice goes to the job's client, owner 2026-09-28)
   piece_count            | INT           |     |
+  package_code           | VARCHAR(10)   |     | (ICEGATE takes ≤ 3 — validated at filing)
   gross_weight           | DECIMAL(10,3) |     |
   net_weight             | DECIMAL(10,3) |     |
   chargeable_weight      | DECIMAL(10,3) |     |
+  weight_unit            | VARCHAR(3)    |     | (KGS, LBS)
   volume_cbm             | DECIMAL(8,3)  |     |
-  filing_status          | VARCHAR(20)   |     | (pending, filed, accepted, rejected)
+  volume_unit            | VARCHAR(3)    |     | (CBM, CFT)
+  filing_status          | VARCHAR(20)   |     | (not_filed DEFAULT, submitted, cleared, rejected — PRD §5.8 tab 11)
   customs_broker_id      | BIGINT        | FK  | ◄── partners.id
   transporter_id         | BIGINT        | FK  | ◄── partners.id
   haulage_provider_id    | BIGINT        | FK  | ◄── partners.id
+  empty_depot            | VARCHAR(150)  |     | (PRD §5.8 tab 8)
   handling_agent_id      | BIGINT        | FK  | ◄── partners.id
   shipping_bill_no       | VARCHAR(30)   |     |
   shipping_bill_date     | DATE          |     |
   igm_no                 | VARCHAR(30)   |     | (Import General Manifest)
   igm_date               | DATE          |     |
-  container_type         | VARCHAR(20)   |     | (FCL, LCL)
   created_at             | TIMESTAMP     |     |
   updated_at             | TIMESTAMP     |     |
 ```
+> `container_type` moved to `sea_containers` on 2026-09-28 — size/type is each box's own (PRD §5.8 tab 7).
 
 ### 7. `air_shipment_details` (PK: `id`)
 ```text
@@ -869,6 +886,7 @@ For production and staging deployments, an independent backup helper container r
   agent_id         | BIGINT      | FK  | ◄── agents_info.id
   job_id           | BIGINT      | FK  | ◄── jobs.id
   container_number | VARCHAR(20) |     |
+  container_type   | VARCHAR(4)  |     | (20GP, 40GP, 40HC, 20RF, 40RF, 20TK, 40OT)
   seal_number      | VARCHAR(30) |     |
   created_at       | TIMESTAMP   |     |
   updated_at       | TIMESTAMP   |     |
@@ -906,7 +924,8 @@ For production and staging deployments, an independent backup helper container r
   id                | BIGINT      | PK  |
   agent_id          | BIGINT      | FK  | ◄── agents_info.id
   job_id            | BIGINT      | FK  | ◄── jobs.id
-  party_type        | VARCHAR(50) |     | (customer, partner)
+  party_type        | VARCHAR(50) |     | (customer, partner, branch — branch → agents_info.id,
+                    |             |     |  only as a master's shipper: the forwarder itself)
   party_id          | BIGINT      |     | (Polymorphic ID referencing customers.id or partners.id)
   role              | VARCHAR(30) |     | (shipper, consignee, notify_party, origin_agent, dest_agent, selling_agent, customs_broker, transporter, other)
   custom_role_label | VARCHAR(50) |     | (Optional label for custom roles when role = 'other')

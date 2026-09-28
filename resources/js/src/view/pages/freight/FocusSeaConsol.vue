@@ -11,11 +11,15 @@
         <select v-model="masterId" class="fx-input" @change="load">
           <option value="">Choose…</option>
           <option v-for="m in masters" :key="m.id" :value="m.id">
-            {{ m.execution_job_no || ("Job " + m.id) }}
+            {{ m.execution_job_no || ("Job " + m.id) }}{{ m.mbl_number ? " · " + m.mbl_number : "" }}
           </option>
         </select>
       </label>
+      <router-link v-if="masterId" :to="'/focus-sea/' + masterId" class="fx-btn">Open the master bill</router-link>
     </div>
+    <p v-if="!masters.length && !loading" class="fx-muted">
+      No masters yet. Create one under Bills of Lading → New master.
+    </p>
 
     <p v-if="loading" class="fx-muted">Loading…</p>
     <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
@@ -51,7 +55,7 @@
           </thead>
           <tbody>
             <tr v-for="h in consol.houses" :key="h.id">
-              <td class="identifier">{{ h.execution_job_no || h.id }}</td>
+              <td><router-link :to="'/focus-sea/' + h.id" class="identifier">{{ h.execution_job_no || h.id }}</router-link></td>
               <td class="identifier">
                 <span v-if="h.hbl_number">{{ h.hbl_number }}</span>
                 <span v-else class="is-empty" aria-label="No HBL number"></span>
@@ -167,9 +171,15 @@ export default {
     },
   },
   created() {
-    ApiService.get("/jobs?transport_mode=sea")
-      .then(({ data }) => { this.masters = (data.data || []).filter((j) => j.transport_mode === "sea"); })
+    // The branch's MASTERS only — a consol is built on the carrier's bill, not on any sea job (GAPS #424).
+    ApiService.get("/sea-shipments")
+      .then(({ data }) => { this.masters = (data.data || []).filter((j) => j.document === "master"); })
       .catch((e) => { this.error = this.readable(e); });
+    // Opened from a master bill: straight onto that master.
+    if (this.$route.query.master) {
+      this.masterId = String(this.$route.query.master);
+      this.load();
+    }
   },
   methods: {
     load() {

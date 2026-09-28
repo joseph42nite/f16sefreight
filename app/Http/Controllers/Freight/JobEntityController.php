@@ -49,12 +49,14 @@ class JobEntityController extends Controller
         $this->authorize('viewManifest');
 
         return response()->json([
-            'document'   => $this->documentKind($job),
+            'document'   => self::documentKind($job),
             'entities'   => $this->hydrate($job),
             'roles'      => self::ROLES,
             // What each role SHOULD be on this document. The form reads this rather
             // than hard-coding the matrix, so the two cannot disagree.
             'expected'   => $this->expectedParties($job),
+            // The one branch a master's shipper can be — this shipment's own.
+            'branch'     => ['id' => (int) $job->agent_id, 'name' => DB::table('agents_info')->where('id', $job->agent_id)->value('agent_name')],
         ]);
     }
 
@@ -64,7 +66,7 @@ class JobEntityController extends Controller
 
         $data = $request->validate([
             'role'              => 'required|string|in:' . implode(',', self::ROLES),
-            'party_type'        => 'required|string|in:customer,partner',
+            'party_type'        => 'required|string|in:customer,partner,branch',
             'party_id'          => 'required|integer',
             'custom_role_label' => 'nullable|string|max:50',
         ]);
@@ -82,13 +84,21 @@ class JobEntityController extends Controller
             return response()->json([
                 'error'  => sprintf(
                     'On %s, the %s is %s — not a %s.',
-                    $this->documentKind($job) === 'master' ? 'a master bill' : 'a house bill',
+                    self::documentKind($job) === 'master' ? 'a master bill' : 'a house bill',
                     str_replace('_', ' ', $data['role']),
                     $expected[$data['role']]['description'],
                     $data['party_type']
                 ),
                 'reason'   => 'party_type_mismatch',
                 'expected' => $expected[$data['role']],
+            ], 422);
+        }
+
+        // The branch is a party only as a master's shipper — the forwarder itself (owner, 2026-09-28).
+        if ($data['party_type'] === 'branch' && ($expected[$data['role']]['party_type'] ?? null) !== 'branch') {
+            return response()->json([
+                'error'  => 'The branch is a party only as the shipper on a master bill.',
+                'reason' => 'party_type_mismatch',
             ], 422);
         }
 
@@ -154,7 +164,7 @@ class JobEntityController extends Controller
      * a HOUSE when it has a parent. A plain direct shipment is treated as a house: its
      * shipper is the real exporter, which is the house reading.
      */
-    private function documentKind(Job $job): string
+    public static function documentKind(Job $job): string
     {
         if ($job->parent_job_id !== null) {
             return 'house';
@@ -166,9 +176,9 @@ class JobEntityController extends Controller
     /** @return array<string, array{party_type: string, description: string}> */
     private function expectedParties(Job $job): array
     {
-        if ($this->documentKind($job) === 'master') {
+        if (self::documentKind($job) === 'master') {
             return [
-                'shipper'      => ['party_type' => 'partner', 'description' => 'the forwarder branch itself'],
+                'shipper'      => ['party_type' => 'branch', 'description' => 'the forwarder branch itself'],
                 'consignee'    => ['party_type' => 'partner', 'description' => 'the counterpart destination agent'],
                 'notify_party' => ['party_type' => 'partner', 'description' => 'the destination agent'],
             ];
@@ -183,6 +193,11 @@ class JobEntityController extends Controller
 
     private function partyExists(string $type, int $id, Job $job): bool
     {
+        // The forwarder is THIS shipment's branch — never another branch of the company.
+        if ($type === 'branch') {
+            return $id === (int) $job->agent_id;
+        }
+
         $companyId = DB::table('agents_info')->where('id', $job->agent_id)->value('company_id');
 
         return DB::table($type === 'customer' ? 'customers' : 'partners')
@@ -202,6 +217,9 @@ class JobEntityController extends Controller
         $partners = DB::table('partners')
             ->whereIn('id', $rows->where('party_type', 'partner')->pluck('party_id'))
             ->pluck('name', 'id');
+        $branches = DB::table('agents_info')
+            ->whereIn('id', $rows->where('party_type', 'branch')->pluck('party_id'))
+            ->pluck('agent_name', 'id');
 
         return $rows->map(fn ($r) => [
             'id'         => $r->id,
@@ -209,9 +227,11 @@ class JobEntityController extends Controller
             'label'      => $r->role === 'other' ? $r->custom_role_label : str_replace('_', ' ', $r->role),
             'party_type' => $r->party_type,
             'party_id'   => $r->party_id,
-            'name'       => $r->party_type === 'customer'
-                ? ($customers[$r->party_id] ?? null)
-                : ($partners[$r->party_id] ?? null),
+            'name'       => match ($r->party_type) {
+                'customer' => $customers[$r->party_id] ?? null,
+                'branch'   => $branches[$r->party_id] ?? null,
+                default    => $partners[$r->party_id] ?? null,
+            },
         ])->all();
     }
 }

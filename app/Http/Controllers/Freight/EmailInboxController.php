@@ -872,8 +872,9 @@ class EmailInboxController extends Controller
             // 🔗 enquiry -> job -> waybill, resolved once here rather than by a second
             // round trip from the drawer. Newest first, matching JobController@index's
             // `latest()`, so both surfaces name the same job out of a consol split.
+            // transport_mode: a sea job's next step is its bill of lading, not an AWB (GAPS #424).
             'job'            => $job ? $job->only(['id', 'execution_job_no', 'awb_number', 'status', 'ops_id', 'pricing_id',
-                'pending_ops_id', 'pending_ops_requested_by']) : null,
+                'pending_ops_id', 'pending_ops_requested_by', 'transport_mode']) : null,
             'job_count'      => $jobs->count(),
             'message_count'  => $mail['message_count'],
             // The client update waiting for someone to send or skip it — the card on the conversation.

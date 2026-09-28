@@ -8738,12 +8738,11 @@ const NAV_ITEMS = [
   designations: null,
   portals: ["focusair"]
 },
-// Sea's master/house/consol forms are not built yet. PRD.md §468 makes FocusSea a
-// nav GROUP (Master / House / Consol) rather than one item, so this resolves into
-// three entries when those land — the same correction, applied to sea.
+// Houses and masters are ONE list with a Houses/Masters switch on the page — the same
+// correction air got: two rail entries for one document set read as two features.
 {
   path: "/focus-sea",
-  label: "Master Bill of Lading",
+  label: "Bills of Lading",
   icon: "water",
   designations: null,
   portals: ["focussea"]
@@ -10797,11 +10796,19 @@ const router = new vue_router__WEBPACK_IMPORTED_MODULE_5__["default"]({
         minTier: 'tactical'
       }
     }, {
-      // FocusSea's master document. §9.2 makes FocusSea a nav GROUP once the
-      // house and consol forms exist; this is the first of the three.
+      // FocusSea's bills — the branch's list, houses and masters (guide Step 12).
       path: "focus-sea",
-      name: "Master Bill of Lading",
-      component: () => __webpack_require__.e(/*! import() */ "resources_js_src_view_pages_freight_FocusSeaMaster_vue").then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/FocusSeaMaster */ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue")),
+      name: "Bills of Lading",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_freight_FocusSeaMaster_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/FocusSeaMaster */ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue")),
+      meta: {
+        userType: 'user'
+      }
+    }, {
+      // One bill. A house and a master are ONE form reading its own document kind.
+      path: "focus-sea/:jobId(\\d+)",
+      name: "Bill of Lading",
+      component: () => Promise.all(/*! import() */[__webpack_require__.e("common"), __webpack_require__.e("css/app"), __webpack_require__.e("resources_js_src_view_pages_freight_FocusSeaMaster_vue")]).then(__webpack_require__.bind(__webpack_require__, /*! @/view/pages/freight/FocusSeaMaster */ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue")),
+      props: true,
       meta: {
         userType: 'user'
       }

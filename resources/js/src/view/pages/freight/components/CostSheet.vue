@@ -57,6 +57,10 @@
                   <strong>{{ sheet.from_waybill.awb_number }}</strong>, which has no rate yet — open it in FocusAir,
                   enter the rate and charges and save, and the freight line appears here.
                 </template>
+                <!-- A bill of lading carries no rates, so a sea sheet is written here (GAPS #424). -->
+                <template v-else-if="sheet.job && sheet.job.transport_mode === 'sea'">
+                  No sell lines yet. Add the freight and charges below.
+                </template>
                 <template v-else-if="!sheet.from_waybill">
                   No sell lines yet. Draft the air waybill first (Extraction), or add a line below.
                 </template>

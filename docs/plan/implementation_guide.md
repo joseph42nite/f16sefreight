@@ -1619,7 +1619,7 @@ confident wrong answer there costs more than the desk's minute.
 | Do freight terms decide who is invoiced? | **No.** The invoice goes to the client who onboarded — the `customers` row and its GSTIN. PRD §5.8 tab 6's "prepaid → invoice the shipper; collect → invoice the consignee" is corrected; freight terms are a BL field only |
 | Parties pre-filled? | **Yes**, by the PRD's HBL/MBL mapping: a house's shipper from the job's client (export), a master's shipper from the branch |
 
-### 12.1 The spine — a sea job reaches its BL, and the BL reaches the money
+### 12.1 The spine — a sea job reaches its BL, and the BL reaches the money 🟢 *built 2026-09-28 (GAPS #425)*
 
 1. **Schema** (PRD §5.8 fields with no column today): per-container size/type; transshipment hubs and ETD/ETA;
    commodity, HS code, marks & numbers; package type, weight and volume units; BL type and release type; empty depot;
@@ -1633,7 +1633,7 @@ confident wrong answer there costs more than the desk's minute.
    totals and the client's credit check; E-Docket = `job_documents`
 6. **Parties pre-filled** by the mapping
 
-### 12.2 Consolidation, connected
+### 12.2 Consolidation, connected 🟢 *built 2026-09-28 (GAPS #426)*
 Master created → houses linked → containers stuffed → roll-up and routing cascade (both built) → piece reconciliation
 shown. The demo gains one sea consol so every screen has something real on it.
 

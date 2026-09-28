@@ -430,6 +430,10 @@
               {{ active.job.execution_job_no }}
             </span>
             <StatusChip :value="active.job.status" />
+            <!-- A sea job's document is its bill of lading, in FocusSea (GAPS #424). -->
+            <router-link v-if="active.job.transport_mode === 'sea'" :to="'/focus-sea/' + active.job.id" class="fx-drawer__awb">
+              Bill of lading →
+            </router-link>
             <!-- The third link in the chain, when the shipment already carries one. -->
             <span v-if="active.job.awb_number" class="identifier fx-drawer__awb">
               {{ active.job.awb_number }}
@@ -630,8 +634,8 @@
               </p>
               <p><strong>Did this shipment confirm?</strong></p>
               <p class="fx-muted">
-                Confirming converts the enquiry to a job and opens AWB drafting. Until then
-                there is nothing to raise a waybill against.
+                Confirming converts the enquiry to a job and opens its document — the AWB, or for sea the
+                bill of lading. Until then there is nothing to raise one against.
               </p>
 
               <label class="fx-field">
@@ -682,8 +686,12 @@
             switching to Cost sheet or Credits destroyed the panel mid-read, its timers with it, and the reading was
             lost even though the server had carried on.
           -->
+          <p v-if="active.job && active.job.transport_mode === 'sea'" class="fx-muted">
+            This is a sea shipment: its document is the bill of lading.
+            <router-link :to="'/focus-sea/' + active.job.id">Open it in FocusSea →</router-link>
+          </p>
           <ExtractionPanel
-            v-show="active.enquiry && active.job"
+            v-show="active.enquiry && active.job && active.job.transport_mode !== 'sea'"
             ref="extraction"
             :prefill-awb="jobAwb"
             :job-id="active.job ? active.job.id : null"

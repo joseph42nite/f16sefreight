@@ -31,7 +31,7 @@ class ConsolidationService
     private const DEBOUNCE_SECONDS = 2;
 
     /** The only fields a master imposes on its houses. See the class docblock. */
-    private const CASCADE = [
+    public const CASCADE = [
         'por_code', 'pol_code', 'pod_code', 'del_code',
         'vessel_name', 'voyage_no', 'imo_number', 'vessel_flag',
     ];
@@ -58,10 +58,13 @@ class ConsolidationService
                          COALESCE(SUM(volume_cbm),0) AS cbm')
             ->first();
 
-        // ⚠️ A master with no houses is left ALONE, not zeroed. A direct shipment is not
+        // ⚠️ A job with no houses is left ALONE, not zeroed. A direct shipment is not
         // a consol with zero children, and resetting its own declared figures to zero
-        // would erase a manifest.
-        if ($houses->isEmpty()) {
+        // would erase a manifest. A CONSOLIDATION master is different: its figures are
+        // only ever its houses' sum, so when the last house leaves it carries nothing
+        // (GAPS #424 — it kept the unlinked house's pieces).
+        $isConsol = (bool) Job::withoutTenantScope()->whereKey($masterId)->value('is_consolidation');
+        if ($houses->isEmpty() && ! $isConsol) {
             return ['houses' => 0, 'skipped' => true];
         }
 

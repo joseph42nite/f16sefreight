@@ -382,6 +382,9 @@ class EnquiryController extends Controller
 
             $this->audit->record($enquiry->agent_id, 'enquiry.converted', 'job', $job->id, auth()->id());
 
+            // A sea bill starts with its client in place — shipper on an export, consignee on an import (GAPS #424).
+            app(\App\Services\SeaParties::class)->prefill($job);
+
             return $job;
         }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
 

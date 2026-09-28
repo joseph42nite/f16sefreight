@@ -101,7 +101,7 @@ export default {
   name: "EntityPanel",
   props: { jobId: { type: [Number, String], required: true } },
   data: () => ({
-    entities: [], roles: [], expected: {}, document: "house",
+    entities: [], roles: [], expected: {}, document: "house", branch: null,
     customers: [], partners: [],
     draft: { role: "shipper", party_type: "customer", party_id: "", custom_role_label: "" },
     loading: true, busy: false, error: null, actionError: null,
@@ -117,6 +117,8 @@ export default {
       return e ? e.party_type : this.draft.party_type;
     },
     options() {
+      // A master's shipper is this shipment's own branch — the only choice there is.
+      if (this.partyType === "branch") return this.branch ? [this.branch] : [];
       return this.partyType === "customer" ? this.customers : this.partners;
     },
   },
@@ -134,6 +136,7 @@ export default {
           this.roles = data.roles || [];
           this.expected = data.expected || {};
           this.document = data.document;
+          this.branch = data.branch || null;
           this.error = null;
         })
         .catch((e) => { this.error = this.readable(e); })

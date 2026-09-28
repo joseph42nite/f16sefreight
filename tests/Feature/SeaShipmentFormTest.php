@@ -180,9 +180,15 @@ class SeaShipmentFormTest extends TestCase
         $this->save(['cargo_type' => 'fcl', 'imo_number' => '9311581'])->assertOk();
     }
 
+    /** Size/type is each container's own (PRD §5.8 tab 7), from the PRD's seven. */
     public function test_an_unknown_container_type_is_refused(): void
     {
-        $this->save(['cargo_type' => 'fcl', 'container_type' => '53FT'])->assertStatus(422);
+        $box = fn (string $type) => ['cargo_type' => 'fcl', 'containers' => [
+            ['container_number' => self::GOOD_BOX, 'container_type' => $type],
+        ]];
+
+        $this->save($box('53FT'))->assertStatus(422);
+        $this->save($box('40HC'))->assertOk()->assertJsonPath('containers.0.container_type', '40HC');
     }
 
     // ─── The decoupling, from the other direction ────────────────────────────

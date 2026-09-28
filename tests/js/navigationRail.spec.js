@@ -14,7 +14,7 @@ describe("the navigation rail", () => {
     const air = labels({ designation: "pricing", tier: "command", portalKey: "focusair" });
 
     expect(air).toContain("Documents");
-    expect(air).not.toContain("Master Bill of Lading");
+    expect(air).not.toContain("Bills of Lading");
   });
 
   /**
@@ -25,7 +25,7 @@ describe("the navigation rail", () => {
   it("hides portal-specific items when the portal is unknown, rather than showing them all", () => {
     const unknown = labels({ designation: "pricing", tier: "command", portalKey: null });
 
-    expect(unknown).not.toContain("Master Bill of Lading");
+    expect(unknown).not.toContain("Bills of Lading");
     expect(unknown).not.toContain("Documents");
     // Portal-independent surfaces are unaffected.
     expect(unknown).toContain("Inbox");
@@ -50,7 +50,7 @@ describe("the navigation rail", () => {
     expect(none).not.toContain("Enquiries");
     expect(none).not.toContain("Clients & Partners");
     // and crucially it no longer leaks another portal's forms into the gap
-    expect(none).not.toContain("Master Bill of Lading");
+    expect(none).not.toContain("Bills of Lading");
   });
 
   it("opens a sales login on their dashboard, above the inbox", () => {

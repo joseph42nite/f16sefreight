@@ -2270,6 +2270,187 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=script&lang=js":
+/*!**************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=script&lang=js ***!
+  \**************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
+/* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+const _excluded = ["side", "id"];
+function _objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: "CostSheet",
+  components: {
+    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_1__["default"]
+  },
+  props: {
+    jobId: {
+      type: [Number, String],
+      required: true
+    }
+  },
+  data: () => ({
+    sheet: null,
+    partners: [],
+    loading: true,
+    busy: false,
+    error: null,
+    actionError: null,
+    /** The line being changed in place: { side, id, description, quantity, rate, tax_percentage, charge_type }. */
+    editing: {},
+    /** The confirmation before the sheet goes to accounts. */
+    confirming: false,
+    draft: {
+      side: "sell",
+      charge_type: "air_freight",
+      description: "",
+      quantity: 1,
+      rate: 0,
+      tax_percentage: 18,
+      vendor_id: ""
+    },
+    /** True once somebody has typed a quantity, so the waybill's weight never overwrites it. */
+    quantityTouched: false
+  }),
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_2__.mapGetters)(["designation"])), {}, {
+    /* Pricing owns the rates; accounts finalizes them. The server re-checks. */
+    canEdit() {
+      return this.designation === "pricing" || this.designation === "accounts";
+    },
+    valid() {
+      return this.draft.description && this.draft.quantity > 0
+      // A buy line needs somebody to owe: the waybill's airline, or a vendor chosen here.
+      && (this.draft.side === "sell" || this.draft.vendor_id || this.sheet && this.sheet.awb_airline);
+    }
+  }),
+  created() {
+    this.load();
+    _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/partners").then(({
+      data
+    }) => {
+      this.partners = data.data || [];
+    }).catch(() => {/* the vendor list is optional until a buy line is added */});
+  },
+  methods: {
+    label(v) {
+      return String(v).replace(/_/g, " ");
+    },
+    load() {
+      this.loading = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/jobs/${this.jobId}/cost-sheet`).then(({
+        data
+      }) => {
+        this.sheet = data;
+        this.error = null;
+
+        // The weight the freight is charged on, so a line typed here starts from the waybill's own figure.
+        const weight = data.from_waybill && data.from_waybill.chargeable_weight;
+        if (weight && !this.quantityTouched && this.draft.charge_type === "air_freight") this.draft.quantity = weight;
+      }).catch(e => {
+        this.error = this.readable(e);
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    add() {
+      this.busy = true;
+      this.actionError = null;
+      const payload = Object.assign({}, this.draft);
+      if (payload.side === "sell") delete payload.vendor_id;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/jobs/${this.jobId}/cost-sheet/lines`, payload).then(({
+        data
+      }) => {
+        this.sheet = data;
+        this.draft.description = "";
+      }).catch(e => {
+        this.actionError = this.readable(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    edit(side, line) {
+      this.editing = {
+        side,
+        id: line.id,
+        description: line.description,
+        quantity: Number(line.quantity),
+        rate: Number(line.rate),
+        tax_percentage: Number(line.tax_percentage || 0),
+        charge_type: line.charge_type
+      };
+    },
+    saveLine() {
+      this.busy = true;
+      this.actionError = null;
+      const _this$editing = this.editing,
+        {
+          side,
+          id
+        } = _this$editing,
+        line = _objectWithoutProperties(_this$editing, _excluded);
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].put(`/jobs/${this.jobId}/cost-sheet/${side}/${id}`, line).then(({
+        data
+      }) => {
+        this.sheet = data;
+        this.editing = {};
+      }).catch(e => {
+        this.actionError = this.readable(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    sendToAccounts() {
+      this.busy = true;
+      this.actionError = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/jobs/${this.jobId}/cost-sheet/send`, {}).then(({
+        data
+      }) => {
+        this.sheet = data;
+        this.confirming = false;
+      }).catch(e => {
+        this.actionError = this.readable(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    remove(side, id) {
+      this.busy = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"]["delete"](`/jobs/${this.jobId}/cost-sheet/${side}/${id}`).then(({
+        data
+      }) => {
+        this.sheet = data;
+      }).catch(e => {
+        this.actionError = this.readable(e);
+      }).finally(() => {
+        this.busy = false;
+      });
+    },
+    readable(e) {
+      const d = e.response && e.response.data || {};
+      return d.error || d.message || "Something went wrong.";
+    }
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/Figure.vue?vue&type=script&lang=js":
 /*!***********************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/Figure.vue?vue&type=script&lang=js ***!
@@ -9298,6 +9479,913 @@ var render = function render() {
   }, [_vm._v(_vm._s(_vm.skipLabel))]), _vm._v(" "), _vm._t("default")], 2)]);
 };
 var staticRenderFns = [];
+render._withStripped = true;
+
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=template&id=b301813e":
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=template&id=b301813e ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render),
+/* harmony export */   "staticRenderFns": () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", [_vm.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.error))]) : [_vm.sheet.locked ? _c("p", {
+    staticClass: "fx-warn",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("\n      Finalized and issued. Corrections need a credit note, not an edit.\n    ")]) : _vm._e(), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Sell — what the client is billed")]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Charge")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Qty")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rate")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Net")]), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", [_vm._l(_vm.sheet.sell.lines, function (l) {
+    return _c("tr", {
+      key: l.id
+    }, [_vm.editing.side === "sell" && _vm.editing.id === l.id ? [_c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.editing.description,
+        expression: "editing.description"
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        type: "text"
+      },
+      domProps: {
+        value: _vm.editing.description
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "description", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.editing.quantity,
+        expression: "editing.quantity",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.001",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.editing.quantity
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "quantity", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.editing.rate,
+        expression: "editing.rate",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.editing.rate
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "rate", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.editing.tax_percentage,
+        expression: "editing.tax_percentage",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0",
+        max: "100"
+      },
+      domProps: {
+        value: _vm.editing.tax_percentage
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "tax_percentage", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: _vm.saveLine
+      }
+    }, [_vm._v("Save")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          _vm.editing = {};
+        }
+      }
+    }, [_vm._v("Cancel")])])] : [_c("td", [_vm._v(_vm._s(l.description) + " "), _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("(" + _vm._s(_vm.label(l.charge_type)) + ")")])]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.quantity,
+        kind: "count"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.rate,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.net_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.edit("sell", l);
+        }
+      }
+    }, [_vm._v("Edit")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.remove("sell", l.id);
+        }
+      }
+    }, [_vm._v("✕")])]) : _vm._e()]], 2);
+  }), _vm._v(" "), !_vm.sheet.sell.lines.length ? _c("tr", [_c("td", {
+    staticClass: "fx-muted",
+    attrs: {
+      colspan: "5"
+    }
+  }, [_vm.sheet.from_waybill && !_vm.sheet.from_waybill.has_rate ? [_vm._v("\n                No sell lines yet. They are written from the draft waybill\n                "), _c("strong", [_vm._v(_vm._s(_vm.sheet.from_waybill.awb_number))]), _vm._v(", which has no rate yet — open it in FocusAir,\n                enter the rate and charges and save, and the freight line appears here.\n              ")] : _vm.sheet.job && _vm.sheet.job.transport_mode === "sea" ? [_vm._v("\n                No sell lines yet. Add the freight and charges below.\n              ")] : !_vm.sheet.from_waybill ? [_vm._v("\n                No sell lines yet. Draft the air waybill first (Extraction), or add a line below.\n              ")] : [_vm._v("No sell lines yet.")]], 2)]) : _vm._e()], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_vm._m(0), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.sell.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("td") : _vm._e()])])])]), _vm._v(" "), _vm.sheet.buy ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Buy — what we owe suppliers")]), _vm._v(" "), _c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Charge")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Qty")]), _vm._v(" "), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Net")]), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }) : _vm._e()])]), _vm._v(" "), _c("tbody", [_vm._l(_vm.sheet.buy.lines, function (l) {
+    return _c("tr", {
+      key: l.id
+    }, [_vm.editing.side === "buy" && _vm.editing.id === l.id ? [_c("td", [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: _vm.editing.description,
+        expression: "editing.description"
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        type: "text"
+      },
+      domProps: {
+        value: _vm.editing.description
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "description", $event.target.value);
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.editing.quantity,
+        expression: "editing.quantity",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.001",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.editing.quantity
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "quantity", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("input", {
+      directives: [{
+        name: "model",
+        rawName: "v-model.number",
+        value: _vm.editing.rate,
+        expression: "editing.rate",
+        modifiers: {
+          number: true
+        }
+      }],
+      staticClass: "fx-input fx-num",
+      attrs: {
+        type: "number",
+        step: "0.01",
+        min: "0"
+      },
+      domProps: {
+        value: _vm.editing.rate
+      },
+      on: {
+        input: function ($event) {
+          if ($event.target.composing) return;
+          _vm.$set(_vm.editing, "rate", _vm._n($event.target.value));
+        },
+        blur: function ($event) {
+          return _vm.$forceUpdate();
+        }
+      }
+    })]), _vm._v(" "), _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--primary",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: _vm.saveLine
+      }
+    }, [_vm._v("Save")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        disabled: _vm.busy
+      },
+      on: {
+        click: function ($event) {
+          _vm.editing = {};
+        }
+      }
+    }, [_vm._v("Cancel")])])] : [_c("td", [_vm._v("\n                " + _vm._s(l.description) + " "), _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v("(" + _vm._s(_vm.label(l.charge_type)) + ")")]), _vm._v(" "), l.vendor ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" · " + _vm._s(l.vendor))]) : _vm._e()]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.quantity,
+        kind: "count"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.net_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("td", {
+      staticClass: "fx-row-actions"
+    }, [_c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.edit("buy", l);
+        }
+      }
+    }, [_vm._v("Edit")]), _vm._v(" "), _c("button", {
+      staticClass: "fx-btn fx-btn--ghost",
+      on: {
+        click: function ($event) {
+          return _vm.remove("buy", l.id);
+        }
+      }
+    }, [_vm._v("✕")])]) : _vm._e()]], 2);
+  }), _vm._v(" "), !_vm.sheet.buy.lines.length ? _c("tr", [_c("td", {
+    staticClass: "fx-muted",
+    attrs: {
+      colspan: "4"
+    }
+  }, [_vm._v("No buy lines yet.")])]) : _vm._e()], 2), _vm._v(" "), _c("tfoot", [_c("tr", [_vm._m(1), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.buy.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("td") : _vm._e()])])])]) : _vm._e(), _vm._v(" "), _vm.sheet.margin ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Margin")]), _vm._v(" "), _c("dl", {
+    staticClass: "fx-defs"
+  }, [_c("dt", [_vm._v("Value")]), _vm._v(" "), _c("dd", [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.margin.value,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1), _vm._v(" "), _c("dt", [_vm._v("Percent")]), _vm._v(" "), _c("dd", [_vm.sheet.margin.percent === null ? _c("span", {
+    staticClass: "is-empty",
+    attrs: {
+      "aria-label": "Nothing billed yet"
+    }
+  }) : _c("span", [_vm._v(_vm._s(Number(_vm.sheet.margin.percent).toFixed(2)) + "%")])])])]) : _vm._e(), _vm._v(" "), _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Accounts")]), _vm._v(" "), _vm.sheet.sent_to_accounts ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n        Sent to accounts " + _vm._s(String(_vm.sheet.sent_to_accounts.at).slice(0, 16))), _vm.sheet.sent_to_accounts.by ? [_vm._v(" by " + _vm._s(_vm.sheet.sent_to_accounts.by))] : _vm._e(), _vm._v(".\n        Sending again replaces what they see.\n      ")], 2) : _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Accounts do not see this sheet until you send it.")]), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.sheet.sell.lines.length
+    },
+    on: {
+      click: function ($event) {
+        _vm.confirming = true;
+      }
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.sheet.sent_to_accounts ? "Send again to accounts" : "Send to accounts") + "\n      ")]) : _vm._e(), _vm._v(" "), !_vm.sheet.sell.lines.length ? _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(" Add at least one sell line first.")]) : _vm._e()]), _vm._v(" "), _vm.confirming ? _c("div", {
+    staticClass: "fx-modal",
+    attrs: {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "send-accounts-title"
+    }
+  }, [_c("div", {
+    staticClass: "fx-modal__panel"
+  }, [_vm._m(2), _vm._v(" "), _c("div", {
+    staticClass: "fx-modal__body"
+  }, [_c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(3), _vm._v(" "), _c("tbody", [_vm._m(4), _vm._v(" "), _vm._l(_vm.sheet.sell.lines, function (l) {
+    return _c("tr", {
+      key: "c-sell-" + l.id
+    }, [_c("td", [_vm._v(_vm._s(l.description))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.quantity,
+        kind: "count"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.rate,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.net_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), _vm._v(" "), _c("tr", [_vm._m(5), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.sell.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)]), _vm._v(" "), _vm.sheet.buy ? [_vm._m(6), _vm._v(" "), _vm._l(_vm.sheet.buy.lines, function (l) {
+    return _c("tr", {
+      key: "c-buy-" + l.id
+    }, [_c("td", [_vm._v(_vm._s(l.description))]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.quantity,
+        kind: "count"
+      }
+    })], 1), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_vm._v("—")]), _vm._v(" "), _c("td", {
+      staticClass: "fx-num"
+    }, [_c("Figure", {
+      attrs: {
+        value: l.net_amount,
+        kind: "currency",
+        "currency-code": "INR"
+      }
+    })], 1)]);
+  }), _vm._v(" "), _c("tr", [_vm._m(7), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.buy.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)])] : _vm._e(), _vm._v(" "), _vm.sheet.margin ? _c("tr", [_vm._m(8), _vm._v(" "), _c("td", {
+    staticClass: "fx-num"
+  }, [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.margin.value,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  }), _vm._v(" "), _vm.sheet.margin.percent !== null ? _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(" · " + _vm._s(_vm.sheet.margin.percent) + "%")]) : _vm._e()], 1)]) : _vm._e()], 2)]), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Accounts finalize and post the invoice; sending does not post anything.")]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()]), _vm._v(" "), _c("footer", {
+    staticClass: "fx-modal__foot"
+  }, [_c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: function ($event) {
+        _vm.confirming = false;
+      }
+    }
+  }, [_vm._v("Back to the sheet")]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy
+    },
+    on: {
+      click: _vm.sendToAccounts
+    }
+  }, [_vm._v(_vm._s(_vm.busy ? "Sending…" : "Send to accounts"))])])])]) : _vm._e(), _vm._v(" "), _vm.canEdit && !_vm.sheet.locked ? _c("section", {
+    staticClass: "fx-section"
+  }, [_c("h3", {
+    staticClass: "fx-section__title"
+  }, [_vm._v("Add a line")]), _vm._v(" "), _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Side")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.draft.side,
+      expression: "draft.side"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.draft, "side", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    attrs: {
+      value: "sell"
+    }
+  }, [_vm._v("Sell")]), _vm._v(" "), _c("option", {
+    attrs: {
+      value: "buy"
+    }
+  }, [_vm._v("Buy")])])]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Charge")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.draft.charge_type,
+      expression: "draft.charge_type"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.draft, "charge_type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, _vm._l(_vm.sheet.vocabulary.charge_types, function (c) {
+    return _c("option", {
+      key: c,
+      domProps: {
+        value: c
+      }
+    }, [_vm._v(_vm._s(_vm.label(c)))]);
+  }), 0)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Description")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.draft.description,
+      expression: "draft.description"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "text"
+    },
+    domProps: {
+      value: _vm.draft.description
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.draft, "description", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Qty")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.draft.quantity,
+      expression: "draft.quantity",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "number",
+      step: "0.001",
+      min: "0"
+    },
+    domProps: {
+      value: _vm.draft.quantity
+    },
+    on: {
+      input: [function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.draft, "quantity", _vm._n($event.target.value));
+      }, function ($event) {
+        _vm.quantityTouched = true;
+      }],
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Rate")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.draft.rate,
+      expression: "draft.rate",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "number",
+      step: "0.01",
+      min: "0"
+    },
+    domProps: {
+      value: _vm.draft.rate
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.draft, "rate", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Tax %")]), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.draft.tax_percentage,
+      expression: "draft.tax_percentage",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "number",
+      step: "0.01",
+      min: "0",
+      max: "100"
+    },
+    domProps: {
+      value: _vm.draft.tax_percentage
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.draft, "tax_percentage", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  })]), _vm._v(" "), _vm.draft.side === "buy" ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Vendor")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.draft.vendor_id,
+      expression: "draft.vendor_id"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.draft, "vendor_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    attrs: {
+      value: ""
+    }
+  }, [_vm._v(_vm._s(_vm.sheet.awb_airline ? _vm.sheet.awb_airline.name + " — from AWB " + _vm.sheet.awb_airline.prefix : "Choose…"))]), _vm._v(" "), _vm._l(_vm.partners, function (p) {
+    return _c("option", {
+      key: p.id,
+      domProps: {
+        value: p.id
+      }
+    }, [_vm._v(_vm._s(p.name))]);
+  })], 2)]) : _vm._e(), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.busy || !_vm.valid
+    },
+    on: {
+      click: _vm.add
+    }
+  }, [_vm._v("Add")])]), _vm._v(" "), _vm.actionError ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.actionError))]) : _vm._e()]) : _vm._e()]], 2);
+};
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "3"
+    }
+  }, [_c("strong", [_vm._v("Total")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "2"
+    }
+  }, [_c("strong", [_vm._v("Total")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("header", {
+    staticClass: "fx-modal__head"
+  }, [_c("h2", {
+    staticClass: "fx-modal__title",
+    attrs: {
+      id: "send-accounts-title"
+    }
+  }, [_vm._v("Send this cost sheet to accounts?")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Charge")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Qty")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Rate")]), _c("th", {
+    staticClass: "fx-num",
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Net")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("tr", [_c("td", {
+    attrs: {
+      colspan: "4"
+    }
+  }, [_c("strong", [_vm._v("Sell — what the client is billed")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "3"
+    }
+  }, [_c("strong", [_vm._v("Sell total")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("tr", [_c("td", {
+    attrs: {
+      colspan: "4"
+    }
+  }, [_c("strong", [_vm._v("Buy — what we owe suppliers")])])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "3"
+    }
+  }, [_c("strong", [_vm._v("Buy total")])]);
+}, function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("td", {
+    attrs: {
+      colspan: "3"
+    }
+  }, [_c("strong", [_vm._v("Margin")])]);
+}];
 render._withStripped = true;
 
 
@@ -26902,6 +27990,45 @@ component.options.__file = "resources/js/src/view/pages/freight/components/Clien
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/components/CostSheet.vue":
+/*!**********************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/CostSheet.vue ***!
+  \**********************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _CostSheet_vue_vue_type_template_id_b301813e__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./CostSheet.vue?vue&type=template&id=b301813e */ "./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=template&id=b301813e");
+/* harmony import */ var _CostSheet_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./CostSheet.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=script&lang=js");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+;
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _CostSheet_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _CostSheet_vue_vue_type_template_id_b301813e__WEBPACK_IMPORTED_MODULE_0__.render,
+  _CostSheet_vue_vue_type_template_id_b301813e__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/src/view/pages/freight/components/CostSheet.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/components/Figure.vue":
 /*!*******************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/components/Figure.vue ***!
@@ -27374,6 +28501,22 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=script&lang=js":
+/*!**********************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=script&lang=js ***!
+  \**********************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_CostSheet_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./CostSheet.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_index_js_vue_loader_options_CostSheet_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/components/Figure.vue?vue&type=script&lang=js":
 /*!*******************************************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/components/Figure.vue?vue&type=script&lang=js ***!
@@ -27668,6 +28811,23 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_ClientUpdateEditor_vue_vue_type_template_id_b7a57a7c_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_ClientUpdateEditor_vue_vue_type_template_id_b7a57a7c_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ClientUpdateEditor.vue?vue&type=template&id=b7a57a7c&scoped=true */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/ClientUpdateEditor.vue?vue&type=template&id=b7a57a7c&scoped=true");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=template&id=b301813e":
+/*!****************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=template&id=b301813e ***!
+  \****************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_CostSheet_vue_vue_type_template_id_b301813e__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_CostSheet_vue_vue_type_template_id_b301813e__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_CostSheet_vue_vue_type_template_id_b301813e__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./CostSheet.vue?vue&type=template&id=b301813e */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/CostSheet.vue?vue&type=template&id=b301813e");
 
 
 /***/ }),

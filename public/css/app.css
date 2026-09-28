@@ -88709,6 +88709,20 @@ to { transform: rotate(360deg);
 }
 
 
+.fx-sea-head[data-v-0af23761] { margin-bottom: var(--space-4);
+}
+.fx-sea-dims[data-v-0af23761] { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;
+}
+.fx-sea-dims .fx-input[data-v-0af23761] { width: 5.5rem;
+}
+.fx-field--wide[data-v-0af23761] { grid-column: 1 / -1;
+}
+.fx-seg[data-v-0af23761] { display: flex; gap: var(--space-1); align-self: flex-end;
+}
+.fx-table-wrap[data-v-0af23761] { overflow-x: auto;
+}
+
+
 /* The cards are the page; they get room to breathe and read as one row on a desk monitor. */
 .fx-today__cards[data-v-20314b3a] {
   gap: 1rem;

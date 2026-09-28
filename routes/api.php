@@ -457,6 +457,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
 
     // ── FocusSea (§5.8). The cargo-type matrix and ISO 6346 are enforced here,
     // not in the Vue watcher — see SeaShipmentController.
+    // A consol master is created here — no client enquiry stands behind it (owner, 2026-09-28).
+    Route::get('/sea-shipments', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'index']);
+    Route::post('/sea-shipments', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'store']);
     Route::get('/jobs/{job}/sea-shipment', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'show']);
     Route::post('/jobs/{job}/sea-shipment', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'save']);
 
@@ -470,6 +473,10 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
 
     // ── Parties on a shipment (§5.8 tab 1). The HBL/MBL mapping is enforced here:
     // the same role means a DIFFERENT company on each document.
+    // E-Docket (PRD §5.8 tab 12): the job's documents, each virus-scanned before it is kept.
+    Route::get('/jobs/{job}/documents', [\App\Http\Controllers\Freight\JobDocumentController::class, 'index']);
+    Route::post('/jobs/{job}/documents', [\App\Http\Controllers\Freight\JobDocumentController::class, 'store']);
+    Route::get('/jobs/{job}/documents/{document}', [\App\Http\Controllers\Freight\JobDocumentController::class, 'download']);
     Route::get('/jobs/{job}/entities', [\App\Http\Controllers\Freight\JobEntityController::class, 'index']);
     Route::post('/jobs/{job}/entities', [\App\Http\Controllers\Freight\JobEntityController::class, 'store']);
     Route::delete('/jobs/{job}/entities/{entityId}', [\App\Http\Controllers\Freight\JobEntityController::class, 'destroy']);

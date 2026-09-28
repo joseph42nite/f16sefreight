@@ -217,6 +217,13 @@
                 </div>
                 <div class="fx-card__links">
                   <router-link
+                    v-if="job.transport_mode === 'sea'"
+                    :to="'/focus-sea/' + job.id"
+                    class="fx-card__link"
+                    title="Bill of lading"
+                    :aria-label="'Open the bill of lading for ' + job.execution_job_no"
+                  >⚓</router-link>
+                  <router-link
                     v-if="col.key === 'transit' && job.awb_number"
                     :to="{ path: '/message-log', query: { awb: job.awb_number } }"
                     class="fx-card__link"

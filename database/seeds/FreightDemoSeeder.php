@@ -122,6 +122,7 @@ class FreightDemoSeeder extends Seeder
         foreach (self::TENANTS as $tenant) {
             $this->purge($tenant['code']);
             $this->seedTenant($tenant);
+            $this->seedSeaConsol($tenant['code']);
         }
 
         $this->seedPlatformStaff();
@@ -1232,6 +1233,61 @@ class FreightDemoSeeder extends Seeder
     }
 
     /** Tier 3 data — the authoritative figures billing and manifests read. */
+    /**
+     * One sea consol per branch that has two sea exports: a master created as FocusSea creates it (no enquiry, the
+     * branch as shipper), its houses turned LCL — their boxes are the master's — linked through the consol engine
+     * so the routing cascades and the pieces roll up, and stuffed into the master's container (GAPS #424).
+     */
+    private function seedSeaConsol(string $code): void
+    {
+        $company = Company::where('code', $code)->first();
+
+        foreach (Agent::where('company_id', $company->id)->get() as $branch) {
+            $houses = Job::withoutGlobalScopes()->where('agent_id', $branch->id)->where('transport_mode', 'sea')
+                ->where('direction', 'export')->where('status', '!=', 'Cancelled')->whereNull('parent_job_id')
+                ->orderBy('id')->limit(2)->get();
+
+            if ($houses->count() < 2) {
+                continue;
+            }
+
+            $top = Job::withoutGlobalScopes()->where('agent_id', $branch->id)->where('execution_job_no', 'like', 'JOBS-%')
+                ->pluck('execution_job_no')->map(fn ($n) => (int) substr($n, -4))->max();
+            $first = DB::table('sea_shipment_details')->where('job_id', $houses[0]->id)->first();
+
+            $master = Job::withoutGlobalScopes()->create([
+                'agent_id' => $branch->id, 'enquiry_id' => null, 'transport_mode' => 'sea', 'direction' => 'export',
+                'is_consolidation' => true, 'cargo_type' => 'fcl', 'delivery_mode' => 'fcl', 'consol_type' => 'agent_consol',
+                'pricing_id' => User::where('branch_name', $branch->id)->where('designation', 'operations')->value('id'),
+                // The branch's own agent code, read off a house number (JOBS-AGENTCODE-YY-NNNN).
+                'execution_job_no' => sprintf('JOBS-%s-%s-%04d', explode('-', $houses[0]->execution_job_no)[1], now()->format('y'), $top + 1),
+            ]);
+            DB::table('sea_shipment_details')->insert([
+                'job_id' => $master->id, 'vessel_name' => $first->vessel_name, 'voyage_no' => $first->voyage_no,
+                'imo_number' => $first->imo_number, 'por_code' => $first->por_code, 'pol_code' => $first->pol_code,
+                'pod_code' => $first->pod_code, 'del_code' => $first->del_code, 'mbl_number' => 'MAEU' . (75000000 + $master->id % 1000000),
+                'freight_terms' => 'prepaid', 'filing_status' => 'not_filed', 'created_at' => now(), 'updated_at' => now(),
+            ]);
+            $box = DB::table('sea_containers')->insertGetId([
+                'agent_id' => $branch->id, 'job_id' => $master->id, 'container_number' => 'MSKU6874230',
+                'container_type' => '40HC', 'seal_number' => 'SEAL900' . $branch->id, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+            app(\App\Services\SeaParties::class)->prefill($master);
+
+            foreach ($houses as $house) {
+                // An LCL house carries no boxes of its own: they are the master's.
+                DB::table('sea_containers')->where('job_id', $house->id)->delete();
+                $house->update(['cargo_type' => 'lcl', 'delivery_mode' => 'lcl']);
+                app(\App\Services\ConsolidationService::class)->link($master, $house);
+                DB::table('sea_container_items')->insert([
+                    'agent_id' => $branch->id, 'container_id' => $box, 'job_id' => $house->id,
+                    'piece_count' => (int) DB::table('sea_shipment_details')->where('job_id', $house->id)->value('piece_count'),
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
     private function seedShipmentDetails(Job $job, string $mode, string $origin, string $dest, int $i, float $scale = 1.0): void
     {
         $common = [
@@ -1252,10 +1308,9 @@ class FreightDemoSeeder extends Seeder
                 'pod_code' => $dest, 'del_code' => $dest,
                 'mbl_number' => 'MAEU' . (74000000 + $i),
                 'hbl_number' => 'HBL' . str_pad((string) (1000 + $i), 6, '0', STR_PAD_LEFT),
-                'container_type' => ['40HC', '20GP', '40GP'][$i % 3],
                 'freight_terms' => 'prepaid',
                 'net_weight' => round(300.0 + ($i * 47.25), 3),
-                'filing_status' => 'pending',
+                'filing_status' => 'not_filed',
             ]);
 
             // A REAL container number — the ISO 6346 check digit is computed on filing,
@@ -1263,9 +1318,14 @@ class FreightDemoSeeder extends Seeder
             DB::table('sea_containers')->insert([
                 'agent_id' => $job->agent_id, 'job_id' => $job->id,
                 'container_number' => ['CSQU3054383', 'MSKU6874230'][$i % 2],
+                // Size/type is the container's own (PRD §5.8 tab 7).
+                'container_type' => ['40HC', '20GP', '40GP'][$i % 3],
                 'seal_number' => 'SEAL' . str_pad((string) (100 + $i), 6, '0', STR_PAD_LEFT),
                 'created_at' => now(), 'updated_at' => now(),
             ]);
+
+            // The client in place on the bill, as a converted enquiry does it (GAPS #424).
+            app(\App\Services\SeaParties::class)->prefill($job);
 
             return;
         }

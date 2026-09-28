@@ -11,15 +11,21 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
 /* harmony import */ var _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/api.service */ "./resources/js/src/core/services/api.service.js");
-/* harmony import */ var _view_pages_freight_components_Field_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/view/pages/freight/components/Field.vue */ "./resources/js/src/view/pages/freight/components/Field.vue");
-/* harmony import */ var _view_pages_freight_components_EntityPanel_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/EntityPanel.vue */ "./resources/js/src/view/pages/freight/components/EntityPanel.vue");
+/* harmony import */ var _core_config_format__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/config/format */ "./resources/js/src/core/config/format.js");
+/* harmony import */ var _view_pages_freight_components_Field_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/view/pages/freight/components/Field.vue */ "./resources/js/src/view/pages/freight/components/Field.vue");
+/* harmony import */ var _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/view/pages/freight/components/Figure.vue */ "./resources/js/src/view/pages/freight/components/Figure.vue");
+/* harmony import */ var _view_pages_freight_components_EntityPanel_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/view/pages/freight/components/EntityPanel.vue */ "./resources/js/src/view/pages/freight/components/EntityPanel.vue");
+/* harmony import */ var _view_pages_freight_components_CostSheet_vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @/view/pages/freight/components/CostSheet.vue */ "./resources/js/src/view/pages/freight/components/CostSheet.vue");
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+
+
 
 
 
@@ -57,18 +63,15 @@ const TABS = [{
 }, {
   n: 8,
   key: "pickup",
-  label: "Pick Up",
-  source: "haulage details"
+  label: "Pick Up"
 }, {
   n: 9,
   key: "charges",
-  label: "Charges",
-  source: "the cost sheet"
+  label: "Charges"
 }, {
   n: 10,
   key: "financials",
-  label: "Financials",
-  source: "aggregates"
+  label: "Financials"
 }, {
   n: 11,
   key: "customs",
@@ -76,85 +79,213 @@ const TABS = [{
 }, {
   n: 12,
   key: "edocket",
-  label: "E-Docket",
-  source: "job_documents"
+  label: "E-Docket"
 }];
+const PORTS = [{
+  key: "por_code",
+  label: "Place of receipt"
+}, {
+  key: "pol_code",
+  label: "Port of loading"
+}, {
+  key: "ts1_code",
+  label: "Transshipment 1"
+}, {
+  key: "ts2_code",
+  label: "Transshipment 2"
+}, {
+  key: "ts3_code",
+  label: "Transshipment 3"
+}, {
+  key: "pod_code",
+  label: "Port of discharge"
+}, {
+  key: "del_code",
+  label: "Place of delivery"
+}];
+const KINDS = [{
+  key: "all",
+  label: "All"
+}, {
+  key: "house",
+  label: "Houses"
+}, {
+  key: "master",
+  label: "Masters"
+}];
+
+/* What the form sends back of the header — the job's own columns. */
+const HEAD = ["consol_type", "booking_thru", "job_order_no", "quotation_no", "planned_clearance_date", "pickup_address", "parent_job_id"];
+
+/* The detail columns the server takes; anything else in `details` (ids, stamps) stays home. */
+const DETAIL = ["carrier_id", "vessel_name", "voyage_no", "vessel_flag", "imo_number", "service_contract_no", "por_code", "pol_code", "pod_code", "del_code", "ts1_code", "ts2_code", "ts3_code", "etd", "eta", "commodity_description", "hs_code", "marks_numbers", "imdg_class", "un_number", "package_code", "piece_count", "gross_weight", "net_weight", "chargeable_weight", "weight_unit", "volume_cbm", "volume_unit", "mbl_number", "hbl_number", "bl_type", "release_type", "freight_terms", "haulage_provider_id", "empty_depot", "shipping_bill_no", "shipping_bill_date", "filing_status"];
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   name: "FocusSeaMaster",
   components: {
-    Field: _view_pages_freight_components_Field_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
-    EntityPanel: _view_pages_freight_components_EntityPanel_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+    Field: _view_pages_freight_components_Field_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+    Figure: _view_pages_freight_components_Figure_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
+    EntityPanel: _view_pages_freight_components_EntityPanel_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
+    CostSheet: _view_pages_freight_components_CostSheet_vue__WEBPACK_IMPORTED_MODULE_5__["default"]
+  },
+  props: {
+    jobId: {
+      type: [Number, String],
+      default: null
+    }
   },
   data: () => ({
-    jobs: [],
-    jobId: "",
+    rows: [],
+    q: "",
+    kind: "all",
+    creating: false,
+    searchTimer: null,
     jobNo: null,
+    document: "house",
+    client: null,
+    parent: null,
+    credit: null,
+    fromMaster: [],
     form: {},
+    head: {},
     containers: [],
     locking: {},
+    violations: [],
     vocab: {
       cargo_types: [],
-      container_types: []
+      container_types: [],
+      consol_types: [],
+      booking_thru: [],
+      weight_units: [],
+      volume_units: [],
+      release_types: []
     },
-    violations: [],
-    tab: "shipping",
+    partners: [],
+    masters: [],
+    sheet: null,
+    documents: [],
+    docTypes: [],
+    dims: {
+      l: null,
+      w: null,
+      h: null
+    },
+    upload: {
+      type: "other",
+      busy: false,
+      error: null
+    },
+    tab: "entity",
     loading: false,
     saving: false,
+    saved: false,
     error: null,
     saveError: null,
-    TABS
+    TABS,
+    PORTS,
+    KINDS
   }),
-  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_3__.mapGetters)(["designation"])), {}, {
-    /* Operations writes the manifest; pricing reads it. The server re-checks. */
+  computed: _objectSpread(_objectSpread({}, (0,vuex__WEBPACK_IMPORTED_MODULE_6__.mapGetters)(["designation", "tierAtLeast"])), {}, {
+    /* The server's viewCostSheet gate, mirrored so the tab says whose it is instead of failing. */
+    canSeeCosts() {
+      return ["pricing", "accounts", "boss"].includes(this.designation) && this.tierAtLeast("command");
+    },
+    /* Operations writes the bill; pricing and the Boss read it. The server re-checks. */
     canWrite() {
       return this.designation === "operations";
     },
-    tabLabel() {
-      const t = TABS.find(x => x.key === this.tab);
-      return t ? t.label : this.tab;
-    },
-    tabSource() {
-      const t = TABS.find(x => x.key === this.tab);
-      return t && t.source || "another record";
+    shown() {
+      return this.kind === "all" ? this.rows : this.rows.filter(r => r.document === this.kind);
     },
     hasBadBox() {
       return this.containers.some(c => c.number && !this.isValidBox(c.number));
+    },
+    transitDays() {
+      if (!this.form.etd || !this.form.eta) return null;
+      return Math.round((new Date(this.form.eta) - new Date(this.form.etd)) / 86400000);
+    },
+    dimsCbm() {
+      const {
+        l,
+        w,
+        h
+      } = this.dims;
+      return l > 0 && w > 0 && h > 0 ? Number((l * w * h / 1e6).toFixed(3)) : null;
     }
   }),
   watch: {
-    /* The matrix, applied immediately. Clearing containers here mirrors what the
-       server would refuse, so the operator is never left holding a payload that
-       cannot save. */
+    jobId: {
+      immediate: true,
+      handler() {
+        this.jobId ? this.load() : this.list();
+      }
+    },
+    /* The matrix, applied at once; the server refuses the same things whatever the form does. */
     "form.cargo_type": function (type) {
       const containerised = type === "fcl" || type === "liquid_cont";
-      this.locking = {
+      this.locking = Object.assign({}, this.locking, {
         delivery_mode: containerised ? "fcl" : type === "lcl" ? "lcl" : null,
         containers_enabled: containerised,
         dimensions_required: type === "lcl"
-      };
+      });
       if (!containerised) this.containers = [];
+    },
+    tab(t) {
+      if (t === "financials" && this.canSeeCosts) this.loadSheet();
+      if (t === "edocket") this.loadDocs();
     }
   },
   created() {
-    _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/jobs?transport_mode=sea").then(({
+    _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/partners").then(({
       data
     }) => {
-      this.jobs = (data.data || []).filter(j => j.transport_mode === "sea");
-    }).catch(e => {
-      this.error = this.readable(e);
-    });
+      this.partners = data.data || [];
+    }).catch(() => {});
   },
   methods: {
     labelOf(v) {
       return String(v || "").replace(/_/g, " ");
     },
+    fmtDate(v) {
+      return (0,_core_config_format__WEBPACK_IMPORTED_MODULE_1__.date)(v);
+    },
+    /* On a house that travels on a master, the vessel and ports are the master's (the cascade). */
+    masterHint(key) {
+      return this.fromMaster.includes(key) && this.parent ? "From master " + this.parent.execution_job_no : null;
+    },
+    upper(key) {
+      if (this.form[key]) this.form[key] = String(this.form[key]).toUpperCase();
+    },
+    list() {
+      this.loading = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sea-shipments" + (this.q ? "?q=" + encodeURIComponent(this.q) : "")).then(({
+        data
+      }) => {
+        this.rows = data.data || [];
+        this.error = null;
+      }).catch(e => {
+        this.error = this.readable(e);
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    searchSoon() {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(this.list, 300);
+    },
+    newMaster() {
+      this.creating = true;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post("/sea-shipments", {}).then(({
+        data
+      }) => {
+        this.$router.push("/focus-sea/" + data.job.id);
+      }).catch(e => {
+        this.error = this.readable(e);
+      }).finally(() => {
+        this.creating = false;
+      });
+    },
     /**
-     * ISO 6346 — four letters, six digits, one check digit.
-     *
-     * 🔴 The same computation the server and the manifest filer run. A mistyped
-     * container number is rejected at the TERMINAL GATE, not at filing, so catching
-     * it while the operator is still typing is the difference between a correction
-     * and a truck turned away.
+     * ISO 6346 — four letters, six digits, one check digit. The same computation the server and the filer run.
      */
     isValidBox(raw) {
       const n = String(raw || "").toUpperCase().trim();
@@ -165,10 +296,9 @@ const TABS = [{
         let v;
         if (/[A-Z]/.test(ch)) {
           v = ch.charCodeAt(0) - 65 + 10;
-          /* The letter table skips 11, 22 and 33. */
           [11, 22, 33].forEach(skip => {
             if (v >= skip) v++;
-          });
+          }); // the letter table skips 11, 22 and 33
         } else {
           v = Number(ch);
         }
@@ -176,30 +306,110 @@ const TABS = [{
       }
       return sum % 11 % 10 === Number(n[10]);
     },
+    apply(data) {
+      this.jobNo = data.job.execution_job_no;
+      this.document = data.document;
+      this.client = data.client;
+      this.parent = data.parent;
+      this.credit = data.credit;
+      this.fromMaster = data.from_master || [];
+      this.vocab = data.vocabulary;
+      this.violations = data.violations || [];
+      const d = data.details || {};
+      this.form = {
+        cargo_type: data.job.cargo_type
+      };
+      DETAIL.forEach(k => {
+        this.$set(this.form, k, d[k] === undefined ? null : d[k]);
+      });
+      if (!this.form.filing_status) this.form.filing_status = "not_filed";
+      this.head = {};
+      HEAD.forEach(k => {
+        this.$set(this.head, k, data.job[k] === undefined ? null : data.job[k]);
+      });
+      if (this.head.planned_clearance_date) this.head.planned_clearance_date = String(this.head.planned_clearance_date).slice(0, 10);
+      this.containers = (data.containers || []).map(c => ({
+        number: c.container_number,
+        type: c.container_type,
+        seal: c.seal_number
+      }));
+      this.$nextTick(() => {
+        this.locking = data.locking;
+      });
+    },
     load() {
-      if (!this.jobId) return;
       this.loading = true;
       this.saveError = null;
+      this.saved = false;
+      this.sheet = null;
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/jobs/${this.jobId}/sea-shipment`).then(({
         data
       }) => {
-        this.jobNo = data.job.execution_job_no;
-        this.form = Object.assign({
-          cargo_type: data.job.cargo_type
-        }, data.details || {});
-        this.containers = (data.containers || []).map(c => ({
-          number: c.container_number,
-          seal: c.seal_number
-        }));
-        this.locking = data.locking;
-        this.vocab = data.vocabulary;
-        this.violations = data.violations || [];
+        this.apply(data);
         this.error = null;
       }).catch(e => {
         this.error = this.readable(e);
       }).finally(() => {
         this.loading = false;
       });
+      // The masters a house could travel on.
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sea-shipments").then(({
+        data
+      }) => {
+        this.masters = (data.data || []).filter(r => r.document === "master" && String(r.id) !== String(this.jobId));
+      }).catch(() => {});
+    },
+    loadSheet() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/jobs/${this.jobId}/cost-sheet`).then(({
+        data
+      }) => {
+        this.sheet = data;
+      }).catch(() => {});
+    },
+    loadDocs() {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get(`/jobs/${this.jobId}/documents`).then(({
+        data
+      }) => {
+        this.documents = data.documents || [];
+        this.docTypes = data.types || [];
+      }).catch(e => {
+        this.upload.error = this.readable(e);
+      });
+    },
+    sendFile() {
+      const file = this.$refs.file && this.$refs.file.files[0];
+      if (!file) {
+        this.upload.error = "Choose a file first.";
+        return;
+      }
+      const body = new FormData();
+      body.append("document_type", this.upload.type);
+      body.append("file", file);
+      this.upload.busy = true;
+      this.upload.error = null;
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/jobs/${this.jobId}/documents`, body).then(() => {
+        this.$refs.file.value = "";
+        this.loadDocs();
+      }).catch(e => {
+        this.upload.error = this.readable(e);
+      }).finally(() => {
+        this.upload.busy = false;
+      });
+    },
+    openDoc(d) {
+      _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].query(`/jobs/${this.jobId}/documents/${d.id}`, {
+        responseType: "blob"
+      }).then(({
+        data
+      }) => {
+        window.open(URL.createObjectURL(data), "_blank");
+      }).catch(e => {
+        this.upload.error = this.readable(e);
+      });
+    },
+    useDims() {
+      this.form.volume_cbm = this.dimsCbm;
+      this.form.volume_unit = "CBM";
     },
     isTabLocked(key) {
       return key === "container" && !this.locking.containers_enabled;
@@ -207,26 +417,22 @@ const TABS = [{
     save() {
       this.saving = true;
       this.saveError = null;
-      const payload = Object.assign({}, this.form);
-      delete payload.id;
-      delete payload.job_id;
-      delete payload.created_at;
-      delete payload.updated_at;
-      delete payload.deleted_at;
+      this.saved = false;
+      const payload = Object.assign({}, this.form, this.head);
       if (this.locking.containers_enabled) {
         payload.containers = this.containers.filter(c => c.number).map(c => ({
           container_number: c.number,
+          container_type: c.type || null,
           seal_number: c.seal || null
         }));
       }
       _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].post(`/jobs/${this.jobId}/sea-shipment`, payload).then(({
         data
       }) => {
-        this.violations = data.violations || [];
-        this.locking = data.locking;
+        this.apply(data);
+        this.saved = true;
       })
-      /* §11.3 — the server's reason, verbatim. "Container CSQU3054384 fails the ISO
-         6346 check digit" tells the operator what to do; "save failed" does not. */.catch(e => {
+      /* §11.3 — the server's reason, verbatim. */.catch(e => {
         this.saveError = this.readable(e);
       }).finally(() => {
         this.saving = false;
@@ -234,6 +440,7 @@ const TABS = [{
     },
     readable(e) {
       const d = e.response && e.response.data || {};
+      if (d.errors) return Object.values(d.errors).flat().join(" ");
       return d.error || d.message || "Something went wrong.";
     }
   }
@@ -273,6 +480,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     roles: [],
     expected: {},
     document: "house",
+    branch: null,
     customers: [],
     partners: [],
     draft: {
@@ -296,6 +504,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
       return e ? e.party_type : this.draft.party_type;
     },
     options() {
+      // A master's shipper is this shipment's own branch — the only choice there is.
+      if (this.partyType === "branch") return this.branch ? [this.branch] : [];
       return this.partyType === "customer" ? this.customers : this.partners;
     }
   }),
@@ -322,6 +532,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
         this.roles = data.roles || [];
         this.expected = data.expected || {};
         this.document = data.document;
+        this.branch = data.branch || null;
         this.error = null;
       }).catch(e => {
         this.error = this.readable(e);
@@ -426,10 +637,10 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761":
-/*!*******************************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761 ***!
-  \*******************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761&scoped=true":
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761&scoped=true ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -444,47 +655,128 @@ var render = function render() {
     staticClass: "fx-page-head"
   }, [_c("h1", {
     staticClass: "fx-page-title"
-  }, [_vm._v("FocusSea — Master Bill of Lading")]), _vm._v(" "), _c("p", {
+  }, [_vm.jobId ? [_vm._v(_vm._s(_vm.document === "master" ? "Master Bill of Lading" : "House Bill of Lading"))] : [_vm._v("Bills of Lading")]], 2), _vm._v(" "), _c("p", {
     staticClass: "fx-page-sub"
-  }, [_vm.jobNo ? _c("span", {
+  }, [_vm.jobId ? [_c("span", {
     staticClass: "identifier"
-  }, [_vm._v(_vm._s(_vm.jobNo))]) : _c("span", [_vm._v("Select a sea shipment to open its document.")])])]), _vm._v(" "), _c("div", {
+  }, [_vm._v(_vm._s(_vm.jobNo))]), _vm._v(" "), _vm.client ? [_vm._v(" · " + _vm._s(_vm.client.name))] : _vm._e(), _vm._v(" "), _vm.document === "master" ? [_vm._v(" ·\n          "), _c("router-link", {
+    attrs: {
+      to: {
+        path: "/focus-sea/consol",
+        query: {
+          master: _vm.jobId
+        }
+      }
+    }
+  }, [_vm._v("Its houses and containers →")])] : _vm._e(), _vm._v(" "), _vm.parent ? [_vm._v(" · on master\n          "), _c("router-link", {
+    staticClass: "identifier",
+    attrs: {
+      to: "/focus-sea/" + _vm.parent.id
+    }
+  }, [_vm._v(_vm._s(_vm.parent.execution_job_no))])] : _vm._e(), _vm._v("\n        · "), _c("router-link", {
+    attrs: {
+      to: "/focus-sea"
+    }
+  }, [_vm._v("All bills")])] : [_vm._v("Every sea shipment of the branch. A house is a client's shipment; a master is the carrier's bill a consol travels on.")]], 2)]), _vm._v(" "), !_vm.jobId ? [_c("div", {
     staticClass: "fx-toolbar"
   }, [_c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
-  }, [_vm._v("Shipment")]), _vm._v(" "), _c("select", {
+  }, [_vm._v("Find")]), _vm._v(" "), _c("input", {
     directives: [{
       name: "model",
       rawName: "v-model",
-      value: _vm.jobId,
-      expression: "jobId"
+      value: _vm.q,
+      expression: "q"
     }],
     staticClass: "fx-input",
-    on: {
-      change: [function ($event) {
-        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
-          return o.selected;
-        }).map(function (o) {
-          var val = "_value" in o ? o._value : o.value;
-          return val;
-        });
-        _vm.jobId = $event.target.multiple ? $$selectedVal : $$selectedVal[0];
-      }, _vm.load]
-    }
-  }, [_c("option", {
     attrs: {
-      value: ""
+      placeholder: "Job no, HBL, MBL or client"
+    },
+    domProps: {
+      value: _vm.q
+    },
+    on: {
+      input: [function ($event) {
+        if ($event.target.composing) return;
+        _vm.q = $event.target.value;
+      }, _vm.searchSoon]
     }
-  }, [_vm._v("Choose…")]), _vm._v(" "), _vm._l(_vm.jobs, function (j) {
-    return _c("option", {
-      key: j.id,
-      domProps: {
-        value: j.id
+  })]), _vm._v(" "), _c("div", {
+    staticClass: "fx-seg",
+    attrs: {
+      role: "group",
+      "aria-label": "Which bills"
+    }
+  }, _vm._l(_vm.KINDS, function (k) {
+    return _c("button", {
+      key: k.key,
+      staticClass: "fx-btn",
+      class: {
+        "fx-btn--primary": _vm.kind === k.key
+      },
+      on: {
+        click: function ($event) {
+          _vm.kind = k.key;
+        }
       }
-    }, [_vm._v("\n          " + _vm._s(j.execution_job_no || "Job " + j.id) + "\n        ")]);
-  })], 2)]), _vm._v(" "), _vm.jobId ? _c("label", {
+    }, [_vm._v("\n          " + _vm._s(k.label) + "\n        ")]);
+  }), 0), _vm._v(" "), _vm.canWrite ? _c("button", {
+    staticClass: "fx-btn fx-btn--primary",
+    attrs: {
+      disabled: _vm.creating
+    },
+    on: {
+      click: _vm.newMaster
+    }
+  }, [_vm._v("\n        " + _vm._s(_vm.creating ? "Creating…" : "New master") + "\n      ")]) : _vm._e()]), _vm._v(" "), _vm.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.error))]) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-table-wrap"
+  }, [_c("table", {
+    staticClass: "fx-table"
+  }, [_vm._m(0), _vm._v(" "), _c("tbody", [_vm._l(_vm.shown, function (r) {
+    return _c("tr", {
+      key: r.id,
+      staticClass: "is-clickable",
+      on: {
+        click: function ($event) {
+          return _vm.$router.push("/focus-sea/" + r.id);
+        }
+      }
+    }, [_c("td", [_c("router-link", {
+      staticClass: "identifier",
+      attrs: {
+        to: "/focus-sea/" + r.id
+      }
+    }, [_vm._v(_vm._s(r.execution_job_no))])], 1), _vm._v(" "), _c("td", [_vm._v("\n              " + _vm._s(r.document === "master" ? "Master" : "House") + "\n              "), r.parent_no ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" · on " + _vm._s(r.parent_no))]) : _vm._e(), _vm._v(" "), r.direction === "import" ? _c("span", {
+      staticClass: "fx-muted"
+    }, [_vm._v(" · import")]) : _vm._e()]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.client || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s((r.document === "master" ? r.mbl_number : r.hbl_number) || "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.vessel_name || "—"))]), _vm._v(" "), _c("td", {
+      staticClass: "identifier"
+    }, [_vm._v(_vm._s(r.pol_code || "…") + " → " + _vm._s(r.pod_code || "…"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(r.status))])]);
+  }), _vm._v(" "), !_vm.shown.length && !_vm.loading ? _c("tr", [_c("td", {
+    staticClass: "fx-muted",
+    attrs: {
+      colspan: "7"
+    }
+  }, [_vm._v("No sea shipments here yet.")])]) : _vm._e()], 2)])])] : [_vm.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.error))]) : [_c("div", {
+    staticClass: "fx-grid fx-sea-head"
+  }, [_c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
@@ -517,25 +809,174 @@ var render = function render() {
         value: c
       }
     }, [_vm._v(_vm._s(_vm.labelOf(c)))]);
-  }), 0)]) : _vm._e(), _vm._v(" "), _vm.jobId ? _c("div", {
+  }), 0)]), _vm._v(" "), _c("div", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
   }, [_vm._v("Delivery mode")]), _vm._v(" "), _c("span", {
     staticClass: "fx-input fx-input--static"
-  }, [_vm._v(_vm._s(_vm.locking.delivery_mode || "—"))])]) : _vm._e()]), _vm._v(" "), _vm.loading ? _c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
+  }, [_vm._v(_vm._s(_vm.locking.delivery_mode || "—"))])]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Consol type")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.head.consol_type,
+      expression: "head.consol_type"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      disabled: !_vm.canWrite
+    },
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.head, "consol_type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("—")]), _vm._v(" "), _vm._l(_vm.vocab.consol_types, function (c) {
+    return _c("option", {
+      key: c,
+      domProps: {
+        value: c
+      }
+    }, [_vm._v(_vm._s(_vm.labelOf(c)))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Booking through")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.head.booking_thru,
+      expression: "head.booking_thru"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      disabled: !_vm.canWrite
+    },
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.head, "booking_thru", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("—")]), _vm._v(" "), _vm._l(_vm.vocab.booking_thru, function (c) {
+    return _c("option", {
+      key: c,
+      domProps: {
+        value: c
+      }
+    }, [_vm._v(_vm._s(c))]);
+  })], 2)]), _vm._v(" "), _c("Field", {
+    attrs: {
+      label: "Shipment date",
+      type: "date",
+      disabled: !_vm.canWrite
+    },
+    model: {
+      value: _vm.head.planned_clearance_date,
+      callback: function ($$v) {
+        _vm.$set(_vm.head, "planned_clearance_date", $$v);
+      },
+      expression: "head.planned_clearance_date"
+    }
+  }), _vm._v(" "), _c("Field", {
+    attrs: {
+      label: "Job order no",
+      disabled: !_vm.canWrite,
+      mono: "",
+      hint: "The client's own reference"
+    },
+    model: {
+      value: _vm.head.job_order_no,
+      callback: function ($$v) {
+        _vm.$set(_vm.head, "job_order_no", $$v);
+      },
+      expression: "head.job_order_no"
+    }
+  }), _vm._v(" "), _c("Field", {
+    attrs: {
+      label: "Quotation no",
+      disabled: !_vm.canWrite,
+      mono: ""
+    },
+    model: {
+      value: _vm.head.quotation_no,
+      callback: function ($$v) {
+        _vm.$set(_vm.head, "quotation_no", $$v);
+      },
+      expression: "head.quotation_no"
+    }
+  }), _vm._v(" "), _vm.document !== "master" || _vm.head.parent_job_id ? _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("On master (sub-shipment)")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.head.parent_job_id,
+      expression: "head.parent_job_id"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      disabled: !_vm.canWrite
+    },
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.head, "parent_job_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("— not in a consol")]), _vm._v(" "), _vm._l(_vm.masters, function (m) {
+    return _c("option", {
+      key: m.id,
+      domProps: {
+        value: m.id
+      }
+    }, [_vm._v(_vm._s(m.execution_job_no) + _vm._s(m.mbl_number ? " · " + m.mbl_number : ""))]);
+  })], 2)]) : _vm._e()], 1), _vm._v(" "), _vm.credit && _vm.credit.blocked ? _c("p", {
     staticClass: "fx-error",
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.error))]) : _vm.jobId ? [_vm.violations.length ? _c("p", {
+  }, [_vm._v("\n        " + _vm._s(_vm.client.name) + " is over its credit limit — accounts will not finalize a bill for it until it pays or the limit is raised.\n      ")]) : _vm._e(), _vm._v(" "), _vm.violations.length ? _c("p", {
     staticClass: "fx-warn",
     attrs: {
       role: "status"
     }
-  }, [_vm._v("\n      " + _vm._s(_vm.violations.length) + " issue" + _vm._s(_vm.violations.length === 1 ? "" : "s") + " would fail\n      structural validation at filing:\n      "), _vm._l(_vm.violations, function (v, i) {
+  }, [_vm._v("\n        " + _vm._s(_vm.violations.length) + " issue" + _vm._s(_vm.violations.length === 1 ? "" : "s") + " would fail ICEGATE's structural check:\n        "), _vm._l(_vm.violations, function (v, i) {
     return _c("span", {
       key: i
     }, [_vm._v(" · " + _vm._s(v.message))]);
@@ -567,16 +1008,54 @@ var render = function render() {
   }), 0), _vm._v(" "), _c("section", {
     staticClass: "fx-form"
   }, [_vm.tab === "entity" ? _c("EntityPanel", {
-    key: _vm.jobId,
+    key: "e" + _vm.jobId,
     attrs: {
       "job-id": _vm.jobId
     }
   }) : _vm.tab === "shipping" ? _c("div", {
     staticClass: "fx-grid"
-  }, [_c("Field", {
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Carrier")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.carrier_id,
+      expression: "form.carrier_id"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      disabled: !_vm.canWrite
+    },
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.form, "carrier_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("—")]), _vm._v(" "), _vm._l(_vm.partners, function (p) {
+    return _c("option", {
+      key: p.id,
+      domProps: {
+        value: p.id
+      }
+    }, [_vm._v(_vm._s(p.name))]);
+  })], 2)]), _vm._v(" "), _c("Field", {
     attrs: {
       label: "Vessel name",
-      disabled: !_vm.canWrite
+      disabled: !_vm.canWrite || _vm.fromMaster.includes("vessel_name"),
+      hint: _vm.masterHint("vessel_name")
     },
     model: {
       value: _vm.form.vessel_name,
@@ -588,7 +1067,8 @@ var render = function render() {
   }), _vm._v(" "), _c("Field", {
     attrs: {
       label: "Voyage no",
-      disabled: !_vm.canWrite
+      disabled: !_vm.canWrite || _vm.fromMaster.includes("voyage_no"),
+      hint: _vm.masterHint("voyage_no")
     },
     model: {
       value: _vm.form.voyage_no,
@@ -600,7 +1080,8 @@ var render = function render() {
   }), _vm._v(" "), _c("Field", {
     attrs: {
       label: "Flag",
-      disabled: !_vm.canWrite
+      disabled: !_vm.canWrite || _vm.fromMaster.includes("vessel_flag"),
+      hint: _vm.masterHint("vessel_flag")
     },
     model: {
       value: _vm.form.vessel_flag,
@@ -611,9 +1092,11 @@ var render = function render() {
     }
   }), _vm._v(" "), _c("Field", {
     attrs: {
-      label: "IMO (7 digits)",
-      disabled: !_vm.canWrite,
-      hint: "^[0-9]{7}$"
+      label: "IMO",
+      disabled: !_vm.canWrite || _vm.fromMaster.includes("imo_number"),
+      mono: "",
+      hint: _vm.masterHint("imo_number") || "7 digits",
+      maxlength: "7"
     },
     model: {
       value: _vm.form.imo_number,
@@ -622,63 +1105,145 @@ var render = function render() {
       },
       expression: "form.imo_number"
     }
+  }), _vm._v(" "), _c("Field", {
+    attrs: {
+      label: "Service contract",
+      disabled: !_vm.canWrite,
+      mono: ""
+    },
+    model: {
+      value: _vm.form.service_contract_no,
+      callback: function ($$v) {
+        _vm.$set(_vm.form, "service_contract_no", $$v);
+      },
+      expression: "form.service_contract_no"
+    }
   })], 1) : _vm.tab === "routing" ? _c("div", {
     staticClass: "fx-grid"
-  }, [_c("Field", {
+  }, [_vm._l(_vm.PORTS, function (p) {
+    return _c("Field", {
+      key: p.key,
+      attrs: {
+        label: p.label,
+        disabled: !_vm.canWrite || _vm.fromMaster.includes(p.key),
+        mono: "",
+        maxlength: "5",
+        hint: _vm.masterHint(p.key) || "UN/LOCODE"
+      },
+      on: {
+        input: function ($event) {
+          return _vm.upper(p.key);
+        }
+      },
+      model: {
+        value: _vm.form[p.key],
+        callback: function ($$v) {
+          _vm.$set(_vm.form, p.key, $$v);
+        },
+        expression: "form[p.key]"
+      }
+    });
+  }), _vm._v(" "), _c("Field", {
     attrs: {
-      label: "POR",
-      disabled: !_vm.canWrite,
-      mono: ""
+      label: "ETD",
+      type: "date",
+      disabled: !_vm.canWrite
     },
     model: {
-      value: _vm.form.por_code,
+      value: _vm.form.etd,
       callback: function ($$v) {
-        _vm.$set(_vm.form, "por_code", $$v);
+        _vm.$set(_vm.form, "etd", $$v);
       },
-      expression: "form.por_code"
+      expression: "form.etd"
     }
   }), _vm._v(" "), _c("Field", {
     attrs: {
-      label: "POL",
-      disabled: !_vm.canWrite,
-      mono: ""
+      label: "ETA",
+      type: "date",
+      disabled: !_vm.canWrite
     },
     model: {
-      value: _vm.form.pol_code,
+      value: _vm.form.eta,
       callback: function ($$v) {
-        _vm.$set(_vm.form, "pol_code", $$v);
+        _vm.$set(_vm.form, "eta", $$v);
       },
-      expression: "form.pol_code"
+      expression: "form.eta"
     }
-  }), _vm._v(" "), _c("Field", {
-    attrs: {
-      label: "POD",
-      disabled: !_vm.canWrite,
-      mono: ""
-    },
-    model: {
-      value: _vm.form.pod_code,
-      callback: function ($$v) {
-        _vm.$set(_vm.form, "pod_code", $$v);
-      },
-      expression: "form.pod_code"
-    }
-  }), _vm._v(" "), _c("Field", {
-    attrs: {
-      label: "DEL",
-      disabled: !_vm.canWrite,
-      mono: ""
-    },
-    model: {
-      value: _vm.form.del_code,
-      callback: function ($$v) {
-        _vm.$set(_vm.form, "del_code", $$v);
-      },
-      expression: "form.del_code"
-    }
-  })], 1) : _vm.tab === "goods" ? _c("div", {
+  }), _vm._v(" "), _c("div", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Transit")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-input fx-input--static"
+  }, [_vm._v(_vm._s(_vm.transitDays === null ? "—" : _vm.transitDays + " days"))])])], 2) : _vm.tab === "goods" ? _c("div", {
     staticClass: "fx-grid"
-  }, [_c("Field", {
+  }, [_c("label", {
+    staticClass: "fx-field fx-field--wide"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Commodity")]), _vm._v(" "), _c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.commodity_description,
+      expression: "form.commodity_description"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      rows: "3",
+      maxlength: "500",
+      disabled: !_vm.canWrite
+    },
+    domProps: {
+      value: _vm.form.commodity_description
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "commodity_description", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("Field", {
+    attrs: {
+      label: "HS code",
+      disabled: !_vm.canWrite,
+      mono: "",
+      hint: "6 to 10 digits",
+      maxlength: "10"
+    },
+    model: {
+      value: _vm.form.hs_code,
+      callback: function ($$v) {
+        _vm.$set(_vm.form, "hs_code", $$v);
+      },
+      expression: "form.hs_code"
+    }
+  }), _vm._v(" "), _c("label", {
+    staticClass: "fx-field fx-field--wide"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Marks & numbers")]), _vm._v(" "), _c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.marks_numbers,
+      expression: "form.marks_numbers"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      rows: "3",
+      disabled: !_vm.canWrite
+    },
+    domProps: {
+      value: _vm.form.marks_numbers
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.form, "marks_numbers", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("Field", {
     attrs: {
       label: "IMDG class",
       disabled: !_vm.canWrite
@@ -707,6 +1272,20 @@ var render = function render() {
     staticClass: "fx-grid"
   }, [_c("Field", {
     attrs: {
+      label: "Package code",
+      disabled: !_vm.canWrite,
+      mono: "",
+      hint: "≤ 3 chars (ICEGATE)"
+    },
+    model: {
+      value: _vm.form.package_code,
+      callback: function ($$v) {
+        _vm.$set(_vm.form, "package_code", $$v);
+      },
+      expression: "form.package_code"
+    }
+  }), _vm._v(" "), _c("Field", {
+    attrs: {
       label: "Pieces",
       type: "number",
       disabled: !_vm.canWrite
@@ -720,9 +1299,10 @@ var render = function render() {
     }
   }), _vm._v(" "), _c("Field", {
     attrs: {
-      label: "Gross weight (kg)",
+      label: "Gross weight",
       type: "number",
-      disabled: !_vm.canWrite
+      disabled: !_vm.canWrite,
+      step: "0.001"
     },
     model: {
       value: _vm.form.gross_weight,
@@ -733,9 +1313,10 @@ var render = function render() {
     }
   }), _vm._v(" "), _c("Field", {
     attrs: {
-      label: "Net weight (kg)",
+      label: "Net weight",
       type: "number",
-      disabled: !_vm.canWrite
+      disabled: !_vm.canWrite,
+      step: "0.001"
     },
     model: {
       value: _vm.form.net_weight,
@@ -746,9 +1327,10 @@ var render = function render() {
     }
   }), _vm._v(" "), _c("Field", {
     attrs: {
-      label: "Chargeable weight (kg)",
+      label: "Chargeable weight",
       type: "number",
-      disabled: !_vm.canWrite
+      disabled: !_vm.canWrite,
+      step: "0.001"
     },
     model: {
       value: _vm.form.chargeable_weight,
@@ -757,11 +1339,49 @@ var render = function render() {
       },
       expression: "form.chargeable_weight"
     }
-  }), _vm._v(" "), _c("Field", {
+  }), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Weight unit")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.weight_unit,
+      expression: "form.weight_unit"
+    }],
+    staticClass: "fx-input",
     attrs: {
-      label: "Volume (CBM)",
+      disabled: !_vm.canWrite
+    },
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.form, "weight_unit", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("—")]), _vm._v(" "), _vm._l(_vm.vocab.weight_units, function (u) {
+    return _c("option", {
+      key: u,
+      domProps: {
+        value: u
+      }
+    }, [_vm._v(_vm._s(u))]);
+  })], 2)]), _vm._v(" "), _c("Field", {
+    attrs: {
+      label: "Volume",
       type: "number",
       disabled: !_vm.canWrite,
+      step: "0.001",
       hint: _vm.locking.dimensions_required ? "Mandatory for LCL — a box cannot be allocated without it" : null
     },
     model: {
@@ -771,7 +1391,142 @@ var render = function render() {
       },
       expression: "form.volume_cbm"
     }
-  })], 1) : _vm.tab === "bl" ? _c("div", {
+  }), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Volume unit")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.volume_unit,
+      expression: "form.volume_unit"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      disabled: !_vm.canWrite
+    },
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.form, "volume_unit", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("—")]), _vm._v(" "), _vm._l(_vm.vocab.volume_units, function (u) {
+    return _c("option", {
+      key: u,
+      domProps: {
+        value: u
+      }
+    }, [_vm._v(_vm._s(u))]);
+  })], 2)]), _vm._v(" "), _c("div", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("From L × W × H (cm)")]), _vm._v(" "), _c("span", {
+    staticClass: "fx-sea-dims"
+  }, [_c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.dims.l,
+      expression: "dims.l",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "number",
+      disabled: !_vm.canWrite,
+      "aria-label": "Length cm"
+    },
+    domProps: {
+      value: _vm.dims.l
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.dims, "l", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  }), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.dims.w,
+      expression: "dims.w",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "number",
+      disabled: !_vm.canWrite,
+      "aria-label": "Width cm"
+    },
+    domProps: {
+      value: _vm.dims.w
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.dims, "w", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  }), _vm._v(" "), _c("input", {
+    directives: [{
+      name: "model",
+      rawName: "v-model.number",
+      value: _vm.dims.h,
+      expression: "dims.h",
+      modifiers: {
+        number: true
+      }
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      type: "number",
+      disabled: !_vm.canWrite,
+      "aria-label": "Height cm"
+    },
+    domProps: {
+      value: _vm.dims.h
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.dims, "h", _vm._n($event.target.value));
+      },
+      blur: function ($event) {
+        return _vm.$forceUpdate();
+      }
+    }
+  }), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: !_vm.canWrite || !_vm.dimsCbm
+    },
+    on: {
+      click: _vm.useDims
+    }
+  }, [_vm._v("Use " + _vm._s(_vm.dimsCbm || "—") + " CBM")])])])], 1) : _vm.tab === "bl" ? _c("div", {
     staticClass: "fx-grid"
   }, [_c("Field", {
     attrs: {
@@ -787,7 +1542,7 @@ var render = function render() {
       },
       expression: "form.mbl_number"
     }
-  }), _vm._v(" "), _c("Field", {
+  }), _vm._v(" "), _vm.document !== "master" ? _c("Field", {
     attrs: {
       label: "HBL number",
       disabled: !_vm.canWrite,
@@ -801,7 +1556,56 @@ var render = function render() {
       },
       expression: "form.hbl_number"
     }
+  }) : _vm._e(), _vm._v(" "), _c("Field", {
+    attrs: {
+      label: "BL type",
+      disabled: !_vm.canWrite
+    },
+    model: {
+      value: _vm.form.bl_type,
+      callback: function ($$v) {
+        _vm.$set(_vm.form, "bl_type", $$v);
+      },
+      expression: "form.bl_type"
+    }
   }), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Release")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.release_type,
+      expression: "form.release_type"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      disabled: !_vm.canWrite
+    },
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.form, "release_type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("—")]), _vm._v(" "), _vm._l(_vm.vocab.release_types, function (r) {
+    return _c("option", {
+      key: r,
+      domProps: {
+        value: r
+      }
+    }, [_vm._v(_vm._s(r))]);
+  })], 2)]), _vm._v(" "), _c("label", {
     staticClass: "fx-field"
   }, [_c("span", {
     staticClass: "fx-field__label"
@@ -828,70 +1632,34 @@ var render = function render() {
       }
     }
   }, [_c("option", {
-    attrs: {
-      value: ""
+    domProps: {
+      value: null
     }
   }, [_vm._v("—")]), _vm._v(" "), _c("option", {
     attrs: {
       value: "prepaid"
     }
-  }, [_vm._v("Prepaid — invoice the shipper")]), _vm._v(" "), _c("option", {
+  }, [_vm._v("Prepaid")]), _vm._v(" "), _c("option", {
     attrs: {
       value: "collect"
     }
-  }, [_vm._v("Collect — invoice the consignee")])])])], 1) : _vm.tab === "container" ? _c("div", [!_vm.locking.containers_enabled ? _c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v("\n          " + _vm._s(_vm.labelOf(_vm.form.cargo_type)) + " carries no containers on this document"), _vm.form.cargo_type === "lcl" ? [_vm._v(" — LCL boxes are managed at master level")] : _vm._e(), _vm._v(".\n        ")], 2) : [_c("label", {
-    staticClass: "fx-field",
-    staticStyle: {
-      "margin-bottom": "var(--space-3)"
-    }
-  }, [_c("span", {
-    staticClass: "fx-field__label"
-  }, [_vm._v("Size / type")]), _vm._v(" "), _c("select", {
-    directives: [{
-      name: "model",
-      rawName: "v-model",
-      value: _vm.form.container_type,
-      expression: "form.container_type"
-    }],
-    staticClass: "fx-input",
-    attrs: {
-      disabled: !_vm.canWrite
-    },
-    on: {
-      change: function ($event) {
-        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
-          return o.selected;
-        }).map(function (o) {
-          var val = "_value" in o ? o._value : o.value;
-          return val;
-        });
-        _vm.$set(_vm.form, "container_type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
-      }
-    }
-  }, [_c("option", {
-    attrs: {
-      value: ""
-    }
-  }, [_vm._v("—")]), _vm._v(" "), _vm._l(_vm.vocab.container_types, function (t) {
-    return _c("option", {
-      key: t,
-      domProps: {
-        value: t
-      }
-    }, [_vm._v(_vm._s(t))]);
-  })], 2)]), _vm._v(" "), _c("table", {
+  }, [_vm._v("Collect")])])])], 1) : _vm.tab === "container" ? _c("div", [_c("div", {
+    staticClass: "fx-table-wrap"
+  }, [_c("table", {
     staticClass: "fx-table"
   }, [_c("thead", [_c("tr", [_c("th", {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Container number")]), _vm._v(" "), _c("th", {
+  }, [_vm._v("Container number")]), _c("th", {
     attrs: {
       scope: "col"
     }
-  }, [_vm._v("Seal")]), _vm._v(" "), _vm.canWrite ? _c("th", {
+  }, [_vm._v("Size / type")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Seal")]), _vm.canWrite ? _c("th", {
     attrs: {
       scope: "col"
     }
@@ -917,14 +1685,49 @@ var render = function render() {
         value: c.number
       },
       on: {
-        input: function ($event) {
+        input: [function ($event) {
           if ($event.target.composing) return;
           _vm.$set(c, "number", $event.target.value);
-        }
+        }, function ($event) {
+          c.number = c.number.toUpperCase();
+        }]
       }
     }), _vm._v(" "), c.number && !_vm.isValidBox(c.number) ? _c("span", {
       staticClass: "fx-field__error"
-    }, [_vm._v("\n                    Fails the ISO 6346 check digit\n                  ")]) : _vm._e()]), _vm._v(" "), _c("td", [_c("input", {
+    }, [_vm._v("Fails the ISO 6346 check digit")]) : _vm._e()]), _vm._v(" "), _c("td", [_c("select", {
+      directives: [{
+        name: "model",
+        rawName: "v-model",
+        value: c.type,
+        expression: "c.type"
+      }],
+      staticClass: "fx-input",
+      attrs: {
+        disabled: !_vm.canWrite
+      },
+      on: {
+        change: function ($event) {
+          var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+            return o.selected;
+          }).map(function (o) {
+            var val = "_value" in o ? o._value : o.value;
+            return val;
+          });
+          _vm.$set(c, "type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+        }
+      }
+    }, [_c("option", {
+      domProps: {
+        value: null
+      }
+    }, [_vm._v("—")]), _vm._v(" "), _vm._l(_vm.vocab.container_types, function (t) {
+      return _c("option", {
+        key: t,
+        domProps: {
+          value: t
+        }
+      }, [_vm._v(_vm._s(t))]);
+    })], 2)]), _vm._v(" "), _c("td", [_c("input", {
       directives: [{
         name: "model",
         rawName: "v-model",
@@ -949,6 +1752,9 @@ var render = function render() {
       staticClass: "fx-row-actions"
     }, [_c("button", {
       staticClass: "fx-btn fx-btn--ghost",
+      attrs: {
+        "aria-label": "Remove container"
+      },
       on: {
         click: function ($event) {
           return _vm.containers.splice(i, 1);
@@ -958,9 +1764,9 @@ var render = function render() {
   }), _vm._v(" "), !_vm.containers.length ? _c("tr", [_c("td", {
     staticClass: "fx-muted",
     attrs: {
-      colspan: "3"
+      colspan: _vm.canWrite ? 4 : 3
     }
-  }, [_vm._v("No containers yet.")])]) : _vm._e()], 2)]), _vm._v(" "), _vm.canWrite ? _c("button", {
+  }, [_vm._v("No containers yet.")])]) : _vm._e()], 2)])]), _vm._v(" "), _vm.canWrite ? _c("button", {
     staticClass: "fx-btn",
     staticStyle: {
       "margin-top": "var(--space-3)"
@@ -969,11 +1775,122 @@ var render = function render() {
       click: function ($event) {
         return _vm.containers.push({
           number: "",
+          type: null,
           seal: ""
         });
       }
     }
-  }, [_vm._v("\n            Add container\n          ")]) : _vm._e()]], 2) : _vm.tab === "customs" ? _c("div", {
+  }, [_vm._v("Add container")]) : _vm._e()]) : _vm.tab === "pickup" ? _c("div", {
+    staticClass: "fx-grid"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Haulage provider")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.form.haulage_provider_id,
+      expression: "form.haulage_provider_id"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      disabled: !_vm.canWrite
+    },
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.form, "haulage_provider_id", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, [_c("option", {
+    domProps: {
+      value: null
+    }
+  }, [_vm._v("—")]), _vm._v(" "), _vm._l(_vm.partners, function (p) {
+    return _c("option", {
+      key: p.id,
+      domProps: {
+        value: p.id
+      }
+    }, [_vm._v(_vm._s(p.name))]);
+  })], 2)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field fx-field--wide"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Pick-up address")]), _vm._v(" "), _c("textarea", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.head.pickup_address,
+      expression: "head.pickup_address"
+    }],
+    staticClass: "fx-input",
+    attrs: {
+      rows: "3",
+      maxlength: "500",
+      disabled: !_vm.canWrite
+    },
+    domProps: {
+      value: _vm.head.pickup_address
+    },
+    on: {
+      input: function ($event) {
+        if ($event.target.composing) return;
+        _vm.$set(_vm.head, "pickup_address", $event.target.value);
+      }
+    }
+  })]), _vm._v(" "), _c("Field", {
+    attrs: {
+      label: "Empty depot",
+      disabled: !_vm.canWrite
+    },
+    model: {
+      value: _vm.form.empty_depot,
+      callback: function ($$v) {
+        _vm.$set(_vm.form, "empty_depot", $$v);
+      },
+      expression: "form.empty_depot"
+    }
+  })], 1) : (_vm.tab === "charges" || _vm.tab === "financials") && !_vm.canSeeCosts ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n          The charges and their totals are the cost sheet, which pricing and accounts keep on the Command plan —\n          nothing on this bill changes them, and they change nothing here.\n        ")]) : _vm.tab === "charges" ? _c("CostSheet", {
+    key: "c" + _vm.jobId,
+    attrs: {
+      "job-id": _vm.jobId
+    }
+  }) : _vm.tab === "financials" ? _c("div", [!_vm.sheet ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Loading…")]) : _c("dl", {
+    staticClass: "fx-defs"
+  }, [_c("dt", [_vm._v("Sell")]), _c("dd", [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.sell.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1), _vm._v(" "), _vm.sheet.buy ? [_c("dt", [_vm._v("Cost")]), _c("dd", [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.buy.total,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  })], 1)] : _vm._e(), _vm._v(" "), _vm.sheet.margin ? [_c("dt", [_vm._v("Estimated profit")]), _vm._v(" "), _c("dd", [_c("Figure", {
+    attrs: {
+      value: _vm.sheet.margin.value,
+      kind: "currency",
+      "currency-code": "INR"
+    }
+  }), _vm._v(" "), _c("span", {
+    staticClass: "fx-muted"
+  }, [_vm._v(" · " + _vm._s(_vm.sheet.margin.percent === null ? "no margin until something is billed" : Number(_vm.sheet.margin.percent).toFixed(2) + "%"))])], 1)] : _vm._e()], 2), _vm._v(" "), _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("Figures are before tax. Lines are edited on the Charges tab; the bill goes to " + _vm._s(_vm.client ? _vm.client.name : "the client") + ".")])]) : _vm.tab === "customs" ? _c("div", {
     staticClass: "fx-grid"
   }, [_c("Field", {
     attrs: {
@@ -1033,17 +1950,115 @@ var render = function render() {
       domProps: {
         value: s
       }
-    }, [_vm._v("\n              " + _vm._s(_vm.labelOf(s)) + "\n            ")]);
-  }), 0)])], 1) : _c("p", {
-    staticClass: "fx-muted"
-  }, [_vm._v("\n        " + _vm._s(_vm.tabLabel) + " reads " + _vm._s(_vm.tabSource) + ", which is not wired into this form yet.\n        "), _vm.tab === "charges" || _vm.tab === "financials" ? [_vm._v("\n          The cost sheet is on the inbox drawer today (§6.7).\n        ")] : _vm._e()], 2)], 1), _vm._v(" "), _vm.canWrite ? _c("footer", {
+    }, [_vm._v(_vm._s(_vm.labelOf(s)))]);
+  }), 0)])], 1) : _vm.tab === "edocket" ? _c("div", [_vm.canWrite ? _c("div", {
+    staticClass: "fx-toolbar"
+  }, [_c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("Document type")]), _vm._v(" "), _c("select", {
+    directives: [{
+      name: "model",
+      rawName: "v-model",
+      value: _vm.upload.type,
+      expression: "upload.type"
+    }],
+    staticClass: "fx-input",
+    on: {
+      change: function ($event) {
+        var $$selectedVal = Array.prototype.filter.call($event.target.options, function (o) {
+          return o.selected;
+        }).map(function (o) {
+          var val = "_value" in o ? o._value : o.value;
+          return val;
+        });
+        _vm.$set(_vm.upload, "type", $event.target.multiple ? $$selectedVal : $$selectedVal[0]);
+      }
+    }
+  }, _vm._l(_vm.docTypes, function (t) {
+    return _c("option", {
+      key: t,
+      domProps: {
+        value: t
+      }
+    }, [_vm._v(_vm._s(_vm.labelOf(t)))]);
+  }), 0)]), _vm._v(" "), _c("label", {
+    staticClass: "fx-field"
+  }, [_c("span", {
+    staticClass: "fx-field__label"
+  }, [_vm._v("File")]), _vm._v(" "), _c("input", {
+    ref: "file",
+    staticClass: "fx-input",
+    attrs: {
+      type: "file",
+      accept: ".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.docx,.doc,.csv"
+    }
+  })]), _vm._v(" "), _c("button", {
+    staticClass: "fx-btn",
+    attrs: {
+      disabled: _vm.upload.busy
+    },
+    on: {
+      click: _vm.sendFile
+    }
+  }, [_vm._v(_vm._s(_vm.upload.busy ? "Scanning…" : "Upload"))])]) : _vm._e(), _vm._v(" "), _vm.upload.error ? _c("p", {
+    staticClass: "fx-error",
+    attrs: {
+      role: "alert"
+    }
+  }, [_vm._v(_vm._s(_vm.upload.error))]) : _vm._e(), _vm._v(" "), _c("div", {
+    staticClass: "fx-table-wrap"
+  }, [_c("table", {
+    staticClass: "fx-table"
+  }, [_c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Type")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("File")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("By")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("When")])])]), _vm._v(" "), _c("tbody", [_vm._l(_vm.documents, function (d) {
+    return _c("tr", {
+      key: d.id
+    }, [_c("td", [_vm._v(_vm._s(_vm.labelOf(d.document_type)))]), _vm._v(" "), _c("td", [_c("a", {
+      attrs: {
+        href: "#"
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          return _vm.openDoc(d);
+        }
+      }
+    }, [_vm._v(_vm._s(d.file_name))])]), _vm._v(" "), _c("td", [_vm._v(_vm._s(d.uploader ? d.uploader.name : "—"))]), _vm._v(" "), _c("td", [_vm._v(_vm._s(_vm.fmtDate(d.created_at)))])]);
+  }), _vm._v(" "), !_vm.documents.length ? _c("tr", [_c("td", {
+    staticClass: "fx-muted",
+    attrs: {
+      colspan: "4"
+    }
+  }, [_vm._v("No documents yet.")])]) : _vm._e()], 2)])])]) : _vm._e()], 1), _vm._v(" "), _vm.canWrite ? _c("footer", {
     staticClass: "fx-form__foot"
   }, [_vm.saveError ? _c("p", {
     staticClass: "fx-error",
     attrs: {
       role: "alert"
     }
-  }, [_vm._v(_vm._s(_vm.saveError))]) : _vm._e(), _vm._v(" "), _c("button", {
+  }, [_vm._v(_vm._s(_vm.saveError))]) : _vm._e(), _vm._v(" "), _vm.saved ? _c("p", {
+    staticClass: "fx-muted",
+    attrs: {
+      role: "status"
+    }
+  }, [_vm._v("Saved.")]) : _vm._e(), _vm._v(" "), _c("button", {
     staticClass: "fx-btn fx-btn--primary",
     attrs: {
       disabled: _vm.saving || _vm.hasBadBox
@@ -1051,9 +2066,41 @@ var render = function render() {
     on: {
       click: _vm.save
     }
-  }, [_vm._v("\n        " + _vm._s(_vm.saving ? "Saving…" : "Save") + "\n      ")])]) : _vm._e()] : _vm._e()], 2);
+  }, [_vm._v(_vm._s(_vm.saving ? "Saving…" : "Save"))])]) : _vm._e()]]], 2);
 };
-var staticRenderFns = [];
+var staticRenderFns = [function () {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("thead", [_c("tr", [_c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Shipment")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Bill")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Client")]), _vm._v(" "), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("BL no")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Vessel")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Route")]), _c("th", {
+    attrs: {
+      scope: "col"
+    }
+  }, [_vm._v("Status")])])]);
+}];
 render._withStripped = true;
 
 
@@ -1324,6 +2371,18 @@ render._withStripped = true;
 
 /***/ }),
 
+/***/ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=style&index=0&id=0af23761&scoped=true&lang=css":
+/*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=style&index=0&id=0af23761&scoped=true&lang=css ***!
+  \***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ }),
+
 /***/ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue":
 /*!****************************************************************!*\
   !*** ./resources/js/src/view/pages/freight/FocusSeaMaster.vue ***!
@@ -1334,23 +2393,25 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _FocusSeaMaster_vue_vue_type_template_id_0af23761__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./FocusSeaMaster.vue?vue&type=template&id=0af23761 */ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761");
+/* harmony import */ var _FocusSeaMaster_vue_vue_type_template_id_0af23761_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./FocusSeaMaster.vue?vue&type=template&id=0af23761&scoped=true */ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761&scoped=true");
 /* harmony import */ var _FocusSeaMaster_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./FocusSeaMaster.vue?vue&type=script&lang=js */ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=script&lang=js");
-/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+/* harmony import */ var _FocusSeaMaster_vue_vue_type_style_index_0_id_0af23761_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./FocusSeaMaster.vue?vue&type=style&index=0&id=0af23761&scoped=true&lang=css */ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=style&index=0&id=0af23761&scoped=true&lang=css");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
 
 
 
+;
 
 
 /* normalize component */
-;
-var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
   _FocusSeaMaster_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
-  _FocusSeaMaster_vue_vue_type_template_id_0af23761__WEBPACK_IMPORTED_MODULE_0__.render,
-  _FocusSeaMaster_vue_vue_type_template_id_0af23761__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  _FocusSeaMaster_vue_vue_type_template_id_0af23761_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
+  _FocusSeaMaster_vue_vue_type_template_id_0af23761_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
   false,
   null,
-  null,
+  "0af23761",
   null
   
 )
@@ -1483,18 +2544,18 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761":
-/*!**********************************************************************************************!*\
-  !*** ./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761 ***!
-  \**********************************************************************************************/
+/***/ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761&scoped=true":
+/*!**********************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761&scoped=true ***!
+  \**********************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_FocusSeaMaster_vue_vue_type_template_id_0af23761__WEBPACK_IMPORTED_MODULE_0__.render),
-/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_FocusSeaMaster_vue_vue_type_template_id_0af23761__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_FocusSeaMaster_vue_vue_type_template_id_0af23761_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_FocusSeaMaster_vue_vue_type_template_id_0af23761_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
-/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_FocusSeaMaster_vue_vue_type_template_id_0af23761__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./FocusSeaMaster.vue?vue&type=template&id=0af23761 */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761");
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_FocusSeaMaster_vue_vue_type_template_id_0af23761_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./FocusSeaMaster.vue?vue&type=template&id=0af23761&scoped=true */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=template&id=0af23761&scoped=true");
 
 
 /***/ }),
@@ -1527,6 +2588,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "staticRenderFns": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Field_vue_vue_type_template_id_1753eb6e__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
 /* harmony export */ });
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_lib_index_js_vue_loader_options_Field_vue_vue_type_template_id_1753eb6e__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!../../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./Field.vue?vue&type=template&id=1753eb6e */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/components/Field.vue?vue&type=template&id=1753eb6e");
+
+
+/***/ }),
+
+/***/ "./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=style&index=0&id=0af23761&scoped=true&lang=css":
+/*!************************************************************************************************************************!*\
+  !*** ./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=style&index=0&id=0af23761&scoped=true&lang=css ***!
+  \************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_clonedRuleSet_9_use_0_node_modules_laravel_mix_node_modules_css_loader_dist_cjs_js_clonedRuleSet_9_use_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_dist_cjs_js_clonedRuleSet_9_use_2_node_modules_vue_loader_lib_index_js_vue_loader_options_FocusSeaMaster_vue_vue_type_style_index_0_id_0af23761_scoped_true_lang_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!../../../../../../node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!../../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../../node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!../../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./FocusSeaMaster.vue?vue&type=style&index=0&id=0af23761&scoped=true&lang=css */ "./node_modules/mini-css-extract-plugin/dist/loader.js??clonedRuleSet-9.use[0]!./node_modules/laravel-mix/node_modules/css-loader/dist/cjs.js??clonedRuleSet-9.use[1]!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-9.use[2]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./resources/js/src/view/pages/freight/FocusSeaMaster.vue?vue&type=style&index=0&id=0af23761&scoped=true&lang=css");
 
 
 /***/ })

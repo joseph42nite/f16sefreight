@@ -788,7 +788,14 @@ var render = function render() {
         staticClass: "fx-card__owners"
       }, [_c("span", [_vm._v("ops " + _vm._s(job.ops_user ? job.ops_user.name : "—"))]), _vm._v(" "), _c("span", [_vm._v("pricing " + _vm._s(job.pricing_owner ? job.pricing_owner.name : "—"))])]), _vm._v(" "), _c("div", {
         staticClass: "fx-card__links"
-      }, [col.key === "transit" && job.awb_number ? _c("router-link", {
+      }, [job.transport_mode === "sea" ? _c("router-link", {
+        staticClass: "fx-card__link",
+        attrs: {
+          to: "/focus-sea/" + job.id,
+          title: "Bill of lading",
+          "aria-label": "Open the bill of lading for " + job.execution_job_no
+        }
+      }, [_vm._v("⚓")]) : _vm._e(), _vm._v(" "), col.key === "transit" && job.awb_number ? _c("router-link", {
         staticClass: "fx-card__link",
         attrs: {
           to: {

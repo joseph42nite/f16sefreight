@@ -44,13 +44,19 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
     }
   }),
   created() {
-    _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/jobs?transport_mode=sea").then(({
+    // The branch's MASTERS only — a consol is built on the carrier's bill, not on any sea job (GAPS #424).
+    _core_services_api_service__WEBPACK_IMPORTED_MODULE_0__["default"].get("/sea-shipments").then(({
       data
     }) => {
-      this.masters = (data.data || []).filter(j => j.transport_mode === "sea");
+      this.masters = (data.data || []).filter(j => j.document === "master");
     }).catch(e => {
       this.error = this.readable(e);
     });
+    // Opened from a master bill: straight onto that master.
+    if (this.$route.query.master) {
+      this.masterId = String(this.$route.query.master);
+      this.load();
+    }
   },
   methods: {
     load() {
@@ -183,8 +189,15 @@ var render = function render() {
       domProps: {
         value: m.id
       }
-    }, [_vm._v("\n          " + _vm._s(m.execution_job_no || "Job " + m.id) + "\n        ")]);
-  })], 2)])]), _vm._v(" "), _vm.loading ? _c("p", {
+    }, [_vm._v("\n          " + _vm._s(m.execution_job_no || "Job " + m.id) + _vm._s(m.mbl_number ? " · " + m.mbl_number : "") + "\n        ")]);
+  })], 2)]), _vm._v(" "), _vm.masterId ? _c("router-link", {
+    staticClass: "fx-btn",
+    attrs: {
+      to: "/focus-sea/" + _vm.masterId
+    }
+  }, [_vm._v("Open the master bill")]) : _vm._e()], 1), _vm._v(" "), !_vm.masters.length && !_vm.loading ? _c("p", {
+    staticClass: "fx-muted"
+  }, [_vm._v("\n    No masters yet. Create one under Bills of Lading → New master.\n  ")]) : _vm._e(), _vm._v(" "), _vm.loading ? _c("p", {
     staticClass: "fx-muted"
   }, [_vm._v("Loading…")]) : _vm.error ? _c("p", {
     staticClass: "fx-error",
@@ -241,9 +254,12 @@ var render = function render() {
   }) : _vm._e()])]), _vm._v(" "), _c("tbody", [_vm._l(_vm.consol.houses, function (h) {
     return _c("tr", {
       key: h.id
-    }, [_c("td", {
-      staticClass: "identifier"
-    }, [_vm._v(_vm._s(h.execution_job_no || h.id))]), _vm._v(" "), _c("td", {
+    }, [_c("td", [_c("router-link", {
+      staticClass: "identifier",
+      attrs: {
+        to: "/focus-sea/" + h.id
+      }
+    }, [_vm._v(_vm._s(h.execution_job_no || h.id))])], 1), _vm._v(" "), _c("td", {
       staticClass: "identifier"
     }, [h.hbl_number ? _c("span", [_vm._v(_vm._s(h.hbl_number))]) : _c("span", {
       staticClass: "is-empty",

@@ -1344,7 +1344,7 @@ graph TD
 | 3 | **Routing** | POR/POL/POD/DEL + up to 3 transshipment hubs from the `ports` LOCODE directory; ETA/ETD compute transit days client-side | `sea_shipment_details` |
 | 4 | **Goods Dtls.** | Commodity description, HS code (`^\d{6,10}$`), marks & numbers, IMDG class, UN number. Selecting an IMDG class marks the shipment high-risk, **requires** a UN number, and alerts the compliance officer over WebSocket | `sea_shipment_details` |
 | 5 | **Item** | Package type, pieces, gross/net/chargeable weight, weight unit (KGS/LBS), volume (CBM/CFT). CBM auto-computes from L×W×H | `sea_shipment_details` |
-| 6 | **BL Info** | HBL/MBL numbers, BL type, release type (original/telex/seaway), freight terms. **Freight terms drive billing direction:** `Prepaid` → invoice the shipper; `Collect` → invoice the consignee | `sea_shipment_details` |
+| 6 | **BL Info** | HBL/MBL numbers, BL type, release type (original/telex/seaway), freight terms. ~~Freight terms drive billing direction~~ — **corrected 2026-09-28 (owner):** the invoice always goes to the client who onboarded (the `customers` row and its GSTIN); freight terms are printed on the BL and bill nobody | `sea_shipment_details` |
 | 7 | **Container** | Dynamic rows: container number (**ISO 6346 check-digit validated client-side**), seal number, size/type (`20GP`, `40GP`, `40HC`, `20RF`, `40RF`, `20TK`, `40OT`) | `sea_containers` |
 | 8 | **Pick Up** | Inland haulage provider lookup, pickup address, empty depot | `sea_shipment_details` |
 | 9 | **Charges** | Charge code, currency, exchange rate, **buy rate**, **sell rate**, tax code. Feeds the decoupled cost sheet — edits here never touch the manifest tabs | `accounts_invoice_items`, `accounts_purchase_items` |

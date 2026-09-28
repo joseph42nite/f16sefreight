@@ -30,6 +30,8 @@ graph TD
     S5 --> S6[Step 6 · Vue workspaces]
     S6 --> S7[Step 7 · Analytics & Sales Intelligence]
     S7 --> S8[Step 8 · Automated testing & audit verification]
+    S8 --> S11[Step 11 · Accounts, by the job]
+    S11 --> S12[Step 12 · FocusSea, connected]
 ```
 
 ---
@@ -1073,7 +1075,7 @@ reinitiate           ENQA-CRLBOM-26-0002  from JOBA-CRLBOM-26-0001, cargo carrie
 | 2 | `OcrUploadModal.vue` | 🟡 modal + confidence highlighting built; **pre-population of the legacy `FocusAir.vue` form still to do**, and end-to-end extraction is blocked by GAPS #29 |
 | 3 | `OpsDashboard.vue` | ✅ four Process columns, Staff matrix, Unassigned Pool, filters, OLI badges, **bell** |
 | 4 | `JobCostSheet.vue` | ✅ buy/sell tables in the drawer, margin gated, locks on finalization |
-| 5 | FocusSea forms | ✅ `FocusSeaMaster.vue` (12 tabs, cargo-type matrix, ISO 6346) · `FocusSeaConsol.vue` (roll-up, routing cascade, stuffing) · the Entity panel enforces the HBL/MBL party mapping, so master and house are **one form reading its own document kind** rather than two components |
+| 5 | FocusSea forms | 🟡 **reopened 2026-09-28 — see Step 12.** Was: ✅ `FocusSeaMaster.vue` (12 tabs, cargo-type matrix, ISO 6346) · `FocusSeaConsol.vue` (roll-up, routing cascade, stuffing) · the Entity panel enforces the HBL/MBL party mapping, so master and house are **one form reading its own document kind** rather than two components |
 | 6 | FocusAir forms | 🟡 IATA constraints surfaced and the silent-truncation defect fixed in BOTH live forms (`FocusAir.vue`, `HouseWayBill.vue`). **`FocusAirImport.vue` does not exist yet** — it belongs to Segment C air import |
 | 7 | `SalesDashboard.vue` | ✅ chart-first — tonnage area, lane bars, win/loss donut — over `/sales/charts`, which reads only engine tables and the funnel views |
 | 8 | `BossDashboard.vue` | 🟡 cross-branch × cross-mode comparison + the funnel with the fiscal/calendar selector · **targets** 🟢 *built 2026-09-15* (`sales_targets`, per branch × mode, with the all-modes total since GAPS #404 — the old "blocked on GAPS #33, no targets table" note was stale) · **Money** 🟢 *built 2026-09-28* — the executive figures from `financial_snapshots`, refreshed half-hourly (GAPS #419). **Latency heatmap still to build** |
@@ -1596,6 +1598,58 @@ confident wrong answer there costs more than the desk's minute.
 2. ③ short payments · ② unidentified money — the same screen, the same frame.
 3. ④ remittance advice · ⑤ supplier statements.
 4. ⑥ vendor TDS sections — last, because it is the one legal classification.
+
+## Step 12 — FocusSea, connected end to end
+
+> **Why this step exists.** Step 6 item 5 was marked ✅ for `FocusSeaMaster.vue` and `FocusSeaConsol.vue`, but the
+> audit of 2026-09-28 (GAPS #424) found a form that nothing leads to and that leads nowhere: a sea job has no way to
+> its bill of lading, a master cannot be created, four of the twelve tabs are placeholders, and nothing prints, files
+> or reads a BL. Owner, 2026-09-28: *"we also have to build focus sea, make sure all that is connected"* — with the
+> BL print, the ICEGATE filing screen, sea import and BL reading all in scope.
+>
+> **FocusSea is the whole sea vertical** (the `focussea` portal), not one form. Limits come from PRD §5.8 and the
+> §4.1.2 table above; nothing here adds a field the PRD does not name without saying so.
+
+### 12.0 Decisions taken (owner, 2026-09-28)
+
+| Question | Decision |
+|---|---|
+| Where does a consol master come from? | **Created in FocusSea** (the PRD footer's *Save & New*). `jobs.enquiry_id` becomes NULL-able **for consolidation masters only** — a CHECK keeps `enquiry_id IS NOT NULL OR is_consolidation = 1`, so every client shipment still traces to its enquiry and the funnel is untouched |
+| Who is the shipper on a master BL? | **The branch itself**, stored as `job_entities.party_type = 'branch'` → `agents_info.id`, allowed only for the shipper role on a master |
+| Do freight terms decide who is invoiced? | **No.** The invoice goes to the client who onboarded — the `customers` row and its GSTIN. PRD §5.8 tab 6's "prepaid → invoice the shipper; collect → invoice the consignee" is corrected; freight terms are a BL field only |
+| Parties pre-filled? | **Yes**, by the PRD's HBL/MBL mapping: a house's shipper from the job's client (export), a master's shipper from the branch |
+
+### 12.1 The spine — a sea job reaches its BL, and the BL reaches the money
+
+1. **Schema** (PRD §5.8 fields with no column today): per-container size/type; transshipment hubs and ETD/ETA;
+   commodity, HS code, marks & numbers; package type, weight and volume units; BL type and release type; empty depot;
+   the two decisions above
+2. **Deep link** `/focus-sea/:jobId`, and a way in from every place a sea job appears — the inbox workspace after
+   *Shipment confirmed* (it offers AWB drafting today), the Kanban card, the job board
+3. **Header** — consol type, booking through, job order no, quotation no, shipment date, sub-shipment → parent master.
+   The page names its own document: *House BL* or *Master BL*
+4. **New master** in FocusSea; the rail becomes the PRD's group (Master · House · Consol)
+5. **Tabs 8–10 and 12 wired** — Pick Up; Charges = the job's cost sheet (§6.7, still decoupled); Financials = its
+   totals and the client's credit check; E-Docket = `job_documents`
+6. **Parties pre-filled** by the mapping
+
+### 12.2 Consolidation, connected
+Master created → houses linked → containers stuffed → roll-up and routing cascade (both built) → piece reconciliation
+shown. The demo gains one sea consol so every screen has something real on it.
+
+### 12.3 Outputs — the BL print and the filing screen
+- **BL print** (House and Master). The PRD gives the fields and limits but no layout; the layout is **proposed** from
+  the fields the form holds and shown to the owner before it is called done
+- **ICEGATE filing screen** — PRD §5.8's CGM/SCMTR grid and *Submit CGM Data* modal. ⚠️ **Transmission is not built**:
+  the message format and DSC signing need ICEGATE's own specification and credentials, as the e-invoice needs the GSP's
+
+### 12.4 BL reading in extraction
+The inbox extraction panel reads a BL or booking PDF into the sea form as it reads an AWB into FocusAir — the sea
+schema per §4.1.2 (format in the schema, length validated after).
+
+### 12.5 Sea import
+Import consol · Delivery Order [Sea] (print unlocks only when saved **and** paid or within credit — server-side `422`)
+· CGM filing. ⚠️ Tables are defined in `database_relations_tree.md` first and shown to the owner, as air import's are.
 
 ## 📌 Conventions
 

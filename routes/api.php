@@ -484,6 +484,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // ── Customs (§5.4). Tactical, because a manifest is operational work, not a
     // Command-tier report — a Tactical branch still files with customs.
     Route::get('/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'index']);
+    // What this portal can file: its filing types, and the branch's masters (sea) or MAWB jobs (air).
+    Route::get('/manifest-filings/jobs', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'jobs']);
     // A DRY RUN. Read-only and open to everyone who may view the manifest.
     Route::get('/jobs/{job}/manifest-check', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'check']);
     Route::post('/jobs/{job}/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'store']);

@@ -6,16 +6,21 @@ use App\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * A manifest filed with ICEGATE against one job — PRD §5.8 CGM Filing.
+ * A manifest filed with ICEGATE against one job — PRD §5.8 (sea) and §5.9 (air) CGM Filing.
  *
- * `status` uses tab 11's words (not_filed · submitted · cleared · rejected) and is copied onto the bill's
- * `sea_shipment_details.filing_status`, so the bill and the filing never disagree. `status_log` is append-only.
+ * `status` uses tab 11's words (not_filed · submitted · cleared · rejected) and is copied onto a sea bill's
+ * `sea_shipment_details.filing_status`, so the bill and the filing never disagree. Air has no such column: an air
+ * job's filing state is its filings. `status_log` is append-only.
  */
 class ManifestFiling extends Model
 {
     use BelongsToTenant;
 
-    public const TYPES = ['CGM', 'SCMTR'];
+    /**
+     * Filing types per mode. Sea: PRD §5.8's CGM / SCMTR. Air: CGM (PRD §5.9, "matches the sea version") and IGM
+     * (PRD §8.1, guide §5.4). ❓ Which of these ICEGATE actually takes per mode is for its specification to settle.
+     */
+    public const TYPES_BY_MODE = ['sea' => ['CGM', 'SCMTR'], 'air' => ['CGM', 'IGM']];
     public const METHODS = ['auto', 'manual', 'email'];
     public const OUTCOMES = ['cleared', 'rejected'];
 

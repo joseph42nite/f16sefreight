@@ -2,7 +2,10 @@
   <div>
     <header class="fx-page-head">
       <h1 class="fx-page-title">Manifest Filing</h1>
-      <p class="fx-page-sub">CGM and SCMTR filings with ICEGATE — checked against its limits before anything is filed.</p>
+      <p class="fx-page-sub">
+        {{ types.join(" and ") }} filings with ICEGATE for {{ mode === "air" ? "air" : "sea" }} — checked against its limits
+        before anything is filed.
+      </p>
     </header>
 
     <!--
@@ -22,7 +25,7 @@
         </select>
       </label>
       <label class="fx-field">
-        <span class="fx-field__label">Consol job no</span>
+        <span class="fx-field__label">{{ mode === "air" ? "Job no" : "Consol job no" }}</span>
         <input v-model.trim="filters.job_no" class="fx-input" @keyup.enter="load" />
       </label>
       <label class="fx-field">
@@ -34,7 +37,7 @@
       </label>
       <label class="fx-field">
         <span class="fx-field__label">Custom house</span>
-        <input v-model.trim="filters.custom_house_code" class="fx-input identifier" maxlength="6" placeholder="INNSA1" @keyup.enter="load" />
+        <input v-model.trim="filters.custom_house_code" class="fx-input identifier" maxlength="6" :placeholder="housePlaceholder" @keyup.enter="load" />
       </label>
       <label class="fx-field">
         <span class="fx-field__label">From</span>
@@ -60,7 +63,7 @@
         <tr>
           <th scope="col">Filed</th>
           <th scope="col">Type</th>
-          <th scope="col">Consol job</th>
+          <th scope="col">{{ mode === "air" ? "Job" : "Consol job" }}</th>
           <th class="fx-num" scope="col">Amendment</th>
           <th scope="col">Custom house</th>
           <th scope="col">ICEGATE ID</th>
@@ -74,9 +77,12 @@
           <td>{{ when(f.filed_at) }}</td>
           <td>{{ f.filing_type }}</td>
           <td>
-            <router-link v-if="f.job" :to="'/focus-sea/' + f.job.id" class="identifier">
+            <router-link v-if="f.job && mode === 'sea'" :to="'/focus-sea/' + f.job.id" class="identifier">
               {{ f.job.execution_job_no || f.job.id }}
             </router-link>
+            <span v-else-if="f.job" class="identifier">
+              {{ f.job.execution_job_no || f.job.id }}{{ f.job.awb_number ? " · " + f.job.awb_number : "" }}
+            </span>
           </td>
           <td class="fx-num">{{ f.amendment_no }}</td>
           <td class="identifier">{{ f.custom_house_code || "—" }}</td>
@@ -104,12 +110,18 @@
         </header>
         <div class="fx-modal__body">
           <div class="fx-toolbar">
+            <!-- The picker holds the latest 100; a search reaches the rest (FocusAir has hundreds of MAWB jobs). -->
             <label class="fx-field">
-              <span class="fx-field__label">Consol no</span>
+              <span class="fx-field__label">Find</span>
+              <input v-model.trim="jobSearch" class="fx-input" :placeholder="mode === 'air' ? 'job no or MAWB' : 'job no'"
+                     @keyup.enter="loadJobs" @change="loadJobs" />
+            </label>
+            <label class="fx-field">
+              <span class="fx-field__label">{{ mode === "air" ? "Job (MAWB)" : "Consol no" }}</span>
               <select v-model="submit.job_id" class="fx-input" @change="check">
                 <option value="">Choose…</option>
-                <option v-for="m in masters" :key="m.id" :value="m.id">
-                  {{ m.execution_job_no || ("Job " + m.id) }}{{ m.mbl_number ? " · " + m.mbl_number : "" }}
+                <option v-for="m in jobs" :key="m.id" :value="m.id">
+                  {{ m.execution_job_no || ("Job " + m.id) }}{{ m.document_no ? " · " + m.document_no : "" }}
                 </option>
               </select>
             </label>
@@ -127,7 +139,7 @@
           <div class="fx-toolbar">
             <label class="fx-field">
               <span class="fx-field__label">CGM file at (custom house)</span>
-              <input v-model.trim="submit.custom_house_code" class="fx-input identifier" maxlength="6" placeholder="INNSA1" />
+              <input v-model.trim="submit.custom_house_code" class="fx-input identifier" maxlength="6" :placeholder="housePlaceholder" />
             </label>
             <label class="fx-field">
               <span class="fx-field__label">ICEGATE ID</span>
@@ -221,15 +233,19 @@ const STATUSES = [
 export default {
   name: "ManifestFiling",
   data: () => ({
-    types: ["CGM", "SCMTR"],
+    // Set by the server from the portal this page is opened in.
+    mode: null, types: [], jobs: [], jobSearch: "",
     statuses: STATUSES,
     filters: { filing_type: "", job_no: "", status: "", custom_house_code: "", from: "", to: "", icegate_id: "" },
-    filings: [], masters: [], connection: null,
+    filings: [], connection: null,
     submit: null, outcomeFor: null, logFor: null, violations: null,
     loading: false, busy: false, error: null, actionError: null,
   }),
   computed: {
     ...mapGetters(["designation"]),
+    housePlaceholder() {
+      return this.mode === "air" ? "INMAA4" : "INNSA1";
+    },
     canWrite() {
       return this.designation === "operations";
     },
@@ -239,7 +255,7 @@ export default {
         && this.violations !== null && !this.violations.some((v) => v.severity === "blocking");
     },
     logText() {
-      if (!this.submit || !this.submit.job_id) return "Choose a consol to check it against ICEGATE's limits.";
+      if (!this.submit || !this.submit.job_id) return "Choose a job to check it against ICEGATE's limits.";
       if (this.violations === null) return "Checking…";
       if (!this.violations.length) return "✓ No violations. Ready to file.";
       return this.violations.map((v) => `✗ [${v.rule}] ${v.message}`).join("\n");
@@ -248,6 +264,7 @@ export default {
   created() {
     this.load();
     ApiService.get("/icegate/status").then(({ data }) => { this.connection = data; }).catch(() => {});
+    this.loadJobs();
   },
   methods: {
     load() {
@@ -258,15 +275,16 @@ export default {
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.loading = false; });
     },
+    loadJobs() {
+      const q = this.jobSearch ? "?q=" + encodeURIComponent(this.jobSearch) : "";
+      return ApiService.get("/manifest-filings/jobs" + q)
+        .then(({ data }) => { this.mode = data.mode; this.types = data.types; this.jobs = data.jobs; })
+        .catch((e) => { this.error = this.readable(e); });
+    },
     openSubmit() {
       this.actionError = null;
       this.violations = null;
-      this.submit = { job_id: "", filing_type: "CGM", filed_at: "", custom_house_code: "", icegate_id: "", sending_method: "manual" };
-      if (!this.masters.length) {
-        ApiService.get("/sea-shipments")
-          .then(({ data }) => { this.masters = (data.data || []).filter((j) => j.document === "master"); })
-          .catch((e) => { this.actionError = this.readable(e); });
-      }
+      this.submit = { job_id: "", filing_type: this.types[0], filed_at: "", custom_house_code: "", icegate_id: "", sending_method: "manual" };
     },
     check() {
       this.violations = null;

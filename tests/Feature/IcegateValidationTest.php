@@ -454,4 +454,71 @@ class IcegateValidationTest extends TestCase
             ->postJson($this->url("/api/manifest-filings/{$filing['id']}/outcome"), ['status' => 'cleared'])
             ->assertForbidden();
     }
+
+    // ─── Air files too (GAPS #430) ───────────────────────────────────────────
+
+    private function airJob(): Job
+    {
+        $job = $this->job('air');
+        $job->update(['awb_number' => '176-12345675']);
+        DB::table('air_shipment_details')->insert([
+            'job_id' => $job->id, 'piece_count' => 4, 'gross_weight' => 120.5,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        return $job;
+    }
+
+    public function test_an_air_job_files_an_igm_on_focusair_and_not_an_scmtr(): void
+    {
+        $job = $this->airJob();
+        $url = $this->url("/api/jobs/{$job->id}/manifest-filings", 'focusair.f16sefreight.com');
+
+        $this->api($this->ops)->postJson($url, $this->filing(['filing_type' => 'SCMTR']))
+            ->assertStatus(422)->assertJsonValidationErrors('filing_type');
+
+        $this->api($this->ops)->postJson($url, $this->filing(['filing_type' => 'IGM', 'custom_house_code' => 'INMAA4']))
+            ->assertStatus(201)->assertJsonPath('amendment_no', 0);
+
+        $this->api($this->ops)->postJson($url, $this->filing(['filing_type' => 'CGM', 'custom_house_code' => 'INMAA4']))
+            ->assertStatus(201);
+    }
+
+    public function test_each_portal_lists_its_own_jobs_types_and_filings(): void
+    {
+        $air = $this->airJob();
+        $master = $this->job('sea');
+        $master->update(['is_consolidation' => true]);
+        $this->seaDetails($master, ['mbl_number' => 'MBLSEA01']);
+        $direct = $this->job('sea');
+
+        $this->api($this->ops)->getJson($this->url('/api/manifest-filings/jobs', 'focusair.f16sefreight.com'))
+            ->assertOk()->assertJsonPath('mode', 'air')->assertJsonPath('types', ['CGM', 'IGM'])
+            ->assertJsonFragment(['document_no' => '176-12345675'])
+            ->assertJsonMissing(['document_no' => 'MBLSEA01']);
+
+        $sea = $this->api($this->ops)->getJson($this->url('/api/manifest-filings/jobs'))
+            ->assertOk()->assertJsonPath('mode', 'sea')->assertJsonPath('types', ['CGM', 'SCMTR'])
+            ->assertJsonFragment(['document_no' => 'MBLSEA01'])
+            ->json('jobs');
+        $this->assertNotContains($direct->id, array_column($sea, 'id'), 'A sea job that is not a consol master is not a CGM.');
+
+        $this->api($this->ops)->postJson($this->url("/api/jobs/{$master->id}/manifest-filings"), $this->filing())->assertStatus(201);
+
+        $this->api($this->ops)->getJson($this->url('/api/manifest-filings', 'focusair.f16sefreight.com'))
+            ->assertOk()->assertJsonMissing(['job_id' => $master->id]);
+        $this->api($this->ops)->getJson($this->url('/api/manifest-filings'))
+            ->assertOk()->assertJsonFragment(['job_id' => $master->id]);
+    }
+
+    /** The picker shows the latest hundred; a search reaches any job by number or MAWB. */
+    public function test_the_filable_jobs_can_be_searched(): void
+    {
+        $this->airJob();
+        $other = $this->job('air');
+        $other->update(['awb_number' => '176-99999990']);
+
+        $this->api($this->ops)->getJson($this->url('/api/manifest-filings/jobs?q=99999990', 'focusair.f16sefreight.com'))
+            ->assertOk()->assertJsonCount(1, 'jobs')->assertJsonPath('jobs.0.document_no', '176-99999990');
+    }
 }

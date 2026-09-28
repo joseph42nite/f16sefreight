@@ -39,6 +39,8 @@ class ManifestFilingController extends Controller
         $this->authorize('viewManifest');
 
         $filings = ManifestFiling::query()
+            // FocusAir sees air filings and FocusSea sea filings — one screen, read by the portal it is opened in.
+            ->whereIn('job_id', Job::forActivePortal()->select('id'))
             ->when($request->filled('job_id'), fn ($q) => $q->where('job_id', $request->integer('job_id')))
             ->when($request->filled('filing_type'), fn ($q) => $q->where('filing_type', $request->input('filing_type')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
@@ -53,6 +55,42 @@ class ManifestFilingController extends Controller
             ->paginate(50);
 
         return response()->json($filings);
+    }
+
+    /**
+     * What can be filed from this portal: the filing types and the branch's jobs. Sea offers consol masters (a CGM is
+     * the consol's manifest); air offers jobs holding a MAWB. Branch-wide, not owner-scoped — filing is the branch's.
+     */
+    public function jobs(Request $request): JsonResponse
+    {
+        $this->authorize('viewManifest');
+
+        $mode = app()->bound('active_portal_scope') ? app('active_portal_scope') : 'sea';
+        $term = trim((string) $request->input('q'));
+
+        $jobs = Job::query()->where('transport_mode', $mode)
+            ->where('status', '!=', 'Cancelled')
+            ->when($mode === 'sea', fn ($q) => $q->where('is_consolidation', true))
+            ->when($mode === 'air', fn ($q) => $q->whereNotNull('awb_number')->where('is_sub_shipment', false))
+            ->when($term !== '', fn ($q) => $q->where(fn ($w) => $w->where('execution_job_no', 'like', "%{$term}%")
+                ->orWhere('awb_number', 'like', "%{$term}%")))
+            ->latest('id')->limit(100)
+            ->get(['id', 'execution_job_no', 'awb_number', 'direction']);
+
+        $mbls = $mode === 'sea'
+            ? DB::table('sea_shipment_details')->whereIn('job_id', $jobs->pluck('id'))->pluck('mbl_number', 'job_id')
+            : collect();
+
+        return response()->json([
+            'mode'  => $mode,
+            'types' => ManifestFiling::TYPES_BY_MODE[$mode],
+            'jobs'  => $jobs->map(fn (Job $j) => [
+                'id'               => $j->id,
+                'execution_job_no' => $j->execution_job_no,
+                'document_no'      => $mode === 'sea' ? $mbls[$j->id] ?? null : $j->awb_number,
+                'direction'        => $j->direction,
+            ])->values(),
+        ]);
     }
 
     /** Whether Auto File can run, and what is missing — env key names, never their values. */
@@ -100,7 +138,7 @@ class ManifestFilingController extends Controller
 
         $data = $request->validate([
             'icegate_id'        => 'required|string|max:' . IcegateValidator::ICEGATE_ID_MAX,
-            'filing_type'       => ['required', Rule::in(ManifestFiling::TYPES)],
+            'filing_type'       => ['required', Rule::in(ManifestFiling::TYPES_BY_MODE[$job->transport_mode] ?? [])],
             'custom_house_code' => ['required', 'string', 'regex:/^[A-Za-z0-9]{6}$/'],
             'sending_method'    => ['required', Rule::in(ManifestFiling::METHODS)],
             'filed_at'          => 'nullable|date',
@@ -208,7 +246,8 @@ class ManifestFilingController extends Controller
     {
         $latest = ManifestFiling::where('job_id', $filing->job_id)->max('id');
 
-        if ((int) $latest === (int) $filing->id) {
+        // Air has no filing status column; its filings are its state.
+        if ((int) $latest === (int) $filing->id && $filing->job->transport_mode === 'sea') {
             DB::table('sea_shipment_details')->where('job_id', $filing->job_id)
                 ->update(['filing_status' => $filing->status, 'updated_at' => now()]);
         }

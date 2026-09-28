@@ -57,7 +57,7 @@ export const NAV_ITEMS = [
   { path: "/focus-sea", label: "Bills of Lading", icon: "water", designations: null, portals: ["focussea"] },
   { path: "/focus-sea/consol", label: "Consolidation", icon: "boxes", designations: null, portals: ["focussea"] },
   // Readers match viewManifest; only operations submits (fileManifest).
-  { path: "/manifest-filing", label: "Manifest Filing", icon: "send", designations: ["operations", "pricing", "boss"], minTier: "tactical", portals: ["focussea"] },
+  { path: "/manifest-filing", label: "Manifest Filing", icon: "send", designations: ["operations", "pricing", "boss"], minTier: "tactical", portals: ["focusair", "focussea"] },
 
   // ── Directories ──────────────────────────────────────────────────────────
   // 🔴 ONE ITEM, not two. Clients are who you invoice and partners are who you pay — two

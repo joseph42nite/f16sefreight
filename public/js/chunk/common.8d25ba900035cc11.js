@@ -2384,15 +2384,38 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
            table entirely, and they have to tab from the top to get back. */
         this.returnFocusTo = document.activeElement;
         this.$nextTick(() => this.$refs.panel && this.$refs.panel.focus());
+        document.addEventListener("keydown", this.escapeFromNowhere);
       } else if (this.returnFocusTo && this.returnFocusTo.focus) {
         this.returnFocusTo.focus();
         this.returnFocusTo = null;
       }
+      if (!isOpen) document.removeEventListener("keydown", this.escapeFromNowhere);
     }
+  },
+  mounted() {
+    // Mounted already open (a v-if parent), so the watcher above never fires.
+    if (this.open) document.addEventListener("keydown", this.escapeFromNowhere);
+  },
+  beforeDestroy() {
+    document.removeEventListener("keydown", this.escapeFromNowhere);
   },
   methods: {
     close() {
       this.$emit("close");
+    },
+    /**
+     * Escape with focus on NOTHING still closes the drawer.
+     *
+     * A button that disables itself while it works (Redraft, Send) drops focus to <body>,
+     * and so does a click on the page behind — after either, the panel's own @keydown.esc
+     * never hears the key. Only when focus is nowhere: a control on the page behind that
+     * has focus is being worked, and its Escape is its own.
+     */
+    escapeFromNowhere(e) {
+      if (e.key !== "Escape" && e.key !== "Esc") return;
+      const at = document.activeElement;
+      if (at && at !== document.body) return;
+      this.close();
     },
     /**
      * Keep Tab inside the panel while it is open.

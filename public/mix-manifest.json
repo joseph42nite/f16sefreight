@@ -1,13 +1,13 @@
 {
     "/js/app.js": "/js/app.js",
     "/js/manifest.js": "/js/manifest.js",
-    "/js/chunk/html2canvas.js": "/js/chunk/html2canvas.js?id=c61ccfc5e165caf4",
-    "/js/chunk/driver.js": "/js/chunk/driver.js?id=f6e58a12c39ee0a9",
-    "/js/chunk/pdfjs.js": "/js/chunk/pdfjs.js?id=c86c9c724923a86e",
-    "/js/chunk/pdfjs-worker.js": "/js/chunk/pdfjs-worker.js?id=00e5b99dde4d7629",
+    "/js/chunk/html2canvas.c61ccfc5e165caf4.js": "/js/chunk/html2canvas.c61ccfc5e165caf4.js",
+    "/js/chunk/driver.f6e58a12c39ee0a9.js": "/js/chunk/driver.f6e58a12c39ee0a9.js",
+    "/js/chunk/pdfjs.c86c9c724923a86e.js": "/js/chunk/pdfjs.c86c9c724923a86e.js",
+    "/js/chunk/pdfjs-worker.00e5b99dde4d7629.js": "/js/chunk/pdfjs-worker.00e5b99dde4d7629.js",
     "/vendor.css": "/vendor.css",
     "/vendor.js": "/vendor.js",
     "/common.css": "/common.css",
-    "/js/chunk/common.js": "/js/chunk/common.js?id=fccf43c2c668549c",
+    "/js/chunk/common.8d25ba900035cc11.js": "/js/chunk/common.8d25ba900035cc11.js",
     "/css/app.css": "/css/app.css"
 }

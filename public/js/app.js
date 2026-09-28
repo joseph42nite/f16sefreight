@@ -9280,6 +9280,49 @@ const ApiService = {
 
 /***/ }),
 
+/***/ "./resources/js/src/core/services/chunkReload.js":
+/*!*******************************************************!*\
+  !*** ./resources/js/src/core/services/chunkReload.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "isChunkLoadError": () => (/* binding */ isChunkLoadError),
+/* harmony export */   "reloadOnChunkError": () => (/* binding */ reloadOnChunkError)
+/* harmony export */ });
+/**
+ * A tab opened before a deploy asks for page chunks the deploy removed. Webpack
+ * throws a ChunkLoadError and the page goes blank. Loading the page the person was
+ * going to fetches the new build — once: a second failure within a minute is a real
+ * fault, and reloading again would loop.
+ */
+const KEY = "fx-chunk-reload-at";
+const WINDOW_MS = 60 * 1000;
+function isChunkLoadError(err) {
+  return !!err && (err.name === "ChunkLoadError" || /Loading (CSS )?chunk [\w-]+ failed/i.test(err.message || ""));
+}
+function reloadOnChunkError(err, targetPath, {
+  storage,
+  location,
+  now = Date.now()
+}) {
+  if (!isChunkLoadError(err)) return false;
+
+  // Storage blocked: with no way to remember the last reload, a reload could loop.
+  try {
+    if (now - (Number(storage.getItem(KEY)) || 0) < WINDOW_MS) return false;
+    storage.setItem(KEY, String(now));
+  } catch (e) {
+    return false;
+  }
+  location.assign(targetPath || location.href);
+  return true;
+}
+
+/***/ }),
+
 /***/ "./resources/js/src/core/services/console.recorder.js":
 /*!************************************************************!*\
   !*** ./resources/js/src/core/services/console.recorder.js ***!
@@ -10249,18 +10292,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm.js");
 /* harmony import */ var _core_services_store__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/core/services/store */ "./resources/js/src/core/services/store/index.js");
 /* harmony import */ var _core_config_navigation__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @/core/config/navigation */ "./resources/js/src/core/config/navigation.js");
 /* harmony import */ var _core_config_portalHosts__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/core/config/portalHosts */ "./resources/js/src/core/config/portalHosts.js");
-/* harmony import */ var vue_router__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vue-router */ "./node_modules/vue-router/dist/vue-router.esm.js");
+/* harmony import */ var _core_services_chunkReload__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/core/services/chunkReload */ "./resources/js/src/core/services/chunkReload.js");
+/* harmony import */ var vue_router__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vue-router */ "./node_modules/vue-router/dist/vue-router.esm.js");
 
 
 
 
 
-vue__WEBPACK_IMPORTED_MODULE_3__["default"].use(vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]);
-const router = new vue_router__WEBPACK_IMPORTED_MODULE_4__["default"]({
+
+vue__WEBPACK_IMPORTED_MODULE_4__["default"].use(vue_router__WEBPACK_IMPORTED_MODULE_5__["default"]);
+const router = new vue_router__WEBPACK_IMPORTED_MODULE_5__["default"]({
   mode: "history",
   scrollBehavior: (to, from, savedPosition) => {
     if (savedPosition) {
@@ -10990,6 +11035,19 @@ router.beforeEach((to, from, next) => {
     return next(_core_config_navigation__WEBPACK_IMPORTED_MODULE_1__.LANDING_ROUTE[designation] || "/focus-air");
   }
   return next();
+});
+
+// After a deploy, an open tab's next page can be a chunk that no longer exists.
+let goingTo = null;
+router.beforeEach((to, from, next) => {
+  goingTo = to.fullPath;
+  next();
+});
+router.onError(err => {
+  (0,_core_services_chunkReload__WEBPACK_IMPORTED_MODULE_3__.reloadOnChunkError)(err, goingTo, {
+    storage: window.sessionStorage,
+    location: window.location
+  });
 });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (router);
 

@@ -2,6 +2,7 @@ import Vue from "vue";
 import store from "@/core/services/store";
 import { LANDING_ROUTE } from "@/core/config/navigation";
 import { mainSiteUrl, portalFromHost } from "@/core/config/portalHosts";
+import { reloadOnChunkError } from "@/core/services/chunkReload";
 import Router from "vue-router";
 Vue.use(Router);
 
@@ -606,6 +607,16 @@ router.beforeEach((to, from, next) => {
   }
 
   return next();
+});
+
+// After a deploy, an open tab's next page can be a chunk that no longer exists.
+let goingTo = null;
+router.beforeEach((to, from, next) => {
+  goingTo = to.fullPath;
+  next();
+});
+router.onError((err) => {
+  reloadOnChunkError(err, goingTo, { storage: window.sessionStorage, location: window.location });
 });
 
 export default router;

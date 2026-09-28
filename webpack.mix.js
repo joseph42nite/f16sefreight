@@ -19,8 +19,18 @@ if (mix.inProduction()) {
 
 mix.webpackConfig({
     output: {
-        chunkFilename: "js/chunk/[name].js?id=[chunkhash]",
+        // The hash in the NAME, not a query string: the server ignores ?id=, so an open tab
+        // from before a deploy was handed the new build's chunk under the old URL.
+        chunkFilename: "js/chunk/[name].[chunkhash].js",
     },
+    plugins: [
+        // Last build's chunks go, so a stale tab gets a clean 404 (and reloads — router.js)
+        // rather than a file from another build; and public/js/chunk does not grow forever.
+        {
+            apply: (compiler) => compiler.hooks.beforeRun.tap("CleanChunks", () =>
+                require("fs").rmSync(path.join(__dirname, "public/js/chunk"), { recursive: true, force: true })),
+        },
+    ],
     optimization: {
         splitChunks: {
             chunks: "all",

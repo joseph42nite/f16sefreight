@@ -132,6 +132,13 @@ class ConsolidationController extends Controller
             return response()->json(['error' => 'That house is not on this consol.', 'reason' => 'not_linked'], 422);
         }
 
+        // A house made inside the consol traces to an enquiry only THROUGH it (GAPS #436) — unlinked, it would trace to
+        // nothing, which the database refuses. Cancel it instead.
+        if ($house->enquiry_id === null) {
+            return response()->json(['error' => 'This house was made inside the consol and belongs to it; cancel it instead of unlinking it.',
+                'reason' => 'house_of_this_consol'], 422);
+        }
+
         $this->consol->unlink($house);
         $this->audit->record($master->agent_id, 'consol.hbl_unlinked', 'job', $house->id, auth()->id());
 

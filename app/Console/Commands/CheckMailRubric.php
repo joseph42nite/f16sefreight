@@ -43,11 +43,11 @@ class CheckMailRubric extends Command
 
     protected $description = 'Replay the mail-filing acceptance set against the live decision model';
 
-    /** [expected folder, subject, body] */
+    /** [expected folder, subject, body, expected direction?] — the direction is checked only where a sample names one (GAPS #437). */
     private const SAMPLES = [
         ['customer_enquiry', 'Hello', 'Can you please quote for 2 shipments next week'],
         ['customer_enquiry', 'Hello', 'Kindly share your best rates'],
-        ['customer_enquiry', 'BLR JFK AC Booking RFQ', 'Dear Sir,'],
+        ['customer_enquiry', 'BLR JFK AC Booking RFQ', 'Dear Sir,', 'export'],
         ['customer_enquiry', 'Hi', "BLR-ORD\nPCS : 21\nWEIGHT : 300 kgs\nGeneral cargo"],
         ['client_shipment', 'Rates for Chennai-Dubai', 'Please share the confirmed booking schedule. Agreed rate 350++, Pcs 400, Gross wgt 17400kgs'],
         // Our OWN quotation, which contains every word a quote request does.
@@ -62,8 +62,12 @@ class CheckMailRubric extends Command
         // Airline EDI that names a forwarder in its payload.
         ['airline', 'FNA 607-53138691', 'Please note below FNA received. 607-53138691 / SKYLINK FREIGHT FORWARDERS LTD / 0 HAWB / BOM / Mumbai / TLV / Tel Aviv Yafo / 1 / 12.6 KGM'],
         ['airline', 'Re: AWB NO:176-28955006', 'FWB/FHL processed successfully. Sl / AWB Number / Client / HAWB Count / Origin / Destination / Pcs / Weight / Time & Date Sent'],
-        ['overseas_agent', 'Pre-alert SIN-BOM', 'Pre-alert: HAWB SGBOM4471, 3 pcs 120 kgs, MAWB 618-12345678. Docs attached. Please arrange clearance and delivery to consignee.'],
-        ['customer_enquiry', 'Import rate FRA-BOM', 'We have a client shipping FRA-BOM around 500 kgs monthly. Please quote your best import rate so we can offer.'],
+        ['overseas_agent', 'Pre-alert SIN-BOM', 'Pre-alert: HAWB SGBOM4471, 3 pcs 120 kgs, MAWB 618-12345678. Docs attached. Please arrange clearance and delivery to consignee.', 'import'],
+        ['customer_enquiry', 'Import rate FRA-BOM', 'We have a client shipping FRA-BOM around 500 kgs monthly. Please quote your best import rate so we can offer.', 'import'],
+        // ── Import (owner, 2026-09-29; GAPS #437): cargo coming in, read the right way round.
+        ['client_shipment', 'Delivery order AWB 176-12345675', 'Our import shipment under AWB 176-12345675 arrived on EK542 yesterday. Please issue the delivery order; your charges are paid.', 'import'],
+        ['customer_enquiry', 'Rate from Shenzhen to Chennai', 'Our supplier in Shenzhen is ready with 8 cartons, 240 kgs, for us in Chennai. Please quote air freight SZX-MAA and clearance.', 'import'],
+        ['customer_enquiry', 'Export rate MAA-SIN', 'Please quote air freight Chennai to Singapore, 6 pcs 180 kgs, ready Thursday.', 'export'],
         ['vendor_invoice', 'Invoice AI/2026/4412', 'Please find attached our invoice AI/2026/4412 against AWB 098-33445566, amount INR 84,200. Kindly arrange payment within 15 days.'],
         ['vendor_invoice', 'Bill for vehicle placement', 'Attached our bill for vehicle placement BOM-Pune on 16/09, Rs 12,500 plus GST.'],
         ['payment_advice', 'Payment released', 'We have released payment of INR 2,45,000 against your invoices INV-1182 and INV-1190. UTR HDFC2026091812345.'],
@@ -79,14 +83,14 @@ class CheckMailRubric extends Command
 
         // ── Sea (FocusSea, 2026-09-28; GAPS #427). The shapes a sea desk receives all day, so the rubric is
         // measured on them as it was on air's — not assumed to carry over because a few words are shared.
-        ['customer_enquiry', 'Rate request 2x40HC Nhava Sheva to Jebel Ali', 'Please quote FCL 2x40HC INNSA-AEJEA, ready 5 Oct, general cargo, about 18 MT per box.'],
+        ['customer_enquiry', 'Rate request 2x40HC Nhava Sheva to Jebel Ali', 'Please quote FCL 2x40HC INNSA-AEJEA, ready 5 Oct, general cargo, about 18 MT per box.', 'export'],
         ['customer_enquiry', 'LCL Chennai to Hamburg', 'Need your LCL rate for 3.5 cbm, 6 pallets, 1200 kgs, Chennai to Hamburg, cargo ready next week.'],
-        ['customer_enquiry', 'Import rate DEHAM-INNSA', 'We have a client shipping 1x40HC Hamburg to Nhava Sheva every month. Please quote your destination charges so we can offer.'],
-        ['client_shipment', 'Booking - 1x20GP Mundra to Rotterdam', 'Please book 1x20GP for our shipment Mundra to Rotterdam at the agreed rate. Cargo ready on the 3rd; shipping instructions attached.'],
+        ['customer_enquiry', 'Import rate DEHAM-INNSA', 'We have a client shipping 1x40HC Hamburg to Nhava Sheva every month. Please quote your destination charges so we can offer.', 'import'],
+        ['client_shipment', 'Booking - 1x20GP Mundra to Rotterdam', 'Please book 1x20GP for our shipment Mundra to Rotterdam at the agreed rate. Cargo ready on the 3rd; shipping instructions attached.', 'export'],
         ['client_shipment', 'Draft BL corrections', 'Please find our corrections to the draft bill of lading for container MSKU6874230. Kindly issue the final BL once they are made.'],
-        ['shipping_line', 'Arrival notice MSC Gulsun V.245E', 'Arrival notice: vessel MSC Gulsun V.245E, ETA JNPT 24/09. B/L MEDU1234567, 1x40HC. Please arrange the delivery order before discharge.'],
+        ['shipping_line', 'Arrival notice MSC Gulsun V.245E', 'Arrival notice: vessel MSC Gulsun V.245E, ETA JNPT 24/09. B/L MEDU1234567, 1x40HC. Please arrange the delivery order before discharge.', 'import'],
         ['vendor_invoice', 'Freight invoice B/L MEDU1234567', 'Please find attached our ocean freight invoice OF-8812 for B/L MEDU1234567, USD 2,450. Kindly remit so the original B/L can be released.'],
-        ['overseas_agent', 'Pre-alert HBL SHNSA7781', 'Pre-alert: HBL SHNSA7781, 2x40HC on CMA CGM Tage V.0AB12, ETA Nhava Sheva 30/09. Documents attached. Please arrange clearance and delivery.'],
+        ['overseas_agent', 'Pre-alert HBL SHNSA7781', 'Pre-alert: HBL SHNSA7781, 2x40HC on CMA CGM Tage V.0AB12, ETA Nhava Sheva 30/09. Documents attached. Please arrange clearance and delivery.', 'import'],
         ['trucking_road', 'Container movement JNPT to Bhiwandi', 'Trailer placed for container TCLU1234567 at JNPT; it will reach the Bhiwandi warehouse by 6 pm. E-way bill attached.'],
         ['clearance', 'Shipping bill filed 4455667', 'We have filed shipping bill 4455667 for your container MSKU6874230. Please send the VGM declaration and the final invoice copy.'],
         ['regulatory', 'ICEGATE: IGM 2233445 filed', 'IGM 2233445 for vessel MSC Gulsun V.245E at INNSA has been filed and accepted by customs.'],
@@ -99,11 +103,13 @@ class CheckMailRubric extends Command
      * detention and demurrage — the mail a sea desk lives in, which the shared set barely touches.
      */
     private const SEA_SAMPLES = [
-        ['customer_enquiry', 'Rate request 2x40HC Nhava Sheva to Jebel Ali', 'Please quote FCL 2x40HC INNSA-AEJEA, ready 5 Oct, general cargo, about 18 MT per box.'],
+        // ── Import (GAPS #437): LCL at the CFS here, asked for by the consignee.
+        ['client_shipment', 'DO and destuffing HBL SHNSA7781', 'Our LCL cargo under HBL SHNSA7781 has reached the CFS at Nhava Sheva. Please share the delivery order and the destuffing date.', 'import'],
+        ['customer_enquiry', 'Rate request 2x40HC Nhava Sheva to Jebel Ali', 'Please quote FCL 2x40HC INNSA-AEJEA, ready 5 Oct, general cargo, about 18 MT per box.', 'export'],
         ['customer_enquiry', 'LCL Chennai to Hamburg', 'Need your LCL rate for 3.5 cbm, 6 pallets, 1200 kgs, Chennai to Hamburg, cargo ready next week.'],
-        ['customer_enquiry', 'Import rate DEHAM-INNSA', 'We have a client shipping 1x40HC Hamburg to Nhava Sheva every month. Please quote your destination charges so we can offer.'],
+        ['customer_enquiry', 'Import rate DEHAM-INNSA', 'We have a client shipping 1x40HC Hamburg to Nhava Sheva every month. Please quote your destination charges so we can offer.', 'import'],
         ['customer_enquiry', 'Re: FCL quote Mundra-Felixstowe', 'Still waiting for your rate on the 3x40HC Mundra to Felixstowe. Our cargo is ready on the 10th.'],
-        ['client_shipment', 'Booking - 1x20GP Mundra to Rotterdam', 'Please book 1x20GP for our shipment Mundra to Rotterdam at the agreed rate. Cargo ready on the 3rd; shipping instructions attached.'],
+        ['client_shipment', 'Booking - 1x20GP Mundra to Rotterdam', 'Please book 1x20GP for our shipment Mundra to Rotterdam at the agreed rate. Cargo ready on the 3rd; shipping instructions attached.', 'export'],
         ['client_shipment', 'SI for booking MAEU261234567', 'Please find our shipping instructions for booking MAEU261234567: shipper, consignee, notify, 20 packages, marks as per invoice.'],
         // A VGM figure about a booked box is NOT a price request — the sea twin of air's "about 480 kg".
         ['client_shipment', 'VGM - MSKU6874230', 'VGM for container MSKU6874230 under booking MAEU261234567: 24,380 kg, method 1. Signed declaration attached.'],
@@ -112,10 +118,10 @@ class CheckMailRubric extends Command
         ['shipping_line', 'Booking confirmation MAEU261234567', 'Booking MAEU261234567 confirmed: 2x40HC, MAERSK KOLKATA V.412W, ETD Nhava Sheva 04/10, SI cut-off 01/10 12:00, VGM cut-off 02/10.'],
         ['shipping_line', 'Rollover notice MAEU261234567', 'Due to space constraints your booking MAEU261234567 has been rolled over to MAERSK KENSINGTON V.415W, ETD 11/10.'],
         ['shipping_line', 'Empty release MAEU261234567', 'Empty release issued for booking MAEU261234567: 2x40HC, pick up from Speedy CFS empty yard, valid until 03/10.'],
-        ['shipping_line', 'Arrival notice MSC Gulsun V.245E', 'Arrival notice: vessel MSC Gulsun V.245E, ETA JNPT 24/09. B/L MEDU1234567, 1x40HC. Please arrange the delivery order before discharge.'],
+        ['shipping_line', 'Arrival notice MSC Gulsun V.245E', 'Arrival notice: vessel MSC Gulsun V.245E, ETA JNPT 24/09. B/L MEDU1234567, 1x40HC. Please arrange the delivery order before discharge.', 'import'],
         ['vendor_invoice', 'Freight invoice B/L MEDU1234567', 'Please find attached our ocean freight invoice OF-8812 for B/L MEDU1234567, USD 2,450. Kindly remit so the original B/L can be released.'],
         ['vendor_invoice', 'Detention invoice MSKU6874230', 'Container MSKU6874230 returned 6 days after free time. Please find our detention invoice DT-4471 for INR 38,400.'],
-        ['overseas_agent', 'Pre-alert HBL SHNSA7781', 'Pre-alert: HBL SHNSA7781, 2x40HC on CMA CGM Tage V.0AB12, ETA Nhava Sheva 30/09. Documents attached. Please arrange clearance and delivery.'],
+        ['overseas_agent', 'Pre-alert HBL SHNSA7781', 'Pre-alert: HBL SHNSA7781, 2x40HC on CMA CGM Tage V.0AB12, ETA Nhava Sheva 30/09. Documents attached. Please arrange clearance and delivery.', 'import'],
         ['trucking_road', 'Container movement JNPT to Bhiwandi', 'Trailer placed for container TCLU1234567 at JNPT; it will reach the Bhiwandi warehouse by 6 pm. E-way bill attached.'],
         ['trucking_road', 'Empty returned TCLU1234567', 'Empty container TCLU1234567 returned to the Maersk yard at Nhava Sheva this morning. EIR copy attached.'],
         ['cfs_warehouse', 'Destuffing done MSKU1234567', 'Container MSKU1234567 destuffed at our CFS today, 40 packages in good order. Free storage till 2 Oct.'],
@@ -153,7 +159,10 @@ class CheckMailRubric extends Command
         $ms = 0;
         $tokens = 0;
 
-        foreach ($samples as [$expected, $subject, $body]) {
+        foreach ($samples as $sample) {
+            [$expected, $subject, $body] = $sample;
+            $expectedDirection = $sample[3] ?? null;
+
             try {
                 $answer = $jev->ask(['from' => 'someone@unknown.test', 'subject' => $subject, 'body' => $body], $questions, 20);
             } catch (RuntimeException $e) {
@@ -162,8 +171,11 @@ class CheckMailRubric extends Command
                 return self::FAILURE;
             }
 
-            $got = $read->invoke($classifier, $answer['answers'], $mode)['classification'] ?? '(refused)';
-            $hit = $got === $expected;
+            $reading = $read->invoke($classifier, $answer['answers'], $mode);
+            $got = $reading['classification'] ?? '(refused)';
+            $gotDirection = $reading['direction'] ?? null;
+            // The direction counts only where the sample names one — and then as much as the folder does.
+            $hit = $got === $expected && ($expectedDirection === null || $gotDirection === $expectedDirection);
             $passed += $hit ? 1 : 0;
             $cost += $answer['usage']['cost_usd'];
             $ms += $answer['usage']['execution_ms'];
@@ -177,6 +189,9 @@ class CheckMailRubric extends Command
                 'sender_confidence' => round((float) ($answer['answers']['sender']['confidence'] ?? 0), 2),
                 'intent' => $answer['answers']['intent']['choice'] ?? '?',
                 'intent_confidence' => round((float) ($answer['answers']['intent']['confidence'] ?? 0), 2),
+                'expected_direction' => $expectedDirection,
+                'direction' => $answer['answers']['direction']['choice'] ?? '?',
+                'direction_confidence' => round((float) ($answer['answers']['direction']['confidence'] ?? 0), 2),
                 'subject' => $subject,
             ];
         }
@@ -193,11 +208,13 @@ class CheckMailRubric extends Command
         }
 
         $this->table(
-            ['', 'expected', 'got', 'sender', 'conf', 'intent', 'conf', 'subject'],
+            ['', 'expected', 'got', 'sender', 'conf', 'intent', 'conf', 'direction (expected)', 'conf', 'subject'],
             array_map(fn ($r) => [
                 $r['ok'] ? '<info>ok</info>' : '<error>FAIL</error>',
                 $r['expected'], $r['got'], $r['sender'], $r['sender_confidence'],
-                $r['intent'], $r['intent_confidence'], mb_substr($r['subject'], 0, 34),
+                $r['intent'], $r['intent_confidence'],
+                $r['direction'] . ($r['expected_direction'] ? " ({$r['expected_direction']})" : ''), $r['direction_confidence'],
+                mb_substr($r['subject'], 0, 34),
             ], $rows)
         );
 

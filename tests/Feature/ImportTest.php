@@ -12,6 +12,7 @@ use App\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
@@ -264,5 +265,126 @@ class ImportTest extends TestCase
             ->assertCreated()->json('job.id');
 
         $this->assertDatabaseMissing('job_entities', ['job_id' => $id, 'role' => 'shipper', 'party_type' => 'branch']);
+    }
+
+    // ─── Houses inside the consol (GAPS #436) ─────────────────────────────────
+
+    /** "Houses come under a master AWB, so it'll be the same enquiry." */
+    public function test_a_house_added_inside_a_consol_takes_its_enquiry_and_is_linked(): void
+    {
+        $house = $this->house();   // an import enquiry's own job — made the consol here
+        $house->update(['is_consolidation' => true]);
+
+        $response = $this->as($this->ops)->postJson($this->url("/jobs/{$house->id}/houses"), ['customer_id' => $this->client->id])
+            ->assertCreated()->assertJsonCount(1, 'houses');
+        $child = Job::withoutTenantScope()->find($response->json('houses.0.id'));
+
+        $this->assertSame((int) $house->enquiry_id, (int) $child->enquiry_id, 'Same enquiry as its master.');
+        $this->assertSame('import', $child->direction);
+        $this->assertSame($house->id, (int) $child->parent_job_id);
+        $this->assertDatabaseHas('job_entities', ['job_id' => $child->id, 'role' => 'consignee', 'party_id' => $this->client->id]);
+    }
+
+    /** A consol made directly has no enquiry; its houses trace through it, and cannot be unlinked into nothing. */
+    public function test_a_house_of_a_consol_with_no_enquiry_traces_through_it_and_stays_with_it(): void
+    {
+        $master = $this->as($this->ops)->postJson($this->url('/imports'))->json('job.id');
+        $child = $this->as($this->ops)->postJson($this->url("/jobs/{$master}/houses"), [])->assertCreated()->json('houses.0.id');
+
+        $this->assertDatabaseHas('jobs', ['id' => $child, 'enquiry_id' => null, 'parent_job_id' => $master]);
+        $this->as($this->ops)->deleteJson($this->url("/jobs/{$master}/link-hbl/{$child}"))
+            ->assertStatus(422)->assertJsonPath('reason', 'house_of_this_consol');
+    }
+
+    public function test_houses_are_added_to_a_consol_only(): void
+    {
+        $this->as($this->ops)->postJson($this->url("/jobs/{$this->house()->id}/houses"), [])
+            ->assertStatus(422)->assertJsonPath('reason', 'not_a_consol');
+    }
+
+    // ─── The arrival notice to the consignee — staged, never sent by itself ──
+
+    private function stagedHouse(): Job
+    {
+        $job = $this->house();
+        DB::table('customer_contacts')->insert(['company_id' => $this->company->id, 'customer_id' => $this->client->id,
+            'email' => 'imports@consignee.test', 'source' => 'manual', 'is_primary' => 1, 'message_count' => 3,
+            'created_at' => now(), 'updated_at' => now()]);
+        DB::table('job_entities')->insert(['agent_id' => $this->branch->id, 'job_id' => $job->id, 'party_type' => 'customer',
+            'party_id' => $this->client->id, 'role' => 'consignee', 'created_at' => now(), 'updated_at' => now()]);
+        $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/arrival-notice"))->assertOk();
+
+        return $job;
+    }
+
+    public function test_staging_addresses_the_consignee_and_sends_nothing(): void
+    {
+        Http::fake();
+        $job = $this->stagedHouse();
+
+        $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/arrival-notice/stage"))->assertOk()
+            ->assertJsonPath('arrival_notice.staged_mail.to', ['imports@consignee.test'])
+            ->assertJsonPath('arrival_notice.decision', null);
+
+        Http::assertNothingSent();
+    }
+
+    public function test_the_notice_goes_only_when_a_person_sends_it_with_the_pdf_attached(): void
+    {
+        // With a file, Graph creates a draft, attaches to it, then sends it — the fake answers each step.
+        Http::fake([
+            '*/me/messages' => Http::response(['id' => 'draft-1'], 201),
+            '*' => Http::response('', 202),
+        ]);
+        \App\MailboxConnection::create(['agent_id' => $this->branch->id, 'user_id' => $this->ops->id, 'email_address' => 'ops-imp@test.local',
+            'provider' => 'outlook', 'access_token' => 'token', 'is_active' => true, 'auth_state' => 'connected']);
+        $job = $this->stagedHouse();
+        $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/arrival-notice/stage"))->assertOk();
+
+        $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/arrival-notice/decide"), ['decision' => 'send', 'subject' => 'Your cargo has arrived'])
+            ->assertOk()->assertJsonPath('arrival_notice.decision', 'sent');
+
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/me/messages') && $request->method() === 'POST'
+            && $request['subject'] === 'Your cargo has arrived'
+            && $request['toRecipients'][0]['emailAddress']['address'] === 'imports@consignee.test');
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/attachments') && str_ends_with((string) $request['name'], '.pdf'));
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/send'));
+
+        $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/arrival-notice/decide"), ['decision' => 'send'])->assertStatus(409);
+    }
+
+    public function test_a_skipped_notice_is_kept_and_never_sent(): void
+    {
+        Http::fake();
+        $job = $this->stagedHouse();
+        $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/arrival-notice/stage"))->assertOk();
+
+        $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/arrival-notice/decide"), ['decision' => 'skip'])
+            ->assertOk()->assertJsonPath('arrival_notice.decision', 'skipped')
+            ->assertJsonPath('arrival_notice.staged_mail.to', ['imports@consignee.test']);
+
+        Http::assertNothingSent();
+    }
+
+    public function test_a_consignee_with_no_address_cannot_be_staged(): void
+    {
+        $job = $this->house();
+        $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/arrival-notice"))->assertOk();
+
+        $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/arrival-notice/stage"))
+            ->assertStatus(422)->assertJsonPath('reason', 'no_address');
+    }
+
+    /** A house has no MAWB of its own; its notice names the consol's, and never an empty "MAWB". */
+    public function test_a_houses_notice_names_its_consols_mawb(): void
+    {
+        Http::fake();
+        $master = Job::withoutTenantScope()->find($this->as($this->ops)->postJson($this->url('/imports'))->json('job.id'));
+        $master->update(['awb_number' => '176-61000002']);
+        $house = $this->stagedHouse();
+        $house->update(['parent_job_id' => $master->id, 'is_sub_shipment' => true]);
+
+        $this->as($this->ops)->postJson($this->url("/jobs/{$house->id}/arrival-notice/stage"))->assertOk()
+            ->assertJsonPath('arrival_notice.staged_mail.subject', fn ($s) => str_ends_with($s, '— MAWB 176-61000002'));
     }
 }

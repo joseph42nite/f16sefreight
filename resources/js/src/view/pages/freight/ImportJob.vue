@@ -103,8 +103,19 @@
             <tr v-if="!data.houses.length"><td class="fx-muted">No houses linked yet.</td></tr>
           </tbody>
         </table>
+        <!-- A house made here takes this consol's enquiry (owner, 2026-09-29) — the usual way an import house arrives. -->
         <div v-if="canWrite" class="fx-toolbar">
-          <label class="fx-field"><span class="fx-field__label">Import shipments with no consol</span>
+          <label class="fx-field"><span class="fx-field__label">New house — consignee</span>
+            <select v-model="newHouse.customer_id" class="fx-input">
+              <option :value="null">Choose…</option>
+              <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select></label>
+          <label v-if="data.mode === 'sea'" class="fx-field"><span class="fx-field__label">HBL no</span>
+            <input v-model.trim="newHouse.hbl_number" class="fx-input identifier" maxlength="20" /></label>
+          <button class="fx-btn" :disabled="busy" @click="addHouse">Add house</button>
+        </div>
+        <div v-if="canWrite" class="fx-toolbar">
+          <label class="fx-field"><span class="fx-field__label">Or link an import shipment with no consol</span>
             <select v-model="linkId" class="fx-input">
               <option value="">Choose…</option>
               <option v-for="j in candidates" :key="j.id" :value="j.id">{{ j.execution_job_no }}</option>
@@ -116,11 +127,35 @@
       <!-- ── Arrival notice ──────────────────────────────────────────────── -->
       <section class="fx-section">
         <h2 class="fx-section__title">Arrival notice</h2>
-        <p v-if="data.arrival_notice">
-          <span class="identifier">{{ data.arrival_notice.notice_number }}</span>
-          · issued <Figure :value="data.arrival_notice.created_at" kind="date" />
-          · <a href="#" @click.prevent="print('arrival-notice.pdf')">Print</a>
-        </p>
+        <template v-if="data.arrival_notice">
+          <p>
+            <span class="identifier">{{ data.arrival_notice.notice_number }}</span>
+            · issued <Figure :value="data.arrival_notice.created_at" kind="date" />
+            · <a href="#" @click.prevent="print('arrival-notice.pdf')">Print</a>
+          </p>
+
+          <!-- To the consignee: staged here for a person — nothing is sent until they press Send (owner, 2026-09-29). -->
+          <p v-if="data.arrival_notice.decision === 'sent'" class="fx-muted">
+            Sent to {{ data.arrival_notice.staged_mail.to.join(", ") }} · <Figure :value="data.arrival_notice.decided_at" kind="date" />
+          </p>
+          <p v-else-if="data.arrival_notice.decision === 'skipped'" class="fx-muted">
+            Not sent (skipped) · <a v-if="canWrite" href="#" @click.prevent="stageNotice">Prepare it again</a>
+          </p>
+          <div v-else-if="data.arrival_notice.staged_mail" class="import-staged">
+            <p class="fx-muted">Waiting for you — the notice is attached when you send it.</p>
+            <label class="fx-field"><span class="fx-field__label">To</span>
+              <input v-model.trim="noticeMail.to" class="fx-input" :disabled="!canWrite" /></label>
+            <label class="fx-field"><span class="fx-field__label">Subject</span>
+              <input v-model="noticeMail.subject" class="fx-input" :disabled="!canWrite" /></label>
+            <label class="fx-field"><span class="fx-field__label">Message</span>
+              <textarea v-model="noticeMail.body" class="fx-input" rows="7" :disabled="!canWrite"></textarea></label>
+            <div v-if="canWrite" class="fx-toolbar">
+              <button class="fx-btn fx-btn--primary" :disabled="busy" @click="decideNotice('send')">Send to the consignee</button>
+              <button class="fx-btn" :disabled="busy" @click="decideNotice('skip')">Skip</button>
+            </div>
+          </div>
+          <button v-else-if="canWrite" class="fx-btn" :disabled="busy" @click="stageNotice">Prepare the mail to the consignee</button>
+        </template>
         <template v-else>
           <p class="fx-muted">Not issued. Issuing gives it its number; nothing is sent to anyone.</p>
           <button v-if="canWrite" class="fx-btn" :disabled="busy" @click="issueNotice">Issue arrival notice</button>
@@ -184,6 +219,7 @@ export default {
   props: { jobId: { type: [Number, String], required: true } },
   data: () => ({
     FILING, data: null, form: {}, order: {}, candidates: [], linkId: "",
+    clients: [], newHouse: { customer_id: null, hbl_number: "" }, noticeMail: { to: "", subject: "", body: "" },
     loading: false, busy: false, error: null, actionError: null,
   }),
   computed: {
@@ -230,6 +266,13 @@ export default {
       const o = data.delivery_order || {};
       this.order = { do_date: (o.do_date || "").slice(0, 10), do_given_to: o.do_given_to || "", can_id: o.can_id || null,
         invoice_id: o.invoice_id || null, fee: o.fee !== undefined && o.fee !== null ? Number(o.fee) : null };
+      const staged = data.arrival_notice && data.arrival_notice.staged_mail;
+      this.noticeMail = staged
+        ? { to: (staged.to || []).join(", "), subject: staged.subject || "", body: staged.body || "" }
+        : { to: "", subject: "", body: "" };
+      if (data.document === "master" && this.canWrite && !this.clients.length) {
+        ApiService.get("/customers").then(({ data: c }) => { this.clients = c.data || []; }).catch(() => {});
+      }
       if (data.document === "master" && this.canWrite) {
         ApiService.get(`/jobs/unassociated?transport_mode=${data.mode}&direction=import`)
           .then(({ data: free }) => { this.candidates = (free.data || []).filter((j) => j.id !== data.job.id); })
@@ -251,6 +294,21 @@ export default {
     save() {
       const body = this.data.mode === "air" ? this.form : Object.fromEntries(Object.entries(this.form).filter(([k]) => !AIR_FIELDS.includes(k)));
       this.commit(() => ApiService.post(`/jobs/${this.jobId}/import`, this.clean(body)));
+    },
+    addHouse() {
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/houses`, this.clean(this.newHouse)))
+        .then(() => { this.newHouse = { customer_id: null, hbl_number: "" }; });
+    },
+    stageNotice() {
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice/stage`));
+    },
+    decideNotice(decision) {
+      const body = { decision };
+      if (decision === "send") {
+        Object.assign(body, { to: this.noticeMail.to.split(",").map((a) => a.trim()).filter(Boolean),
+          subject: this.noticeMail.subject, body: this.noticeMail.body });
+      }
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice/decide`, body));
     },
     issueNotice() {
       this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice`));
@@ -292,3 +350,19 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* The staged mail waiting for a person — framed so it reads as one thing to decide, not more form. */
+.import-staged {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  max-width: 48rem;
+}
+.import-staged textarea {
+  min-height: 10rem;
+  resize: vertical;
+}
+</style>

@@ -1676,6 +1676,9 @@ focusair for air"** — so air import (PRD §8.1) is built beside it: one *Impor
 consol and its houses, IGM, arrival notice (numbered once, printed) and the delivery order with its release gate.
 ❓ Open: the import party mapping (the export one is no longer forced on imports), and the layouts of the two printed
 documents — see GAPS #434.
+**2026-09-29, owner's answers (GAPS #436, #437):** houses are made inside the import consol and share its enquiry;
+the arrival notice to the consignee is staged for a person; mail triage reads import vs export — the lane first, Jev's
+`direction` question otherwise, in both rubrics (to be measured with `mail:rubric-check`, both modes).
 
 ## 📌 Conventions
 

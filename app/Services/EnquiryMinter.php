@@ -30,6 +30,8 @@ class EnquiryMinter
         $enquiry = Enquiry::create([
             'agent_id'          => $thread->agent_id,
             'transport_mode'    => $mode,
+            // Import or export as the mail read (GAPS #437); export when nothing said, as before.
+            'direction'         => $thread->auto_direction ?: 'export',
             'enquiry_no'        => $this->sequences->next($thread->agent_id, ['air' => 'ENQA', 'sea' => 'ENQS', 'road' => 'ENQR'][$mode]),
             'status'            => 'new',
             'cargo_data_source' => 'manual',

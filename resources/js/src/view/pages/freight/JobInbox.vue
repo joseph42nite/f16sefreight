@@ -516,6 +516,22 @@
           first — see GAPS. Showing a value the operator cannot commit is honest; showing
           a button that silently does nothing is not.
         -->
+        <!--
+          Import or export, as the mail was read — from its lane, or by Jev (GAPS #437). Pricing corrects it here; the
+          shipment takes it when the enquiry is confirmed. Shown on every enquiry, figures or not.
+        -->
+        <div v-if="active.enquiry && isEnquiryWork" class="fx-toolbar">
+          <label class="fx-field">
+            <span class="fx-field__label">Direction</span>
+            <select v-if="canConfirmCargo" :value="active.enquiry.direction || 'export'" class="fx-input"
+                    :disabled="cargoBusy" @change="setDirection($event.target.value)">
+              <option value="export">Export</option>
+              <option value="import">Import</option>
+            </select>
+            <span v-else class="fx-input fx-input--static">{{ active.enquiry.direction === "import" ? "Import" : "Export" }}</span>
+          </label>
+        </div>
+
         <section v-if="stagedCargo.length" class="fx-staged">
           <h3 class="fx-staged__title">What the mail said</h3>
           <dl class="fx-staged__list">
@@ -1245,6 +1261,17 @@ export default {
      * is not a value of NULL — it is a figure nobody has an opinion on, and sending NULL
      * would erase whatever is already there.
      */
+    setDirection(direction) {
+      this.cargoBusy = true;
+      this.cargoError = null;
+      ApiService.patch("/enquiries/" + this.active.enquiry.id, "cargo", { direction })
+        .then(() => { this.active.enquiry.direction = direction; })
+        .catch((e) => {
+          const d = (e.response && e.response.data) || {};
+          this.cargoError = d.error || d.message || "The direction could not be saved.";
+        })
+        .finally(() => { this.cargoBusy = false; });
+    },
     confirmCargo() {
       const cargo = (this.active && this.active.staged_cargo) || {};
       const MAP = {

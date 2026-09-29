@@ -224,6 +224,8 @@ class MessageIngestor
                 'auto_classification_source' => $result['source'],
                 'auto_classification_confidence' => $result['confidence'],
                 'auto_classification_rubric' => $result['rubric'],
+                // Import or export, when the lane or Jev said (GAPS #437) — what the enquiry it mints starts as.
+                'auto_direction' => $result['direction'] ?? null,
                 'classification' => $result['classification'],
                 // PRD §5.2.5 — the cargo the parser read, parked for the operator to
                 // confirm. NULL where nothing was found: an airline notice has no cargo in

@@ -181,7 +181,7 @@ class MailIntentClassifier
      * the weakest answer it rests on. It is a diagnostic, not a probability — do not treat it as
      * "the chance this folder is right".
      *
-     * @return array{classification: string, confidence: float, rubric: string}|null
+     * @return array{classification: string, confidence: float, rubric: string, direction: ?string}|null
      */
     private function read(array $answers, ?string $mode = null): ?array
     {
@@ -210,10 +210,17 @@ class MailIntentClassifier
             default                    => 'other',
         };
 
+        // Import or export — kept only when sure, and never a folder decision (GAPS #437). A rubric without the
+        // question, or an answer outside it, says nothing rather than guessing export.
+        [$direction, $directionConfidence] = $this->choiceIn($answers, 'direction', $rubric);
+        $direction = in_array($direction, ['import', 'export'], true) && $directionConfidence >= $this->floorFor('direction', $rubric)
+            ? $direction : null;
+
         return [
             'classification' => $folder,
             'confidence' => round(min($senderConfidence, $intentConfidence), 3),
             'rubric' => $rubric['version'],
+            'direction' => $direction,
         ];
     }
 

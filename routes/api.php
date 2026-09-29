@@ -499,8 +499,13 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/imports', [\App\Http\Controllers\Freight\ImportController::class, 'store']);
     Route::get('/jobs/{job}/import', [\App\Http\Controllers\Freight\ImportController::class, 'show']);
     Route::post('/jobs/{job}/import', [\App\Http\Controllers\Freight\ImportController::class, 'save']);
+    // A house made inside an import consol — it takes the consol's enquiry (GAPS #436).
+    Route::post('/jobs/{job}/houses', [\App\Http\Controllers\Freight\ImportController::class, 'addHouse']);
     Route::post('/jobs/{job}/arrival-notice', [\App\Http\Controllers\Freight\ImportController::class, 'arrivalNotice']);
     Route::get('/jobs/{job}/arrival-notice.pdf', [\App\Http\Controllers\Freight\ImportController::class, 'arrivalNoticePdf']);
+    // To the consignee — staged for a person, sent only when they press Send (owner, 2026-09-29).
+    Route::post('/jobs/{job}/arrival-notice/stage', [\App\Http\Controllers\Freight\ImportController::class, 'stageArrivalNotice']);
+    Route::post('/jobs/{job}/arrival-notice/decide', [\App\Http\Controllers\Freight\ImportController::class, 'decideArrivalNotice']);
     Route::post('/jobs/{job}/delivery-order', [\App\Http\Controllers\Freight\ImportController::class, 'saveDeliveryOrder']);
     Route::get('/jobs/{job}/delivery-order.pdf', [\App\Http\Controllers\Freight\ImportController::class, 'deliveryOrderPdf']);
     // Whether Auto File can run, and what is missing. Key names only, never values.

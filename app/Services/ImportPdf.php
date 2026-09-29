@@ -51,7 +51,9 @@ class ImportPdf
             'consignee' => $this->party($job, 'consignee'),
             'document'  => $sea
                 ? ['label' => $job->is_consolidation ? 'MBL' : 'HBL', 'no' => $job->is_consolidation ? ($d->mbl_number ?? null) : ($d->hbl_number ?? null)]
-                : ['label' => 'MAWB', 'no' => $job->awb_number],
+                // A house travels on its consol's master air waybill — it has none of its own.
+                : ['label' => 'MAWB', 'no' => $job->awb_number
+                    ?: ($job->parent_job_id ? DB::table('jobs')->where('id', $job->parent_job_id)->value('awb_number') : null)],
             'carriage'  => $sea
                 ? trim(($d->vessel_name ?? '') . (($d->voyage_no ?? null) ? ' / ' . $d->voyage_no : ''))
                 : trim(($d->carrier_name ?? '') . (($d->flight_number ?? null) ? ' ' . $d->flight_number : '')),

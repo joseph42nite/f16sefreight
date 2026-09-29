@@ -209,6 +209,8 @@ class EnquiryController extends Controller
             'cargo_type'       => ['nullable', 'string', 'in:' . implode(',', \App\Http\Controllers\Freight\SeaShipmentController::CARGO_TYPES)],
             'origin_code'      => ['nullable', 'string', 'min:3', 'max:5'],
             'dest_code'        => ['nullable', 'string', 'min:3', 'max:5'],
+            // Pricing's correction when the mail was read the wrong way round (GAPS #437).
+            'direction'        => ['nullable', 'in:export,import'],
         ]);
 
         // 🔴 Refused once a job exists. The shipment has been confirmed and its cargo now

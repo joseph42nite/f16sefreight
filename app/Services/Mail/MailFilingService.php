@@ -218,9 +218,16 @@ class MailFilingService
                 ?? $this->model($message, $transportMode)
                 ?? ['classification' => 'other', 'source' => 'none']);
 
+        $cargo = $this->extractCargo($haystack, $transportMode);
+
+        // Import or export (GAPS #437): the lane when the mail names one — a fact — else Jev's reading when it was
+        // asked and sure. A known client's mail never reaches Jev, so for it only the lane can say.
+        $decision['direction'] = app(ShipmentDirection::class)->fromCargo($cargo, (int) $message->agent_id)
+            ?? ($decision['direction'] ?? null);
+
         return $decision + [
             'matched_rule_id' => $rule->id ?? null,
-            'cargo'           => $this->extractCargo($haystack, $transportMode),
+            'cargo'           => $cargo,
             'confidence'      => null,
             'rubric'          => null,
         ];

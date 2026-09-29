@@ -88,8 +88,10 @@ return [
      * 2026-09-28  — sea (GAPS #427): twelve sea mails added to the acceptance set; one missed — an
      *               agent's sea pre-alert naming the vessel read as the shipping line (0.43). The agent and
      *               carrier criteria now say which bill each one issues.
+     * 2026-09-29  — import triage (owner, GAPS #437): a THIRD question, `direction`, asked in the same request.
+     *               A mail that names its lane is decided by the lane instead (a fact — ShipmentDirection).
      */
-    'rubric_version' => '2026-09-28',
+    'rubric_version' => '2026-09-29',
 
     /*
     |--------------------------------------------------------------------------
@@ -202,6 +204,30 @@ return [
             ],
         ],
 
+        /*
+         * Import or export (owner, 2026-09-29: "have the mail triage for import from Jev too, for sea and air").
+         * Read only when the mail does not name its lane — a lane is a fact and outranks this (ShipmentDirection).
+         * Three options; the enquiry it mints takes the answer only above this floor, and export is the default.
+         */
+        'direction' => [
+            'min_confidence' => (float) env('MAIL_INTENT_DIRECTION_FLOOR', 0.60),
+
+            'instructions' => 'We are a freight forwarder in India. Is the cargo this email is about coming INTO India '
+                . 'to us, or going OUT of India from us? Decide from the route, the ports or airports named, and words '
+                . 'like pre-alert, arrival or delivery order — not from where the sender is based.',
+
+            'criteria' => [
+                'import' => 'The cargo is coming into India: an overseas shipper or agent sending it to a buyer here, a '
+                    . 'pre-alert of cargo shipped to us, an arrival notice, a delivery order or clearance for cargo '
+                    . 'landing here, or a request for a rate on cargo from abroad to India.',
+                'export' => 'The cargo is leaving India: an Indian shipper sending goods abroad, a booking or rate '
+                    . 'request from an Indian origin to an overseas destination, shipping instructions or a shipping '
+                    . 'bill for cargo going out.',
+                'cannot_tell' => 'The email does not say which way any cargo moves: an invoice or payment with no route, '
+                    . 'a general question, or nothing to do with a shipment.',
+            ],
+        ],
+
     ],
 
     /*
@@ -225,9 +251,10 @@ return [
     |
     | sea-2026-09-28  — first sea rubric. 25/25 on its own set.
     | sea-2026-09-28b — the EIR sentence on `transporter` (an empty-return mail read at 0.43).
+    | sea-2026-09-29  — import triage: the `direction` question, in sea's words (GAPS #437).
     */
     'sea' => [
-        'rubric_version' => 'sea-2026-09-28b',
+        'rubric_version' => 'sea-2026-09-29',
 
         'questions' => [
 
@@ -300,6 +327,26 @@ return [
                     'nothing_for_us' => 'Nothing to do with a shipment of ours: marketing, a newsletter, an industry '
                         . 'bulletin, a survey, a sales pitch, a job application, an internal note, or an automated '
                         . 'system message. Also a fragment so short that what it is about cannot be told from it.',
+                ],
+            ],
+
+            // Import or export, in a sea desk's words — see the shared rubric's note.
+            'direction' => [
+                'min_confidence' => (float) env('MAIL_INTENT_SEA_DIRECTION_FLOOR', 0.60),
+
+                'instructions' => 'We are a freight forwarder in India. Is the sea cargo this email is about coming INTO '
+                    . 'an Indian port to us, or going OUT of India from us? Decide from the ports named and words like '
+                    . 'pre-alert, arrival notice, IGM or delivery order — not from where the sender is based.',
+
+                'criteria' => [
+                    'import' => 'The cargo is coming into an Indian port: a pre-alert of containers or LCL cargo shipped '
+                        . 'to us, an arrival notice, an IGM, a delivery order or destuffing at a CFS here, or a rate '
+                        . 'request for cargo from a foreign port to India.',
+                    'export' => 'The cargo is leaving an Indian port: a booking, shipping instructions, VGM, a shipping '
+                        . 'bill, empty pickup or stuffing for cargo going abroad, or a rate request from India to a '
+                        . 'foreign port.',
+                    'cannot_tell' => 'The email does not say which way any cargo moves: an invoice or payment with no '
+                        . 'route, a general question, or nothing to do with a shipment.',
                 ],
             ],
 

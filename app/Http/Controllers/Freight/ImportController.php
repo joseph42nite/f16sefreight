@@ -169,6 +169,67 @@ class ImportController extends Controller
         return response()->json($this->payload($job->fresh()));
     }
 
+    /**
+     * A house made inside an import consol (owner, 2026-09-29: "houses come under a master AWB, so it'll be the same
+     * enquiry — connect it to the consolidation"). It takes the consol's enquiry, direction and mode, and is linked
+     * through ConsolidationService so the roll-up and the routing cascade run as for any linked house (GAPS #436).
+     *
+     * The client is the consignee this house is delivered to — who the DO's payment is checked against.
+     */
+    public function addHouse(Request $request, Job $job): JsonResponse
+    {
+        $this->authorize('fileManifest');
+        $this->mustBeImport($job);
+
+        if (! $job->is_consolidation) {
+            return response()->json(['error' => 'Houses are added to a consol, not to another house.', 'reason' => 'not_a_consol'], 422);
+        }
+
+        $data = $request->validate([
+            'customer_id' => ['nullable', 'integer', Rule::exists('customers', 'id')
+                ->where('company_id', DB::table('agents_info')->where('id', $job->agent_id)->value('company_id'))],
+            'hbl_number'  => 'nullable|string|max:20',
+        ], ['customer_id.exists' => 'That client is not one of yours.']);
+
+        $house = DB::transaction(function () use ($job, $data) {
+            $house = Job::create([
+                'agent_id'         => $job->agent_id,
+                'enquiry_id'       => $job->enquiry_id,
+                'transport_mode'   => $job->transport_mode,
+                'direction'        => 'import',
+                'customer_id'      => $data['customer_id'] ?? null,
+                // Born inside the consol: with no enquiry of its own it traces through this link, from the first row.
+                'parent_job_id'    => $job->id,
+                'is_sub_shipment'  => true,
+                'ops_id'           => $job->ops_id,
+                'pricing_id'       => $job->pricing_id,
+                'cargo_type'       => $job->transport_mode === 'sea' ? 'lcl' : null,
+                'execution_job_no' => $this->sequences->next($job->agent_id, $job->transport_mode === 'sea' ? 'JOBS' : 'JOBA'),
+            ]);
+
+            if ($job->transport_mode === 'sea') {
+                DB::table('sea_shipment_details')->insert(['job_id' => $house->id, 'hbl_number' => $data['hbl_number'] ?? null,
+                    'created_at' => now(), 'updated_at' => now()]);
+            }
+
+            app(\App\Services\ConsolidationService::class)->link($job, $house);
+            // On an import house the client is the consignee — named here for both modes.
+            if ($house->customer_id !== null) {
+                $role = DB::table('job_entities')->where('job_id', $house->id)->where('role', 'consignee')->whereNull('deleted_at')->exists();
+                if (! $role) {
+                    DB::table('job_entities')->insert(['agent_id' => $house->agent_id, 'job_id' => $house->id, 'party_type' => 'customer',
+                        'party_id' => $house->customer_id, 'role' => 'consignee', 'created_at' => now(), 'updated_at' => now()]);
+                }
+            }
+
+            return $house;
+        }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
+
+        $this->audit->record($job->agent_id, 'import.house_added', 'job', $house->id, auth()->id());
+
+        return response()->json($this->payload($job->fresh()), 201);
+    }
+
     /** The cargo arrival notice's number — minted once per job, never recycled. */
     public function arrivalNotice(Job $job): JsonResponse
     {
@@ -185,6 +246,137 @@ class ImportController extends Controller
         }
 
         return response()->json($this->payload($job));
+    }
+
+    /**
+     * Prepare the notice's mail to the consignee — STAGED, never sent (owner, 2026-09-29: "stage for approval").
+     * Addressed to the consignee's contacts, with the notice to be attached; it waits on this page for a person.
+     */
+    public function stageArrivalNotice(Job $job): JsonResponse
+    {
+        $this->authorize('fileManifest');
+        $this->mustBeImport($job);
+
+        $can = DB::table('cargo_arrival_notices')->where('job_id', $job->id)->first();
+
+        if ($can === null) {
+            return response()->json(['error' => 'Issue the arrival notice first.', 'reason' => 'no_notice'], 422);
+        }
+
+        if ($can->decision === 'sent') {
+            return response()->json(['error' => 'This notice has already been sent.', 'reason' => 'already_sent'], 422);
+        }
+
+        $to = $this->consigneeAddresses($job);
+
+        if ($to === []) {
+            return response()->json(['error' => 'The consignee has no email address on file. Add one in Clients & Partners.',
+                'reason' => 'no_address'], 422);
+        }
+
+        $doc = $this->pdf->shape($job);
+        // No number, no reference — "under MAWB" with nothing after it tells the consignee nothing.
+        $ref = filled($doc['document']['no']) ? $doc['document']['label'] . ' ' . $doc['document']['no'] : '';
+        $arrival = $doc['arrival'] ? \Illuminate\Support\Carbon::parse($doc['arrival'])->format('d M Y') : null;
+        $storage = $doc['free_days'] !== null
+            ? "\n\nFree storage: {$doc['free_days']} day(s)" . ($doc['storage_from'] ? '; storage charges apply from '
+                . \Illuminate\Support\Carbon::parse($doc['storage_from'])->format('d M Y') : '') . '.'
+            : '';
+
+        DB::table('cargo_arrival_notices')->where('id', $can->id)->update([
+            'staged_mail' => json_encode([
+                'to' => $to, 'cc' => [],
+                'subject' => "Arrival notice {$can->notice_number}" . ($ref !== '' ? " — {$ref}" : ''),
+                'body' => "Hello,\n\nYour shipment" . ($ref !== '' ? " under {$ref}" : '')
+                    . ($arrival ? ($doc['mode'] === 'sea' ? " is due on {$arrival}" : " arrived on {$arrival}") : ' has arrived')
+                    . ($doc['to'] ? " at {$doc['to']}" : '') . ". The cargo arrival notice {$can->notice_number} is attached."
+                    . $storage . "\n\nKind regards,",
+            ]),
+            'staged_at' => now(), 'decision' => null, 'decided_by' => null, 'decided_at' => null, 'updated_at' => now(),
+        ]);
+
+        $this->audit->record($job->agent_id, 'import.notice_staged', 'job', $job->id, auth()->id());
+
+        return response()->json($this->payload($job));
+    }
+
+    /**
+     * The person's decision on the staged notice. `send` goes from THEIR connected mailbox with the notice attached —
+     * the approval and the sending are the same act, by a named person; `skip` keeps the draft on record, unsent.
+     */
+    public function decideArrivalNotice(Request $request, Job $job): JsonResponse
+    {
+        $this->authorize('fileManifest');
+        $this->mustBeImport($job);
+
+        $data = $request->validate([
+            'decision' => 'required|in:send,skip',
+            'to'       => 'nullable|array|min:1', 'to.*' => 'email',
+            'cc'       => 'nullable|array', 'cc.*' => 'email',
+            'subject'  => 'nullable|string|max:255',
+            'body'     => 'nullable|string',
+        ]);
+
+        $can = DB::table('cargo_arrival_notices')->where('job_id', $job->id)->first();
+
+        if ($can === null || $can->staged_mail === null || $can->decision !== null) {
+            return response()->json(['error' => 'There is no notice waiting to be sent.', 'reason' => 'not_waiting'], 409);
+        }
+
+        $mail = array_merge(json_decode($can->staged_mail, true), array_filter(
+            array_intersect_key($data, array_flip(['to', 'cc', 'subject', 'body'])), fn ($v) => $v !== null));
+
+        if ($data['decision'] === 'send') {
+            $user = auth()->user();
+            $connection = \App\MailboxConnection::withoutGlobalScopes()->where('user_id', $user->id)->where('is_active', true)
+                ->whereNull('disconnected_at')->where('auth_state', 'connected')->latest('id')->first();
+
+            if ($connection === null) {
+                return response()->json(['error' => 'Connect your Outlook first (in Settings), so the notice goes from you.',
+                    'reason' => 'no_mailbox'], 422);
+            }
+
+            $body = app(\App\Services\Mail\MailBody::class)->forEmail(nl2br(e($mail['body'])),
+                app(\App\Services\Mail\ThreadMailer::class)->signatureFor($connection, $user), null);
+            $result = app(\App\Services\Mail\MailProviderRegistry::class)->for($connection->provider)->send(
+                $connection, $mail['to'], $mail['cc'] ?? [], $mail['subject'], $body, null,
+                [['name' => $can->notice_number . '.pdf', 'mime_type' => 'application/pdf', 'bytes' => $this->pdf->arrivalNotice($job)]]
+            );
+
+            if (! ($result['ok'] ?? false)) {
+                return response()->json(['error' => $result['error'] ?? 'The mail provider refused the message.', 'reason' => 'send_failed'], 502);
+            }
+        }
+
+        DB::table('cargo_arrival_notices')->where('id', $can->id)->update([
+            'staged_mail' => json_encode($mail), 'decision' => $data['decision'] === 'send' ? 'sent' : 'skipped',
+            'decided_by' => auth()->id(), 'decided_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->audit->record($job->agent_id, 'import.notice_' . ($data['decision'] === 'send' ? 'sent' : 'skipped'), 'job', $job->id, auth()->id());
+
+        return response()->json($this->payload($job));
+    }
+
+    /** The consignee's addresses: its contacts that have not opted out (primary first), else its own email. */
+    private function consigneeAddresses(Job $job): array
+    {
+        $party = DB::table('job_entities')->where('job_id', $job->id)->where('role', 'consignee')->whereNull('deleted_at')->first();
+        [$type, $id] = $party ? [$party->party_type, $party->party_id] : ['customer', $job->customer_id];
+
+        if ($id === null || $type === 'branch') {
+            return [];
+        }
+
+        if ($type === 'partner') {
+            $email = DB::table('partners')->where('id', $id)->value('email');
+
+            return $email ? [$email] : [];
+        }
+
+        $contacts = DB::table('customer_contacts')->where('customer_id', $id)->whereNull('opted_out_at')
+            ->orderByDesc('is_primary')->orderByDesc('message_count')->limit(3)->pluck('email')->all();
+
+        return $contacts ?: array_filter([DB::table('customers')->where('id', $id)->value('email')]);
     }
 
     public function arrivalNoticePdf(Job $job)
@@ -332,7 +524,12 @@ class ImportController extends Controller
                     ->first(['flight_number', 'flight_date', 'carrier_name', 'pol_code', 'pod_code', 'piece_count',
                         'gross_weight', 'chargeable_weight']),
             'import'   => $mode === 'air' ? DB::table('air_import_details')->where('job_id', $job->id)->first() : null,
-            'arrival_notice' => DB::table('cargo_arrival_notices')->where('job_id', $job->id)->first(['id', 'notice_number', 'created_at']),
+            'arrival_notice' => ($can = DB::table('cargo_arrival_notices')->where('job_id', $job->id)
+                ->first(['id', 'notice_number', 'created_at', 'staged_mail', 'staged_at', 'decision', 'decided_at']))
+                ? ['id' => $can->id, 'notice_number' => $can->notice_number, 'created_at' => $can->created_at,
+                   'staged_mail' => $can->staged_mail ? json_decode($can->staged_mail, true) : null, 'staged_at' => $can->staged_at,
+                   'decision' => $can->decision, 'decided_at' => $can->decided_at]
+                : null,
             'delivery_order' => DB::table('delivery_orders')->where('job_id', $job->id)->first(),
             'release'  => $this->release($job),
             'invoices' => DB::table('accounts_invoices')->where('job_id', $job->id)->whereNotIn('status', ['draft', 'void'])

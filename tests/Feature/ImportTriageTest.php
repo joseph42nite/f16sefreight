@@ -87,6 +87,32 @@ class ImportTriageTest extends TestCase
             'Sea asks it in its own words.');
     }
 
+    /**
+     * The rubric is the bill (owner, 2026-09-29: "make sure the Jev prompt is not too long"). Each one sent is held
+     * under ~1,000 tokens (4,000 characters of JSON); it was ~1,300 before it was compacted.
+     */
+    public function test_the_rubric_stays_compact(): void
+    {
+        foreach ([null, 'sea'] as $mode) {
+            $questions = array_map(fn (array $q) => \App\Services\JevClient::choice($q['instructions'], $q['criteria']),
+                \App\Services\Mail\MailIntentClassifier::rubricFor($mode)['questions']);
+
+            $this->assertLessThanOrEqual(4000, strlen(json_encode($questions)), ($mode ?? 'air') . ' rubric grew past its budget.');
+        }
+    }
+
+    /** A lane already answers import or export, so the question is not sent and not paid for. */
+    public function test_jev_is_not_asked_the_direction_a_lane_already_gives(): void
+    {
+        $this->fakeAnswer('client', 'wants_a_price', null);
+
+        app(MailFilingService::class)->classify($this->message('Rate SZX-MAA', 'SZX-MAA 8 cartons 240 kgs, please quote'), 'air');
+        Http::assertSent(fn ($request) => ! array_key_exists('direction', $request['questions']));
+
+        app(MailFilingService::class)->classify($this->message('Rates', 'please share your best rates'), 'air');
+        Http::assertSent(fn ($request) => array_key_exists('direction', $request['questions']));
+    }
+
     public function test_a_sure_import_reading_is_kept(): void
     {
         $this->fakeAnswer('overseas_agent', 'wants_to_book', 'import');

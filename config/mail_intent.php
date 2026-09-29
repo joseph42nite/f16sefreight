@@ -90,8 +90,11 @@ return [
      *               carrier criteria now say which bill each one issues.
      * 2026-09-29  — import triage (owner, GAPS #437): a THIRD question, `direction`, asked in the same request.
      *               A mail that names its lane is decided by the lane instead (a fact — ShipmentDirection).
+     * 2026-09-29b — compacted (owner: "make sure the Jev prompt is not too long"): ~1,260 → ~830 tokens, and the
+     *               direction question is not sent when a lane answers it (~680). Every measured boundary sentence
+     *               kept in substance; the rest shortened. Re-measure.
      */
-    'rubric_version' => '2026-09-29',
+    'rubric_version' => '2026-09-29b',
 
     /*
     |--------------------------------------------------------------------------
@@ -132,39 +135,32 @@ return [
              */
             'min_confidence' => (float) env('MAIL_INTENT_SENDER_FLOOR', 0.38),
 
-            'instructions' => 'This email arrived in the shared mailbox of a freight forwarder — a company that '
-                . 'arranges transport of commercial cargo by air and sea for its clients. Who wrote it? Decide from '
-                . 'their role in the shipping chain, not from the subject.',
+            'instructions' => 'Email to a freight forwarder (air and sea cargo). Who wrote it? Judge their role in the '
+                . 'shipping chain, not the subject.',
 
             'criteria' => [
-                'client' => 'A shipper, consignee, exporter, importer or manufacturer whose own cargo we move or '
-                    . 'might move — including someone writing to us for the first time.',
+                'client' => 'A shipper, consignee, exporter, importer or manufacturer whose own cargo we move or might '
+                    . 'move, including a first-time sender.',
                 // ⚠️ The pre-alert sentence is measured: a sea pre-alert naming the vessel read as the
                 // shipping line at 0.43 until it said so (2026-09-28).
-                'overseas_agent' => 'A freight forwarder, co-loader or consolidator in another country who works '
-                    . 'the other end of our shipments: sending us cargo, receiving ours, or asking our rates to '
-                    . 'quote their own client. A pre-alert that gives house bill numbers (HBL or HAWB) for cargo '
-                    . 'they have shipped to us comes from the agent, even when it names the vessel or the carrier.',
+                'overseas_agent' => 'A forwarder, co-loader or consolidator abroad working the other end of our '
+                    . 'shipments, or asking our rates for its own client. A pre-alert giving HBL or HAWB numbers for '
+                    . 'cargo they shipped to us is from the agent, even when it names the vessel or carrier.',
                 // ⚠️ The EDI sentence is load-bearing. FNA and FWB/FHL notices quote the
                 // forwarder's name in their payload, and without this the model read two real
                 // ones as `overseas_agent` at 0.36 and 0.39 and both mails fell to Other.
-                'airline' => 'An air cargo carrier, or the cargo handling agent acting for one. A status message '
-                    . 'produced by an airline cargo system — FNA, FWB, FHL or FSU — comes from the airline even '
-                    . 'when the text of it names a freight forwarder as shipper, agent or consignee.',
-                'shipping_line' => 'An ocean carrier, NVOCC or their liner agent: the company that owns or operates the '
-                    . 'vessel, issues the master bill of lading (MBL), confirms bookings and sailings, and sends '
-                    . 'arrival notices and freight invoices for its own bills.',
-                'customs_broker' => 'A customs broker or CHA — a firm that clears cargo, not the authority itself.',
-                'transporter' => 'A road haulier, trucking company, transport contractor or driver: vehicle or '
-                    . 'trailer placement, lorry and container movement by road, e-way bills, and pickup or '
-                    . 'delivery runs between a warehouse, port or airport and a door.',
-                'cfs_warehouse' => 'A container freight station, ICD, bonded warehouse, port or airport cargo '
-                    . 'terminal, or ground handling agent — whoever physically holds the cargo between legs.',
-                'authority' => 'A government or regulatory body: customs itself, ICEGATE, DGFT, a port trust, or '
-                    . 'a tax authority.',
-                'outsider' => 'Nobody in the shipping chain for our cargo: a company selling us something, a '
-                    . 'newsletter, a recruiter or job applicant, a bank, a software vendor, our own staff, or an '
-                    . 'automated notice from a system we use.',
+                'airline' => 'An air cargo carrier or its handling agent. An FNA, FWB, FHL or FSU status message is '
+                    . 'from the airline even when it names a forwarder as shipper, agent or consignee.',
+                'shipping_line' => 'An ocean carrier, NVOCC or liner agent: operates the vessel, issues the master '
+                    . 'bill (MBL), confirms bookings and sailings, sends arrival notices and invoices for its bills.',
+                'customs_broker' => 'A customs broker or CHA: a firm that clears cargo, not customs itself.',
+                'transporter' => 'A road haulier, trucker or driver: vehicle placement, cargo or containers by road, '
+                    . 'e-way bills, pickups and deliveries.',
+                'cfs_warehouse' => 'A CFS, ICD, bonded warehouse, port or airport cargo terminal, or ground handler: '
+                    . 'whoever holds the cargo between legs.',
+                'authority' => 'A government body: customs, ICEGATE, DGFT, a port trust or a tax authority.',
+                'outsider' => 'Nobody in our cargo chain: a vendor, newsletter, recruiter or applicant, bank, our own '
+                    . 'staff, or an automated system notice.',
             ],
         ],
 
@@ -172,59 +168,47 @@ return [
             /* Seven options, and the folder for money or trouble turns on this one alone. */
             'min_confidence' => (float) env('MAIL_INTENT_INTENT_FLOOR', 0.50),
 
-            'instructions' => 'What does the sender of this email want from us? Decide from what they are asking '
-                . 'for, not from who they are.',
+            'instructions' => 'What does the sender want from us? Judge the request, not the sender.',
 
             'criteria' => [
                 // ⚠️ The last sentence is a boundary that was measured, not imagined. Without it a
                 // two-word reply reading "about 480 kg" was read as a price request at 0.85 — and
                 // that folder MINTS a document number. A figure is not a request.
-                'wants_a_price' => 'To find out what we would charge. A request for a rate, a quotation, an offer '
-                    . 'or a tariff, or a list of cargo details — pieces, weight, dimensions, a route, a ready '
-                    . 'date — sent so that we will price it. Also chasing a quote we have not sent yet. '
-                    . 'A short reply that mentions a figure or a measurement but names no cargo, no route and no '
-                    . 'request is NOT this.',
-                'wants_to_book' => 'To have us move a specific shipment, with the price already settled or not in '
-                    . 'question. Shipping instructions, a booking request or confirmation, documents sent so the '
-                    . 'shipment can go, or a nomination of cargo to us.',
-                'operational_update' => 'To tell us, or ask us, how a shipment already underway is going: flight '
-                    . 'or vessel details, an air waybill or bill of lading, arrival and gate messages, a customs '
-                    . 'query, a delivery time, a document needed to release the cargo.',
-                'wants_money' => 'To be paid by us, or to tell us what we owe: their invoice, a statement of '
-                    . 'account, a debit note, a payment reminder or a dunning notice.',
-                'sending_money' => 'To tell us that money has been paid to us, or is about to be: a remittance '
-                    . 'advice, a payment reference or UTR, a cheque or transfer confirmation, a TDS certificate.',
-                'has_a_problem' => 'To raise something that went wrong and is being held against someone: cargo '
-                    . 'damaged, short, lost or delayed, an insurance claim, a penalty, or a dispute over an amount '
-                    . 'already billed.',
-                'nothing_for_us' => 'Nothing to do with a shipment of ours: marketing, a newsletter, an industry '
-                    . 'bulletin, a survey or feedback request, a sales pitch, a job application, an internal note, '
-                    . 'or an automated system message. Also a fragment so short that what it is about cannot be '
-                    . 'told from it at all.',
+                'wants_a_price' => 'Our price: a rate, quote or tariff request, or cargo details (pieces, weight, '
+                    . 'size, route, ready date) sent for pricing, or chasing an unsent quote. A short reply with a '
+                    . 'figure but no cargo, route or request is NOT this.',
+                'wants_to_book' => 'Us to move a specific shipment, price settled: shipping instructions, a booking, '
+                    . 'documents so it can go, or a cargo nomination.',
+                'operational_update' => 'News or a question on a shipment underway: flight or vessel, AWB or BL, '
+                    . 'arrival, a customs query, delivery time, release documents.',
+                'wants_money' => 'Payment from us: their invoice, statement, debit note or payment reminder.',
+                'sending_money' => 'Money paid or about to be paid to us: remittance advice, UTR, cheque or transfer '
+                    . 'confirmation, TDS certificate.',
+                'has_a_problem' => 'A complaint: cargo damaged, short, lost or delayed, an insurance claim, a penalty, '
+                    . 'or a disputed bill.',
+                'nothing_for_us' => 'Not about our shipments: marketing, newsletter, survey, sales pitch, job '
+                    . 'application, internal note, system message, or a fragment too short to tell.',
             ],
         ],
 
         /*
          * Import or export (owner, 2026-09-29: "have the mail triage for import from Jev too, for sea and air").
-         * Read only when the mail does not name its lane — a lane is a fact and outranks this (ShipmentDirection).
-         * Three options; the enquiry it mints takes the answer only above this floor, and export is the default.
+         * NOT SENT when the mail names its lane — a lane is a fact and outranks this (ShipmentDirection), so an
+         * answer to it would be paid for and thrown away. Three options; kept only above this floor, export default.
          */
         'direction' => [
             'min_confidence' => (float) env('MAIL_INTENT_DIRECTION_FLOOR', 0.60),
 
-            'instructions' => 'We are a freight forwarder in India. Is the cargo this email is about coming INTO India '
-                . 'to us, or going OUT of India from us? Decide from the route, the ports or airports named, and words '
-                . 'like pre-alert, arrival or delivery order — not from where the sender is based.',
+            'instructions' => 'We are in India. Is the cargo coming into India or leaving it? Judge the route, ports '
+                . 'and words like pre-alert, arrival or delivery order, not where the sender is.',
 
             'criteria' => [
-                'import' => 'The cargo is coming into India: an overseas shipper or agent sending it to a buyer here, a '
-                    . 'pre-alert of cargo shipped to us, an arrival notice, a delivery order or clearance for cargo '
-                    . 'landing here, or a request for a rate on cargo from abroad to India.',
-                'export' => 'The cargo is leaving India: an Indian shipper sending goods abroad, a booking or rate '
-                    . 'request from an Indian origin to an overseas destination, shipping instructions or a shipping '
-                    . 'bill for cargo going out.',
-                'cannot_tell' => 'The email does not say which way any cargo moves: an invoice or payment with no route, '
-                    . 'a general question, or nothing to do with a shipment.',
+                'import' => 'Inbound to India: a pre-alert, arrival notice, delivery order or clearance here, or a rate '
+                    . 'for cargo from abroad.',
+                'export' => 'Outbound from India: a booking, rate request, shipping instructions or shipping bill for '
+                    . 'cargo going abroad.',
+                'cannot_tell' => 'No direction given: an invoice or payment without a route, a general question, or no '
+                    . 'shipment.',
             ],
         ],
 
@@ -252,9 +236,10 @@ return [
     | sea-2026-09-28  — first sea rubric. 25/25 on its own set.
     | sea-2026-09-28b — the EIR sentence on `transporter` (an empty-return mail read at 0.43).
     | sea-2026-09-29  — import triage: the `direction` question, in sea's words (GAPS #437).
+    | sea-2026-09-29b — compacted, as the shared rubric (~1,340 → ~910 tokens). Re-measure.
     */
     'sea' => [
-        'rubric_version' => 'sea-2026-09-29',
+        'rubric_version' => 'sea-2026-09-29b',
 
         'questions' => [
 
@@ -262,91 +247,75 @@ return [
                 // Eight options, so a real reading sits a little higher than across air's nine.
                 'min_confidence' => (float) env('MAIL_INTENT_SEA_SENDER_FLOOR', 0.38),
 
-                'instructions' => 'This email arrived in the mailbox of the ocean freight desk of a freight forwarder '
-                    . '— the people who book containers and LCL cargo on ships for their clients. Who wrote it? Decide '
-                    . 'from their role in the ocean shipping chain, not from the subject.',
+                'instructions' => 'Email to a freight forwarder\'s ocean desk (FCL and LCL). Who wrote it? Judge their '
+                    . 'role in the ocean shipping chain, not the subject.',
 
                 'criteria' => [
                     'client' => 'An exporter, importer, shipper, consignee or manufacturer whose own cargo we move or '
-                        . 'might move by sea — including someone writing to us for the first time, and their staff '
-                        . 'sending shipping instructions, VGM or corrections to a draft bill of lading.',
-                    'overseas_agent' => 'A freight forwarder or consolidator in another country who works the other '
-                        . 'end of our sea shipments: sending us cargo, receiving ours, or asking our rates to quote '
-                        . 'their own client. A pre-alert giving house bill of lading (HBL) numbers for cargo they '
-                        . 'have shipped to us comes from the agent, even when it names the vessel or the carrier.',
-                    'shipping_line' => 'An ocean carrier, NVOCC or its liner agent: the company that operates the vessel '
-                        . 'and issues the master bill of lading. It confirms or rolls over bookings, sends sailing '
-                        . 'schedules and cut-offs, releases empty containers, and sends arrival notices, delivery '
-                        . 'orders, and freight, detention and demurrage invoices for its own bills.',
-                    'customs_broker' => 'A customs broker or CHA — a firm that files shipping bills and bills of entry '
-                        . 'and clears cargo, not the customs authority itself.',
+                        . 'might move by sea, including a first-time sender and their staff sending SI, VGM or draft '
+                        . 'BL corrections.',
+                    'overseas_agent' => 'A forwarder or consolidator abroad working the other end of our sea shipments, '
+                        . 'or asking our rates for its own client. A pre-alert giving HBL numbers for cargo they '
+                        . 'shipped to us is from the agent, even when it names the vessel or carrier.',
+                    'shipping_line' => 'An ocean carrier, NVOCC or liner agent: operates the vessel, issues the master '
+                        . 'BL, confirms or rolls bookings, sends schedules and cut-offs, releases empties, and sends '
+                        . 'arrival notices, DOs and freight, detention or demurrage invoices for its bills.',
+                    'customs_broker' => 'A customs broker or CHA: files shipping bills and bills of entry, not customs '
+                        . 'itself.',
                     // ⚠️ The EIR sentence is measured: "empty returned, EIR attached" read as the haulier at only
                     // 0.43 without it (sea-2026-09-28).
-                    'transporter' => 'A container haulier, trailer or trucking company or driver: placing a trailer, '
-                        . 'moving a container between a factory, CFS, ICD and the port, returning an empty, and the '
-                        . 'e-way bill for the run. A haulier reporting that it returned a box sends the EIR '
-                        . '(equipment interchange receipt) as its proof.',
-                    'cfs_warehouse' => 'A container freight station, ICD, container terminal, empty yard or depot, or '
-                        . 'bonded warehouse — whoever physically holds the container or cargo between legs: gate-in '
-                        . 'and gate-out, stuffing and destuffing, free storage days.',
-                    'authority' => 'A government or regulatory body: customs itself, ICEGATE, a port authority or '
-                        . 'port trust, DGFT, or a tax authority.',
-                    'outsider' => 'Nobody in the shipping chain for our cargo: a company selling us something, a '
-                        . 'newsletter, a recruiter or job applicant, a bank, a software vendor, our own staff, or an '
-                        . 'automated notice from a system we use.',
+                    'transporter' => 'A container haulier, trucker or driver: trailer placement, moving boxes between '
+                        . 'factory, CFS, ICD and port, returning empties, e-way bills. A haulier that returned a box '
+                        . 'sends the EIR (equipment interchange receipt) as proof.',
+                    'cfs_warehouse' => 'A CFS, ICD, container terminal, empty yard, depot or bonded warehouse: gate-in '
+                        . 'and gate-out, stuffing and destuffing, free days.',
+                    'authority' => 'A government body: customs, ICEGATE, a port authority or trust, DGFT, or a tax '
+                        . 'authority.',
+                    'outsider' => 'Nobody in our cargo chain: a vendor, newsletter, recruiter or applicant, bank, our '
+                        . 'own staff, or an automated system notice.',
                 ],
             ],
 
             'intent' => [
                 'min_confidence' => (float) env('MAIL_INTENT_SEA_INTENT_FLOOR', 0.50),
 
-                'instructions' => 'What does the sender of this email want from our ocean freight desk? Decide from '
-                    . 'what they are asking for, not from who they are.',
+                'instructions' => 'What does the sender want from our ocean desk? Judge the request, not the sender.',
 
                 'criteria' => [
-                    'wants_a_price' => 'To find out what we would charge to move cargo by sea: a rate for FCL containers '
-                        . '(how many and what size) or LCL cargo (volume and weight), between two ports, with a '
-                        . 'commodity or a ready date — or chasing such a quote we have not sent yet. A container '
-                        . 'weight, VGM or volume mentioned about a box already booked is NOT this.',
-                    'wants_to_book' => 'To have us move a specific sea shipment: a booking request, shipping '
-                        . 'instructions (SI), a VGM declaration sent so the box can load, or a nomination of cargo '
-                        . 'to us — the price already settled or not in question.',
-                    'operational_update' => 'To tell us, or ask us, how a sea shipment already underway is going: a '
-                        . 'booking confirmation, a sailing schedule, cut-off, ETD or ETA, a rollover to a later '
-                        . 'vessel, container release or empty pickup, gate-in or loading, a draft bill of lading to '
-                        . 'check or correct, a telex or original release, an arrival notice, a delivery order, or a '
-                        . 'customs query or hold.',
-                    'wants_money' => 'To be paid by us, or to tell us what we owe: an ocean freight invoice, local '
-                        . 'charges or THC, a detention or demurrage bill, delivery order charges, a statement of '
-                        . 'account or a payment reminder.',
-                    'sending_money' => 'To tell us that money has been paid to us, or is about to be: a remittance '
-                        . 'advice, a payment reference or UTR, a cheque or transfer confirmation, a TDS certificate.',
-                    'has_a_problem' => 'To raise something that went wrong and is being held against someone: cargo or '
-                        . 'a container damaged, short or lost, a shipment rolled or delayed with a loss, an insurance '
-                        . 'claim, a penalty, or a dispute over detention, demurrage or an amount already billed.',
-                    'nothing_for_us' => 'Nothing to do with a shipment of ours: marketing, a newsletter, an industry '
-                        . 'bulletin, a survey, a sales pitch, a job application, an internal note, or an automated '
-                        . 'system message. Also a fragment so short that what it is about cannot be told from it.',
+                    'wants_a_price' => 'Our sea rate: FCL (count and size) or LCL (volume, weight) between two ports, '
+                        . 'with a commodity or ready date, or chasing an unsent quote. A weight, VGM or volume about a '
+                        . 'box already booked is NOT this.',
+                    // ⚠️ Spelled out, not "SI" alone: the model reads the rubric literally (SeaInboxTest pins it).
+                    'wants_to_book' => 'Us to move a specific sea shipment, price settled: a booking request, shipping '
+                        . 'instructions (SI), a VGM so the box can load, or a cargo nomination.',
+                    'operational_update' => 'News or a question on a sea shipment underway: booking confirmation, '
+                        . 'schedule, cut-off, ETD or ETA, rollover, container release or pickup, gate-in, a draft BL, '
+                        . 'telex or original release, arrival notice, DO, or a customs query or hold.',
+                    'wants_money' => 'Payment from us: ocean freight, local charges or THC, detention or demurrage, DO '
+                        . 'charges, a statement or a payment reminder.',
+                    'sending_money' => 'Money paid or about to be paid to us: remittance advice, UTR, cheque or '
+                        . 'transfer confirmation, TDS certificate.',
+                    'has_a_problem' => 'A complaint: cargo or a container damaged, short or lost, a costly rollover or '
+                        . 'delay, an insurance claim, a penalty, or disputed detention, demurrage or billing.',
+                    'nothing_for_us' => 'Not about our shipments: marketing, newsletter, survey, sales pitch, job '
+                        . 'application, internal note, system message, or a fragment too short to tell.',
                 ],
             ],
 
-            // Import or export, in a sea desk's words — see the shared rubric's note.
+            // Import or export, in a sea desk's words — see the shared rubric's note (not sent when a lane says).
             'direction' => [
                 'min_confidence' => (float) env('MAIL_INTENT_SEA_DIRECTION_FLOOR', 0.60),
 
-                'instructions' => 'We are a freight forwarder in India. Is the sea cargo this email is about coming INTO '
-                    . 'an Indian port to us, or going OUT of India from us? Decide from the ports named and words like '
-                    . 'pre-alert, arrival notice, IGM or delivery order — not from where the sender is based.',
+                'instructions' => 'We are in India. Is the sea cargo coming into an Indian port or leaving one? Judge '
+                    . 'the ports and words like pre-alert, arrival notice, IGM or DO, not where the sender is.',
 
                 'criteria' => [
-                    'import' => 'The cargo is coming into an Indian port: a pre-alert of containers or LCL cargo shipped '
-                        . 'to us, an arrival notice, an IGM, a delivery order or destuffing at a CFS here, or a rate '
-                        . 'request for cargo from a foreign port to India.',
-                    'export' => 'The cargo is leaving an Indian port: a booking, shipping instructions, VGM, a shipping '
-                        . 'bill, empty pickup or stuffing for cargo going abroad, or a rate request from India to a '
-                        . 'foreign port.',
-                    'cannot_tell' => 'The email does not say which way any cargo moves: an invoice or payment with no '
-                        . 'route, a general question, or nothing to do with a shipment.',
+                    'import' => 'Inbound to India: a pre-alert, arrival notice, IGM, DO or CFS destuffing here, or a '
+                        . 'rate for cargo from a foreign port.',
+                    'export' => 'Outbound from India: a booking, SI, VGM, shipping bill, empty pickup or stuffing, or '
+                        . 'a rate to a foreign port.',
+                    'cannot_tell' => 'No direction given: an invoice or payment without a route, a general question, '
+                        . 'or no shipment.',
                 ],
             ],
 

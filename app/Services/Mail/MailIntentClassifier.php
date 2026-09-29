@@ -113,8 +113,11 @@ class MailIntentClassifier
             : ['version' => (string) config('mail_intent.rubric_version'), 'questions' => config('mail_intent.questions')];
     }
 
-    /** @param ?string $mode the mailbox's desk (MailboxMode) — it chooses the rubric */
-    public function classify(EmailMessage $message, ?string $mode = null): ?array
+    /**
+     * @param ?string $mode         the mailbox's desk (MailboxMode) — it chooses the rubric
+     * @param bool    $askDirection FALSE when the mail's lane already says import or export — the question is left out
+     */
+    public function classify(EmailMessage $message, ?string $mode = null, bool $askDirection = true): ?array
     {
         if (! config('mail_intent.enabled') || ! $this->jev->configured()) {
             return null;
@@ -143,9 +146,14 @@ class MailIntentClassifier
             // ⚠️ ONE request carrying BOTH questions. The state is sent once — which is the whole
             // cost, since output tokens are free — so the second answer is very nearly a freebie.
             // Two separate calls would double the bill and the latency for nothing.
+            $questions = self::rubricFor($mode)['questions'];
+            if (! $askDirection) {
+                unset($questions['direction']);
+            }
+
             $answer = $this->jev->ask($this->state($message), array_map(
                 fn (array $q) => JevClient::choice($q['instructions'], $q['criteria']),
-                self::rubricFor($mode)['questions']
+                $questions
             ));
         } catch (RuntimeException $e) {
             $this->credits->refund($transaction);

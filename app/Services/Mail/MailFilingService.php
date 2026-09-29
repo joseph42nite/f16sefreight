@@ -210,20 +210,22 @@ class MailFilingService
         // credit, and the two kinds it intercepts — our own outgoing mail coming back, and the
         // airline EDI a busy branch receives all day — are both high volume and both perfectly
         // regular. A model adds nothing to a template.
+        $cargo = $this->extractCargo($haystack, $transportMode);
+
+        // Import or export (GAPS #437): the lane when the mail names one — a fact — else Jev's reading when it was
+        // asked and sure. A known client's mail never reaches Jev, so for it only the lane can say. A lane also
+        // means Jev is not asked the question at all: an answer that cannot be used is not paid for.
+        $lane = app(ShipmentDirection::class)->fromCargo($cargo, (int) $message->agent_id);
+
         $decision = $rule !== null
             ? ['classification' => $rule->target_classification, 'source' => 'rule']
             : ($this->firstOf($this->knownClientClassification($message), 'client')
                 ?? $this->firstOf($this->globalClassificationFor($message->from), 'directory')
                 ?? $this->firstOf($this->patternClassification($message, $haystack), 'pattern')
-                ?? $this->model($message, $transportMode)
+                ?? $this->model($message, $transportMode, $lane === null)
                 ?? ['classification' => 'other', 'source' => 'none']);
 
-        $cargo = $this->extractCargo($haystack, $transportMode);
-
-        // Import or export (GAPS #437): the lane when the mail names one — a fact — else Jev's reading when it was
-        // asked and sure. A known client's mail never reaches Jev, so for it only the lane can say.
-        $decision['direction'] = app(ShipmentDirection::class)->fromCargo($cargo, (int) $message->agent_id)
-            ?? ($decision['direction'] ?? null);
+        $decision['direction'] = $lane ?? ($decision['direction'] ?? null);
 
         return $decision + [
             'matched_rule_id' => $rule->id ?? null,
@@ -314,10 +316,10 @@ class MailFilingService
      * tenant being out of AI budget or credits, and the call not coming back. All of them mean
      * the same thing to this chain: nobody decided, so the mail falls through to `other`.
      */
-    private function model(EmailMessage $message, ?string $transportMode = null): ?array
+    private function model(EmailMessage $message, ?string $transportMode = null, bool $askDirection = true): ?array
     {
         // The desk chooses the rubric: a sea mailbox is read against sea's own (GAPS #428).
-        $answer = app(MailIntentClassifier::class)->classify($message, $transportMode);
+        $answer = app(MailIntentClassifier::class)->classify($message, $transportMode, $askDirection);
 
         return $answer === null ? null : $answer + ['source' => 'model'];
     }

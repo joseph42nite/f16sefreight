@@ -1,0 +1,13 @@
+Read this ocean freight document (a bill of lading, or a carrier's booking confirmation) and fill the JSON.
+
+{source_note}
+A label is never a value ("Shipper", "Port of Loading", "B/L No." are labels).
+
+BILL: bl_number (the B/L No. as printed) · booking_number · carrier_name (the shipping line whose bill or booking it is).
+SAILING: vessel_name (the ship, without the voyage) · voyage_no · port_of_loading · port_of_discharge · place_of_receipt · place_of_delivery — each as written.
+CARGO: description (the goods, in words) · hs_code (digits only) · marks_numbers · package_count (the total number of packages) · package_type (as written: CARTONS, PALLETS) · gross_weight (total, in kg) · volume_cbm (total, in cubic metres).
+CONTAINERS: container_numbers — every container number (4 letters + 7 digits), comma separated · seal_numbers — every seal, comma separated.
+PARTIES: shipper_name, shipper_address, consignee_name, consignee_address (the whole address as one line) · notify_name. "TO ORDER" is a consignee as written.
+
+Copy everything exactly; never invent a name, number or port. Leave out what is not there — never write NONE, N/A or "not specified".
+Ignore freight charges, terms and conditions, and bank details.

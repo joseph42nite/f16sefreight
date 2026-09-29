@@ -16,6 +16,7 @@ CONFIG_FILE_PATH = str(CURRENT_DIR / "boxes_config.json")
 # and stays resident in memory forever.
 from extract_awb_new import _iata_patterns, extract_all_boxes
 from unstructured import extract_from_images, extract_from_text
+from bill import extract_bill_from_images, extract_bill_from_text
 
 # ⚠️ Built at startup, not on the first document: compiling the 8,383 airport-name patterns takes
 # ~0.6 s, which the first invoice after a restart would otherwise pay.
@@ -106,6 +107,7 @@ async def extract_unstructured(
     use_model: str = Form("true"),
     skip_reason: str = Form("the daily AI limit has been reached"),
     free_first: str = Form("false"),
+    document_type: str = Form(""),
 ):
     """
     Read a document that has no fixed layout — a commercial invoice, a packing list.
@@ -142,11 +144,17 @@ async def extract_unstructured(
         # would block every other request, /health included, for the whole reading.
         # 🌙 Laravel says when the free model may be tried first (at night, when superadmin allows it).
         free = str(free_first).lower() in ("1", "true", "yes")
-        result = await run_in_threadpool(extract_from_text, tmp_path, model_allowed, skip_reason[:120], free)
+        # 🚢 A bill of lading or booking has its own schema and prompt (guide Step 12.4) — bill.py.
+        if document_type == "bill_of_lading":
+            result = await run_in_threadpool(extract_bill_from_text, tmp_path, model_allowed, skip_reason[:120])
+            if result["extraction_path"] == "none" and wants_vision:
+                result = await run_in_threadpool(extract_bill_from_images, tmp_path)
+        else:
+            result = await run_in_threadpool(extract_from_text, tmp_path, model_allowed, skip_reason[:120], free)
 
-        if result["extraction_path"] == "none" and wants_vision:
-            # Consent was given: read the scan's pages as images.
-            result = await run_in_threadpool(extract_from_images, tmp_path)
+            if result["extraction_path"] == "none" and wants_vision:
+                # Consent was given: read the scan's pages as images.
+                result = await run_in_threadpool(extract_from_images, tmp_path)
 
         logger.info(
             f"Unstructured '{file.filename}' -> {result['extraction_path']} "

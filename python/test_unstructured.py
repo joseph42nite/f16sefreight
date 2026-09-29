@@ -1024,6 +1024,73 @@ def test_the_fast_reader_is_the_one_in_use():
     assert unstructured._HAS_MUPDF, "PyMuPDF is not installed; the slow path is running"
 
 
+# ── Bills of lading (guide Step 12.4) ───────────────────────────────────────────
+
+BILL = """BILL OF LADING   B/L No. MEDUBOM12345
+Shipper: Northwind Exports Pvt Ltd, 41 Marine Drive, Mumbai 400020, India
+Consignee: TO ORDER
+Notify: Hansa Logistik GmbH
+Vessel: MSC ANNA   Voyage: 412W
+Port of Loading: NHAVA SHEVA   Port of Discharge: HAMBURG
+Container: MSCU1234565  Seal: 887766
+12 PALLETS  Pharmaceutical excipients  HS 293299
+Gross weight 4800.500 KGS  Measurement 22.400 CBM
+"""
+
+
+def _bill_answer(**values):
+    return _answer({**{k: None for k in model_extract._strict_schema(model_extract.ExtractedBill)["properties"]}, **values})
+
+
+def test_a_bill_is_read_against_its_own_schema_and_prompt():
+    """One schema per document type (guide §4.1 rule 4): the bill's keys and prompt, not the invoice's."""
+    seen, restore = _with_openrouter([_bill_answer(bl_number="MEDUBOM12345", vessel_name="MSC ANNA", voyage_no="412W",
+                                                   container_numbers="MSCU1234565", gross_weight=4800.5)])
+    try:
+        fields, error, usage = model_extract.extract_bill(BILL)
+    finally:
+        restore()
+
+    schema = seen[0]["response_format"]["json_schema"]["schema"]
+    assert "vessel_name" in schema["properties"] and "shipper_state" not in schema["properties"]
+    assert "ocean freight document" in seen[0]["messages"][0]["content"]
+    assert error is None and fields["vessel_name"] == "MSC ANNA" and fields["gross_weight"] == 4800.5
+    assert usage["prompt_version"] == model_extract.BILL_PROMPT_VERSION
+
+
+def test_an_invented_container_is_dropped_and_the_real_one_kept():
+    """Each container number is checked on the page on its own — one invented number must not cost the real one."""
+    seen, restore = _with_openrouter([_bill_answer(container_numbers="MSCU1234565, TGHU7654321", vessel_name="EVER GIVEN")])
+    try:
+        fields, error, _ = model_extract.extract_bill(BILL)
+    finally:
+        restore()
+
+    assert fields["container_numbers"] == "MSCU1234565"
+    assert "vessel_name" not in fields, "a vessel not on the page is dropped"
+
+
+def test_a_bill_pdf_goes_through_the_bill_reader():
+    import bill
+
+    path = _pdf(BILL)
+    seen, restore = _with_openrouter([_bill_answer(bl_number="MEDUBOM12345")])
+    try:
+        result = bill.extract_bill_from_text(path)
+    finally:
+        restore()
+
+    assert result["extraction_path"] == "text" and result["document"] == "bill"
+    assert result["read_by"] == "model" and result["bill"]["bl_number"] == "MEDUBOM12345"
+
+
+def test_a_scanned_bill_parks_for_consent():
+    import bill
+
+    result = bill.extract_bill_from_text(_pdf(boxes_only=True))
+    assert result["extraction_path"] == "none"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failed = 0

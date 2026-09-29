@@ -178,7 +178,8 @@ class ProcessPdfOcrJob implements ShouldQueue
 
                 // 🔴 The text credit, charged only now that the AI has answered (a scan's was reserved at consent).
                 if ($extractionPath === OcrRoutingService::PATH_TEXT && ($company = $this->companyFor($job))) {
-                    app(OcrCreditService::class)->reserve($company, $job, OcrCreditService::TEXT_COST, 'Invoice or packing list read by AI');
+                    app(OcrCreditService::class)->reserve($company, $job, OcrCreditService::TEXT_COST,
+                        $documentType === 'bill_of_lading' ? 'Bill of lading read by AI' : 'Invoice or packing list read by AI');
                 }
             }
 

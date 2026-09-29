@@ -127,6 +127,13 @@ class OcrController extends Controller
                 : null;
 
             // What THIS document used, in credits (user, 2026-09-14): charges less refunds.
+            // 🚢 A bill of lading, in the sea form's own fields, each checked against §4.1.2 (guide Step 12.4).
+            if ($job->document_type === 'bill_of_lading') {
+                $agentId = (int) \App\User::whereKey($job->user_id)->value('branch_name');
+                $response['bill'] = app(\App\Services\SeaBillReading::class)->read(
+                    is_array($job->extracted_data['bill'] ?? null) ? $job->extracted_data['bill'] : [], $agentId);
+            }
+
             $response['credits_used'] = round(-(float) \Illuminate\Support\Facades\DB::table('ocr_credit_transactions')
                 ->where('pdf_processing_job_id', $job->id)->sum('amount'), 2);
         }

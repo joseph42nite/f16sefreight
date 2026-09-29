@@ -34,7 +34,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import urllib.error
 import urllib.request
 
-from schemas import ExtractedDocument
+from schemas import ExtractedBill, ExtractedDocument
 
 logger = logging.getLogger("model_extract")
 
@@ -119,6 +119,19 @@ PROMPT = _INSTRUCTIONS.replace(
 # The same instructions for a scan, where there is no extracted text to be jumbled.
 VISION_PROMPT = _INSTRUCTIONS.replace("{source_note}", "The document is given as page IMAGES. Read every page before answering.")
 
+# 🔴 A BILL OF LADING has its own prompt and its own schema (guide Step 12.4, §4.1 rule 4): one per document type.
+# Fixed text first and the document last, as above.
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts", "extract_bill.txt"), encoding="utf-8") as _f:
+    _BILL_INSTRUCTIONS = _f.read().strip()
+
+BILL_PROMPT_VERSION = __import__("hashlib").sha256(_BILL_INSTRUCTIONS.encode()).hexdigest()[:8]
+BILL_PROMPT = _BILL_INSTRUCTIONS.replace(
+    "{source_note}",
+    "The text comes from a printed form and may be JUMBLED: a value may sit before or after its label. Match "
+    "values to labels by meaning, not position.",
+) + "\n\nDOCUMENT:\n{text}\n"
+BILL_VISION_PROMPT = _BILL_INSTRUCTIONS.replace("{source_note}", "The document is given as page IMAGES. Read every page before answering.")
+
 
 def compact(text: str) -> str:
     """
@@ -192,7 +205,33 @@ def extract_images(pages: List[bytes]) -> Tuple[Optional[Dict[str, Any]], Option
     return (_grounded(fields, "", check_presence=False) if fields is not None else None), error, usage
 
 
-def _ask(content, timeouts: Tuple[int, int, int], free_first: bool = False) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
+def extract_bill(text: str) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
+    """Read a bill of lading's (or booking's) text against the bill schema. Same returns as `extract`."""
+    if not text.strip():
+        return None, "the document has no text for the model to read", None
+
+    content = BILL_PROMPT.format(text=compact(text)[:MAX_DOCUMENT_CHARS])
+    fields, error, usage = _ask(content, TEXT_TIMEOUTS, schema=ExtractedBill, prompt_version=BILL_PROMPT_VERSION)
+
+    return (_grounded(fields, text) if fields is not None else None), error, usage
+
+
+def extract_bill_images(pages: List[bytes]) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
+    """A scanned bill, from its page images — only after a person authorised the paid run."""
+    if not pages:
+        return None, "the document has no pages to read", None
+
+    content = [{"type": "text", "text": BILL_VISION_PROMPT}] + [
+        {"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(p).decode()}}
+        for p in pages[:MAX_VISION_PAGES]
+    ]
+    fields, error, usage = _ask(content, VISION_TIMEOUTS, schema=ExtractedBill, prompt_version=BILL_PROMPT_VERSION)
+
+    return (_grounded(fields, "", check_presence=False) if fields is not None else None), error, usage
+
+
+def _ask(content, timeouts: Tuple[int, int, int], free_first: bool = False, schema=ExtractedDocument,
+         prompt_version: Optional[str] = None) -> Tuple[Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]]:
     """One question: the free model when asked (text only), then economy, the fast fallback, economy by throughput."""
     if not available():
         return None, "the model is not configured (no OPENROUTER_API_KEY)", None
@@ -201,12 +240,12 @@ def _ask(content, timeouts: Tuple[int, int, int], free_first: bool = False) -> T
     started_all = time.monotonic()
 
     if free_first:
-        parsed, usage = _ask_free(content, started_all)
+        parsed, usage = _ask_free(content, started_all, schema)
         if parsed is not None:
             return parsed, None, usage
 
     for attempt, ((tier, sort), timeout) in enumerate(zip(TIERS, timeouts), start=2 if free_first else 1):
-        body, reason = _post(content, tier, sort, timeout)
+        body, reason = _post(content, tier, sort, timeout, schema)
 
         if body is None:
             logger.warning(f"attempt {attempt} ({tier}, {sort}) failed: {reason}")
@@ -215,10 +254,12 @@ def _ask(content, timeouts: Tuple[int, int, int], free_first: bool = False) -> T
         # ⚠️ Timed from the FIRST try: a fallback that answers in 4 s after a 9 s economy timeout
         # took the operator 13 s, and that is the number worth seeing in superadmin.
         usage = _usage(body, attempt, started_all, tier)
+        if prompt_version:
+            usage["prompt_version"] = prompt_version
         raw = ((body.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
 
         try:
-            parsed = ExtractedDocument.model_validate_json(raw).model_dump(exclude_none=True)
+            parsed = schema.model_validate_json(raw).model_dump(exclude_none=True)
         except Exception as e:
             # ⚠️ Logged with the payload: "it returned this" is actionable, "invalid" is not.
             logger.warning(f"model output failed validation: {e} | raw={raw[:300]}")
@@ -229,9 +270,9 @@ def _ask(content, timeouts: Tuple[int, int, int], free_first: bool = False) -> T
     return None, reason, None
 
 
-def _ask_free(content: str, started: float) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+def _ask_free(content: str, started: float, schema=ExtractedDocument) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
     """The free model's one try. A usable answer, or (None, None) and the paid tiers take over."""
-    keys = list(_strict_schema()["properties"])
+    keys = list(_strict_schema(schema)["properties"])
     body, reason = _post(content + "\n\nAnswer with ONLY a JSON object with exactly these keys, null for anything absent: "
                          + ", ".join(keys), "free", "", FREE_TIMEOUT)
 
@@ -245,13 +286,13 @@ def _ask_free(content: str, started: float) -> Tuple[Optional[Dict[str, Any]], O
         answer = json.loads(raw)
         if not isinstance(answer, dict) or set(keys) - set(answer):
             raise ValueError("keys missing")
-        return ExtractedDocument.model_validate(answer).model_dump(exclude_none=True), _usage(body, 1, started, "free")
+        return schema.model_validate(answer).model_dump(exclude_none=True), _usage(body, 1, started, "free")
     except Exception as e:
         logger.info(f"free model answer not usable ({e}); using the paid model")
         return None, None
 
 
-def _post(content, tier: str, sort: str, timeout: int) -> Tuple[Optional[Dict[str, Any]], str]:
+def _post(content, tier: str, sort: str, timeout: int, schema=ExtractedDocument) -> Tuple[Optional[Dict[str, Any]], str]:
     """One HTTP call. Returns the body, or None and the reason."""
     payload = {
         "model": MODEL,
@@ -260,7 +301,7 @@ def _post(content, tier: str, sort: str, timeout: int) -> Tuple[Optional[Dict[st
         "max_tokens": MAX_ANSWER_TOKENS,
         "response_format": {
             "type": "json_schema",
-            "json_schema": {"name": "extracted_document", "strict": True, "schema": _strict_schema()},
+            "json_schema": {"name": "extracted_document", "strict": True, "schema": _strict_schema(schema)},
         },
         "provider": _provider(tier, sort),
         # The cost of THIS call, in the response, for llm_usage_logs.
@@ -306,14 +347,14 @@ def _post(content, tier: str, sort: str, timeout: int) -> Tuple[Optional[Dict[st
     return body, ""
 
 
-def _strict_schema() -> Dict[str, Any]:
+def _strict_schema(schema_cls=ExtractedDocument) -> Dict[str, Any]:
     """
     The schema as strict structured output needs it: every key REQUIRED, nothing extra.
 
     ⚠️ Null is still a valid answer for every field, so "required" asks the model to face each
     question, not to fill it — the same reason the cargo keys were already required-nullable.
     """
-    schema = ExtractedDocument.model_json_schema()
+    schema = schema_cls.model_json_schema()
     schema.pop("title", None)
 
     for field in schema["properties"].values():
@@ -433,6 +474,14 @@ def _grounded(parsed: Dict[str, Any], source: str, check_presence: bool = True) 
     for key, value in parsed.items():
         if not isinstance(value, str) or not value.strip():
             clean[key] = value
+            continue
+
+        # A bill's containers and seals are one comma-separated string (no lists in the schema): each number is
+        # checked on its own, so one invented number is dropped without losing the real ones beside it.
+        if key in ("container_numbers", "seal_numbers") and check_presence:
+            kept = [v.strip() for v in re.split(r"[,;\s]+", value) if v.strip() and _comparable(v) in haystack]
+            if kept:
+                clean[key] = ", ".join(kept)
             continue
 
         if _comparable(value) in ABSENT_WORDS:

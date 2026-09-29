@@ -90,3 +90,48 @@ class ExtractedDocument(BaseModel):
     consignee_post_code: Optional[str] = None
     consignee_country: Optional[str] = None
 
+
+
+class ExtractedBill(BaseModel):
+    """
+    What a model may return for a BILL OF LADING or a carrier's BOOKING CONFIRMATION (guide Step 12.4).
+
+    🔴 ONE SCHEMA PER DOCUMENT TYPE (guide §4.1 rule 4) — never a union with the invoice's. A bill carries
+    what an invoice does not (vessel, voyage, containers, seals) and does not split an address the way the
+    AWB's party form needs, so the two shapes are kept apart.
+
+    ⚠️ The same rules as ExtractedDocument: flat, every value nullable, NO free-form lists — the containers
+    and seals come back as ONE string each, "MSCU1234565, TGHU7654321", and are split in PHP, where each
+    number also meets its ISO 6346 check digit. ⚠️ NO LENGTHS in the schema (guide §4.1.2): an over-long
+    name is flagged after reading, never truncated while reading.
+    """
+
+    # The bill's own number, as printed ("B/L No"). Whether it is a house or a master bill is the form's
+    # decision — the page it is read into knows which document it is.
+    bl_number: Optional[str]
+    booking_number: Optional[str]
+    carrier_name: Optional[str]
+
+    vessel_name: Optional[str]
+    voyage_no: Optional[str]
+    port_of_loading: Optional[str]
+    port_of_discharge: Optional[str]
+    place_of_receipt: Optional[str] = None
+    place_of_delivery: Optional[str] = None
+
+    description: Optional[str]
+    hs_code: Optional[str] = None
+    marks_numbers: Optional[str] = None
+    package_count: Optional[int] = Field(..., ge=0)
+    package_type: Optional[str] = None
+    gross_weight: Optional[float] = Field(..., ge=0)
+    volume_cbm: Optional[float] = Field(..., ge=0)
+
+    container_numbers: Optional[str] = None
+    seal_numbers: Optional[str] = None
+
+    shipper_name: Optional[str] = None
+    shipper_address: Optional[str] = None
+    consignee_name: Optional[str] = None
+    consignee_address: Optional[str] = None
+    notify_name: Optional[str] = None

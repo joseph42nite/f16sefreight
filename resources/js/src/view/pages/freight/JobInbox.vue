@@ -704,10 +704,14 @@
             switching to Cost sheet or Credits destroyed the panel mid-read, its timers with it, and the reading was
             lost even though the server had carried on.
           -->
-          <p v-if="active.job && active.job.transport_mode === 'sea'" class="fx-muted">
-            This is a sea shipment: its document is the bill of lading.
-            <router-link :to="'/focus-sea/' + active.job.id">Open it in FocusSea →</router-link>
-          </p>
+          <template v-if="active.job && active.job.transport_mode === 'sea'">
+            <p class="fx-muted">
+              This is a sea shipment: its document is the bill of lading.
+              <router-link :to="'/focus-sea/' + active.job.id">Open it in FocusSea →</router-link>
+            </p>
+            <!-- A carrier's BL or booking, read straight into the bill (guide Step 12.4). -->
+            <BlReader v-if="designation === 'operations'" :key="'bl' + active.job.id" :job-id="active.job.id" mode="save" />
+          </template>
           <ExtractionPanel
             v-show="active.enquiry && active.job && active.job.transport_mode !== 'sea'"
             ref="extraction"
@@ -734,6 +738,7 @@ import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import ExtractionPanel from "@/view/pages/freight/components/ExtractionPanel.vue";
+import BlReader from "@/view/pages/freight/components/BlReader.vue";
 import CostSheet from "@/view/pages/freight/components/CostSheet.vue";
 import CreditsPanel from "@/view/pages/freight/components/CreditsPanel.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
@@ -824,7 +829,7 @@ const WORKSPACE_TABS = [
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor, StaffPicker, NewMail, MailBodyFrame },
+  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, BlReader, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor, StaffPicker, NewMail, MailBodyFrame },
   data: () => ({
     /** The New mail pop-up is open. */
     writingNew: false,

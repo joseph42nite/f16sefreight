@@ -126,6 +126,10 @@
           <span v-for="(v, i) in violations" :key="i"> · {{ v.message }}</span>
         </p>
 
+        <!-- Read a carrier's BL or booking into this bill (guide Step 12.4). Reading with AI is Tactical and up. -->
+        <BlReader v-if="canWrite && tierAtLeast('tactical')" :job-id="jobId" @apply="takeReading" @parties="partiesTick++" />
+        <p v-if="readNote" class="fx-notice" role="status">{{ readNote }}</p>
+
         <nav class="fx-drawer__tabs" role="tablist" aria-label="Document sections">
           <button
             v-for="t in TABS" :key="t.key"
@@ -137,7 +141,7 @@
 
         <section class="fx-form">
           <!-- 1 · Entity — the HBL/MBL party mapping. -->
-          <EntityPanel v-if="tab === 'entity'" :key="'e' + jobId" :job-id="jobId" />
+          <EntityPanel v-if="tab === 'entity'" :key="'e' + jobId + '-' + partiesTick" :job-id="jobId" />
 
           <!-- 2 · Shipping -->
           <div v-else-if="tab === 'shipping'" class="fx-grid">
@@ -374,6 +378,7 @@ import { date as formatDate } from "@/core/config/format";
 import Field from "@/view/pages/freight/components/Field.vue";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import EntityPanel from "@/view/pages/freight/components/EntityPanel.vue";
+import BlReader from "@/view/pages/freight/components/BlReader.vue";
 import CostSheet from "@/view/pages/freight/components/CostSheet.vue";
 
 /* PRD §5.8 — twelve tabs, in the document's own order. */
@@ -423,7 +428,7 @@ const DETAIL = [
 
 export default {
   name: "FocusSeaMaster",
-  components: { Field, Figure, EntityPanel, CostSheet },
+  components: { Field, Figure, EntityPanel, CostSheet, BlReader },
   props: { jobId: { type: [Number, String], default: null } },
   data: () => ({
     rows: [], q: "", kind: "all", creating: false, printing: false, searchTimer: null,
@@ -433,6 +438,7 @@ export default {
     partners: [], masters: [], sheet: null, documents: [], docTypes: [],
     dims: { l: null, w: null, h: null },
     upload: { type: "other", busy: false, error: null },
+    readNote: null, partiesTick: 0,
     tab: "entity", loading: false, saving: false, saved: false, error: null, saveError: null,
     TABS, PORTS, KINDS,
   }),
@@ -607,6 +613,28 @@ export default {
       ApiService.query(`/jobs/${this.jobId}/documents/${d.id}`, { responseType: "blob" })
         .then(({ data }) => { window.open(URL.createObjectURL(data), "_blank"); })
         .catch((e) => { this.upload.error = this.readable(e); });
+    },
+    /**
+     * What a read BL says, into the form — the operator checks it and saves (guide Step 12.4). A house keeps what its
+     * master gives it; containers join the ones already typed, never replace them.
+     */
+    takeReading({ fields, containers }) {
+      const skipped = [];
+      Object.keys(fields).forEach((k) => {
+        const key = k === "bl_number" ? (this.document === "master" ? "mbl_number" : "hbl_number") : k;
+        if (this.fromMaster.includes(key)) skipped.push(key);
+        else this.$set(this.form, key, fields[k]);
+      });
+      let boxes = "";
+      if (containers.length && this.locking.containers_enabled) {
+        containers.forEach((c) => {
+          if (!this.containers.some((h) => h.number === c.container_number)) this.containers.push({ number: c.container_number, type: null, seal: c.seal_number });
+        });
+      } else if (containers.length) {
+        boxes = " The containers were not added: this cargo type carries none on this bill.";
+      }
+      this.readNote = "Taken from the document — check each tab, then Save."
+        + (skipped.length ? " Left as the master has them: " + skipped.join(", ").replace(/_/g, " ") + "." : "") + boxes;
     },
     useDims() {
       this.form.volume_cbm = this.dimsCbm;

@@ -1664,9 +1664,16 @@ shown. The demo gains one sea consol so every screen has something real on it.
   holding a MAWB and the types CGM · IGM (sea: consol masters, CGM · SCMTR). Air **import** (PRD §8.1) is built —
   §12.5
 
-### 12.4 BL reading in extraction
+### 12.4 BL reading in extraction 🟢 *built 2026-09-29 (GAPS #441)*
 The inbox extraction panel reads a BL or booking PDF into the sea form as it reads an AWB into FocusAir — the sea
 schema per §4.1.2 (format in the schema, length validated after).
+**Built:** the same road as an invoice (upload → queue → `/extract-unstructured` → a scan asks before it spends), with
+`document_type = bill_of_lading` choosing the bill's OWN schema (`ExtractedBill`) and prompt
+(`python/prompts/extract_bill.txt`) in `python/bill.py`. `SeaBillReading` turns the answer into the form's fields and
+checks each (BL ≤ 20, ISO 6346, HS 6–10 digits, a UN/LOCODE only when one sea port has that name, a carrier only when
+one of the branch's shipping lines has that name, parties matched never created). `BlReader.vue`: on the FocusSea form
+it fills the form for the operator to save; in the inbox (a sea shipment, operations) it saves to the bill, merging
+containers. Reading with AI is Tactical and up, as every AI reading is.
 
 ### 12.5 Sea import — and air import 🟢 *built 2026-09-29 (GAPS #434)*
 Import consol · Delivery Order [Sea] (print unlocks only when saved **and** paid or within credit — server-side `422`)

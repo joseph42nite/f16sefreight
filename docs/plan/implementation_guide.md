@@ -1427,7 +1427,7 @@ Resolve these before the dependent module starts:
 | ~~`composer require doctrine/dbal`~~ | ✅ **Installed 2026-08-26**, pinned `^3.1.4` with `carbonphp/carbon-doctrine-types:^2.0`. **Never let it drift to 4.x** — Laravel 9 supports `^2.13.3\|^3.1.4` only, and a bare `require` pulls 4.4 |
 | **The 4 production data checks** (`CONTEXT.md` §6) | Batch 1a·7 — the local DB is empty, so the `branch_name` conversion is unverified against real data |
 | **Install `laravel/horizon`** | Step 4. `docker-compose.yml` now runs a plain `queue:work` across the seven named queues in priority order, which is correct but gives no dashboard, no per-queue worker counts and no failed-job inspector (`PRD.md` §2.3.6 expects all three). Swap the `queue` service command to `php artisan horizon` once installed |
-| **`air_import_details` table** is not yet defined in `database_relations_tree.md` | Segment C.1 Air Import — add it there first |
+| ~~**`air_import_details` table**~~ | ✅ **Defined and built 2026-09-29** — `database_relations_tree.md` #46 (GAPS #434) |
 | ~~`enquiries.quoted_amount` / `quoted_currency`~~ | ✅ **Present in the DDL** — verified 2026-08-26 |
 | ~~`email_threads.first_response_at`~~ | ✅ **Present in the DDL**, and filled automatically by Sent-folder sync (`PRD.md` §5.2.3) |
 
@@ -1668,9 +1668,14 @@ shown. The demo gains one sea consol so every screen has something real on it.
 The inbox extraction panel reads a BL or booking PDF into the sea form as it reads an AWB into FocusAir — the sea
 schema per §4.1.2 (format in the schema, length validated after).
 
-### 12.5 Sea import
+### 12.5 Sea import — and air import 🟢 *built 2026-09-29 (GAPS #434)*
 Import consol · Delivery Order [Sea] (print unlocks only when saved **and** paid or within credit — server-side `422`)
-· CGM filing. ⚠️ Tables are defined in `database_relations_tree.md` first and shown to the owner, as air import's are.
+· CGM filing. Tables defined in `database_relations_tree.md` #46–#47 first (`air_import_details`, `delivery_orders`);
+sea needs none of its own. **Owner, 2026-09-29: "build the page for import for sea in the focussea and import in
+focusair for air"** — so air import (PRD §8.1) is built beside it: one *Import* page per portal (`/import`), the
+consol and its houses, IGM, arrival notice (numbered once, printed) and the delivery order with its release gate.
+❓ Open: the import party mapping (the export one is no longer forced on imports), and the layouts of the two printed
+documents — see GAPS #434.
 
 ## 📌 Conventions
 

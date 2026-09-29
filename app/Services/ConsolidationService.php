@@ -169,6 +169,11 @@ class ConsolidationService
             return ['ok' => false, 'reason' => 'mode_mismatch'];
         }
 
+        // An export house on an import consol would put outbound cargo on an arrival manifest (GAPS #434).
+        if ($house->direction !== $master->direction) {
+            return ['ok' => false, 'reason' => 'direction_mismatch'];
+        }
+
         $house->update(['parent_job_id' => $master->id, 'is_sub_shipment' => true]);
         $master->update(['is_consolidation' => true]);
 

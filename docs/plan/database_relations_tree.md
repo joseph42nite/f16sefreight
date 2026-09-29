@@ -1537,6 +1537,56 @@ from the job's latest filing.*
   updated_at      | TIMESTAMP    |     |
 ```
 
+### 46. `air_import_details` (PK: `id`) — *added 2026-09-29, GAPS #434*
+*Note: PRD §8.1's air import fields, one row per air import job. The flight, carrier, airports, pieces and weights stay
+on `air_shipment_details`; the MAWB on `jobs.awb_number`. `filing_status` uses the sea bill's words.*
+
+```text
+  Column            | Type         | Key | Connection Links
+  ------------------|--------------|-----|----------------------------------------
+  id                | BIGINT       | PK  |
+  agent_id          | BIGINT       | FK  | ◄── agents_info.id
+  job_id            | BIGINT       | UQ  | ◄── jobs.id (ON DELETE CASCADE) — one per job
+  arrived_at        | DATETIME     |     | (Flight arrival — PRD §8.1 "flight arrival info")
+  free_storage_days | SMALLINT     |     | (Storage grace period)
+  storage_from      | DATE         |     | (Storage charges start)
+  igm_no            | VARCHAR(20)  |     |
+  igm_date          | DATE         |     |
+  filing_status     | VARCHAR(20)  |     | not_filed · submitted · cleared · rejected (default not_filed)
+  handling_agent_id | BIGINT       | FK  | ◄── partners.id (NULL)
+  created_at        | TIMESTAMP    |     |
+  updated_at        | TIMESTAMP    |     |
+```
+
+### 47. `delivery_orders` (PK: `id`) — *added 2026-09-29, GAPS #434*
+*Note: PRD §5.8 Delivery Order [Sea] and §5.9 Delivery Order [Air] — one table for both modes. One DO per job.
+**Printing (release) is refused server-side (422) until the DO is saved AND the job's issued bills are paid or the
+client is within credit** (PRD §5.8). Parties (consignee, transporter, high-sea buyer, broker) stay on `job_entities`.*
+
+```text
+  Column       | Type          | Key | Connection Links
+  -------------|---------------|-----|----------------------------------------
+  id           | BIGINT        | PK  |
+  agent_id     | BIGINT        | FK  | ◄── agents_info.id
+  job_id       | BIGINT        | UQ  | ◄── jobs.id — one per job
+  do_number    | VARCHAR(30)   | UQ  | (agent_id, do_number) — sequence prefix DO
+  do_date      | DATE          |     |
+  do_given_to  | VARCHAR(150)  |     | (PRD: free text)
+  can_id       | BIGINT        | FK  | ◄── cargo_arrival_notices.id (NULL) — "CAN Number"
+  invoice_id   | BIGINT        | FK  | ◄── accounts_invoices.id (NULL) — "Invoice No"
+  fee          | DECIMAL(12,2) |     | (DO fee, INR; NULL = not charged separately)
+  status       | VARCHAR(12)   |     | draft · released (released on the first permitted print)
+  released_at  | TIMESTAMP     |     |
+  released_by  | BIGINT        | FK  | ◄── users.id (NULL)
+  created_at   | TIMESTAMP     |     |
+  updated_at   | TIMESTAMP     |     |
+```
+
+*`cargo_arrival_notices` (#21) is unchanged: its number is minted once per import job (sequence prefix CAN) and the
+printed notice is built from `air_import_details` / `sea_shipment_details`. Sea import needs no new table: an import
+consol is a sea master with `jobs.direction = 'import'`, and `sea_shipment_details` already carries `igm_no`,
+`igm_date` and `handling_agent_id`.*
+
 ---
 
 ## 🧪 Polymorphic MorphTo Mapping Targets

@@ -127,6 +127,11 @@ class FreightDemoSeeder extends Seeder
 
         $this->seedPlatformStaff();
         $this->syncSequenceCounters();
+        // After the counters: imports draw their numbers from the sequence service, which must start past the
+        // numbers the rest of the demo wrote directly.
+        foreach (self::TENANTS as $tenant) {
+            $this->seedImports($tenant['code']);
+        }
         // Mail through the real sync, regex and shipment steps, so each automated client update appears.
         $this->call(DemoMailLoopSeeder::class);
         // Every client's mail addresses, gathered from the demo mail written straight into the tables.
@@ -281,6 +286,9 @@ class FreightDemoSeeder extends Seeder
         DB::table('job_entities')->whereIn('job_id', $jobIds)->delete();
         DB::table('approved_drafts_queue')->whereIn('job_id', $jobIds)->delete();
         DB::table('operational_cover_letters')->whereIn('job_id', $jobIds)->delete();
+        // Import (GAPS #434): the DO and the air import fields cascade from the job.
+        DB::table('delivery_orders')->whereIn('job_id', $jobIds)->delete();
+        DB::table('air_import_details')->whereIn('job_id', $jobIds)->delete();
         // No action on `jobs` — these used to make the purge refuse outright whenever they had rows.
         DB::table('cargo_arrival_notices')->whereIn('job_id', $jobIds)->delete();
         DB::table('sea_container_items')->whereIn('job_id', $jobIds)->delete();
@@ -1290,6 +1298,96 @@ class FreightDemoSeeder extends Seeder
                     'created_at' => now(), 'updated_at' => now(),
                 ]);
             }
+        }
+    }
+
+    /**
+     * Cargo arriving, both modes (GAPS #434), so the Import screens have something real on them: per branch an air
+     * import consol with two houses and a sea import consol with one. Each house is an import enquiry its client sent
+     * — the client is its consignee and who it is billed to. One air house has its arrival notice and a draft DO.
+     */
+    private function seedImports(string $code): void
+    {
+        $company = Company::where('code', $code)->first();
+        $sequences = app(\App\Services\EnquirySequenceService::class);
+        $consol = app(\App\Services\ConsolidationService::class);
+
+        foreach (Agent::where('company_id', $company->id)->get() as $branch) {
+            $clients = Customer::withoutGlobalScopes()->where('company_id', $company->id)->orderBy('id')->limit(2)->pluck('id');
+            $ops = User::where('branch_name', $branch->id)->where('designation', 'operations')->value('id');
+
+            if ($clients->count() < 2 || $ops === null) {
+                continue;
+            }
+
+            $airport = $branch->branch_code === 'MAA' ? 'MAA' : 'BOM';
+            $port = $branch->branch_code === 'MAA' ? 'INMAA' : 'INNSA';
+
+            $house = function (string $mode, int $client, int $n) use ($branch, $sequences, $ops) {
+                $enquiry = Enquiry::withoutGlobalScopes()->create([
+                    'agent_id' => $branch->id, 'transport_mode' => $mode, 'direction' => 'import', 'status' => 'converted',
+                    'customer_id' => $client, 'enquiry_no' => $sequences->next($branch->id, $mode === 'air' ? 'ENQA' : 'ENQS'),
+                ]);
+                $job = Job::withoutGlobalScopes()->create([
+                    'agent_id' => $branch->id, 'enquiry_id' => $enquiry->id, 'transport_mode' => $mode, 'direction' => 'import',
+                    'customer_id' => $client, 'ops_id' => $ops, 'cargo_type' => $mode === 'sea' ? 'lcl' : null,
+                    'execution_job_no' => $sequences->next($branch->id, $mode === 'air' ? 'JOBA' : 'JOBS'),
+                ]);
+                DB::table('job_entities')->insert(['agent_id' => $branch->id, 'job_id' => $job->id, 'party_type' => 'customer',
+                    'party_id' => $client, 'role' => 'consignee', 'created_at' => now(), 'updated_at' => now()]);
+
+                return $job;
+            };
+
+            // ── Air: a consol off EK542 from Dubai, arrived yesterday, IGM filed.
+            $master = Job::withoutGlobalScopes()->create([
+                'agent_id' => $branch->id, 'enquiry_id' => null, 'transport_mode' => 'air', 'direction' => 'import',
+                'is_consolidation' => true, 'consol_type' => 'agent_consol', 'ops_id' => $ops, 'pricing_id' => $ops,
+                'awb_number' => sprintf('176-%08d', 61000000 + $branch->id), 'execution_job_no' => $sequences->next($branch->id, 'JOBA'),
+            ]);
+            DB::table('air_shipment_details')->insert(['job_id' => $master->id, 'flight_number' => 'EK542', 'carrier_name' => 'Emirates SkyCargo',
+                'flight_date' => now()->subDay(), 'pol_code' => 'DXB', 'pod_code' => $airport, 'piece_count' => 18, 'gross_weight' => 642.5,
+                'chargeable_weight' => 690, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('air_import_details')->insert(['agent_id' => $branch->id, 'job_id' => $master->id, 'arrived_at' => now()->subDay()->setTime(6, 40),
+                'free_storage_days' => 3, 'storage_from' => now()->addDays(2)->toDateString(), 'igm_no' => (string) (2340000 + $master->id),
+                'igm_date' => now()->subDay()->toDateString(), 'filing_status' => 'submitted', 'created_at' => now(), 'updated_at' => now()]);
+
+            foreach ([[$clients[0], 10, 360.0], [$clients[1], 8, 282.5]] as $i => [$client, $pieces, $kg]) {
+                $h = $house('air', $client, $i);
+                DB::table('air_shipment_details')->insert(['job_id' => $h->id, 'flight_number' => 'EK542', 'carrier_name' => 'Emirates SkyCargo',
+                    'flight_date' => now()->subDay(), 'pol_code' => 'DXB', 'pod_code' => $airport, 'piece_count' => $pieces,
+                    'gross_weight' => $kg, 'chargeable_weight' => $kg, 'created_at' => now(), 'updated_at' => now()]);
+                $consol->link($master, $h);
+
+                if ($i === 0) {
+                    // The first house is ready to release: notice issued, DO drafted — its print waits on payment.
+                    $can = DB::table('cargo_arrival_notices')->insertGetId(['agent_id' => $branch->id, 'job_id' => $h->id,
+                        'notice_number' => $sequences->next($branch->id, 'CAN'), 'created_at' => now(), 'updated_at' => now()]);
+                    DB::table('delivery_orders')->insert(['agent_id' => $branch->id, 'job_id' => $h->id,
+                        'do_number' => $sequences->next($branch->id, 'DO'), 'do_date' => now()->toDateString(),
+                        'do_given_to' => 'Sharma CHA & Co', 'can_id' => $can, 'fee' => 1500, 'status' => 'draft',
+                        'created_at' => now(), 'updated_at' => now()]);
+                }
+            }
+
+            // ── Sea: a consol from Shanghai, due in three days.
+            $sea = Job::withoutGlobalScopes()->create([
+                'agent_id' => $branch->id, 'enquiry_id' => null, 'transport_mode' => 'sea', 'direction' => 'import',
+                'is_consolidation' => true, 'cargo_type' => 'fcl', 'delivery_mode' => 'fcl', 'consol_type' => 'agent_consol',
+                'ops_id' => $ops, 'pricing_id' => $ops, 'execution_job_no' => $sequences->next($branch->id, 'JOBS'),
+            ]);
+            DB::table('sea_shipment_details')->insert(['job_id' => $sea->id, 'vessel_name' => 'MV COSCO Hope', 'voyage_no' => '112W',
+                'pol_code' => 'CNSHA', 'pod_code' => $port, 'eta' => now()->addDays(3), 'mbl_number' => 'COSU' . (6200000 + $sea->id),
+                'piece_count' => 40, 'gross_weight' => 5120, 'igm_no' => (string) (9900000 + $sea->id), 'igm_date' => now()->toDateString(),
+                'freight_terms' => 'collect', 'filing_status' => 'not_filed', 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('sea_containers')->insert(['agent_id' => $branch->id, 'job_id' => $sea->id, 'container_number' => 'CSQU3054383',
+                'container_type' => '40HC', 'seal_number' => 'CN' . (880000 + $branch->id), 'created_at' => now(), 'updated_at' => now()]);
+
+            $h = $house('sea', $clients[0], 0);
+            DB::table('sea_shipment_details')->insert(['job_id' => $h->id, 'hbl_number' => 'HBLIMP' . $h->id, 'pol_code' => 'CNSHA',
+                'pod_code' => $port, 'piece_count' => 40, 'gross_weight' => 5120, 'commodity_description' => 'Machine parts',
+                'filing_status' => 'not_filed', 'created_at' => now(), 'updated_at' => now()]);
+            $consol->link($sea, $h);
         }
     }
 

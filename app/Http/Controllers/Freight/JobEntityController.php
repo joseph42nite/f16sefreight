@@ -50,6 +50,7 @@ class JobEntityController extends Controller
 
         return response()->json([
             'document'   => self::documentKind($job),
+            'direction'  => $job->direction,
             'entities'   => $this->hydrate($job),
             'roles'      => self::ROLES,
             // What each role SHOULD be on this document. The form reads this rather
@@ -95,7 +96,9 @@ class JobEntityController extends Controller
         }
 
         // The branch is a party only as a master's shipper — the forwarder itself (owner, 2026-09-28).
-        if ($data['party_type'] === 'branch' && ($expected[$data['role']]['party_type'] ?? null) !== 'branch') {
+        $importMaster = $job->direction === 'import' && self::documentKind($job) === 'master';
+
+        if ($data['party_type'] === 'branch' && ! $importMaster && ($expected[$data['role']]['party_type'] ?? null) !== 'branch') {
             return response()->json([
                 'error'  => 'The branch is a party only as the shipper on a master bill.',
                 'reason' => 'party_type_mismatch',
@@ -176,6 +179,12 @@ class JobEntityController extends Controller
     /** @return array<string, array{party_type: string, description: string}> */
     private function expectedParties(Job $job): array
     {
+        // ❓ The PRD's HBL/MBL mapping is written for EXPORT. On an import the roles turn around (the origin agent ships
+        // to us), and that mirror is not confirmed — so nothing is enforced on an import until it is (GAPS #434).
+        if ($job->direction === 'import') {
+            return [];
+        }
+
         if (self::documentKind($job) === 'master') {
             return [
                 'shipper'      => ['party_type' => 'branch', 'description' => 'the forwarder branch itself'],

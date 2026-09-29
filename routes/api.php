@@ -493,6 +493,16 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/jobs/{job}/manifest-filings', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'store']);
     // What the gateway answered, recorded by the operator — cleared or rejected (GAPS #429).
     Route::post('/manifest-filings/{filing}/outcome', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'outcome']);
+    // ── Import, both modes (GAPS #434): the portal decides sea or air. Reads are viewManifest; writes and the DO
+    // release are fileManifest. The DO print is the release gate — 422 until saved AND paid or within credit.
+    Route::get('/imports', [\App\Http\Controllers\Freight\ImportController::class, 'index']);
+    Route::post('/imports', [\App\Http\Controllers\Freight\ImportController::class, 'store']);
+    Route::get('/jobs/{job}/import', [\App\Http\Controllers\Freight\ImportController::class, 'show']);
+    Route::post('/jobs/{job}/import', [\App\Http\Controllers\Freight\ImportController::class, 'save']);
+    Route::post('/jobs/{job}/arrival-notice', [\App\Http\Controllers\Freight\ImportController::class, 'arrivalNotice']);
+    Route::get('/jobs/{job}/arrival-notice.pdf', [\App\Http\Controllers\Freight\ImportController::class, 'arrivalNoticePdf']);
+    Route::post('/jobs/{job}/delivery-order', [\App\Http\Controllers\Freight\ImportController::class, 'saveDeliveryOrder']);
+    Route::get('/jobs/{job}/delivery-order.pdf', [\App\Http\Controllers\Freight\ImportController::class, 'deliveryOrderPdf']);
     // Whether Auto File can run, and what is missing. Key names only, never values.
     Route::get('/icegate/status', [\App\Http\Controllers\Freight\ManifestFilingController::class, 'connection']);
 

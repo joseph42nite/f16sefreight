@@ -13,7 +13,10 @@
       <p class="fx-muted" style="margin-bottom: var(--space-3)">
         This is
         <strong>{{ document === "master" ? "a master bill" : "a house bill" }}</strong>.
-        <template v-if="document === 'master'">
+        <template v-if="direction === 'import'">
+          An import: choose each party's type — the house/master mapping is written for export and is not applied here.
+        </template>
+        <template v-else-if="document === 'master'">
           The shipper is the forwarder branch itself and the consignee is the destination agent —
           not the exporter and buyer.
         </template>
@@ -69,6 +72,8 @@
           <select v-model="draft.party_type" class="fx-input" @change="draft.party_id = ''">
             <option value="customer">customer</option>
             <option value="partner">partner</option>
+            <!-- On an import master the branch receives the cargo — it may be named, in whichever role. -->
+            <option v-if="direction === 'import' && document === 'master'" value="branch">branch</option>
           </select>
         </label>
 
@@ -101,7 +106,7 @@ export default {
   name: "EntityPanel",
   props: { jobId: { type: [Number, String], required: true } },
   data: () => ({
-    entities: [], roles: [], expected: {}, document: "house", branch: null,
+    entities: [], roles: [], expected: {}, document: "house", direction: "export", branch: null,
     customers: [], partners: [],
     draft: { role: "shipper", party_type: "customer", party_id: "", custom_role_label: "" },
     loading: true, busy: false, error: null, actionError: null,
@@ -136,6 +141,7 @@ export default {
           this.roles = data.roles || [];
           this.expected = data.expected || {};
           this.document = data.document;
+          this.direction = data.direction || "export";
           this.branch = data.branch || null;
           this.error = null;
         })

@@ -24,7 +24,11 @@ class SeaParties
         }
 
         if ($job->is_consolidation && $job->parent_job_id === null) {
-            $this->fill($job, 'shipper', 'branch', (int) $job->agent_id);
+            // The branch ships an EXPORT master. On an import master the origin agent ships to us — not prefilled
+            // until that mapping is confirmed (GAPS #434).
+            if ($job->direction !== 'import') {
+                $this->fill($job, 'shipper', 'branch', (int) $job->agent_id);
+            }
 
             return;
         }

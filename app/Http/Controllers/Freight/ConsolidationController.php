@@ -82,9 +82,11 @@ class ConsolidationController extends Controller
             ->whereNull('parent_job_id')
             ->where('is_consolidation', false)
             ->when($request->filled('transport_mode'), fn ($q) => $q->where('transport_mode', $request->string('transport_mode')))
+            // Same direction as the consol it would join — an import consol offers import houses only (GAPS #434).
+            ->when($request->filled('direction'), fn ($q) => $q->where('direction', $request->string('direction')))
             ->with('customer:id,name')
             ->limit(100)
-            ->get(['id', 'execution_job_no', 'customer_id', 'transport_mode']);
+            ->get(['id', 'execution_job_no', 'customer_id', 'transport_mode', 'awb_number', 'direction']);
 
         return response()->json(['data' => $rows]);
     }
@@ -109,7 +111,8 @@ class ConsolidationController extends Controller
                     'already_linked' => 'That house already belongs to another consol. Unlink it there first — '
                                       . 'moving it silently would take cargo off one manifest and add it to another.',
                     'self_link'      => 'A shipment cannot be its own house.',
-                    'mode_mismatch'  => 'A sea consol cannot carry an air house.',
+                    'mode_mismatch'  => 'A consol carries houses of its own mode only.',
+                    'direction_mismatch' => 'An import consol carries import houses, and an export consol export houses.',
                     default          => 'That house cannot be linked.',
                 },
                 'reason' => $result['reason'],

@@ -433,6 +433,20 @@ const router = new Router({
           meta: { userType: 'user' }
         },
         {
+          // Import, both portals — the server answers for the portal it is opened in (GAPS #434).
+          path: "import",
+          name: "Import",
+          component: () => import("@/view/pages/freight/ImportList"),
+          meta: { userType: 'user', designations: ['operations', 'pricing', 'boss'], minTier: 'tactical' }
+        },
+        {
+          path: "import/:jobId(\\d+)",
+          name: "Import shipment",
+          component: () => import("@/view/pages/freight/ImportJob"),
+          props: true,
+          meta: { userType: 'user', designations: ['operations', 'pricing', 'boss'], minTier: 'tactical' }
+        },
+        {
           // CGM / SCMTR filings with ICEGATE — PRD §5.8, ui_ux_guide §9.11 (GAPS #429).
           path: "manifest-filing",
           name: "Manifest Filing",

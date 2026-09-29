@@ -56,6 +56,8 @@ export const NAV_ITEMS = [
   // correction air got: two rail entries for one document set read as two features.
   { path: "/focus-sea", label: "Bills of Lading", icon: "water", designations: null, portals: ["focussea"] },
   { path: "/focus-sea/consol", label: "Consolidation", icon: "boxes", designations: null, portals: ["focussea"] },
+  // Cargo arriving — the consol, IGM, arrival notice and delivery order (GAPS #434). Readers match viewManifest.
+  { path: "/import", label: "Import", icon: "box-arrow-in-down", designations: ["operations", "pricing", "boss"], minTier: "tactical", portals: ["focusair", "focussea"] },
   // Readers match viewManifest; only operations submits (fileManifest).
   { path: "/manifest-filing", label: "Manifest Filing", icon: "send", designations: ["operations", "pricing", "boss"], minTier: "tactical", portals: ["focusair", "focussea"] },
 

@@ -58,6 +58,13 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer();
 
+        // Connected bank accounts' statements through Setu (GAPS #442). Hourly collects what is ready; each account asks
+        // for a new statement once a day. PRD §6.4's 3-day sweep assumed a feed that pushes — an AA does not.
+        $schedule->command('bank:sync-feeds')
+            ->hourly()
+            ->withoutOverlapping()
+            ->onOneServer();
+
         // Mail is kept three months after a conversation's last message; the figures stay (user, 2026-09-16).
         $schedule->command('mail:prune')
             ->dailyAt('02:30')

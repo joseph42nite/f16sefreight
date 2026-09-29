@@ -23,6 +23,8 @@ class BankAccount extends Model
     protected $fillable = [
         'agent_id', 'name', 'bank_name', 'account_no', 'ifsc_code', 'branch_name',
         'currency', 'account_code', 'last_four', 'provider', 'provider_ref', 'is_default', 'is_active',
+        // The live feed (GAPS #442) — read-only; see BankFeedService.
+        'feed_status', 'feed_consent_url', 'feed_expires_at', 'feed_session_id', 'feed_fetched_through', 'feed_synced_at', 'feed_error',
     ];
 
     protected $casts = [
@@ -30,6 +32,9 @@ class BankAccount extends Model
         'ifsc_code' => 'encrypted',
         'is_default' => 'boolean',
         'is_active' => 'boolean',
+        'feed_expires_at' => 'datetime',
+        'feed_fetched_through' => 'date',
+        'feed_synced_at' => 'datetime',
     ];
 
     protected $hidden = ['account_no', 'ifsc_code'];

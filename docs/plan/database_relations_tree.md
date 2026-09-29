@@ -3074,6 +3074,39 @@ ALTER TABLE enquiries ADD CONSTRAINT fk_enq_reinitiated_from_job FOREIGN KEY (re
 
 ---
 
+### 48. `bank_accounts` (PK: `id`) — *created 2026-09-21 (GAPS #386), listed here 2026-09-29; feed columns GAPS #442*
+*Note: the bank accounts master — one ledger code each (`1100-Bank-<slug>`). It was built without an entry here; found
+while adding its feed. The feed is READ-ONLY: a statement read with the account holder's consent (Setu AA).*
+
+```text
+  Column               | Type          | Key | Connection Links
+  ---------------------|---------------|-----|----------------------------------------
+  id                   | BIGINT        | PK  | ──► bank_transactions / accounts_receipts / accounts_payments.bank_account_id
+  agent_id             | BIGINT        | FK  | ◄── agents_info.id
+  name                 | VARCHAR(100)  |     |
+  bank_name            | VARCHAR(100)  |     |
+  account_no           | TEXT          |     | (encrypted)
+  ifsc_code            | TEXT          |     | (encrypted)
+  branch_name          | VARCHAR(100)  |     |
+  currency             | CHAR(3)       |     | INR
+  account_code         | VARCHAR(30)   | UQ  | (agent_id, account_code) — the ledger code, fixed at creation
+  last_four            | VARCHAR(4)    |     | in the clear — how a fed statement is checked to be this account
+  provider             | VARCHAR(20)   |     | setu · plaid · NULL (by file)
+  provider_ref         | VARCHAR(100)  |     | the provider's consent id
+  feed_status          | VARCHAR(12)   |     | NULL · pending · active · paused · rejected · revoked · expired
+  feed_consent_url     | VARCHAR(500)  |     | where the holder approves
+  feed_expires_at      | TIMESTAMP     |     |
+  feed_session_id      | VARCHAR(64)   |     | a statement request in flight
+  feed_fetched_through | DATE          |     |
+  feed_synced_at       | TIMESTAMP     |     |
+  feed_error           | VARCHAR(255)  |     |
+  is_default           | BOOLEAN       |     |
+  is_active            | BOOLEAN       |     | closed, never deleted
+  created_at/updated_at| TIMESTAMP     |     |
+```
+
+---
+
 ## 🔒 Triggers & Views
 
 *Authored 2026-08-26. Previously specified in prose only — `implementation_guide.md` §1b·7, §3.4 and §1d referenced these, but no statement existed anywhere in this document.*

@@ -187,6 +187,13 @@ class ReconciliationController extends Controller
                 return response()->json(['error' => 'That bank account is not one of this branch\'s.',
                     'reason' => 'bank_account_not_found'], 404);
             }
+
+            // 🔴 An account Setu reads is not also imported by hand: the feed's references are Setu's own, a CSV's are
+            // the bank's, so the same money would come in twice (GAPS #442).
+            if ($account->provider === 'setu' && $account->feed_status !== null) {
+                return response()->json(['error' => 'This account\'s statement comes in through Setu — disconnect it there to import a file instead.',
+                    'reason' => 'account_has_feed'], 422);
+            }
         }
 
         $importer = app(\App\Services\Bank\StatementImporter::class);

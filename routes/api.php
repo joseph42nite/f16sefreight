@@ -296,6 +296,9 @@ Route::middleware('throttle:30,1')->group(function () {
     Route::get('/d/{token}', [\App\Http\Controllers\Freight\DocumentShareController::class, 'download']);
     Route::post('/d/{token}/respond', [\App\Http\Controllers\Freight\DocumentShareController::class, 'respond']);
 });
+// Setu's notice that a bank consent changed or a statement is ready (GAPS #442). UNAUTHENTICATED: the body is only used
+// to find the account, which is then read from Setu with our own keys — see BankFeedController::notify.
+Route::post('/bank-feed/setu', [\App\Http\Controllers\Freight\BankFeedController::class, 'notify'])->middleware('throttle:60,1');
 Route::post('/openclaw/telegram-callback', [\App\Http\Controllers\OpenClawController::class, 'telegramCallback']);
 /*
 |--------------------------------------------------------------------------
@@ -575,6 +578,10 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::post('/bank-accounts', [\App\Http\Controllers\Freight\BankAccountController::class, 'store']);
         Route::put('/bank-accounts/{id}', [\App\Http\Controllers\Freight\BankAccountController::class, 'update'])->whereNumber('id');
         Route::post('/bank-accounts/{id}/close', [\App\Http\Controllers\Freight\BankAccountController::class, 'close'])->whereNumber('id');
+        // The live statement through Setu — READ-ONLY (PRD §6.4, GAPS #442). Accounts connect and read.
+        Route::post('/bank-accounts/{id}/feed', [\App\Http\Controllers\Freight\BankFeedController::class, 'connect'])->whereNumber('id');
+        Route::post('/bank-accounts/{id}/feed/sync', [\App\Http\Controllers\Freight\BankFeedController::class, 'sync'])->whereNumber('id');
+        Route::delete('/bank-accounts/{id}/feed', [\App\Http\Controllers\Freight\BankFeedController::class, 'disconnect'])->whereNumber('id');
 
         // ── Money out: what we owe, and the run that pays it (user, 2026-09-21).
         Route::get('/payments', [\App\Http\Controllers\Freight\PaymentController::class, 'index']);

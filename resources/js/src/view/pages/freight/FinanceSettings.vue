@@ -97,6 +97,7 @@
               <th v-if="branches.length > 1" scope="col">Branch</th>
               <th class="fx-num" scope="col">Balance</th>
               <th scope="col">Waiting</th>
+              <th scope="col">Statement feed</th>
               <th v-if="canManage" scope="col"></th>
             </tr>
           </thead>
@@ -113,6 +114,29 @@
               <td v-if="branches.length > 1">{{ b.branch }}</td>
               <td class="fx-num"><Figure :value="b.balance" kind="currency" :currency-code="b.currency || 'INR'" /></td>
               <td>{{ b.unreconciled ? b.unreconciled + " to place" : "—" }}</td>
+              <!-- The statement read through Setu — READ-ONLY (GAPS #442). Accounts connect and read. -->
+              <td>
+                <template v-if="b.provider === 'setu' && b.feed_status">
+                  <StatusChip :value="b.feed_status" />
+                  <span v-if="b.feed_synced_at" class="fx-muted"> · read {{ String(b.feed_synced_at).slice(0, 10) }}</span>
+                  <a v-if="b.feed_status === 'pending' && b.feed_consent_url" :href="b.feed_consent_url" target="_blank" rel="noopener"> · approve it</a>
+                  <p v-if="b.feed_error" class="fx-error">{{ b.feed_error }}</p>
+                  <span v-if="canFeed" class="fx-row-actions">
+                    <button class="fx-btn" :disabled="busy" @click="syncFeed(b)">Fetch now</button>
+                    <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="disconnectFeed(b)">Disconnect</button>
+                  </span>
+                </template>
+                <template v-else-if="canFeed">
+                  <span v-if="feed.id === b.id" class="fx-row-actions">
+                    <input v-model.trim="feed.mobile" class="fx-input" inputmode="numeric" maxlength="10"
+                           placeholder="Mobile registered with the bank" aria-label="Mobile registered with the bank" />
+                    <button class="fx-btn fx-btn--primary" :disabled="busy || !/^[6-9]\d{9}$/.test(feed.mobile)" @click="connectFeed(b)">Ask to share</button>
+                    <button class="fx-btn fx-btn--ghost" @click="feed = { id: null, mobile: '' }">Cancel</button>
+                  </span>
+                  <button v-else class="fx-btn" @click="feed = { id: b.id, mobile: '' }">Connect with Setu</button>
+                </template>
+                <span v-else class="fx-muted">By file</span>
+              </td>
               <td v-if="canManage" class="fx-row-actions">
                 <button class="fx-btn" @click="editBank(b)">Edit</button>
                 <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="closeBank(b)">Close</button>
@@ -120,6 +144,12 @@
             </tr>
           </tbody>
         </table>
+
+        <p v-if="feedNotice" class="fx-notice" role="status">{{ feedNotice }}</p>
+        <p class="fx-muted">
+          A connected account's statement is read through Setu once a day, with the account holder's consent, and waits
+          on the reconciliation screen like a file would. It is read-only: nothing here can move money.
+        </p>
 
         <p v-if="legacyBalance" class="fx-muted">
           <!-- ⚠️ Everything posted before the master existed. History is not rewritten. -->
@@ -475,6 +505,7 @@ export default {
     tdsForm: { description: "", rate: 0, rate_no_pan: 20, threshold_single: null, threshold_annual: null, is_active: true },
     /** The bank accounts master (user, 2026-09-21). */
     banks: [], legacyBalance: 0,
+    feed: { id: null, mobile: "" }, feedNotice: null,
     bankForm: { id: null, agent_id: null, name: "", bank_name: "", account_no: "", ifsc_code: "", is_default: false },
     customers: [], partners: [],
     loading: true, busy: false, error: null, actionError: null,
@@ -490,6 +521,10 @@ export default {
     /* Accounts keeps the ledger; the Boss may set the rates their branches quote. */
     canEdit() {
       return this.designation === "accounts" || this.designation === "boss";
+    },
+    /* Connecting and reading a statement is the reconciler's: accounts alone (the server's `reconcile`). */
+    canFeed() {
+      return this.designation === "accounts";
     },
     /* Changing a bank account is `manageFinanceSettings` — the same two roles. */
     canManage() {
@@ -561,6 +596,45 @@ export default {
 
       call
         .then(() => { this.bankForm = this.blankBank(); return this.loadBanks(); })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    connectFeed(bank) {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/bank-accounts/${bank.id}/feed`, { mobile: this.feed.mobile })
+        .then(({ data }) => {
+          this.feed = { id: null, mobile: "" };
+          this.feedNotice = "Setu has asked the account holder to approve sharing " + bank.name
+            + ". They approve it on their phone, or on the page linked beside the account.";
+          if (data.approve_url) window.open(data.approve_url, "_blank", "noopener");
+          return this.loadBanks();
+        })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    syncFeed(bank) {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/bank-accounts/${bank.id}/feed/sync`, {})
+        .then(({ data }) => {
+          const r = data.result || {};
+          this.feedNotice = r.imported !== undefined
+            ? `${bank.name}: ${r.imported} new line(s) read, ${r.repeated} already here.`
+            : r.waiting ? `${bank.name}: the bank is preparing the statement — it comes in on the next read.`
+            : `${bank.name}: ${r.error || "the consent is " + r.status + "."}`;
+          return this.loadBanks();
+        })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
+    disconnectFeed(bank) {
+      this.busy = true;
+      ApiService.delete(`/bank-accounts/${bank.id}/feed`)
+        .then(() => {
+          this.feedNotice = `${bank.name} is no longer read. Ask the account holder to revoke the consent in their AA app too.`;
+          return this.loadBanks();
+        })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },

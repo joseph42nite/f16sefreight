@@ -1617,6 +1617,7 @@ confident wrong answer there costs more than the desk's minute.
 | Where does a consol master come from? | **Created in FocusSea** (the PRD footer's *Save & New*). `jobs.enquiry_id` becomes NULL-able **for consolidation masters only** — a CHECK keeps `enquiry_id IS NOT NULL OR is_consolidation = 1`, so every client shipment still traces to its enquiry and the funnel is untouched |
 | Who is the shipper on a master BL? | **The branch itself**, stored as `job_entities.party_type = 'branch'` → `agents_info.id`, allowed only for the shipper role on a master |
 | Do freight terms decide who is invoiced? | **No.** The invoice goes to the client who onboarded — the `customers` row and its GSTIN. PRD §5.8 tab 6's "prepaid → invoice the shipper; collect → invoice the consignee" is corrected; freight terms are a BL field only |
+| Who is billed for a shipment? *(owner, 2026-09-29)* | **Who sent us the enquiry** — the client matched from the sender's mail domain when the mail arrived (the sales person is assigned to that client at onboarding), carried onto the shipment as `jobs.customer_id`. **Never the shipper or consignee.** A shipment invoice bills that client; Accounts correct it with *Change client* on a draft, which moves the shipment's client too (GAPS #432) |
 | Parties pre-filled? | **Yes**, by the PRD's HBL/MBL mapping: a house's shipper from the job's client (export), a master's shipper from the branch |
 
 ### 12.1 The spine — a sea job reaches its BL, and the BL reaches the money 🟢 *built 2026-09-28 (GAPS #425)*

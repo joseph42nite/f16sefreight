@@ -286,6 +286,8 @@
           <dd><Figure :value="document.document_date" kind="date" /></dd>
           <dt>Due</dt>
           <dd><Figure v-if="document.due_date" :value="document.due_date" kind="date" /><span v-else class="fx-muted">—</span></dd>
+          <dt>Billed to</dt>
+          <dd>{{ document.organization ? document.organization.name : "—" }}</dd>
           <dt>Shipment</dt>
           <dd class="identifier">{{ document.job ? document.job.execution_job_no : (document.general ? "Not for a shipment" : "—") }}</dd>
           <dt>Total</dt>
@@ -387,6 +389,26 @@
               </label>
               <button class="fx-btn" :disabled="busy || !newLine.description || !newLine.rate" @click="addLine">Add</button>
             </div>
+
+            <!--
+              Accounts' correction when the client matched from the mail domain was the wrong one. On a shipment it
+              moves the shipment's client and its other drafts too — the bill and the shipment are one fact.
+            -->
+            <template v-if="can.change_client">
+              <h3 class="fx-section__title">Client</h3>
+              <div class="fx-toolbar">
+                <label class="fx-field">
+                  <span class="fx-field__label">Billed to</span>
+                  <select v-model="clientDraft" class="fx-input">
+                    <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>
+                  </select>
+                </label>
+                <button class="fx-btn" :disabled="busy || !clientDraft || clientDraft === document.customer_id" @click="changeClient">
+                  Change client
+                </button>
+              </div>
+              <p v-if="document.job" class="fx-muted">Changes the shipment's client too, and its other draft bills.</p>
+            </template>
 
             <h3 class="fx-section__title">Header</h3>
             <div class="fx-toolbar">
@@ -607,7 +629,15 @@
                 <option v-for="j in jobs" :key="j.id" :value="j.id">{{ j.execution_job_no }}</option>
               </select>
             </label>
-            <label v-if="raise.type === 'invoice'" class="fx-field">
+            <!--
+              We bill who sent the enquiry (owner, 2026-09-29): a shipment's client was matched from the sender's mail
+              domain, so it is shown, not chosen. A different client is set with Change client on the draft.
+            -->
+            <p v-if="raise.type === 'invoice' && jobClient" class="fx-muted">
+              Billed to <strong>{{ jobClient.name }}</strong> — the client who sent the enquiry.
+              To bill another client, use Change client on the draft.
+            </p>
+            <label v-else-if="raise.type === 'invoice'" class="fx-field">
               <span class="fx-field__label">Client</span>
               <select v-model="raise.customer_id" class="fx-input">
                 <option :value="null">Choose…</option>
@@ -865,6 +895,8 @@ export default {
   data: () => ({
     /** ④ The payment mail's reading this receipt was opened from (GAPS #416). */
     remittanceDecisionId: null,
+    /** The client picked in the drawer's Change client. */
+    clientDraft: null,
     view: "all", VIEWS, STATUSES, DOC_TABS,
     rows: [], totals: { count: 0, amount_inr: 0, outstanding_inr: 0, credited_inr: 0 },
     branches: [], types: {}, currencies: [], raisedBy: [],
@@ -929,13 +961,21 @@ export default {
     raiseTotal() {
       return this.raise ? this.raise.lines.reduce((sum, l) => sum + this.lineNet(l), 0) : 0;
     },
+    /** The chosen shipment's client, when it has one — the party it is billed to. */
+    jobClient() {
+      if (!this.raise || this.raise.general || !this.raise.job_id) return null;
+      const job = this.jobs.find((j) => j.id === this.raise.job_id);
+      if (!job || !job.customer_id) return null;
+      return this.clients.find((c) => c.id === job.customer_id) || job.customer || { name: "the shipment's client" };
+    },
     raiseValid() {
       if (!this.raise) return false;
       const linesOk = this.raise.lines.every((l) => l.description && Number(l.rate) > 0);
 
       if (this.isNote) return linesOk && !!this.raise.parent_invoice_id && !!(this.raise.reason || "").trim();
       if (this.raise.type === "invoice") {
-        return linesOk && !!this.raise.customer_id && (this.raise.general ? !!this.raise.agent_id : !!this.raise.job_id);
+        return linesOk && (!!this.raise.customer_id || !!this.jobClient)
+          && (this.raise.general ? !!this.raise.agent_id : !!this.raise.job_id);
       }
 
       return linesOk && !!this.raise.job_id && !!this.raise.partner_id;
@@ -1065,6 +1105,10 @@ export default {
       this.can = data.can || {};
       this.editingLine = null;
       this.newLine = this.blankLine();
+      this.clientDraft = this.document.customer_id;
+      if (this.can.change_client && !this.clients.length) {
+        ApiService.get("/customers").then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
+      }
       this.header = {
         document_date: (this.document.document_date || "").slice(0, 10),
         due_date: (this.document.due_date || "").slice(0, 10),
@@ -1072,6 +1116,10 @@ export default {
         exchange_rate: Number(this.document.exchange_rate),
         narration: this.document.narration || "",
       };
+    },
+    changeClient() {
+      // The register's Organization column moves with it.
+      this.commit(() => ApiService.put(`/billing/${this.document.id}/client`, { customer_id: this.clientDraft }), true);
     },
     saveHeader() {
       this.commit(() => ApiService.put(`/billing/${this.document.id}`, this.header));
@@ -1234,7 +1282,8 @@ export default {
     saveRaise() {
       this.busy = true;
       this.actionError = null;
-      ApiService.post("/billing/documents", this.raise)
+      // The server bills the shipment's own client; sending another one is refused, so none is sent.
+      ApiService.post("/billing/documents", this.jobClient ? { ...this.raise, customer_id: null } : this.raise)
         .then(({ data }) => {
           this.raise = null;
           this.load();

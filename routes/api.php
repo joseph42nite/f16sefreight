@@ -610,6 +610,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         // One document, opened: header, lines, notes against it, receipts, and the journal it would post.
         Route::get('/billing/{id}', [\App\Http\Controllers\Freight\BillingController::class, 'show'])->whereNumber('id');
         Route::put('/billing/{id}', [\App\Http\Controllers\Freight\BillingController::class, 'update'])->whereNumber('id');
+        // Accounts' correction of who a draft bills — moves the shipment's client with it (owner, 2026-09-29).
+        Route::put('/billing/{id}/client', [\App\Http\Controllers\Freight\BillingController::class, 'changeClient'])->whereNumber('id');
         Route::post('/billing/{id}/void', [\App\Http\Controllers\Freight\BillingController::class, 'void'])->whereNumber('id');
         Route::post('/billing/{id}/lines', [\App\Http\Controllers\Freight\BillingController::class, 'storeLine'])->whereNumber('id');
         Route::put('/billing/{id}/lines/{lineId}', [\App\Http\Controllers\Freight\BillingController::class, 'updateLine'])->whereNumber('id');

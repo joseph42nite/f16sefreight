@@ -256,7 +256,9 @@ class BillingController extends Controller
             'general' => 'nullable|boolean',
             'agent_id' => 'nullable|integer',
             'job_id' => 'nullable|integer|required_if:type,brokerage,consol_invoice',
-            'customer_id' => 'required_if:type,invoice|nullable|integer|exists:customers,id',
+            // A shipment invoice bills the shipment's own client, so this is needed only for a general invoice or a
+            // shipment that has no client yet (checked below).
+            'customer_id' => 'nullable|integer|exists:customers,id',
             'partner_id' => 'required_if:type,brokerage,consol_invoice|nullable|integer|exists:partners,id',
             'basis' => 'nullable|string|max:30',
             'reason' => 'required_if:type,debit_note,credit_note|nullable|string|max:255',
@@ -309,7 +311,40 @@ class BillingController extends Controller
 
         $jobId = $parent ? $parent->job_id : ($general ? null : (int) $data['job_id']);
 
-        $invoice = DB::transaction(function () use ($data, $parent, $agentId, $jobId) {
+        // 🔴 WE BILL WHO SENT THE ENQUIRY (owner, 2026-09-29): the shipment's client, matched from the sender's mail
+        // domain when the enquiry arrived — never the shipper or the consignee. Billing someone else is a correction
+        // made on the draft (changeClient), where it moves the shipment's client with it, not a choice typed in here.
+        $claimsJobClient = false;
+
+        if ($data['type'] === 'invoice') {
+            $jobClient = $jobId === null ? null : DB::table('jobs')->where('id', $jobId)->value('customer_id');
+
+            if ($jobClient !== null && ! empty($data['customer_id']) && (int) $data['customer_id'] !== (int) $jobClient) {
+                return response()->json([
+                    'error' => 'This shipment is billed to ' . DB::table('customers')->where('id', $jobClient)->value('name')
+                        . ', who sent the enquiry. To bill another client, raise it and use Change client on the draft.',
+                    'reason' => 'not_the_shipments_client',
+                ], 422);
+            }
+
+            $claimsJobClient = $jobId !== null && $jobClient === null;
+            $data['customer_id'] = $jobClient ?? ($data['customer_id'] ?? null);
+
+            if ($data['customer_id'] === null) {
+                return response()->json(['error' => 'Choose the client this is billed to.', 'reason' => 'client_required'], 422);
+            }
+
+            if (! $this->clientOfBranch((int) $data['customer_id'], $agentId)) {
+                return response()->json(['error' => 'That client is not one of yours.', 'reason' => 'client_not_found'], 404);
+            }
+        }
+
+        $invoice = DB::transaction(function () use ($data, $parent, $agentId, $jobId, $claimsJobClient) {
+            // A shipment with no client yet takes the one it is first billed to — the bill and the shipment are one fact.
+            if ($claimsJobClient) {
+                DB::table('jobs')->where('id', $jobId)->update(['customer_id' => $data['customer_id'], 'updated_at' => now()]);
+            }
+
             // Who the document is addressed to, by type: a note follows its parent, an invoice bills the client, and
             // brokerage and consol bill a partner with NO customer debtor at all (PRD §6.2).
             [$billedType, $billedId, $role, $customerId] = match (true) {
@@ -426,6 +461,8 @@ class BillingController extends Controller
             // What this document can do next, decided once on the server rather than re-derived by every button.
             'can' => [
                 'edit' => $invoice->status === 'draft',
+                // Who a draft invoice bills — Accounts' correction (owner, 2026-09-29); a note follows its invoice.
+                'change_client' => $invoice->status === 'draft' && $invoice->type === 'invoice' && $invoice->billed_party_type !== 'partner',
                 'finalize' => $invoice->status === 'draft',
                 'post' => $invoice->status !== 'draft' && ! $invoice->is_posted,
                 // 🔴 A POSTED DOCUMENT IS NEVER VOIDED. It is in the ledger and in the GST register; the correction
@@ -457,6 +494,71 @@ class BillingController extends Controller
             'currency' => 'nullable|string|size:3',
             'exchange_rate' => 'nullable|numeric|min:0.0001',
         ]));
+
+        return $this->show($id);
+    }
+
+    /**
+     * Change who a draft bill is addressed to — Accounts' correction when the client matched from the mail domain was
+     * the wrong one (owner, 2026-09-29).
+     *
+     * 🔴 ONE FACT, NOT TWO: on a shipment it moves the SHIPMENT's client, and every other draft on it, because we bill
+     * who sent the enquiry and the shipment's client is that. Refused once anything has been issued to the old client
+     * on that shipment — that is in the ledger and the GST register, and is corrected by a credit note first.
+     * Notes follow their invoice, and brokerage and consol bill a partner, so only an invoice is changed here.
+     */
+    public function changeClient(Request $request, int $id): JsonResponse
+    {
+        $this->authorize('finalizeInvoice');
+
+        $invoice = $this->draft($id);
+
+        if (! $invoice instanceof AccountsInvoice) {
+            return $invoice;
+        }
+
+        $data = $request->validate(['customer_id' => 'required|integer|exists:customers,id']);
+        $to = (int) $data['customer_id'];
+
+        if ($invoice->type !== 'invoice' || $invoice->billed_party_type === 'partner') {
+            return response()->json(['error' => 'Only an invoice to a client changes client; a note follows its invoice.',
+                'reason' => 'not_a_client_invoice'], 422);
+        }
+
+        if (! $this->clientOfBranch($to, $invoice->agent_id)) {
+            return response()->json(['error' => 'That client is not one of yours.', 'reason' => 'client_not_found'], 404);
+        }
+
+        $from = $invoice->customer_id;
+
+        // What is still issued to the old client on this shipment — invoices and debit notes less credit notes. Zero
+        // once a credit note has cleared it, which is the way out this refusal names.
+        $issued = $invoice->job_id === null ? 0.0 : (float) AccountsInvoice::withoutTenantScope()
+            ->where('job_id', $invoice->job_id)->where('customer_id', $from)->whereNotIn('status', ['draft', 'void'])
+            ->sum(DB::raw("CASE WHEN type = 'credit_note' THEN -grand_total ELSE grand_total END"));
+
+        if ($issued > 0.009) {
+            return response()->json([
+                'error' => 'This shipment has already been billed to ' . DB::table('customers')->where('id', $from)->value('name')
+                    . '. Credit that bill first; an issued bill is in the ledger and the GST register.',
+                'reason' => 'already_billed',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($invoice, $to) {
+            $drafts = AccountsInvoice::withoutTenantScope()->where('status', 'draft')->where('type', 'invoice')
+                ->where(fn ($q) => $invoice->job_id === null ? $q->where('id', $invoice->id) : $q->where('job_id', $invoice->job_id))
+                ->where(fn ($q) => $q->whereNull('billed_party_type')->orWhere('billed_party_type', 'customer'));
+
+            $drafts->update(['customer_id' => $to, 'billed_party_type' => 'customer', 'billed_party_id' => $to,
+                'billed_party_role' => 'client', 'updated_at' => now()]);
+
+            if ($invoice->job_id !== null) {
+                DB::table('jobs')->where('id', $invoice->job_id)->update(['customer_id' => $to, 'updated_at' => now()]);
+            }
+        });
+
+        $this->audit->record($invoice->agent_id, 'invoice.client_changed', 'invoice', $invoice->id, auth()->id());
 
         return $this->show($id);
     }
@@ -707,6 +809,13 @@ class BillingController extends Controller
         abort_if($invoice === null, 404, 'That document is not one of yours.');
 
         return $invoice;
+    }
+
+    /** A client of the company the branch belongs to — never another tenant's. */
+    private function clientOfBranch(int $customerId, int $agentId): bool
+    {
+        return DB::table('customers')->where('id', $customerId)
+            ->where('company_id', DB::table('agents_info')->where('id', $agentId)->value('company_id'))->exists();
     }
 
     private function jobBranch(int $jobId): ?int

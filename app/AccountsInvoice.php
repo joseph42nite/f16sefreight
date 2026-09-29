@@ -47,7 +47,10 @@ class AccountsInvoice extends Model
      */
     public static function placeholderNumber(?int $jobId): string
     {
-        return self::DRAFT_NUMBER_PREFIX . ($jobId ?? 'G' . bin2hex(random_bytes(4))) . '-' . now()->format('YmdHis');
+        // A random tail on every placeholder: two drafts on one shipment in the same second collided on the UNIQUE
+        // number and answered 500 (GAPS #432). Only the prefix is ever read.
+        // `invoice_no` is VARCHAR(30): the random tail replaces the timestamp rather than adding to it.
+        return self::DRAFT_NUMBER_PREFIX . ($jobId ?? 'G') . '-' . bin2hex(random_bytes(4));
     }
 
     /** Billing with no shipment behind it (user, 2026-09-26) — an invoice, or a note raised against one. */

@@ -90,6 +90,14 @@
           </label>
           <button class="fx-btn" :disabled="!linkId || busy" @click="link">Link HBL</button>
         </div>
+        <!-- Or a new house, born on this master — how a Core branch makes one (owner, 2026-09-29). -->
+        <div class="fx-toolbar">
+          <label class="fx-field">
+            <span class="fx-field__label">New house — HBL number (optional)</span>
+            <input v-model.trim="newHbl" class="fx-input" maxlength="20" />
+          </label>
+          <button class="fx-btn" :disabled="busy" @click="addHouse">New house</button>
+        </div>
         <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
       </section>
 
@@ -161,13 +169,14 @@ export default {
   components: { Figure },
   data: () => ({
     masters: [], candidates: [], consol: null,
-    masterId: "", linkId: "",
+    masterId: "", linkId: "", newHbl: "",
     loading: false, busy: false, error: null, actionError: null,
   }),
   computed: {
-    ...mapGetters(["designation"]),
+    ...mapGetters(["designation", "tier"]),
     canWrite() {
-      return this.designation === "operations";
+      // Core has one login type, so every Core user writes the bills; from Tactical, operations (owner, 2026-09-29).
+      return this.tier === "core" || this.designation === "operations";
     },
   },
   created() {
@@ -216,6 +225,14 @@ export default {
         .then(({ data }) => { this.consol = data; this.linkId = ""; this.load(); })
         /* §11.3 the server's reason verbatim — "already belongs to another consol"
            tells the operator where to go; "link failed" does not. */
+        .catch((e) => { this.actionError = this.readable(e); })
+        .finally(() => { this.busy = false; });
+    },
+    addHouse() {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.post(`/sea-shipments/${this.masterId}/houses`, { hbl_number: this.newHbl || null })
+        .then(() => { this.newHbl = ""; this.load(); })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
     },

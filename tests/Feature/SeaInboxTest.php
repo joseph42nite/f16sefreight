@@ -152,6 +152,44 @@ class SeaInboxTest extends TestCase
     }
 
     /**
+     * Sea's own moments (owner, 2026-09-29: "build all the draft automation mails … for both FocusSea and air"): the
+     * draft BL to approve, booked with the shipping line, delivered — told by bill of lading, never by air waybill.
+     */
+    public function test_a_sea_client_hears_every_moment_in_sea_words(): void
+    {
+        $this->desk(['sea']);
+        $thread = $this->receive();
+        $job = \App\Job::create(['agent_id' => $this->branch->id, 'enquiry_id' => $thread->enquiry_id, 'transport_mode' => 'sea',
+            'execution_job_no' => 'JOBS-SMC-26-0002']);
+        $updates = app(\App\Services\ClientNotificationService::class);
+
+        // Nothing true to say before the bill has a number or a vessel.
+        $this->assertNull($updates->draft($thread->fresh(), 'booked'));
+
+        DB::table('sea_shipment_details')->updateOrInsert(['job_id' => $job->id], ['hbl_number' => 'HBLSMC1', 'vessel_name' => 'MSC ANNA',
+            'voyage_no' => '412W', 'pol_code' => 'INNSA', 'pod_code' => 'DEHAM', 'created_at' => now(), 'updated_at' => now()]);
+
+        $draftBl = $updates->draft($thread->fresh(), 'draft_bl');
+        $this->assertSame('Draft bill of lading ready', $draftBl['title']);
+        $this->assertStringContainsString(\App\Services\ClientNotificationService::REVIEW_LINK, $draftBl['body']);
+
+        $booked = $updates->draft($thread->fresh(), 'booked');
+        $this->assertSame('Booked with the shipping line', $booked['title']);
+        $this->assertStringContainsString('MSC ANNA', $booked['body']);
+        $this->assertStringContainsString('HBLSMC1', $booked['body']);
+        $this->assertSame('BL-HBLSMC1.pdf', $booked['attachment']);
+
+        $this->assertStringContainsString('HBLSMC1', $updates->draft($thread->fresh(), 'delivered')['body']);
+        foreach (['draft_awb', 'departed', 'arrived'] as $airOnly) {
+            $this->assertNull($updates->draft($thread->fresh(), $airOnly), "{$airOnly} is told by air waybill");
+        }
+
+        // The job's status prepares it, as on air: PDF Generated → the draft BL.
+        $job->update(['status' => \App\Enums\JobStatus::PdfGenerated]);
+        $this->assertSame('draft_bl', $thread->fresh()->pending_client_notification['stage']);
+    }
+
+    /**
      * 🔴 A sea mailbox is read against SEA's rubric, not air's (owner, 2026-09-28: "not copying exactly from air —
      * those types of emails will be different"). Checked on the request Jev receives, and on the stamp.
      */

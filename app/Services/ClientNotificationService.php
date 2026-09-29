@@ -20,9 +20,18 @@ use Illuminate\Support\Facades\Storage;
  * prepares a draft from a fixed template; the draft waits as a card on the conversation (and in the owner's bell)
  * until someone sends, edits or skips it. Only `decide()` sends, and it needs the person who approved.
  *
- * Each moment is prepared ONCE per conversation (`email_threads.client_updates`). A newer moment replaces a draft
- * nobody acted on — a client does not need "draft AWB ready" once the shipment is booked. The job number is internal
- * and never goes into these mails; the AWB number is the client's reference.
+ * Each moment is prepared ONCE per conversation (`email_threads.client_updates`). The job number is internal and never
+ * goes into these mails; the AWB number (air) or the bill of lading number (sea) is the client's reference.
+ *
+ * ── 🔴 THE DRAFT PROTOCOL — air and sea alike (owner, 2026-09-29) ──────────
+ *   1. ONE draft waits per conversation (`pending_client_notification`).
+ *   2. A newer moment lands ON TOP of a draft nobody acted on: the old one is recorded as `superseded` (still shown
+ *      in the conversation as "not sent") and the new one is what the person acts on. Nobody has to clear a queue.
+ *   3. The bell FOLLOWS the draft: one card per conversation, for the draft now waiting — removed, read or not, when
+ *      it is sent, skipped or replaced. A card never points at a draft that is gone.
+ *   4. Acting on a replaced draft answers 409 with the draft now on top, so the screen shows it instead of a dead end.
+ *   5. A moment with nothing true to say (no AWB / no BL yet, or the other desk's moment) prepares nothing and rings
+ *      nothing — and leaves any waiting draft where it is.
  */
 class ClientNotificationService
 {
@@ -31,6 +40,8 @@ class ClientNotificationService
         'claimed'   => 'We have your enquiry',
         'confirmed' => 'Shipment confirmed',
         'draft_awb' => 'Draft AWB ready',
+        // Sea's draft to approve (owner, 2026-09-29) — the bill of lading, prepared by the same job status as air's.
+        'draft_bl'  => 'Draft bill of lading ready',
         'booked'    => 'Booked with the airline',
         'departed'  => 'Departed',
         'arrived'   => 'Arrived with all pieces',
@@ -48,6 +59,13 @@ class ClientNotificationService
 
     public const BELL_TYPE = 'ClientUpdateReady';
 
+    /** What a sea client is told a moment is, where air's words would be wrong. */
+    private const SEA_TITLES = ['booked' => 'Booked with the shipping line'];
+
+    /** Moments only one desk has: a sea client never hears of an air waybill, nor an air client of a bill of lading. */
+    private const AIR_ONLY = ['draft_awb', 'departed', 'arrived'];
+    private const SEA_ONLY = ['draft_bl'];
+
     /** The draft for one moment, from its template. NULL when there is no client address to write to. */
     public function draft(EmailThread $thread, string $stage): ?array
     {
@@ -61,19 +79,17 @@ class ClientNotificationService
         $subject = (string) EmailMessage::where('thread_key', $thread->thread_key)->orderBy('received_at')->value('subject');
         $f = $this->facts($thread);
 
-        // Booked, departed, arrived and delivered are told by AWB number; without one there is nothing true to say.
-        if ($f['awb'] === '' && in_array($stage, ['booked', 'departed', 'arrived', 'delivered'], true)) {
+        // 🔴 Each desk tells its own moments (GAPS #427): the other desk's is not prepared at all.
+        if (in_array($stage, $f['sea'] ? self::AIR_ONLY : self::SEA_ONLY, true)) {
             return null;
         }
 
-        // 🔴 A SEA shipment is never told about an air waybill (GAPS #427). The moments after confirmation follow the
-        // job's status, and sea's own statuses are not decided yet — so a sea client hears "we have your enquiry"
-        // and "confirmed", in sea's words, and nothing an air template would say.
-        if ($f['sea'] && ! in_array($stage, ['claimed', 'confirmed'], true)) {
+        // Booked and after are told by the bill's own number — the AWB, or the BL; without one there is nothing true to say.
+        if (($f['sea'] ? $f['bl'] : $f['awb']) === '' && in_array($stage, ['booked', 'departed', 'arrived', 'delivered'], true)) {
             return null;
         }
 
-        $body = match ($stage) {
+        $body = $f['sea'] ? $this->seaBody($stage, $f) : match ($stage) {
             'claimed'   => "Thank you for your enquiry. We have received it and {$f['owner']} is looking after it. We will come back to you with our rates shortly.",
             'confirmed' => $f['sea']
                 ? "Thank you for confirming. Your shipment{$f['lane']}{$f['cargo']} is booked in with us and we have started the paperwork.{$f['operator']}\n\n"
@@ -81,7 +97,8 @@ class ClientNotificationService
                 : "Thank you for confirming. Your shipment{$f['lane']}{$f['cargo']} is booked in with us and we have started the paperwork.{$f['operator']}\n\n"
                     . "Your shipment is booked on [date] with [airline].\n\nWe will send you the draft air waybill to check next.",
             'draft_awb' => "The draft air waybill for your shipment{$f['lane']} is ready. Please check it and approve it, or tell us what to change, here:\n" . self::REVIEW_LINK . "\n\nThe link stays open for 14 days.",
-            'booked'    => "Your shipment{$f['lane']} is booked with the airline under AWB {$f['awb']}{$f['flight']}." . ($f['pdf'] ? ' The air waybill is attached.' : ''),
+            'booked'    => "Your shipment{$f['lane']} is booked with the airline under AWB {$f['awb']}{$f['flight']}."
+                . ($f['pdf'] ? ($f['houses'] ? ' The air waybill and the house air waybill' . (count($f['houses']) > 1 ? 's are' : ' is') . ' attached.' : ' The air waybill is attached.') : ''),
             'departed'  => "Your shipment under AWB {$f['awb']} has departed{$f['from']}{$f['flight']}. We will let you know when it is delivered.",
             'arrived'   => "Your shipment under AWB {$f['awb']} has reached the hub{$f['to']} and all {$f['pieces']}pieces have been received. We will let you know when it is delivered.",
             'delivered' => "Your shipment under AWB {$f['awb']} has been delivered{$f['to']}. Thank you for shipping with us.",
@@ -89,13 +106,32 @@ class ClientNotificationService
 
         return [
             'stage' => $stage,
-            'title' => self::STAGES[$stage],
+            'title' => $f['sea'] ? (self::SEA_TITLES[$stage] ?? self::STAGES[$stage]) : self::STAGES[$stage],
             'to' => [$client],
             'cc' => [],
             'subject' => preg_match('/^re:/i', $subject) ? $subject : 'Re: ' . $subject,
             'body' => "Hello,\n\n{$body}\n\nKind regards,",
-            'attachment' => $stage === 'booked' && $f['pdf'] ? 'AWB-' . $f['awb'] . '.pdf' : null,
+            'attachment' => $stage !== 'booked' ? null : ($f['sea'] ? $this->blFileName($f['bl'])
+                : ($f['pdf'] ? implode(', ', array_merge(['AWB-' . $f['awb'] . '.pdf'], array_column($f['houses'], 'file'))) : null)),
         ];
+    }
+
+    /** Sea's words for each moment. `confirmed` keeps its own two-desk wording above. */
+    private function seaBody(string $stage, array $f): string
+    {
+        return match ($stage) {
+            'claimed'   => "Thank you for your enquiry. We have received it and {$f['owner']} is looking after it. We will come back to you with our rates shortly.",
+            'confirmed' => "Thank you for confirming. Your shipment{$f['lane']}{$f['cargo']} is booked in with us and we have started the paperwork.{$f['operator']}\n\n"
+                . "Your shipment is booked on [date] with [shipping line].\n\nWe will send you the draft bill of lading to check next.",
+            'draft_bl'  => "The draft bill of lading for your shipment{$f['lane']} is ready. Please check it and approve it, or tell us what to change, here:\n" . self::REVIEW_LINK . "\n\nThe link stays open for 14 days.",
+            'booked'    => "Your shipment{$f['lane']} is booked with {$f['carrier']}{$f['vessel']} under bill of lading {$f['bl']}{$f['etd']}. The bill of lading is attached.",
+            'delivered' => "Your shipment under bill of lading {$f['bl']} has been delivered{$f['to']}. Thank you for shipping with us.",
+        };
+    }
+
+    private function blFileName(string $bl): string
+    {
+        return 'BL-' . preg_replace('/[^A-Za-z0-9\-]/', '', $bl) . '.pdf';
     }
 
     /** Park the draft for a moment on the job's conversation and tell its owner. */
@@ -159,7 +195,9 @@ class ClientNotificationService
         $waiting = ($pending['stage'] ?? null) === $stage || ($stage === 'claimed' && ! $this->handled($thread, 'claimed'));
 
         if (! $by->exists || ! $waiting) {
-            return ['ok' => false, 'error' => 'This update has already been dealt with.', 'reason' => 'not_waiting', 'status' => 409];
+            // Protocol rule 4: the draft now on top comes back, so the screen shows it instead of a dead end.
+            return ['ok' => false, 'error' => $pending ? 'A newer update has replaced this one — it is shown now.' : 'This update has already been dealt with.',
+                'reason' => 'not_waiting', 'status' => 409, 'client_update' => $pending];
         }
 
         if ($decision === 'send') {
@@ -239,10 +277,11 @@ class ClientNotificationService
                     'reason' => 'blank_left', 'status' => 422];
         }
 
-        if ($stage === 'draft_awb' && str_contains($body, self::REVIEW_LINK)) {
-            $document = $this->awbDocument($thread, $by->id);
+        if (in_array($stage, ['draft_awb', 'draft_bl'], true) && str_contains($body, self::REVIEW_LINK)) {
+            $document = $stage === 'draft_bl' ? $this->blDocument($thread, $by->id) : $this->awbDocument($thread, $by->id);
             if ($document === null) {
-                return ['ok' => false, 'error' => 'There is no air waybill on this shipment to link to yet.', 'reason' => 'no_awb', 'status' => 422];
+                return ['ok' => false, 'error' => $stage === 'draft_bl' ? 'There is no bill of lading on this shipment to link to yet.'
+                    : 'There is no air waybill on this shipment to link to yet.', 'reason' => $stage === 'draft_bl' ? 'no_bl' : 'no_awb', 'status' => 422];
             }
 
             [, $raw] = DocumentShareLink::issue([
@@ -252,8 +291,21 @@ class ClientNotificationService
             $body = str_replace(self::REVIEW_LINK, url('/api/d/' . $raw), $body);
         }
 
-        if ($stage === 'booked' && ($document = $this->awbDocument($thread, $by->id)) && Storage::exists($document->file_path)) {
-            $attachments[] = ['name' => $document->file_name, 'mime_type' => 'application/pdf', 'bytes' => Storage::get($document->file_path)];
+        if ($stage === 'booked' && ($job = $this->jobFor($thread)) && $job->transport_mode === 'sea') {
+            // The bill as it stands when the mail goes — made fresh, never a stale copy.
+            $f = $this->facts($thread);
+            $attachments[] = ['name' => $this->blFileName($f['bl']), 'mime_type' => 'application/pdf', 'bytes' => app(BlPdf::class)->render($job)];
+        } elseif ($stage === 'booked') {
+            if (($document = $this->awbDocument($thread, $by->id)) && Storage::exists($document->file_path)) {
+                $attachments[] = ['name' => $document->file_name, 'mime_type' => 'application/pdf', 'bytes' => Storage::get($document->file_path)];
+            }
+            // Each house waybill beside the master (GAPS #303). A house that cannot be drawn is left out, not faked.
+            foreach ($this->facts($thread)['houses'] as $house) {
+                $bytes = rescue(fn () => app(\App\Http\Controllers\Generators\GenerateHawbPdfController::class)->pdfBytes($house['id']), null);
+                if (filled($bytes)) {
+                    $attachments[] = ['name' => $house['file'], 'mime_type' => 'application/pdf', 'bytes' => $bytes];
+                }
+            }
         }
 
         return app(ThreadMailer::class)->send($thread, $by, (array) ($draft['to'] ?? []), (array) ($draft['cc'] ?? []),
@@ -278,6 +330,24 @@ class ClientNotificationService
         return $document;
     }
 
+    /** The job's bill of lading as a filed document, drawn fresh from the record — the review link points at it. */
+    private function blDocument(EmailThread $thread, int $userId): ?JobDocument
+    {
+        $job = $this->jobFor($thread);
+
+        if ($job === null || $job->transport_mode !== 'sea') {
+            return null;
+        }
+
+        $path = "documents/bl/{$job->id}.pdf";
+        Storage::put($path, app(BlPdf::class)->render($job));
+
+        return JobDocument::withoutGlobalScopes()->updateOrCreate(['job_id' => $job->id, 'document_type' => 'bl'], [
+            'agent_id' => $job->agent_id, 'file_name' => $this->blFileName($this->facts($thread)['bl'] ?: 'draft'),
+            'file_path' => $path, 'mime_type' => 'application/pdf', 'file_size' => Storage::size($path), 'uploaded_by' => $userId,
+        ]);
+    }
+
     private function jobFor(EmailThread $thread): ?Job
     {
         return Job::withoutGlobalScopes()
@@ -295,14 +365,26 @@ class ClientNotificationService
             ->first(['departure_airport', 'destination_airport', 'flight', 'date']) : null;
         $date = filled($waybill->date ?? null) ? rescue(fn () => \Illuminate\Support\Carbon::parse($waybill->date)->format('j M Y'), $waybill->date, false) : null;
 
-        $origin = $waybill->departure_airport ?? $enquiry?->origin_code;
-        $destination = $waybill->destination_airport ?? $enquiry?->dest_code;
+        $sea = ($job?->transport_mode ?? $enquiry?->transport_mode) === 'sea';
+        $bill = $sea && $job ? DB::table('sea_shipment_details')->where('job_id', $job->id)->first() : null;
+        $etd = filled($bill->etd ?? null) ? rescue(fn () => \Illuminate\Support\Carbon::parse($bill->etd)->format('j M Y'), null, false) : null;
+
+        $origin = $bill->pol_code ?? $waybill->departure_airport ?? $enquiry?->origin_code;
+        $destination = $bill->pod_code ?? $waybill->destination_airport ?? $enquiry?->dest_code;
         $pieces = $enquiry?->extracted_pieces;
         $weight = $enquiry?->extracted_weight;
         $owner = $thread->assigned_ops_id ? User::whereKey($thread->assigned_ops_id)->value('name') : null;
 
         return [
-            'sea' => ($job?->transport_mode ?? $enquiry?->transport_mode) === 'sea',
+            'sea' => $sea,
+            // Sea: the client's reference is the house bill, or the master's on a direct shipment.
+            'bl' => (string) ($bill->hbl_number ?? null ?: ($bill->mbl_number ?? '')),
+            'carrier' => ($bill->carrier_id ?? null) ? (DB::table('partners')->where('id', $bill->carrier_id)->value('name') ?: 'the shipping line') : 'the shipping line',
+            'vessel' => filled($bill->vessel_name ?? null) ? ' on ' . $bill->vessel_name . (filled($bill->voyage_no ?? null) ? ' voyage ' . $bill->voyage_no : '') : '',
+            'etd' => $etd ? ", sailing {$etd}" : '',
+            // Air: the house waybills on this job, attached to "Booked" beside the master.
+            'houses' => $job && ! $sea ? DB::table('house_way_bills')->where('job_id', $job->id)->get(['id', 'awb_no'])
+                ->map(fn ($h) => ['id' => $h->id, 'file' => 'HAWB-' . preg_replace('/[^A-Za-z0-9\-]/', '', (string) $h->awb_no) . '.pdf'])->all() : [],
             'owner' => $owner ?: 'our team',
             'lane' => $origin && $destination ? " from {$origin} to {$destination}" : '',
             'cargo' => $pieces && $weight ? ' (' . $pieces . ' pcs, ' . rtrim(rtrim(number_format((float) $weight, 2, '.', ''), '0'), '.') . ' kg)' : '',
@@ -320,10 +402,13 @@ class ClientNotificationService
         ];
     }
 
-    /** The owner's bell card goes once nothing is waiting — a bell is a list of things still to do. */
+    /**
+     * The conversation's bell card goes — READ OR NOT (protocol rule 3). Deleting only unread cards left an opened card
+     * pointing at a draft that had been replaced or sent: a notification with nothing behind it.
+     */
     private function dissolveBell(EmailThread $thread): void
     {
-        DB::table('notifications')->where('type', self::BELL_TYPE)->whereNull('read_at')
+        DB::table('notifications')->where('type', self::BELL_TYPE)
             ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.thread_id')) = ?", [(string) $thread->id])
             ->delete();
     }

@@ -210,6 +210,59 @@ class ClientUpdatesTest extends TestCase
         $this->assertNull($this->pending($thread), 'booked was already dealt with');
     }
 
+    /**
+     * The draft protocol (owner, 2026-09-29): a new draft lands on top of one nobody acted on, and the bell follows the
+     * draft — ONE card per conversation, for the draft now waiting. A card the owner had already opened went on
+     * pointing at a draft that no longer existed ("only a notification comes").
+     */
+    public function test_a_new_draft_lands_on_top_and_the_bell_follows_it(): void
+    {
+        $thread = $this->thread(['assigned_ops_id' => $this->pricing->id]);
+        $job = $this->jobFor($thread, ['awb_number' => '176-10000008']);
+        $bells = fn () => DB::table('notifications')->where('type', ClientNotificationService::BELL_TYPE)
+            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.thread_id')) = ?", [(string) $thread->id]);
+
+        $this->assertSame('confirmed', $this->pending($thread)['stage']);
+        $bells()->update(['read_at' => now()]);   // the owner opened the bell, and did nothing with the draft
+
+        $job->update(['status' => JobStatus::PdfGenerated]);
+
+        $this->assertSame('draft_awb', $this->pending($thread)['stage']);
+        $this->assertSame('superseded', $thread->fresh()->client_updates['confirmed']['decision']);
+        $this->assertSame(1, $bells()->count(), 'one card, for the draft now waiting');
+        $this->assertSame('draft_awb', json_decode($bells()->value('data'), true)['stage']);
+
+        // Acting on the card that was replaced shows the one on top instead of a dead end.
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$thread->id}/client-update"), ['stage' => 'confirmed', 'decision' => 'skip'])
+            ->assertStatus(409)->assertJsonPath('client_update.stage', 'draft_awb');
+
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$thread->id}/client-update"), ['stage' => 'draft_awb', 'decision' => 'skip'])
+            ->assertOk();
+        $this->assertSame(0, $bells()->count(), 'nothing waiting, nothing in the bell');
+    }
+
+    /** "Booked" carries the house waybills with the master (GAPS #303: "Booked attaches the master AWB only"). */
+    public function test_booked_attaches_the_house_waybills_too(): void
+    {
+        Storage::fake();
+        Storage::put('documents/awb/1.pdf', '%PDF-1.4 awb');
+        $thread = $this->thread(['assigned_ops_id' => $this->pricing->id]);
+        $job = $this->jobFor($thread, ['awb_number' => '176-10000008']);
+        \App\JobDocument::create(['agent_id' => $this->branch->id, 'job_id' => $job->id, 'document_type' => 'awb',
+            'file_name' => 'AWB-176-10000008.pdf', 'file_path' => 'documents/awb/1.pdf', 'mime_type' => 'application/pdf', 'file_size' => 12]);
+        DB::table('house_way_bills')->insert(['id' => 990001, 'job_id' => $job->id, 'agent_id' => $this->branch->id, 'awb_code' => 176, 'awb_no' => '4471',
+            'created_at' => now(), 'updated_at' => now()]);
+        $job->update(['status' => JobStatus::SentToAirline]);
+
+        $this->assertStringContainsString('house air waybill', $this->pending($thread)['body']);
+
+        $this->api($this->pricing)->postJson($this->url("/api/inbox/threads/{$thread->id}/client-update"), ['stage' => 'booked', 'decision' => 'send'])
+            ->assertOk();
+
+        $this->assertStringContainsString('AWB-176-10000008.pdf', $this->mailed());
+        $this->assertStringContainsString('HAWB-4471.pdf', $this->mailed());
+    }
+
     /** 🔴 The secure review link is made only when the draft AWB mail is sent, and asks the client to approve. */
     public function test_the_review_link_is_made_when_the_draft_awb_mail_is_sent(): void
     {

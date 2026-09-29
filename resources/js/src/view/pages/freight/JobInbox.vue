@@ -1085,6 +1085,10 @@ export default {
     "$route.query.thread"(id) {
       if (id) this.open({ id });
     },
+    /* A bell card for the conversation already open reloads it, so the draft on top is the one shown. */
+    "$route.query.n"() {
+      if (this.$route.query.thread) this.open({ id: this.$route.query.thread });
+    },
   },
   mounted() {
     document.addEventListener("mousedown", this.closeThreadFiles);
@@ -1726,7 +1730,16 @@ export default {
         stage: this.active.client_update.stage, decision, ...(values || {}),
       })
         .then(({ data }) => { this.active = Object.assign({}, this.active, data); })
-        .catch((e) => { this.updateError = this.messageFor(e); })
+        .catch((e) => {
+          const d = (e.response && e.response.data) || {};
+          /* The draft protocol: a newer update replaced this one — show it on top, with the reason. */
+          if (e.response && e.response.status === 409 && "client_update" in d) {
+            this.active = Object.assign({}, this.active, { client_update: d.client_update });
+            this.actionNotice = d.error;
+            return;
+          }
+          this.updateError = this.messageFor(e);
+        })
         .finally(() => { this.updateBusy = false; });
     },
     classify() {

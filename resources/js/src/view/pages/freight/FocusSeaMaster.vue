@@ -437,14 +437,15 @@ export default {
     TABS, PORTS, KINDS,
   }),
   computed: {
-    ...mapGetters(["designation", "tierAtLeast"]),
+    ...mapGetters(["designation", "tier", "tierAtLeast"]),
     /* The server's viewCostSheet gate, mirrored so the tab says whose it is instead of failing. */
     canSeeCosts() {
       return ["pricing", "accounts", "boss"].includes(this.designation) && this.tierAtLeast("command");
     },
     /* Operations writes the bill; pricing and the Boss read it. The server re-checks. */
     canWrite() {
-      return this.designation === "operations";
+      // Core has one login type, so every Core user writes the bills; from Tactical, operations (owner, 2026-09-29).
+      return this.tier === "core" || this.designation === "operations";
     },
     shown() {
       return this.kind === "all" ? this.rows : this.rows.filter((r) => r.document === this.kind);

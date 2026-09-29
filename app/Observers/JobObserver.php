@@ -57,6 +57,10 @@ class JobObserver
 
         // The client hears where their shipment is — a draft each, approved by a person before it goes.
         $stage = $job->wasChanged('status') ? self::CLIENT_UPDATES[$job->status?->value] ?? null : null;
+        // A sea job's draft to approve is its bill of lading (owner, 2026-09-29); the other moments share their names.
+        if ($stage === 'draft_awb' && $job->transport_mode === 'sea') {
+            $stage = 'draft_bl';
+        }
         if ($stage !== null) {
             app(ClientNotificationService::class)->prepareForJob($job, $stage);
         }

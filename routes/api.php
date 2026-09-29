@@ -460,6 +460,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // A consol master is created here — no client enquiry stands behind it (owner, 2026-09-28).
     Route::get('/sea-shipments', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'index']);
     Route::post('/sea-shipments', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'store']);
+    // A house born inside a master — how Core makes one, with no enquiry to confirm (owner, 2026-09-29).
+    Route::post('/sea-shipments/{master}/houses', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'addHouse']);
     Route::get('/jobs/{job}/sea-shipment', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'show']);
     Route::post('/jobs/{job}/sea-shipment', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'save']);
     // The printed BL, House or Master (guide Step 12.3). PROPOSED layout — GAPS #433.

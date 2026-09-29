@@ -431,7 +431,9 @@ class EmailInboxController extends Controller
         $result = $this->clientUpdates->decide($thread, auth()->user(), (string) $request->input('stage'), ...$this->clientUpdateInput($request));
 
         if (! $result['ok']) {
-            return response()->json(['error' => $result['error'], 'reason' => $result['reason']], $result['status']);
+            // A replaced draft answers with the one now on top (the draft protocol — ClientNotificationService).
+            return response()->json(['error' => $result['error'], 'reason' => $result['reason']]
+                + (array_key_exists('client_update', $result) ? ['client_update' => $result['client_update']] : []), $result['status']);
         }
 
         return response()->json($this->shape($thread->fresh(['assignedOps', 'enquiry'])));

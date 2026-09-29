@@ -154,7 +154,8 @@ export default {
     goTo(n) {
       if ((n.type === "ThreadAssigned" || n.type === "ClientUpdateReady") && n.data.thread_id) {
         this.open = false;
-        this.$router.push({ path: "/inbox", query: { thread: n.data.thread_id } }).catch(() => {});
+        // `n` makes a card for the conversation already open reload it, not a no-op on the same URL.
+        this.$router.push({ path: "/inbox", query: { thread: n.data.thread_id, n: n.id } }).catch(() => {});
       }
     },
     markRead(n) {

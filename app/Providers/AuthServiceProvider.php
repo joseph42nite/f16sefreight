@@ -103,6 +103,13 @@ class AuthServiceProvider extends ServiceProvider
         $this->define('fileManifest', ['operations'],                      'tactical');
         $this->define('viewManifest', ['operations', 'pricing', 'boss'],   'tactical');
 
+        // ── The bills themselves — BL, consol, parties, E-Docket, search (owner, 2026-09-29) ─────
+        // "FocusSea is the same as FocusAir: Core only gets the documentation, the consol part and search." Core has
+        // one login type, so on Core EVERY user works the bills; from Tactical the roles apply as for the manifest.
+        // Filing with customs and import stay on viewManifest/fileManifest — Tactical.
+        $this->define('editDocuments', ['operations'],                    'core', coreForEveryone: true);
+        $this->define('viewDocuments', ['operations', 'pricing', 'boss'], 'core', coreForEveryone: true);
+
         // ── Analytics — explicitly 403 for operations and pricing ────────────
         $this->define('viewAnalytics', ['sales', 'boss', 'accounts'], 'tactical');
         $this->define('viewSales',     ['sales', 'boss'],             'tactical');
@@ -124,14 +131,19 @@ class AuthServiceProvider extends ServiceProvider
      * @param  string[]  $designations
      * @param  string    $minTier  checked BEFORE the designation — see the docblock
      */
-    private function define(string $ability, array $designations, string $minTier): void
+    private function define(string $ability, array $designations, string $minTier, bool $coreForEveryone = false): void
     {
-        Gate::define($ability, function (User $user) use ($designations, $minTier) {
+        Gate::define($ability, function (User $user) use ($designations, $minTier, $coreForEveryone) {
             $context = UserContext::for($user);
 
             // 1. TIER FIRST. On core, designation is inert and nothing role-scoped opens.
             if (! $context->tierAtLeast($minTier)) {
                 return false;
+            }
+
+            // A Core surface: one login type, so the designation is not read at all.
+            if ($coreForEveryone && $context->tier === 'core') {
+                return true;
             }
 
             // 2. THEN ROLE.

@@ -35,7 +35,7 @@ class JobDocumentController extends Controller
 
     public function index(Job $job): JsonResponse
     {
-        $this->authorize('viewManifest');
+        $this->authorize('viewDocuments');
 
         return response()->json([
             'documents' => JobDocument::where('job_id', $job->id)->latest()
@@ -47,7 +47,7 @@ class JobDocumentController extends Controller
 
     public function store(Request $request, Job $job): JsonResponse
     {
-        $this->authorize('fileManifest');
+        $this->authorize('editDocuments');
 
         $data = $request->validate([
             'document_type' => 'required|string|in:' . implode(',', self::TYPES),
@@ -85,7 +85,7 @@ class JobDocumentController extends Controller
 
     public function download(Job $job, int $document): StreamedResponse|JsonResponse
     {
-        $this->authorize('viewManifest');
+        $this->authorize('viewDocuments');
 
         $row = JobDocument::where('job_id', $job->id)->find($document);
 

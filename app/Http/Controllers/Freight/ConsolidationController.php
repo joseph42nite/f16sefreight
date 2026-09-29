@@ -27,7 +27,7 @@ class ConsolidationController extends Controller
     /** The consol: its houses, its containers, and what is stuffed where. */
     public function show(Job $master): JsonResponse
     {
-        $this->authorize('viewManifest');
+        $this->authorize('viewDocuments');
 
         $houses = Job::withoutTenantScope()
             ->where('parent_job_id', $master->id)
@@ -76,7 +76,7 @@ class ConsolidationController extends Controller
      */
     public function unassociated(Request $request): JsonResponse
     {
-        $this->authorize('viewManifest');
+        $this->authorize('viewDocuments');
 
         $rows = Job::forActivePortal()
             ->whereNull('parent_job_id')
@@ -93,7 +93,7 @@ class ConsolidationController extends Controller
 
     public function link(Request $request, Job $master): JsonResponse
     {
-        $this->authorize('fileManifest');
+        $this->authorize('editDocuments');
 
         $data = $request->validate(['house_id' => 'required|integer']);
 
@@ -126,7 +126,7 @@ class ConsolidationController extends Controller
 
     public function unlink(Job $master, Job $house): JsonResponse
     {
-        $this->authorize('fileManifest');
+        $this->authorize('editDocuments');
 
         if ((int) $house->parent_job_id !== (int) $master->id) {
             return response()->json(['error' => 'That house is not on this consol.', 'reason' => 'not_linked'], 422);
@@ -159,7 +159,7 @@ class ConsolidationController extends Controller
      */
     public function stuff(Request $request, Job $master): JsonResponse
     {
-        $this->authorize('fileManifest');
+        $this->authorize('editDocuments');
 
         $data = $request->validate([
             'container_id' => 'required|integer',

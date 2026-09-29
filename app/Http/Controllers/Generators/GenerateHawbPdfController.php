@@ -145,6 +145,19 @@ class GenerateHawbPdfController extends Controller
     }
 
     public function downloadHawbPdf($hawb_id) {
+        $pdf = $this->hawbPdf($hawb_id);
+
+        return $pdf?->stream();
+    }
+
+    /** The house waybill as a file — what the "Booked" client mail attaches beside the master (GAPS #303). */
+    public function pdfBytes($hawb_id): ?string
+    {
+        return $this->hawbPdf($hawb_id)?->output();
+    }
+
+    private function hawbPdf($hawb_id): ?\Barryvdh\DomPDF\PDF
+    {
         $houseWayBill = HouseWayBills::leftJoin('payment_info', 'house_way_bills.id', '=', 'payment_info.awb_id')
             ->leftJoin('way_bill_addresses', 'house_way_bills.id', '=', 'way_bill_addresses.awb_id')
             ->leftJoin('way_bill_consignment_data', 'house_way_bills.id', '=', 'way_bill_consignment_data.awb_id')
@@ -160,9 +173,10 @@ class GenerateHawbPdfController extends Controller
             $this->attachHawbRelatedData($houseWayBill, $hawb_id);
             // Create a variable with true value to show or hide back page.
             $showBothPage = true;
-            $pdf = Pdf::loadView('documents.generate-hawb-pdf', compact('houseWayBill', 'showBothPage'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
-            return $pdf->stream();
+            return Pdf::loadView('documents.generate-hawb-pdf', compact('houseWayBill', 'showBothPage'))->setPaper('a4', 'portrait')->set_option('isHtml5ParserEnabled', true);
         }
+
+        return null;
     }
 
     public function downloadMultipleHawbPdf($hawb_id) {

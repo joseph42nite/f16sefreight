@@ -46,7 +46,7 @@ class JobEntityController extends Controller
 
     public function index(Job $job): JsonResponse
     {
-        $this->authorize('viewManifest');
+        $this->authorize('viewDocuments');
 
         return response()->json([
             'document'   => self::documentKind($job),
@@ -63,7 +63,7 @@ class JobEntityController extends Controller
 
     public function store(Request $request, Job $job): JsonResponse
     {
-        $this->authorize('fileManifest');
+        $this->authorize('editDocuments');
 
         $data = $request->validate([
             'role'              => 'required|string|in:' . implode(',', self::ROLES),
@@ -144,7 +144,7 @@ class JobEntityController extends Controller
 
     public function destroy(Job $job, int $entityId): JsonResponse
     {
-        $this->authorize('fileManifest');
+        $this->authorize('editDocuments');
 
         // Soft — job_entities carries deleted_at, and the generated unique gate frees
         // up with it so the role can be filled again.

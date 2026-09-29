@@ -112,9 +112,10 @@ export default {
     loading: true, busy: false, error: null, actionError: null,
   }),
   computed: {
-    ...mapGetters(["designation"]),
+    ...mapGetters(["designation", "tier"]),
     canWrite() {
-      return this.designation === "operations";
+      // Core has one login type, so every Core user writes the bills; from Tactical, operations (owner, 2026-09-29).
+      return this.tier === "core" || this.designation === "operations";
     },
     /* The mapped roles fix the party type; the rest let the operator choose. */
     partyType() {

@@ -381,6 +381,9 @@ Carried on `companies.tier`.
 |---|:---:|:---:|:---:|
 | **Multi-role logins / role separation** | ❌ **1 login only** | ✅ 4 roles | ✅ 5 roles |
 | Coordinate-based PDF extraction (`pdfplumber` templates) | ✅ | ✅ | ✅ |
+| **Documentation, consolidation and search — FocusAir (AWB/HAWB) and FocusSea (BL, consol, parties, E-Docket)** *(owner, 2026-09-29: "FocusSea is the same as FocusAir")* | ✅ every user | ✅ operations writes; pricing & Boss read | ✅ as Tactical |
+| Import (arrival notice, DO) and manifest filing (ICEGATE) | ❌ | ✅ | ✅ |
+| Job cost sheet | ❌ | ❌ | ✅ |
 | AI unstructured parsing (PyMuPDF + Gemma) & vision OCR (Gemini) | ❌ | ✅ | ✅ |
 | Unified Gmail/Outlook inbox sync & triage | ❌ | ✅ | ✅ |
 | Operational workflows (enquiries, jobs, Kanban, assignment, OLI) | ❌ | ✅ | ✅ |
@@ -1260,6 +1263,10 @@ The moments (user, 2026-09-16 — replaces the earlier Intake / AI Extraction / 
 | Departed | The airline's Cargo Status `DEP` | AWB number, from, flight | — |
 | Arrived with all pieces | Cargo Status `RCF` (received from the flight at the hub), unless the airline reported a discrepancy (`DIS`) on the AWB | AWB number, hub, all pieces received | — |
 | Delivered | Cargo Status `DLV` / `DDL`, or job status `Completed` | AWB number, at destination | — |
+
+**Sea (owner, 2026-09-29: "build all the draft automation mails … for both FocusSea and air").** Sea's moments come from the same job statuses, told by bill of lading, never by air waybill: *We have your enquiry* and *Shipment confirmed* in sea's words · **Draft bill of lading ready** on `PDF Generated` (the secure review link to the BL) · **Booked with the shipping line** on `Sent to Airline` / `Airline Confirmed` (vessel, voyage, sailing date, BL number; the BL PDF attached) · **Delivered** on `Completed`. There is no carrier status feed for sea, so no *Departed* / *Arrived*. Air's *Booked* now attaches every house air waybill beside the master.
+
+**The draft protocol (owner, 2026-09-29), both desks:** one draft waits per conversation; a newer moment lands **on top** of one nobody acted on (the old one is kept in the conversation as *not sent*); the bell follows the draft — one card per conversation, removed read or not when the draft is sent, skipped or replaced; acting on a replaced draft shows the one on top.
 
 The job number is internal and is never in these mails. Wording is a fixed template the person can edit. Each moment is prepared once per conversation; a newer moment replaces a draft nobody acted on. A waiting update shows as a card on the conversation (**Send to client** / **Skip**) and a pinned bell for the conversation's owner. Endpoints: `GET /api/inbox/threads/{thread}/client-update/preview?stage=`, `POST /api/inbox/threads/{thread}/client-update`, and `client_update` on `POST …/claim`.
 

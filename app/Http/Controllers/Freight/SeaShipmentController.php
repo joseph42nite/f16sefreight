@@ -78,7 +78,7 @@ class SeaShipmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $this->authorize('viewManifest');
+        $this->authorize('viewDocuments');
 
         $term = trim((string) $request->query('q', ''));
 
@@ -116,7 +116,7 @@ class SeaShipmentController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $this->authorize('fileManifest');
+        $this->authorize('editDocuments');
 
         $data = $request->validate([
             'direction'  => 'nullable|string|in:export,import',
@@ -144,12 +144,57 @@ class SeaShipmentController extends Controller
     }
 
     /**
+     * A HOUSE made inside a master (owner, 2026-09-29: Core gets "the documentation and the consol part"). Core has no
+     * enquiries to confirm a house from, so the house is born in the consol, as an import house is (GAPS #436): it
+     * takes the master's enquiry, NULL on a master made here, and traces through the link from its first row.
+     */
+    public function addHouse(Request $request, Job $master): JsonResponse
+    {
+        $this->authorize('editDocuments');
+
+        abort_unless($master->transport_mode === 'sea', 404, 'Only a sea master takes a house here.');
+
+        if (! $master->is_consolidation) {
+            return response()->json(['error' => 'Houses are added to a master, not to another house.', 'reason' => 'not_a_consol'], 422);
+        }
+
+        $data = $request->validate(['hbl_number' => 'nullable|string|max:20']);
+
+        $house = DB::transaction(function () use ($master, $data) {
+            $house = Job::create([
+                'agent_id'         => $master->agent_id,
+                'enquiry_id'       => $master->enquiry_id,
+                'transport_mode'   => 'sea',
+                'direction'        => $master->direction,
+                'parent_job_id'    => $master->id,
+                'is_sub_shipment'  => true,
+                'ops_id'           => $master->ops_id,
+                'pricing_id'       => auth()->id(),
+                'cargo_type'       => 'lcl',
+                'delivery_mode'    => $this->lockingFor('lcl')['delivery_mode'],
+                'execution_job_no' => $this->sequences->next($master->agent_id, TransportMode::Sea->jobPrefix()),
+            ]);
+
+            DB::table('sea_shipment_details')->insert(['job_id' => $house->id, 'hbl_number' => $data['hbl_number'] ?? null,
+                'created_at' => now(), 'updated_at' => now()]);
+
+            $this->consol->link($master, $house);
+
+            return $house;
+        }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
+
+        $this->audit->record($master->agent_id, 'sea_shipment.house_added', 'job', $house->id, auth()->id());
+
+        return response()->json($this->show($house->fresh())->getData(true), 201);
+    }
+
+    /**
      * The printed bill of lading — House or Master, whichever this document is (guide Step 12.3, GAPS #433).
      * Read-only, so anyone who may view the manifest may print it; an unnumbered bill prints as a DRAFT.
      */
     public function printBl(Job $job, \App\Services\BlPdf $pdf)
     {
-        $this->authorize('viewManifest');
+        $this->authorize('viewDocuments');
 
         abort_unless($job->transport_mode === 'sea', 404, 'Only a sea shipment has a bill of lading.');
 
@@ -162,7 +207,7 @@ class SeaShipmentController extends Controller
     /** The whole record the form binds to. */
     public function show(Job $job): JsonResponse
     {
-        $this->authorize('viewManifest');
+        $this->authorize('viewDocuments');
 
         $details = DB::table('sea_shipment_details')->where('job_id', $job->id)->first();
         $parent = $job->parent_job_id ? Job::withoutTenantScope()->find($job->parent_job_id, ['id', 'execution_job_no']) : null;
@@ -213,7 +258,7 @@ class SeaShipmentController extends Controller
      */
     public function save(Request $request, Job $job): JsonResponse
     {
-        $this->authorize('fileManifest');
+        $this->authorize('editDocuments');
 
         $data = $request->validate([
             'cargo_type'     => 'nullable|string|in:' . implode(',', self::CARGO_TYPES),

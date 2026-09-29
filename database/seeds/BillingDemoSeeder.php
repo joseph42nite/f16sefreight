@@ -30,6 +30,9 @@ class BillingDemoSeeder extends Seeder
     /** The narration of a receipt standing for FreightDemoSeeder's history, paid through the bank — see postSome(). */
     private const HISTORY_RECEIPT = 'Settled through the bank';
 
+    /** Days after the due date each demo client pays its history (GAPS #443): one early, one punctual, one late. */
+    private const PAYMENT_HABIT = ['Contoso Exports' => -3, 'Northwind Traders' => 0, 'Globex Chennai' => 12, 'Northstar Exports' => 25];
+
     public function run(): void
     {
         $this->sequences = app(EnquirySequenceService::class);
@@ -120,6 +123,10 @@ class BillingDemoSeeder extends Seeder
         // And the Boss's money strip, which reads financial_snapshots: computed before any of this was posted, it read
         // ₹0 cash and ₹0 payables until the scheduler ran (GAPS #431).
         $this->command->call('snapshots:compute');
+        // The last three months' payment report cards (GAPS #443), oldest first so each has last month to trend against.
+        foreach ([3, 2, 1] as $back) {
+            $this->command->call('clients:payment-report', ['--month' => now()->subMonthsNoOverflow($back)->format('Y-m')]);
+        }
 
         $this->command->info(sprintf(
             'Billing demo: %d debit notes, %d credit notes, %d brokerage, %d consol, %d receipts, %d chases, '
@@ -175,6 +182,9 @@ class BillingDemoSeeder extends Seeder
     /** Last run's documents, so re-running does not stack six credit notes on one invoice. */
     private function clear(array $branches): void
     {
+        // Last run's payment report cards — rebuilt from this run's receipts at the end (GAPS #443).
+        DB::table('client_payment_reports')->whereIn('company_id', DB::table('agents_info')->whereIn('id', $branches)->pluck('company_id'))->delete();
+
         // 🔴 Everything this seeder can recreate, so re-running is IDEMPOTENT. Without the drafts in this list
         // every run stacked another set of cost sheets on the queue — 4 waiting became 12 in three runs, and a
         // demo whose figures move every time you rebuild it is a demo nobody can check anything against.
@@ -740,8 +750,12 @@ class BillingDemoSeeder extends Seeder
                 - (float) DB::table('accounts_receipt_allocations')->where('invoice_id', $invoice->id)->sum('amount'), 2);
 
             if ($gap > 0.009) {
+                // Paid the way this client pays (GAPS #443) — dated against the bill's due date, so the monthly report
+                // card has a real habit to grade. A date "a few days ago" made six months of history look months late.
+                $habit = self::PAYMENT_HABIT[DB::table('customers')->where('id', $invoice->customer_id)->value('name')] ?? 5;
+                $paidOn = \Illuminate\Support\Carbon::parse($invoice->due_date ?: $invoice->document_date)->addDays($habit);
                 $this->receipt($branch, $invoice->customer_id, $gap, 'bank_transfer', 'NEFT ' . $invoice->invoice_no,
-                    self::HISTORY_RECEIPT)->allocations()->create(['invoice_id' => $invoice->id, 'amount' => $gap]);
+                    self::HISTORY_RECEIPT, $paidOn->isFuture() ? now() : $paidOn)->allocations()->create(['invoice_id' => $invoice->id, 'amount' => $gap]);
             }
         }
 
@@ -1014,12 +1028,13 @@ class BillingDemoSeeder extends Seeder
         return $made + 1;
     }
 
-    private function receipt(int $branch, ?int $payerId, float $amount, string $mode, string $reference, string $narration): AccountsReceipt
+    private function receipt(int $branch, ?int $payerId, float $amount, string $mode, string $reference, string $narration,
+        ?\Illuminate\Support\Carbon $on = null): AccountsReceipt
     {
         return AccountsReceipt::withoutGlobalScopes()->create([
             'agent_id' => $branch, 'payer_type' => 'customer', 'payer_id' => $payerId,
             'receipt_no' => $this->sequences->next($branch, 'RCPT'),
-            'receipt_date' => now()->subDays(random_int(0, 9))->toDateString(),
+            'receipt_date' => ($on ?? now()->subDays(random_int(0, 9)))->toDateString(),
             'mode' => $mode, 'reference' => $reference, 'amount' => $amount,
             'currency' => 'INR', 'exchange_rate' => 1, 'narration' => $narration,
         ]);

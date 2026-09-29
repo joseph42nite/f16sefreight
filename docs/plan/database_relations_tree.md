@@ -3107,6 +3107,35 @@ while adding its feed. The feed is READ-ONLY: a statement read with the account 
 
 ---
 
+### 49. `client_payment_reports` (PK: `id`) — *added 2026-09-29, GAPS #443*
+*Note: a client's payment report card, one row per client per month (kept — the history is the trend). Every figure
+is worked out in PHP (`ClientPaymentGrader`) from invoices' due dates and the receipts allocated to them; Jev only reads
+a slipping client's mail, and a person confirms it (`ai_decisions`).*
+
+```text
+  Column              | Type          | Key | Connection Links
+  --------------------|---------------|-----|----------------------------------------
+  id                  | BIGINT        | PK  |
+  company_id          | BIGINT        | FK  | ◄── companies.id
+  customer_id         | BIGINT        | FK  | ◄── customers.id — UQ (customer_id, month)
+  month               | DATE          |     | first day of the month graded
+  terms_days          | SMALLINT      |     | the client's terms that month
+  bills_due           | SMALLINT      |     | bills that fell due in the window (3 months)
+  due_value           | DECIMAL(14,2) |     | INR at each bill's rate
+  on_time_value       | DECIMAL(14,2) |     |
+  on_time_share       | DECIMAL(5,4)  |     | NULL when nothing fell due
+  avg_days_late       | DECIMAL(6,1)  |     | value-weighted; unpaid counted to month end
+  overdue_value       | DECIMAL(14,2) |     | unpaid past due at month end
+  oldest_overdue_days | SMALLINT      |     |
+  score               | TINYINT       |     | 0–100; NULL with fewer than 3 bills
+  grade               | CHAR(1)       |     | A · B · C · D (config/client_grades.php)
+  trend               | VARCHAR(8)    |     | better · steady · worse; NULL for the first card
+  ai_decision_id      | BIGINT        | FK  | ◄── ai_decisions.id (NULL) — Jev's reading of their mail
+  created_at/updated_at| TIMESTAMP    |     |
+```
+
+---
+
 ## 🔒 Triggers & Views
 
 *Authored 2026-08-26. Previously specified in prose only — `implementation_guide.md` §1b·7, §3.4 and §1d referenced these, but no statement existed anywhere in this document.*

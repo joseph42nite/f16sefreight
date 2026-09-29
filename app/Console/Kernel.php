@@ -65,6 +65,12 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer();
 
+        // Every client's payment report card for the month just ended (GAPS #443) — after the night's receipts are in.
+        $schedule->command('clients:payment-report')
+            ->monthlyOn(1, '06:15')
+            ->withoutOverlapping()
+            ->onOneServer();
+
         // Mail is kept three months after a conversation's last message; the figures stay (user, 2026-09-16).
         $schedule->command('mail:prune')
             ->dailyAt('02:30')

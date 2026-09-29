@@ -375,6 +375,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::get('/customers/ports', [\App\Http\Controllers\Freight\CustomerController::class, 'ports']);
     Route::get('/customers/{customer}/contacts', [\App\Http\Controllers\Freight\CustomerController::class, 'contacts']);
     Route::get('/customers/{customer}/group', [\App\Http\Controllers\Freight\CustomerController::class, 'group']);
+    // How a client pays, month by month (GAPS #443) — and a person's answer to Jev's reading of their mail.
+    Route::get('/customers/{customer}/payment-reports', [\App\Http\Controllers\Freight\ClientPaymentController::class, 'index']);
+    Route::post('/customers/{customer}/payment-reports/{report}/jev', [\App\Http\Controllers\Freight\ClientPaymentController::class, 'confirm'])->whereNumber('report');
 
     Route::get('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'index']);
     Route::post('/partners', [\App\Http\Controllers\Freight\PartnerController::class, 'store']);

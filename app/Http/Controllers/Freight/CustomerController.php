@@ -116,6 +116,13 @@ class CustomerController extends Controller
             ->selectRaw('customer_id, SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * (grand_total - amount_paid) * exchange_rate) AS owed', ['credit_note'])
             ->groupBy('customer_id')->pluck('owed', 'customer_id');
 
+        // Each client's latest payment report card (GAPS #443) — one query, the newest month per client.
+        $cards = $this->withAccounts() ? \Illuminate\Support\Facades\DB::table('client_payment_reports as r')
+            ->whereIn('r.customer_id', $customers->pluck('id'))
+            ->whereRaw('r.month = (SELECT MAX(month) FROM client_payment_reports WHERE customer_id = r.customer_id)')
+            ->get(['r.customer_id', 'r.month', 'r.grade', 'r.score', 'r.on_time_share', 'r.avg_days_late', 'r.trend'])
+            ->keyBy('customer_id') : collect();
+
         foreach ($customers as $customer) {
             $customer->setAttribute('branch', $branches[$customer->branch_id] ?? null);
             $customer->setAttribute('salesperson', $reps[$customer->sales_id] ?? null);
@@ -131,6 +138,7 @@ class CustomerController extends Controller
             // NULL limit is "not configured", never zero — the difference decides whether cargo moves.
             $customer->setAttribute('available', $limit === null ? null : round($limit - $exposure, 2));
             $customer->setAttribute('on_hold', $limit !== null && $exposure > $limit);
+            $customer->setAttribute('payment', $cards[$customer->id] ?? null);
         }
     }
 

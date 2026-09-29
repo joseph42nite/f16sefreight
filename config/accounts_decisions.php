@@ -32,7 +32,8 @@ return [
     /* Seconds. A screen waits for this, so it is short: past it the screen simply has no suggestion. */
     'timeout' => (int) env('ACCOUNTS_AI_TIMEOUT', 4),
 
-    'rubric_version' => '2026-09-26a',
+    // 2026-09-29a — ⑦ payment_mail added (GAPS #443).
+    'rubric_version' => '2026-09-29a',
 
     /* A dynamic list (bills, vouchers) is cut to this many, plus "none of these" — more options, flatter answers. */
     'max_options' => 5,
@@ -134,6 +135,26 @@ return [
             'none' => 'None — we do not deduct tax on what we pay this supplier.',
             'not_sure' => 'Not sure — the evidence does not settle it.',
             'min_confidence' => 0.65,
+        ],
+
+        // ⑦ Clients → payment report card — what a SLIPPING client's own mail says about paying (GAPS #443). The grade is
+        //   worked out in PHP; this is what the figures cannot see. Asked once a month, only for a client graded C or D
+        //   or getting worse, and only when they wrote to us. A person confirms it on the card.
+        'payment_mail' => [
+            'label' => "What a late client's mail says about paying",
+            'where' => 'Clients & Partners → a client → Payments',
+            'instructions' => 'A client of ours is paying late. The state gives how late, and the emails they sent us '
+                . 'recently. Decide only from what the emails SAY about paying us — not from the figures. Choose '
+                . 'cannot_tell when the emails say nothing about payment.',
+            'criteria' => [
+                'disputes_a_bill' => 'They question or dispute a bill — an amount, a charge, a missing document — and '
+                    . 'payment waits on it being sorted out.',
+                'promised_to_pay' => 'They say when they will pay, or that a payment has been made or is on its way.',
+                'short_of_money' => 'They say they cannot pay yet — cash flow, waiting on their own customer, or they '
+                    . 'ask for more time.',
+                'cannot_tell' => 'The emails say nothing about paying us.',
+            ],
+            'min_confidence' => 0.60,
         ],
     ],
 ];

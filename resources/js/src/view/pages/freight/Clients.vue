@@ -55,12 +55,13 @@
             <th v-if="withAccounts" class="fx-num" scope="col">Credit limit</th>
             <th v-if="withAccounts" class="fx-num" scope="col">Owed now</th>
             <th v-if="withAccounts" class="fx-num" scope="col">Left</th>
+            <th v-if="withAccounts" scope="col">Pays</th>
             <th scope="col">Contacts</th>
           </tr>
         </thead>
         <tbody v-for="group in groups" :key="group.key">
           <tr v-if="grouped" class="fx-row--quiet">
-            <td :colspan="withAccounts ? 9 : 5">
+            <td :colspan="withAccounts ? 10 : 5">
               <strong>{{ group.key }}</strong>
               <span class="fx-muted"> · {{ group.rows.length }} billing entit{{ group.rows.length === 1 ? "y" : "ies" }}</span>
               <span v-if="withAccounts" class="fx-muted"> · owed {{ money(group.owed) }}</span>
@@ -101,6 +102,14 @@
               <template v-if="c.available !== null">
                 <StatusChip v-if="c.on_hold" value="credit_hold" />
                 <Figure v-else :value="c.available" kind="currency" currency-code="INR" />
+              </template>
+              <span v-else class="fx-muted">—</span>
+            </td>
+            <!-- Last month's payment grade (GAPS #443): on time by the due date, worked out from receipts. -->
+            <td v-if="withAccounts">
+              <template v-if="c.payment && c.payment.grade">
+                <strong>{{ c.payment.grade }}</strong>
+                <span class="fx-muted"> · {{ pct(c.payment.on_time_share) }} on time{{ c.payment.trend === "worse" ? " · slipping" : c.payment.trend === "better" ? " · improving" : "" }}</span>
               </template>
               <span v-else class="fx-muted">—</span>
             </td>
@@ -162,6 +171,51 @@
             </template>
           </dl>
           <button v-if="canEdit" class="fx-btn" @click="openForm(selected)">Edit</button>
+        </section>
+
+        <!-- How they pay, month by month (GAPS #443). Graded from due dates and receipts; Jev reads their mail when
+             they are slipping, and a person says whether that reading is right. -->
+        <section v-else-if="tab === 'payments'" class="fx-section">
+          <p v-if="!withAccounts" class="fx-muted">Payment history is on the Command plan.</p>
+          <p v-else-if="!payments.length" class="fx-muted">No report card yet — one is made on the 1st of each month for the month before.</p>
+          <template v-else>
+            <p v-if="payments[0].jev && payments[0].jev.suggested" class="fx-notice" role="status">
+              <strong>Jev read their mail:</strong> {{ payments[0].jev.meaning }}
+              <span class="fx-muted">({{ pct(payments[0].jev.confidence) }} sure)</span>
+              <template v-if="canConfirmJev && !payments[0].jev.outcome">
+                <button class="fx-btn" :disabled="busy" @click="confirmJev(payments[0], payments[0].jev.answer)">That's right</button>
+                <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="confirmJev(payments[0], null)">Not right</button>
+              </template>
+              <span v-else-if="payments[0].jev.outcome" class="fx-muted"> · {{ payments[0].jev.outcome === "accepted" ? "confirmed" : "marked not right" }}</span>
+            </p>
+            <table class="fx-table">
+              <thead>
+                <tr>
+                  <th scope="col">Month</th><th scope="col">Grade</th><th class="fx-num" scope="col">Bills due</th>
+                  <th class="fx-num" scope="col">On time</th><th class="fx-num" scope="col">Avg days late</th>
+                  <th class="fx-num" scope="col">Overdue at month end</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="p in payments" :key="p.id">
+                  <td>{{ String(p.month).slice(0, 7) }}</td>
+                  <td>
+                    <strong v-if="p.grade">{{ p.grade }}</strong>
+                    <span v-else class="fx-muted">Too few bills</span>
+                    <span v-if="p.trend && p.trend !== 'steady'" class="fx-muted"> · {{ p.trend }}</span>
+                  </td>
+                  <td class="fx-num">{{ p.bills_due }}</td>
+                  <td class="fx-num">{{ p.on_time_share === null ? "—" : pct(p.on_time_share) }}</td>
+                  <td class="fx-num">{{ p.avg_days_late === null ? "—" : p.avg_days_late }}</td>
+                  <td class="fx-num"><Figure :value="p.overdue_value" kind="currency" currency-code="INR" /></td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="fx-muted">
+              Judged on the bills that fell due in the last three months against each bill's due date ({{ selected.payment_terms_days }}-day terms),
+              counting unpaid ones up to month end. A = 85+, B = 70+, C = 50+.
+            </p>
+          </template>
         </section>
 
         <!-- The other billing entities of the same client — the group IS the domain. -->
@@ -365,6 +419,7 @@ import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 
 const TABS = [
   { key: "details", label: "Details" },
+  { key: "payments", label: "Payments" },
   { key: "group", label: "Their other entities" },
   { key: "contacts", label: "Addresses" },
 ];
@@ -378,7 +433,7 @@ export default {
     options: { branches: [], salespeople: [] },
     filters: { branch_id: null, sales_id: null, q: "", unassigned: false, no_limit: false },
     grouped: false,
-    selected: null, tab: "details", group: [], contacts: [],
+    selected: null, tab: "details", group: [], contacts: [], payments: [],
     form: null, ports: [], portQuery: "",
     loading: true, busy: false, error: null, actionError: null,
   }),
@@ -386,6 +441,10 @@ export default {
     ...mapGetters(["designation"]),
     canEdit() {
       return ["accounts", "boss", "sales", "pricing"].includes(this.designation);
+    },
+    /* Whether Jev read a client's mail right is decided by the people who chase — accounts and the Boss. */
+    canConfirmJev() {
+      return ["accounts", "boss"].includes(this.designation);
     },
     /** Grouped by the domain, or one flat list under a single empty heading. */
     groups() {
@@ -414,6 +473,16 @@ export default {
     this.load();
   },
   methods: {
+    pct(share) {
+      return share === null || share === undefined ? "—" : Math.round(Number(share) * 100) + "%";
+    },
+    confirmJev(card, chosen) {
+      this.busy = true;
+      ApiService.post(`/customers/${this.selected.id}/payment-reports/${card.id}/jev`, { chosen })
+        .then(({ data }) => { this.payments = data.cards || []; })
+        .catch((e) => { this.actionError = this.messageFor(e); })
+        .finally(() => { this.busy = false; });
+    },
     money(value) {
       return "INR " + Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
     },
@@ -445,6 +514,12 @@ export default {
       this.actionError = null;
       this.group = [];
       this.contacts = [];
+      this.payments = [];
+      if (this.withAccounts) {
+        ApiService.get(`/customers/${customer.id}/payment-reports`)
+          .then(({ data }) => { this.payments = data.cards || []; })
+          .catch(() => {});
+      }
 
       ApiService.get(`/customers/${customer.id}/group`)
         .then(({ data }) => { this.group = (data.members || data.group || []).filter((g) => g.id !== customer.id); })

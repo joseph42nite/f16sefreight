@@ -254,7 +254,7 @@
                   <Figure v-if="Number(p.tds_amount) > 0" :value="p.tds_amount" kind="currency" currency-code="INR" />
                   <span v-else class="fx-muted">—</span>
                 </td>
-                <td class="fx-num"><Figure :value="Number(p.amount) - Number(p.tds_amount || 0)" kind="currency" currency-code="INR" /></td>
+                <td class="fx-num"><Figure :value="Number(p.amount) - Number(p.tds_amount || 0) - Number(p.commission_amount || 0) - Number(p.discount_amount || 0)" kind="currency" currency-code="INR" /></td>
                 <td><StatusChip :value="p.is_posted ? 'posted' : 'unposted'" /></td>
                 <td v-if="canPay" class="fx-row-actions">
                   <button v-if="!p.is_posted" class="fx-btn" :disabled="busy" @click="post(p)">Post</button>
@@ -271,8 +271,11 @@
           <!-- 🔴 The desk transfers `to_transfer`, not `total` — the difference is `tds_withheld`, owed to
                the government by the 7th, not to any supplier here. Said every time it is not zero, because
                the one place this run should be silent about it is nowhere. -->
-          <template v-if="lastRun.tds_withheld > 0">
-            {{ money(lastRun.tds_withheld) }} of that is TDS withheld — transfer {{ money(lastRun.to_transfer) }}, not the total.
+          <template v-if="lastRun.tds_withheld > 0 || lastRun.commission_taken > 0 || lastRun.discount_taken > 0">
+            <template v-if="lastRun.tds_withheld > 0">{{ money(lastRun.tds_withheld) }} is TDS withheld. </template>
+            <template v-if="lastRun.commission_taken > 0">{{ money(lastRun.commission_taken) }} is commission. </template>
+            <template v-if="lastRun.discount_taken > 0">{{ money(lastRun.discount_taken) }} is discount. </template>
+            Transfer {{ money(lastRun.to_transfer) }}, not the total.
           </template>
         </p>
       </template>
@@ -287,16 +290,29 @@
         <div class="fx-modal__body">
           <table class="fx-table">
             <thead>
-              <tr><th scope="col">Supplier</th><th class="fx-num" scope="col">Vouchers</th><th class="fx-num" scope="col">Amount</th></tr>
+              <tr>
+                <th scope="col">Supplier</th><th class="fx-num" scope="col">Vouchers</th><th class="fx-num" scope="col">Amount</th>
+                <!-- What their bill took off (GAPS #444): an airline's commission, a discount or tonnage incentive — typed
+                     from their bill or CASS statement. The vouchers are still settled in full; only the transfer is less. -->
+                <th class="fx-num" scope="col">Commission</th><th class="fx-num" scope="col">Discount</th>
+              </tr>
             </thead>
             <tbody>
               <tr v-for="p in payees" :key="'pay-' + p.vendor_id">
                 <td>{{ p.vendor }}</td>
                 <td class="fx-num">{{ p.count }}</td>
                 <td class="fx-num"><Figure :value="p.amount" kind="currency" currency-code="INR" /></td>
+                <td><input v-model.number="deductions[p.vendor_id].commission" type="number" step="0.01" min="0" class="fx-input fx-num"
+                           :aria-label="'Commission from ' + p.vendor" /></td>
+                <td><input v-model.number="deductions[p.vendor_id].discount" type="number" step="0.01" min="0" class="fx-input fx-num"
+                           :aria-label="'Discount from ' + p.vendor" /></td>
               </tr>
             </tbody>
           </table>
+          <p class="fx-muted">
+            Commission and discount are what the supplier's own bill takes off what you pay — leave them empty when there
+            is none. They are recorded as income, and the transfer is less by that much.
+          </p>
           <p class="fx-muted">
             One payment each. Nothing leaves a bank account from here — this records what you are paying, and each
             payment posts to the ledger separately.
@@ -332,6 +348,8 @@ export default {
     stages: [], stage: "due", branches: [],
     vouchers: [], total: 0, payments: [], modes: [],
     picked: {}, amounts: {},
+    /** vendor id → what that supplier's bill took off: { commission, discount } (GAPS #444). */
+    deductions: {},
     form: { agent_id: null, payment_date: new Date().toISOString().slice(0, 10), mode: "bank_transfer", reference: "" },
     showPaid: false, confirming: false, lastRun: null,
     /** ① Cost to book, and the one shipment whose cost is being booked (user, 2026-09-26). */
@@ -457,6 +475,8 @@ export default {
         .finally(() => { this.busy = false; });
     },
     toggle(voucher, on) {
+      // A place to type what this supplier's bill took off, kept while the run is being built.
+      if (on && !this.deductions[voucher.vendor_id]) this.$set(this.deductions, voucher.vendor_id, { commission: null, discount: null });
       this.$set(this.picked, voucher.id, on);
       this.$set(this.amounts, voucher.id, on ? Number(voucher.outstanding) : 0);
     },
@@ -467,6 +487,8 @@ export default {
       ApiService.post("/payments/run", {
         ...this.form,
         allocations: this.chosen.map((v) => ({ purchase_voucher_id: v.id, amount: Number(this.amounts[v.id]) })),
+        deductions: this.payees.map((p) => ({ vendor_id: p.vendor_id,
+          commission: Number(this.deductions[p.vendor_id].commission) || 0, discount: Number(this.deductions[p.vendor_id].discount) || 0 })),
       })
         .then(({ data }) => { this.lastRun = data; this.confirming = false; this.load(); })
         .catch((e) => {

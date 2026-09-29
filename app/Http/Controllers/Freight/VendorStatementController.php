@@ -91,6 +91,10 @@ class VendorStatementController extends Controller
                 'theirs' => round((float) $lines->sum('their_amount'), 2),
                 'ours' => round((float) $lines->sum('our_amount'), 2),
                 'difference' => round((float) $lines->sum('difference'), 2),
+                // What the supplier's bill takes off (GAPS #444) — typed into the payment run as commission and
+                // discount, so the transfer is the net and the difference is recorded as income.
+                'commission' => round((float) $lines->sum('commission_amount'), 2),
+                'discount' => round((float) $lines->sum('discount_amount'), 2),
             ],
             'states' => VendorStatements::STATES,
         ]);

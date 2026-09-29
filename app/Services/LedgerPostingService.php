@@ -39,6 +39,14 @@ class LedgerPostingService
      */
     public const COMMISSION_RECEIVABLE = ['code' => '1210-Commission-Receivable', 'name' => 'Commission Receivable'];
     public const COMMISSION_REVENUE = ['code' => '4800-Commission-Revenue', 'name' => 'Commission Revenue'];
+
+    /**
+     * What a supplier's own bill takes off (GAPS #444): an airline's commission on the AWB, and a discount or tonnage
+     * incentive. Income of their own — kept apart from commission WE bill (4800), so each can be read on its own.
+     * ⚠️ Whether GST applies to either is the company's accountant's call; nothing here posts tax on them.
+     */
+    public const SUPPLIER_COMMISSION = ['code' => '4810-Airline-Commission', 'name' => 'Commission from airlines'];
+    public const SUPPLIER_DISCOUNT = ['code' => '4820-Supplier-Discounts', 'name' => 'Discounts and incentives from suppliers'];
     public const AR_AGENTS = ['code' => '1220-AR-Agents', 'name' => 'Accounts Receivable — Agents'];
     public const CONSOL_REVENUE = ['code' => '4050-Consol-Revenue', 'name' => 'Consol Revenue'];
     /**
@@ -232,17 +240,29 @@ class LedgerPostingService
      * ⚠️ No adjustment leg. A supplier settled SHORT is a dispute, not a write-off we take silently — it stays on
      * the voucher as an outstanding balance and goes through the statement comparison, where somebody argues it.
      */
-    public function linesForPayment(float $paid, ?\App\BankAccount $from = null, float $tds = 0.0): array
+    public function linesForPayment(float $paid, ?\App\BankAccount $from = null, float $tds = 0.0,
+        float $commission = 0.0, float $discount = 0.0): array
     {
         $tds = round(max(0.0, $tds), 2);
+        $commission = round(max(0.0, $commission), 2);
+        $discount = round(max(0.0, $discount), 2);
 
         $lines = [
             // 🔴 The payable comes down by the GROSS. The supplier's invoice really is settled in full — the
             // withheld part was paid to the government in their name, not kept — so crediting AP with only
             // the cash would leave every voucher we deduct from looking part-paid forever.
             self::AP + ['debit' => round($paid, 2), 'credit' => 0.0],
-            $this->bank($from) + ['debit' => 0.0, 'credit' => round($paid - $tds, 2)],
+            // The cash that actually left: less TDS, and less what the supplier's own bill took off (GAPS #444).
+            $this->bank($from) + ['debit' => 0.0, 'credit' => round($paid - $tds - $commission - $discount, 2)],
         ];
+
+        if ($commission > 0.0) {
+            $lines[] = self::SUPPLIER_COMMISSION + ['debit' => 0.0, 'credit' => $commission];
+        }
+
+        if ($discount > 0.0) {
+            $lines[] = self::SUPPLIER_DISCOUNT + ['debit' => 0.0, 'credit' => $discount];
+        }
 
         if ($tds > 0.0) {
             // A LIABILITY, not an expense: we are holding the government's money until the challan is paid.

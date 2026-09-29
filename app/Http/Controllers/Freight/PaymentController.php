@@ -151,6 +151,12 @@ class PaymentController extends Controller
             'allocations' => 'required|array|min:1',
             'allocations.*.purchase_voucher_id' => 'required|integer',
             'allocations.*.amount' => 'required|numeric|min:0.01',
+            // What each supplier's bill took off — an airline's commission, a discount or incentive (GAPS #444).
+            // Keyed by supplier: one payment per supplier, so one figure each. Typed from their bill or statement.
+            'deductions' => 'nullable|array',
+            'deductions.*.vendor_id' => 'required|integer',
+            'deductions.*.commission' => 'nullable|numeric|min:0',
+            'deductions.*.discount' => 'nullable|numeric|min:0',
         ]);
 
         if (! $this->branches()->contains('id', (int) $data['agent_id'])) {
@@ -185,8 +191,9 @@ class PaymentController extends Controller
         }
 
         $runRef = 'RUN-' . now()->format('Ymd-His');
+        $deductions = collect($data['deductions'] ?? [])->keyBy('vendor_id');
 
-        $payments = DB::transaction(function () use ($data, $vouchers, $runRef) {
+        $payments = DB::transaction(function () use ($data, $vouchers, $runRef, $deductions) {
             $made = [];
 
             // 🔴 Grouped by SUPPLIER: each payment is one transfer to one bank account.
@@ -200,6 +207,15 @@ class PaymentController extends Controller
                 $withheld = $this->withholding((int) $data['agent_id'], (int) $vendorId, $lines,
                     $vouchers, (string) $data['payment_date']);
 
+                $commission = round((float) ($deductions[$vendorId]['commission'] ?? 0), 2);
+                $discount = round((float) ($deductions[$vendorId]['discount'] ?? 0), 2);
+
+                // Nothing left to transfer means the figures are wrong — a supplier is not paid a negative amount.
+                if ($amount - $withheld['amount'] - $commission - $discount < 0.01) {
+                    abort(response()->json(['error' => 'The commission and discount are more than this supplier is being paid.',
+                        'reason' => 'deductions_too_large'], 422));
+                }
+
                 $payment = AccountsPayment::create([
                     'agent_id' => $data['agent_id'], 'payee_type' => 'partner', 'payee_id' => (int) $vendorId,
                     'payment_no' => $this->sequences->next((int) $data['agent_id'], 'PAY'),
@@ -207,6 +223,7 @@ class PaymentController extends Controller
                     'reference' => $data['reference'] ?? null, 'amount' => $amount,
                     'tds_amount' => $withheld['amount'], 'tds_section' => $withheld['section'],
                     'tds_rate' => $withheld['deduct'] ? $withheld['rate'] : null,
+                    'commission_amount' => $commission, 'discount_amount' => $discount,
                     'currency' => 'INR', 'exchange_rate' => 1, 'run_ref' => $runRef,
                     'bank_account_id' => $this->bankAccount($data['bank_account_id'] ?? null)?->id,
                     'narration' => $data['narration'] ?? null, 'created_by' => auth()->id(),
@@ -236,7 +253,10 @@ class PaymentController extends Controller
             // `total`; the difference is owed to the government by the 7th. Showing only the total is how a
             // payment run gets executed at the gross and the deduction becomes a correction next month.
             'tds_withheld' => round(collect($payments)->sum('tds_amount'), 2),
-            'to_transfer' => round(collect($payments)->sum(fn ($p) => (float) $p->amount - (float) $p->tds_amount), 2),
+            'commission_taken' => round(collect($payments)->sum('commission_amount'), 2),
+            'discount_taken' => round(collect($payments)->sum('discount_amount'), 2),
+            'to_transfer' => round(collect($payments)->sum(fn ($p) => (float) $p->amount - (float) $p->tds_amount
+                - (float) $p->commission_amount - (float) $p->discount_amount), 2),
         ], 201);
     }
 
@@ -307,7 +327,8 @@ class PaymentController extends Controller
         DB::transaction(function () use ($payment, $period) {
             $this->ledger->write(
                 $this->ledger->linesForPayment((float) $payment->amount,
-                    $this->bankAccount($payment->bank_account_id), (float) $payment->tds_amount),
+                    $this->bankAccount($payment->bank_account_id), (float) $payment->tds_amount,
+                    (float) $payment->commission_amount, (float) $payment->discount_amount),
                 $payment->agent_id, $period->id, $payment->id, 'payment');
 
             // ⚠️ The register row is cut inside the posting transaction, like the inward one, so the ledger's
@@ -353,7 +374,8 @@ class PaymentController extends Controller
 
         return response()->json($this->ledger->summarise(
             $this->ledger->linesForPayment((float) $payment->amount,
-                $this->bankAccount($payment->bank_account_id), (float) $payment->tds_amount)
+                $this->bankAccount($payment->bank_account_id), (float) $payment->tds_amount,
+                (float) $payment->commission_amount, (float) $payment->discount_amount)
         ));
     }
 

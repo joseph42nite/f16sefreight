@@ -25,6 +25,8 @@ class AccountsPayment extends Model
         // cash leg. Listed here deliberately: this is the fifth place on this desk where a value passed to
         // `create()` would have been dropped on the floor by an unlisted column, silently.
         'tds_amount', 'tds_section', 'tds_rate',
+        // What the supplier's bill took off (GAPS #444): an airline's commission, and a discount or incentive.
+        'commission_amount', 'discount_amount',
         'is_posted', 'created_by',
     ];
 

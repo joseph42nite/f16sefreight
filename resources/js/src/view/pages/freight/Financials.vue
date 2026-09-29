@@ -148,6 +148,12 @@
           They billed {{ money(vendorTotals.theirs) }}; we have {{ money(vendorTotals.ours) }} booked against these
           shipments for this supplier — a difference of {{ money(vendorTotals.difference) }}.
         </p>
+        <!-- What the airline's bill took off (GAPS #444): not a difference to argue — enter it on the payment. -->
+        <p v-if="vendorTotals.commission > 0 || vendorTotals.discount > 0" class="fx-notice" role="status">
+          Their bill takes off {{ money(vendorTotals.commission) }} commission and {{ money(vendorTotals.discount) }}
+          discount. When you pay it in Money out, enter those two figures on the payment: the vouchers are settled in
+          full, the transfer is the net, and the difference is recorded as income.
+        </p>
         <table class="fx-table">
           <thead>
             <tr>
@@ -166,7 +172,15 @@
               <td class="identifier">{{ l.reference || "—" }}</td>
               <td class="identifier">{{ l.job_no || "—" }}</td>
               <td>{{ l.description || "—" }}</td>
-              <td class="fx-num"><Figure :value="l.their_amount" kind="currency" currency-code="INR" /></td>
+              <td class="fx-num">
+                <Figure :value="l.their_amount" kind="currency" currency-code="INR" />
+                <!-- The airline's breakdown, when the bill gives one: freight + due carrier − commission − discount. -->
+                <div v-if="l.freight_amount !== null" class="fx-muted">
+                  {{ money(l.freight_amount) }} + {{ money(l.due_carrier_amount || 0) }}
+                  <template v-if="Number(l.commission_amount) > 0"> − {{ money(l.commission_amount) }} comm.</template>
+                  <template v-if="Number(l.discount_amount) > 0"> − {{ money(l.discount_amount) }} disc.</template>
+                </div>
+              </td>
               <td class="fx-num">
                 <Figure v-if="l.our_amount !== null" :value="l.our_amount" kind="currency" currency-code="INR" />
                 <span v-else class="fx-muted">—</span>

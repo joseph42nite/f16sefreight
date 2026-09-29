@@ -30,14 +30,24 @@ class VendorStatements
     private const TOLERANCE = 1.00;
 
     /**
+     * An airline's line broken down, as an AWB and a CASS bill show it (owner, 2026-09-29; GAPS #444): freight
+     * (chargeable weight × rate), charges due carrier, less the commission and any discount or tonnage incentive the
+     * airline takes off — the rest is what is due. The incentive's FORMULA is the company's own contract with the
+     * airline and is not modelled; what the bill says it took off is what is recorded.
+     */
+    private const BREAKDOWN = ['freight_amount', 'due_carrier_amount', 'commission_amount', 'discount_amount'];
+
+    /**
      * Import one supplier's statement for one period, replacing that period if it is sent again.
      *
      * @param  array<int, array{reference?: ?string, description?: ?string, charge_date?: ?string,
-     *                          chargeable_weight?: float|string|null, rate?: float|string|null, amount: float|string}>  $lines
+     *                          chargeable_weight?: float|string|null, rate?: float|string|null, amount?: float|string|null,
+     *                          freight_amount?: ?float, due_carrier_amount?: ?float, commission_amount?: ?float, discount_amount?: ?float}>  $lines
      */
     public function import(int $agentId, int $vendorId, string $period, array $lines, array $meta = [], ?int $by = null): int
     {
         $vendorType = DB::table('partners')->where('id', $vendorId)->value('partner_type') ?? 'vendor';
+        $lines = array_map([$this, 'withNet'], $lines);
 
         return DB::transaction(function () use ($agentId, $vendorId, $vendorType, $period, $lines, $meta, $by) {
             $existing = DB::table('vendor_statements')
@@ -68,6 +78,7 @@ class VendorStatements
                     'chargeable_weight' => $line['chargeable_weight'] ?? null,
                     'rate' => $line['rate'] ?? null,
                     'their_amount' => round((float) ($line['amount'] ?? 0), 2),
+                ] + collect(self::BREAKDOWN)->mapWithKeys(fn ($k) => [$k => isset($line[$k]) && $line[$k] !== '' ? round((float) $line[$k], 2) : null])->all() + [
                     'state' => 'unmatched',
                     'created_at' => now(), 'updated_at' => now(),
                 ]);
@@ -102,10 +113,16 @@ class VendorStatements
             $voucherId = $jobId === null ? null : DB::table('accounts_purchase_vouchers')
                 ->where('job_id', $jobId)->where('vendor_id', $statement->vendor_id)->value('id');
 
+            // 🔴 Compared with what the airline CHARGED before its commission and discount (freight + due carrier), when
+            // the line says — that is what a cost sheet books from the AWB. A company that books the net instead
+            // agrees on the net. Either way the commission and discount are not a difference to argue: they are
+            // taken off the payment and recorded as income (GAPS #444).
+            $theirs = $this->comparable($line, $ours);
+
             $state = match (true) {
                 $jobId === null => 'unmatched',
                 $ours === null => 'not_booked',
-                abs($ours - (float) $line->their_amount) <= self::TOLERANCE => 'agreed',
+                abs($ours - $theirs) <= self::TOLERANCE => 'agreed',
                 default => 'different',
             };
 
@@ -113,7 +130,7 @@ class VendorStatements
                 'matched_job_id' => $jobId,
                 'matched_voucher_id' => $voucherId,
                 'our_amount' => $ours,
-                'difference' => $ours === null ? null : round((float) $line->their_amount - $ours, 2),
+                'difference' => $ours === null ? null : round($theirs - $ours, 2),
                 'state' => $state,
                 'updated_at' => now(),
             ]);
@@ -207,6 +224,34 @@ class VendorStatements
             : null;
     }
 
+    /**
+     * The figure of theirs to hold our cost against: the gross (freight + due carrier) when the line gives it, unless
+     * our cost matches the net instead; otherwise the amount.
+     */
+    private function comparable(object $line, ?float $ours): float
+    {
+        $net = (float) $line->their_amount;
+
+        if ($line->freight_amount === null) {
+            return $net;
+        }
+
+        $gross = round((float) $line->freight_amount + (float) $line->due_carrier_amount, 2);
+
+        return $ours !== null && abs($ours - $net) <= self::TOLERANCE ? $net : $gross;
+    }
+
+    /** The amount due, worked out from the breakdown when a statement gives the parts but not the net. */
+    private function withNet(array $line): array
+    {
+        if ((! isset($line['amount']) || $line['amount'] === '' || (float) $line['amount'] == 0.0) && isset($line['freight_amount'])) {
+            $line['amount'] = round((float) $line['freight_amount'] + (float) ($line['due_carrier_amount'] ?? 0)
+                - (float) ($line['commission_amount'] ?? 0) - (float) ($line['discount_amount'] ?? 0), 2);
+        }
+
+        return $line;
+    }
+
     /** A supplier's CSV as lines: reference, description, weight, rate, amount — whatever their spelling. */
     public function fromCsv(string $csv): array
     {
@@ -225,6 +270,8 @@ class VendorStatements
             return '';
         };
         $money = fn (string $v) => (float) str_replace([',', '₹', ' '], '', $v);
+        // A breakdown column that is absent stays NULL — "not given" is not "zero".
+        $part = fn (array $row, array $names) => ($v = $column($row, $names)) === '' ? null : $money($v);
 
         return array_map(fn ($row) => [
             'reference' => $column($row, ['awb', 'awb no', 'awb number', 'reference', 'ref', 'job', 'job no', 'docket']),
@@ -232,7 +279,12 @@ class VendorStatements
             'charge_date' => $column($row, ['date', 'flight date', 'charge date']) ?: null,
             'chargeable_weight' => $money($column($row, ['chargeable weight', 'cw', 'weight'])) ?: null,
             'rate' => $money($column($row, ['rate'])) ?: null,
-            'amount' => $money($column($row, ['amount', 'total', 'net', 'charges'])),
+            'amount' => $money($column($row, ['net', 'net due', 'amount due', 'total due', 'amount', 'total', 'charges'])),
+            // An airline's or CASS bill's own columns (GAPS #444), in the spellings they use.
+            'freight_amount' => $part($row, ['weight charge', 'freight', 'air freight', 'freight charges']),
+            'due_carrier_amount' => $part($row, ['due carrier', 'other charges due carrier', 'charges due carrier', 'oc due carrier']),
+            'commission_amount' => $part($row, ['commission', 'agent commission', 'iata commission']),
+            'discount_amount' => $part($row, ['discount', 'incentive', 'rebate', 'volume incentive']),
         ], $rows);
     }
 }

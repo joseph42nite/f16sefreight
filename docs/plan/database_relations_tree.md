@@ -3136,6 +3136,26 @@ a slipping client's mail, and a person confirms it (`ai_decisions`).*
 
 ---
 
+### 50. Supplier commission and discounts — columns on `vendor_statement_lines` and `accounts_payments` — *2026-09-29, GAPS #444*
+*Note: neither table had an entry here (both built in the accounts work, GAPS #370 and #383); only the columns added
+now are listed. An airline's bill breaks a line down as freight + charges due carrier − commission − discount; the
+incentive FORMULA is each company's own contract and is not modelled — the bill's figures are recorded.*
+
+```text
+  vendor_statement_lines
+  freight_amount       | DECIMAL(15,2) |     | chargeable weight × rate (NULL: not broken down)
+  due_carrier_amount   | DECIMAL(15,2) |     | other charges due carrier
+  commission_amount    | DECIMAL(15,2) |     | taken off by the airline
+  discount_amount      | DECIMAL(15,2) |     | discount / tonnage incentive taken off
+
+  accounts_payments
+  commission_amount    | DECIMAL(15,2) |     | default 0 — posts Cr 4810-Airline-Commission
+  discount_amount      | DECIMAL(15,2) |     | default 0 — posts Cr 4820-Supplier-Discounts
+```
+*A payment still settles the vouchers at `amount` (the gross); the bank is credited `amount − tds − commission − discount`.*
+
+---
+
 ## 🔒 Triggers & Views
 
 *Authored 2026-08-26. Previously specified in prose only — `implementation_guide.md` §1b·7, §3.4 and §1d referenced these, but no statement existed anywhere in this document.*

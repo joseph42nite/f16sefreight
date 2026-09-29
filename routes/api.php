@@ -462,6 +462,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/sea-shipments', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'store']);
     Route::get('/jobs/{job}/sea-shipment', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'show']);
     Route::post('/jobs/{job}/sea-shipment', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'save']);
+    // The printed BL, House or Master (guide Step 12.3). PROPOSED layout — GAPS #433.
+    Route::get('/jobs/{job}/bl.pdf', [\App\Http\Controllers\Freight\SeaShipmentController::class, 'printBl']);
 
     // ── Consolidation (§5.8). The routing cascade and the piece reconciliation are
     // customs concerns, not display ones — see ConsolidationService.

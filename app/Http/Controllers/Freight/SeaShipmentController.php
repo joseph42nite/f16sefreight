@@ -143,6 +143,22 @@ class SeaShipmentController extends Controller
         return response()->json($this->show($job->fresh())->getData(true), 201);
     }
 
+    /**
+     * The printed bill of lading — House or Master, whichever this document is (guide Step 12.3, GAPS #433).
+     * Read-only, so anyone who may view the manifest may print it; an unnumbered bill prints as a DRAFT.
+     */
+    public function printBl(Job $job, \App\Services\BlPdf $pdf)
+    {
+        $this->authorize('viewManifest');
+
+        abort_unless($job->transport_mode === 'sea', 404, 'Only a sea shipment has a bill of lading.');
+
+        return response($pdf->render($job), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $pdf->filename($job) . '"',
+        ]);
+    }
+
     /** The whole record the form binds to. */
     public function show(Job $job): JsonResponse
     {

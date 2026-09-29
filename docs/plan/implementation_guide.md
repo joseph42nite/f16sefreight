@@ -1639,8 +1639,9 @@ Master created → houses linked → containers stuffed → roll-up and routing 
 shown. The demo gains one sea consol so every screen has something real on it.
 
 ### 12.3 Outputs — the BL print and the filing screen
-- **BL print** (House and Master). The PRD gives the fields and limits but no layout; the layout is **proposed** from
-  the fields the form holds and shown to the owner before it is called done
+- **BL print** (House and Master) 🟡 *proposed 2026-09-29 — awaiting the owner (GAPS #433)*. The PRD gives the
+  fields and limits but no layout; the layout is **proposed** from the fields the form holds and shown to the owner
+  before it is called done. `GET /jobs/{job}/bl.pdf`, *Print BL* on the FocusSea form; an unnumbered bill prints DRAFT
 - **ICEGATE filing screen** 🟢 *built 2026-09-28 (GAPS #429)* — `/manifest-filing` on FocusSea: PRD §5.8's CGM/SCMTR
   grid and *Submit CGM Data* modal. `manifest_filings` carries the PRD's fields; the amendment number is given by the
   system; the operator records ICEGATE's answer (cleared / rejected) and the bill's tab 11 status follows the latest

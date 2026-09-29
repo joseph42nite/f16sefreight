@@ -16,6 +16,8 @@
             <router-link :to="'/focus-sea/' + parent.id" class="identifier">{{ parent.execution_job_no }}</router-link>
           </template>
           · <router-link to="/focus-sea">All bills</router-link>
+          <!-- The printed BL (guide Step 12.3). Unnumbered, it prints as a DRAFT. -->
+          · <a href="#" :aria-disabled="printing" @click.prevent="printBl">{{ printing ? "Preparing…" : "Print BL" }}</a>
         </template>
         <template v-else>Every sea shipment of the branch. A house is a client's shipment; a master is the carrier's bill a consol travels on.</template>
       </p>
@@ -424,7 +426,7 @@ export default {
   components: { Field, Figure, EntityPanel, CostSheet },
   props: { jobId: { type: [Number, String], default: null } },
   data: () => ({
-    rows: [], q: "", kind: "all", creating: false, searchTimer: null,
+    rows: [], q: "", kind: "all", creating: false, printing: false, searchTimer: null,
     jobNo: null, document: "house", client: null, parent: null, credit: null, fromMaster: [],
     form: {}, head: {}, containers: [], locking: {}, violations: [],
     vocab: { cargo_types: [], container_types: [], consol_types: [], booking_thru: [], weight_units: [], volume_units: [], release_types: [] },
@@ -480,6 +482,21 @@ export default {
     ApiService.get("/partners").then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
   },
   methods: {
+    printBl() {
+      if (this.printing) return;
+      this.printing = true;
+      // Opened first, while the click still counts, so the browser does not block it as a pop-up.
+      const tab = window.open("", "_blank");
+      ApiService.query(`/jobs/${this.jobId}/bl.pdf`, { responseType: "blob" })
+        .then(({ data }) => {
+          const url = window.URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
+          if (tab) tab.location = url;
+          else window.open(url, "_blank");
+          setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+        })
+        .catch(() => { if (tab) tab.close(); this.error = "The bill of lading could not be printed."; })
+        .finally(() => { this.printing = false; });
+    },
     labelOf(v) {
       return String(v || "").replace(/_/g, " ");
     },

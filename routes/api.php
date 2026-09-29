@@ -590,6 +590,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::get('/payments', [\App\Http\Controllers\Freight\PaymentController::class, 'index']);
         Route::get('/payments/due', [\App\Http\Controllers\Freight\PaymentController::class, 'due']);
         Route::post('/payments/run', [\App\Http\Controllers\Freight\PaymentController::class, 'run']);
+        // The run as a file for the bank's bulk upload (GAPS #445) — the company's own net banking sends it, not us.
+        Route::get('/payments/runs/{runRef}/bank-file', [\App\Http\Controllers\Freight\PaymentController::class, 'bankFile'])->where('runRef', 'RUN-[0-9-]+');
         Route::get('/payments/{id}/posting-preview', [\App\Http\Controllers\Freight\PaymentController::class, 'postingPreview'])->whereNumber('id');
         Route::post('/payments/{id}/post', [\App\Http\Controllers\Freight\PaymentController::class, 'post'])->whereNumber('id');
         Route::get('/money-out/stages', [\App\Http\Controllers\Freight\MoneyOutController::class, 'stages']);

@@ -150,4 +150,38 @@ class SupplierDeductionsTest extends TestCase
 
         $this->assertSame('agreed', $body['lines'][0]['state']);
     }
+
+    /**
+     * The run as a file for the bank's bulk upload (GAPS #445): the transfer (net of commission and discount), the
+     * supplier's decrypted bank details, NEFT or RTGS by amount — accounts only, and never another company's run.
+     */
+    public function test_a_run_downloads_as_a_bank_upload_file(): void
+    {
+        $this->airline->forceFill(['bank_account_no' => '00112233445566', 'bank_ifsc_code' => 'HDFC0000123'])->save();
+        $trucker = Partner::create(['company_id' => $this->airline->company_id, 'agent_id' => $this->branch->id,
+            'name' => 'Road Movers', 'partner_type' => 'transporter']);
+        $big = $this->voucher(300000, '176-10000008');
+        $small = $this->voucher(20000, '176-10000019');
+        $small->forceFill(['vendor_id' => $trucker->id])->save();
+
+        $run = $this->as()->postJson($this->url('/payments/run'), ['agent_id' => $this->branch->id, 'payment_date' => now()->toDateString(),
+            'mode' => 'bank_transfer', 'allocations' => [['purchase_voucher_id' => $big->id, 'amount' => 300000],
+                ['purchase_voucher_id' => $small->id, 'amount' => 20000]],
+            'deductions' => [['vendor_id' => $this->airline->id, 'commission' => 15000, 'discount' => 5000]]])
+            ->assertCreated()->json();
+
+        $csv = $this->as()->get($this->url("/payments/runs/{$run['run_ref']}/bank-file"))->assertOk()->getContent();
+        $rows = array_map('str_getcsv', array_values(array_filter(preg_split('/\R/', trim($csv)))));
+
+        $this->assertSame(['Beneficiary name', 'Account number', 'IFSC', 'Amount', 'Mode', 'Payment reference', 'Narration', 'Check'], $rows[0]);
+        $byName = collect(array_slice($rows, 1))->keyBy(0);
+        $this->assertSame(['00112233445566', 'HDFC0000123', '280000.00', 'RTGS'], array_slice($byName['Emirates SkyCargo'], 1, 4));
+        $this->assertSame(['20000.00', 'NEFT'], array_slice($byName['Road Movers'], 3, 2));
+        $this->assertStringContainsString('Bank details missing', $byName['Road Movers'][7]);
+
+        $boss = User::create(['name' => 'Boss', 'email' => 'boss-ded@test.local', 'password' => Hash::make('x'),
+            'company_name' => $this->accounts->company_name, 'branch_name' => $this->branch->id, 'designation' => 'boss', 'is_active' => 1]);
+        $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($boss), 'Accept' => 'application/json'])
+            ->get($this->url("/payments/runs/{$run['run_ref']}/bank-file"))->assertForbidden();
+    }
 }

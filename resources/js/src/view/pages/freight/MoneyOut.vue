@@ -258,6 +258,7 @@
                 <td><StatusChip :value="p.is_posted ? 'posted' : 'unposted'" /></td>
                 <td v-if="canPay" class="fx-row-actions">
                   <button v-if="!p.is_posted" class="fx-btn" :disabled="busy" @click="post(p)">Post</button>
+                  <button v-if="p.run_ref" class="fx-btn fx-btn--ghost" :disabled="busy" @click="bankFile(p.run_ref)">Bank file</button>
                 </td>
               </tr>
             </tbody>
@@ -278,6 +279,36 @@
             Transfer {{ money(lastRun.to_transfer) }}, not the total.
           </template>
         </p>
+
+        <!-- How the money actually leaves (GAPS #445): through the company's OWN bank, never from here. -->
+        <details v-if="lastRun || payments.length" class="fx-section" :open="!!lastRun">
+          <summary><strong>How to pay this run from your bank</strong></summary>
+          <ol>
+            <li>
+              <strong>Download the bank file</strong>
+              <button v-if="lastRun" class="fx-btn" :disabled="busy" @click="bankFile(lastRun.run_ref)">Bank file for {{ lastRun.run_ref }}</button>
+              <span v-else class="fx-muted">— the <em>Bank file</em> button on any payment below gives its whole run.</span>
+              One row per supplier: name, account number, IFSC, the amount to transfer (already less TDS, commission and
+              discount), NEFT or RTGS, and our payment number as the reference. A row marked in the <em>Check</em> column has
+              no bank details yet — add them in Clients &amp; Partners first.
+            </li>
+            <li>
+              <strong>Log in to your bank's corporate net banking</strong> and open its bulk payment upload (banks call it
+              <em>Bulk Upload</em>, <em>Bulk Payments</em> or <em>File Upload</em>). Download your bank's template from
+              there the first time, and copy the columns across — the headings differ slightly from bank to bank.
+            </li>
+            <li>
+              <strong>Upload the file and have it approved</strong> by your authorised signatories, with your bank's own
+              OTP or approval rules. The bank sends each payment; nothing leaves from this screen.
+            </li>
+            <li>
+              <strong>Record the bank's reference.</strong> Once the bank confirms, <em>Post</em> each payment here. When
+              the statement arrives — through Setu if the account is connected, or a CSV if not — each debit is matched
+              to its payment on the reconciliation screen.
+            </li>
+          </ol>
+          <p class="fx-muted">Paying one supplier? The same row can be keyed straight into your bank's single transfer instead.</p>
+        </details>
       </template>
     </template>
 
@@ -494,6 +525,21 @@ export default {
         .catch((e) => {
           this.actionError = (e.response && e.response.data && e.response.data.error) || "The run could not be built.";
         })
+        .finally(() => { this.busy = false; });
+    },
+    /** The run as a CSV for the bank's bulk upload — downloaded with the session's token, like every document. */
+    bankFile(runRef) {
+      this.busy = true;
+      this.actionError = null;
+      ApiService.query(`/payments/runs/${runRef}/bank-file`, { responseType: "blob" })
+        .then(({ data }) => {
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(data);
+          link.download = runRef + "-bank-upload.csv";
+          link.click();
+          URL.revokeObjectURL(link.href);
+        })
+        .catch(() => { this.actionError = "The bank file could not be made."; })
         .finally(() => { this.busy = false; });
     },
     post(payment) {

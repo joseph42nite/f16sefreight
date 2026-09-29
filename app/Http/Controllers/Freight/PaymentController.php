@@ -365,6 +365,50 @@ class PaymentController extends Controller
         return response()->json($payment->fresh());
     }
 
+    /**
+     * A run as a CSV for the bank's BULK PAYMENT upload (owner, 2026-09-29; GAPS #445): one row per supplier with the
+     * columns every Indian bank's bulk template asks for — beneficiary, account, IFSC, amount, mode, reference. The
+     * company copies these into its own bank's template in corporate net banking, where its signatories approve it.
+     *
+     * 🔐 Nothing is sent to any bank from here, and no banking credential is held: this is a file for a person. It
+     * carries decrypted account numbers, so it is accounts' alone and every download is audited.
+     * ⚠️ The amount is the TRANSFER — less TDS, commission and discount — never the gross the vouchers are settled at.
+     */
+    public function bankFile(string $runRef)
+    {
+        $this->authorize('postLedger');
+
+        $payments = AccountsPayment::withoutGlobalScopes()->where('run_ref', $runRef)
+            ->whereIn('agent_id', $this->branches()->pluck('id'))->orderBy('id')->get();
+        abort_if($payments->isEmpty(), 404);
+
+        $out = fopen('php://temp', 'r+');
+        fputcsv($out, ['Beneficiary name', 'Account number', 'IFSC', 'Amount', 'Mode', 'Payment reference', 'Narration', 'Check']);
+
+        foreach ($payments as $payment) {
+            $vendor = \App\Partner::withoutGlobalScopes()->find($payment->payee_id);
+            $amount = round((float) $payment->amount - (float) $payment->tds_amount
+                - (float) $payment->commission_amount - (float) $payment->discount_amount, 2);
+            $missing = blank($vendor?->bank_account_no) || blank($vendor?->bank_ifsc_code);
+
+            fputcsv($out, [
+                $vendor?->name, $vendor?->bank_account_no, $vendor?->bank_ifsc_code, number_format($amount, 2, '.', ''),
+                // RBI: RTGS is for ₹2,00,000 and above; below it NEFT. The bank may offer IMPS too — the desk decides.
+                $amount >= 200000 ? 'RTGS' : 'NEFT',
+                $payment->payment_no, mb_substr('Payment ' . $payment->payment_no, 0, 30),
+                $missing ? 'Bank details missing — add them in Clients & Partners before uploading' : '',
+            ]);
+        }
+
+        rewind($out);
+        $csv = stream_get_contents($out);
+        fclose($out);
+
+        $this->audit->record((int) $payments->first()->agent_id, 'payment.bank_file_downloaded', 'payment', (int) $payments->first()->id, auth()->id());
+
+        return response($csv, 200, ['Content-Type' => 'text/csv', 'Content-Disposition' => 'attachment; filename="' . $runRef . '-bank-upload.csv"']);
+    }
+
     /** The exact journal the post will write. */
     public function postingPreview(int $id): JsonResponse
     {

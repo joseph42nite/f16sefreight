@@ -573,7 +573,14 @@ class SalesDashboardController extends Controller
                 's.credit_utilization', 's.client_health_score',
                 'p.risk_band', 'p.overdue_ratio', 'p.last_shipment_at', 'p.is_irregular',
             ])
-            ->map(fn ($r) => (array) $r)
+            // The score's parts, each in [0, 1] or NULL — the page shows the bars, never the bare number (PRD §7.3.4 H).
+            ->map(function ($r) use ($latest) {
+                $health = app(\App\Services\Sales\ClientHealth::class);
+                $r->health = $health->components($r->momentum === null ? null : (float) $r->momentum, $r->risk_band,
+                    $r->win_rate === null ? null : (float) $r->win_rate,
+                    $health->paymentScore((int) $r->customer_id, \Illuminate\Support\Carbon::parse($latest)), null);
+                return (array) $r;
+            })
             ->all();
     }
 

@@ -340,6 +340,8 @@
               <th class="fx-num" scope="col">Revenue MTD</th>
               <th class="fx-num" scope="col">Win rate</th>
               <th class="fx-num" scope="col">Outstanding 60+</th>
+              <th class="fx-num" scope="col" title="Days from bill to the client's payment, unpaid bills counted to today">Days to pay</th>
+              <th scope="col">Health</th>
             </tr>
           </thead>
           <tbody>
@@ -351,6 +353,13 @@
               <!-- §7.1 NULL is not 0% — an unmeasurable rate renders as an em dash. -->
               <td class="fx-num"><Figure :value="c.win_rate" kind="count" /></td>
               <td class="fx-num"><Figure :value="c.outstanding_60_plus" kind="currency" currency-code="INR" /></td>
+              <td class="fx-num"><Figure :value="c.dso_days" kind="count" /></td>
+              <td>
+                <HealthBars
+                  :score="c.client_health_score === null ? null : Number(c.client_health_score)"
+                  :parts="c.health || {}"
+                />
+              </td>
             </tr>
           </tbody>
         </table>
@@ -409,6 +418,7 @@ import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxChart from "@/view/pages/freight/components/FxChart.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
+import HealthBars from "@/view/pages/freight/components/HealthBars.vue";
 
 /** What each suggested email is about, in the rep's words. */
 const TYPE_LABELS = {
@@ -423,7 +433,7 @@ const list = (text) => String(text || "").split(",").map((s) => s.trim()).filter
 
 export default {
   name: "SalesDashboard",
-  components: { Figure, StatusChip, FxChart, FxDrawer, MailEditor },
+  components: { Figure, StatusChip, FxChart, FxDrawer, MailEditor, HealthBars },
   data: () => ({
     emails: [], hasMailbox: true, showsClientNames: false, outreachLoaded: false,
     dismissReasons: {}, dismissing: null, dismissed: [], dismissedByReason: {},

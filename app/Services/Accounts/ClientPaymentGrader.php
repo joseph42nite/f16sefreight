@@ -113,9 +113,11 @@ class ClientPaymentGrader
      * neither, WHEN it was paid is unknown and it is returned as undated — its last update is when somebody edited
      * it, not when the client paid, and reading it as the payment date made punctual clients look months late.
      *
+     * Shared with the sales engine's DSO (GAPS #450), so "when did they pay" has one answer.
+     *
      * @return array{0: array<int, Carbon>, 1: array<int, true>} bill id => settled on; bill id => undated
      */
-    private function settledOn(Collection $bills, Carbon $end): array
+    public function settledOn(Collection $bills, Carbon $end): array
     {
         $allocations = DB::table('accounts_receipt_allocations as a')
             ->join('accounts_receipts as r', 'r.id', '=', 'a.receipt_id')

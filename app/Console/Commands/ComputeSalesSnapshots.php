@@ -37,9 +37,11 @@ use Illuminate\Support\Facades\DB;
  *   C  Funnel      win rate = converted ÷ (converted + lost); lost on price / on service = that reason ÷ all lost.
  *   D  Lanes       concentration (HHI) = Σ (lane kg ÷ total kg)².
  *   F  Money       revenue and tonnage MTD / YTD; aging 0–30 / 31–60 / 60+ by invoice date;
- *                  DSO = value-weighted days from invoice to payment (bank match date) for paid invoices,
- *                  and to today for unpaid ones past their terms; drift = DSO − payment terms;
+ *                  DSO = rupee-weighted days from invoice to payment (the settling receipt's date) for paid bills,
+ *                  and to today for unpaid ones past their due date; drift = DSO − payment terms;
  *                  credit use = amount owed ÷ credit limit.
+ *   H  Health      0.30 trend + 0.25 rhythm + 0.20 win rate + 0.15 payment card + 0.10 ops, each in [0, 1];
+ *                  a part without data dropped and the rest re-weighted; under three parts, none (ClientHealth).
  */
 class ComputeSalesSnapshots extends Command
 {
@@ -145,6 +147,10 @@ class ComputeSalesSnapshots extends Command
         $momentum = $this->momentum($shipments, $date);
         $monthStart = $date->copy()->startOfMonth();
         $yearStart = ClientHistory::financialYearStart($date);
+        // The rhythm first: its band is one of the health score's parts.
+        $profile = $this->rhythm($agentId, $customerId, $mode, $shipments, $date);
+        $health = app(\App\Services\Sales\ClientHealth::class);
+        $parts = $health->components($momentum, $profile->risk_band, $funnel['win_rate'], $health->paymentScore($customerId, $date), null);
 
         DB::table('customer_performance_snapshots')->updateOrInsert(
             ['customer_id' => $customerId, 'transport_mode' => $mode, 'snapshot_date' => $date->toDateString()],
@@ -156,13 +162,14 @@ class ComputeSalesSnapshots extends Command
                 'enquiry_count_mtd' => $enquiries->filter(fn ($e) => Carbon::parse($e->created_at)->gte($monthStart))->count(),
                 'momentum' => $momentum,
                 'lane_hhi' => $this->laneConcentration($shipments),
+                // H — ops health (G) is not computed yet, so it is always the dropped part.
+                'client_health_score' => $health->score($parts),
                 'last_computed_at' => now(),
                 'updated_at' => now(),
                 'created_at' => now(),
             ], $funnel, $money)
         );
 
-        $profile = $this->rhythm($agentId, $customerId, $mode, $shipments, $date);
         $this->laneStats($agentId, $customerId, $mode, $shipments, $enquiries, $date);
         $this->rankActions($agentId, $customerId, $mode, $customer, $profile, $funnel, $money, $date);
         $this->clientEmails($agentId, $customerId, $mode, $customer, $profile, $momentum, $funnel, $shipments, $branchShipments, $enquiries, $date);
@@ -354,27 +361,36 @@ class ComputeSalesSnapshots extends Command
     }
 
     /**
-     * Days to pay, weighted by invoice value (PRD §7.3.4 F). Paid invoices count to the day the bank
-     * payment was matched (the invoice's last update when no match is on file); unpaid invoices past their
-     * terms count to today — leaving them out would make a client who never pays look like the best payer.
+     * Days to pay (DSO), weighted by each bill's value in rupees at its own rate (PRD §7.3.4 F).
+     *
+     * 🔴 **"Paid" is the day the client paid** — the date of the receipt that settled the bill, or for a bill paid
+     * before receipts existed, its matched bank line's VALUE date — by the payment card's own rule
+     * (`ClientPaymentGrader::settledOn`, GAPS #450). It used to be the day the bank line was IMPORTED, or the bill's
+     * last edit when nothing matched: a statement uploaded a week late made a punctual client a week slower, and an
+     * edit made months later read as months late. A bill marked paid with no dated evidence is not measured at all.
+     *
+     * Unpaid bills past their due date count to the snapshot day — leaving them out would make a client who never
+     * pays look like the best payer. Credit notes are not a bill to pay.
      */
     private function daysToPay(Collection $invoices, object $customer, Carbon $date): ?int
     {
         $terms = (int) ($customer->payment_terms_days ?? self::DEFAULT_TERMS_DAYS);
-        $paid = $invoices->where('status', 'paid');
-        $overdue = $invoices->whereIn('status', self::OUTSTANDING)
-            ->filter(fn ($i) => Carbon::parse($i->document_date)->addDays($terms)->lt($date));
+        $bills = $invoices->whereIn('type', \App\Services\Accounts\ClientPaymentGrader::BILLS)
+            ->whereIn('status', \App\Services\Accounts\ClientPaymentGrader::ISSUED)->values();
+
+        [$settled, $undated] = app(\App\Services\Accounts\ClientPaymentGrader::class)->settledOn($bills, $date);
+        $due = fn ($i) => Carbon::parse($i->due_date ?: Carbon::parse($i->document_date)->addDays($terms))->startOfDay();
+
+        $paid = $bills->filter(fn ($i) => isset($settled[$i->id]));
+        $overdue = $bills->filter(fn ($i) => ! isset($settled[$i->id]) && ! isset($undated[$i->id]) && $due($i)->lt($date));
 
         if ($paid->count() + $overdue->count() < self::MIN_INVOICES) {
             return null;
         }
 
-        $matched = DB::table('bank_transactions')->whereIn('matched_invoice_id', $paid->pluck('id'))
-            ->groupBy('matched_invoice_id')->selectRaw('matched_invoice_id, MAX(created_at) AS paid_at')
-            ->pluck('paid_at', 'matched_invoice_id');
-
-        $days = $paid->map(fn ($i) => [Carbon::parse($i->document_date)->diffInDays(Carbon::parse($matched[$i->id] ?? $i->updated_at)), (float) $i->grand_total])
-            ->merge($overdue->map(fn ($i) => [Carbon::parse($i->document_date)->diffInDays($date), (float) $i->grand_total]));
+        $inr = fn ($i) => (float) $i->grand_total * (float) ($i->exchange_rate ?: 1);
+        $days = $paid->map(fn ($i) => [Carbon::parse($i->document_date)->startOfDay()->diffInDays($settled[$i->id]), $inr($i)])
+            ->merge($overdue->map(fn ($i) => [Carbon::parse($i->document_date)->startOfDay()->diffInDays($date), $inr($i)]));
 
         $value = $days->sum(fn ($d) => $d[1]);
 

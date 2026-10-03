@@ -147,30 +147,46 @@ class SalesFormulasTest extends TestCase
     }
 
     /**
-     * 🔴 Days to pay count unpaid invoices past their terms, weighted by value.
-     * Paid ₹1,000, bank match 10 days after the invoice · paid ₹2,000, no match, updated 5 days after ·
-     * unpaid ₹1,000 from 90 days ago (past 30-day terms). (10×1000 + 5×2000 + 90×1000) ÷ 4000 = 27.5 → 28; drift 28 − 30 = −2.
+     * 🔴 Days to pay (DSO) count to the day the client PAID — the receipt that settled the bill — not the day a bank
+     * line was imported, and not the bill's last edit (GAPS #450). Unpaid bills past their due date count to today;
+     * every bill is weighted in rupees at its own rate.
+     * · ₹1,000 of 1 Aug, receipt dated 8 Aug (its bank line imported 11 Aug)          →  7 days
+     * · ₹1,000 of 1 Jul, no receipt, bank line VALUE-dated 21 Jul                     → 20 days
+     * · ₹2,000 of 1 Sep marked paid with no receipt and no bank line (edited 6 Sep)   → not measured, left out
+     * · US$100 at ₹10 = ₹1,000 of 17 Jun, unpaid, due 17 Jul                          → 90 days to 15 Sep
+     * (7×1000 + 20×1000 + 90×1000) ÷ 3000 = 39; drift 39 − 30 = 9.
      */
-    public function test_days_to_pay_include_unpaid_invoices_past_their_terms(): void
+    public function test_days_to_pay_count_to_the_receipt_and_include_unpaid_bills(): void
     {
         $job = $this->shipment($this->daysBefore(100), 100);
-        $invoice = fn (string $status, string $date, float $total, ?string $updated = null) => DB::table('accounts_invoices')->insertGetId([
+        $invoice = fn (string $status, string $date, float $total, float $rate = 1, string $currency = 'INR') => DB::table('accounts_invoices')->insertGetId([
             'agent_id' => $this->branch->id, 'job_id' => $job, 'customer_id' => $this->client->id, 'transport_mode' => 'air',
             'invoice_no' => 'INV-' . random_int(10000, 99999), 'type' => 'invoice', 'document_date' => $date,
             'status' => $status, 'grand_total' => $total, 'amount_paid' => $status === 'paid' ? $total : 0,
-            'created_at' => $date, 'updated_at' => $updated ?? $date,
+            'currency' => $currency, 'exchange_rate' => $rate, 'created_at' => $date, 'updated_at' => $date,
         ]);
+        $bankLine = fn (int $invoiceId, string $valueDate, string $imported) => DB::table('bank_transactions')->insertGetId([
+            'agent_id' => $this->branch->id, 'plaid_transaction_id' => 'p-' . random_int(1, 999999), 'amount' => 1000,
+            'direction' => 'credit', 'value_date' => $valueDate, 'reconciliation_status' => 'matched', 'matched_invoice_id' => $invoiceId,
+            'created_at' => $imported, 'updated_at' => $imported]);
 
-        $matched = $invoice('paid', '2026-08-01', 1000);
-        DB::table('bank_transactions')->insert(['agent_id' => $this->branch->id, 'plaid_transaction_id' => 'p-' . random_int(1, 99999),
-            'amount' => 1000, 'matched_invoice_id' => $matched, 'created_at' => '2026-08-11 09:00:00', 'updated_at' => '2026-08-11 09:00:00']);
-        $invoice('paid', '2026-09-01', 2000, '2026-09-06 09:00:00');
-        $invoice('sent', '2026-06-17', 1000);
+        $receipted = $invoice('paid', '2026-08-01', 1000);
+        $line = $bankLine($receipted, '2026-08-08', '2026-08-11 09:00:00');
+        $receipt = DB::table('accounts_receipts')->insertGetId(['agent_id' => $this->branch->id, 'payer_type' => 'customer',
+            'payer_id' => $this->client->id, 'receipt_no' => 'RC-FRM-' . random_int(1, 99999), 'receipt_date' => '2026-08-08',
+            'mode' => 'bank_transfer', 'amount' => 1000, 'currency' => 'INR', 'exchange_rate' => 1, 'bank_transaction_id' => $line,
+            'is_posted' => 1, 'created_at' => '2026-08-11', 'updated_at' => '2026-08-11']);
+        DB::table('accounts_receipt_allocations')->insert(['receipt_id' => $receipt, 'invoice_id' => $receipted, 'amount' => 1000,
+            'created_at' => now(), 'updated_at' => now()]);
+
+        $bankLine($invoice('paid', '2026-07-01', 1000), '2026-07-21', '2026-07-30 09:00:00');
+        DB::table('accounts_invoices')->where('id', $invoice('paid', '2026-09-01', 2000))->update(['updated_at' => '2026-09-06 09:00:00']);
+        $invoice('sent', '2026-06-17', 100, 10, 'USD');
 
         $snapshot = $this->roll();
 
-        $this->assertSame(28, (int) $snapshot->dso_days);
-        $this->assertSame(-2, (int) $snapshot->payment_drift_days);
+        $this->assertSame(39, (int) $snapshot->dso_days);
+        $this->assertSame(9, (int) $snapshot->payment_drift_days);
     }
 
     /** 🔴 The nightly run re-derives the worklist but never deletes a client email the rep has already drafted. */

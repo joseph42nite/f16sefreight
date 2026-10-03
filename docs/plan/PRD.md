@@ -1795,7 +1795,7 @@ These cannot be retro-fitted usefully — the models need trailing history, so *
 - 🔴 **`enquiries.quoted_amount` + `quoted_currency`.** `quotation_no` is only a reference string. Without the amount, `lost_reason = 'rates_high'` records *that* we lost on price but never *by how much* — so price elasticity, "how close were we", and any defensible renegotiation target are uncomputable. `rates_high` is the most common loss reason; this is the **highest-value column in this document**.
 - ✅ **`email_threads.first_response_at` — now solved by Sent-folder sync (§5.2.3).** The original problem was that `email_messages` held inbound mail only, so outbound replies were never timestamped and response latency was unmeasurable. Syncing Sent Items captures the first outbound message on every thread **regardless of where it was typed**, so `first_response_at` fills automatically and `lost_reason = 'delay_in_response'` becomes provable. **Outbound messages are stamped but never classified** — see §5.2.3.
 - 🟡 **`enquiries.origin_code` / `dest_code`** and **`pdf_processing_jobs.enquiry_id`** — without the latter, the extraction is orphaned and no cargo promotion is possible.
-- 🟡 Lower priority: invoices carry no `paid_at` (DSO is derivable through `bank_transactions.matched_invoice_id`, just a heavier join).
+- ✅ Invoices carry no `paid_at`; the day a bill was paid is the date of the posted receipt whose allocations completed it (a bill paid before receipts existed: its matched bank line's *value* date — never the day the line was imported, and never the bill's last edit). One rule for the payment card and DSO: `ClientPaymentGrader::settledOn` (GAPS #450).
 
 #### 7.3.4 The algorithms
 
@@ -1913,7 +1913,7 @@ Priced from `rate_cards` weight breaks. Runs branch-wide for Tactical (no client
 ```
 -- Settled invoices: actual days to pay. Open invoices: days outstanding SO FAR.
 -- Both are included; excluding open ones would hide the worst payers entirely.
-settled = avg(settlement_date − document_date)   over paid invoices      -- via bank_transactions
+settled = avg(settlement_date − document_date)   over paid invoices      -- the settling RECEIPT's date (GAPS #450)
 open    = avg(today          − document_date)    over unpaid invoices past due
 if count(settled) + count(open) < 3 → payment indices NULL, stop
 
@@ -1965,7 +1965,7 @@ Every component is first mapped to **[0, 1] where 1 = healthiest** (per the norm
 | `momentum_norm` | **B** | `clamp((momentum + 1) / 2, 0, 1)` |
 | `churn_norm` | **A** | `LOW 1.0 · WATCH 0.67 · AT_RISK 0.33 · DORMANT 0.0` |
 | `win_rate` | funnel | already `[0, 1]` — used directly |
-| `payment_norm` | **F** | `clamp(1 − (max(drift, 0) / drift_scale), 0, 1)` — on-time or early = 1.0 |
+| `payment_norm` | **the payment report card** (GAPS #443) | card score ÷ 100. ⚠️ *Changed 2026-10-03 (owner's decision, GAPS #450):* was `clamp(1 − (max(drift, 0) / drift_scale), 0, 1)` from **F**, with `drift_scale` never given. The card grades the client's bills in air AND sea together — the one deliberate exception to §7.3.2, because a client pays one ledger — so the same payment part sits on both their air and sea scores |
 | `ops_health` | **G** | already inverted to `[0, 1]` |
 
 ```

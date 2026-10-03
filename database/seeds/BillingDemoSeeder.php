@@ -123,6 +123,7 @@ class BillingDemoSeeder extends Seeder
         // And the Boss's money strip, which reads financial_snapshots: computed before any of this was posted, it read
         // ₹0 cash and ₹0 payables until the scheduler ran (GAPS #431).
         $this->command->call('snapshots:compute');
+        $this->supplierBankDetails($branches);
         // The last three months' payment report cards (GAPS #443), oldest first so each has last month to trend against.
         foreach ([3, 2, 1] as $back) {
             $this->command->call('clients:payment-report', ['--month' => now()->subMonthsNoOverflow($back)->format('Y-m')]);
@@ -176,6 +177,20 @@ class BillingDemoSeeder extends Seeder
         $noLimit = $owed->keys()->last();
         if ($noLimit !== null && $noLimit !== $biggest) {
             DB::table('customers')->where('id', $noLimit)->update(['credit_limit' => null, 'updated_at' => now()]);
+        }
+    }
+
+    /**
+     * Every demo supplier gets bank details (GAPS #445), so a payment run's bank file is complete — a real company keys
+     * these in Clients & Partners. Demo numbers only; encrypted at rest by the model like any other.
+     */
+    private function supplierBankDetails(array $branches): void
+    {
+        foreach (Partner::withoutGlobalScopes()->whereIn('agent_id', $branches)->get() as $partner) {
+            if (blank($partner->bank_account_no)) {
+                $partner->forceFill(['bank_name' => 'HDFC Bank', 'bank_account_no' => '502000' . str_pad((string) $partner->id, 8, '0', STR_PAD_LEFT),
+                    'bank_ifsc_code' => 'HDFC0000' . str_pad((string) ($partner->id % 1000), 3, '0', STR_PAD_LEFT)])->save();
+            }
         }
     }
 

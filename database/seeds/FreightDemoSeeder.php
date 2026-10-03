@@ -66,6 +66,9 @@ class FreightDemoSeeder extends Seeder
 
     private const DESIGNATIONS = ['pricing', 'operations', 'sales', 'accounts', 'boss'];
 
+    /** The Core company: one login (its designation is inert on Core), the document forms and nothing else. */
+    private const CORE = ['code' => 'CORE', 'name' => 'Core Docs Co', 'domain' => 'coredocs.test', 'email' => 'core@demo.test', 'user' => 'Meera Joshi'];
+
     /**
      * Real names, because CLIENTS read them: the automated updates say "Priya Nair from our operations team will be
      * taking care of it" (user, 2026-09-16). The email is still what identifies the login.
@@ -126,7 +129,11 @@ class FreightDemoSeeder extends Seeder
         }
 
         $this->seedPlatformStaff();
+        $this->purge(self::CORE['code']);
         $this->syncSequenceCounters();
+        // A Core company (owner, 2026-09-29: FocusSea is the same as FocusAir — Core gets the documents, the consol and
+        // search, nothing else; GAPS #439). After the counters: its numbers come from the sequence service.
+        $this->seedCoreTenant();
         // After the counters: imports draw their numbers from the sequence service, which must start past the
         // numbers the rest of the demo wrote directly.
         foreach (self::TENANTS as $tenant) {
@@ -1920,6 +1927,41 @@ class FreightDemoSeeder extends Seeder
         }
     }
 
+    /**
+     * One Core company: a branch, one login and a sea master with a house made inside it — exactly what a Core company
+     * can make itself, since it has no enquiries (GAPS #439). Its air side is the AWB forms, which need no seed.
+     */
+    private function seedCoreTenant(): void
+    {
+        $company = Company::firstOrCreate(['code' => self::CORE['code']],
+            ['name' => self::CORE['name'], 'tier' => 'core', 'email_domain' => self::CORE['domain'], 'ocr_credits_balance' => 0]);
+        $company->update(['tier' => 'core', 'name' => self::CORE['name']]);
+        $branch = Agent::firstOrCreate(['company_id' => $company->id, 'branch_code' => 'BOM'],
+            ['agent_name' => 'Mumbai', 'agent_city' => 'Mumbai', 'agent_country' => 'India', 'gst_no' => '27AACCC1234E1Z3']);
+        SystemActor::forBranch($branch->id);
+
+        $user = User::updateOrCreate(['email' => self::CORE['email']], ['name' => self::CORE['user'], 'password' => Hash::make(self::PASSWORD),
+            'company_name' => $company->id, 'branch_name' => $branch->id, 'designation' => 'operations', 'is_active' => 1]);
+        // A login needs its `roles` row as well as the user (see the note at the top of this seeder).
+        DB::table('roles')->updateOrInsert(['email' => self::CORE['email']], ['role' => 'user', 'updated_at' => now(), 'created_at' => now()]);
+
+        $sequences = app(\App\Services\EnquirySequenceService::class);
+        $master = Job::withoutGlobalScopes()->create(['agent_id' => $branch->id, 'enquiry_id' => null, 'transport_mode' => 'sea',
+            'direction' => 'export', 'is_consolidation' => true, 'cargo_type' => 'fcl', 'delivery_mode' => 'fcl', 'pricing_id' => $user->id,
+            'execution_job_no' => $sequences->next($branch->id, 'JOBS')]);
+        DB::table('sea_shipment_details')->insert(['job_id' => $master->id, 'vessel_name' => 'MSC ANNA', 'voyage_no' => '412W',
+            'pol_code' => 'INNSA', 'pod_code' => 'DEHAM', 'mbl_number' => 'MEDUCORE001', 'freight_terms' => 'prepaid',
+            'filing_status' => 'not_filed', 'created_at' => now(), 'updated_at' => now()]);
+        app(\App\Services\SeaParties::class)->prefill($master);
+
+        $house = Job::withoutGlobalScopes()->create(['agent_id' => $branch->id, 'enquiry_id' => null, 'transport_mode' => 'sea',
+            'direction' => 'export', 'parent_job_id' => $master->id, 'is_sub_shipment' => true, 'cargo_type' => 'lcl', 'delivery_mode' => 'lcl',
+            'pricing_id' => $user->id, 'execution_job_no' => $sequences->next($branch->id, 'JOBS')]);
+        DB::table('sea_shipment_details')->insert(['job_id' => $house->id, 'hbl_number' => 'HBLCORE001', 'piece_count' => 12,
+            'gross_weight' => 2400, 'volume_cbm' => 9.5, 'filing_status' => 'not_filed', 'created_at' => now(), 'updated_at' => now()]);
+        app(\App\Services\ConsolidationService::class)->link($master, $house);
+    }
+
     private function summary(): void
     {
         $this->command->newLine();
@@ -1937,6 +1979,7 @@ class FreightDemoSeeder extends Seeder
             }
         }
 
+        $rows[] = ['core', self::CORE['email'], 'the one Core login · Mumbai', self::CORE['user']];
         $this->command->table(['Tier', 'Email', 'Designation', 'Name'], $rows);
 
         $this->command->line('  Platform staff (superadmin. portal, separate guard): staff@f16s.test');

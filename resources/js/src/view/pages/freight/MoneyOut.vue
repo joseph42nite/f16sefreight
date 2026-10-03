@@ -281,13 +281,13 @@
         </p>
 
         <!-- How the money actually leaves (GAPS #445): through the company's OWN bank, never from here. -->
-        <details v-if="lastRun || payments.length" class="fx-section" :open="!!lastRun">
+        <details class="fx-section" :open="!!lastRun">
           <summary><strong>How to pay this run from your bank</strong></summary>
           <ol>
             <li>
               <strong>Download the bank file</strong>
               <button v-if="lastRun" class="fx-btn" :disabled="busy" @click="bankFile(lastRun.run_ref)">Bank file for {{ lastRun.run_ref }}</button>
-              <span v-else class="fx-muted">— the <em>Bank file</em> button on any payment below gives its whole run.</span>
+              <span v-else class="fx-muted">— raise a run first; then the <em>Bank file</em> button on any of its payments gives the whole run.</span>
               One row per supplier: name, account number, IFSC, the amount to transfer (already less TDS, commission and
               discount), NEFT or RTGS, and our payment number as the reference. A row marked in the <em>Check</em> column has
               no bank details yet — add them in Clients &amp; Partners first.

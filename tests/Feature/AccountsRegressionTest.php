@@ -32,6 +32,19 @@ class AccountsRegressionTest extends TestCase
     }
 
     /**
+     * The same figures on the second day of a quarter (GAPS #449). The fixture's two TDS deductions are dated a few
+     * days back, so early in a quarter one falls in the quarter before; the check must read each in the quarter it
+     * was made, not today's — it failed 2/176 every first week of a quarter.
+     */
+    public function test_every_figure_holds_in_the_first_days_of_a_quarter(): void
+    {
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-07-02 11:00'));
+
+        $this->artisan('db:seed', ['--class' => '\AccountsRegressionSeeder', '--force' => true])->assertExitCode(0);
+        $this->artisan('accounts:verify')->assertExitCode(0);
+    }
+
+    /**
      * 🔒 The whole accounts section is Command-tier. A Tactical tenant's accounts login is refused at the gate,
      * not shown an empty screen — an empty register reads as "we have no invoices", which is a different and
      * much worse answer than "your plan does not include this".

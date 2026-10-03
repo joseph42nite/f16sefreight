@@ -31,7 +31,7 @@ Paste this into the new session:
 - **End-to-end check (#447):** everything green except two tests needing the gitignored `config/common-data.php`.
 - **Connect your bank + alerts (#448):** Today and Money in ④ ask for a bank account until one is connected or has a statement; the bell (accounts, Boss, the client's salesperson) and Today carry a supplier bill due tomorrow, money matched short and left owed, a client who slipped a grade letter — `accounts:alerts`, hourly, once per event.
 - **Health score + DSO (#450):** the nightly sales rollup fills PRD §7.3.4 H (payment part = the client's report card, owner's call); DSO counts to the settling receipt's date. Sales → Accounts shows *Days to pay* and the score with its bars. Ops health (G) is still uncomputed, so it is always dropped.
-- ⚠️ **`accounts:verify` TDS check is quarter-dated (#449):** fails 2/176 in a quarter's first days, before and after #448; not fixed.
+- **`accounts:verify` TDS check (#449):** reads each deduction in its own quarter; 176/176 on any date, pinned by a test on 2 July.
 
 ## Waiting on the owner
 - BL / house / arrival notice / DO print layouts (#433, #434); import party mapping (#434a).
@@ -44,7 +44,7 @@ Paste this into the new session:
 1. ~~"Connect your bank" + alerts~~ — done (#448).
 2. CASS importer once sample files arrive.
 3. ~~Health score + DSO from receipt dates~~ — done (#450).
-4. Fix the quarter-dated TDS check in `accounts:verify` (#449).
+4. ~~Fix the quarter-dated TDS check~~ — done (#449).
 
 ## On the Mac after pulling
 ```

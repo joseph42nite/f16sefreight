@@ -384,10 +384,20 @@ class VerifyAccounts extends Command
      */
     private function tds(): void
     {
-        [$financialYear, $quarter] = \App\Services\TdsService::period(now()->toDateString());
+        // 🔴 Each direction is read in the quarter its deduction was MADE in, from the fixture's own date — not today's
+        // quarter. The two are dated a few days back, so in a quarter's first days one fell in the quarter before and
+        // the check failed on figures that were right (GAPS #449). The date is the fixture's; the windowing is still
+        // the register's, so a deduction filed under the wrong quarter still fails here.
+        $register = function (string $direction) {
+            $on = DB::table('tds_entries')->whereIn('agent_id', $this->branchIds())->where('direction', $direction)
+                ->orderBy('id')->value('deducted_on') ?? now()->toDateString();
+            [$financialYear, $quarter] = \App\Services\TdsService::period((string) $on);
 
-        $body = json_decode(app(\App\Http\Controllers\Freight\TdsController::class)
-            ->index(new Request(['financial_year' => $financialYear, 'quarter' => $quarter]))->getContent(), true);
+            return json_decode(app(\App\Http\Controllers\Freight\TdsController::class)
+                ->index(new Request(['financial_year' => $financialYear, 'quarter' => $quarter]))->getContent(), true);
+        };
+        $body = $register('deducted_by_us');
+        $body['receivable'] = $register('deducted_from_us')['receivable'];
 
         // 🔴 OUTWARD. j1's voucher is 70,000 net of GST; the carrier is 194C at 2% and has a PAN, so the
         // ordinary rate applies rather than the 20% s.206AA penalty. 2% of 70,000 = 1,400.

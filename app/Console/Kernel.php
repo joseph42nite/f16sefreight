@@ -71,6 +71,13 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer();
 
+        // The desk's bell: a supplier bill due tomorrow, money in short, a client who slipped (GAPS #448). Each event
+        // rings once, so hourly only means a short payment matched at 10:05 is heard by 11:00.
+        $schedule->command('accounts:alerts')
+            ->hourly()
+            ->withoutOverlapping()
+            ->onOneServer();
+
         // Mail is kept three months after a conversation's last message; the figures stay (user, 2026-09-16).
         $schedule->command('mail:prune')
             ->dailyAt('02:30')

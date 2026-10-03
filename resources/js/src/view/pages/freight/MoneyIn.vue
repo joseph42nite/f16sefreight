@@ -48,6 +48,22 @@
         </router-link>
       </div>
 
+      <!-- An account nobody connected is one nothing will ever be matched in (GAPS #448): the next step, not an error. -->
+      <div v-if="stage === 'money_in' && current && current.has_bank_account === false" class="fx-toolbar">
+        <p class="fx-muted">No bank account is set up, so nothing that arrives can be matched here.</p>
+        <router-link class="fx-btn" to="/settings/finance">Add a bank account</router-link>
+      </div>
+      <div v-else-if="stage === 'money_in' && current && current.unconnected && current.unconnected.length" class="fx-toolbar">
+        <p class="fx-muted">
+          {{ current.unconnected.map((a) => a.name).join(", ") }}
+          {{ current.unconnected.length === 1 ? "is" : "are" }} not connected, so its money cannot be matched here.
+        </p>
+        <router-link class="fx-btn" to="/settings/finance">Connect with Setu</router-link>
+        <router-link class="fx-btn fx-btn--ghost" :to="{ path: '/financials', query: { view: 'bank' } }">
+          Upload a statement
+        </router-link>
+      </div>
+
       <!--
         ⚠️ The stage renders the register that ALREADY owns it. Merging the pages was navigation, not a rewrite —
         every figure below is served by the same endpoint it was before, which is what lets the money fixture

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
+use App\Services\Accounts\AccountsAlerts;
 use App\Services\AgeingService;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +23,10 @@ use Illuminate\Support\Facades\DB;
  */
 class AccountsTodayController extends Controller
 {
-    public function __construct(private readonly AgeingService $ageing) {}
+    public function __construct(
+        private readonly AgeingService $ageing,
+        private readonly AccountsAlerts $alerts,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -178,7 +182,8 @@ class AccountsTodayController extends Controller
                 'to' => ['path' => '/money-in', 'query' => ['stage' => 'to_bill']]];
         }
 
-        return $out;
+        // The bank to connect, a supplier bill due tomorrow, money that came in short, a client who slipped (GAPS #448).
+        return array_merge($out, $this->alerts->forToday($scope));
     }
 
     private function branches()

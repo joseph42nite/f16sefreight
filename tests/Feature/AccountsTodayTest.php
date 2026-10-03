@@ -130,6 +130,10 @@ class AccountsTodayTest extends TestCase
 
     public function test_a_clear_desk_says_so_rather_than_showing_empty_cards(): void
     {
+        // A clear desk has its bank connected — without one, "connect your bank" is the day's first job (GAPS #448).
+        \App\BankAccount::withoutGlobalScopes()->create(['agent_id' => $this->branch->id, 'name' => 'HDFC current',
+            'account_code' => '1100-Bank-hdfc', 'currency' => 'INR', 'is_active' => true, 'provider' => 'setu', 'feed_status' => 'active']);
+
         $body = $this->as($this->accounts)->getJson($this->url())->assertOk()->json();
 
         $this->assertSame([], $body['exceptions']);

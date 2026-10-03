@@ -145,13 +145,22 @@ export default {
       if (n.type.indexOf("Reassignment") !== -1) {
         return "Handover requested on " + (n.data.job_no || "a job");
       }
+      /* Accounts alerts (GAPS #448) carry their own sentence, written where the figures are. */
+      if (n.type === "AccountsAlert") {
+        return n.data.text;
+      }
       if (n.type === "ThreadAssigned") {
         return (n.data.by || "A colleague") + " assigned you a conversation: " + (n.data.subject || "(no subject)");
       }
       return n.type.split("\\").pop().replace(/([a-z])([A-Z])/g, "$1 $2");
     },
-    /** A notice about a conversation opens it. */
+    /** A notice about a conversation opens it; an accounts alert opens the stage it names. */
     goTo(n) {
+      if (n.type === "AccountsAlert" && n.data.to) {
+        this.open = false;
+        this.$router.push(n.data.to).catch(() => {});
+        return;
+      }
       if ((n.type === "ThreadAssigned" || n.type === "ClientUpdateReady") && n.data.thread_id) {
         this.open = false;
         // `n` makes a card for the conversation already open reload it, not a no-op on the same URL.

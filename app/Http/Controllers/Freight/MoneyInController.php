@@ -71,6 +71,9 @@ class MoneyInController extends Controller
                  'count' => (int) $received->n + (int) $unplaced->n,
                  'amount' => round((float) $received->total, 2),
                  'unplaced' => ['count' => (int) $unplaced->n, 'amount' => round((float) $unplaced->total, 2)],
+                 // Accounts nothing will ever be matched in until they are connected or a statement is uploaded.
+                 'unconnected' => app(\App\Services\Accounts\AccountsAlerts::class)->unconnectedAccounts($scope),
+                 'has_bank_account' => DB::table('bank_accounts')->whereIn('agent_id', $scope)->where('is_active', true)->exists(),
                  'note' => (int) $unplaced->n > 0
                      ? (int) $unplaced->n . ' payment(s) still to place.'
                      : 'Everything that arrived is placed.'],

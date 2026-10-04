@@ -93,8 +93,11 @@ return [
      * 2026-09-29b — compacted (owner: "make sure the Jev prompt is not too long"): ~1,260 → ~830 tokens, and the
      *               direction question is not sent when a lane answers it (~680). Every measured boundary sentence
      *               kept in substance; the rest shortened. Re-measure.
+     * 2026-10-04  — measured on the live model: 39/40 — "BLR JFK AC Booking RFQ" (an airport pair, nothing else)
+     *               lost its direction at 0.53 < 0.60. Restored the two phrases the compaction cut: "ports or
+     *               airports named" and export's "from an Indian origin to an overseas destination".
      */
-    'rubric_version' => '2026-09-29b',
+    'rubric_version' => '2026-10-04',
 
     /*
     |--------------------------------------------------------------------------
@@ -199,14 +202,14 @@ return [
         'direction' => [
             'min_confidence' => (float) env('MAIL_INTENT_DIRECTION_FLOOR', 0.60),
 
-            'instructions' => 'We are in India. Is the cargo coming into India or leaving it? Judge the route, ports '
-                . 'and words like pre-alert, arrival or delivery order, not where the sender is.',
+            'instructions' => 'We are in India. Is the cargo coming into India or leaving it? Judge the route, the ports '
+                . 'or airports named, and words like pre-alert, arrival or delivery order, not where the sender is.',
 
             'criteria' => [
                 'import' => 'Inbound to India: a pre-alert, arrival notice, delivery order or clearance here, or a rate '
                     . 'for cargo from abroad.',
-                'export' => 'Outbound from India: a booking, rate request, shipping instructions or shipping bill for '
-                    . 'cargo going abroad.',
+                'export' => 'Outbound from India: a booking or rate request from an Indian origin to an overseas '
+                    . 'destination, shipping instructions or a shipping bill for cargo going abroad.',
                 'cannot_tell' => 'No direction given: an invoice or payment without a route, a general question, or no '
                     . 'shipment.',
             ],

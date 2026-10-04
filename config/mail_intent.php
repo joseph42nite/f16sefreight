@@ -96,8 +96,10 @@ return [
      * 2026-10-04  — measured on the live model: 39/40 — "BLR JFK AC Booking RFQ" (an airport pair, nothing else)
      *               lost its direction at 0.53 < 0.60. Restored the two phrases the compaction cut: "ports or
      *               airports named" and export's "from an Indian origin to an overseas destination".
+     * 2026-10-04b — import's "an overseas shipper or agent sending it to a buyer here" restored too (the last #438
+     *               cut): Pre-alert SIN-BOM 0/5 → 2/5 (direction 0.55–0.70), nothing else moved. GAPS #453.
      */
-    'rubric_version' => '2026-10-04',
+    'rubric_version' => '2026-10-04b',
 
     /*
     |--------------------------------------------------------------------------
@@ -206,8 +208,8 @@ return [
                 . 'or airports named, and words like pre-alert, arrival or delivery order, not where the sender is.',
 
             'criteria' => [
-                'import' => 'Inbound to India: a pre-alert, arrival notice, delivery order or clearance here, or a rate '
-                    . 'for cargo from abroad.',
+                'import' => 'Inbound to India: an overseas shipper or agent sending it to a buyer here, a pre-alert, '
+                    . 'arrival notice, delivery order or clearance here, or a rate for cargo from abroad.',
                 'export' => 'Outbound from India: a booking or rate request from an Indian origin to an overseas '
                     . 'destination, shipping instructions or a shipping bill for cargo going abroad.',
                 'cannot_tell' => 'No direction given: an invoice or payment without a route, a general question, or no '

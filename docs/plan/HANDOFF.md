@@ -36,7 +36,7 @@ Paste this into the new session:
 - **Accountant questions (#446)**. **End-to-end check (#447)**.
 
 ## Not measured yet — run on the Mac
-- ~~Rubric check~~ measured 2026-10-04 (#453): sea 26/26; air 39/40 over five runs — *Pre-alert SIN-BOM*'s direction sits at 0.50–0.59 < 0.60. ❓ Owner to decide the next wording try (import's "an overseas shipper or agent sending it to a buyer here" is the last #438 cut not restored).
+- ~~Rubric check~~ measured 2026-10-04 (#453): sea 26/26; air 39–40/40 — with every #438 cut restored (`2026-10-04b`) *Pre-alert SIN-BOM* passes 2/5 (direction 0.55–0.70 vs 0.60). ❓ Owner: further wording would be new, not a restore.
 - A real bill of lading through the BL reader (#441) — the AI server is now running; send back any field it misreads.
 - Setu's request shapes against their sandbox (`app/Services/Bank/SetuAccountAggregator.php`, #442).
 

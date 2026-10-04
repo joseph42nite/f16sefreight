@@ -174,7 +174,8 @@ class DocumentShareLinkTest extends TestCase
     /** 🔒 A document id must not be enough to publish another tenant's paperwork. */
     public function test_another_tenant_cannot_mint_a_link_for_this_document(): void
     {
-        $other = Company::create(['name' => 'Rival Co', 'code' => 'RIV', 'tier' => 'command']);
+        // Not 'RIV': AccountsRegressionSeeder's rival owns that code (GAPS #455).
+        $other = Company::create(['name' => 'Rival Co', 'code' => 'RIVDS', 'tier' => 'command']);
         $branch = Agent::create(['company_id' => $other->id, 'agent_name' => 'DEL', 'branch_code' => 'DEL']);
 
         $intruder = User::create([

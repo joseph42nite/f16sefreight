@@ -49,8 +49,9 @@ class SeaInboxTest extends TestCase
         Customer::create(['company_id' => $company->id, 'name' => 'Globex Sea', 'email_domain' => 'globex-smc.test']);
 
         foreach ([['INNSA', 'Jawaharlal Nehru (Nhava Sheva)', 'IN'], ['AEJEA', 'Jebel Ali', 'AE']] as [$code, $name, $cc]) {
-            DB::table('ports')->insert(['locode' => $code, 'port_name' => $name, 'country_code' => $cc, 'port_type' => 'sea',
-                'is_active' => 1, 'created_at' => now(), 'updated_at' => now()]);
+            // `upsert`, not `insert`: a port left in the test DB by a seeder run by hand must not fail this test (GAPS #455).
+            DB::table('ports')->upsert(['locode' => $code, 'port_name' => $name, 'country_code' => $cc, 'port_type' => 'sea',
+                'is_active' => 1, 'created_at' => now(), 'updated_at' => now()], ['locode'], ['port_name', 'country_code', 'port_type', 'is_active']);
         }
     }
 

@@ -206,6 +206,8 @@ class ProfitabilityTest extends TestCase
         ]);
 
         // Three characters is IATA and reads from `locations`; five is a UN/LOCODE and reads from `ports`.
+        // FRA must have no name here — said outright, not assumed of whatever the test DB holds (GAPS #455).
+        DB::table('locations')->where('iata_code', 'FRA')->delete();
         DB::table('locations')->insert(['destination' => 'bombay', 'iata_code' => 'BOM', 'is_active' => 1,
             'created_at' => now(), 'updated_at' => now()]);
 
@@ -227,12 +229,13 @@ class ProfitabilityTest extends TestCase
     {
         // 🔴 `locations` names airports by IATA and has never heard of DEHAM; a three-letter code cannot address
         // it. Sea lanes resolve from `ports`, the UN/LOCODE directory (GAPS #376).
-        DB::table('ports')->insert([
+        // `upsert`, not `insert`: a port left in the test DB by a seeder run by hand must not fail this test (GAPS #455).
+        DB::table('ports')->upsert([
             ['locode' => 'INNSA', 'port_name' => 'Jawaharlal Nehru (Nhava Sheva)', 'country_code' => 'IN',
              'port_type' => 'sea', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['locode' => 'DEHAM', 'port_name' => 'Hamburg', 'country_code' => 'DE',
              'port_type' => 'sea', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        ], ['locode'], ['port_name', 'country_code', 'port_type', 'is_active']);
 
         $job = $this->shipment($this->beta, 'INNSA', 'DEHAM', 'sea');
         $this->bill($job, 250000);

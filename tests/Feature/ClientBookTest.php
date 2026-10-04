@@ -102,7 +102,8 @@ class ClientBookTest extends TestCase
 
     public function test_a_salesperson_or_branch_from_another_company_is_refused(): void
     {
-        $other = Company::create(['name' => 'Rival Co', 'code' => 'RIV', 'tier' => 'command']);
+        // Not 'RIV': AccountsRegressionSeeder's rival owns that code (GAPS #455).
+        $other = Company::create(['name' => 'Rival Co', 'code' => 'RIVCB', 'tier' => 'command']);
         $theirBranch = Agent::create(['company_id' => $other->id, 'agent_name' => 'Delhi', 'branch_code' => 'DEL']);
         $theirRep = $this->user('sales', $theirBranch, $other);
 
@@ -196,12 +197,13 @@ class ClientBookTest extends TestCase
 
     public function test_the_port_picker_searches_the_locode_directory(): void
     {
-        DB::table('ports')->insert([
+        // `upsert`, not `insert`: a port left in the test DB by a seeder run by hand must not fail this test (GAPS #455).
+        DB::table('ports')->upsert([
             ['locode' => 'INMAA', 'port_name' => 'Chennai (ex Madras)', 'country_code' => 'IN', 'port_type' => 'sea',
              'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['locode' => 'DEHAM', 'port_name' => 'Hamburg', 'country_code' => 'DE', 'port_type' => 'sea',
              'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        ], ['locode'], ['port_name', 'country_code', 'port_type', 'is_active']);
 
         $byCode = $this->as($this->accounts)->getJson($this->url('/customers/ports?q=INMA'))->assertOk()->json('ports');
         $this->assertSame('INMAA', $byCode[0]['locode']);

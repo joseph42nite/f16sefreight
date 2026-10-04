@@ -19,7 +19,7 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#452, all pushed; last commit `73fbd9f2`)
+## Where we are (GAPS #436–#453, all pushed)
 
 ### This session (2026-10-03/04)
 - **Connect your bank + alerts (#448):** no onboarding wizard exists, so (owner's answers) the bank step is a line on **Today** — *No bank account is set up* / *X is not connected* — and the next action on **Money in ④**; it clears once a feed is active or a statement is uploaded, and never rings the bell. Three alerts on **Today while true** and on the **bell once per event** (accounts + Boss; a client's money also to that client's salesperson): a **supplier** voucher due tomorrow (recorded due date only), a client's bank payment **matched short and left owed**, a client whose **grade letter** got worse. One service, `App\Services\Accounts\AccountsAlerts`; `accounts:alerts` hourly.
@@ -36,7 +36,7 @@ Paste this into the new session:
 - **Accountant questions (#446)**. **End-to-end check (#447)**.
 
 ## Not measured yet — run on the Mac
-- `php artisan mail:rubric-check` and `php artisan mail:rubric-check --mode=sea` — the wording changed in #437/#438; the old 13/13 and 25/25 no longer stand (#438 ❓).
+- ~~Rubric check~~ measured 2026-10-04 (#453): sea 26/26; air 39/40 over five runs — *Pre-alert SIN-BOM*'s direction sits at 0.50–0.59 < 0.60. ❓ Owner to decide the next wording try (import's "an overseas shipper or agent sending it to a buyer here" is the last #438 cut not restored).
 - A real bill of lading through the BL reader (#441) — the AI server is now running; send back any field it misreads.
 - Setu's request shapes against their sandbox (`app/Services/Bank/SetuAccountAggregator.php`, #442).
 
@@ -53,6 +53,8 @@ Paste this into the new session:
 - **Ops health (PRD §7.3.4 G)** is computed by nothing, so every health score rests on at most four of five parts (#450).
 - **No test pins the empty-path case** in `ProcessPdfOcrJob` (#452).
 - The Mode column's hidden case on FocusAir/FocusSea is covered by a jest spec only, not walked in the browser (#451).
+- `extractCargo` reads "Pre-alert SIN-BOM" as PRE → YLT and finds no lane in "BLR JFK" (#453).
+- `SeaInboxTest` fails on a leftover `ports` row `INNSA` in `f16s_test` (#453).
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.

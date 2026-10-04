@@ -53,7 +53,7 @@ Paste this into the new session:
 - **Ops health (PRD §7.3.4 G)** is computed by nothing, so every health score rests on at most four of five parts (#450).
 - **No test pins the empty-path case** in `ProcessPdfOcrJob` (#452).
 - The Mode column's hidden case on FocusAir/FocusSea is covered by a jest spec only, not walked in the browser (#451).
-- `SeaInboxTest` fails on a leftover `ports` row `INNSA` in `f16s_test` (#453).
+- Some test leaves `ports` rows behind in `f16s_test` (INNSA cleared 2026-10-04; `DEHAM` id 76 still there) — whichever writes outside its transaction is not found yet (#453).
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.

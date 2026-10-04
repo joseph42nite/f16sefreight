@@ -23,6 +23,13 @@ services:
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
     ports:
       - "8080:80"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OCR_SERVICE_URL=http://ai-server:8000
+      - AI_SERVER_URL=http://ai-server:8000
     depends_on:
       db:
         condition: service_healthy
@@ -41,9 +48,16 @@ services:
       dockerfile: Dockerfile.laravel
     container_name: f16s-queue
     working_dir: /var/www
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OCR_SERVICE_URL=http://ai-server:8000
+      - AI_SERVER_URL=http://ai-server:8000
     command: >
       php artisan queue:work redis
-      --queue=notifications,sync,mail-out,documents,ocr,backfill,analytics
+      --queue=pdf_processing,notifications,sync,mail-out,documents,ocr,backfill,analytics,default
       --tries=5 --backoff=1,2,4,8,16 --timeout=120
     volumes:
       - .:/var/www

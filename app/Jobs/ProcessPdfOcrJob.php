@@ -67,9 +67,18 @@ class ProcessPdfOcrJob implements ShouldQueue
             'started_at' => now(),
         ]);
 
+        if (empty($job->temp_file_path)) {
+            $job->update([
+                'status'        => 'failed',
+                'error_message' => 'Temp PDF file not found on disk.',
+                'completed_at'  => now(),
+            ]);
+            return;
+        }
+
         $tempPath = Storage::disk('pdf_temp')->path($job->temp_file_path);
 
-        if (!file_exists($tempPath)) {
+        if (!is_file($tempPath)) {
             $job->update([
                 'status'        => 'failed',
                 'error_message' => 'Temp PDF file not found on disk.',

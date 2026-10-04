@@ -17,7 +17,7 @@ Paste this into the new session:
 - Money: revenue/profit net of tax; a credit note subtracts, a debit note adds; drafts/voids never count; INR at each document's own rate; a NULL credit limit never blocks, 0.00 blocks; a figure nobody measures is NULL, never 0; check `$fillable`.
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 
-## Where we are (GAPS #436–#450, all pushed)
+## Where we are (GAPS #436–#451, all pushed)
 - **Import (#434, #436, #437):** sea + air import pages, houses made inside the consol, arrival notice staged for approval, mail triage reads import/export (lane first, Jev's `direction` otherwise).
 - **Jev prompt compacted (#438):** ~830 (air) / ~910 (sea) tokens; direction not asked when the lane answers. ❓ Owner to run `php artisan mail:rubric-check` and `--mode=sea` on the Mac.
 - **Tiers (#439):** Core = FocusAir/FocusSea documents, consol, search (every Core user writes); Tactical = inbox, Kanban, import, manifest filing; Command = accounts + cost sheet.

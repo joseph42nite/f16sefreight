@@ -335,6 +335,7 @@
           <thead>
             <tr>
               <th scope="col">Client</th>
+              <th v-if="bookShowsMode" scope="col">Mode</th>
               <th scope="col">Risk</th>
               <th class="fx-num" scope="col">Tonnage YTD</th>
               <th class="fx-num" scope="col">Revenue MTD</th>
@@ -347,6 +348,8 @@
           <tbody>
             <tr v-for="c in book" :key="c.customer_id + '-' + c.transport_mode">
               <td>{{ c.name }}</td>
+              <!-- A client with air and sea business has a row for each, and the two must never be confusable (§8.4). -->
+              <td v-if="bookShowsMode">{{ modeName(c.transport_mode) }}</td>
               <td><StatusChip :value="c.risk_band" /></td>
               <td class="fx-num"><Figure :value="c.tonnage_ytd" kind="weight" /></td>
               <td class="fx-num"><Figure :value="c.revenue_mtd" kind="currency" currency-code="INR" /></td>
@@ -520,6 +523,10 @@ export default {
     modeLabel() {
       return this.mode ? this.mode + " only" : "all modes";
     },
+    /* Only an unscoped book (the Boss on the admin portal) mixes modes; inside a portal every row is that portal's. */
+    bookShowsMode() {
+      return !this.mode;
+    },
     tiles() {
       const b = this.branch || {};
       const tiles = [
@@ -545,6 +552,10 @@ export default {
     this.loadFigures();
   },
   methods: {
+    /* The portal chip's own symbols (ui_ux_guide: ✈ FOCUS AIR / ⚓ FOCUS SEA). */
+    modeName(mode) {
+      return mode === "air" ? "✈ Air" : mode === "sea" ? "⚓ Sea" : "—";
+    },
     loadOutreach() {
       ApiService.get("/sales/outreach")
         .then(({ data }) => {

@@ -19,7 +19,7 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#453, all pushed)
+## Where we are (GAPS #436–#454, all pushed)
 
 ### This session (2026-10-03/04)
 - **Connect your bank + alerts (#448):** no onboarding wizard exists, so (owner's answers) the bank step is a line on **Today** — *No bank account is set up* / *X is not connected* — and the next action on **Money in ④**; it clears once a feed is active or a statement is uploaded, and never rings the bell. Three alerts on **Today while true** and on the **bell once per event** (accounts + Boss; a client's money also to that client's salesperson): a **supplier** voucher due tomorrow (recorded due date only), a client's bank payment **matched short and left owed**, a client whose **grade letter** got worse. One service, `App\Services\Accounts\AccountsAlerts`; `accounts:alerts` hourly.
@@ -53,13 +53,13 @@ Paste this into the new session:
 - **Ops health (PRD §7.3.4 G)** is computed by nothing, so every health score rests on at most four of five parts (#450).
 - **No test pins the empty-path case** in `ProcessPdfOcrJob` (#452).
 - The Mode column's hidden case on FocusAir/FocusSea is covered by a jest spec only, not walked in the browser (#451).
-- `extractCargo` reads "Pre-alert SIN-BOM" as PRE → YLT and finds no lane in "BLR JFK" (#453).
 - `SeaInboxTest` fails on a leftover `ports` row `INNSA` in `f16s_test` (#453).
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.
 
 *(Done this session: connect your bank + alerts #448, health score + DSO #450, TDS check #449, mode label #451.)*
+*(Then, 2026-10-04: rubric measured live #453; "Pre-alert SIN-BOM" lane misread fixed #454.)*
 
 ## On the Mac after pulling
 ```

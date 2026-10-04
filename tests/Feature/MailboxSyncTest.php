@@ -433,6 +433,27 @@ class MailboxSyncTest extends TestCase
     }
 
     /**
+     * 🔴 "Pre-alert SIN-BOM" was read as PRE → YLT (GAPS #454): "Pre-alert" is a hyphenated pair too, PRE is Pore's
+     * code and "alert" is YLT's city — so the lane stopped at the first pair and never reached the real one.
+     */
+    public function test_a_pre_alert_is_not_a_lane_and_the_real_one_after_it_is_read(): void
+    {
+        DB::table('locations')->insert([
+            ['destination' => 'pore', 'iata_code' => 'PRE', 'is_active' => 1],
+            ['destination' => 'alert', 'iata_code' => 'YLT', 'is_active' => 1],
+            ['destination' => 'singapore', 'iata_code' => 'SIN', 'is_active' => 1],
+            ['destination' => 'mumbai', 'iata_code' => 'BOM', 'is_active' => 1],
+        ]);
+
+        $cargo = app(\App\Services\Mail\MailFilingService::class)->extractCargo(
+            "Pre-alert SIN-BOM\nPre-alert: HAWB SGBOM4471, 3 pcs 120 kgs, MAWB 618-12345678.", 'air'
+        );
+
+        $this->assertSame('SIN', $cargo['origin']['value'] ?? null);
+        $this->assertSame('BOM', $cargo['destination']['value'] ?? null);
+    }
+
+    /**
      * ⚠️ A thread with no cargo in it stages NULL, not an empty object. An airline notice
      * has nothing to extract, and `{}` would claim we looked and found none — a different
      * statement from having nothing to say.

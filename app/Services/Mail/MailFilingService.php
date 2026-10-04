@@ -120,6 +120,8 @@ class MailFilingService
         'to', 'by', 'first', 'carrier', 'routing', 'and', 'destination', 'airport',
         'of', 'requested', 'flight', 'date', 'the', 'for', 'via', 'our', 'per',
         'kgs', 'kg', 'pcs', 'cbm', 'awb', 'eta', 'etd', 'ready', 'from',
+        // "Pre-alert" read as PRE (Pore) → YLT (Alert, Nunavut) — GAPS #454.
+        'pre', 'alert',
     ];
 
     /**
@@ -499,21 +501,22 @@ class MailFilingService
      */
     private function extractLane(string $text): array
     {
-        if (! preg_match(self::LANE_PATTERN, $text, $m)) {
-            return [];
+        // Every pair, in order — the first one written is not always a lane ("Pre-alert SIN-BOM", GAPS #454).
+        preg_match_all(self::LANE_PATTERN, $text, $matches, PREG_SET_ORDER);
+
+        foreach ($matches as $m) {
+            $origin = $this->resolveLocation($m[1]);
+            $dest   = $this->resolveLocation($m[2]);
+
+            if ($origin !== null && $dest !== null && $origin !== $dest) {
+                return [
+                    'origin'      => ['value' => $origin, 'confidence' => 'low'],
+                    'destination' => ['value' => $dest,   'confidence' => 'low'],
+                ];
+            }
         }
 
-        $origin = $this->resolveLocation($m[1]);
-        $dest   = $this->resolveLocation($m[2]);
-
-        if ($origin === null || $dest === null || $origin === $dest) {
-            return [];
-        }
-
-        return [
-            'origin'      => ['value' => $origin, 'confidence' => 'low'],
-            'destination' => ['value' => $dest,   'confidence' => 'low'],
-        ];
+        return [];
     }
 
     /**

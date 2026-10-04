@@ -51,13 +51,13 @@ Paste this into the new session:
 
 ## Open — noticed, not asked for (offer, don't start)
 - **Ops health (PRD §7.3.4 G)** is computed by nothing, so every health score rests on at most four of five parts (#450).
-- The Mode column's hidden case on FocusAir/FocusSea is covered by a jest spec only, not walked in the browser (#451).
+- FocusSea's Sales → Accounts table clips its Health figures at an 800 px window; FocusAir's fits (#451).
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.
 
 *(Done this session: connect your bank + alerts #448, health score + DSO #450, TDS check #449, mode label #451.)*
-*(Then, 2026-10-04: rubric measured live #453; "Pre-alert SIN-BOM" lane misread fixed #454; test DB cleared of a hand-run fixture, tests made tolerant #455.)*
+*(Then, 2026-10-04: rubric measured live #453; "Pre-alert SIN-BOM" lane misread fixed #454; test DB cleared of a hand-run fixture, tests made tolerant #455; OCR empty-path test #452; Mode column's hidden case walked on both portals #451.)*
 
 ## On the Mac after pulling
 ```
@@ -67,7 +67,8 @@ php artisan db:seed --class='\BillingDemoSeeder' --force
 php artisan help:load-bundled
 npm run prod
 ```
-- **Docker stops when the Mac sleeps.** Start Docker Desktop, then `docker compose up -d` (web, queue, db, redis, soketi, ai-server, clamav). The ai-server mounts `./python`, so it runs the current code without a rebuild — it only has to be running. `curl` is not in the queue container; test reach with `php -r 'echo file_get_contents("http://ai-server:8000/health");'`.
+- **Docker stops when the Mac sleeps** — and can come back wedged: `docker info` says *"Docker Desktop is unable to start … backend time … context deadline exceeded"* and `compose up` fails on whichever image it reads first (*"unexpected end of JSON input"*). Quit Docker Desktop fully (`osascript -e 'quit app "Docker"'`) and reopen it; then restart the preview too, its workers stay stuck on the hung requests.
+- **Docker (as before):** Start Docker Desktop, then `docker compose up -d` (web, queue, db, redis, soketi, ai-server, clamav). The ai-server mounts `./python`, so it runs the current code without a rebuild — it only has to be running. `curl` is not in the queue container; test reach with `php -r 'echo file_get_contents("http://ai-server:8000/health");'`.
 - **The preview** (`.claude/launch.json` → `f16s`) serves on `:8099` with `php artisan serve`; the first requests after a start are slow (~20 s), so wait before signing in.
 - **Portals:** accounts sign in at `accounts.localhost:8099`, the Boss at `admin.localhost:8099` (FocusAir refuses the Boss), operations/pricing/sales at `focusair.` / `focussea.`. Demo logins: `demo-*@demo.test`, `tact-*@demo.test`, `core@demo.test` — password `demo1234`.
 - After seeding, `php artisan accounts:alerts` and `php artisan sales:compute-snapshots` fill the bell and the Sales page (the demo Boss sees *Northwind Traders slipped from A to C*, scores on Sales → Accounts).

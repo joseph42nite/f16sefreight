@@ -3,48 +3,61 @@
 Paste this into the new session:
 
 > Continue F16s Freight OS (Laravel 9, Vue 2) on branch `feat/freight-os-schema-ldt65g`. Read `docs/plan/HANDOFF.md`,
-> then the newest rows of `docs/plan/GAPS.md` (#436 onward), then `docs/plan/implementation_guide.md` Steps 11–12.
+> then the newest rows of `docs/plan/GAPS.md` (#443 onward), then `docs/plan/implementation_guide.md` Steps 11–12.
 > Follow the standing rules in HANDOFF.md. Ask me before starting anything not listed under "Next".
 
 ## Standing rules (from the owner)
 - Record every finding as a numbered row in `docs/plan/GAPS.md`. Read the root docs and `docs/plan/*` before each piece of work; if a doc disagrees with the code, say so.
 - Laravel migrations only, run on BOTH databases: `php artisan migrate --force` and `DB_DATABASE=f16s_test php artisan migrate --force`; check down/up.
-- Commit by explicit path, never `git add -A` (another session may work in this repo). Push when tests pass. End commit messages with the Co-Authored-By / Claude-Session lines.
+- Commit by explicit path, never `git add -A` (another session may work in this repo). Push when tests pass. End commit messages with the Co-Authored-By / Claude-Session lines (leave out Claude-Session when the session's link is not known).
 - Never run two `php artisan test` at once; run test files one at a time. Every new test must be shown to fail on the old code.
 - Secrets: the owner adds API keys to `.env`; only check whether a key is set, never print it.
 - Never send real email (skip Send on client updates, Boss mails, "Ask the client").
-- Don't make the code complicated. If unsure what a function should do, ask. Never invent spec content.
+- Don't make the code complicated. If unsure what a function should do, ask. Never invent spec content — a HANDOFF "Next" line is a heading, not a spec: ask what it means before building it (#448 had four open questions).
 - Money: revenue/profit net of tax; a credit note subtracts, a debit note adds; drafts/voids never count; INR at each document's own rate; a NULL credit limit never blocks, 0.00 blocks; a figure nobody measures is NULL, never 0; check `$fillable`.
+- "When was a bill paid" has ONE answer: `ClientPaymentGrader::settledOn` — the settling receipt's date, else the matched bank line's VALUE date, else not measured. Never a bank line's import date or a bill's `updated_at`.
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
+- Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#452, all pushed)
-- **Import (#434, #436, #437):** sea + air import pages, houses made inside the consol, arrival notice staged for approval, mail triage reads import/export (lane first, Jev's `direction` otherwise).
-- **Jev prompt compacted (#438):** ~830 (air) / ~910 (sea) tokens; direction not asked when the lane answers. ❓ Owner to run `php artisan mail:rubric-check` and `--mode=sea` on the Mac.
-- **Tiers (#439):** Core = FocusAir/FocusSea documents, consol, search (every Core user writes); Tactical = inbox, Kanban, import, manifest filing; Command = accounts + cost sheet.
-- **Draft protocol (#440):** one draft per conversation, a new one lands on top, the bell follows it; sea client mails (draft BL, booked with shipping line, delivered); air Booked attaches HAWBs.
-- **Step 12.4 (#441):** read a BL/booking PDF into the sea bill (`python/bill.py`, `SeaBillReading`, `BlReader.vue`). ❓ Not measured on a real BL (no API key in the container).
-- **Setu bank feed (#442):** read-only, per bank account, ready for keys (`SETU_AA_*`, `php artisan setu:status --ping`). ⚠️ Request shapes written from memory — confirm against Setu's sandbox (all in `app/Services/Bank/SetuAccountAggregator.php`).
-- **Client payment report card (#443):** monthly grade A–D from due dates and receipts (`clients:payment-report`, `config/client_grades.php`); Jev reads a slipping client's mail; Clients & Partners → Pays / Payments.
-- **Airline commission & discounts (#444):** statement lines keep freight / due carrier / commission / discount; a payment takes commission + discount off the transfer like TDS (4810 / 4820).
-- **Bank upload file + guide (#445):** Money out → Bank file (CSV) and "How to pay this run from your bank"; `docs/help/paying-suppliers-from-your-bank.md`, loaded by `php artisan help:load-bundled`.
-- **Accountant questions (#446):** GST on commission/incentives; incentive as income vs cost reduction; late rebates tied to statements.
-- **End-to-end check (#447):** everything green except two tests needing the gitignored `config/common-data.php`.
-- **Connect your bank + alerts (#448):** Today and Money in ④ ask for a bank account until one is connected or has a statement; the bell (accounts, Boss, the client's salesperson) and Today carry a supplier bill due tomorrow, money matched short and left owed, a client who slipped a grade letter — `accounts:alerts`, hourly, once per event.
-- **Health score + DSO (#450):** the nightly sales rollup fills PRD §7.3.4 H (payment part = the client's report card, owner's call); DSO counts to the settling receipt's date. Sales → Accounts shows *Days to pay* and the score with its bars. Ops health (G) is still uncomputed, so it is always dropped.
-- **`accounts:verify` TDS check (#449):** reads each deduction in its own quarter; 176/176 on any date, pinned by a test on 2 July.
+## Where we are (GAPS #436–#452, all pushed; last commit `73fbd9f2`)
+
+### This session (2026-10-03/04)
+- **Connect your bank + alerts (#448):** no onboarding wizard exists, so (owner's answers) the bank step is a line on **Today** — *No bank account is set up* / *X is not connected* — and the next action on **Money in ④**; it clears once a feed is active or a statement is uploaded, and never rings the bell. Three alerts on **Today while true** and on the **bell once per event** (accounts + Boss; a client's money also to that client's salesperson): a **supplier** voucher due tomorrow (recorded due date only), a client's bank payment **matched short and left owed**, a client whose **grade letter** got worse. One service, `App\Services\Accounts\AccountsAlerts`; `accounts:alerts` hourly.
+- **Health score + DSO (#450):** PRD §7.3.4 H filled by `sales:compute-snapshots` via `App\Services\Sales\ClientHealth`, weights in `config/client_health.php`. **Payment part = the client's report card** (owner's call — the one deliberate air/sea blend, PRD updated). Ops health (G) is computed by nothing, so it is always the dropped part. DSO now counts to the settling receipt's date, in rupees, bills only. Sales → Accounts shows *Days to pay* and the score with its bars (`HealthBars.vue`).
+- **`accounts:verify` TDS check (#449):** each direction read in its own deduction's quarter; 176/176 on any date (a test pins 2 July).
+- **Mode label (#451):** the Boss's unscoped client book shows `✈ Air` / `⚓ Sea` per row.
+- **Docker OCR (#452, the owner's own fixes):** the queue worker now listens to `pdf_processing` (where every OCR job goes — before, PDFs uploaded in Docker were never read); `web`/`queue` reach db/redis/ai-server by service name; an OCR job with no temp file fails cleanly.
+
+### Before (one line each — the GAPS rows have the detail)
+- **Import (#434, #436, #437)** sea + air import pages, houses inside the consol, arrival notice staged; triage reads import/export.
+- **Jev prompt compacted (#438)** ~830 / ~910 tokens. **Tiers (#439)** Core / Tactical / Command on FocusSea as on FocusAir.
+- **Draft protocol (#440)** one draft per conversation, the bell follows it. **BL reading (#441)** `python/bill.py` → `SeaBillReading` → `BlReader.vue`.
+- **Setu feed (#442)** read-only, ready for keys. **Payment report card (#443)** monthly A–D. **Airline commission/discounts (#444)**. **Bank upload file + guide (#445)**.
+- **Accountant questions (#446)**. **End-to-end check (#447)**.
+
+## Not measured yet — run on the Mac
+- `php artisan mail:rubric-check` and `php artisan mail:rubric-check --mode=sea` — the wording changed in #437/#438; the old 13/13 and 25/25 no longer stand (#438 ❓).
+- A real bill of lading through the BL reader (#441) — the AI server is now running; send back any field it misreads.
+- Setu's request shapes against their sandbox (`app/Services/Bank/SetuAccountAggregator.php`, #442).
 
 ## Waiting on the owner
 - BL / house / arrival notice / DO print layouts (#433, #434); import party mapping (#434a).
 - ICEGATE developer-portal details (guide §12.3).
-- CASS: a client's CASSLink billing files + the CASS agent output specification, and their iiNET SFTP/APIsec setup (to build the CASS importer on the supplier-statement check).
+- CASS: a client's CASSLink billing files + the CASS agent output specification, and their iiNET SFTP/APIsec setup.
 - Bank templates (HDFC, ICICI, Axis…) for bank-specific upload files.
-- Answers to #446; root-doc conflicts (#421, #435); FocusSea statuses (#425b).
+- Answers to #446 (GST on commission/incentives; incentive as income or cost; late rebates); root-doc conflicts (#421, #435); FocusSea statuses (#425b).
+- A provider that can also PAY (RazorpayX, Cashfree Payouts, a bank's corporate API) — Setu only reads (#442).
+- Whether to bring back the *AI Extraction* and *Re-initiation* client mails (#440).
+
+## Open — noticed, not asked for (offer, don't start)
+- **Ops health (PRD §7.3.4 G)** is computed by nothing, so every health score rests on at most four of five parts (#450).
+- **No test pins the empty-path case** in `ProcessPdfOcrJob` (#452).
+- The Mode column's hidden case on FocusAir/FocusSea is covered by a jest spec only, not walked in the browser (#451).
 
 ## Next (when the owner says go)
-1. ~~"Connect your bank" + alerts~~ — done (#448).
-2. CASS importer once sample files arrive.
-3. ~~Health score + DSO from receipt dates~~ — done (#450).
-4. ~~Fix the quarter-dated TDS check~~ — done (#449).
+1. CASS importer — once the sample files above arrive.
+
+*(Done this session: connect your bank + alerts #448, health score + DSO #450, TDS check #449, mode label #451.)*
 
 ## On the Mac after pulling
 ```
@@ -54,4 +67,8 @@ php artisan db:seed --class='\BillingDemoSeeder' --force
 php artisan help:load-bundled
 npm run prod
 ```
-Restart the Python OCR service (new `python/bill.py`). Demo logins: `demo-*@demo.test`, `tact-*@demo.test`, `core@demo.test` — password `demo1234`.
+- **Docker stops when the Mac sleeps.** Start Docker Desktop, then `docker compose up -d` (web, queue, db, redis, soketi, ai-server, clamav). The ai-server mounts `./python`, so it runs the current code without a rebuild — it only has to be running. `curl` is not in the queue container; test reach with `php -r 'echo file_get_contents("http://ai-server:8000/health");'`.
+- **The preview** (`.claude/launch.json` → `f16s`) serves on `:8099` with `php artisan serve`; the first requests after a start are slow (~20 s), so wait before signing in.
+- **Portals:** accounts sign in at `accounts.localhost:8099`, the Boss at `admin.localhost:8099` (FocusAir refuses the Boss), operations/pricing/sales at `focusair.` / `focussea.`. Demo logins: `demo-*@demo.test`, `tact-*@demo.test`, `core@demo.test` — password `demo1234`.
+- After seeding, `php artisan accounts:alerts` and `php artisan sales:compute-snapshots` fill the bell and the Sales page (the demo Boss sees *Northwind Traders slipped from A to C*, scores on Sales → Accounts).
+- Two tests fail only because `config/common-data.php` is gitignored and absent (CargoStatusCodeTest, JobBoardLinksTest).

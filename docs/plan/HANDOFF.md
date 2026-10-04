@@ -51,7 +51,6 @@ Paste this into the new session:
 
 ## Open — noticed, not asked for (offer, don't start)
 - **Ops health (PRD §7.3.4 G)** is computed by nothing, so every health score rests on at most four of five parts (#450).
-- **No test pins the empty-path case** in `ProcessPdfOcrJob` (#452).
 - The Mode column's hidden case on FocusAir/FocusSea is covered by a jest spec only, not walked in the browser (#451).
 
 ## Next (when the owner says go)

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Agent;
+use App\Jobs\ProcessPdfOcrJob;
 use App\Company;
 use App\PdfProcessingJob;
 use App\Services\CircuitBreaker;
@@ -12,6 +13,8 @@ use App\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -254,5 +257,28 @@ class OcrCreditGateTest extends TestCase
 
         $this->expectException(\App\Services\CircuitOpenException::class);
         $breaker->call(fn () => 'never runs');
+    }
+
+    /**
+     * 🔴 A job with no temp file fails cleanly (GAPS #452). An empty path resolved to the `pdf_temp` disk's ROOT, a
+     * directory, which `file_exists` accepted — so the job went on to route and call the OCR service with no PDF.
+     */
+    public function test_a_job_with_no_temp_file_fails_without_reading_anything(): void
+    {
+        Storage::fake('pdf_temp');
+        Http::fake();
+        ['user' => $user] = $this->tenant('tactical', 10);
+
+        foreach (['', null] as $path) {
+            $job = $this->extraction($user->id, ['temp_file_path' => $path]);
+
+            (new ProcessPdfOcrJob($job->id))->handle();
+
+            $job->refresh();
+            $this->assertSame('failed', $job->status, var_export($path, true));
+            $this->assertSame('Temp PDF file not found on disk.', $job->error_message, var_export($path, true));
+        }
+
+        Http::assertNothingSent();
     }
 }

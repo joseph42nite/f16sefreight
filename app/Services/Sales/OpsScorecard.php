@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\DB;
  * GAPS #456). Measured, not scored: the owner picks weights once real quarters exist.
  *
  * - **Days slower**: on our own steps (config `ops_health.our_steps`), the client's median days per step against the
- *   branch's, same mode, same quarter; Σ of the positive deltas — only lateness counts.
+ *   OTHER clients' median, same branches, mode and quarter; Σ of the positive deltas — only lateness counts. Not a
+ *   normal that includes the client (owner, 2026-10-05): a client who is most of the work would set it and read 0.
  * - **Cancellation rate**: cancelled jobs ÷ the client's jobs opened in the quarter.
  * - **FNA rate** (air): jobs whose waybill the airline rejected at least once ÷ jobs it answered. An FNA counts as a
  *   rejection only — how long the airline took is not ours (owner).
@@ -92,9 +93,12 @@ class OpsScorecard
      */
     private function daysSlower(array $lengths, array $clientJobIds): array
     {
+        // The others: every job of the branches in the quarter that is not this client's.
+        $others = array_diff_key($lengths, array_flip($clientJobIds));
+
         $deltas = [];
         foreach (config('ops_health.our_steps') as $step) {
-            $branch = array_merge([], ...array_values(array_map(fn ($perJob) => $perJob[$step] ?? [], $lengths)));
+            $branch = array_merge([], ...array_values(array_map(fn ($perJob) => $perJob[$step] ?? [], $others)));
             $client = array_merge([], ...array_values(array_map(
                 fn ($id) => $lengths[$id][$step] ?? [], $clientJobIds
             )));

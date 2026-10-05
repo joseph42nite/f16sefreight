@@ -46,7 +46,7 @@ Paste this into the new session:
 - CASS: a client's CASSLink billing files + the CASS agent output specification, and their iiNET SFTP/APIsec setup.
 - Bank templates (HDFC, ICICI, Axis…) for bank-specific upload files.
 - Answers to #446 (GST on commission/incentives; incentive as income or cost; late rebates); root-doc conflicts (#421, #435); FocusSea statuses (#425b).
-- **Ops health weights** (`w[s]`, `w_cancel`, `w_corr`, `w_cass`, `w_decl`, `penalty_scale`) — the owner picks them after 2–3 months of real quarters in `customer_ops_quarters` (#456). Also: should "days slower" compare a client with the *other* clients only, instead of a normal that includes them (#457)?
+- **Ops health weights** (`w[s]`, `w_cancel`, `w_corr`, `w_cass`, `w_decl`, `penalty_scale`) — the owner picks them after 2–3 months of real quarters in `customer_ops_quarters` (#456). ("Days slower" compares with the other clients only — owner, #457.)
 - Production `.env`: `PORTAL_DOMAIN` / `PORTAL_SCHEME`, so the staff reviews' "See the details" links point at the live portals (#457).
 - A provider that can also PAY (RazorpayX, Cashfree Payouts, a bank's corporate API) — Setu only reads (#442).
 - Whether to bring back the *AI Extraction* and *Re-initiation* client mails (#440).

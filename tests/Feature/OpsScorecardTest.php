@@ -88,8 +88,9 @@ class OpsScorecardTest extends TestCase
     }
 
     /**
-     * Slowco: Intake 2 d, Verification 3 d, PDF Generated 1 d. Quickco: 1, 1, 1. Branch medians over all six jobs:
-     * 1.5, 2, 1 — Slowco is +0.5, +1.0, 0 → 1.5 days slower; Quickco is faster on every step → 0, not negative.
+     * Slowco: Intake 2 d, Verification 3 d, PDF Generated 1 d. Quickco: 1, 1, 1. Each is compared with the OTHER
+     * clients only (owner, 2026-10-05): Slowco is +1, +2, 0 → 3 days slower; Quickco is faster on every step → 0, not
+     * negative.
      * Slowco's 5 days waiting on the airline after "Sent to Airline" are the airline's, and count for nothing.
      */
     public function test_days_slower_counts_only_our_own_steps_and_only_lateness(): void
@@ -100,9 +101,36 @@ class OpsScorecardTest extends TestCase
         }
 
         $slow = $this->measure($this->slow);
-        $this->assertSame(1.5, $slow['days_slower']);
-        $this->assertSame(['Intake' => 0.5, 'Verification' => 1.0, 'PDF Generated' => 0.0], $slow['step_deltas']);
+        $this->assertSame(3.0, $slow['days_slower']);
+        $this->assertSame(['Intake' => 1.0, 'Verification' => 2.0, 'PDF Generated' => 0.0], $slow['step_deltas']);
         $this->assertSame(0.0, $this->measure($this->quick)['days_slower']);
+    }
+
+    /**
+     * 🔴 A client who is most of the branch's work cannot set its own normal (owner, 2026-10-05: "compare against the
+     * other clients only"). Nine slow jobs beside three quick ones: measured against a normal that included them, the
+     * nine WERE the normal and read 0 days slower. Against the others they are 1 + 2 = 3 days slower.
+     */
+    public function test_a_client_who_is_most_of_the_work_is_still_measured_against_the_others(): void
+    {
+        foreach (range(1, 9) as $d) {
+            $this->job($this->slow, '2026-08-' . sprintf('%02d', $d), ['Intake' => 2, 'Verification' => 3, 'Completed' => 0]);
+        }
+        foreach (['2026-07-10', '2026-08-10', '2026-09-01'] as $on) {
+            $this->job($this->quick, $on, ['Intake' => 1, 'Verification' => 1, 'Completed' => 0]);
+        }
+
+        $this->assertSame(3.0, $this->measure($this->slow)['days_slower']);
+    }
+
+    /** With no other client through a step, there is nothing to compare with: the step is left out, not read as 0. */
+    public function test_a_client_alone_has_no_normal_to_compare_with(): void
+    {
+        foreach (['2026-07-10', '2026-08-10', '2026-09-01'] as $on) {
+            $this->job($this->slow, $on, ['Intake' => 2, 'Verification' => 3, 'Completed' => 0]);
+        }
+
+        $this->assertNull($this->measure($this->slow)['days_slower']);
     }
 
     /** Two jobs through each step is under the PRD's three: not "0 days slower" — not said at all. */
@@ -173,7 +201,7 @@ class OpsScorecardTest extends TestCase
 
         $row = DB::table('customer_ops_quarters')->where('customer_id', $this->slow->id)->first();
         $this->assertSame('2026-07-01', $row->quarter_start);
-        $this->assertSame('1.50', $row->days_slower);
+        $this->assertSame('3.00', $row->days_slower);
         $this->assertFalse(DB::table('customer_ops_quarters')->where('customer_id', $tacClient->id)->exists());
         // Measured, not scored: ops_health stays NULL until the owner sets weights.
         $this->assertNull(DB::table('customer_performance_snapshots')->where('customer_id', $this->slow->id)->value('ops_health'));
@@ -193,8 +221,8 @@ class OpsScorecardTest extends TestCase
         $row = collect($this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($boss), 'Accept' => 'application/json'])
             ->getJson('http://admin.f16sefreight.com/api/sales/dashboard')->assertOk()->json('book'))->firstWhere('customer_id', $this->slow->id);
 
-        // On 15 September the running quarter is Q2; Q1 had no jobs, so only Q2 "so far" shows.
-        $this->assertSame([['quarter' => 'Q2 FY 2026-27', 'so_far' => true, 'days_slower' => 1.5, 'cancellation_rate' => null,
+        // On 15 September the running quarter is Q2; Q1 had no jobs, so only Q2 "so far" shows. (JSON writes 3.0 as 3.)
+        $this->assertSame([['quarter' => 'Q2 FY 2026-27', 'so_far' => true, 'days_slower' => 3, 'cancellation_rate' => null,
             'fna_rate' => null, 'weight_gap_pct' => null]], $row['ops']);
         $this->assertNull($row['health']['ops']);
     }

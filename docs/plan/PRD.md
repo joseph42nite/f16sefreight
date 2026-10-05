@@ -2061,6 +2061,14 @@ The engine produces **two kinds of finding**, and they must never mix.
 >
 > The failure this prevents is unrecoverable: emailing a client that their account is at risk *because our own staff member responds too slowly* discloses an internal performance problem to the counterparty it affects. No amount of drafting care substitutes for making the column combination impossible to store.
 
+##### Internal drafts — the quarterly staff review (owner's decision, 2026-10-05, GAPS #457)
+
+An internal finding still never becomes a **client** draft. It may now become an **internal** one, to our own staff only:
+- **When:** once a financial-year quarter has closed, one review per client and mode, prepared once, **Command only**. Nothing is sent without a click, from the sender's own mailbox.
+- **Who:** the Boss's draft goes to the client's **salesperson only** (one client can have many ops staff; sales coordinates them). The salesperson's draft goes to the **ops and pricing staff** who worked the client that quarter. Each portal lists its own mode's reviews.
+- **What:** the quarter beside the previous one — enquiries won and lost, each loss with its reason and who priced it; cancellations and airline rejections (FNA), each with the job, AWB and ops/pricing person; days slower than our normal on our own steps; cancellation, FNA and weight-gap rates; every job. Subject is a clean header (`Quarterly review · client · mode · quarter`); job and AWB numbers are in the body; a **See the details** link opens the review's page, for the people in its chain.
+- **🔒 Staff only:** every To/Cc must be an active user of the company; anything else is refused before sending. This applies to all the Boss's mails to the team.
+
 ##### Client outreach drafts
 
 For `audience = 'client'` rows the engine composes a **ready-to-send professional email**, written in the rep's voice so the client experiences it as a personal message, not an automated report.

@@ -193,8 +193,9 @@ class OpsScorecardTest extends TestCase
         $row = collect($this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($boss), 'Accept' => 'application/json'])
             ->getJson('http://admin.f16sefreight.com/api/sales/dashboard')->assertOk()->json('book'))->firstWhere('customer_id', $this->slow->id);
 
-        $this->assertSame(['quarter' => 'Q2 FY 2026-27', 'days_slower' => 1.5, 'cancellation_rate' => null, 'fna_rate' => null,
-            'weight_gap_pct' => null], $row['ops']);
+        // On 15 September the running quarter is Q2; Q1 had no jobs, so only Q2 "so far" shows.
+        $this->assertSame([['quarter' => 'Q2 FY 2026-27', 'so_far' => true, 'days_slower' => 1.5, 'cancellation_rate' => null,
+            'fna_rate' => null, 'weight_gap_pct' => null]], $row['ops']);
         $this->assertNull($row['health']['ops']);
     }
 }

@@ -46,6 +46,7 @@ class BossMails
         'losing_on_price' => 'Losing on price',
         'slow_replies' => 'Replies getting slower',
         'money_overdue' => 'Money overdue',
+        StaffReviews::KIND => 'Quarterly review',
     ];
 
     /** Replace the company's open, undrafted suggestions with tonight's. A drafted one is somebody's work: kept. */
@@ -54,7 +55,9 @@ class BossMails
         $company = DB::table('companies')->find($companyId);
         $findings = $this->findings($companyId, $company->tier === 'command', $date);
 
-        DB::table('boss_mail_suggestions')->where('company_id', $companyId)->where('status', 'open')->whereNull('drafted_at')->delete();
+        // The quarterly staff reviews are prepared once per quarter (StaffReviews), not re-derived nightly: never swept here.
+        DB::table('boss_mail_suggestions')->where('company_id', $companyId)->where('status', 'open')->whereNull('drafted_at')
+            ->where('kind', '!=', StaffReviews::KIND)->delete();
 
         $resting = DB::table('boss_mail_suggestions')->where('company_id', $companyId)
             ->where(fn ($q) => $q->where('status', 'open')

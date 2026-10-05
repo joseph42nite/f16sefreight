@@ -47,6 +47,18 @@ class Portal
             : new self(null, []);
     }
 
+    /** A full link into a portal, for an email: {scheme}://{portal}.{domain}{path} (config f16s.portal_*). */
+    public static function link(string $portal, string $path): string
+    {
+        return config('f16s.portal_scheme') . '://' . $portal . '.' . config('f16s.portal_domain') . '/' . ltrim($path, '/');
+    }
+
+    /** The portal a transport mode's staff work in. */
+    public static function forMode(string $mode): string
+    {
+        return collect(config('f16s.portals', []))->search(fn ($p) => ($p['scope'] ?? null) === $mode) ?: 'focusair';
+    }
+
     /** True when the host named a real portal. */
     public function exists(): bool
     {

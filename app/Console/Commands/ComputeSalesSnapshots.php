@@ -87,6 +87,8 @@ class ComputeSalesSnapshots extends Command
             $written += $this->rollCompany((int) $companyId, $date);
             // The Boss's mails to his team, from the figures just rolled (user, 2026-09-16).
             app(\App\Services\Sales\BossMails::class)->refresh((int) $companyId, $date);
+            // Command: once a quarter has closed, its staff reviews per client (owner, 2026-10-05).
+            app(\App\Services\Sales\StaffReviews::class)->prepare((int) $companyId, $date);
         }
 
         $this->info("  {$written} snapshot rows written for " . $date->toDateString() . '.');

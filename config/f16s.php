@@ -181,6 +181,13 @@ return [
     |
     */
 
+    /*
+     * Where a link in an email points: {scheme}://{portal}.{domain}/… (the staff reviews' "See the details", GAPS #457).
+     * Locally: PORTAL_DOMAIN=localhost:8099 and PORTAL_SCHEME=http.
+     */
+    'portal_domain' => env('PORTAL_DOMAIN', 'f16sefreight.com'),
+    'portal_scheme' => env('PORTAL_SCHEME', 'https'),
+
     'portals' => [
 
         'focusair' => [

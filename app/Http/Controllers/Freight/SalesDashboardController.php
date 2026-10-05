@@ -551,12 +551,6 @@ class SalesDashboardController extends Controller
                 $join->on('p.customer_id', '=', 's.customer_id')
                      ->on('p.transport_mode', '=', 's.transport_mode');
             })
-            // G, measured not scored (owner, 2026-10-05): the running quarter's facts, shown beside the bars.
-            ->leftJoin('customer_ops_quarters as o', function ($join) use ($latest) {
-                $join->on('o.customer_id', '=', 's.customer_id')
-                     ->on('o.transport_mode', '=', 's.transport_mode')
-                     ->where('o.quarter_start', \App\Services\Sales\OpsScorecard::quarterStart(\Illuminate\Support\Carbon::parse($latest))->toDateString());
-            })
             ->whereIn('s.agent_id', $ids)
             ->where('s.snapshot_date', $latest)
             ->when($mode !== null, fn ($q) => $q->where('s.transport_mode', $mode))
@@ -578,7 +572,6 @@ class SalesDashboardController extends Controller
                 's.outstanding_0_30', 's.outstanding_31_60', 's.outstanding_60_plus',
                 's.credit_utilization', 's.client_health_score',
                 'p.risk_band', 'p.overdue_ratio', 'p.last_shipment_at', 'p.is_irregular',
-                'o.quarter_start as ops_quarter', 'o.days_slower', 'o.cancellation_rate', 'o.fna_rate', 'o.weight_gap_pct',
             ])
             // The score's parts, each in [0, 1] or NULL — the page shows the bars, never the bare number (PRD §7.3.4 H).
             ->map(function ($r) use ($latest) {
@@ -586,20 +579,40 @@ class SalesDashboardController extends Controller
                 $r->health = $health->components($r->momentum === null ? null : (float) $r->momentum, $r->risk_band,
                     $r->win_rate === null ? null : (float) $r->win_rate,
                     $health->paymentScore((int) $r->customer_id, \Illuminate\Support\Carbon::parse($latest)), null);
-                $r->ops = $r->ops_quarter === null ? null : [
-                    'quarter' => \App\Services\Sales\OpsScorecard::quarterLabel(\Illuminate\Support\Carbon::parse($r->ops_quarter)),
-                    'days_slower' => $r->days_slower === null ? null : (float) $r->days_slower,
-                    'cancellation_rate' => $r->cancellation_rate === null ? null : (float) $r->cancellation_rate,
-                    'fna_rate' => $r->fna_rate === null ? null : (float) $r->fna_rate,
-                    'weight_gap_pct' => $r->weight_gap_pct === null ? null : (float) $r->weight_gap_pct,
-                ];
-                if ($r->ops !== null && $r->transport_mode !== 'air') {
-                    unset($r->ops['fna_rate']);   // an airline's answer to a waybill: air only
-                }
-                unset($r->ops_quarter, $r->days_slower, $r->cancellation_rate, $r->fna_rate, $r->weight_gap_pct);
+                $r->ops = $this->opsQuarters((int) $r->customer_id, $r->transport_mode, $latest);
                 return (array) $r;
             })
             ->all();
+    }
+
+    /**
+     * G, measured not scored (owner, 2026-10-05; GAPS #456): the last closed quarter's facts, then the running
+     * quarter's "so far" once anything in it is measured. Each figure NULL when there was too little to say.
+     */
+    private function opsQuarters(int $customerId, string $mode, string $latest): array
+    {
+        $running = \App\Services\Sales\OpsScorecard::quarterStart(\Illuminate\Support\Carbon::parse($latest));
+        $closed = $running->copy()->subMonths(3);
+        $figures = ['days_slower', 'cancellation_rate', 'fna_rate', 'weight_gap_pct'];
+
+        return DB::table('customer_ops_quarters')->where('customer_id', $customerId)->where('transport_mode', $mode)
+            ->whereIn('quarter_start', [$closed->toDateString(), $running->toDateString()])->orderBy('quarter_start')
+            ->get()
+            ->map(function ($q) use ($running, $mode, $figures) {
+                $row = ['quarter' => \App\Services\Sales\OpsScorecard::quarterLabel(\Illuminate\Support\Carbon::parse($q->quarter_start)),
+                    'so_far' => $q->quarter_start === $running->toDateString()];
+                foreach ($figures as $f) {
+                    $row[$f] = $q->{$f} === null ? null : (float) $q->{$f};
+                }
+                if ($mode !== 'air') {
+                    unset($row['fna_rate']);   // an airline's answer to a waybill: air only
+                }
+
+                return $row;
+            })
+            // A running quarter with nothing measured yet says nothing — the closed one stands alone.
+            ->reject(fn ($row) => $row['so_far'] && collect($row)->only($figures)->filter(fn ($v) => $v !== null)->isEmpty())
+            ->values()->all();
     }
 
     /**

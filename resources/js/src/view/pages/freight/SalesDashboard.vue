@@ -361,13 +361,22 @@
                 <HealthBars
                   :score="c.client_health_score === null ? null : Number(c.client_health_score)"
                   :parts="c.health || {}"
-                  :ops="c.ops || null"
+                  :ops="c.ops || []"
                 />
               </td>
             </tr>
           </tbody>
         </table>
       </section>
+
+      <!-- A Command salesperson's quarterly reviews, one per client, to the ops and pricing staff who worked it (GAPS #457). -->
+      <TeamMails
+        v-if="designation === 'sales' && tier === 'command'"
+        endpoint="/sales/team-mails"
+        title="Quarterly reviews for your team"
+        intro="Each quarter, a review per client for the ops and pricing staff who worked it. Open one, change anything, and send it yourself."
+        empty="No reviews to send right now — the next ones come when this quarter closes."
+      />
     </template>
 
     <FxDrawer
@@ -423,6 +432,7 @@ import FxChart from "@/view/pages/freight/components/FxChart.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 import HealthBars from "@/view/pages/freight/components/HealthBars.vue";
+import TeamMails from "@/view/pages/freight/components/TeamMails.vue";
 
 /** What each suggested email is about, in the rep's words. */
 const TYPE_LABELS = {
@@ -437,7 +447,7 @@ const list = (text) => String(text || "").split(",").map((s) => s.trim()).filter
 
 export default {
   name: "SalesDashboard",
-  components: { Figure, StatusChip, FxChart, FxDrawer, MailEditor, HealthBars },
+  components: { Figure, StatusChip, FxChart, FxDrawer, MailEditor, HealthBars, TeamMails },
   data: () => ({
     emails: [], hasMailbox: true, showsClientNames: false, outreachLoaded: false,
     dismissReasons: {}, dismissing: null, dismissed: [], dismissedByReason: {},

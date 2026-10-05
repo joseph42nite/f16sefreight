@@ -15,11 +15,11 @@
         </span>
         <span class="fx-health__value">{{ p.value === null ? "—" : Math.round(p.value * 100) }}</span>
       </li>
-      <!-- Our ops is measured but not scored yet (owner, 2026-10-05): the quarter's facts, as they are. -->
-      <li v-if="ops" class="fx-health__ops" :title="'Measured this quarter, not yet part of the score'">
-        {{ ops.quarter }}: {{ fact(ops.days_slower, " d slower") }} · cancelled {{ fact(ops.cancellation_rate, "%") }}
-        <template v-if="ops.fna_rate !== undefined"> · FNA {{ fact(ops.fna_rate, "%") }}</template>
-        · weight gap {{ fact(ops.weight_gap_pct, "%") }}
+      <!-- Our ops is measured but not scored yet (owner, 2026-10-05): the last closed quarter, then this one so far. -->
+      <li v-for="q in ops" :key="q.quarter" class="fx-health__ops" title="Measured, not yet part of the score">
+        {{ q.quarter }}{{ q.so_far ? " so far" : "" }}: {{ fact(q.days_slower, " d slower") }} · cancelled {{ fact(q.cancellation_rate, "%") }}
+        <template v-if="q.fna_rate !== undefined"> · FNA {{ fact(q.fna_rate, "%") }}</template>
+        · weight gap {{ fact(q.weight_gap_pct, "%") }}
       </li>
     </ul>
   </div>
@@ -40,8 +40,8 @@ export default {
   props: {
     score: { type: Number, default: null },
     parts: { type: Object, default: () => ({}) },
-    /* G's facts for the running quarter, or null. Each NULL figure is "not enough data", shown as an em dash. */
-    ops: { type: Object, default: null },
+    /* G's facts: the last closed quarter, then the running one so far. A NULL figure is "not enough data" — an em dash. */
+    ops: { type: Array, default: () => [] },
   },
   methods: {
     fact(value, unit) {

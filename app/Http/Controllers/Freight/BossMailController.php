@@ -32,10 +32,10 @@ class BossMailController extends Controller
 
     public function index(): JsonResponse
     {
-        $context = $this->boss();
+        $context = $this->viewer();
 
-        $rows = DB::table('boss_mail_suggestions as s')->join('agents_info as a', 'a.id', '=', 's.agent_id')
-            ->where('s.company_id', $context->companyId)->where('s.status', 'open')
+        $rows = $this->scoped(DB::table('boss_mail_suggestions as s'), $context, 's.')->join('agents_info as a', 'a.id', '=', 's.agent_id')
+            ->where('s.status', 'open')
             ->orderByDesc('s.priority')->orderBy('s.id')
             ->get(['s.*', 'a.agent_name as branch']);
 
@@ -54,7 +54,8 @@ class BossMailController extends Controller
     {
         $row = $this->open($id);
         $to = DB::table('users')->whereIn('id', json_decode($row->suggested_to, true) ?: [])->pluck('email')->all();
-        $draft = $drafter->draft($row->kind, json_decode($row->facts, true) ?: [], auth()->user());
+        // A quarterly review's "See the details" links to its own page (GAPS #457).
+        $draft = $drafter->draft($row->kind, (json_decode($row->facts, true) ?: []) + ['review_id' => $id], auth()->user());
 
         DB::table('boss_mail_suggestions')->where('id', $id)->update([
             'draft_subject' => $draft['subject'], 'draft_body' => $draft['body'],
@@ -76,6 +77,18 @@ class BossMailController extends Controller
             'subject' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
         ]);
+
+        // 🔒 Mails to the team go to the team: every address must be one of the company's own active staff. An internal
+        // review must never reach a client (PRD §7.3.7's firewall, kept for the staff reviews, GAPS #457).
+        $addresses = array_map('strtolower', array_merge($data['to'], $data['cc'] ?? []));
+        $staff = DB::table('users')->where('company_name', UserContext::for(auth()->user())->companyId)->where('is_active', 1)
+            ->whereIn(DB::raw('LOWER(email)'), $addresses)->pluck('email')->map(fn ($e) => strtolower($e))->all();
+        $outside = array_values(array_diff($addresses, $staff));
+
+        if ($outside !== []) {
+            return response()->json(['error' => 'Mails to the team go only to your own staff. Not staff: ' . implode(', ', $outside) . '.',
+                'reason' => 'not_staff'], 422);
+        }
 
         $connection = $this->mailbox();
 
@@ -127,7 +140,8 @@ class BossMailController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    private function boss(): UserContext
+    /** Who may use these mails. The Boss here; a Command salesperson for their own (SalesTeamMailController). */
+    protected function viewer(): UserContext
     {
         $this->authorize('viewSales');
         $context = UserContext::for(auth()->user());
@@ -136,11 +150,17 @@ class BossMailController extends Controller
         return $context;
     }
 
-    /** An open suggestion of the Boss's own company, or 404. */
+    /** The viewer's rows: the company's, and — for the Boss — those with no other owner. */
+    protected function scoped($query, UserContext $context, string $prefix = '')
+    {
+        return $query->where($prefix . 'company_id', $context->companyId)->whereNull($prefix . 'owner_user_id');
+    }
+
+    /** An open suggestion of the viewer's own, or 404. */
     private function open(int $id): object
     {
-        $context = $this->boss();
-        $row = DB::table('boss_mail_suggestions')->where('id', $id)->where('company_id', $context->companyId)->where('status', 'open')->first();
+        $context = $this->viewer();
+        $row = $this->scoped(DB::table('boss_mail_suggestions'), $context)->where('id', $id)->where('status', 'open')->first();
         abort_if($row === null, 404);
 
         return $row;

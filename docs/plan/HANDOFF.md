@@ -19,7 +19,7 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#455, all pushed)
+## Where we are (GAPS #436–#457, all pushed)
 
 ### This session (2026-10-03/04)
 - **Connect your bank + alerts (#448):** no onboarding wizard exists, so (owner's answers) the bank step is a line on **Today** — *No bank account is set up* / *X is not connected* — and the next action on **Money in ④**; it clears once a feed is active or a statement is uploaded, and never rings the bell. Three alerts on **Today while true** and on the **bell once per event** (accounts + Boss; a client's money also to that client's salesperson): a **supplier** voucher due tomorrow (recorded due date only), a client's bank payment **matched short and left owed**, a client whose **grade letter** got worse. One service, `App\Services\Accounts\AccountsAlerts`; `accounts:alerts` hourly.
@@ -46,6 +46,8 @@ Paste this into the new session:
 - CASS: a client's CASSLink billing files + the CASS agent output specification, and their iiNET SFTP/APIsec setup.
 - Bank templates (HDFC, ICICI, Axis…) for bank-specific upload files.
 - Answers to #446 (GST on commission/incentives; incentive as income or cost; late rebates); root-doc conflicts (#421, #435); FocusSea statuses (#425b).
+- **Ops health weights** (`w[s]`, `w_cancel`, `w_corr`, `w_cass`, `w_decl`, `penalty_scale`) — the owner picks them after 2–3 months of real quarters in `customer_ops_quarters` (#456). Also: should "days slower" compare a client with the *other* clients only, instead of a normal that includes them (#457)?
+- Production `.env`: `PORTAL_DOMAIN` / `PORTAL_SCHEME`, so the staff reviews' "See the details" links point at the live portals (#457).
 - A provider that can also PAY (RazorpayX, Cashfree Payouts, a bank's corporate API) — Setu only reads (#442).
 - Whether to bring back the *AI Extraction* and *Re-initiation* client mails (#440).
 
@@ -57,7 +59,7 @@ Paste this into the new session:
 1. CASS importer — once the sample files above arrive.
 
 *(Done this session: connect your bank + alerts #448, health score + DSO #450, TDS check #449, mode label #451.)*
-*(Then, 2026-10-04: rubric measured live #453; "Pre-alert SIN-BOM" lane misread fixed #454; test DB cleared of a hand-run fixture, tests made tolerant #455; OCR empty-path test #452; Mode column's hidden case walked on both portals #451.)*
+*(Then, 2026-10-04: rubric measured live #453; "Pre-alert SIN-BOM" lane misread fixed #454; test DB cleared of a hand-run fixture, tests made tolerant #455; OCR empty-path test #452; Mode column's hidden case walked on both portals #451. 2026-10-05: ops scorecard measured per quarter, not scored #456; quarterly staff reviews Boss → sales → ops/pricing, Command only #457.)*
 
 ## On the Mac after pulling
 ```
@@ -71,6 +73,7 @@ npm run prod
 - **Docker (as before):** Start Docker Desktop, then `docker compose up -d` (web, queue, db, redis, soketi, ai-server, clamav). The ai-server mounts `./python`, so it runs the current code without a rebuild — it only has to be running. `curl` is not in the queue container; test reach with `php -r 'echo file_get_contents("http://ai-server:8000/health");'`.
 - **The preview** (`.claude/launch.json` → `f16s`) serves on `:8099` with `php artisan serve`; the first requests after a start are slow (~20 s), so wait before signing in.
 - **Portals:** accounts sign in at `accounts.localhost:8099`, the Boss at `admin.localhost:8099` (FocusAir refuses the Boss), operations/pricing/sales at `focusair.` / `focussea.`. Demo logins: `demo-*@demo.test`, `tact-*@demo.test`, `core@demo.test` — password `demo1234`.
+- Locally, `.env` needs `PORTAL_DOMAIN=localhost:8099` and `PORTAL_SCHEME=http` for the staff reviews' links (#457).
 - After seeding, `php artisan accounts:alerts` and `php artisan sales:compute-snapshots` fill the bell and the Sales page (the demo Boss sees *Northwind Traders slipped from A to C*, scores on Sales → Accounts).
 - Run `AccountsRegressionSeeder` + `accounts:verify` against the dev DB, never `DB_DATABASE=f16s_test` by hand — `AccountsRegressionTest` runs it there inside a transaction; by hand it commits and breaks other tests (#455).
 - Two tests fail only because `config/common-data.php` is gitignored and absent (CargoStatusCodeTest, JobBoardLinksTest).

@@ -32,7 +32,72 @@ class BossMailDrafter
     /** @return array{subject: string, body: string, written_by: string} */
     public function draft(string $kind, array $facts, User $boss): array
     {
+        // The quarterly review lists every job and names everyone in the chain: the plain template keeps all of it, as
+        // given, and its subject stays the clean header (owner, 2026-10-05). AI wording could drop a line.
+        if ($kind === StaffReviews::KIND) {
+            return $this->review($facts);
+        }
+
         return $this->written($kind, $facts, $boss) ?? $this->template($kind, $facts);
+    }
+
+    /**
+     * The quarterly review (GAPS #457): this quarter beside the last, who worked the account, every loss, cancellation
+     * and airline rejection with the person on it, and a link to the review page. Never a figure that is not measured:
+     * NULL reads "not enough to measure", never 0.
+     */
+    private function review(array $f): array
+    {
+        $mode = $f['mode'] === 'sea' ? 'Sea' : 'Air';
+        $was = fn ($now, $before, string $unit = '') => ($now === null ? 'not enough to measure' : $now . $unit)
+            . ' (' . $f['previous_quarter'] . ': ' . ($before === null ? 'not enough to measure' : $before . $unit) . ')';
+        $people = fn (array $names) => $names === [] ? 'nobody recorded' : implode(', ', $names);
+        $who = fn (array $r) => ' — ops: ' . ($r['ops'] ?? 'not set') . ', pricing: ' . ($r['pricing'] ?? 'not set');
+        $jobRef = fn (array $r) => $r['job'] . ($r['awb'] ? " (AWB {$r['awb']})" : '');
+
+        $e = $f['enquiries'];
+        $pe = $f['previous_enquiries'];
+        $p = [];
+        $p[] = $f['version'] === 'boss' ? 'Hi ' . ($f['sales'] ?? 'there') . ',' : 'Hi team,';
+        $p[] = "Here is the {$mode} review of {$f['client']} for {$f['quarter']}, with {$f['previous_quarter']} beside each figure so we can see whether we are improving.";
+        $p[] = 'Who worked the account: sales ' . ($f['sales'] ?? 'not set') . '; ops ' . $people($f['ops_staff'])
+            . '; pricing ' . $people($f['pricing_staff']) . '.';
+        $p[] = "Enquiries: {$e['total']} ({$pe['total']}), converted {$e['converted']} ({$pe['converted']}), lost {$e['lost']} ({$pe['lost']}). "
+            . "Shipments: {$f['shipments']} ({$f['previous_shipments']}).";
+
+        $section = function (string $title, array $rows, callable $line) use (&$p) {
+            $p[] = $title . ': ' . ($rows === [] ? 'none.' : count($rows) . '.');
+            foreach ($rows as $r) {
+                $p[] = '• ' . $line($r);
+            }
+        };
+        $section('Enquiries lost', $f['lost'], fn ($r) => "{$r['enquiry']} — {$r['reason']} (pricing: " . ($r['pricing'] ?? 'not set') . ')');
+        $section('Jobs cancelled', $f['cancelled'], fn ($r) => $jobRef($r) . " — {$r['reason']}" . $who($r));
+        if ($f['mode'] === 'air') {
+            $section('Rejected by the airline (FNA)', $f['rejected_by_airline'], fn ($r) => $jobRef($r) . " — {$r['reason']}" . $who($r));
+        }
+
+        $steps = $f['our_steps'];
+        $slowest = collect($steps['step_deltas'] ?? [])->filter(fn ($d) => $d > 0)->sortDesc()
+            ->map(fn ($d, $step) => "{$step} +{$d} days")->values()->all();
+        $p[] = 'Our own steps: ' . $was($steps['days_slower'], $steps['previous_days_slower'], ' days slower than our normal')
+            . ($slowest === [] ? '.' : '. Slower than normal at: ' . implode(', ', $slowest) . '.');
+
+        $r = $f['rates'];
+        $p[] = 'Cancellation rate: ' . $was($r['cancellation_rate'], $r['previous_cancellation_rate'], '%') . '. '
+            . ($f['mode'] === 'air' ? 'Airline rejection rate: ' . $was($r['fna_rate'], $r['previous_fna_rate'], '%') . '. ' : '')
+            . 'Declared vs actual weight: ' . $was($r['weight_gap_pct'], $r['previous_weight_gap_pct'], '% apart') . '.';
+
+        $section("All jobs in {$f['quarter']}", $f['jobs'], fn ($r) => $jobRef($r) . " — {$r['status']}" . $who($r));
+
+        $p[] = $f['version'] === 'boss'
+            ? 'Please go through this with the ops and pricing team on this account and come back to me with what we will do differently next quarter.'
+            : 'Please look at the points above for your jobs and tell me by the end of the week what we can fix for next quarter.';
+
+        $link = \App\Support\Portal::link(\App\Support\Portal::forMode($f['mode']), 'review/' . ($f['review_id'] ?? ''));
+        $body = $this->html($p) . '<p><a href="' . e($link) . '"><strong>See the details</strong></a></p>' . $this->html(['Thanks,']);
+
+        return ['subject' => "Quarterly review · {$f['client']} · {$mode} · {$f['quarter']}", 'body' => $body, 'written_by' => 'template'];
     }
 
     private function written(string $kind, array $facts, User $boss): ?array

@@ -434,6 +434,13 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/boss/mails/{id}/draft', [\App\Http\Controllers\Freight\BossMailController::class, 'draft'])->whereNumber('id');
     Route::post('/boss/mails/{id}/send', [\App\Http\Controllers\Freight\BossMailController::class, 'send'])->whereNumber('id');
     Route::post('/boss/mails/{id}/dismiss', [\App\Http\Controllers\Freight\BossMailController::class, 'dismiss'])->whereNumber('id');
+    // A Command salesperson's own mails to the team — the quarterly reviews to ops and pricing (GAPS #457).
+    Route::get('/sales/team-mails', [\App\Http\Controllers\Freight\SalesTeamMailController::class, 'index']);
+    Route::post('/sales/team-mails/{id}/draft', [\App\Http\Controllers\Freight\SalesTeamMailController::class, 'draft'])->whereNumber('id');
+    Route::post('/sales/team-mails/{id}/send', [\App\Http\Controllers\Freight\SalesTeamMailController::class, 'send'])->whereNumber('id');
+    Route::post('/sales/team-mails/{id}/dismiss', [\App\Http\Controllers\Freight\SalesTeamMailController::class, 'dismiss'])->whereNumber('id');
+    // What a quarterly review's "See the details" opens — for the people in its chain.
+    Route::get('/staff-reviews/{id}', [\App\Http\Controllers\Freight\StaffReviewController::class, 'show'])->whereNumber('id');
     // How each person is doing — the Boss's staff view (user, 2026-09-16).
     Route::get('/sales/staff', [\App\Http\Controllers\Freight\SalesDashboardController::class, 'staff']);
     // Monthly targets per branch and mode, set by the Boss (user, 2026-09-15).

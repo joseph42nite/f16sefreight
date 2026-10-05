@@ -460,6 +460,13 @@ const router = new Router({
           meta: { userType: 'user', designations: ['sales', 'boss'], minTier: 'tactical' }
         },
         {
+          // A quarterly staff review in full — the email's "See the details" (GAPS #457). The server checks the chain.
+          path: "review/:id(\\d+)",
+          name: "StaffReview",
+          component: () => import("@/view/pages/freight/StaffReview"),
+          meta: { userType: 'user', designations: ['pricing', 'operations', 'sales', 'boss'], minTier: 'command' }
+        },
+        {
           // Cross-mode oversight. No portal scope, so the funnel shows air and sea
           // side by side rather than one at a time.
           path: "boss",

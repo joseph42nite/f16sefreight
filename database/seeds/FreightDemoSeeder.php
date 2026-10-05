@@ -13,6 +13,7 @@ use App\User;
 use Illuminate\Database\Seeder;
 use App\Services\AwbJobLinker;
 use App\Support\AwbNumber;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -390,6 +391,7 @@ class FreightDemoSeeder extends Seeder
         DB::table('customer_performance_snapshots')->whereIn('agent_id', $branchIds)->delete();
         DB::table('customer_lane_stats')->whereIn('agent_id', $branchIds)->delete();
         DB::table('customer_cadence_profiles')->whereIn('agent_id', $branchIds)->delete();
+        DB::table('customer_ops_quarters')->whereIn('agent_id', $branchIds)->delete();
 
         // enquiries.reinitiated_from_job_id points BACK at jobs, so break the cycle
         // before deleting either side.
@@ -515,13 +517,85 @@ class FreightDemoSeeder extends Seeder
                     'created_at' => $when, 'updated_at' => $when,
                 ]);
 
+                // Our ops (GAPS #456), one problem per client so each shows: Northwind declares 8% under what ships
+                // and every sixth waybill comes back rejected (FNA) before it is taken; Contoso's jobs sit longer in
+                // Verification and PDF Generated (below), and some of its bookings are cancelled.
+                $northwind = $customer->id === $customers[0]->id;
+                $actual = $northwind ? round($kg * 1.08, 1) : $kg;
+
                 DB::table('air_shipment_details')->insert([
                     'job_id' => $job->id, 'flight_number' => 'EK511', 'carrier_name' => 'Emirates SkyCargo',
-                    'pol_code' => $origin, 'pod_code' => $dest, 'piece_count' => 8, 'gross_weight' => $kg,
-                    'chargeable_weight' => $kg, 'created_at' => $when, 'updated_at' => $when,
+                    'pol_code' => $origin, 'pod_code' => $dest, 'piece_count' => 8, 'gross_weight' => $actual,
+                    'chargeable_weight' => $actual, 'created_at' => $when, 'updated_at' => $when,
                 ]);
+
+                $this->walkSteps($job, $when, $northwind ? [0.5, 1, 0.5, 1] : [0.5, 2.5, 1.5, 1]);
+                $this->airlineAnswer($job->awb_number, $when, $northwind && $k % 6 === 0);
+
+                // And Contoso's cargo is not ready every eighth booking: a job opened, then cancelled.
+                if ($customer->id === $customers[1]->id && $k % 8 === 3) {
+                    $seq++;
+                    $lost = Enquiry::create([
+                        'agent_id' => $branch->id, 'transport_mode' => 'air', 'direction' => 'export',
+                        'enquiry_no' => sprintf('ENQA-%s-%s-%04d', $agentCode, $when->format('y'), $seq),
+                        'customer_id' => $customer->id, 'sales_id' => $users['sales']->id, 'pricing_id' => $users['pricing']->id,
+                        'status' => 'converted', 'origin_code' => $origin, 'dest_code' => $dest, 'extracted_pieces' => 4,
+                        'extracted_weight' => $kg, 'cargo_description' => 'Auto components', 'cargo_type' => 'general',
+                        'cargo_data_source' => 'regex', 'created_at' => $when, 'updated_at' => $when,
+                    ]);
+                    $cancelled = Job::create([
+                        'agent_id' => $branch->id, 'enquiry_id' => $lost->id, 'transport_mode' => 'air', 'direction' => 'export',
+                        'execution_job_no' => sprintf('JOBA-%s-%s-%04d', $agentCode, $when->format('y'), $seq),
+                        'customer_id' => $customer->id, 'ops_id' => $users['operations']->id, 'pricing_id' => $users['pricing']->id,
+                        'status' => 'Cancelled', 'cargo_type' => 'general', 'cancellation_reason' => 'cargo_not_ready',
+                        'cancelled_at' => $when->copy()->addDay(), 'cancelled_by' => $users['operations']->id,
+                        'created_at' => $when, 'updated_at' => $when,
+                    ]);
+                    $this->walkSteps($cancelled, $when, [1], 'Cancelled');
+                }
             }
         }
+    }
+
+    /**
+     * The job's stage log as it would have been written live: Intake, Verification, PDF Generated and Sent to Airline
+     * lasting `$days` each, then Airline Confirmed and the end state (GAPS #456). Replaces the single row the observer
+     * wrote at seeding time, which made every demo job look as if it skipped its steps.
+     */
+    private function walkSteps(Job $job, Carbon $from, array $days, string $end = 'Completed'): void
+    {
+        DB::table('milestone_performance_logs')->where('job_id', $job->id)->delete();
+
+        $steps = array_slice(['Intake', 'Verification', 'PDF Generated', 'Sent to Airline'], 0, count($days));
+        $rows = [];
+        $at = $from->copy();
+        foreach ($steps as $i => $step) {
+            $rows[] = [$step, $at->copy()];
+            $at->addMinutes((int) round($days[$i] * 1440));
+        }
+        if ($end === 'Completed') {
+            $rows[] = ['Airline Confirmed', $at->copy()];
+            $at->addHours(12);
+        }
+        $rows[] = [$end, $at->copy()];
+
+        DB::table('milestone_performance_logs')->insert(array_map(fn ($r) => ['agent_id' => $job->agent_id, 'job_id' => $job->id,
+            'milestone_name' => $r[0], 'entered_at' => $r[1], 'created_at' => $r[1], 'updated_at' => $r[1]], $rows));
+    }
+
+    /** The airline's answer to the waybill: processed (FMA), or rejected (FNA) and then processed after the fix. */
+    private function airlineAnswer(string $awb, Carbon $sent, bool $rejectedFirst): void
+    {
+        $answer = fn (string $status, string $reason, Carbon $at) => ['business_id' => $awb, 'business_name' => 'Air Waybill',
+            'business_status_code' => $status, 'reason' => $reason, 'created_at' => $at, 'updated_at' => $at];
+
+        $rows = [];
+        if ($rejectedFirst) {
+            $rows[] = $answer('Rejected', 'Consignee address incomplete', $sent->copy()->addDays(3));
+        }
+        $rows[] = $answer('Processed', '', $sent->copy()->addDays($rejectedFirst ? 4 : 3));
+
+        DB::table('status_response')->insert($rows);
     }
 
     /**

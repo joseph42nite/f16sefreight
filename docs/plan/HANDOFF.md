@@ -2,9 +2,14 @@
 
 Paste this into the new session:
 
-> Continue F16s Freight OS (Laravel 9, Vue 2) on branch `feat/freight-os-schema-ldt65g`. Read `docs/plan/HANDOFF.md`,
-> then the newest rows of `docs/plan/GAPS.md` (#443 onward), then `docs/plan/implementation_guide.md` Steps 11–12.
-> Follow the standing rules in HANDOFF.md. Ask me before starting anything not listed under "Next".
+> Continue F16s Freight OS (Laravel 9, Vue 2) on branch `feat/freight-os-schema-ldt65g`. Run `git pull` first. Read
+> `docs/plan/HANDOFF.md`, then the newest rows of `docs/plan/GAPS.md` (#451 onward), then
+> `docs/plan/implementation_guide.md` Steps 11–12. Follow the standing rules in HANDOFF.md. Ask me before starting
+> anything not listed under "Next".
+>
+> Other sessions may be working in this repo at the same time: before any `php artisan test`, check none is running
+> (`ps aux | grep "artisan test"`); just before adding a GAPS row or editing HANDOFF.md, `git pull` and take the next
+> free number; commit by explicit path only.
 
 ## Standing rules (from the owner)
 - Record every finding as a numbered row in `docs/plan/GAPS.md`. Read the root docs and `docs/plan/*` before each piece of work; if a doc disagrees with the code, say so.
@@ -19,24 +24,42 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#458, all pushed)
+## Where we are (GAPS #436–#458, all pushed; last commit `bd0e698a`)
 
-### This session (2026-10-03/04)
-- **Connect your bank + alerts (#448):** no onboarding wizard exists, so (owner's answers) the bank step is a line on **Today** — *No bank account is set up* / *X is not connected* — and the next action on **Money in ④**; it clears once a feed is active or a statement is uploaded, and never rings the bell. Three alerts on **Today while true** and on the **bell once per event** (accounts + Boss; a client's money also to that client's salesperson): a **supplier** voucher due tomorrow (recorded due date only), a client's bank payment **matched short and left owed**, a client whose **grade letter** got worse. One service, `App\Services\Accounts\AccountsAlerts`; `accounts:alerts` hourly.
-- **Health score + DSO (#450):** PRD §7.3.4 H filled by `sales:compute-snapshots` via `App\Services\Sales\ClientHealth`, weights in `config/client_health.php`. **Payment part = the client's report card** (owner's call — the one deliberate air/sea blend, PRD updated). Ops health (G) is computed by nothing, so it is always the dropped part. DSO now counts to the settling receipt's date, in rupees, bills only. Sales → Accounts shows *Days to pay* and the score with its bars (`HealthBars.vue`).
-- **`accounts:verify` TDS check (#449):** each direction read in its own deduction's quarter; 176/176 on any date (a test pins 2 July).
-- **Mode label (#451):** the Boss's unscoped client book shows `✈ Air` / `⚓ Sea` per row.
-- **Docker OCR (#452, the owner's own fixes):** the queue worker now listens to `pdf_processing` (where every OCR job goes — before, PDFs uploaded in Docker were never read); `web`/`queue` reach db/redis/ai-server by service name; an OCR job with no temp file fails cleanly.
+### This session (2026-10-04/05)
+- **Ops scorecard, measured not scored (#456):** PRD §7.3.4 G as facts per client, mode and **financial-year quarter**
+  in `customer_ops_quarters` (`App\Services\Sales\OpsScorecard`, written nightly by `sales:compute-snapshots`,
+  **Command only**): days slower than the **other clients** on our own steps (Intake … PDF Generated, each equal; the
+  airline's wait is not ours), cancellation rate, **FNA rate** (rejections only), declared-vs-actual weight gap — NULL
+  below the PRD minimums. `ops_health` stays NULL, so H still drops it, until the owner picks weights. Sales → Accounts
+  shows the last closed quarter and this one "so far" under the health bars. OCR corrections and CASS are not recorded.
+- **Quarterly staff reviews (#457):** when a quarter closes, per client and mode, prepared once (`StaffReviews`, on the
+  Boss-mail pipeline, `boss_mail_suggestions.owner_user_id`): the **Boss's** draft to the client's salesperson only;
+  the **salesperson's** (Command, Sales page, own portal's mode) to the ops and pricing staff who worked it. Plain
+  template: clean subject, the chain, losses with reason and pricing person, cancellations and FNAs with job/AWB/ops,
+  rates against last quarter, every job, **See the details** → `/review/:id` (the chain only). 🔒 Every Boss/sales
+  team mail now goes **only to the company's own active staff**. `TeamMails.vue` shared by Boss and Sales views.
+- **Demo walks its jobs (#457):** `FreightDemoSeeder` writes each job's stage log at historical times and the airline's
+  answer per AWB. Q2 FY 2026-27: Contoso 2.5 d slower than the others + 8.33% cancelled; Northwind FNA 11.11%, weight
+  gap 8%. Run `sales:compute-snapshots` after seeding to prepare the Q2 reviews.
+- **Rubric measured live (#453):** sea 26/26; air 39–40/40 — every #438 cut restored (`2026-10-04b`).
+- **Lane misread (#454):** "Pre-alert SIN-BOM" read as SIN → BOM, not PRE → YLT (every lane pair tried; pre/alert are
+  stopwords). "BLR JFK" (no separator) is still not a lane, by design.
+- **Test DB (#455):** a hand-run `AccountsRegressionSeeder` had left rows in `f16s_test`; cleared, and the tests now
+  upsert their ports and use their own rival codes.
+- **OCR empty path (#452)** pinned by a test; **Mode column (#451)** walked hidden on both portals; **Accounts table
+  (#458)** scrolls inside its column instead of being cut off at a narrow window (`.fx-table-wrap` is now shared).
 
 ### Before (one line each — the GAPS rows have the detail)
+- **Bank + alerts (#448)** Today line, three alerts, `accounts:alerts` hourly. **Health score + DSO (#450)** H via
+  `ClientHealth`, payment part = the report card. **TDS check (#449)**. **Mode label (#451)** on the Boss's book.
+  **Docker OCR (#452)** the queue reads `pdf_processing`.
 - **Import (#434, #436, #437)** sea + air import pages, houses inside the consol, arrival notice staged; triage reads import/export.
-- **Jev prompt compacted (#438)** ~830 / ~910 tokens. **Tiers (#439)** Core / Tactical / Command on FocusSea as on FocusAir.
-- **Draft protocol (#440)** one draft per conversation, the bell follows it. **BL reading (#441)** `python/bill.py` → `SeaBillReading` → `BlReader.vue`.
-- **Setu feed (#442)** read-only, ready for keys. **Payment report card (#443)** monthly A–D. **Airline commission/discounts (#444)**. **Bank upload file + guide (#445)**.
-- **Accountant questions (#446)**. **End-to-end check (#447)**.
+- **Jev prompt compacted (#438)**. **Tiers (#439)**. **Draft protocol (#440)**. **BL reading (#441)** `python/bill.py` → `BlReader.vue`.
+- **Setu feed (#442)** read-only, ready for keys. **Payment report card (#443)**. **Airline commission/discounts (#444)**.
+  **Bank upload file + guide (#445)**. **Accountant questions (#446)**. **End-to-end check (#447)**.
 
 ## Not measured yet — run on the Mac
-- ~~Rubric check~~ measured 2026-10-04 (#453): sea 26/26; air 39–40/40 — with every #438 cut restored (`2026-10-04b`) *Pre-alert SIN-BOM* passes 2/5 (direction 0.55–0.70 vs 0.60). ❓ Owner: further wording would be new, not a restore.
 - A real bill of lading through the BL reader (#441) — the AI server is now running; send back any field it misreads.
 - Setu's request shapes against their sandbox (`app/Services/Bank/SetuAccountAggregator.php`, #442).
 
@@ -47,17 +70,18 @@ Paste this into the new session:
 - Bank templates (HDFC, ICICI, Axis…) for bank-specific upload files.
 - Answers to #446 (GST on commission/incentives; incentive as income or cost; late rebates); root-doc conflicts (#421, #435); FocusSea statuses (#425b).
 - **Ops health weights** (`w[s]`, `w_cancel`, `w_corr`, `w_cass`, `w_decl`, `penalty_scale`) — the owner picks them after 2–3 months of real quarters in `customer_ops_quarters` (#456). ("Days slower" compares with the other clients only — owner, #457.)
-- Production `.env`: `PORTAL_DOMAIN` / `PORTAL_SCHEME`, so the staff reviews' "See the details" links point at the live portals (#457).
+- Production `.env`: `PORTAL_DOMAIN` / `PORTAL_SCHEME` only if the live site is not `https://…f16sefreight.com` (the default) — they make the staff reviews' "See the details" links (#457).
 - A provider that can also PAY (RazorpayX, Cashfree Payouts, a bank's corporate API) — Setu only reads (#442).
 - Whether to bring back the *AI Extraction* and *Re-initiation* client mails (#440).
+- *Pre-alert SIN-BOM* on the air rubric passes 2/5 (direction 0.55–0.70 vs the 0.60 floor) with every #438 cut restored; any further wording would be new, not a restore (#453). In production its lane now decides it (#454).
 
 ## Open — noticed, not asked for (offer, don't start)
+- Nothing open.
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.
 
-*(Done this session: connect your bank + alerts #448, health score + DSO #450, TDS check #449, mode label #451.)*
-*(Then, 2026-10-04: rubric measured live #453; "Pre-alert SIN-BOM" lane misread fixed #454; test DB cleared of a hand-run fixture, tests made tolerant #455; OCR empty-path test #452; Mode column's hidden case walked on both portals #451. 2026-10-05: ops scorecard measured per quarter, not scored #456; quarterly staff reviews Boss → sales → ops/pricing, Command only #457; Accounts table scrolls instead of clipping #458.)*
+Nothing else is ready to build: every other item waits on the owner above.
 
 ## On the Mac after pulling
 ```
@@ -67,11 +91,12 @@ php artisan db:seed --class='\BillingDemoSeeder' --force
 php artisan help:load-bundled
 npm run prod
 ```
-- **Docker stops when the Mac sleeps** — and can come back wedged: `docker info` says *"Docker Desktop is unable to start … backend time … context deadline exceeded"* and `compose up` fails on whichever image it reads first (*"unexpected end of JSON input"*). Quit Docker Desktop fully (`osascript -e 'quit app "Docker"'`) and reopen it; then restart the preview too, its workers stay stuck on the hung requests.
+- **Docker stops when the Mac sleeps** (it happened three times on 2026-10-04/05; a hung sign-in is the sign) — and can come back wedged: `docker info` says *"Docker Desktop is unable to start … backend time … context deadline exceeded"* and `compose up` fails on whichever image it reads first (*"unexpected end of JSON input"*). Quit Docker Desktop fully (`osascript -e 'quit app "Docker"'`; if `com.docker.backend` keeps the same PID, kill it — `com.docker.vmnetd` is root's and stays) and reopen it (`open -a Docker`); wait for `docker info` to show a server version, then `docker compose up -d`. The preview's workers may stay stuck on requests from before: sign in again, or restart the preview.
 - **Docker (as before):** Start Docker Desktop, then `docker compose up -d` (web, queue, db, redis, soketi, ai-server, clamav). The ai-server mounts `./python`, so it runs the current code without a rebuild — it only has to be running. `curl` is not in the queue container; test reach with `php -r 'echo file_get_contents("http://ai-server:8000/health");'`.
 - **The preview** (`.claude/launch.json` → `f16s`) serves on `:8099` with `php artisan serve`; the first requests after a start are slow (~20 s), so wait before signing in.
 - **Portals:** accounts sign in at `accounts.localhost:8099`, the Boss at `admin.localhost:8099` (FocusAir refuses the Boss), operations/pricing/sales at `focusair.` / `focussea.`. Demo logins: `demo-*@demo.test`, `tact-*@demo.test`, `core@demo.test` — password `demo1234`.
 - Locally, `.env` needs `PORTAL_DOMAIN=localhost:8099` and `PORTAL_SCHEME=http` for the staff reviews' links (#457).
-- After seeding, `php artisan accounts:alerts` and `php artisan sales:compute-snapshots` fill the bell and the Sales page (the demo Boss sees *Northwind Traders slipped from A to C*, scores on Sales → Accounts).
+- After seeding, `php artisan accounts:alerts` and `php artisan sales:compute-snapshots` fill the bell and the Sales page (the demo Boss sees *Northwind Traders slipped from A to C*, scores on Sales → Accounts, and the Q2 quarterly reviews; demo-sales sees theirs on Sales in FocusAir/FocusSea).
+- `git pull` / `git push` can stall on SSH for minutes; run them with a time limit and check `git status -sb` after.
 - Run `AccountsRegressionSeeder` + `accounts:verify` against the dev DB, never `DB_DATABASE=f16s_test` by hand — `AccountsRegressionTest` runs it there inside a transaction; by hand it commits and breaks other tests (#455).
 - Two tests fail only because `config/common-data.php` is gitignored and absent (CargoStatusCodeTest, JobBoardLinksTest).

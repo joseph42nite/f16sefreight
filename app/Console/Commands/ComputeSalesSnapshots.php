@@ -40,6 +40,8 @@ use Illuminate\Support\Facades\DB;
  *                  DSO = rupee-weighted days from invoice to payment (the settling receipt's date) for paid bills,
  *                  and to today for unpaid ones past their due date; drift = DSO − payment terms;
  *                  credit use = amount owed ÷ credit limit.
+ *   G  Our ops     (Command) per financial-year quarter: days slower than the branch on our own steps, cancellation rate,
+ *                  FNA rate, declared-vs-actual weight gap — measured, NOT scored (OpsScorecard; owner 2026-10-05).
  *   H  Health      0.30 trend + 0.25 rhythm + 0.20 win rate + 0.15 payment card + 0.10 ops, each in [0, 1];
  *                  a part without data dropped and the rest re-weighted; under three parts, none (ClientHealth).
  */
@@ -67,7 +69,11 @@ class ComputeSalesSnapshots extends Command
     /** When a client has no payment terms on file. */
     private const DEFAULT_TERMS_DAYS = 30;
 
-    public function __construct(private readonly ClientHistory $history, private readonly ClientFindings $findings)
+    public function __construct(
+        private readonly ClientHistory $history,
+        private readonly ClientFindings $findings,
+        private readonly \App\Services\Sales\OpsScorecard $ops,
+    )
     {
         parent::__construct();
     }
@@ -111,17 +117,19 @@ class ComputeSalesSnapshots extends Command
 
         // The lanes the branches run, for offering new ones — read once per mode.
         $branchShipments = [];
+        // The per-client ops scorecard is Command's (PRD §7.3.8).
+        $command = DB::table('companies')->where('id', $companyId)->value('tier') === 'command';
 
         foreach ($pairs as $pair) {
             $mode = $pair->transport_mode;
             $branchShipments[$mode] ??= $this->history->shipments($branchIds, null, $mode, $date);
-            $this->rollClient($branchIds, (int) $pair->customer_id, $mode, $date, $branchShipments[$mode]);
+            $this->rollClient($branchIds, (int) $pair->customer_id, $mode, $date, $branchShipments[$mode], $command);
         }
 
         return $pairs->count();
     }
 
-    private function rollClient(array $branchIds, int $customerId, string $mode, Carbon $date, Collection $branchShipments): void
+    private function rollClient(array $branchIds, int $customerId, string $mode, Carbon $date, Collection $branchShipments, bool $command = false): void
     {
         $customer = DB::table('customers')->find($customerId);
 
@@ -162,13 +170,20 @@ class ComputeSalesSnapshots extends Command
                 'enquiry_count_mtd' => $enquiries->filter(fn ($e) => Carbon::parse($e->created_at)->gte($monthStart))->count(),
                 'momentum' => $momentum,
                 'lane_hhi' => $this->laneConcentration($shipments),
-                // H — ops health (G) is not computed yet, so it is always the dropped part.
+                // H — ops health (G) is measured per quarter but not scored yet (owner, 2026-10-05), so it is the dropped part.
                 'client_health_score' => $health->score($parts),
                 'last_computed_at' => now(),
                 'updated_at' => now(),
                 'created_at' => now(),
             ], $funnel, $money)
         );
+
+        if ($command) {
+            // G, the running quarter to date. Measured only: ops_health above stays NULL until the owner sets weights.
+            $quarter = \App\Services\Sales\OpsScorecard::quarterStart($date);
+            $this->ops->record($agentId, $customerId, $mode, $quarter,
+                $this->ops->measure($branchIds, $customerId, $mode, $quarter, $date->copy()->endOfDay()));
+        }
 
         $this->laneStats($agentId, $customerId, $mode, $shipments, $enquiries, $date);
         $this->rankActions($agentId, $customerId, $mode, $customer, $profile, $funnel, $money, $date);

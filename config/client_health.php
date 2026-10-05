@@ -10,7 +10,7 @@ return [
         'churn'    => 0.25,   // A — rhythm band
         'win_rate' => 0.20,   // C — converted ÷ closed enquiries
         'payment'  => 0.15,   // the client's payment report card (GAPS #443, owner 2026-10-03)
-        'ops'      => 0.10,   // G — internal ops scorecard (nothing computes it yet: always dropped)
+        'ops'      => 0.10,   // G — measured per quarter (OpsScorecard) but not scored until the owner sets weights: dropped
     ],
 
     // Fewer components than this with enough data ⇒ no score ("—"). Absent evidence is not bad news.

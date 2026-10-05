@@ -1950,6 +1950,12 @@ ops_health      = clamp(1 − (raw_penalty / penalty_scale), 0, 1)
 
 All weights `w[*]` and `penalty_scale` live in config, not code.
 
+> **⚠️ Measured first, scored later (owner's decision, 2026-10-05, GAPS #456).** No weights or `penalty_scale` were available, so G is built as **facts, not a score**: per client, mode and **financial-year quarter** (Apr–Jun, Jul–Sep, Oct–Dec, Jan–Mar) in `customer_ops_quarters` — **days slower** (Σ of positive per-step deltas, every step weighted equally), **cancellation rate**, **FNA rate** and **declared-vs-actual weight gap**. `customer_performance_snapshots.ops_health` stays NULL, so H keeps dropping this part, until the owner picks the weights from 2–3 months of real quarters.
+> - **Stages = our own steps only:** Intake · AI Extraction · Verification · Generation · PDF Generated (each lasts until the job's next status). The wait after *Sent to Airline* is the airline's and is not counted.
+> - **The airline's answer is a quality fact, not a time.** An FMA ("processed") means the data we sent was right; an **FNA** means the airline rejected it. A job counts as rejected if any answer to its waybill was `Rejected`, even if it was accepted after a fix; a *Cargo Status* message is tracking, not an answer. A single FNA is normal and triggers nothing (owner).
+> - `pdf_extraction_correction_rate` and `cass_weight_mismatch_rate` are **not recorded** (nothing writes corrections; the CASS importer is not built) — left out, never read as 0.
+> - Command only (§7.3.8); shown on Sales → Accounts under the health bars, without a bar.
+
 > **The inversion is not cosmetic.** `stage_delta` is defined so that *bigger is worse* (the client's clearance takes longer than the branch norm), whereas every other component of the composite score is *bigger is better*. Summing them without inverting would make a slow, problem-ridden account score as **healthy** — a sign error that silently reverses the meaning of the headline number.
 
 Combined with cancellation rate, `pdf_extraction_corrections` rate on their documents (messy paperwork → slow clearance), CASS `weight_mismatch` rate, and the declared-vs-actual weight delta (§5.3).

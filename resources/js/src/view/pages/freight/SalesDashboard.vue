@@ -361,6 +361,7 @@
                 <HealthBars
                   :score="c.client_health_score === null ? null : Number(c.client_health_score)"
                   :parts="c.health || {}"
+                  :ops="c.ops || null"
                 />
               </td>
             </tr>

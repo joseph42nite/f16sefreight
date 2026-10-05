@@ -15,6 +15,12 @@
         </span>
         <span class="fx-health__value">{{ p.value === null ? "—" : Math.round(p.value * 100) }}</span>
       </li>
+      <!-- Our ops is measured but not scored yet (owner, 2026-10-05): the quarter's facts, as they are. -->
+      <li v-if="ops" class="fx-health__ops" :title="'Measured this quarter, not yet part of the score'">
+        {{ ops.quarter }}: {{ fact(ops.days_slower, " d slower") }} · cancelled {{ fact(ops.cancellation_rate, "%") }}
+        <template v-if="ops.fna_rate !== undefined"> · FNA {{ fact(ops.fna_rate, "%") }}</template>
+        · weight gap {{ fact(ops.weight_gap_pct, "%") }}
+      </li>
     </ul>
   </div>
 </template>
@@ -34,6 +40,13 @@ export default {
   props: {
     score: { type: Number, default: null },
     parts: { type: Object, default: () => ({}) },
+    /* G's facts for the running quarter, or null. Each NULL figure is "not enough data", shown as an em dash. */
+    ops: { type: Object, default: null },
+  },
+  methods: {
+    fact(value, unit) {
+      return value === null ? "—" : value + unit;
+    },
   },
   computed: {
     rows() {
@@ -52,4 +65,5 @@ export default {
 .fx-health__track { height: 6px; background: var(--bg-sunken); border-radius: var(--radius-sm); overflow: hidden; }
 .fx-health__fill { display: block; height: 100%; background: var(--status-info); }
 .fx-health__value { font-family: var(--font-mono); text-align: right; color: var(--text-secondary); }
+.fx-health__ops { font-size: .68rem; line-height: 1.4; color: var(--text-secondary); margin-top: 2px; }
 </style>

@@ -1107,6 +1107,11 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 .fx-steps__title { font-size: .9375rem; margin: 0 0 var(--space-1);
                    display: flex; align-items: center; gap: var(--space-2); }
 
+/* A table wider than the space beside the menu scrolls sideways inside its wrapper instead of being cut off — at 800 px
+   FocusSea's longer menu left the Sales → Accounts table 529 px for its 667 (GAPS #458). Not only on phones: the
+   column narrows with the menu, not with the window. */
+.fx-table-wrap { max-width: 100%; overflow-x: auto; }
+
 /* On a phone every register scrolls sideways inside itself, never the whole page: wide tables pushed the page left
    and took the header and menu with them (GAPS #420). A table as a block keeps its rows as a table inside. */
 @media (max-width: 767px) {

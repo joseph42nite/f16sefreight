@@ -19,7 +19,7 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#457, all pushed)
+## Where we are (GAPS #436–#458, all pushed)
 
 ### This session (2026-10-03/04)
 - **Connect your bank + alerts (#448):** no onboarding wizard exists, so (owner's answers) the bank step is a line on **Today** — *No bank account is set up* / *X is not connected* — and the next action on **Money in ④**; it clears once a feed is active or a statement is uploaded, and never rings the bell. Three alerts on **Today while true** and on the **bell once per event** (accounts + Boss; a client's money also to that client's salesperson): a **supplier** voucher due tomorrow (recorded due date only), a client's bank payment **matched short and left owed**, a client whose **grade letter** got worse. One service, `App\Services\Accounts\AccountsAlerts`; `accounts:alerts` hourly.
@@ -52,13 +52,12 @@ Paste this into the new session:
 - Whether to bring back the *AI Extraction* and *Re-initiation* client mails (#440).
 
 ## Open — noticed, not asked for (offer, don't start)
-- FocusSea's Sales → Accounts table clips its Health figures at an 800 px window; FocusAir's fits (#451).
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.
 
 *(Done this session: connect your bank + alerts #448, health score + DSO #450, TDS check #449, mode label #451.)*
-*(Then, 2026-10-04: rubric measured live #453; "Pre-alert SIN-BOM" lane misread fixed #454; test DB cleared of a hand-run fixture, tests made tolerant #455; OCR empty-path test #452; Mode column's hidden case walked on both portals #451. 2026-10-05: ops scorecard measured per quarter, not scored #456; quarterly staff reviews Boss → sales → ops/pricing, Command only #457.)*
+*(Then, 2026-10-04: rubric measured live #453; "Pre-alert SIN-BOM" lane misread fixed #454; test DB cleared of a hand-run fixture, tests made tolerant #455; OCR empty-path test #452; Mode column's hidden case walked on both portals #451. 2026-10-05: ops scorecard measured per quarter, not scored #456; quarterly staff reviews Boss → sales → ops/pricing, Command only #457; Accounts table scrolls instead of clipping #458.)*
 
 ## On the Mac after pulling
 ```

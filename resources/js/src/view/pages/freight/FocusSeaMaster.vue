@@ -674,5 +674,4 @@ export default {
 .fx-sea-dims .fx-input { width: 5.5rem; }
 .fx-field--wide { grid-column: 1 / -1; }
 .fx-seg { display: flex; gap: var(--space-1); align-self: flex-end; }
-.fx-table-wrap { overflow-x: auto; }
 </style>

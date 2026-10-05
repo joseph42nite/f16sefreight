@@ -331,42 +331,45 @@
            §8.1: the locked nav item is what explains the gap, not an empty grid here. -->
       <section v-if="book.length" class="fx-section">
         <h2 class="fx-section__title">Accounts</h2>
-        <table class="fx-table">
-          <thead>
-            <tr>
-              <th scope="col">Client</th>
-              <th v-if="bookShowsMode" scope="col">Mode</th>
-              <th scope="col">Risk</th>
-              <th class="fx-num" scope="col">Tonnage YTD</th>
-              <th class="fx-num" scope="col">Revenue MTD</th>
-              <th class="fx-num" scope="col">Win rate</th>
-              <th class="fx-num" scope="col">Outstanding 60+</th>
-              <th class="fx-num" scope="col" title="Days from bill to the client's payment, unpaid bills counted to today">Days to pay</th>
-              <th scope="col">Health</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="c in book" :key="c.customer_id + '-' + c.transport_mode">
-              <td>{{ c.name }}</td>
-              <!-- A client with air and sea business has a row for each, and the two must never be confusable (§8.4). -->
-              <td v-if="bookShowsMode">{{ modeName(c.transport_mode) }}</td>
-              <td><StatusChip :value="c.risk_band" /></td>
-              <td class="fx-num"><Figure :value="c.tonnage_ytd" kind="weight" /></td>
-              <td class="fx-num"><Figure :value="c.revenue_mtd" kind="currency" currency-code="INR" /></td>
-              <!-- §7.1 NULL is not 0% — an unmeasurable rate renders as an em dash. -->
-              <td class="fx-num"><Figure :value="c.win_rate" kind="count" /></td>
-              <td class="fx-num"><Figure :value="c.outstanding_60_plus" kind="currency" currency-code="INR" /></td>
-              <td class="fx-num"><Figure :value="c.dso_days" kind="count" /></td>
-              <td>
-                <HealthBars
-                  :score="c.client_health_score === null ? null : Number(c.client_health_score)"
-                  :parts="c.health || {}"
-                  :ops="c.ops || []"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- Wider than the column at a narrow window: it scrolls inside, it is never cut off (GAPS #458). -->
+        <div class="fx-table-wrap">
+          <table class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Client</th>
+                <th v-if="bookShowsMode" scope="col">Mode</th>
+                <th scope="col">Risk</th>
+                <th class="fx-num" scope="col">Tonnage YTD</th>
+                <th class="fx-num" scope="col">Revenue MTD</th>
+                <th class="fx-num" scope="col">Win rate</th>
+                <th class="fx-num" scope="col">Outstanding 60+</th>
+                <th class="fx-num" scope="col" title="Days from bill to the client's payment, unpaid bills counted to today">Days to pay</th>
+                <th scope="col">Health</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="c in book" :key="c.customer_id + '-' + c.transport_mode">
+                <td>{{ c.name }}</td>
+                <!-- A client with air and sea business has a row for each, and the two must never be confusable (§8.4). -->
+                <td v-if="bookShowsMode">{{ modeName(c.transport_mode) }}</td>
+                <td><StatusChip :value="c.risk_band" /></td>
+                <td class="fx-num"><Figure :value="c.tonnage_ytd" kind="weight" /></td>
+                <td class="fx-num"><Figure :value="c.revenue_mtd" kind="currency" currency-code="INR" /></td>
+                <!-- §7.1 NULL is not 0% — an unmeasurable rate renders as an em dash. -->
+                <td class="fx-num"><Figure :value="c.win_rate" kind="count" /></td>
+                <td class="fx-num"><Figure :value="c.outstanding_60_plus" kind="currency" currency-code="INR" /></td>
+                <td class="fx-num"><Figure :value="c.dso_days" kind="count" /></td>
+                <td>
+                  <HealthBars
+                    :score="c.client_health_score === null ? null : Number(c.client_health_score)"
+                    :parts="c.health || {}"
+                    :ops="c.ops || []"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <!-- A Command salesperson's quarterly reviews, one per client, to the ops and pricing staff who worked it (GAPS #457). -->

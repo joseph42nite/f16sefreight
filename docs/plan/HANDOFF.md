@@ -52,7 +52,6 @@ Paste this into the new session:
 - Whether to bring back the *AI Extraction* and *Re-initiation* client mails (#440).
 
 ## Open — noticed, not asked for (offer, don't start)
-- **Ops health (PRD §7.3.4 G)** is computed by nothing, so every health score rests on at most four of five parts (#450).
 - FocusSea's Sales → Accounts table clips its Health figures at an 800 px window; FocusAir's fits (#451).
 
 ## Next (when the owner says go)

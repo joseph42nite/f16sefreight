@@ -79,7 +79,7 @@ Paste this into the new session:
 - Setu's request shapes against their sandbox (`app/Services/Bank/SetuAccountAggregator.php`, #442).
 
 ## Waiting on the owner
-- BL / house / arrival notice / DO print layouts (#433, #434); import party mapping (#434a).
+- BL / house / arrival notice / DO print layouts (#433, #434).
 - ICEGATE developer-portal details (guide §12.3).
 - CASS: a client's CASSLink billing files + the CASS agent output specification, and their iiNET SFTP/APIsec setup.
 - Bank templates (HDFC, ICICI, Axis…) for bank-specific upload files.

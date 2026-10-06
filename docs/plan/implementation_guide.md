@@ -981,7 +981,7 @@ php artisan tinker
 | `GET /api/jobs/operator-load` | Per-operator active jobs, clearance schedule and computed **OLI** for the pricing load-balancing view |
 | `PUT /api/jobs/{id}/status` | Milestone transitions |
 | `POST /api/jobs/{id}/cancel` | Requires `cancellation_reason`; **`422`** if posted invoices/vouchers exist; on success detaches the AWB/HWB (`job_id → NULL`), releasing the number to stock |
-| `POST /api/jobs/{id}/reinitiate` | Creates a **fresh `enquiries` row** (new number, `reinitiated_from_job_id` → this cancelled job) and queues the re-quote client email |
+| `POST /api/jobs/{id}/reinitiate` | Creates a **fresh `enquiries` row** (new number, `reinitiated_from_job_id` → this cancelled job); no client mail (GAPS #459) |
 | `POST /api/jobs/{id}/reassign` | Pricing sets `ops_id` directly |
 | `POST /api/jobs/{id}/reassign/request` | Operator stages `pending_ops_id` and notifies the pricing owner's bell with **elevated `priority`** so it pins to the top |
 | `POST /api/jobs/{id}/reassign/withdraw` | Clears the pending fields **and hard-deletes** the matching `ReassignmentRequested` notification (matched on `data.job_id`) so it auto-dissolves from the bell |

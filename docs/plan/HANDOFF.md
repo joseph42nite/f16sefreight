@@ -24,9 +24,13 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#458, all pushed; last commit `bd0e698a`)
+## Where we are (GAPS #436–#459)
 
-### This session (2026-10-04/05)
+### 2026-10-06
+- **Owner's answers (#459):** no *AI Extraction* / *Re-initiation* client mails (PRD + guide no longer claim one);
+  *Pre-alert SIN-BOM* stays at 2/5 — prompts stay short, the lane (branch's country, PHP) decides it.
+
+### 2026-10-04/05
 - **Ops scorecard, measured not scored (#456):** PRD §7.3.4 G as facts per client, mode and **financial-year quarter**
   in `customer_ops_quarters` (`App\Services\Sales\OpsScorecard`, written nightly by `sales:compute-snapshots`,
   **Command only**): days slower than the **other clients** on our own steps (Intake … PDF Generated, each equal; the
@@ -72,8 +76,6 @@ Paste this into the new session:
 - **Ops health weights** (`w[s]`, `w_cancel`, `w_corr`, `w_cass`, `w_decl`, `penalty_scale`) — the owner picks them after 2–3 months of real quarters in `customer_ops_quarters` (#456). ("Days slower" compares with the other clients only — owner, #457.)
 - Production `.env`: `PORTAL_DOMAIN` / `PORTAL_SCHEME` only if the live site is not `https://…f16sefreight.com` (the default) — they make the staff reviews' "See the details" links (#457).
 - A provider that can also PAY (RazorpayX, Cashfree Payouts, a bank's corporate API) — Setu only reads (#442).
-- Whether to bring back the *AI Extraction* and *Re-initiation* client mails (#440).
-- *Pre-alert SIN-BOM* on the air rubric passes 2/5 (direction 0.55–0.70 vs the 0.60 floor) with every #438 cut restored; any further wording would be new, not a restore (#453). In production its lane now decides it (#454).
 
 ## Open — noticed, not asked for (offer, don't start)
 - Nothing open.

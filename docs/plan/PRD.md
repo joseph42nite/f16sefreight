@@ -1109,7 +1109,7 @@ Submitting sets `enquiries.status = 'lost'`, stamps `lost_at`, halts SLA timers,
 - **Financial guard:** blocked with `422` if the job has posted invoices or vouchers (`is_posted = true`) until they are voided or credit-noted — real costs (DO fees, cartage) may already exist.
 - **AWB release:** on success, any assigned AWB/HWB is detached (`job_id → NULL`) and returned to stock.
 
-**Re-initiation.** Freight rates are time-sensitive, so restarting a cancelled shipment spawns a **new `enquiries` row with a fresh `enquiry_no`** (the old number is never recycled), sets `enquiries.reinitiated_from_job_id` to the cancelled job, and dispatches a fresh client email carrying the re-quoted rate through the consent engine. The cancelled job stays visible, linked to its successor.
+**Re-initiation.** Freight rates are time-sensitive, so restarting a cancelled shipment spawns a **new `enquiries` row with a fresh `enquiry_no`** (the old number is never recycled), and sets `enquiries.reinitiated_from_job_id` to the cancelled job. No client mail is sent (owner, 2026-10-06 — GAPS #459). The cancelled job stays visible, linked to its successor.
 
 Re-entering the funnel as an enquiry is deliberate: **a re-quote *is* a fresh sales conversation and should be measured as one.**
 

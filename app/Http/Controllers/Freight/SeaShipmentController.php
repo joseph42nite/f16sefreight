@@ -133,8 +133,8 @@ class SeaShipmentController extends Controller
             'is_consolidation' => true,
             'cargo_type'       => $data['cargo_type'] ?? null,
             'delivery_mode'    => $this->lockingFor($data['cargo_type'] ?? null)['delivery_mode'],
-            // An import's maker in their own role's column (GAPS #462); an export master is unchanged.
-            (($data['direction'] ?? 'export') === 'import' ? Job::ownerColumnFor(auth()->user()->designation) : 'pricing_id') => auth()->id(),
+            // Its maker in their own role's column, export or import — an operator is its operator (GAPS #462, #463).
+            Job::ownerColumnFor(auth()->user()->designation) => auth()->id(),
             'execution_job_no' => $this->sequences->next($agentId, TransportMode::Sea->jobPrefix()),
         ]), EnquirySequenceService::DEADLOCK_ATTEMPTS);
 
@@ -169,8 +169,9 @@ class SeaShipmentController extends Controller
                 'direction'        => $master->direction,
                 'parent_job_id'    => $master->id,
                 'is_sub_shipment'  => true,
+                // The master's owners, as an import consol's houses take them (GAPS #463).
                 'ops_id'           => $master->ops_id,
-                'pricing_id'       => auth()->id(),
+                'pricing_id'       => $master->pricing_id,
                 'cargo_type'       => 'lcl',
                 'delivery_mode'    => $this->lockingFor('lcl')['delivery_mode'],
                 'execution_job_no' => $this->sequences->next($master->agent_id, TransportMode::Sea->jobPrefix()),

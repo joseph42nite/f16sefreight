@@ -104,6 +104,23 @@ class FocusSeaConnectedTest extends TestCase
     }
 
     /** 🔴 The exception is for masters only: a client shipment still traces to its enquiry. */
+    /**
+     * The operator who makes an export master is its operator, not its pricing owner; a house made inside it carries
+     * the master's owners (owner, 2026-10-06: "fix the export master the same way" — GAPS #463, as #462 for imports).
+     */
+    public function test_the_operator_who_makes_an_export_master_and_its_houses_is_their_operator(): void
+    {
+        $master = $this->master();
+
+        $this->assertSame($this->ops->id, (int) $master->ops_id);
+        $this->assertNull($master->pricing_id);
+
+        $houseId = $this->api()->postJson($this->url("/api/sea-shipments/{$master->id}/houses"))->assertCreated()->json('job.id');
+        $house = Job::withoutTenantScope()->find($houseId);
+        $this->assertSame($this->ops->id, (int) $house->ops_id);
+        $this->assertNull($house->pricing_id);
+    }
+
     public function test_only_a_consolidation_master_may_lack_an_enquiry(): void
     {
         $this->expectException(QueryException::class);

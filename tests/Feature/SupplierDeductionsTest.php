@@ -80,7 +80,7 @@ class SupplierDeductionsTest extends TestCase
     }
 
     /** The bill settled in full; the bank pays the net; commission and discount are income. No bank feed needed. */
-    public function test_commission_and_discount_come_off_the_transfer_and_are_income(): void
+    public function test_commission_and_discount_come_off_the_transfer_and_lower_our_cost(): void
     {
         $voucher = $this->voucher(100000, '176-10000008');
 
@@ -98,8 +98,11 @@ class SupplierDeductionsTest extends TestCase
         $b = $this->balances();
         $this->assertSame(0.0, $b['2100-AP'], 'nothing left owing to the airline');
         $this->assertSame(-93000.0, $b['1100-Bank'], 'only the net left the bank');
-        $this->assertSame(-5000.0, $b['4810-Airline-Commission']);
-        $this->assertSame(-2000.0, $b['4820-Supplier-Discounts']);
+        // Not income: airlines pay us nothing — commission and discount come off the CASS bill, so they lower our
+        // cost, on a line of their own under Direct Costs (owner, 2026-10-06, GAPS #465).
+        $this->assertSame(-7000.0, $b['5010-Airline-Discounts']);
+        $this->assertArrayNotHasKey('4810-Airline-Commission', $b);
+        $this->assertArrayNotHasKey('4820-Supplier-Discounts', $b);
         $this->assertSame(0.0, round(array_sum($b), 2), 'the ledger balances');
     }
 

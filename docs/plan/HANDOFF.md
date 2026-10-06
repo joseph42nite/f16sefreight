@@ -24,7 +24,7 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#464)
+## Where we are (GAPS #436–#465)
 
 ### 2026-10-06
 - **Owner's answers (#459):** no *AI Extraction* / *Re-initiation* client mails (PRD + guide no longer claim one);
@@ -40,6 +40,8 @@ Paste this into the new session:
 - **Export masters the same way (#463):** the maker in their own role; a house inside a master takes the master's owners.
 - **Masters to take (#464):** the Enquiries board lists every master with no pricing owner — import or export —
   and pricing takes it with its houses (`/masters/to-take`, `/masters/{job}/take`).
+- **Airline deductions are a lower cost (#465):** commission and discount off the CASS bill post to
+  `5010-Airline-Discounts` under Direct Costs, not income; no GST on them. #446 closed.
 
 ### 2026-10-04/05
 - **Ops scorecard, measured not scored (#456):** PRD §7.3.4 G as facts per client, mode and **financial-year quarter**
@@ -83,7 +85,6 @@ Paste this into the new session:
 - ICEGATE developer-portal details (guide §12.3).
 - CASS: a client's CASSLink billing files + the CASS agent output specification, and their iiNET SFTP/APIsec setup.
 - Bank templates (HDFC, ICICI, Axis…) for bank-specific upload files.
-- Answers to #446 (1) GST on commission/incentives and (2) incentive as income or cost — (3) is answered: airlines never pay us (#461).
 - **FocusSea statuses (#425b)** — the owner will work on them with us.
 - **Live database, before its first `php artisan migrate`:** record in `migrations` what live already has, read from the live schema (#460); and #421 (4)'s hand-run check of users whose company disagrees with their branch's.
 - **Ops health weights** (`w[s]`, `w_cancel`, `w_corr`, `w_cass`, `w_decl`, `penalty_scale`) — the owner picks them after one quarter of real data in `customer_ops_quarters` (#456). ("Days slower" compares with the other clients only — owner, #457.)

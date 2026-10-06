@@ -3149,8 +3149,8 @@ incentive FORMULA is each company's own contract and is not modelled — the bil
   discount_amount      | DECIMAL(15,2) |     | discount / tonnage incentive taken off
 
   accounts_payments
-  commission_amount    | DECIMAL(15,2) |     | default 0 — posts Cr 4810-Airline-Commission
-  discount_amount      | DECIMAL(15,2) |     | default 0 — posts Cr 4820-Supplier-Discounts
+  commission_amount    | DECIMAL(15,2) |     | default 0 — posts Cr 5010-Airline-Discounts (a lower cost, GAPS #465)
+  discount_amount      | DECIMAL(15,2) |     | default 0 — posts Cr 5010-Airline-Discounts (a lower cost, GAPS #465)
 ```
 *A payment still settles the vouchers at `amount` (the gross); the bank is credited `amount − tds − commission − discount`.*
 

@@ -41,12 +41,12 @@ class LedgerPostingService
     public const COMMISSION_REVENUE = ['code' => '4800-Commission-Revenue', 'name' => 'Commission Revenue'];
 
     /**
-     * What a supplier's own bill takes off (GAPS #444): an airline's commission on the AWB, and a discount or tonnage
-     * incentive. Income of their own — kept apart from commission WE bill (4800), so each can be read on its own.
-     * ⚠️ Whether GST applies to either is the company's accountant's call; nothing here posts tax on them.
+     * What an airline's own bill takes off (GAPS #444) — its commission, and a discount when a tonnage level is met.
+     * 🔴 NOT income (owner, 2026-10-06, GAPS #465): "we do not get anything from airlines; it is usually a discount from
+     * the total CASS bill". So both LOWER our cost, on one line of their own under Direct Costs, where the discount
+     * can still be read by itself. No GST is posted on them — nothing is received.
      */
-    public const SUPPLIER_COMMISSION = ['code' => '4810-Airline-Commission', 'name' => 'Commission from airlines'];
-    public const SUPPLIER_DISCOUNT = ['code' => '4820-Supplier-Discounts', 'name' => 'Discounts and incentives from suppliers'];
+    public const AIRLINE_DISCOUNTS = ['code' => '5010-Airline-Discounts', 'name' => 'Airline discounts and commission'];
     public const AR_AGENTS = ['code' => '1220-AR-Agents', 'name' => 'Accounts Receivable — Agents'];
     public const CONSOL_REVENUE = ['code' => '4050-Consol-Revenue', 'name' => 'Consol Revenue'];
     /**
@@ -256,12 +256,8 @@ class LedgerPostingService
             $this->bank($from) + ['debit' => 0.0, 'credit' => round($paid - $tds - $commission - $discount, 2)],
         ];
 
-        if ($commission > 0.0) {
-            $lines[] = self::SUPPLIER_COMMISSION + ['debit' => 0.0, 'credit' => $commission];
-        }
-
-        if ($discount > 0.0) {
-            $lines[] = self::SUPPLIER_DISCOUNT + ['debit' => 0.0, 'credit' => $discount];
+        if ($commission + $discount > 0.0) {
+            $lines[] = self::AIRLINE_DISCOUNTS + ['debit' => 0.0, 'credit' => round($commission + $discount, 2)];
         }
 
         if ($tds > 0.0) {

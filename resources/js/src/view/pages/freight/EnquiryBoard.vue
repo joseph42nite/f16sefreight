@@ -10,24 +10,29 @@
     </header>
 
     <!--
-      An import is a job like an export, and pricing takes it here, where an export starts (owner, 2026-10-06,
-      GAPS #462). Import consols with nobody in pricing yet; taking one takes its houses too.
+      Every master is taken here, where an export starts (owner, 2026-10-06, GAPS #462, #464): import consols and
+      export masters that operations made, with nobody in pricing yet. Taking one takes its houses too.
     -->
-    <section v-if="canConvert && imports.length" class="fx-section">
-      <h2 class="fx-section__title">Imports to take</h2>
+    <section v-if="canConvert && masters.length" class="fx-section">
+      <h2 class="fx-section__title">Masters to take</h2>
       <p v-if="importError" class="fx-error" role="alert">{{ importError }}</p>
       <table class="fx-table">
         <thead>
           <tr>
             <th scope="col">Job</th>
+            <th scope="col">Direction</th>
             <th scope="col">Operations</th>
             <th scope="col">Created</th>
             <th scope="col"></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="i in imports" :key="i.id">
-            <td><router-link :to="'/import/' + i.id" class="identifier">{{ i.job_no }}</router-link></td>
+          <tr v-for="i in masters" :key="i.id">
+            <td>
+              <router-link v-if="pageOf(i)" :to="pageOf(i)" class="identifier">{{ i.job_no }}</router-link>
+              <span v-else class="identifier">{{ i.job_no }}</span>
+            </td>
+            <td>{{ i.direction === 'import' ? 'Import' : 'Export' }}</td>
             <td>
               <span v-if="i.operator">{{ i.operator }}</span>
               <span v-else class="is-empty" aria-label="No operator yet"></span>
@@ -181,7 +186,7 @@ export default {
   components: { StatusChip, Figure },
   data: () => ({
     client: "", status: "", rows: [], loading: true, error: null, busyId: null, STATUSES,
-    page: 1, lastPage: 1, total: 0, imports: [], importError: null, takingId: null }),
+    page: 1, lastPage: 1, total: 0, masters: [], importError: null, takingId: null }),
   computed: {
     ...mapGetters(["portalLabel", "can", "designation"]),
     /** The Pricing column is for sales: everyone else either is pricing, or has the owner elsewhere. */
@@ -195,7 +200,7 @@ export default {
   },
   created() {
     this.load();
-    this.loadImports();
+    this.loadMasters();
   },
   methods: {
     /** A new search starts again from the first page. */
@@ -231,20 +236,25 @@ export default {
           this.loading = false;
         });
     },
-    loadImports() {
+    loadMasters() {
       if (!this.canConvert) return;
-      ApiService.get("/imports/to-take")
-        .then(({ data }) => { this.imports = data.imports || []; })
-        .catch(() => { this.imports = []; });
+      ApiService.get("/masters/to-take")
+        .then(({ data }) => { this.masters = data.masters || []; })
+        .catch(() => { this.masters = []; });
+    },
+    /** An import opens on the Import page, a sea export master in FocusSea; an air export master has no page of its own. */
+    pageOf(m) {
+      if (m.direction === "import") return "/import/" + m.id;
+      return m.mode === "sea" ? "/focus-sea/" + m.id : null;
     },
     take(i) {
       this.takingId = i.id;
       this.importError = null;
-      ApiService.post(`/imports/${i.id}/take`, {})
-        .then(() => this.$router.push("/import/" + i.id))
+      ApiService.post(`/masters/${i.id}/take`, {})
+        .then(() => (this.pageOf(i) ? this.$router.push(this.pageOf(i)) : this.loadMasters()))
         .catch((e) => {
           this.importError = this.readable(e);
-          this.loadImports();
+          this.loadMasters();
         })
         .finally(() => { this.takingId = null; });
     },

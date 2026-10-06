@@ -24,7 +24,7 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#463)
+## Where we are (GAPS #436–#464)
 
 ### 2026-10-06
 - **Owner's answers (#459):** no *AI Extraction* / *Re-initiation* client mails (PRD + guide no longer claim one);
@@ -34,10 +34,12 @@ Paste this into the new session:
 - **Owner's answers (#461):** import parties by the assigned pricing/ops person; ops health weights after one quarter;
   airlines never pay the forwarder (a discount on the bill only); #425 (a) settled by #439, (c) as designed.
 - **Imports assigned like exports (#462):** the maker in their own role's column; pricing takes an unowned import
-  from *Imports to take* on the Enquiries board (houses come with it); the assigned pricing person may name its parties.
+  from *Masters to take* on the Enquiries board (houses come with it); the assigned pricing person may name its parties.
 - **Inbox → FocusSea link fixed (#462):** the thread's job always came back with no mode, so sea jobs were offered AWB
   drafting; walked as demo-operations — the link opens the House Bill of Lading.
 - **Export masters the same way (#463):** the maker in their own role; a house inside a master takes the master's owners.
+- **Masters to take (#464):** the Enquiries board lists every master with no pricing owner — import or export —
+  and pricing takes it with its houses (`/masters/to-take`, `/masters/{job}/take`).
 
 ### 2026-10-04/05
 - **Ops scorecard, measured not scored (#456):** PRD §7.3.4 G as facts per client, mode and **financial-year quarter**
@@ -89,7 +91,7 @@ Paste this into the new session:
 - A provider that can also PAY (RazorpayX, Cashfree Payouts, a bank's corporate API) — Setu only reads (#442).
 
 ## Open — noticed, not asked for (offer, don't start)
-- An export master made by an operator has no pricing owner and is not on *Imports to take*, so pricing never picks it up and a handover request answers `no_owner` — list it for pricing too? (#463)
+- Nothing open.
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.

@@ -347,6 +347,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     Route::post('/jobs/{job}/cancel', [\App\Http\Controllers\Freight\JobController::class, 'cancel']);
     Route::post('/jobs/{job}/reinitiate', [\App\Http\Controllers\Freight\JobController::class, 'reinitiate']);
     Route::post('/jobs/{job}/claim', [\App\Http\Controllers\Freight\JobController::class, 'claim']);
+    // Masters with no pricing owner — import or export — taken by pricing from the Enquiries board (GAPS #462, #464).
+    Route::get('/masters/to-take', [\App\Http\Controllers\Freight\JobController::class, 'mastersToTake']);
+    Route::post('/masters/{job}/take', [\App\Http\Controllers\Freight\JobController::class, 'takeMaster']);
     // The cross-staff clearance matrix. 🔒 pricing/boss only — PRD §9.4 says the
     // matrix is ABSENT for operations, not disabled.
     // The handover lifecycle. Operations ASKS; pricing or boss ANSWERS; only the
@@ -512,8 +515,6 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // release are fileManifest. The DO print is the release gate — 422 until saved AND paid or within credit.
     Route::get('/imports', [\App\Http\Controllers\Freight\ImportController::class, 'index']);
     Route::post('/imports', [\App\Http\Controllers\Freight\ImportController::class, 'store']);
-    Route::get('/imports/to-take', [\App\Http\Controllers\Freight\ImportController::class, 'toTake']);
-    Route::post('/imports/{job}/take', [\App\Http\Controllers\Freight\ImportController::class, 'take']);
     Route::get('/jobs/{job}/import', [\App\Http\Controllers\Freight\ImportController::class, 'show']);
     Route::post('/jobs/{job}/import', [\App\Http\Controllers\Freight\ImportController::class, 'save']);
     // A house made inside an import consol — it takes the consol's enquiry (GAPS #436).

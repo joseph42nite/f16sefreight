@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 /**
  * An import is a job like an export (owner, 2026-10-06, GAPS #462): whoever makes the consol is recorded in their own
- * role's column, pricing takes an unowned import from the Enquiries board, and the assigned pricing person may name
+ * role's column, pricing takes an unowned master — import or export — from the Enquiries board, and the assigned pricing person may name
  * its parties.
  */
 class ImportAssignmentTest extends TestCase
@@ -86,34 +86,58 @@ class ImportAssignmentTest extends TestCase
             'parent_job_id' => $consol->id, 'ops_id' => $this->ops->id, 'customer_id' => $this->client->id,
             'execution_job_no' => 'JOBA-ASGMAA-26-' . random_int(1000, 9999)]);
 
-        $this->as($this->pricing)->getJson($this->url('/imports/to-take'))->assertOk()
-            ->assertJsonPath('imports.0.id', $consol->id)
-            ->assertJsonPath('imports.0.job_no', $consol->execution_job_no);
+        $this->as($this->pricing)->getJson($this->url('/masters/to-take'))->assertOk()
+            ->assertJsonPath('masters.0.id', $consol->id)
+            ->assertJsonPath('masters.0.job_no', $consol->execution_job_no);
 
-        $this->as($this->pricing)->postJson($this->url("/imports/{$consol->id}/take"))->assertOk();
+        $this->as($this->pricing)->postJson($this->url("/masters/{$consol->id}/take"))->assertOk();
 
         $this->assertSame($this->pricing->id, (int) $consol->fresh()->pricing_id);
         $this->assertSame($this->pricing->id, (int) $house->fresh()->pricing_id);
-        $this->as($this->pricing)->getJson($this->url('/imports/to-take'))->assertOk()->assertJsonCount(0, 'imports');
+        $this->as($this->pricing)->getJson($this->url('/masters/to-take'))->assertOk()->assertJsonCount(0, 'masters');
 
         // A colleague a moment later does not take it from them.
-        $this->as($this->user('pricing', '2'))->postJson($this->url("/imports/{$consol->id}/take"))
+        $this->as($this->user('pricing', '2'))->postJson($this->url("/masters/{$consol->id}/take"))
             ->assertStatus(409)->assertJsonPath('reason', 'already_taken');
         $this->assertSame($this->pricing->id, (int) $consol->fresh()->pricing_id);
+    }
+
+    /** "Yes" (owner, 2026-10-06, GAPS #464): an export master an operator made is listed and taken the same way. */
+    public function test_pricing_takes_an_export_master_with_its_houses_too(): void
+    {
+        $id = $this->as($this->ops)->postJson($this->url('/sea-shipments', 'sea'), ['direction' => 'export'])->assertCreated()->json('job.id');
+        $houseId = $this->as($this->ops)->postJson($this->url("/sea-shipments/{$id}/houses", 'sea'))->assertCreated()->json('job.id');
+
+        $this->as($this->pricing)->getJson($this->url('/masters/to-take', 'sea'))->assertOk()
+            ->assertJsonPath('masters.0.id', $id)->assertJsonPath('masters.0.direction', 'export');
+        $this->as($this->pricing)->postJson($this->url("/masters/{$id}/take", 'sea'))->assertOk();
+
+        $this->assertSame($this->pricing->id, (int) Job::withoutTenantScope()->find($id)->pricing_id);
+        $this->assertSame($this->pricing->id, (int) Job::withoutTenantScope()->find($houseId)->pricing_id);
+    }
+
+    public function test_a_house_is_not_taken_on_its_own(): void
+    {
+        $consol = $this->airConsol();
+        $house = Job::create(['agent_id' => $this->branch->id, 'transport_mode' => 'air', 'direction' => 'import',
+            'parent_job_id' => $consol->id, 'execution_job_no' => 'JOBA-ASGMAA-26-' . random_int(1000, 9999)]);
+
+        $this->as($this->pricing)->postJson($this->url("/masters/{$house->id}/take"))->assertStatus(422);
+        $this->assertNull($house->fresh()->pricing_id);
     }
 
     public function test_operations_does_not_take_an_import_for_pricing(): void
     {
         $consol = $this->airConsol();
 
-        $this->as($this->ops)->postJson($this->url("/imports/{$consol->id}/take"))->assertForbidden();
+        $this->as($this->ops)->postJson($this->url("/masters/{$consol->id}/take"))->assertForbidden();
         $this->assertNull($consol->fresh()->pricing_id);
     }
 
     public function test_the_assigned_pricing_person_names_an_imports_parties_and_nobody_else_in_pricing_does(): void
     {
         $consol = $this->airConsol();
-        $this->as($this->pricing)->postJson($this->url("/imports/{$consol->id}/take"))->assertOk();
+        $this->as($this->pricing)->postJson($this->url("/masters/{$consol->id}/take"))->assertOk();
         $party = ['role' => 'consignee', 'party_type' => 'customer', 'party_id' => $this->client->id];
 
         $this->as($this->pricing)->getJson($this->url("/jobs/{$consol->id}/entities"))->assertOk()->assertJsonPath('can_write', true);

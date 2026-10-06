@@ -1687,7 +1687,7 @@ documents — see GAPS #434.
 the arrival notice to the consignee is staged for a person; mail triage reads import vs export — the lane first, Jev's
 `direction` question otherwise, in both rubrics (to be measured with `mail:rubric-check`, both modes).
 **Assigned like an export (owner, 2026-10-06, GAPS #462):** the consol's maker is recorded in their own role; pricing
-takes an unowned import from *Imports to take* on the Enquiries board, its houses with it; the assigned pricing or
+takes an unowned master — import or export (#464) — from *Masters to take* on the Enquiries board, its houses with it; the assigned pricing or
 operations person names its parties — there is no automatic import mapping (#434a, #461).
 **Compacted 2026-09-29 (GAPS #438):** the rubric sent per mail is ~830 tokens (air) / ~910 (sea), and the `direction`
 question is left out when the lane already answers it. A test holds each under 4,000 chars of JSON.

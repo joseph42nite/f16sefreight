@@ -352,6 +352,63 @@ class JobController extends Controller
     }
 
     /**
+     * Consol masters nobody in pricing owns yet — an import consol or an export master that operations made — shown
+     * on pricing's Enquiries board, where an export starts, so every master is taken the same way (owner, 2026-10-06,
+     * GAPS #462, #464). Not enquiry rows: none was received, and a made-up one would count in the funnel and win rate.
+     */
+    public function mastersToTake(): JsonResponse
+    {
+        $this->authorize('convert');
+
+        $jobs = Job::forActivePortal()
+            ->where('is_consolidation', true)->whereNull('pricing_id')
+            ->where('status', '!=', JobStatus::Cancelled->value)
+            ->with('opsUser:id,name')->latest()->limit(50)->get();
+
+        return response()->json(['masters' => $jobs->map(fn (Job $j) => [
+            'id'         => $j->id,
+            'job_no'     => $j->execution_job_no,
+            'mode'       => $j->transport_mode,
+            'direction'  => $j->direction,
+            'operator'   => $j->opsUser->name ?? null,
+            'created_at' => $j->created_at,
+        ])->values()]);
+    }
+
+    /**
+     * Pricing takes a master, and its houses with it. 🔴 `409` when someone already has: `UPDATE … WHERE pricing_id
+     * IS NULL` decides the race in the database, as a claim does.
+     */
+    public function takeMaster(Job $job): JsonResponse
+    {
+        $this->authorize('convert');
+
+        if (! $job->is_consolidation) {
+            return response()->json(['error' => 'Take the master; its houses come with it.', 'reason' => 'not_a_master'], 422);
+        }
+
+        $taken = DB::transaction(function () use ($job) {
+            $taken = Job::withoutTenantScope()->whereKey($job->id)->whereNull('pricing_id')
+                ->update(['pricing_id' => auth()->id(), 'updated_at' => now()]);
+
+            if ($taken) {
+                Job::withoutTenantScope()->where('parent_job_id', $job->id)->whereNull('pricing_id')
+                    ->update(['pricing_id' => auth()->id(), 'updated_at' => now()]);
+            }
+
+            return $taken;
+        });
+
+        if ($taken === 0) {
+            return response()->json(['error' => 'Someone in pricing has already taken this.', 'reason' => 'already_taken'], 409);
+        }
+
+        $this->audit->record($job->agent_id, 'job.master_taken', 'job', $job->id, auth()->id());
+
+        return response()->json($job->fresh());
+    }
+
+    /**
      * Atomic claim of an unassigned job.
      *
      * 🔴 **`409` when zero rows are affected.** `UPDATE … WHERE ops_id IS NULL` decides the

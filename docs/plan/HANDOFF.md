@@ -24,11 +24,13 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#459)
+## Where we are (GAPS #436–#460)
 
 ### 2026-10-06
 - **Owner's answers (#459):** no *AI Extraction* / *Re-initiation* client mails (PRD + guide no longer claim one);
   *Pre-alert SIN-BOM* stays at 2/5 — prompts stay short, the lane (branch's country, PHP) decides it.
+- **Root docs (#460):** README, `guide.md`, `implementation.md`, `it_devops_checklist.md` checked against the code —
+  wrong lines omitted, restructured, nothing added; `guide.md`'s style rules are the public website's only.
 
 ### 2026-10-04/05
 - **Ops scorecard, measured not scored (#456):** PRD §7.3.4 G as facts per client, mode and **financial-year quarter**
@@ -72,7 +74,8 @@ Paste this into the new session:
 - ICEGATE developer-portal details (guide §12.3).
 - CASS: a client's CASSLink billing files + the CASS agent output specification, and their iiNET SFTP/APIsec setup.
 - Bank templates (HDFC, ICICI, Axis…) for bank-specific upload files.
-- Answers to #446 (GST on commission/incentives; incentive as income or cost; late rebates); root-doc conflicts (#421, #435); FocusSea statuses (#425b).
+- Answers to #446 (GST on commission/incentives; incentive as income or cost; late rebates); FocusSea statuses (#425b).
+- **Live database, before its first `php artisan migrate`:** record in `migrations` what live already has, read from the live schema (#460); and #421 (4)'s hand-run check of users whose company disagrees with their branch's.
 - **Ops health weights** (`w[s]`, `w_cancel`, `w_corr`, `w_cass`, `w_decl`, `penalty_scale`) — the owner picks them after 2–3 months of real quarters in `customer_ops_quarters` (#456). ("Days slower" compares with the other clients only — owner, #457.)
 - Production `.env`: `PORTAL_DOMAIN` / `PORTAL_SCHEME` only if the live site is not `https://…f16sefreight.com` (the default) — they make the staff reviews' "See the details" links (#457).
 - A provider that can also PAY (RazorpayX, Cashfree Payouts, a bank's corporate API) — Setu only reads (#442).

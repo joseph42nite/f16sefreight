@@ -1,110 +1,73 @@
-# F16s - Modern Freight Logistics Platform
+# F16s — Freight Logistics Platform
 
 ![F16s Logo](public/media/assets/logos/f16s-logo.svg)
 
-F16s is a high-performance, premium freight logistics platform designed to streamline global supply chain management with a focus on speed, security, and transparency. Built with a modern **Glassmorphism** design language, the platform offers a seamless experience across all devices, from desktop to mobile.
+F16s is a freight logistics platform: a public website, the air waybill dashboard, a superadmin panel, and the
+Freight OS portals. This README covers setup and the public website; the development guide is `guide.md`, and the
+Freight OS is documented in `docs/plan/` (start with `docs/plan/HANDOFF.md`).
 
 ---
 
-## ✨ Key Features
+## Public website
 
-### 🏢 Modern UI/UX
-- **Glassmorphism Design**: A sleek, translucent interface using modern CSS techniques for a premium feel.
-- **Micro-Animations**: Smooth cross-fade transitions and hover effects for enhanced user engagement.
-- **Fully Responsive**: Optimized for high-fidelity performance across mobile, tablet, and desktop breakpoints.
+### Design
+- **Glassmorphism** look — translucent cards, layered backgrounds.
+- **Micro-animations** — cross-fades and hover effects.
+- **Responsive** — mobile, tablet and desktop.
 
-### 📦 Comprehensive Services
-- **Cloud Storage**: Secure, scalable data management for logistics documentation.
-- **End-to-End Service**: Holistic freight management from origin to final destination.
-- **Small Business Solutions**: Tailored logistics support for growing enterprises.
-- **EDI & Smart Tracking**: Real-time tracking and automated data exchange.
+Details (colours, fonts, style rules): `guide.md` → Branding.
 
-### 📰 Content & Engagement
-- **Blogs & News**: A dynamic section for industry insights, company updates, and logistics trends.
-- **Dynamic Product Descriptions**: Detailed views for specific logistics solutions.
-- **Interactive Solutions**: Dedicated modules for Air, Sea, and Road freight.
+### Services
+- **Cloud Storage** — logistics documentation.
+- **End-to-End Service** — from origin to final destination.
+- **Small Business Solutions** — for growing businesses.
+- **EDI & Smart Tracking** — tracking and automated data exchange.
 
----
-
-## 🛠 Tech Stack
-
-- **Backend**: Laravel (PHP Framework)
-- **Frontend**: Vue.js 2
-- **UI Framework**: Bootstrap Vue
-- **Styling**: SASS / Vanilla CSS
-- **Asset Management**: Laravel Mix
-- **State Management**: Vuex
-- **SEO & Meta Management**: [Vue Meta](https://vue-meta.nuxtjs.org/) (Added: 2026-05-04)
+### Content
+- **Blogs & News** — industry insights and company updates.
+- **Product descriptions** — pages for each logistics solution.
+- **Solutions** — air, sea and road freight.
 
 ---
 
-## 🚀 Getting Started
+## Tech stack
+
+| Part | Uses |
+|---|---|
+| Backend | Laravel 9 (PHP) |
+| Frontend | Vue.js 2, Bootstrap Vue, Vuex |
+| Styling | SASS / CSS |
+| Build | Laravel Mix |
+| SEO / meta | [Vue Meta](https://vue-meta.nuxtjs.org/) |
+
+---
+
+## Getting started
 
 ### Prerequisites
-- PHP >= 7.3
+- PHP 8 (Laravel 9 needs 8.0.2 or newer)
 - Composer
-- Node.js & NPM
+- Node.js & npm
 - MySQL
 
 ### Installation
 
-1. **Clone the repository**:
-   ```bash
-   git clone git@github.com:dkdharmatmaa/f16s_main.git
-   cd f16s_main
-   ```
-
-2. **Install Backend Dependencies**:
-   ```bash
-   composer install
-   ```
-
-3. **Install Frontend Dependencies**:
-   ```bash
-   npm install
-   # New package added on 2026-05-04:
-   npm install vue-meta
-   ```
-
-4. **Environment Setup**:
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-
-5. **Database Migration**:
-   ```bash
-   php artisan migrate --seed
-   ```
-
-6. **Build Assets**:
-   ```bash
-   npm run dev
-   # or for production
-   npm run prod
-   ```
-
-7. **Run the Application**:
-   ```bash
-   php artisan serve
-   ```
+```bash
+git clone <repository-url>
+cd <repository-folder>
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm run dev        # or: npm run prod
+php artisan serve
+```
 
 ---
 
-## 🎨 Design System
-
-The F16s platform follows a strict design system centered around **Glassmorphism**:
-- **Backgrounds**: Deep gradients with blurred overlays.
-- **Typography**: Modern, clean sans-serif fonts (Inter/Roboto).
-- **Icons**: Custom SVG icons for high-resolution clarity.
-- **Colors**: A professional palette of deep blues, sleek whites, and vibrant accents.
-
----
-
-## 📄 License
+## License
 
 This project is proprietary and confidential. All rights reserved.
-
----
 
 Built with ❤️ by the F16s Development Team.

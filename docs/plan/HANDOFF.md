@@ -24,7 +24,7 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#461)
+## Where we are (GAPS #436–#462)
 
 ### 2026-10-06
 - **Owner's answers (#459):** no *AI Extraction* / *Re-initiation* client mails (PRD + guide no longer claim one);
@@ -33,7 +33,10 @@ Paste this into the new session:
   wrong lines omitted, restructured, nothing added; `guide.md`'s style rules are the public website's only.
 - **Owner's answers (#461):** import parties by the assigned pricing/ops person; ops health weights after one quarter;
   airlines never pay the forwarder (a discount on the bill only); #425 (a) settled by #439, (c) as designed.
-  Still to walk: the inbox → FocusSea link as demo-operations (#425 d).
+- **Imports assigned like exports (#462):** the maker in their own role's column; pricing takes an unowned import
+  from *Imports to take* on the Enquiries board (houses come with it); the assigned pricing person may name its parties.
+- **Inbox → FocusSea link fixed (#462):** the thread's job always came back with no mode, so sea jobs were offered AWB
+  drafting; walked as demo-operations — the link opens the House Bill of Lading.
 
 ### 2026-10-04/05
 - **Ops scorecard, measured not scored (#456):** PRD §7.3.4 G as facts per client, mode and **financial-year quarter**
@@ -79,14 +82,13 @@ Paste this into the new session:
 - Bank templates (HDFC, ICICI, Axis…) for bank-specific upload files.
 - Answers to #446 (1) GST on commission/incentives and (2) incentive as income or cost — (3) is answered: airlines never pay us (#461).
 - **FocusSea statuses (#425b)** — the owner will work on them with us.
-- **Import assignment (#461):** an import consol is recorded with its operations creator as `pricing_id` and no `ops_id`; the owner wants imports assigned like exports — ❓ how a pricing person comes onto an import consol.
 - **Live database, before its first `php artisan migrate`:** record in `migrations` what live already has, read from the live schema (#460); and #421 (4)'s hand-run check of users whose company disagrees with their branch's.
 - **Ops health weights** (`w[s]`, `w_cancel`, `w_corr`, `w_cass`, `w_decl`, `penalty_scale`) — the owner picks them after one quarter of real data in `customer_ops_quarters` (#456). ("Days slower" compares with the other clients only — owner, #457.)
 - Production `.env`: `PORTAL_DOMAIN` / `PORTAL_SCHEME` only if the live site is not `https://…f16sefreight.com` (the default) — they make the staff reviews' "See the details" links (#457).
 - A provider that can also PAY (RazorpayX, Cashfree Payouts, a bank's corporate API) — Setu only reads (#442).
 
 ## Open — noticed, not asked for (offer, don't start)
-- Nothing open.
+- A sea **export** master made in FocusSea records its maker (an operator) as `pricing_id` — the slip #462 fixed for imports (#462).
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.

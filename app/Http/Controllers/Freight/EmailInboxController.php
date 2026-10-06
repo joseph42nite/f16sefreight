@@ -141,7 +141,7 @@ class EmailInboxController extends Controller
                 // The job is what the operator quotes once conversion has happened —
                 // eager-loaded so a 50-row list does not become 50 extra queries.
                 // ops_id and the staged handover ride along for the workspace's operator dropdown.
-                'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status,ops_id,pricing_id,pending_ops_id,pending_ops_requested_by',
+                'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status,ops_id,pricing_id,pending_ops_id,pending_ops_requested_by,transport_mode',
             ])
             ->orderByDesc('latest_message_received_at')
             ->paginate(50);
@@ -176,7 +176,7 @@ class EmailInboxController extends Controller
             'thread'   => $this->shape($thread->load([
                 'assignedOps:id,name',
                 'enquiry:id,enquiry_no,status,direction,lost_reason,lost_automatically',
-                'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status,ops_id,pricing_id,pending_ops_id,pending_ops_requested_by',
+                'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status,ops_id,pricing_id,pending_ops_id,pending_ops_requested_by,transport_mode',
             ])),
             'messages' => $messages,
             // The suggested mails nobody sent — shown in the conversation so the history is whole (user, 2026-09-16).

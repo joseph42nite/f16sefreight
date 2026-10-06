@@ -8,6 +8,7 @@ use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * The parties on a shipment — `job_entities`. PRD.md §5.8 tab 1.
@@ -58,12 +59,13 @@ class JobEntityController extends Controller
             'expected'   => $this->expectedParties($job),
             // The one branch a master's shipper can be — this shipment's own.
             'branch'     => ['id' => (int) $job->agent_id, 'name' => DB::table('agents_info')->where('id', $job->agent_id)->value('agent_name')],
+            'can_write'  => $this->canWrite($job),
         ]);
     }
 
     public function store(Request $request, Job $job): JsonResponse
     {
-        $this->authorize('editDocuments');
+        abort_unless($this->canWrite($job), 403);
 
         $data = $request->validate([
             'role'              => 'required|string|in:' . implode(',', self::ROLES),
@@ -144,7 +146,7 @@ class JobEntityController extends Controller
 
     public function destroy(Job $job, int $entityId): JsonResponse
     {
-        $this->authorize('editDocuments');
+        abort_unless($this->canWrite($job), 403);
 
         // Soft — job_entities carries deleted_at, and the generated unique gate frees
         // up with it so the role can be filled again.
@@ -214,6 +216,22 @@ class JobEntityController extends Controller
     }
 
     /** Resolve each polymorphic party to a name the form can print. */
+    /**
+     * Who names a job's parties: whoever writes the bills (`editDocuments` — operations; on Core, everyone) and, on an
+     * import, the pricing person assigned to it — an import is filled in by its assigned pricing or operations person
+     * (owner, 2026-10-06, GAPS #462).
+     */
+    private function canWrite(Job $job): bool
+    {
+        if (Gate::allows('editDocuments')) {
+            return true;
+        }
+
+        return $job->direction === 'import'
+            && auth()->user()->designation === 'pricing'
+            && (int) $job->pricing_id === (int) auth()->id();
+    }
+
     private function hydrate(Job $job): array
     {
         $rows = DB::table('job_entities')

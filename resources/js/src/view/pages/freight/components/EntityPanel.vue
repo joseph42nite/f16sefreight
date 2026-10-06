@@ -106,7 +106,7 @@ export default {
   name: "EntityPanel",
   props: { jobId: { type: [Number, String], required: true } },
   data: () => ({
-    entities: [], roles: [], expected: {}, document: "house", direction: "export", branch: null,
+    entities: [], roles: [], expected: {}, document: "house", direction: "export", branch: null, serverCanWrite: null,
     customers: [], partners: [],
     draft: { role: "shipper", party_type: "customer", party_id: "", custom_role_label: "" },
     loading: true, busy: false, error: null, actionError: null,
@@ -114,7 +114,9 @@ export default {
   computed: {
     ...mapGetters(["designation", "tier"]),
     canWrite() {
-      // Core has one login type, so every Core user writes the bills; from Tactical, operations (owner, 2026-09-29).
+      // The server says — it also lets an import's assigned pricing person name its parties (GAPS #462). Until it
+      // answers: Core has one login type, so every Core user writes the bills; from Tactical, operations (2026-09-29).
+      if (this.serverCanWrite !== null) return this.serverCanWrite;
       return this.tier === "core" || this.designation === "operations";
     },
     /* The mapped roles fix the party type; the rest let the operator choose. */
@@ -144,6 +146,7 @@ export default {
           this.document = data.document;
           this.direction = data.direction || "export";
           this.branch = data.branch || null;
+          this.serverCanWrite = typeof data.can_write === "boolean" ? data.can_write : null;
           this.error = null;
         })
         .catch((e) => { this.error = this.readable(e); })

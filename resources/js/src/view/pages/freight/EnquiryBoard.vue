@@ -10,6 +10,40 @@
     </header>
 
     <!--
+      An import is a job like an export, and pricing takes it here, where an export starts (owner, 2026-10-06,
+      GAPS #462). Import consols with nobody in pricing yet; taking one takes its houses too.
+    -->
+    <section v-if="canConvert && imports.length" class="fx-section">
+      <h2 class="fx-section__title">Imports to take</h2>
+      <p v-if="importError" class="fx-error" role="alert">{{ importError }}</p>
+      <table class="fx-table">
+        <thead>
+          <tr>
+            <th scope="col">Job</th>
+            <th scope="col">Operations</th>
+            <th scope="col">Created</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="i in imports" :key="i.id">
+            <td><router-link :to="'/import/' + i.id" class="identifier">{{ i.job_no }}</router-link></td>
+            <td>
+              <span v-if="i.operator">{{ i.operator }}</span>
+              <span v-else class="is-empty" aria-label="No operator yet"></span>
+            </td>
+            <td>{{ new Date(i.created_at).toLocaleDateString() }}</td>
+            <td class="fx-row-actions">
+              <button class="fx-btn fx-btn--ghost" :disabled="takingId === i.id" @click="take(i)">
+                {{ takingId === i.id ? 'Taking…' : 'Take' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!--
       🔍 ONE box over BOTH identities. An operator looking for "globex" should not have to
       know whether that client was ever onboarded as a customer — the server matches the
       customer name, its email domain, and the address the conversation arrived from, so
@@ -147,7 +181,7 @@ export default {
   components: { StatusChip, Figure },
   data: () => ({
     client: "", status: "", rows: [], loading: true, error: null, busyId: null, STATUSES,
-    page: 1, lastPage: 1, total: 0 }),
+    page: 1, lastPage: 1, total: 0, imports: [], importError: null, takingId: null }),
   computed: {
     ...mapGetters(["portalLabel", "can", "designation"]),
     /** The Pricing column is for sales: everyone else either is pricing, or has the owner elsewhere. */
@@ -161,6 +195,7 @@ export default {
   },
   created() {
     this.load();
+    this.loadImports();
   },
   methods: {
     /** A new search starts again from the first page. */
@@ -195,6 +230,23 @@ export default {
         .finally(() => {
           this.loading = false;
         });
+    },
+    loadImports() {
+      if (!this.canConvert) return;
+      ApiService.get("/imports/to-take")
+        .then(({ data }) => { this.imports = data.imports || []; })
+        .catch(() => { this.imports = []; });
+    },
+    take(i) {
+      this.takingId = i.id;
+      this.importError = null;
+      ApiService.post(`/imports/${i.id}/take`, {})
+        .then(() => this.$router.push("/import/" + i.id))
+        .catch((e) => {
+          this.importError = this.readable(e);
+          this.loadImports();
+        })
+        .finally(() => { this.takingId = null; });
     },
     convert(row) {
       this.busyId = row.id;

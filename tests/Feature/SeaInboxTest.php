@@ -135,6 +135,24 @@ class SeaInboxTest extends TestCase
     }
 
     /** A sea client is never told about an air waybill — "confirmed" is in sea's words, the air moments are not sent. */
+    /**
+     * The conversation names its job's mode, so the inbox offers "Open it in FocusSea" rather than AWB drafting
+     * (GAPS #425 d, walked 2026-10-06, #462). The eager loads picked a column list without `transport_mode`, so it was
+     * always null and a sea job was offered an air waybill.
+     */
+    public function test_a_sea_conversation_names_its_job_as_sea(): void
+    {
+        $this->desk(['sea']);
+        $thread = $this->receive();
+        \App\Job::create(['agent_id' => $this->branch->id, 'enquiry_id' => $thread->enquiry_id, 'transport_mode' => 'sea',
+            'execution_job_no' => 'JOBS-SMC-26-0002']);
+        $as = $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->owner), 'Accept' => 'application/json']);
+
+        $as->getJson("http://focussea.f16sefreight.com/api/inbox/threads/{$thread->id}")->assertOk()
+            ->assertJsonPath('thread.job.execution_job_no', 'JOBS-SMC-26-0002')
+            ->assertJsonPath('thread.job.transport_mode', 'sea');
+    }
+
     public function test_a_sea_client_hears_sea_not_air(): void
     {
         $this->desk(['sea']);

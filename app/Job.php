@@ -171,6 +171,15 @@ class Job extends Model
         return $this->hasMany(AccountsPurchaseVoucher::class, 'job_id');
     }
 
+    /**
+     * The column a job's creator goes in: pricing owns a job as its pricing owner; every other role that may make one
+     * (operations, and Core's one login type) works it as its operator (owner, 2026-10-06, GAPS #462).
+     */
+    public static function ownerColumnFor(?string $designation): string
+    {
+        return $designation === 'pricing' ? 'pricing_id' : 'ops_id';
+    }
+
     public function scopeForActivePortal($query)
     {
         if (app()->bound('active_portal_scope')) {

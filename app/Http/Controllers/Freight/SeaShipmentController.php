@@ -133,7 +133,8 @@ class SeaShipmentController extends Controller
             'is_consolidation' => true,
             'cargo_type'       => $data['cargo_type'] ?? null,
             'delivery_mode'    => $this->lockingFor($data['cargo_type'] ?? null)['delivery_mode'],
-            'pricing_id'       => auth()->id(),
+            // An import's maker in their own role's column (GAPS #462); an export master is unchanged.
+            (($data['direction'] ?? 'export') === 'import' ? Job::ownerColumnFor(auth()->user()->designation) : 'pricing_id') => auth()->id(),
             'execution_job_no' => $this->sequences->next($agentId, TransportMode::Sea->jobPrefix()),
         ]), EnquirySequenceService::DEADLOCK_ATTEMPTS);
 

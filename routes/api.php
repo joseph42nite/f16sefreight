@@ -512,6 +512,8 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // release are fileManifest. The DO print is the release gate — 422 until saved AND paid or within credit.
     Route::get('/imports', [\App\Http\Controllers\Freight\ImportController::class, 'index']);
     Route::post('/imports', [\App\Http\Controllers\Freight\ImportController::class, 'store']);
+    Route::get('/imports/to-take', [\App\Http\Controllers\Freight\ImportController::class, 'toTake']);
+    Route::post('/imports/{job}/take', [\App\Http\Controllers\Freight\ImportController::class, 'take']);
     Route::get('/jobs/{job}/import', [\App\Http\Controllers\Freight\ImportController::class, 'show']);
     Route::post('/jobs/{job}/import', [\App\Http\Controllers\Freight\ImportController::class, 'save']);
     // A house made inside an import consol — it takes the consol's enquiry (GAPS #436).

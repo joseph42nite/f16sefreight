@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Customer;
+use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Job;
 use App\Services\AuditLogger;
@@ -98,13 +99,68 @@ class ImportController extends Controller
             'transport_mode'   => 'air',
             'direction'        => 'import',
             'is_consolidation' => true,
-            'pricing_id'       => auth()->id(),
+            // Its maker in their own role's column — an operator is its operator, not its pricing owner (GAPS #462).
+            Job::ownerColumnFor(auth()->user()->designation) => auth()->id(),
             'execution_job_no' => $this->sequences->next($agentId, 'JOBA'),
         ]), EnquirySequenceService::DEADLOCK_ATTEMPTS);
 
         $this->audit->record($job->agent_id, 'import.consol_created', 'job', $job->id, auth()->id());
 
         return response()->json($this->payload($job->fresh()), 201);
+    }
+
+    /**
+     * Import consols nobody in pricing owns yet — shown on pricing's Enquiries board, where an export starts, so an
+     * import is taken the same way (owner, 2026-10-06, GAPS #462). Not an enquiry row: none was received, and a made-up
+     * one would count in the funnel and the win rate.
+     */
+    public function toTake(): JsonResponse
+    {
+        $this->authorize('convert');
+
+        $jobs = Job::forActivePortal()
+            ->where('direction', 'import')->where('is_consolidation', true)->whereNull('pricing_id')
+            ->where('status', '!=', JobStatus::Cancelled->value)
+            ->with('opsUser:id,name')->latest()->limit(50)->get();
+
+        return response()->json(['imports' => $jobs->map(fn (Job $j) => [
+            'id'         => $j->id,
+            'job_no'     => $j->execution_job_no,
+            'mode'       => $j->transport_mode,
+            'operator'   => $j->opsUser->name ?? null,
+            'created_at' => $j->created_at,
+        ])->values()]);
+    }
+
+    /**
+     * Pricing takes an import consol, and its houses with it. 🔴 `409` when someone already has: `UPDATE … WHERE
+     * pricing_id IS NULL` decides the race in the database, as a job claim does.
+     */
+    public function take(Job $job): JsonResponse
+    {
+        $this->authorize('convert');
+        $this->mustBeImport($job);
+        abort_unless($job->is_consolidation, 422, 'Take the consol; its houses come with it.');
+
+        $taken = DB::transaction(function () use ($job) {
+            $taken = Job::withoutTenantScope()->whereKey($job->id)->whereNull('pricing_id')
+                ->update(['pricing_id' => auth()->id(), 'updated_at' => now()]);
+
+            if ($taken) {
+                Job::withoutTenantScope()->where('parent_job_id', $job->id)->whereNull('pricing_id')
+                    ->update(['pricing_id' => auth()->id(), 'updated_at' => now()]);
+            }
+
+            return $taken;
+        });
+
+        if ($taken === 0) {
+            return response()->json(['error' => 'Someone in pricing has already taken this import.', 'reason' => 'already_taken'], 409);
+        }
+
+        $this->audit->record($job->agent_id, 'import.taken', 'job', $job->id, auth()->id());
+
+        return response()->json($this->payload($job->fresh()));
     }
 
     public function show(Job $job): JsonResponse

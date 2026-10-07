@@ -80,7 +80,9 @@ export default {
    * "Page Not Found" on whatever came next. A page with its own metaInfo still wins.
    */
   metaInfo() {
-    return { title: [this.$route.name, this.$store.getters.portalLabel || "F16s"].filter(Boolean).join(" · ") };
+    // Route names are code ("ClientsAndPartners", "EditAirwayBill"): put spaces between the words.
+    const page = String(this.$route.name || "").replace(/([a-z])([A-Z])/g, "$1 $2");
+    return { title: [page, this.$store.getters.portalLabel || "F16s"].filter(Boolean).join(" · ") };
   },
   components: { BellPanel, HelpAssistant, VisualReporter, ProfileMenu, MailboxWelcome },
   data: () => ({ collapsed: false }),

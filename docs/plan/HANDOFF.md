@@ -100,7 +100,8 @@ Paste this into the new session:
 
 ## Open — noticed, not asked for (offer, don't start)
 - joseph@'s test jobs (#466): JOBA-BASEBAS-26-0003 cancelled 2026-10-07 ("Test job from an internal sender"); JOBA-BASEBAS-26-0001 **kept on the owner's word** — it has unpaid voucher PV-9480-20260918131733, so it cannot be cancelled without voiding that.
-- Not walked yet: the operator's AWB steps, accounts, FocusSea, the Boss and Sales views as real users (#466).
+- Walk 2 (2026-10-07, in the how-it-works doc): operator waybill steps + operations/sales/boss/accounts logins in F16s Base all walked clean. Test logins base-{operations,sales,boss,accounts,pricing}@demo.test (each needs a `roles` row). Open findings 16–18, 20–22 in the doc; pricing + FocusSea page walk and the demo company's logins not done yet.
+- Not walked yet: FocusSea pages as pricing/operations, Import, Manifest Filing.
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.

@@ -47,9 +47,9 @@ export const NAV_ITEMS = [
   // ⚠️ Only the LABEL and the rail collapse changed. /house-way-bill and /consolidation
   // are still routes and still linked from that selector; nothing was orphaned.
   //
-  // ⚠️ No sibling-highlight logic here on purpose. All three document routes render the
-  // LEGACY layout, not this rail — the rail is gone from the screen entirely once the
-  // operator is on them, so an "active" state for it would be code that can never run.
+  // ⚠️ No sibling-highlight logic here on purpose: the three document routes share one rail entry, which
+  // stays highlighted on all of them. (Since GAPS #466 they open inside the app shell with this rail; before,
+  // they rendered the public website's layout and the rail was gone from the screen.)
   { path: "/master-airway-bill", label: "Documents", icon: "file-earmark-text", designations: null, portals: ["focusair"] },
   { path: "/message-log", label: "Message Log", icon: "clock-history", designations: null, portals: ["focusair"] },
   // Houses and masters are ONE list with a Houses/Masters switch on the page — the same

@@ -183,6 +183,24 @@ class JobCostSheetTest extends TestCase
     // ─── Margin arithmetic ───────────────────────────────────────────────────
 
     /**
+     * 🔴 The margin is on amounts BEFORE tax (GAPS #466, found clicking as pricing): GST is the government's, not ours —
+     * 300 × 180 at 18% read a margin of 63,720 instead of 54,000.
+     */
+    public function test_the_margin_is_before_tax(): void
+    {
+        $this->addLine(['quantity' => 300, 'rate' => 180, 'tax_percentage' => 18]);
+        $this->addLine(['side' => 'buy', 'quantity' => 300, 'rate' => 150, 'tax_percentage' => 18, 'vendor_id' => $this->vendor->id]);
+
+        $body = $this->api($this->pricing)->getJson($this->url("/api/jobs/{$this->job->id}/cost-sheet"))->assertOk()->json();
+
+        $this->assertSame(54000.0, (float) $body['sell']['total']);
+        $this->assertSame(9720.0, (float) $body['sell']['tax']);
+        $this->assertSame(45000.0, (float) $body['buy']['total']);
+        $this->assertSame(9000.0, (float) $body['margin']['value']);
+        $this->assertSame(16.67, (float) $body['margin']['percent']);
+    }
+
+    /**
      * 🔴 NULL, NEVER −100%, ON AN UNBILLED JOB. "We have not billed this yet" and "we
      * lost everything on this" are opposite facts, and reporting the first as the
      * second corrupts every P&L roll-up that averages it.

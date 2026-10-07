@@ -248,6 +248,53 @@ class OperatorLoadTest extends TestCase
         $this->assertSame($idle->id, $rows[0]['id']);
     }
 
+    /**
+     * 🔴 The operator is operations staff (GAPS #466, found clicking as pricing): pricing was offered in "Hand to an
+     * operator" and the Staff view, and two of a pricing person's own jobs recorded him as their operator.
+     */
+    public function test_pricing_is_not_offered_as_an_operator(): void
+    {
+        $pricing = $this->user('pricing');
+
+        $ids = collect($this->api($pricing)->getJson($this->url('/api/jobs/staff-load'))->assertOk()->json('operators'))->pluck('id');
+
+        $this->assertContains($this->ops->id, $ids);
+        $this->assertNotContains($pricing->id, $ids);
+    }
+
+    public function test_a_job_is_handed_only_to_an_operator_of_its_branch(): void
+    {
+        $pricing = $this->user('pricing');
+        $other = Company::create(['name' => 'Other Co', 'code' => 'OTH', 'tier' => 'tactical']);
+        $otherBranch = Agent::create(['company_id' => $other->id, 'agent_name' => 'DEL', 'branch_code' => 'DEL']);
+        $stranger = User::create(['name' => 'Stranger', 'email' => 'stranger-lod@test.local', 'password' => Hash::make('x'),
+            'company_name' => $other->id, 'branch_name' => $otherBranch->id, 'designation' => 'operations', 'is_active' => 1]);
+        $job = $this->job(['ops_id' => null]);
+
+        foreach ([$pricing->id, $stranger->id] as $who) {
+            $this->api($pricing)->postJson($this->url("/api/jobs/{$job->id}/reassign"), ['ops_id' => $who])
+                ->assertStatus(422)->assertJsonPath('reason', 'not_an_operator');
+        }
+        $this->assertNull($job->fresh()->ops_id);
+
+        $enquiry = Enquiry::create(['agent_id' => $this->branch->id, 'transport_mode' => 'air', 'enquiry_no' => 'ENQA-LODBOM-26-9001']);
+        $this->api($pricing)->postJson($this->url("/api/enquiries/{$enquiry->id}/convert"), ['ops_id' => $pricing->id])
+            ->assertStatus(422)->assertJsonPath('reason', 'not_an_operator');
+        $this->api($pricing)->postJson($this->url("/api/enquiries/{$enquiry->id}/convert"), ['ops_id' => $this->ops->id])
+            ->assertCreated()->assertJsonPath('job.ops_id', $this->ops->id);
+    }
+
+    public function test_pricing_does_not_claim_a_job_as_its_operator(): void
+    {
+        $job = $this->job(['ops_id' => null]);
+
+        $this->api($this->user('pricing'))->postJson($this->url("/api/jobs/{$job->id}/claim"))->assertForbidden();
+        $this->assertNull($job->fresh()->ops_id);
+
+        $this->api($this->ops)->postJson($this->url("/api/jobs/{$job->id}/claim"))->assertOk();
+        $this->assertSame($this->ops->id, (int) $job->fresh()->ops_id);
+    }
+
     /** 🔒 The matrix is ABSENT for operations (PRD §9.4), not merely disabled. */
     public function test_operations_cannot_read_the_staff_matrix(): void
     {

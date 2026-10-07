@@ -342,6 +342,12 @@ class EnquiryController extends Controller
             ], 422);
         }
 
+        // The operator chosen here runs the shipment: operations staff of this branch only (GAPS #466).
+        if (filled($data['ops_id'] ?? null)
+            && ! app(\App\Services\OperatorLoadService::class)->isOperator((int) $data['ops_id'], (int) $enquiry->agent_id)) {
+            return \App\Services\OperatorLoadService::notAnOperator();
+        }
+
         $mode = TransportMode::from($enquiry->transport_mode);
 
         // awb_number is AIR-ONLY; the model guards it too, but a 422 beats a 500.

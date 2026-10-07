@@ -30,6 +30,7 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { getMe } from "@/core/services/me";
 import { LOGOUT } from "@/core/services/store/auth.module";
 
 const PLANS = { core: "Core", tactical: "Tactical", command: "Command" };
@@ -68,8 +69,9 @@ export default {
       this.open = !this.open;
       if (this.open && !this.profile) this.fetchProfile();
     },
-    fetchProfile() {
-      ApiService.get("/me")
+    fetchProfile(event) {
+      // A "profile updated" event means the cached answer is stale (GAPS #466).
+      getMe({ fresh: Boolean(event && event.type) })
         .then(({ data }) => {
           this.profile = data.profile;
           this.name = (data.profile && data.profile.name) || null;

@@ -70,14 +70,17 @@ class JobCostSheetController extends Controller
         $sell = $this->sellLines($job);
         $buy = $this->buyLines($job);
 
-        $sellTotal = round($sell->sum(fn ($i) => (float) $i->net_amount), 2);
-        $buyTotal = round($buy->sum(fn ($i) => (float) $i->net_amount), 2);
+        // 🔴 BEFORE TAX (GAPS #466): GST is collected for the government and input GST is claimed back, so neither is
+        // revenue or cost — totals and margin are line amounts, as every report does (#403). The tax is its own figure.
+        $sellTotal = round($sell->sum(fn ($i) => (float) $i->amount), 2);
+        $buyTotal = round($buy->sum(fn ($i) => (float) $i->amount), 2);
 
         $payload = [
             'job' => $job->only(['id', 'execution_job_no', 'transport_mode', 'status']),
             'sell' => [
                 'lines' => $sell->map(fn ($i) => $this->sellShape($i))->values(),
                 'total' => $sellTotal,
+                'tax'   => round($sell->sum(fn ($i) => (float) $i->tax_amount), 2),
             ],
             'vocabulary' => [
                 'charge_types' => self::CHARGE_TYPES,
@@ -100,6 +103,7 @@ class JobCostSheetController extends Controller
             $payload['buy'] = [
                 'lines' => $buy->map(fn ($i) => $this->buyShape($i))->values(),
                 'total' => $buyTotal,
+                'tax'   => round($buy->sum(fn ($i) => (float) $i->tax_amount), 2),
             ];
             $payload['margin'] = $this->margin($sellTotal, $buyTotal);
         }

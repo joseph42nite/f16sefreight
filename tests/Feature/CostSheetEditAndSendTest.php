@@ -53,14 +53,16 @@ class CostSheetEditAndSendTest extends TestCase
         $sheet = $this->as($this->pricing)->postJson($this->url('/lines'), ['side' => 'sell', 'charge_type' => 'air_freight',
             'description' => 'Air freight', 'quantity' => 100, 'rate' => 80, 'tax_percentage' => 18])->assertCreated()->json();
         $line = $sheet['sell']['lines'][0];
-        $this->assertSame(9440.0, (float) $sheet['sell']['total']);
+        // Totals and margin are BEFORE tax (GAPS #466): 100 × 80 = 8,000; the 18% sits in its own figure.
+        $this->assertSame(8000.0, (float) $sheet['sell']['total']);
+        $this->assertSame(1440.0, (float) $sheet['sell']['tax']);
 
         // Changed in place: 120 × 85, tax 18%.
         $changed = $this->putJson($this->url("/sell/{$line['id']}"), ['charge_type' => 'air_freight',
             'description' => 'Air freight — revised', 'quantity' => 120, 'rate' => 85, 'tax_percentage' => 18])->assertOk()->json();
 
         $this->assertSame('Air freight — revised', $changed['sell']['lines'][0]['description']);
-        $this->assertSame(12036.0, (float) $changed['sell']['total']);
+        $this->assertSame(10200.0, (float) $changed['sell']['total']);
 
         // A buy line, and it can be changed too.
         $vendor = Partner::create(['company_id' => $this->branch->company_id, 'name' => 'Skylink', 'partner_type' => 'agent']);
@@ -71,7 +73,7 @@ class CostSheetEditAndSendTest extends TestCase
         $afterBuy = $this->putJson($this->url("/buy/{$buyLine['id']}"), ['charge_type' => 'air_freight',
             'description' => 'Carrier — agreed', 'quantity' => 120, 'rate' => 55])->assertOk()->json();
         $this->assertSame(6600.0, (float) $afterBuy['buy']['total']);
-        $this->assertSame(5436.0, (float) $afterBuy['margin']['value']);
+        $this->assertSame(3600.0, (float) $afterBuy['margin']['value']);
 
         // Nothing reaches accounts until it is sent.
         $this->assertNull($afterBuy['sent_to_accounts']);

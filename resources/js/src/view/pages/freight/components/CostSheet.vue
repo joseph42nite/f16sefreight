@@ -21,7 +21,8 @@
               <th scope="col">Charge</th>
               <th class="fx-num" scope="col">Qty</th>
               <th class="fx-num" scope="col">Rate</th>
-              <th class="fx-num" scope="col">Net</th>
+              <!-- Before tax (GAPS #466): GST is not ours, so the amounts, totals and margin leave it out. -->
+              <th class="fx-num" scope="col">Amount</th>
               <th v-if="canEdit && !sheet.locked" scope="col"></th>
             </tr>
           </thead>
@@ -42,7 +43,10 @@
                 <td>{{ l.description }} <span class="fx-muted">({{ label(l.charge_type) }})</span></td>
                 <td class="fx-num"><Figure :value="l.quantity" kind="count" /></td>
                 <td class="fx-num"><Figure :value="l.rate" kind="currency" currency-code="INR" /></td>
-                <td class="fx-num"><Figure :value="l.net_amount" kind="currency" currency-code="INR" /></td>
+                <td class="fx-num">
+                  <Figure :value="l.amount" kind="currency" currency-code="INR" />
+                  <span v-if="Number(l.tax_amount) > 0" class="fx-muted fx-cost__tax">+ {{ Number(l.tax_percentage) }}% tax</span>
+                </td>
                 <td v-if="canEdit && !sheet.locked" class="fx-row-actions">
                   <button class="fx-btn fx-btn--ghost" @click="edit('sell', l)">Edit</button>
                   <button class="fx-btn fx-btn--ghost" @click="remove('sell', l.id)">✕</button>
@@ -70,8 +74,13 @@
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="3"><strong>Total</strong></td>
+              <td colspan="3"><strong>Total</strong> <span class="fx-muted">before tax</span></td>
               <td class="fx-num"><Figure :value="sheet.sell.total" kind="currency" currency-code="INR" /></td>
+              <td v-if="canEdit && !sheet.locked"></td>
+            </tr>
+            <tr v-if="Number(sheet.sell.tax) > 0">
+              <td colspan="3" class="fx-muted">GST on the invoice — collected for the government, not in the margin</td>
+              <td class="fx-num fx-muted"><Figure :value="sheet.sell.tax" kind="currency" currency-code="INR" /></td>
               <td v-if="canEdit && !sheet.locked"></td>
             </tr>
           </tfoot>
@@ -94,7 +103,7 @@
             <tr>
               <th scope="col">Charge</th>
               <th class="fx-num" scope="col">Qty</th>
-              <th class="fx-num" scope="col">Net</th>
+              <th class="fx-num" scope="col">Amount</th>
               <th v-if="canEdit && !sheet.locked" scope="col"></th>
             </tr>
           </thead>
@@ -116,7 +125,10 @@
                   <span v-if="l.vendor" class="fx-muted"> · {{ l.vendor }}</span>
                 </td>
                 <td class="fx-num"><Figure :value="l.quantity" kind="count" /></td>
-                <td class="fx-num"><Figure :value="l.net_amount" kind="currency" currency-code="INR" /></td>
+                <td class="fx-num">
+                  <Figure :value="l.amount" kind="currency" currency-code="INR" />
+                  <span v-if="Number(l.tax_amount) > 0" class="fx-muted fx-cost__tax">+ tax</span>
+                </td>
                 <td v-if="canEdit && !sheet.locked" class="fx-row-actions">
                   <button class="fx-btn fx-btn--ghost" @click="edit('buy', l)">Edit</button>
                   <button class="fx-btn fx-btn--ghost" @click="remove('buy', l.id)">✕</button>
@@ -129,8 +141,13 @@
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="2"><strong>Total</strong></td>
+              <td colspan="2"><strong>Total</strong> <span class="fx-muted">before tax</span></td>
               <td class="fx-num"><Figure :value="sheet.buy.total" kind="currency" currency-code="INR" /></td>
+              <td v-if="canEdit && !sheet.locked"></td>
+            </tr>
+            <tr v-if="Number(sheet.buy.tax) > 0">
+              <td colspan="2" class="fx-muted">GST on the bills — claimed back, not in the margin</td>
+              <td class="fx-num fx-muted"><Figure :value="sheet.buy.tax" kind="currency" currency-code="INR" /></td>
               <td v-if="canEdit && !sheet.locked"></td>
             </tr>
           </tfoot>
@@ -139,7 +156,7 @@
 
       <!-- ── Margin ───────────────────────────────────────────────────────── -->
       <section v-if="sheet.margin" class="fx-section">
-        <h3 class="fx-section__title">Margin</h3>
+        <h3 class="fx-section__title">Margin <span class="fx-muted">before tax</span></h3>
         <dl class="fx-defs">
           <dt>Value</dt>
           <dd><Figure :value="sheet.margin.value" kind="currency" currency-code="INR" /></dd>

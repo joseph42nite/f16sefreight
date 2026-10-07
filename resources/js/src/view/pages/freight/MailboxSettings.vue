@@ -169,6 +169,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { getMe } from "@/core/services/me";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 
@@ -196,7 +197,7 @@ export default {
   },
   created() {
     this.load();
-    ApiService.get("/me").then(({ data }) => { this.myName = (data.profile && data.profile.name) || ""; }).catch(() => {});
+    getMe().then(({ data }) => { this.myName = (data.profile && data.profile.name) || ""; }).catch(() => {});
   },
   methods: {
     load() {

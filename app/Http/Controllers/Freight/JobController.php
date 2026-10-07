@@ -417,6 +417,9 @@ class JobController extends Controller
      */
     public function claim(Job $job): JsonResponse
     {
+        // A claim makes the caller the job's OPERATOR, so only operations claims (GAPS #466); pricing owns it otherwise.
+        abort_unless(auth()->user()->designation === 'operations', 403, 'Only operations claims a job to run it.');
+
         $claimed = Job::withoutTenantScope()
             ->whereKey($job->id)
             ->whereNull('ops_id')
@@ -457,6 +460,10 @@ class JobController extends Controller
 
         $data = $request->validate(['ops_id' => ['required', 'integer', 'exists:users,id']]);
 
+        if (! app(OperatorLoadService::class)->isOperator((int) $data['ops_id'], (int) $job->agent_id)) {
+            return OperatorLoadService::notAnOperator();
+        }
+
         $job->update([
             'ops_id'                   => $data['ops_id'],
             'pending_ops_id'           => null,
@@ -490,6 +497,10 @@ class JobController extends Controller
         $this->authorize('requestReassignment');
 
         $data = $request->validate(['ops_id' => ['required', 'integer', 'exists:users,id']]);
+
+        if (! app(OperatorLoadService::class)->isOperator((int) $data['ops_id'], (int) $job->agent_id)) {
+            return OperatorLoadService::notAnOperator();
+        }
 
         // 🔴 A REQUEST NEEDS SOMEBODY TO ASK. Staging on an unowned job raised no
         // notification at all, so the request waited for a decision nobody would ever be
@@ -658,7 +669,8 @@ class JobController extends Controller
             : collect();
 
         $operators = \App\User::where('branch_name', $agentId)
-            ->whereIn('designation', ['operations', 'pricing'])
+            // Operations only (GAPS #466): pricing owns a job, it does not run it.
+            ->where('designation', 'operations')
             ->where('is_active', 1)
             ->get(['id', 'name', 'designation']);
 

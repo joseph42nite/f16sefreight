@@ -669,7 +669,7 @@
                   yet" rather than as a deliberate decision.
                 -->
                 <select v-model="opsId" class="fx-input">
-                  <option value="">Nobody yet — I'll handle it</option>
+                  <option value="">Nobody yet</option>
                   <option v-for="o in operators" :key="o.id" :value="o.id">
                     {{ operatorLabel(o) }}
                   </option>

@@ -11,7 +11,7 @@
  * sidebar looks like and nothing else. Never gate a mutation on these values alone.
  */
 
-import ApiService from "@/core/services/api.service";
+import { getMe } from "@/core/services/me";
 
 const STORAGE_KEY = "f16s_context";
 
@@ -123,7 +123,7 @@ const actions = {
    * Filed as dropdown. The stored copy still draws the first frame; the server's answer replaces it.
    */
   [LOAD_CONTEXT](context) {
-    return ApiService.get("/me")
+    return getMe()
       .then(({ data }) => context.commit(SET_CONTEXT, { context: data.context, portal: data.portal }))
       // A failure here leaves the shell exactly as it was. The route guards and the
       // server still decide everything that matters.

@@ -182,11 +182,13 @@ class LifecycleApiTest extends TestCase
     public function test_operations_cannot_reassign_directly(): void
     {
         $jobId = $this->makeJob();
+        // A colleague in operations: a job is handed only to an operator (GAPS #466), never to pricing.
+        $colleague = $this->makeUser('operations', 'operations2-lc@test.local');
 
-        $this->api($this->operations)->postJson($this->url("/api/jobs/{$jobId}/reassign"), ['ops_id' => $this->pricing->id])
+        $this->api($this->operations)->postJson($this->url("/api/jobs/{$jobId}/reassign"), ['ops_id' => $colleague->id])
             ->assertForbidden();
 
-        $this->api($this->operations)->postJson($this->url("/api/jobs/{$jobId}/reassign/request"), ['ops_id' => $this->pricing->id])
+        $this->api($this->operations)->postJson($this->url("/api/jobs/{$jobId}/reassign/request"), ['ops_id' => $colleague->id])
             ->assertStatus(202);
     }
 

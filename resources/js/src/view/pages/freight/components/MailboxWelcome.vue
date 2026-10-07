@@ -36,6 +36,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { getMe } from "@/core/services/me";
 
 /** Asks pricing, operations, sales, the Boss and accounts to connect their own Outlook (user, 2026-09-16). */
 export default {
@@ -48,7 +49,7 @@ export default {
     },
   },
   created() {
-    ApiService.get("/me").then(({ data }) => { this.state = data.mailbox || null; }).catch(() => {});
+    getMe().then(({ data }) => { this.state = data.mailbox || null; }).catch(() => {});
   },
   methods: {
     connect() {

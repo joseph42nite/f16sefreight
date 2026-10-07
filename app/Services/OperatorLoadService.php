@@ -46,6 +46,23 @@ class OperatorLoadService
     private const SENT = ['Sent to Airline', 'Airline Confirmed'];
 
     /**
+     * Whether a user may be a job's operator in this branch: active operations staff of the branch (GAPS #466). Pricing
+     * owns a job as its pricing owner and is never its operator; `exists:users,id` alone let any user anywhere through.
+     */
+    public function isOperator(int $userId, int $agentId): bool
+    {
+        return DB::table('users')->where('id', $userId)->where('branch_name', $agentId)
+            ->where('designation', 'operations')->where('is_active', 1)->exists();
+    }
+
+    /** The refusal every hand-over gives when the person named is not one of the branch's operators. */
+    public static function notAnOperator(): \Illuminate\Http\JsonResponse
+    {
+        return response()->json(['error' => 'Only an operations person of this branch can run the shipment.',
+            'reason' => 'not_an_operator'], 422);
+    }
+
+    /**
      * OLI for every operator in a branch, keyed by user id.
      *
      * @return array<int, array{oli: float, cap: float, overloaded: bool, jobs: int}>

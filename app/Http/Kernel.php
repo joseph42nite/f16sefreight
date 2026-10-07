@@ -40,7 +40,9 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            'throttle:60,1',
+            // 300 a minute per user (GAPS #466): one conversation and its workspace make 18 requests, so 60 refused a
+            // pricing person opening a few mails in a row. Sign-in keeps its own 10 a minute (routes/api.php).
+            'throttle:300,1',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             // Resolves the portal from the request Host on EVERY api request — see
             // guide §3.3. Deliberately on the group rather than a route: it must run

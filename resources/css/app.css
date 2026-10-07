@@ -1117,3 +1117,6 @@ body.fx-picking, body.fx-picking * { cursor: crosshair !important; }
 @media (max-width: 767px) {
   .fx-table { display: block; max-width: 100%; overflow-x: auto; }
 }
+
+/* The cost sheet's amounts are before tax (GAPS #466); the tax a line carries is noted under its amount. */
+.fx-cost__tax { display: block; font-size: var(--font-size-xs, 0.75rem); }

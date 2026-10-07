@@ -98,7 +98,7 @@ Paste this into the new session:
 - A provider that can also PAY (RazorpayX, Cashfree Payouts, a bank's corporate API) — Setu only reads (#442).
 
 ## Open — noticed, not asked for (offer, don't start)
-- JOBA-BASEBAS-26-0001/-0003 (joseph@'s test jobs from an internal sender): no client, and Joseph (pricing) as operator — reassign or cancel (#466).
+- joseph@'s test jobs (#466): JOBA-BASEBAS-26-0003 cancelled 2026-10-07 ("Test job from an internal sender"); JOBA-BASEBAS-26-0001 **kept on the owner's word** — it has unpaid voucher PV-9480-20260918131733, so it cannot be cancelled without voiding that.
 - Not walked yet: the operator's AWB steps, accounts, FocusSea, the Boss and Sales views as real users (#466).
 
 ## Next (when the owner says go)

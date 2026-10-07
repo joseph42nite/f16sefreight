@@ -52,8 +52,13 @@ class ClientContacts
      *   - our own company's domain (a colleague forwarding the request): nobody — we are not our own client.
      * The sender is saved as one of its contacts. Returns the client's id, or null.
      */
+    /** The client the last `clientForConfirmedEnquiry` call CREATED, if it made one — so the confirmer can be told. */
+    public ?Customer $created = null;
+
     public function clientForConfirmedEnquiry(int $enquiryId): ?int
     {
+        $this->created = null;
+
         $thread = DB::table('email_threads')->where('enquiry_id', $enquiryId)->first(['agent_id', 'thread_key']);
         $first = $thread ? DB::table('email_messages')->where('thread_key', $thread->thread_key)->where('direction', 'inbound')
             ->orderBy('received_at')->first(['from', 'received_at']) : null;
@@ -79,10 +84,12 @@ class ClientContacts
             : (clone $clients)->whereRaw('LOWER(email_domain) = ?', [$domain])->orderBy('id')->value('id');
 
         if ($id === null) {
-            $customer = Customer::create($freeMail
+            // In the branch the mail came into (GAPS #466) — the book showed "Not set" for every client made here.
+            $customer = Customer::create(($freeMail
                 ? ['company_id' => $companyId, 'name' => $email, 'email' => $email]
-                : ['company_id' => $companyId, 'name' => $domain, 'email_domain' => $domain]);
+                : ['company_id' => $companyId, 'name' => $domain, 'email_domain' => $domain]) + ['branch_id' => $thread->agent_id]);
             $id = $customer->id;
+            $this->created = $customer;
 
             if (! $freeMail) {
                 $this->backfill($customer); // every address already received from that domain

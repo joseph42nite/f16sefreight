@@ -356,6 +356,31 @@ class ClientUpdatesTest extends TestCase
         $this->assertNull($this->pending($thread));
     }
 
+    /**
+     * A reply is somebody looking at the mail, so a first reply stamps triage when nothing has (GAPS #466): a mail
+     * answered from Outlook and filed later read "Answered 0m after triage" — triage stamped hours after the reply.
+     * A triage already stamped is never moved (it is write-once, PRD §5.2.6).
+     */
+    public function test_a_first_reply_stamps_triage_when_nobody_has(): void
+    {
+        $connection = \App\MailboxConnection::find($this->connectionId);
+        $reply = fn (EmailThread $t, $at) => app(MessageIngestor::class)->ingest($connection, [new NormalisedMessage(
+            messageId: '<out-' . uniqid('', false) . '@test.local>', threadId: null, from: $this->pricing->email, to: ['ops@client.test'],
+            cc: [], bcc: [], subject: 'Re: Rates BOM-FRA', snippet: 'Received.', receivedAt: $at, direction: 'outbound',
+            references: [DB::table('email_messages')->where('thread_key', $t->thread_key)->value('message_id')],
+        )]);
+
+        $untriaged = $this->thread(['first_triage_at' => null]);
+        $repliedAt = now()->subMinutes(30)->startOfSecond();
+        $reply($untriaged, $repliedAt);
+        $this->assertEquals($repliedAt, $untriaged->fresh()->first_triage_at);
+
+        $triagedAt = now()->subMinutes(50)->startOfSecond();
+        $triaged = $this->thread(['first_triage_at' => $triagedAt]);
+        $reply($triaged, now()->subMinutes(10));
+        $this->assertEquals($triagedAt, $triaged->fresh()->first_triage_at);
+    }
+
     /** 🔴 A first reply typed in Outlook claims the conversation for the pricing member who sent it. */
     public function test_a_reply_sent_from_outlook_claims_for_the_pricing_sender(): void
     {

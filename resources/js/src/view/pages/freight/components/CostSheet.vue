@@ -255,7 +255,7 @@
           </label>
           <label class="fx-field">
             <span class="fx-field__label">Description</span>
-            <input v-model="draft.description" class="fx-input" type="text" />
+            <input v-model="draft.description" class="fx-input" type="text" :placeholder="label(draft.charge_type)" />
           </label>
           <label class="fx-field">
             <span class="fx-field__label">Qty</span>
@@ -282,6 +282,7 @@
             </select>
           </label>
           <button class="fx-btn fx-btn--primary" :disabled="busy || !valid" @click="add">Add</button>
+          <span v-if="missing" class="fx-muted" role="status">{{ missing }}</span>
         </div>
         <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
       </section>
@@ -316,10 +317,17 @@ export default {
       return this.designation === "pricing" || this.designation === "accounts";
     },
     valid() {
-      return this.draft.description
-        && this.draft.quantity > 0
-        // A buy line needs somebody to owe: the waybill's airline, or a vendor chosen here.
-        && (this.draft.side === "sell" || this.draft.vendor_id || (this.sheet && this.sheet.awb_airline));
+      return !this.missing;
+    },
+    /**
+     * Why Add is unavailable, said beside it (GAPS #466): the button was simply greyed out until a Description was
+     * typed, and nothing said so. An empty description now takes the charge's name.
+     */
+    missing() {
+      if (!(this.draft.quantity > 0)) return "Enter a quantity above 0.";
+      // A buy line needs somebody to owe: the waybill's airline, or a vendor chosen here.
+      if (this.draft.side === "buy" && !this.draft.vendor_id && !(this.sheet && this.sheet.awb_airline)) return "Choose the vendor this is owed to.";
+      return null;
     },
   },
   created() {
@@ -339,6 +347,10 @@ export default {
           this.sheet = data;
           this.error = null;
 
+          // The list offers only the charges that fit the job (GAPS #466); start on one it offers.
+          const offered = (data.vocabulary && data.vocabulary.charge_types) || [];
+          if (offered.length && !offered.includes(this.draft.charge_type)) this.draft.charge_type = offered[0];
+
           // The weight the freight is charged on, so a line typed here starts from the waybill's own figure.
           const weight = data.from_waybill && data.from_waybill.chargeable_weight;
           if (weight && !this.quantityTouched && this.draft.charge_type === "air_freight") this.draft.quantity = weight;
@@ -351,6 +363,7 @@ export default {
       this.actionError = null;
       const payload = Object.assign({}, this.draft);
       if (payload.side === "sell") delete payload.vendor_id;
+      if (!String(payload.description || "").trim()) payload.description = this.label(payload.charge_type);
 
       ApiService.post(`/jobs/${this.jobId}/cost-sheet/lines`, payload)
         .then(({ data }) => {

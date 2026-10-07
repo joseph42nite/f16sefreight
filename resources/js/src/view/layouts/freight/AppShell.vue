@@ -75,6 +75,13 @@ import MailboxWelcome from "@/view/pages/freight/components/MailboxWelcome.vue";
 
 export default {
   name: "AppShell",
+  /**
+   * Every page inside the app names the tab (GAPS #466): app pages set no title, so after a 404 the tab kept reading
+   * "Page Not Found" on whatever came next. A page with its own metaInfo still wins.
+   */
+  metaInfo() {
+    return { title: [this.$route.name, this.$store.getters.portalLabel || "F16s"].filter(Boolean).join(" · ") };
+  },
   components: { BellPanel, HelpAssistant, VisualReporter, ProfileMenu, MailboxWelcome },
   data: () => ({ collapsed: false }),
   /* The shell is the first thing that needs to know who is looking at it, so a session

@@ -400,9 +400,9 @@ class MailboxSyncTest extends TestCase
         $this->assertSame('HAM', $cargo['destination']['value']);
         $this->assertSame(12, $cargo['pieces']['value']);
 
-        // ⚠️ `low` throughout: this is prose read by a regex, not a field off a document,
-        // and the workspace has to ask before any of it is trusted.
-        $this->assertSame('low', $cargo['origin']['confidence']);
+        // The subject writes the codes themselves ("BOM to HAM"), so the lane is read, not guessed — high (GAPS #466).
+        // A lane worked out from names stays low: test_a_route_written_as_codes_is_high_confidence_and_one_from_names_is_low.
+        $this->assertSame('high', $cargo['origin']['confidence']);
     }
 
     /**
@@ -451,6 +451,26 @@ class MailboxSyncTest extends TestCase
 
         $this->assertSame('SIN', $cargo['origin']['value'] ?? null);
         $this->assertSame('BOM', $cargo['destination']['value'] ?? null);
+    }
+
+    /**
+     * A route written as the airport codes themselves is read, not guessed, so it is high confidence (GAPS #466: the
+     * "BLR-ORD" mail showed both ends as "check"). A route worked out from city names stays low.
+     */
+    public function test_a_route_written_as_codes_is_high_confidence_and_one_from_names_is_low(): void
+    {
+        DB::table('locations')->insert([
+            ['destination' => 'bengaluru', 'iata_code' => 'BLR', 'is_active' => 1],
+            ['destination' => 'chicago', 'iata_code' => 'ORD', 'is_active' => 1],
+        ]);
+        $filing = app(\App\Services\Mail\MailFilingService::class);
+
+        $codes = $filing->extractCargo("Requesting quotation for :\nBLR-ORD\nPCS : 21", 'air');
+        $this->assertSame(['BLR', 'high'], [$codes['origin']['value'], $codes['origin']['confidence']]);
+        $this->assertSame(['ORD', 'high'], [$codes['destination']['value'], $codes['destination']['confidence']]);
+
+        $names = $filing->extractCargo('Please quote Bengaluru to Chicago, 21 pcs', 'air');
+        $this->assertSame(['BLR', 'low'], [$names['origin']['value'] ?? null, $names['origin']['confidence'] ?? null]);
     }
 
     /**

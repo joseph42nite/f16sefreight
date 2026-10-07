@@ -35,7 +35,10 @@ export default {
       return '<!doctype html><html><head><meta charset="utf-8"><base target="_blank">'
         + "<style>body{margin:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#1f2933;overflow-wrap:anywhere}"
         + "h1,h2,h3,h4,h5,h6{font-size:1em;margin:0 0 6px}"
-        + "img{max-width:100%;height:auto}table{max-width:100%}p{margin:0 0 10px}</style></head><body>"
+        // A wide table keeps its words whole and scrolls sideways in the frame (GAPS #466): squeezed to the frame with
+        // words broken anywhere, an airline's FNA table read one letter per line.
+        + "html{overflow-x:auto}td,th{overflow-wrap:normal;word-break:normal}"
+        + "img{max-width:100%;height:auto}p{margin:0 0 10px}</style></head><body>"
         + this.html + "</body></html>";
     },
   },

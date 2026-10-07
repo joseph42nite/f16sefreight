@@ -166,8 +166,16 @@ class RealMailFlowTest extends TestCase
     public function test_free_mail_and_colleague_senders_when_confirmed(): void
     {
         $gmail = $this->arrives('jomy.flow@gmail.com', 'blr-ord', 'Requesting quotation for BLR-ORD, PCS : 21');
-        $this->as($this->pricing)->postJson($this->url("/enquiries/{$gmail->enquiry_id}/convert"), [])->assertCreated();
-        $this->assertSame('jomy.flow@gmail.com', DB::table('customers')->where('id', DB::table('enquiries')->where('id', $gmail->enquiry_id)->value('customer_id'))->value('name'));
+        $this->as($this->pricing)->postJson($this->url("/enquiries/{$gmail->enquiry_id}/convert"), [])->assertCreated()
+            // The confirmer is told a client was added and needs onboarding (GAPS #466, found clicking as pricing).
+            ->assertJsonPath('new_client.name', 'jomy.flow@gmail.com');
+        $client = DB::table('customers')->where('id', DB::table('enquiries')->where('id', $gmail->enquiry_id)->value('customer_id'))->first();
+        $this->assertSame('jomy.flow@gmail.com', $client->name);
+        $this->assertSame($this->branch->id, (int) $client->branch_id, 'the branch the mail came into, not "Not set"');
+
+        // A client already in the book is not "new" the second time.
+        $again = $this->arrives('jomy.flow@gmail.com', 'blr-del', 'Requesting quotation for BLR-DEL, PCS : 5');
+        $this->postJson($this->url("/enquiries/{$again->enquiry_id}/convert"), [])->assertCreated()->assertJsonPath('new_client', null);
 
         $colleague = $this->arrives('deepanjan@flow-fwd.test', 'Ex BLR 400 pcs JFK', 'Please share the confirmed booking schedule. Pcs 400, Gross wgt 17400kgs');
 

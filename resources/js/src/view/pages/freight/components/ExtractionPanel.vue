@@ -572,6 +572,12 @@ const GROUPS = [
 const ROUTE_KEYS = { route_origin: "origin", route_destination: "destination" };
 
 /**
+ * Every field that falls back to what the mail said when no document gives it: the route, and since GAPS #466 the
+ * cargo the mail stated — the BLR → ORD mail's 21 pcs, 300 kg and 60 x 30 x 20 otherwise read "not set".
+ */
+const MAIL_KEYS = { ...ROUTE_KEYS, pieces: "pieces", gross_weight: "gross_weight", dimensions: "dimensions" };
+
+/**
  * Step 3 lists FIELDS, not groups.
  *
  * 🔴 Assignment is by group — a document supplies "the parties" or "the cargo" — but
@@ -995,9 +1001,9 @@ export default {
         Object.keys(r.fields || {}).forEach((k) => { out[k] = r.fields[k]; });
       });
 
-      // The mail's route, where no ticked document gives one.
-      Object.keys(ROUTE_KEYS).forEach((k) => {
-        if (out[k] === undefined && this.mailRoute(k)) out[k] = this.mailRoute(k);
+      // What the mail said — the route and the cargo (GAPS #466) — where no ticked document gives it.
+      Object.keys(MAIL_KEYS).forEach((k) => {
+        if (out[k] === undefined && this.mailField(k)) out[k] = this.mailField(k);
       });
 
       // The paste wins over anything a document said, at the field level too.
@@ -1193,15 +1199,15 @@ export default {
       const doc = this.documents.find((d) => d.uid === uid);
       const found = doc && doc.state === "ready" && doc.fields ? doc.fields[key] : undefined;
 
-      if (found !== undefined || !ROUTE_KEYS[key]) return found;
+      if (found !== undefined || !MAIL_KEYS[key]) return found;
 
-      // The route falls back to what the mail said.
-      return this.mailRoute(key);
+      // The route and the cargo fall back to what the mail said.
+      return this.mailField(key);
     },
-    /** The mail's origin or destination as a field, marked so the table can name the mail. */
-    mailRoute(key) {
-      const said = raw((this.mailCargo || {})[ROUTE_KEYS[key]]);
-      return said ? { value: said, confidence: "high", fromMail: true } : undefined;
+    /** What the mail said for a field, marked so the table can name the mail. */
+    mailField(key) {
+      const said = raw((this.mailCargo || {})[MAIL_KEYS[key]]);
+      return said !== null && said !== undefined && said !== "" ? { value: said, confidence: "high", fromMail: true } : undefined;
     },
     /** Open or close a row's edit boxes. */
     toggleEdit(key) {

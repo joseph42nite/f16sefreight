@@ -12,6 +12,7 @@
         :key="f.key"
         class="fx-folder"
         :class="{ 'is-active': folder === f.key }"
+        :aria-pressed="folder === f.key ? 'true' : 'false'"
         @click="select(f.key)"
       >
         <span>{{ f.label }}</span>
@@ -450,7 +451,10 @@
             -->
             <label v-if="canSeeOperator" class="fx-drawer__ops">
               <span class="fx-muted">Operator</span>
+              <!-- Keyed on the list: a value set before the operators load matched no option and stuck on
+                   "Nobody yet" (GAPS #466). -->
               <select
+                :key="'ops-' + operators.length + '-' + (active.job.ops_id || '')"
                 class="fx-input"
                 :value="active.job.ops_id || ''"
                 :disabled="busy || !!active.job.pending_ops_id"
@@ -471,6 +475,11 @@
               @click="cancelling = { reason: '', custom: '', error: null }"
             >Cancel shipment</button>
             <span v-if="active.job.status === 'Cancelled'" class="fx-muted">Cancelled — this conversation can now be filed as something else.</span>
+            <!-- Confirming added the sender to the client book; it has no salesperson or credit limit yet (GAPS #466). -->
+            <span v-if="newClient" class="fx-muted" role="status">
+              New client added: <strong>{{ newClient.name }}</strong> — give them a salesperson and a credit limit in
+              <router-link to="/clients-partners">Clients &amp; Partners</router-link>.
+            </span>
             <span v-if="canSeeOperator && active.job.pending_ops_id" class="fx-muted">
               Waiting for approval → {{ operatorName(active.job.pending_ops_id) }}
               <button
@@ -878,7 +887,7 @@ export default {
     signature: null,
     /** The attachment being fetched, and why the last one could not be. */
     attachmentBusy: null, attachmentError: null,
-    outcomeBusy: false, outcomeError: null,
+    outcomeBusy: false, outcomeError: null, newClient: null,
     /** The acknowledgement shown when claiming, and the state of sending a client update. */
     claimDraft: null, updateBusy: false, updateError: null,
     LOST_REASONS,
@@ -1049,8 +1058,11 @@ export default {
       const triaged = new Date(a.first_triage_at);
 
       if (a.first_response_at) {
+        const answered = new Date(a.first_response_at);
+        // Answered before anyone filed it (older mail, from Outlook): there is no "after triage" to show (GAPS #466).
+        if (answered < triaged) return { label: "Answered before it was triaged", tone: "success" };
         return {
-          label: "Answered " + this.elapsed(triaged, new Date(a.first_response_at)) + " after triage",
+          label: "Answered " + this.elapsed(triaged, answered) + " after triage",
           tone: "success",
         };
       }
@@ -1507,7 +1519,7 @@ export default {
       })
         /* Reload rather than patch: conversion changes the enquiry's status, mints the
            job number and moves the thread's identifier — the server owns all of it. */
-        .then(() => this.open(this.active))
+        .then(({ data }) => this.open(this.active).then(() => { this.newClient = data.new_client || null; }))
         .then(() => {
           // The file picked with Extract before confirming goes into Extraction now.
           if (this.waitingFile && this.active.job) this.handToExtraction(this.waitingFile);
@@ -1653,7 +1665,7 @@ export default {
     },
     open(thread) {
       this.actionError = null;
-      if (!this.active || this.active.id !== thread.id) this.actionNotice = null;
+      if (!this.active || this.active.id !== thread.id) { this.actionNotice = null; this.newClient = null; }
       // A file waiting for confirmation belongs to its own conversation only.
       if (!this.active || this.active.id !== thread.id) this.waitingFile = null;
       /* The outcome gate is per-conversation: a half-typed loss reason must not follow

@@ -24,7 +24,7 @@ Paste this into the new session:
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
-## Where we are (GAPS #436–#465)
+## Where we are (GAPS #436–#466)
 
 ### 2026-10-06
 - **Owner's answers (#459):** no *AI Extraction* / *Re-initiation* client mails (PRD + guide no longer claim one);
@@ -42,6 +42,12 @@ Paste this into the new session:
   and pricing takes it with its houses (`/masters/to-take`, `/masters/{job}/take`).
 - **Airline deductions are a lower cost (#465):** commission and discount off the CASS bill post to
   `5010-Airline-Discounts` under Direct Costs, not income; no GST on them. #446 closed.
+
+### 2026-10-07
+- **A real case clicked through as joseph@ (#466):** 15 findings in the Claude Docs doc *F16s demo walk — findings
+  from clicking*; all fixed but #12 (test data). Cost-sheet margin before tax; 300 requests/min and one `/me` per load;
+  only operations runs a job; old dashboard pages inside the app; the mail's cargo into the waybill; a confirmed
+  mail's new client takes its branch and asks for onboarding.
 
 ### 2026-10-04/05
 - **Ops scorecard, measured not scored (#456):** PRD §7.3.4 G as facts per client, mode and **financial-year quarter**
@@ -92,7 +98,8 @@ Paste this into the new session:
 - A provider that can also PAY (RazorpayX, Cashfree Payouts, a bank's corporate API) — Setu only reads (#442).
 
 ## Open — noticed, not asked for (offer, don't start)
-- Nothing open.
+- JOBA-BASEBAS-26-0001/-0003 (joseph@'s test jobs from an internal sender): no client, and Joseph (pricing) as operator — reassign or cancel (#466).
+- Not walked yet: the operator's AWB steps, accounts, FocusSea, the Boss and Sales views as real users (#466).
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.

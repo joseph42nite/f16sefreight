@@ -496,8 +496,8 @@ class MailFilingService
      * read" is a half-lane, and a half-lane on a card looks like a whole one — the
      * operator sees an origin, believes the destination was simply blank, and never checks.
      *
-     * ⚠️ Confidence is `low` throughout. This is one line of prose read by a regex, not a
-     * field off a document, and the workspace should ask before it is trusted.
+     * ⚠️ Confidence is `low` for a lane worked out from names: one line of prose read by a regex, not a field off a
+     * document, and the workspace should ask before it is trusted. Codes written as codes are `high` (GAPS #466).
      */
     private function extractLane(string $text): array
     {
@@ -509,9 +509,14 @@ class MailFilingService
             $dest   = $this->resolveLocation($m[2]);
 
             if ($origin !== null && $dest !== null && $origin !== $dest) {
+                // Written as the codes themselves ("BLR-ORD") is read, not guessed — high (GAPS #466). A lane worked
+                // out from names stays low, for the workspace to ask about.
+                $asWritten = strtoupper(trim($m[1])) === $origin && strtoupper(trim($m[2])) === $dest;
+                $confidence = $asWritten ? 'high' : 'low';
+
                 return [
-                    'origin'      => ['value' => $origin, 'confidence' => 'low'],
-                    'destination' => ['value' => $dest,   'confidence' => 'low'],
+                    'origin'      => ['value' => $origin, 'confidence' => $confidence],
+                    'destination' => ['value' => $dest,   'confidence' => $confidence],
                 ];
             }
         }

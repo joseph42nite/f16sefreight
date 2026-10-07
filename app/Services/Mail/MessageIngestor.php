@@ -264,7 +264,7 @@ class MessageIngestor
     private function touchThread(MailboxConnection $connection, string $threadKey, NormalisedMessage $message, bool $historical = false): void
     {
         $thread = DB::table('email_threads')->where('thread_key', $threadKey)
-            ->first(['agent_id', 'latest_message_received_at', 'first_response_at', 'enquiry_id', 'assigned_ops_id', 'client_updates']);
+            ->first(['agent_id', 'latest_message_received_at', 'first_response_at', 'first_triage_at', 'enquiry_id', 'assigned_ops_id', 'client_updates']);
 
         if ($thread === null) {
             return;
@@ -287,6 +287,12 @@ class MessageIngestor
         // provable number (PRD §5.2.3).
         if ($message->direction === 'outbound' && $thread->first_response_at === null) {
             $update['first_response_at'] = $message->receivedAt;
+        }
+
+        // A reply is somebody looking at it, so it is triage too when nobody has triaged yet (GAPS #466) — answered
+        // from Outlook and filed later read "Answered 0m after triage". Write-once: an earlier triage stands.
+        if ($message->direction === 'outbound' && $thread->first_triage_at === null) {
+            $update['first_triage_at'] = $message->receivedAt;
         }
 
         // 🔴 A first reply typed in Outlook claims the conversation too (user, 2026-09-16): the pricing member who sent

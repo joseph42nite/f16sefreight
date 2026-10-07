@@ -49,6 +49,21 @@ class JobCostSheetController extends Controller
 
     public const CHARGE_BASES = ['per_container', 'per_cbm', 'per_bl', 'flat_rate', 'per_weight_ton'];
 
+    /**
+     * The charges the Add list offers for this job (GAPS #466): no ocean freight on an air job, no air freight on a
+     * sea one, and no delivery-order fee on an export — the DO is issued at import. A line already of another type is
+     * still accepted and shown; this only narrows what is offered.
+     */
+    public static function chargeTypesFor(Job $job): array
+    {
+        $leaveOut = [
+            $job->transport_mode === 'sea' ? 'air_freight' : 'ocean_freight',
+            ...($job->direction === 'import' ? [] : ['delivery_order_fee']),
+        ];
+
+        return array_values(array_diff(self::CHARGE_TYPES, $leaveOut));
+    }
+
     public const TAX_STATUSES = ['taxable', 'exempt', 'zero_rated'];
 
     public function __construct(
@@ -83,7 +98,7 @@ class JobCostSheetController extends Controller
                 'tax'   => round($sell->sum(fn ($i) => (float) $i->tax_amount), 2),
             ],
             'vocabulary' => [
-                'charge_types' => self::CHARGE_TYPES,
+                'charge_types' => self::chargeTypesFor($job),
                 'charge_bases' => self::CHARGE_BASES,
                 'tax_statuses' => self::TAX_STATUSES,
             ],

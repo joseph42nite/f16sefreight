@@ -120,60 +120,6 @@ const router = new Router({
           meta: { logo: 'blue' }
         },
 
-        // User Dashboard Pages
-        {
-          // The MASTER air waybill form. `focus-air` stays as an alias because eight
-          // legacy files link to it (header, footer, sidebar, the auth landing
-          // fallback) — renaming the path would break every one of them for a label
-          // change. New links use the canonical path.
-          name: "Master Airway Bill",
-          path: "master-airway-bill",
-          alias: "focus-air",
-          component: () => import("@/view/pages/dashboard/FocusAir"),
-          meta: { userType: 'user' }
-        },
-        {
-          path: 'edit-airway-bill/:id?',
-          name: 'EditAirwayBill',
-          component: () => import("@/view/pages/dashboard/FocusAir"),
-          meta: { userType: 'user' }
-        },
-        {
-          name: "House Way Bill",
-          path: "house-way-bill",
-          component: () => import("@/view/pages/dashboard/HouseWayBill"),
-          meta: { userType: 'user' }
-        },
-        {
-          name: "Consolidation",
-          path: "consolidation",
-          component: () => import("@/view/pages/dashboard/Consolidation"),
-          meta: { userType: 'user' }
-        },
-        {
-          path: 'edit-houseway-bill/:id?',
-          name: 'EditHousewayBill',
-          component: () => import("@/view/pages/dashboard/HouseWayBill"),
-          meta: { userType: 'user' }
-        },
-        {
-          name: "Message Log",
-          path: "message-log",
-          component: () => import("@/view/pages/dashboard/MessageLog"),
-          meta: { userType: 'user' }
-        },
-        {
-          name: "XML View",
-          path: "xml-view/:id?",
-          component: () => import("@/view/pages/dashboard/XmlView"),
-          meta: { userType: 'user' }
-        },
-        {
-          name: "Settings",
-          path: "settings",
-          component: () => import("@/view/pages/dashboard/UserSettings"),
-          meta: { userType: 'user' }
-        },
       ]
     },
 
@@ -353,6 +299,61 @@ const router = new Router({
       path: "/",
       component: () => import("@/view/layouts/freight/AppShell"),
       children: [
+        // The air waybill pages, the message log and Settings — inside the app's shell (GAPS #466). Under the public
+        // MainLayout they opened with the website's header and no app menu, from the app's own menu.
+        {
+          // The MASTER air waybill form. `focus-air` stays as an alias because eight
+          // legacy files link to it (header, footer, sidebar, the auth landing
+          // fallback) — renaming the path would break every one of them for a label
+          // change. New links use the canonical path.
+          name: "Master Airway Bill",
+          path: "master-airway-bill",
+          alias: "focus-air",
+          component: () => import("@/view/pages/dashboard/FocusAir"),
+          meta: { userType: 'user' }
+        },
+        {
+          path: 'edit-airway-bill/:id?',
+          name: 'EditAirwayBill',
+          component: () => import("@/view/pages/dashboard/FocusAir"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "House Way Bill",
+          path: "house-way-bill",
+          component: () => import("@/view/pages/dashboard/HouseWayBill"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "Consolidation",
+          path: "consolidation",
+          component: () => import("@/view/pages/dashboard/Consolidation"),
+          meta: { userType: 'user' }
+        },
+        {
+          path: 'edit-houseway-bill/:id?',
+          name: 'EditHousewayBill',
+          component: () => import("@/view/pages/dashboard/HouseWayBill"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "Message Log",
+          path: "message-log",
+          component: () => import("@/view/pages/dashboard/MessageLog"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "XML View",
+          path: "xml-view/:id?",
+          component: () => import("@/view/pages/dashboard/XmlView"),
+          meta: { userType: 'user' }
+        },
+        {
+          name: "Settings",
+          path: "settings",
+          component: () => import("@/view/pages/dashboard/UserSettings"),
+          meta: { userType: 'user' }
+        },
         {
           path: "inbox",
           name: "Inbox",

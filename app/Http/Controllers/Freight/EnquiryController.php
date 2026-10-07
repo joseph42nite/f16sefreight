@@ -370,10 +370,12 @@ class EnquiryController extends Controller
             ->where('enquiry_id', $enquiry->id)
             ->value('assigned_ops_id');
 
-        $job = DB::transaction(function () use ($enquiry, $data, $mode, $claimedBy) {
+        $contacts = app(\App\Services\ClientContacts::class);
+
+        $job = DB::transaction(function () use ($enquiry, $data, $mode, $claimedBy, $contacts) {
             // The client is added to Clients & Partners (or found) when the shipment is confirmed (user, 2026-09-17).
             if (empty($data['customer_id']) && $enquiry->customer_id === null
-                && ($clientId = app(\App\Services\ClientContacts::class)->clientForConfirmedEnquiry($enquiry->id))) {
+                && ($clientId = $contacts->clientForConfirmedEnquiry($enquiry->id))) {
                 $enquiry->forceFill(['customer_id' => $clientId])->save();
             }
 
@@ -401,6 +403,8 @@ class EnquiryController extends Controller
         return response()->json([
             'job'     => $job,
             'enquiry' => $enquiry->fresh(), // now 'converted', flipped by JobObserver
+            // A client made by this confirmation, so the screen can ask for its salesperson and credit limit (GAPS #466).
+            'new_client' => $contacts->created ? ['id' => $contacts->created->id, 'name' => $contacts->created->name] : null,
         ], 201);
     }
 

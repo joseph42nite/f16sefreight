@@ -180,6 +180,18 @@ class JobCostSheetTest extends TestCase
         $this->assertStringNotContainsString('777.77', $body);
     }
 
+    /** The Add list offers the charges that fit the job (GAPS #466): an air export was offered ocean freight and a DO fee. */
+    public function test_the_charges_offered_fit_the_jobs_mode_and_direction(): void
+    {
+        $types = $this->api($this->pricing)->getJson($this->url("/api/jobs/{$this->job->id}/cost-sheet"))->assertOk()
+            ->json('vocabulary.charge_types');
+
+        $this->assertSame('air', $this->job->transport_mode);
+        $this->assertContains('air_freight', $types);
+        $this->assertNotContains('ocean_freight', $types);
+        $this->assertNotContains('delivery_order_fee', $types);
+    }
+
     // ─── Margin arithmetic ───────────────────────────────────────────────────
 
     /**

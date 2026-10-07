@@ -22,6 +22,7 @@ Paste this into the new session:
 - Money: revenue/profit net of tax; a credit note subtracts, a debit note adds; drafts/voids never count; INR at each document's own rate; a NULL credit limit never blocks, 0.00 blocks; a figure nobody measures is NULL, never 0; check `$fillable`.
 - "When was a bill paid" has ONE answer: `ClientPaymentGrader::settledOn` — the settling receipt's date, else the matched bank line's VALUE date, else not measured. Never a bank line's import date or a bill's `updated_at`.
 - Jev: only chooses among options PHP built; a person confirms every suggestion; asked once; rubric in `config/mail_intent.php` / `config/accounts_decisions.php` — bump the version on any wording change.
+- Every click-through of the app (any role, any portal) is added to ONE Claude Doc, *F16s — how it works, learned by clicking* (https://claude.ai/code/artifact/ae176c2a-3f66-45d7-83f7-bc70a24ebcc8): "How it works", the flow, the walk log, findings numbered across walks — never a new doc (owner, 2026-10-07).
 - Built assets (`public/js`, `public/css`) are NOT committed on this branch since `c4a634fc`; run `npm run prod` locally and leave `public/` out of commits.
 
 ## Where we are (GAPS #436–#466)

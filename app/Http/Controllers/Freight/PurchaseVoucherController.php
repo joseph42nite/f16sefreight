@@ -42,7 +42,7 @@ class PurchaseVoucherController extends Controller
         $vouchers = AccountsPurchaseVoucher::query()
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->filled('job_id'), fn ($q) => $q->where('job_id', $request->integer('job_id')))
-            ->with(['vendor:id,name,partner_type', 'items'])
+            ->with(['vendor:id,name,partner_type', 'items', 'job:id,execution_job_no'])
             ->latest('document_date')
             ->paginate(50);
 
@@ -182,6 +182,8 @@ class PurchaseVoucherController extends Controller
             'id'             => $voucher->id,
             'voucher_no'     => $voucher->voucher_no,
             'job_id'         => $voucher->job_id,
+            // The shipment as people know it — the register showed the bare id (Walk 7).
+            'job_no'         => $voucher->job?->execution_job_no,
             'transport_mode' => $voucher->transport_mode,
             'document_date'  => $voucher->document_date,
             'status'         => $voucher->status,

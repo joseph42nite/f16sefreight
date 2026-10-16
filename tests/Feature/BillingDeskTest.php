@@ -413,6 +413,31 @@ class BillingDeskTest extends TestCase
     }
 
     /**
+     * Walk 7: a void document still offered "Post to ledger", and the server posted it — a cancelled bill in the books.
+     * Voiding a credit note also overwrote why it was raised. Both kept now: never posted, and both reasons on record.
+     */
+    public function test_a_void_document_is_never_posted_and_keeps_why_it_was_raised(): void
+    {
+        $invoice = $this->invoice(9000);
+        $invoice->forceFill(['reason' => 'Goodwill credit'])->save();
+
+        $voided = $this->as($this->accounts)->postJson($this->url("/billing/{$invoice->id}/void"), ['reason' => 'Raised twice'])
+            ->assertOk()->json();
+
+        $this->assertStringContainsString('Goodwill credit', $voided['document']['reason']);
+        $this->assertStringContainsString('Raised twice', $voided['document']['reason']);
+        $this->assertFalse($voided['can']['post']);
+        $this->postJson($this->url("/invoices/{$invoice->id}/post"))->assertStatus(422)->assertJsonPath('reason', 'void');
+        $this->assertFalse((bool) $invoice->fresh()->is_posted);
+
+        // Nothing is left to settle on it, in the document or in the register's column and total.
+        $this->assertSame(0.0, (float) $voided['document']['outstanding']);
+        $register = $this->getJson($this->url('/billing?status=void'))->json();
+        $this->assertSame(0.0, (float) collect($register['rows'])->firstWhere('id', $invoice->id)['outstanding_inr']);
+        $this->assertSame(0.0, (float) $register['totals']['outstanding_inr']);
+    }
+
+    /**
      * 🔴 Opening a draft and pressing Save header must not move its date.
      *
      * The date columns were cast as `date`, which serialises as a UTC timestamp — a document dated the 20th in

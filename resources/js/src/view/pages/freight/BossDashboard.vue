@@ -29,7 +29,7 @@
                 <th scope="col">Branch</th>
                 <th class="fx-num" scope="col">Owed to us</th>
                 <th class="fx-num" scope="col">We owe</th>
-                <th class="fx-num" scope="col">In the bank</th>
+                <th class="fx-num" scope="col" title="The ledger's bank balance (1100-Bank). Accounts connects the real bank accounts under Finance settings.">In the bank, per the books</th>
                 <th class="fx-num" scope="col">Cash in − out, this month</th>
                 <th class="fx-num" scope="col">Done, not billed</th>
                 <th class="fx-num" scope="col">Costs not yet billed to us</th>
@@ -283,6 +283,7 @@
 </template>
 
 <script>
+import { localToday } from "@/core/config/format";
 import { LOAD_CONTEXT } from "@/core/services/store/context.module";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
@@ -298,7 +299,7 @@ export default {
     periods: [], loading: true, error: null, grain: "month", basis: "fiscal",
     branches: [], modes: [], asOf: null, targets: null, branchesReason: null,
     ai: null,
-    targetMonth: new Date().toISOString().slice(0, 7), editingTargets: false, savingTargets: false,
+    targetMonth: localToday().slice(0, 7), editingTargets: false, savingTargets: false,
     targetForm: {}, targetsError: null,
   }),
   computed: {

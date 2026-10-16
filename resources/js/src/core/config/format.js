@@ -50,7 +50,9 @@ export function volume(value, unit = "CBM") {
 /** Thousands separators + 2 dp, prefixed with the currency. */
 export function currency(value, code) {
   if (isEmpty(value)) return null;
-  const n = Number(value).toLocaleString(undefined, {
+  // Rupees are grouped the Indian way (7,85,703.00) everywhere; before this the shared formatter followed the
+  // browser's locale while the page-local ones used en-IN, so one screen showed both (Walk 4 #39).
+  const n = Number(value).toLocaleString(code === "INR" ? "en-IN" : undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -63,4 +65,22 @@ export function count(value) {
   return Number(value).toLocaleString();
 }
 
-export default { isEmpty, date, dateTime, weight, volume, currency, count };
+/**
+ * Today as YYYY-MM-DD on the user's own clock (Walk 7). `toISOString()` is the UTC day, which in India is still
+ * yesterday until 05:30 — so a receipt recorded at 00:45 on the 10th was dated the 9th.
+ */
+export function localToday() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** A client's payment terms in words (#55): 0 days is cash and carry — they pay before we execute. */
+export function termsLabel(days) {
+  if (days === null || days === undefined || days === "") return "—";
+
+  return Number(days) === 0 ? "Cash and carry" : `${Number(days)} days credit`;
+}
+
+export default { isEmpty, date, dateTime, weight, volume, currency, count, localToday, termsLabel };

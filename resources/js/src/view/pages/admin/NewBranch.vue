@@ -23,13 +23,24 @@
                         <has-error :form="branch_form" field="agent_city"></has-error>
                     </b-form-group>
                 </div>
+                <!-- The branch code is the second half of every document number; the GSTIN decides the tax split (Walk 7). -->
+                <div class="d-flex mb-7">
+                    <b-form-group class="w-50 mr-2">
+                        <b-form-input v-model="branch_form.branch_code" type="text" required maxlength="5" placeholder="Branch code (2–5 letters, e.g. COK)" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('branch_code'),}"></b-form-input>
+                        <has-error :form="branch_form" field="branch_code"></has-error>
+                    </b-form-group>
+                    <b-form-group class="w-50 mr-2">
+                        <b-form-input v-model="branch_form.gst_no" type="text" maxlength="15" placeholder="GSTIN" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('gst_no'),}"></b-form-input>
+                        <has-error :form="branch_form" field="gst_no"></has-error>
+                    </b-form-group>
+                </div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
                         <b-form-select v-model="branch_form.company_id" :options="all_company"></b-form-select>
-                        <has-error :form="branch_form" field="company"></has-error>
+                        <has-error :form="branch_form" field="company_id"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.agent_issue_sign" type="text" required placeholder="Agent issue Sign" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_issue_sign'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.agent_issue_sign" type="text" placeholder="Agent issue Sign" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_issue_sign'),}"></b-form-input>
                         <has-error :form="branch_form" field="agent_issue_sign"></has-error>
                     </b-form-group>
                 </div>
@@ -43,91 +54,91 @@
                         </div>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.agent_issue_date" type="date" required placeholder="Agent Issue Date" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_issue_date'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.agent_issue_date" type="date" placeholder="Agent Issue Date" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('agent_issue_date'),}"></b-form-input>
                         <has-error :form="branch_form" field="agent_issue_date"></has-error>
                     </b-form-group>
                 </div>
                 <div>Iata Code and Case</div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.iata_agent_code" type="text" required placeholder="IATA Agent Code" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('iata_agent_code'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.iata_agent_code" type="text" placeholder="IATA Agent Code" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('iata_agent_code'),}"></b-form-input>
                         <has-error :form="branch_form" field="iata_agent_code"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.iata_agent_cass" type="text" required placeholder="IATA Agent Cass" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('iata_agent_cass'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.iata_agent_cass" type="text" placeholder="IATA Agent Cass" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('iata_agent_cass'),}"></b-form-input>
                         <has-error :form="branch_form" field="iata_agent_cass"></has-error>
                     </b-form-group>
                 </div>
                 <div>Participant Details</div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.participant_airport" type="text" required placeholder="Participant Airport" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('participant_airport'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.participant_airport" type="text" placeholder="Participant Airport" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('participant_airport'),}"></b-form-input>
                         <has-error :form="branch_form" field="participant_airport"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.prticipant_identifer" type="text" required placeholder="Participant Identifer" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('prticipant_identifer'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.prticipant_identifer" type="text" placeholder="Participant Identifer" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('prticipant_identifer'),}"></b-form-input>
                         <has-error :form="branch_form" field="prticipant_identifer"></has-error>
                     </b-form-group>
                 </div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.participant_code" type="text" required placeholder="Participant Code" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('participant_code'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.participant_code" type="text" placeholder="Participant Code" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('participant_code'),}"></b-form-input>
                         <has-error :form="branch_form" field="participant_code"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.participant_file_reference" type="text" required placeholder="Participant File Reference" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('participant_file_reference'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.participant_file_reference" type="text" placeholder="Participant File Reference" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('participant_file_reference'),}"></b-form-input>
                         <has-error :form="branch_form" field="participant_file_reference"></has-error>
                     </b-form-group>
                 </div>
                 <div>Office Details</div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.office_airport" type="text" required placeholder="Office Airport" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('office_airport'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.office_airport" type="text" placeholder="Office Airport" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('office_airport'),}"></b-form-input>
                         <has-error :form="branch_form" field="office_airport"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.office_function_designator" type="text" required placeholder="Office Function Designtor" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('office_function_designator'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.office_function_designator" type="text" placeholder="Office Function Designtor" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('office_function_designator'),}"></b-form-input>
                         <has-error :form="branch_form" field="office_function_designator"></has-error>
                     </b-form-group>
                 </div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.office_company_designator" type="text" required placeholder="Office Company Designator" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('office_company_designator'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.office_company_designator" type="text" placeholder="Office Company Designator" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('office_company_designator'),}"></b-form-input>
                         <has-error :form="branch_form" field="office_company_designator"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.office_file_reference" type="text" required placeholder="Office File Reference" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('office_file_reference'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.office_file_reference" type="text" placeholder="Office File Reference" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('office_file_reference'),}"></b-form-input>
                         <has-error :form="branch_form" field="office_file_reference"></has-error>
                     </b-form-group>
                 </div>
                 <div>HO Details</div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.ho_name" type="text" required placeholder="Ho Name" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_name'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.ho_name" type="text" placeholder="Ho Name" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_name'),}"></b-form-input>
                         <has-error :form="branch_form" field="ho_name"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.ho_address" type="text" required placeholder="Ho Address" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_address'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.ho_address" type="text" placeholder="Ho Address" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_address'),}"></b-form-input>
                         <has-error :form="branch_form" field="ho_address"></has-error>
                     </b-form-group>
                 </div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.ho_city" type="text" required placeholder="Ho City" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_city'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.ho_city" type="text" placeholder="Ho City" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_city'),}"></b-form-input>
                         <has-error :form="branch_form" field="ho_city"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.ho_pincode" type="number" required placeholder="Ho Pincode" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_pincode'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.ho_pincode" type="number" placeholder="Ho Pincode" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_pincode'),}"></b-form-input>
                         <has-error :form="branch_form" field="ho_pincode"></has-error>
                     </b-form-group>
                 </div>
                 <div class="d-flex mb-7">
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.ho_state" type="text" required placeholder="Ho State" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_state'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.ho_state" type="text" placeholder="Ho State" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_state'),}"></b-form-input>
                         <has-error :form="branch_form" field="ho_state"></has-error>
                     </b-form-group>
                     <b-form-group class="w-50 mr-2">
-                        <b-form-input id="input-1" v-model="branch_form.ho_country" type="text" required placeholder="Ho Country" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_country'),}"></b-form-input>
+                        <b-form-input id="input-1" v-model="branch_form.ho_country" type="text" placeholder="Ho Country" class="mx-1 input-box" :class="{'is-invalid': branch_form.errors.has('ho_country'),}"></b-form-input>
                         <has-error :form="branch_form" field="ho_country"></has-error>
                     </b-form-group>
                 </div>
@@ -158,6 +169,8 @@ export default {
                 agent_issue_sign:"",
                 agent_issue_loc_code: '',
                 agent_issue_date:"",
+                branch_code: "",
+                gst_no: "",
                 agent_account: "",
                 //iata cass and code
                 iata_agent_code:"",
@@ -194,7 +207,7 @@ export default {
             if (this.action == "Add") {
                 this.branch_form.post(`/superadmin/create-branch`)
                     .then(({ data }) => {
-                        this.$router.push("/superadmin/all-branch");
+                        this.$router.push({ path: "/superadmin/tenants", query: { company: String(this.branch_form.company_id) } });
                     })
                     .catch((err) => {
                     });

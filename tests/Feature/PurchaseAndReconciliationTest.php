@@ -209,6 +209,17 @@ class PurchaseAndReconciliationTest extends TestCase
         $this->assertStringContainsString('"amount"', $body);
     }
 
+    /** Walk 7: the Boss's "What we owe" showed the shipment as its database id (1170), not its job number. */
+    public function test_the_register_names_each_vouchers_shipment_by_its_job_number(): void
+    {
+        $this->job->forceFill(['execution_job_no' => 'JOBA-PURBOM-26-0001'])->save();
+        $this->voucher(80000.00, 14400.00);
+
+        $row = $this->api($this->accounts)->getJson($this->url('/api/vouchers'))->assertOk()->json('data.0');
+
+        $this->assertSame('JOBA-PURBOM-26-0001', $row['job_no']);
+    }
+
     /** A voucher with no lines asserts a liability of nothing. */
     public function test_a_voucher_with_no_items_cannot_be_posted(): void
     {

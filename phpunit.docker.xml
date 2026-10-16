@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory suffix="Test.php">./tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory suffix="Test.php">./tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">./app</directory>
+        </whitelist>
+    </filter>
+    <php>
+        <server name="APP_ENV" value="testing"/>
+        <server name="BCRYPT_ROUNDS" value="4"/>
+        <server name="CACHE_DRIVER" value="array"/>
+        <!--
+            Tests run against MySQL 8, NOT SQLite. Local dev used to be SQLite while
+            production is MySQL, and the two disagree on things this schema depends on:
+            loose DECIMAL/VARCHAR typing (the ledger), TRUNCATE bypassing DELETE triggers,
+            and FK cascades not firing triggers at all — which silently voids the
+            audit_logs append-only guarantee. A suite green on SQLite proved nothing
+            about production. See implementation_guide.md Step 8.
+
+            Start the database with:  docker compose up -d db
+        -->
+        <server name="DB_CONNECTION" value="mysql"/>
+        <server name="DB_HOST" value="db"/>
+        <server name="DB_PORT" value="3306"/>
+        <!-- Redis is published on 6380, not 6379 — the same off-by-default mapping as
+             MySQL's 3307, so a stray local server cannot be mistaken for the stack. -->
+        <server name="REDIS_PORT" value="6380"/>
+        <!-- predis, not phpredis: the C extension is not installed on the host PHP, and
+             predis/predis is already a dependency. Without this every Redis call throws
+             "Please make sure the PHP Redis extension is installed" — which surfaces as
+             a dead queue, an inert circuit breaker and OCR credit reservations that
+             cannot take a lock, none of which name Redis in their own error. -->
+        <server name="REDIS_CLIENT" value="predis"/>
+        <server name="DB_DATABASE" value="f16s_test"/>
+        <!-- No free night model during tests: a suite run after 9pm must not change which calls are made. NightFreeModelTest turns it on. -->
+        <!--
+            🔴 THE DECISION MODEL IS OFF IN TESTS, and it is off because it is a PAID endpoint on a
+            real host. `services.jev.decisions_base` has a working default and the developer's .env
+            carries a real OPENROUTER_API_KEY, so a suite that did not switch this off would file
+            mail by calling openrouter.ai — slowly, differently on each run, and on somebody's card.
+            A test that wants the model turns it on and fakes the HTTP itself; see EnquiryPatternsTest.
+        -->
+        <server name="MAIL_INTENT_AI" value="false"/>
+        <server name="ACCOUNTS_AI" value="false"/>
+        <server name="OPENROUTER_FREE_FROM_HOUR" value="24"/>
+        <server name="OPENROUTER_FREE_UNTIL_HOUR" value="0"/>
+        <server name="DB_USERNAME" value="f16s"/>
+        <server name="DB_PASSWORD" value="secret"/>
+        <!--
+            Six tests failed with "Secret is not set" because the JWT secret is only in
+            .env, which phpunit overrides. This app authenticates with JWT, so tests must
+            carry a secret of their own or every authenticated test fails for the wrong reason.
+        -->
+        <server name="JWT_SECRET" value="testing-only-secret-not-used-anywhere-else"/>
+        <server name="MAIL_MAILER" value="array"/>
+        <server name="QUEUE_CONNECTION" value="sync"/>
+        <server name="SESSION_DRIVER" value="array"/>
+        <server name="TELESCOPE_ENABLED" value="false"/>
+    </php>
+</phpunit>

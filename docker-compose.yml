@@ -69,6 +69,33 @@ services:
     restart: unless-stopped
     networks: [f16s-network]
 
+  # Runs app/Console/Kernel.php's schedule (snapshots:compute every 30 min for the Boss's figures,
+  # mailboxes:poll, accounts:alerts, credits:grant-monthly, ...). Nothing else in this stack starts it:
+  # supervisord runs only php-fpm and nginx, and the queue worker above only works queued jobs.
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.laravel
+    container_name: f16s-scheduler
+    working_dir: /var/www
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OCR_SERVICE_URL=http://ai-server:8000
+      - AI_SERVER_URL=http://ai-server:8000
+    command: php artisan schedule:work
+    volumes:
+      - .:/var/www
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks: [f16s-network]
+
   db:
     image: mysql:8.0
     container_name: f16s-db

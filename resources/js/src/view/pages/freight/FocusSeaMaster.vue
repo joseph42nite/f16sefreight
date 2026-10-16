@@ -64,7 +64,7 @@
               <td class="identifier">{{ r.pol_code || "…" }} → {{ r.pod_code || "…" }}</td>
               <td>{{ r.status }}</td>
             </tr>
-            <tr v-if="!shown.length && !loading"><td colspan="7" class="fx-muted">No sea shipments here yet.</td></tr>
+            <tr v-if="!shown.length && !loading && !error"><td colspan="7" class="fx-muted">No sea shipments here yet.</td></tr>
           </tbody>
         </table>
       </div>

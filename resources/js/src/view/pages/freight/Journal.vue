@@ -228,7 +228,7 @@
                   <th v-if="drill.document.type !== 'receipt'" class="fx-num" scope="col">Qty</th>
                   <th v-if="drill.document.type !== 'receipt'" class="fx-num" scope="col">Rate</th>
                   <th v-if="drill.document.type !== 'receipt'" class="fx-num" scope="col">Tax</th>
-                  <th class="fx-num" scope="col">Net</th>
+                  <th class="fx-num" scope="col">Total with tax</th>
                 </tr>
               </thead>
               <tbody>

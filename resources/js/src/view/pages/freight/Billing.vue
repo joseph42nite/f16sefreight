@@ -319,7 +319,7 @@
                 <th class="fx-num" scope="col">Rate</th>
                 <th class="fx-num" scope="col">Amount</th>
                 <th class="fx-num" scope="col">Tax %</th>
-                <th class="fx-num" scope="col">Net</th>
+                <th class="fx-num" scope="col">Total with tax</th>
                 <th v-if="can.edit" scope="col"></th>
               </tr>
             </thead>
@@ -408,6 +408,23 @@
                 </button>
               </div>
               <p v-if="document.job" class="fx-muted">Changes the shipment's client too, and its other draft bills.</p>
+            </template>
+
+            <!-- Another office of the same client, at its own GSTIN — the shipment stays theirs (owner, 2026-10-10). -->
+            <template v-if="billTo.length > 1">
+              <h3 class="fx-section__title">Bill to which office</h3>
+              <div class="fx-toolbar">
+                <label class="fx-field">
+                  <span class="fx-field__label">Office</span>
+                  <select v-model="officeDraft" class="fx-input" data-test="bill-to">
+                    <option v-for="o in billTo" :key="o.id" :value="o.id">{{ o.name }}{{ o.gst_no ? " · GSTIN " + o.gst_no : " · no GSTIN" }}</option>
+                  </select>
+                </label>
+                <button class="fx-btn" :disabled="busy || !officeDraft || officeDraft === document.customer_id" @click="billToOffice">
+                  Bill this office
+                </button>
+              </div>
+              <p class="fx-muted">Only this bill moves: the GST, address and dues follow the office billed; the shipment stays with the office that sent it.</p>
             </template>
 
             <h3 class="fx-section__title">Header</h3>
@@ -547,6 +564,9 @@
           </template>
           <p v-else class="fx-muted">Raise the client's limit in Clients, or ask somebody who can override it.</p>
         </section>
+
+        <!-- The invoice mail to the client's accounts, drafted at Finalize and sent only from here (owner, 2026-10-10). -->
+        <InvoiceMailCard v-if="canPost" :mail="clientMail" :busy="mailBusy" :error="mailError" @decide="decideMail" />
       </template>
 
       <template #footer>
@@ -673,7 +693,7 @@
                 <th class="fx-num" scope="col">Qty</th>
                 <th class="fx-num" scope="col">Rate</th>
                 <th class="fx-num" scope="col">Tax %</th>
-                <th class="fx-num" scope="col">Net</th>
+                <th class="fx-num" scope="col">Total with tax</th>
                 <th scope="col"></th>
               </tr>
             </thead>
@@ -852,8 +872,10 @@
 </template>
 
 <script>
+import { localToday } from "@/core/config/format";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import InvoiceMailCard from "@/view/pages/freight/components/InvoiceMailCard.vue";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
@@ -884,7 +906,7 @@ const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "
 
 export default {
   name: "Billing",
-  components: { Figure, StatusChip, FxDrawer },
+  components: { Figure, StatusChip, FxDrawer, InvoiceMailCard },
   props: {
     /** Rendered as a stage of Money in rather than as a page of its own. */
     embedded: { type: Boolean, default: false },
@@ -897,18 +919,20 @@ export default {
     remittanceDecisionId: null,
     /** The client picked in the drawer's Change client. */
     clientDraft: null,
+    billTo: [], officeDraft: null,
     view: "all", VIEWS, STATUSES, DOC_TABS,
     rows: [], totals: { count: 0, amount_inr: 0, outstanding_inr: 0, credited_inr: 0 },
     branches: [], types: {}, currencies: [], raisedBy: [],
     filters: { agent_id: null, from: "", to: "", q: "", status: "", currency: "",
                created_by: null, sort: "date", outstanding: false, exclude_credit_notes: false,
                /** Set by a Money in stage: handed over by pricing, or raised on this desk. */
-               awaiting: false, own_drafts: false },
+               awaiting: false, own_drafts: false, issued: false },
     /** Which rows are ticked for printing or mailing. */
     picked: {},
     receipts: [], modes: [], eInvoices: [], eInvoiceNote: "",
     /** The document open in the drawer, and everything that belongs to it. */
     document: null, items: [], notes: [], receiptsOn: [], journal: { lines: [] }, can: {}, tab: "document",
+    clientMail: null, mailBusy: false, mailError: null,
     /** Set when the credit gate refuses a finalize, so the drawer can offer the override (PRD §251). */
     creditBlock: null, canOverride: false, overrideReason: "",
     header: {}, newLine: {}, editingLine: null, lineDraft: {},
@@ -1004,7 +1028,7 @@ export default {
     initialView(view) {
       this.view = view;
       this.document = null;
-      Object.assign(this.filters, { awaiting: false, own_drafts: false }, this.stageFilter || {});
+      Object.assign(this.filters, { awaiting: false, own_drafts: false, issued: false }, this.stageFilter || {});
       this.load();
     },
   },
@@ -1049,6 +1073,7 @@ export default {
       if (this.filters.outstanding) params.push("outstanding=1");
       if (this.filters.awaiting) params.push("awaiting=1");
       if (this.filters.own_drafts) params.push("own_drafts=1");
+      if (this.filters.issued) params.push("issued=1");
       if (this.view === "all" && this.filters.exclude_credit_notes) params.push("exclude_credit_notes=1");
 
       return params.length ? "?" + params.join("&") : "";
@@ -1094,8 +1119,19 @@ export default {
         .then(({ data }) => this.showDocument(data))
         .catch((e) => { this.actionError = this.messageFor(e); });
     },
+    /** Send or skip the invoice mail (owner, 2026-10-10); the answer is the document again, with what became of it. */
+    decideMail(payload) {
+      this.mailBusy = true;
+      this.mailError = null;
+      ApiService.post(`/billing/${this.document.id}/client-mail`, payload)
+        .then(({ data }) => this.showDocument(data))
+        .catch((e) => { this.mailError = this.messageFor(e); })
+        .finally(() => { this.mailBusy = false; });
+    },
     showDocument(data) {
       this.document = data.document;
+      this.clientMail = data.client_mail || null;
+      this.mailError = null;
       this.creditBlock = null;
       this.overrideReason = "";
       this.items = data.items || [];
@@ -1106,6 +1142,8 @@ export default {
       this.editingLine = null;
       this.newLine = this.blankLine();
       this.clientDraft = this.document.customer_id;
+      this.billTo = data.bill_to || [];
+      this.officeDraft = this.document.customer_id;
       if (this.can.change_client && !this.clients.length) {
         ApiService.get("/customers").then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
       }
@@ -1120,6 +1158,10 @@ export default {
     changeClient() {
       // The register's Organization column moves with it.
       this.commit(() => ApiService.put(`/billing/${this.document.id}/client`, { customer_id: this.clientDraft }), true);
+    },
+    /** Address this bill to another office of the same client (owner, 2026-10-10). */
+    billToOffice() {
+      this.commit(() => ApiService.post(`/billing/${this.document.id}/bill-to`, { customer_id: this.officeDraft }), true);
     },
     saveHeader() {
       this.commit(() => ApiService.put(`/billing/${this.document.id}`, this.header));
@@ -1304,7 +1346,7 @@ export default {
       this.resolution = {};
       this.receipt = {
         agent_id: this.branches.length ? this.branches[0].id : null, payer_id: null,
-        receipt_date: new Date().toISOString().slice(0, 10), mode: "bank_transfer", reference: "", amount: 0,
+        receipt_date: localToday(), mode: "bank_transfer", reference: "", amount: 0,
       };
 
       ApiService.get("/customers").then(({ data }) => { this.clients = data.data || []; }).catch(() => {});

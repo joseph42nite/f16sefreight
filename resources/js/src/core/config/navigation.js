@@ -119,9 +119,10 @@ const railRank = (item, designation) => {
 /**
  * What the rail should show this user.
  *
- * Returns each item with a `locked` flag rather than filtering locked items out — §8.1's
- * whole point is that a tier-locked item stays VISIBLE. Role-forbidden items are removed
- * here; tier-forbidden ones come back locked.
+ * Role-forbidden AND tier-forbidden items are both removed (owner, 2026-10-09: a locked item is HIDDEN). §8.1 asked for
+ * tier-locked items to stay visible as an upsell, and the Admin portal did that while FocusAir hid them for Core, so the
+ * two disagreed (Walk 3 #26). `locked` stays on every item, always false, so the rail's lock markup stays harmless; going
+ * to a locked URL still lands on the upgrade screen.
  */
 export function visibleNavFor({ designation, tier, portalKey, tierAtLeast }) {
   return NAV_ITEMS.filter((item) => {
@@ -147,9 +148,11 @@ export function visibleNavFor({ designation, tier, portalKey, tierAtLeast }) {
     ...item,
     // What this login calls it: sales open on their dashboard, everyone else sees the shared label.
     label: (item.labelFor && item.labelFor[designation]) || item.label,
-    // Tier forbids -> visible but locked. This is the upsell moment.
-    locked: !tierAtLeast(item.minTier),
+    // Kept for the rail's markup; every item that reaches it is usable (see the filter below).
+    locked: false,
   }))
+    // Tier forbids -> hidden, like a role that forbids.
+    .filter((item) => tierAtLeast(item.minTier))
     // A login with its own order gets it; everyone else keeps the list's order (the sort is stable).
     .sort((a, b) => railRank(a, designation) - railRank(b, designation));
 }

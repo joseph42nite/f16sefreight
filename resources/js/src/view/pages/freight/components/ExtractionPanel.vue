@@ -1377,7 +1377,11 @@ export default {
 
       ApiService.post("/user/documents/awb/" + key + "/publish", {})
         .then(({ data }) => ApiService.post("/user/documents/" + data.document_id + "/share", { valid_days: 14, requires_approval: true }))
-        .then(({ data }) => { this.shareLink = data.url || data.link || null; })
+        .then(({ data }) => {
+          this.shareLink = data.url || data.link || null;
+          // Filing the PDF moved the job to "PDF Generated": the workspace reloads it, or its header says Intake (Walk 2 #20).
+          this.$emit("job-changed");
+        })
         .catch((e) => { this.shareError = this.messageFor(e); })
         .finally(() => { this.sharing = false; });
     },

@@ -137,7 +137,7 @@ class EmailInboxController extends Controller
             })
             ->with([
                 'assignedOps:id,name',
-                'enquiry:id,enquiry_no,status,direction,lost_reason,lost_automatically',
+                'enquiry:id,enquiry_no,status,direction,lost_reason,lost_automatically,extracted_pieces,extracted_weight,origin_code,dest_code',
                 // The job is what the operator quotes once conversion has happened —
                 // eager-loaded so a 50-row list does not become 50 extra queries.
                 // ops_id and the staged handover ride along for the workspace's operator dropdown.
@@ -155,6 +155,65 @@ class EmailInboxController extends Controller
             // The folders this portal may show — see classificationsForMode().
             'classifications' => self::classificationsForMode($this->activeMode()),
         ]);
+    }
+
+    /**
+     * To and CC suggestions (owner, 2026-10-10): "when I write @name it shows a small dropdown of the saved options".
+     * Colleagues, and the addresses this company has mailed or heard from in the last 2,000 messages — the closest
+     * match first, then the most used. The browser adds its own memory of what this person picks most.
+     *
+     * 🔒 Only this company's staff and this company's mail: a suggestion is a disclosure.
+     */
+    public function addressBook(Request $request): JsonResponse
+    {
+        $this->authorize('viewInbox');
+
+        $q = mb_strtolower(ltrim(trim((string) $request->query('q')), '@'));
+        if ($q === '') {
+            return response()->json(['suggestions' => []]);
+        }
+
+        $context = \App\Support\UserContext::for(auth()->user());
+        $branches = DB::table('agents_info')->where('company_id', $context->companyId)->pluck('id');
+
+        // Every address on our recent mail, with how often it appears and the name it last went by.
+        $seen = [];
+        DB::table('email_messages')->whereIn('agent_id', $branches)->latest('id')->limit(2000)
+            ->get(['from', 'to', 'cc'])->each(function ($m) use (&$seen) {
+                foreach ([$m->from, $m->to, $m->cc] as $field) {
+                    foreach (self::addresses((string) $field) as [$name, $email]) {
+                        $seen[$email]['count'] = ($seen[$email]['count'] ?? 0) + 1;
+                        $seen[$email]['name'] ??= $name ?: null;
+                    }
+                }
+            });
+
+        $people = collect();
+        DB::table('users')->where('company_name', $context->companyId)->where('is_active', 1)->where('id', '!=', auth()->id())
+            ->get(['name', 'email'])->each(function ($u) use (&$people, $seen) {
+                $email = mb_strtolower($u->email);
+                $people[$email] = ['name' => $u->name, 'email' => $email, 'kind' => 'colleague', 'count' => $seen[$email]['count'] ?? 0];
+            });
+        foreach ($seen as $email => $s) {
+            $people[$email] ??= ['name' => $s['name'] ?? null, 'email' => $email, 'kind' => 'mailed', 'count' => $s['count']];
+        }
+
+        $close = fn ($p) => str_starts_with($p['email'], $q)
+            || collect(preg_split('/\s+/', mb_strtolower((string) $p['name'])))->contains(fn ($w) => str_starts_with($w, $q));
+
+        $suggestions = $people->filter(fn ($p) => str_contains($p['email'], $q) || str_contains(mb_strtolower((string) $p['name']), $q))
+            ->sortBy([fn ($a, $b) => $close($b) <=> $close($a), fn ($a, $b) => $b['count'] <=> $a['count']])
+            ->take(8)->map(fn ($p) => ['name' => $p['name'], 'email' => $p['email'], 'kind' => $p['kind']])->values();
+
+        return response()->json(['suggestions' => $suggestions]);
+    }
+
+    /** "Name <a@b.c>, d@e.f" → [[name, email], …], lower-cased addresses. */
+    private static function addresses(string $field): array
+    {
+        preg_match_all('/(?:"?([^"<>,]*?)"?\s*<([^<>\s,]+@[^<>\s,]+)>)|([^\s,;<>"]+@[^\s,;<>"]+)/', $field, $m, PREG_SET_ORDER);
+
+        return array_map(fn ($x) => isset($x[3]) && $x[3] !== '' ? [null, mb_strtolower($x[3])] : [trim($x[1]), mb_strtolower($x[2])], $m);
     }
 
     /** One conversation — column three. */
@@ -175,7 +234,7 @@ class EmailInboxController extends Controller
         return response()->json([
             'thread'   => $this->shape($thread->load([
                 'assignedOps:id,name',
-                'enquiry:id,enquiry_no,status,direction,lost_reason,lost_automatically',
+                'enquiry:id,enquiry_no,status,direction,lost_reason,lost_automatically,extracted_pieces,extracted_weight,origin_code,dest_code',
                 'enquiry.jobs:id,enquiry_id,execution_job_no,awb_number,status,ops_id,pricing_id,pending_ops_id,pending_ops_requested_by,transport_mode',
             ])),
             'messages' => $messages,
@@ -185,7 +244,30 @@ class EmailInboxController extends Controller
             'signature' => $this->threadSignature($thread),
             // ④ A client's payment mail, read for which of their bills it pays (GAPS #416). Accounts and the Boss only.
             'remittance' => $this->remittance($thread, $messages),
+            // A cash-and-carry client pays before we execute (#55): said in the workspace, never a block.
+            'cash_and_carry' => $this->cashAndCarry($thread),
         ]);
+    }
+
+    /**
+     * #55 (owner, 2026-10-10): "cash and carry — they have to pay, only then we'll execute the shipment. Don't block it;
+     * mention it in the workspace so payment is checked: first with the client, then with accounts." A client on
+     * 0-day terms is cash and carry. `paid`: NULL while no bill is issued, else whether every issued bill is settled.
+     */
+    private function cashAndCarry(EmailThread $thread): ?array
+    {
+        $job = $thread->enquiry ? $thread->enquiry->jobs()->latest('id')->first(['id', 'customer_id']) : null;
+        $client = $job?->customer_id ? \App\Customer::withoutTenantScope()->find($job->customer_id, ['id', 'name', 'payment_terms_days']) : null;
+
+        if ($client === null || (int) $client->payment_terms_days !== 0) {
+            return null;
+        }
+
+        $bills = \App\AccountsInvoice::withoutTenantScope()->where('job_id', $job->id)
+            ->whereIn('type', ['invoice', 'debit_note'])->whereNotIn('status', ['draft', 'void'])->get(['grand_total', 'amount_paid']);
+
+        return ['client' => $client->name,
+            'paid' => $bills->isEmpty() ? null : $bills->every(fn ($b) => (float) $b->amount_paid >= (float) $b->grand_total - 0.009)];
     }
 
     /**
@@ -843,6 +925,33 @@ class EmailInboxController extends Controller
         ]])->all();
     }
 
+    /**
+     * What the enquiry already holds, for a conversation whose parser left nothing staged (Walk 4 #30).
+     *
+     * 🔴 The workspace's "What will be used" falls back to what the mail said, and read only `staged_cargo`. An enquiry
+     * whose cargo and route had been checked and committed (`updateCargo`) — or created another way — still showed
+     * Origin, Destination, Pieces and Weight as "not set", and the draft waybill saved from it had no departure or
+     * destination. The committed figures are the operator's own, so they are the next-best answer to the mail's.
+     * Same shape the parser stages, so the panel needs no second path; NULL when the enquiry holds nothing.
+     *
+     * @return ?array<string, mixed>
+     */
+    private function cargoFromEnquiry(?\App\Enquiry $enquiry): ?array
+    {
+        if ($enquiry === null) {
+            return null;
+        }
+
+        $cargo = array_filter([
+            'pieces'       => $enquiry->extracted_pieces,
+            'gross_weight' => $enquiry->extracted_weight !== null ? (float) $enquiry->extracted_weight : null,
+            'origin'       => $enquiry->origin_code,
+            'destination'  => $enquiry->dest_code,
+        ], fn ($v) => $v !== null && $v !== '');
+
+        return $cargo === [] ? null : $cargo;
+    }
+
     private function shape(EmailThread $thread, ?array $mail = null): array
     {
         $mail ??= $this->mailSummaries(collect([$thread->thread_key]))[$thread->thread_key];
@@ -862,7 +971,7 @@ class EmailInboxController extends Controller
             // reads on its own.
             'staged_cargo'   => $thread->staged_cargo
                 ? json_decode($thread->staged_cargo, true)
-                : null,
+                : $this->cargoFromEnquiry($thread->enquiry),
             'subject'        => $mail['subject'],
             'from'           => $mail['from'],
             'snippet'        => $mail['snippet'],

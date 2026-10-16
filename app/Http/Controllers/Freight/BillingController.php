@@ -434,6 +434,10 @@ class BillingController extends Controller
         $job = DB::table('jobs')->where('id', $invoice->job_id)->first(['id', 'execution_job_no', 'awb_number', 'transport_mode']);
 
         return response()->json([
+            // The invoice mail waiting for accounts, or what became of it (owner, 2026-10-10).
+            'client_mail' => $invoice->client_mail,
+            // The client's offices this bill can be addressed to, each its own GSTIN (owner, 2026-10-10).
+            'bill_to' => $this->clientOffices($invoice),
             'document' => array_merge($invoice->toArray(), [
                 'label' => BillingDocuments::label($invoice->type),
                 'organization' => $this->organisation($invoice),
@@ -464,7 +468,8 @@ class BillingController extends Controller
                 // Who a draft invoice bills — Accounts' correction (owner, 2026-09-29); a note follows its invoice.
                 'change_client' => $invoice->status === 'draft' && $invoice->type === 'invoice' && $invoice->billed_party_type !== 'partner',
                 'finalize' => $invoice->status === 'draft',
-                'post' => $invoice->status !== 'draft' && ! $invoice->is_posted,
+                // Never a void one: it is cancelled, and the books never carry it (Walk 7).
+                'post' => ! in_array($invoice->status, ['draft', 'void'], true) && ! $invoice->is_posted,
                 // 🔴 A POSTED DOCUMENT IS NEVER VOIDED. It is in the ledger and in the GST register; the correction
                 // is a credit note, which leaves both trails intact (PRD §9.3). Nor is one money has arrived
                 // against — the flag carries BOTH rules, so the button is never offered only to refuse.
@@ -563,6 +568,61 @@ class BillingController extends Controller
         return $this->show($id);
     }
 
+    /**
+     * Bill another office of the same client (owner, 2026-10-10): "a client sends an AWB from BLR but asks to bill it to
+     * DEL — then that way", to that office's GSTIN. Unlike Change client this moves only THIS bill: the shipment stays
+     * the office that sent it. The GST heads, the address, the credit check, the dues and the invoice mail all follow
+     * the office billed, because each reads the bill's own client.
+     */
+    public function billTo(Request $request, int $id): JsonResponse
+    {
+        $this->authorize('finalizeInvoice');
+
+        $invoice = $this->draft($id);
+
+        if (! $invoice instanceof AccountsInvoice) {
+            return $invoice;
+        }
+
+        $to = (int) $request->validate(['customer_id' => 'required|integer'])['customer_id'];
+
+        if (! collect($this->clientOffices($invoice))->contains('id', $to)) {
+            return response()->json(['error' => 'Bill it to one of this client\'s own offices — another client is Change client.',
+                'reason' => 'not_this_client'], 422);
+        }
+
+        $invoice->forceFill(['customer_id' => $to, 'billed_party_type' => 'customer', 'billed_party_id' => $to])->save();
+        $this->audit->record($invoice->agent_id, 'invoice.billed_to_office', 'invoice', $invoice->id, auth()->id());
+
+        return $this->show($id);
+    }
+
+    /**
+     * The offices of the client a bill is addressed to: every client row of this company sharing one of its email
+     * domains (the client-group key — see the customers migration). Empty for a bill to a partner, or a note.
+     *
+     * @return array<int, array{id: int, name: string, gst_no: ?string}>
+     */
+    private function clientOffices(AccountsInvoice $invoice): array
+    {
+        if (! in_array($invoice->type, ['invoice', 'debit_note'], true) || $invoice->billed_party_type === 'partner' || $invoice->customer_id === null) {
+            return [];
+        }
+
+        $domains = fn (?string $d) => array_filter(array_map(fn ($x) => strtolower(trim($x)), explode(',', (string) $d)));
+        $billed = DB::table('customers')->where('id', $invoice->customer_id)->first(['company_id', 'email_domain']);
+        $mine = $domains($billed->email_domain ?? null);
+
+        if ($mine === []) {
+            return [];
+        }
+
+        return DB::table('customers')->where('company_id', $billed->company_id)->orderBy('name')
+            ->get(['id', 'name', 'gst_no', 'email_domain'])
+            ->filter(fn ($c) => array_intersect($domains($c->email_domain), $mine) !== [])
+            ->map(fn ($c) => ['id' => (int) $c->id, 'name' => $c->name, 'gst_no' => $c->gst_no])->values()->all();
+    }
+
     /** Add a line to a draft. */
     public function storeLine(Request $request, int $id): JsonResponse
     {
@@ -644,8 +704,40 @@ class BillingController extends Controller
             ], 422);
         }
 
-        $invoice->update(['status' => 'void', 'reason' => $data['reason']]);
+        // Why it was raised stays beside why it was voided (Walk 7: voiding a credit note overwrote its reason).
+        $reason = filled($invoice->reason) ? \Illuminate\Support\Str::limit($invoice->reason . ' — voided: ' . $data['reason'], 255, '')
+            : $data['reason'];
+        $invoice->update(['status' => 'void', 'reason' => $reason]);
         $this->audit->record($invoice->agent_id, 'invoice.voided', 'invoice', $invoice->id, auth()->id());
+
+        return $this->show($id);
+    }
+
+    /**
+     * Send or skip the invoice mail to the client's accounts (owner, 2026-10-10). Sending is accounts' approval; the
+     * mail goes from their own Outlook with the bill attached. See InvoiceMail.
+     */
+    public function clientMail(Request $request, int $id): JsonResponse
+    {
+        $this->authorize('finalizeInvoice');
+
+        $invoice = $this->own($id);
+        $data = $request->validate([
+            'decision' => 'required|in:send,skip',
+            'to' => 'nullable|array', 'to.*' => 'email',
+            'cc' => 'nullable|array', 'cc.*' => 'email',
+            'subject' => 'nullable|string|max:255',
+            'body' => 'nullable|string|max:20000',
+        ]);
+
+        $result = app(\App\Services\Billing\InvoiceMail::class)->decide($invoice, auth()->user(), $data['decision'],
+            array_intersect_key($data, array_flip(['to', 'cc', 'subject', 'body'])));
+
+        if (! $result['ok']) {
+            return response()->json(['error' => $result['error'], 'reason' => $result['reason']], $result['status']);
+        }
+
+        $this->audit->record($invoice->agent_id, 'invoice.mail_' . ($data['decision'] === 'send' ? 'sent' : 'skipped'), 'invoice', $invoice->id, auth()->id());
 
         return $this->show($id);
     }
@@ -761,6 +853,8 @@ class BillingController extends Controller
             ->when($request->boolean('awaiting'), fn ($q) => $q->whereNotNull('i.sent_to_accounts_at')->where('i.status', 'draft'))
             // Stage ②: raised on this desk and not finalized — a draft nobody handed over.
             ->when($request->boolean('own_drafts'), fn ($q) => $q->whereNull('i.sent_to_accounts_at')->where('i.status', 'draft'))
+            // Stage ③: numbered and gone to the client — what its count is made of, without the drafts (Walk 7).
+            ->when($request->boolean('issued'), fn ($q) => $q->whereNotIn('i.status', ['draft', 'void']))
             // Logi-Sys calls it "Exclude Reverse Txns": the credit notes that give money back.
             ->when($request->boolean('exclude_credit_notes'), fn ($q) => $q->where('i.type', '!=', 'credit_note'))
             // General billing — no shipment behind it, and the notes raised against it (user, 2026-09-26).
@@ -779,7 +873,8 @@ class BillingController extends Controller
                 DB::raw('i.job_id IS NULL AS general'),
                 DB::raw('COALESCE(c.name, p.name) AS organization'),
                 DB::raw('ROUND(i.grand_total * i.exchange_rate, 2) AS amount_inr'),
-                DB::raw('ROUND((i.grand_total - i.amount_paid) * i.exchange_rate, 2) AS outstanding_inr'),
+                // Nothing on a void one — it showed its whole amount, and the total under the list counted it (Walk 7).
+                DB::raw("CASE WHEN i.status = 'void' THEN 0 ELSE ROUND((i.grand_total - i.amount_paid) * i.exchange_rate, 2) END AS outstanding_inr"),
                 // 🔴 A CREDIT NOTE COUNTS THE OTHER WAY. Its own face reads as a positive amount — that is what the
                 // document says and what the client receives — but in a total it GIVES money back, so a register
                 // that adds it reports revenue that was reversed. The row shows what is printed; the total nets.

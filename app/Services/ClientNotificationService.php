@@ -137,13 +137,34 @@ class ClientNotificationService
     /** Park the draft for a moment on the job's conversation and tell its owner. */
     public function prepareForJob(Job $job, string $stage): bool
     {
-        $thread = EmailThread::withoutGlobalScopes()
+        $thread = $this->threadFor($job);
+
+        return $thread !== null && $this->prepare($thread, $stage, $job);
+    }
+
+    /**
+     * A handover changes who the waiting draft names (Walk 2 #16): it is drawn again from the job as it stands now.
+     * The same moment, so it keeps its place and time; nobody has edited it yet (edits travel only with Send).
+     */
+    public function refreshForJob(Job $job): void
+    {
+        $thread = $this->threadFor($job);
+        $pending = $thread?->pending_client_notification;
+
+        if (! isset($pending['stage']) || ($draft = $this->draft($thread, $pending['stage'])) === null) {
+            return;
+        }
+
+        $thread->forceFill(['pending_client_notification' => $draft + ['staged_at' => $pending['staged_at'] ?? now()->toIso8601String()]])->save();
+    }
+
+    private function threadFor(Job $job): ?EmailThread
+    {
+        return EmailThread::withoutGlobalScopes()
             ->where(fn ($q) => $q->where('job_id', $job->id)
                 ->when($job->enquiry_id, fn ($q) => $q->orWhere('enquiry_id', $job->enquiry_id)))
             ->orderByDesc('latest_message_received_at')
             ->first();
-
-        return $thread !== null && $this->prepare($thread, $stage, $job);
     }
 
     public function prepare(EmailThread $thread, string $stage, ?Job $job = null): bool

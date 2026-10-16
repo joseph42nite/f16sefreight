@@ -342,7 +342,7 @@
           </table>
           <p class="fx-muted">
             Commission and discount are what the supplier's own bill takes off what you pay — leave them empty when there
-            is none. They are recorded as income, and the transfer is less by that much.
+            is none. They lower the cost (Airline discounts and commission, a direct cost), and the transfer is less by that much.
           </p>
           <p class="fx-muted">
             One payment each. Nothing leaves a bank account from here — this records what you are paying, and each
@@ -367,6 +367,7 @@
 </template>
 
 <script>
+import { localToday } from "@/core/config/format";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
@@ -381,7 +382,7 @@ export default {
     picked: {}, amounts: {},
     /** vendor id → what that supplier's bill took off: { commission, discount } (GAPS #444). */
     deductions: {},
-    form: { agent_id: null, payment_date: new Date().toISOString().slice(0, 10), mode: "bank_transfer", reference: "" },
+    form: { agent_id: null, payment_date: localToday(), mode: "bank_transfer", reference: "" },
     showPaid: false, confirming: false, lastRun: null,
     /** ① Cost to book, and the one shipment whose cost is being booked (user, 2026-09-26). */
     queue: { rows: [], suppliers: {}, charge_types: [], can_book: false }, queueLoading: false, booking: null,

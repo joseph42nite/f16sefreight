@@ -27,6 +27,18 @@
       <section class="fx-section">
         <h2 class="fx-section__title">Arrival &amp; customs</h2>
 
+        <!-- A house: what its consol says, read from the consol and never copied here (Walk 4 #41; owner, 2026-10-10). -->
+        <p v-if="data.consol" class="fx-muted" data-test="consol-arrival">
+          On consol <router-link :to="'/import/' + data.parent.id" class="identifier">{{ data.consol.execution_job_no }}</router-link>:
+          {{ data.mode === "sea" ? "ETA" : "arrived" }} <Figure :value="data.consol.arrived_at" :kind="data.mode === 'sea' ? 'date' : 'dateTime'" empty-label="not yet" />
+          · IGM <span class="identifier">{{ data.consol.igm_no || "not filed" }}</span>
+          · {{ filingLabel(data.consol.filing_status) }}
+          <template v-if="data.consol.storage_from">
+            · storage charges from <Figure :value="data.consol.storage_from" kind="date" />
+            <template v-if="data.consol.free_storage_days !== null"> ({{ data.consol.free_storage_days }} free days)</template>
+          </template>
+        </p>
+
         <dl v-if="data.mode === 'sea' && data.details" class="fx-defs">
           <dt>{{ data.document === "master" ? "MBL" : "HBL" }}</dt>
           <dd class="identifier">{{ (data.document === "master" ? data.details.mbl_number : data.details.hbl_number) || "—" }}</dd>
@@ -238,6 +250,10 @@ export default {
     this.load();
   },
   methods: {
+    filingLabel(value) {
+      const known = FILING.find((f) => f.value === value);
+      return known ? known.label : "Not filed";
+    },
     load() {
       this.loading = true;
       ApiService.get(`/jobs/${this.jobId}/import`)

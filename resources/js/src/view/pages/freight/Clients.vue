@@ -91,7 +91,7 @@
               <span v-else class="fx-error">Nobody</span>
             </td>
             <td v-if="withAccounts" class="identifier">{{ c.gst_no || "—" }}</td>
-            <td v-if="withAccounts" class="fx-num">{{ c.payment_terms_days }}d</td>
+            <td v-if="withAccounts" class="fx-num">{{ termsLabel(c.payment_terms_days) }}</td>
             <td v-if="withAccounts" class="fx-num">
               <Figure v-if="c.credit_limit !== null" :value="c.credit_limit" kind="currency" currency-code="INR" />
               <!-- 🔴 NULL is "not configured", never zero: zero blocks every shipment. -->
@@ -164,7 +164,7 @@
               <dt>GSTIN</dt><dd class="identifier">{{ selected.gst_no || "—" }}</dd>
               <dt>PAN</dt><dd class="identifier">{{ selected.pan_no || "—" }}</dd>
               <dt>DUNS</dt><dd class="identifier">{{ selected.duns_no || "—" }}</dd>
-              <dt>Payment terms</dt><dd>{{ selected.payment_terms_days }} days</dd>
+              <dt>Payment terms</dt><dd>{{ termsLabel(selected.payment_terms_days) }}</dd>
               <dt>Bank</dt>
               <!-- 🔐 Account number and IFSC are encrypted at rest and never returned. -->
               <dd>{{ selected.bank_name || "—" }} <span class="fx-muted">(account details are stored encrypted and not shown)</span></dd>
@@ -364,7 +364,7 @@
             <h3 class="fx-section__title">Terms and credit</h3>
             <div class="fx-toolbar">
               <label class="fx-field">
-                <span class="fx-field__label">Payment terms (days)</span>
+                <span class="fx-field__label">Payment terms (days; 0 = cash and carry)</span>
                 <input v-model.number="form.payment_terms_days" type="number" min="0" max="365" class="fx-input fx-num" />
               </label>
               <label class="fx-field">
@@ -413,6 +413,7 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { termsLabel } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
@@ -473,6 +474,7 @@ export default {
     this.load();
   },
   methods: {
+    termsLabel,
     pct(share) {
       return share === null || share === undefined ? "—" : Math.round(Number(share) * 100) + "%";
     },

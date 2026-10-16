@@ -182,7 +182,7 @@ class CompanyAiBudgetTest extends TestCase
 
     // ─── Enquiries ──────────────────────────────────────────────────────────
 
-    /** 🔴 Sales read the branch's enquiries, 50 a page; a Tactical rep sees domains, not names; nobody sales converts. */
+    /** 🔴 Sales read the branch's enquiries, 50 a page; a Tactical rep sees the client's name once its domain is saved (owner, 2026-10-09); nobody sales converts. */
     public function test_sales_see_the_branch_enquiries_fifty_a_page(): void
     {
         $this->company->update(['tier' => 'tactical']);
@@ -198,7 +198,8 @@ class CompanyAiBudgetTest extends TestCase
 
         $first = $api->getJson('http://focusair.localhost/api/enquiries')->assertOk()->json();
         $this->assertSame([50, 55, 2], [count($first['data']), $first['total'], $first['last_page']]);
-        $this->assertSame('globex.test', $first['data'][0]['client_label']);
+        $this->assertSame('Globex', $first['data'][0]['client_label']);
+        $this->assertNull($first['data'][0]['customer_id'], 'a name, but still no key to the client record');
 
         $this->assertCount(5, $api->getJson('http://focusair.localhost/api/enquiries?page=2')->json('data'));
         $api->postJson('http://focusair.localhost/api/enquiries/' . $first['data'][0]['id'] . '/convert')->assertForbidden();

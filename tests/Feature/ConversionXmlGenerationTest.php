@@ -48,6 +48,15 @@ class ConversionXmlGenerationTest extends TestCase
         OtherCustomInformation::unguard();
     }
 
+    // sendXmlToDescartes() parses the upload response as XML, so a bare Http::fake() (empty body) makes
+    // simplexml_load_string() fail and the route 500s.
+    private function fakeDescartes(): void
+    {
+        Http::fake([
+            '*' => Http::response('<response><host>descartes.test</host><bytesReceived>1</bytesReceived><error></error></response>', 200),
+        ]);
+    }
+
     // Every route's IssueDateTime/ActualDateTime use gmdate(), and the house
     // waybill's message ID embeds time() — both change every run even with
     // zero code changes, so they're masked before comparing against the
@@ -143,7 +152,7 @@ class ConversionXmlGenerationTest extends TestCase
     public function test_waybill_conversion_xml_matches_golden_master()
     {
         Storage::fake('local');
-        Http::fake();
+        $this->fakeDescartes();
 
         $awbId = '99977778888';
         [, , $user] = $this->seedCommon($awbId, $awbId, $awbId, $awbId, $awbId, 'AWB Conv Co', 'AWB Conv Agent');
@@ -186,7 +195,7 @@ class ConversionXmlGenerationTest extends TestCase
     public function test_houseway_bill_conversion_xml_matches_golden_master()
     {
         Storage::fake('local');
-        Http::fake();
+        $this->fakeDescartes();
 
         $hawbId = '99966665555';
         [, , $user] = $this->seedCommon($hawbId, $hawbId, $hawbId, $hawbId, $hawbId, 'HAWB Conv Co', 'HAWB Conv Agent');

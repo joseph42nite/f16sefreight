@@ -1,369 +1,56 @@
 <template>
+  <!-- Five hubs instead of seventeen pages (owner, 2026-10-11); a hub's pages are the tabs across its top. -->
   <ul class="menu-nav">
-    <router-link
-      to="/superadmin/monitor"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-heartbeat"></i>
-          <span class="menu-text">Platform monitor</span>
-        </a>
-      </li>
-    </router-link>
-
-    <router-link
-      to="/superadmin/help-documents"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-life-ring"></i>
-          <span class="menu-text">Help documents</span>
-        </a>
-      </li>
-    </router-link>
-
-    <router-link
-      to="/superadmin/ai-usage"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-coins"></i>
-          <span class="menu-text">AI usage</span>
-        </a>
-      </li>
-    </router-link>
-
-    <router-link
-      to="/superadmin/mail-filing"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-inbox"></i>
-          <span class="menu-text">Mail filing</span>
-        </a>
-      </li>
-    </router-link>
-
-    <router-link
-      to="/superadmin/suggestion-feedback"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-comment-dots"></i>
-          <span class="menu-text">Suggestion feedback</span>
-        </a>
-      </li>
-    </router-link>
-
-    <router-link
-      to="/superadmin/airlines"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-plane"></i>
-          <span class="menu-text">Airlines</span>
-        </a>
-      </li>
-    </router-link>
-
-    <router-link
-      to="/superadmin/domain-directory"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-globe"></i>
-          <span class="menu-text">Domain directory</span>
-        </a>
-      </li>
-    </router-link>
-
-    <router-link
-      to="/superadmin/support-desk"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-life-ring"></i>
-          <span class="menu-text">Support desk</span>
-        </a>
-      </li>
-    </router-link>
-
-    <router-link
-      to="/superadmin/all-company"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-building"></i>
-          <span class="menu-text">Company</span>
-        </a>
-      </li>
-    </router-link>
-    <router-link
-      to="/superadmin/all-branch"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-map-marked-alt"></i>
-          <span class="menu-text">Branch</span>
-        </a>
-      </li>
-    </router-link>
-    <router-link
-      to="/superadmin/all-users"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-users"></i>
-          <span class="menu-text">Users</span>
-        </a>
-      </li>
-    </router-link>
-    <router-link
-      to="/superadmin/client-shipments"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-shipping-fast"></i>
-          <span class="menu-text">Shipments</span>
-        </a>
-      </li>
-    </router-link>
-    <router-link
-      to="/superadmin/all-templates"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-file-code"></i>
-          <span class="menu-text">OCR Templates</span>
-        </a>
-      </li>
-    </router-link>
-    <router-link to="/superadmin/all-contacts" v-slot="{ href, navigate, isActive, isExactActive }">
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-address-book"></i>
-          <span class="menu-text">Contact</span>
-        </a>
-      </li>
-    </router-link>
-    <router-link to="/superadmin/setting" v-slot="{ href, navigate, isActive, isExactActive }">
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-cog"></i>
-          <span class="menu-text">Setting</span>
-        </a>
-      </li>
-    </router-link>
-    <router-link to="/superadmin/all-blogs" v-slot="{ href, navigate, isActive, isExactActive }">
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-blog"></i>
-          <span class="menu-text">Manage Blogs</span>
-        </a>
-      </li>
-    </router-link>
-    <router-link
-      to="/superadmin/account"
-      v-slot="{ href, navigate, isActive, isExactActive }"
+    <li
+      v-for="hub in hubs"
+      :key="hub.key"
+      aria-haspopup="true"
+      class="menu-item"
+      :class="{ 'menu-item-active': active && active.key === hub.key }"
     >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-user-circle"></i>
-          <span class="menu-text">Account</span>
-        </a>
-      </li>
-    </router-link>
-    <router-link
-      to=""
-      @click.native="logout"
-      v-slot="{ href, navigate, isActive, isExactActive }"
-    >
-      <li
-        aria-haspopup="true"
-        data-menu-toggle="hover"
-        class="menu-item"
-        :class="[
-          isActive && 'menu-item-active',
-          isExactActive && 'menu-item-active',
-        ]"
-      >
-        <a :href="href" class="menu-link" @click="navigate">
-          <i class="menu-icon fas fa-sign-out-alt"></i>
-          <span class="menu-text">Logout</span>
-        </a>
-      </li>
-    </router-link>
+      <router-link :to="hub.to" class="menu-link">
+        <i class="menu-icon" :class="hub.icon"></i>
+        <span class="menu-text">{{ hub.label }}</span>
+      </router-link>
+    </li>
+
+    <li class="menu-item">
+      <a href="#" class="menu-link" @click.prevent="logout">
+        <i class="menu-icon fas fa-sign-out-alt"></i>
+        <span class="menu-text">Logout</span>
+      </a>
+    </li>
   </ul>
 </template>
 
 <script>
 import { LOGOUT } from "@/core/services/store/auth.module";
+import { ADMIN_HUBS, hubFor } from "@/core/config/adminHubs";
+
 export default {
   name: "KTMenu",
-  methods: {
-    hasActiveChildren(match) {
-      return this.$route["path"].indexOf(match) !== -1;
+  data: () => ({ hubs: ADMIN_HUBS }),
+  computed: {
+    active() {
+      return hubFor(this.$route.path);
     },
+  },
+  methods: {
     logout() {
       this.$store.dispatch(LOGOUT).then(() => this.$router.push("/"));
     },
   },
 };
 </script>
+
 <style scoped>
 .menu-text {
   font-size: 14px !important;
 }
 a {
   color: #a2a3b7 !important;
+}
+.menu-item-active a {
+  color: #fff !important;
 }
 </style>

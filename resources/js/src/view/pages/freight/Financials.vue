@@ -152,7 +152,7 @@
         <p v-if="vendorTotals.commission > 0 || vendorTotals.discount > 0" class="fx-notice" role="status">
           Their bill takes off {{ money(vendorTotals.commission) }} commission and {{ money(vendorTotals.discount) }}
           discount. When you pay it in Money out, enter those two figures on the payment: the vouchers are settled in
-          full, the transfer is the net, and the difference is recorded as income.
+          full, the transfer is the net, and the difference lowers the cost (Airline discounts and commission).
         </p>
         <table class="fx-table">
           <thead>
@@ -668,9 +668,18 @@
               <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
             </select>
           </label>
+          <!-- The books' year is the Indian financial year, 1 April to 31 March, unless the company chooses otherwise
+               (owner, 2026-10-09). Picking one fills the name and the dates; all three stay editable. -->
+          <label class="fx-field">
+            <span class="fx-field__label">Year</span>
+            <select v-model="yearPick" class="fx-input" @change="pickYear(yearPick)">
+              <option value="">Custom dates</option>
+              <option v-for="y in yearChoices" :key="y.key" :value="y.key">{{ y.label }}</option>
+            </select>
+          </label>
           <label class="fx-field">
             <span class="fx-field__label">Name</span>
-            <input v-model="newPeriod.period_name" class="fx-input" placeholder="September 2026" />
+            <input v-model="newPeriod.period_name" class="fx-input" placeholder="FY 2026-27" />
           </label>
           <label class="fx-field">
             <span class="fx-field__label">From</span>
@@ -1043,6 +1052,7 @@
 </template>
 
 <script>
+import { yearChoices } from "@/core/config/financialYear";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
@@ -1111,6 +1121,8 @@ export default {
     REPORTS, SHORT_REASONS, UNMATCHED_READS, report: "profit-and-loss", periodId: null, periods: [], reportData: null, reportLoading: false,
     /** A period being opened. */
     newPeriod: { agent_id: null, period_name: "", start_date: "", end_date: "" },
+    /* Which of `yearChoices` the form was filled from; "" means the dates were typed. */
+    yearPick: "",
     /** Bank reconciliation: the row being settled, what it could settle, and how a short payment is treated. */
     bankRow: null, candidates: [], candidateNote: "", resolution: "",
     /** Jev's suggestions for the open bank line (GAPS #412). */
@@ -1165,6 +1177,10 @@ export default {
     branchForImport() {
       return this.branchId || (this.branches.length === 1 ? this.branches[0].id : null);
     },
+    /** The years a period can be opened for: the financial year first, the calendar year after it. */
+    yearChoices() {
+      return yearChoices();
+    },
     newPeriodValid() {
       const p = this.newPeriod;
       return p.agent_id && p.period_name.trim() && p.start_date && p.end_date && p.start_date <= p.end_date;
@@ -1200,6 +1216,9 @@ export default {
   methods: {
     /* Balance is derived, never stored — a stored balance drifts from its own parts. */
     balanceOf(row) {
+      // A void document is cancelled, so nothing is left to settle on it (Walk 7: a void note showed INR 1,180.00).
+      if (row.status === "void") return 0;
+
       return Number(row.grand_total || 0) - Number(row.amount_paid || 0);
     },
     /** From a report line down to the ledger: the same account, the same period. */
@@ -1236,6 +1255,8 @@ export default {
           this.periods = data.periods || [];
           this.branches = data.branches || this.branches;
           if (!this.newPeriod.agent_id && this.branches.length) this.newPeriod.agent_id = this.branches[0].id;
+          // Primarily the financial year: start from this one unless the person has already chosen something.
+          if (!this.newPeriod.start_date && !this.yearPick) { this.yearPick = this.yearChoices[0].key; this.pickYear(this.yearPick); }
           this.error = null;
         })
         .catch((e) => { this.error = this.messageFor(e); })
@@ -1251,12 +1272,20 @@ export default {
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.reportLoading = false; });
     },
+    /** Fill the form from one of the year choices; "" leaves whatever was typed. */
+    pickYear(key) {
+      const y = this.yearChoices.find((c) => c.key === key);
+      if (!y) return;
+
+      this.newPeriod = { ...this.newPeriod, period_name: y.name, start_date: y.start, end_date: y.end };
+    },
     openPeriod() {
       this.busy = true;
       this.actionError = null;
       ApiService.post("/reports/periods", this.newPeriod)
         .then(() => {
           this.newPeriod = { ...this.newPeriod, period_name: "", start_date: "", end_date: "" };
+          this.yearPick = "";
           this.loadPeriods();
         })
         .catch((e) => { this.actionError = this.messageFor(e); })

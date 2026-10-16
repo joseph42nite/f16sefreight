@@ -323,6 +323,17 @@ const STATE_NAMES = [
   "NEW DELHI", "JAMMU AND KASHMIR", "LADAKH", "LAKSHADWEEP", "PUDUCHERRY", "PONDICHERRY",
 ];
 
+/**
+ * US states (and DC) and Canadian provinces, as the two-letter code an address writes beside the ZIP:
+ * "Chicago IL 60654" (Walk 2 #17). Capitals only, so a word in a town's name is never taken for one.
+ */
+const STATE_CODES = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA",
+  "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR",
+  "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+  "AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT",
+];
+
 /** "Amman 11191 Jordan": a country written at the end of a line rather than on its own. */
 function trailingCountry(text, countries) {
   const names = Object.keys(countries || {}).map((code) => [code, String(countries[code])])
@@ -399,6 +410,13 @@ export function parsePartyBlock(text, countries) {
     if (!out.state && STATE_NAMES.includes(city.toUpperCase())) {
       out.state = city;
       city = "";
+    }
+
+    // "Chicago IL 60654" / "Chicago, IL 60654": a state code beside the ZIP; the town is the words before it.
+    const coded = out.state ? null : city.match(/^(.*?)\s*\b([A-Z]{2})$/);
+    if (coded && STATE_CODES.includes(coded[2])) {
+      out.state = coded[2];
+      city = coded[1].replace(/[\s,–-]+$/, "").trim();
     }
 
     if (city) out.city = city;

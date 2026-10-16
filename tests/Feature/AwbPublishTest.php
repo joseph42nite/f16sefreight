@@ -30,7 +30,11 @@ class AwbPublishTest extends TestCase
             'execution_job_no' => 'JOBA-PUBBOM-26-0001', 'awb_number' => '176-99887766', 'status' => 'Intake']);
 
         DB::table('air_way_bills')->insert(['id' => 17699887766, 'awb_code' => '176', 'awb_no' => '99887766',
-            'agent_id' => $branch->id, 'job_id' => $job->id, 'status' => 'draft', 'created_at' => now(), 'updated_at' => now()]);
+            'agent_id' => $branch->id, 'job_id' => $job->id, 'status' => 'draft', 'departure_airport' => 'BOM', 'destination_airport' => 'FRA',
+            'created_at' => now(), 'updated_at' => now()]);
+        DB::table('way_bill_addresses')->insert(['awb_id' => '17699887766', 'ship_name' => 'Globex', 'ship_address' => 'Plot 42/A',
+            'ship_city' => 'Mumbai', 'cons_name' => 'Hansa', 'cons_address' => 'Grosse Elbstrasse 145', 'cons_city' => 'Hamburg',
+            'created_at' => now(), 'updated_at' => now()]);
 
         $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($user), 'Accept' => 'application/json'])
             ->postJson('http://focusair.localhost/api/user/documents/awb/17699887766/publish')

@@ -15,7 +15,7 @@
 
       <nav class="fx-rail__nav" aria-label="Main">
         <!--
-          §8.1 — a tier-locked item stays VISIBLE and routes to the upgrade teaser.
+          Tier-locked items are no longer sent here at all (owner, 2026-10-09: hidden); `locked` is always false now.
           Hiding it would hide the reason to upgrade. Role-forbidden items never
           reach this list at all.
         -->

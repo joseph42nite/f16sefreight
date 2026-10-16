@@ -64,7 +64,7 @@ router.beforeEach((to, from, next) => {
     if (role === 'user') {
       return next('/focus-air');
     } else if (role === 'superAdmin') {
-      return next('/superadmin/all-users');
+      return next('/superadmin/overview');
     }
   }
 

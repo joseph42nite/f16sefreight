@@ -70,7 +70,8 @@ class AccountsTodayController extends Controller
             [
                 'key' => 'to_bill', 'label' => 'To bill', 'count' => (int) $toBill->n,
                 'unit' => 'shipment', 'amount' => round((float) $toBill->total, 2),
-                'note' => 'Cost sheets pricing has handed over.',
+                // What the client will be billed, GST included (Walk 2 #22); the cost sheet shows before tax.
+                'note' => 'Cost sheets pricing has handed over. Amounts with GST.',
                 'to' => ['path' => '/money-in', 'query' => ['stage' => 'to_bill']],
             ],
             [

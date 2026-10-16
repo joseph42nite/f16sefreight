@@ -495,10 +495,10 @@ class ImportController extends Controller
 
         // Say what actually blocks it: this shipment's unpaid amount when there is one, and the client's own position.
         $position = sprintf('%s owes ₹%s against a limit of ₹%s', $customer->name,
-            number_format((float) $credit['exposure'], 2), number_format((float) $credit['limit'], 2));
+            \App\Support\Inr::format((float) $credit['exposure']), \App\Support\Inr::format((float) $credit['limit']));
 
         return ['allowed' => false, 'reason' => 'payment_required',
-            'message' => ($outstanding > 0.009 ? '₹' . number_format($outstanding, 2) . ' is unpaid on this shipment, and ' : '')
+            'message' => ($outstanding > 0.009 ? '₹' . \App\Support\Inr::format($outstanding) . ' is unpaid on this shipment, and ' : '')
                 . $position . '. Collect it, or have Accounts raise the limit, before releasing the cargo.',
             'outstanding' => $outstanding];
     }
@@ -515,6 +515,7 @@ class ImportController extends Controller
             'job'      => $job->only(['id', 'execution_job_no', 'awb_number', 'consol_type', 'status', 'customer_id', 'parent_job_id']),
             'client'   => $job->customer_id ? DB::table('customers')->where('id', $job->customer_id)->value('name') : null,
             'parent'   => $parent,
+            'consol'   => $parent ? $this->consolArrival($parent, $mode) : null,
             'houses'   => Job::withoutTenantScope()->where('parent_job_id', $job->id)->orderBy('id')
                 ->get(['id', 'execution_job_no', 'awb_number', 'customer_id']),
             'details'  => $mode === 'sea'
@@ -537,6 +538,38 @@ class ImportController extends Controller
                 ->get(['id', 'invoice_no', 'type', 'grand_total', 'amount_paid', 'currency']),
             'agents'   => DB::table('partners')->where('company_id', DB::table('agents_info')->where('id', $job->agent_id)->value('company_id'))
                 ->whereIn('partner_type', ['agent', 'overseas_agent', 'handling_agent', 'cfs_warehouse'])->orderBy('name')->get(['id', 'name']),
+        ];
+    }
+
+    /**
+     * What a house's consol says about the arrival, shown on the house as one read-only line (Walk 4 #41; owner,
+     * 2026-10-10). Read from the consol on every open and never copied into the house, so the two cannot drift.
+     *
+     * The storage clock: the date written on the consol, else its arrival plus its free days (the same sum the
+     * arrival notice's "storage charges apply from" carries), else not known.
+     */
+    private function consolArrival(Job $parent, string $mode): array
+    {
+        $d = $mode === 'sea'
+            ? DB::table('sea_shipment_details')->where('job_id', $parent->id)->first(['eta', 'igm_no', 'igm_date', 'filing_status'])
+            : DB::table('air_import_details')->where('job_id', $parent->id)
+                ->first(['arrived_at', 'free_storage_days', 'storage_from', 'igm_no', 'igm_date', 'filing_status']);
+
+        $arrived = $mode === 'sea' ? ($d->eta ?? null) : ($d->arrived_at ?? null);
+        $free = $d->free_storage_days ?? null;
+        $from = $d->storage_from ?? null;
+        if ($from === null && $arrived !== null && $free !== null) {
+            $from = \Illuminate\Support\Carbon::parse($arrived)->addDays((int) $free)->toDateString();
+        }
+
+        return [
+            'execution_job_no'  => $parent->execution_job_no,
+            'arrived_at'        => $arrived,
+            'igm_no'            => $d->igm_no ?? null,
+            'igm_date'          => $d->igm_date ?? null,
+            'filing_status'     => $d->filing_status ?? null,
+            'free_storage_days' => $free === null ? null : (int) $free,
+            'storage_from'      => $from === null ? null : substr((string) $from, 0, 10),
         ];
     }
 

@@ -232,6 +232,42 @@ class JobCostSheetTest extends TestCase
         $this->assertNull($margin['percent'], '...but the PERCENTAGE is undefined.');
     }
 
+    /**
+     * 🔴 NO COST ENTERED = NO MARGIN (Walk 4 #33). With only a sell line the sheet read "Margin INR 43,200 · 100%": a figure
+     * nobody had measured, shown as the best possible result. It is NULL until a buy line exists, and says why.
+     */
+    public function test_a_sheet_with_no_cost_has_no_margin_to_show(): void
+    {
+        $this->addLine(['quantity' => 240, 'rate' => 180, 'tax_percentage' => 18]);
+
+        $margin = $this->api($this->pricing)->getJson($this->url("/api/jobs/{$this->job->id}/cost-sheet"))
+            ->assertOk()->json('margin');
+
+        $this->assertSame(43200.0, (float) $margin['sell']);
+        $this->assertNull($margin['value'], 'Nothing is costed, so there is no margin value.');
+        $this->assertNull($margin['percent'], 'And no 100%.');
+        $this->assertFalse($margin['costed']);
+    }
+
+    /**
+     * 🔴 A DRAFT'S HEADER FOLLOWS ITS LINES (Walk 4 #36). The cost sheet wrote lines and never the header, so the draft
+     * sat at INR 0.00 in Accounts' To-bill list until somebody finalized it.
+     */
+    public function test_the_draft_invoice_total_follows_its_lines(): void
+    {
+        $this->addLine(['quantity' => 240, 'rate' => 180, 'tax_percentage' => 18]);
+
+        $draft = DB::table('accounts_invoices')->where('job_id', $this->job->id)->where('status', 'draft')->first();
+
+        $this->assertSame(43200.0, (float) $draft->subtotal);
+        $this->assertSame(7776.0, (float) $draft->tax_amount);
+        $this->assertSame(50976.0, (float) $draft->grand_total);
+
+        $this->addLine(['quantity' => 1, 'rate' => 1000, 'tax_percentage' => 0, 'description' => 'Handling']);
+
+        $this->assertSame(51976.0, (float) DB::table('accounts_invoices')->where('id', $draft->id)->value('grand_total'));
+    }
+
     /** Amounts are derived server-side — a client cannot post arithmetic that disagrees. */
     public function test_line_amounts_are_computed_not_accepted(): void
     {

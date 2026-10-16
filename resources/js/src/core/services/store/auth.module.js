@@ -73,7 +73,7 @@ const actions = {
           const designation = (data.context && data.context.designation) || null;
           router.replace(LANDING_ROUTE[designation] || "/focus-air");
         } else if (data.role == "superAdmin")
-          router.replace(`/superadmin/all-users`);
+          router.replace(`/superadmin/overview`);
         return data;
       })
       .catch((error) => {
@@ -97,7 +97,10 @@ const actions = {
         })
         .catch(({ response }) => {
           if (response.status == 401) {
+              // Kept past the purge, so the sign-in page can say why (Walk 4 #38: "you signed in somewhere else").
+              const reason = response.data && response.data.error;
               context.dispatch(LOGOUT)
+                  .then(() => { if (reason) context.commit(SET_ERROR, reason); })
                   .then(() => toSignIn());
           } else {
               context.commit(SET_ERROR, response.data.errors);

@@ -102,6 +102,23 @@ class ClientPaymentReportTest extends TestCase
         $this->assertSame('D', $card->grade);
     }
 
+    /**
+     * #55 (owner, 2026-10-10): a cash-and-carry client (0-day terms) pays before we execute, so a bill with no due date
+     * is due the day it was raised. `?:` read 0 as "not set" and gave them the 30-day default.
+     */
+    public function test_a_cash_and_carry_bill_is_due_the_day_it_is_raised(): void
+    {
+        $cash = $this->client('Cash', 0);
+        $id = $this->bill($cash, '2026-10-10', null);              // raised 10 Sep, still unpaid
+        DB::table('accounts_invoices')->where('id', $id)->update(['due_date' => null]);
+
+        $this->artisan('clients:payment-report', ['--month' => '2026-09'])->assertSuccessful();
+
+        // Due 10 Sep, unpaid at 30 Sep: 20 days late — not "due 10 Oct, nothing due yet".
+        $card = $this->card($cash);
+        $this->assertSame([1, 20], [$card->bills_due, $card->oldest_overdue_days]);
+    }
+
     /** A bill marked paid with no dated evidence is not judged — its last edit is not when the client paid. */
     public function test_a_paid_bill_with_no_date_of_payment_is_left_out(): void
     {

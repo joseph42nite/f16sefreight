@@ -63,6 +63,9 @@ class JobObserver
         }
         if ($stage !== null) {
             app(ClientNotificationService::class)->prepareForJob($job, $stage);
+        } elseif ($job->wasChanged('ops_id')) {
+            // A handover: the waiting draft names whoever runs the shipment now (Walk 2 #16).
+            app(ClientNotificationService::class)->refreshForJob($job);
         }
     }
 

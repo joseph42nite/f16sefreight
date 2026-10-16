@@ -316,11 +316,11 @@
           <template v-else>
             <label class="fx-field">
               <span class="fx-field__label">To</span>
-              <input v-model="draft.to" class="fx-input" placeholder="comma separated" />
+              <RecipientInput v-model="draft.to" />
             </label>
             <label class="fx-field">
               <span class="fx-field__label">Cc</span>
-              <input v-model="draft.cc" class="fx-input" placeholder="comma separated" />
+              <RecipientInput v-model="draft.cc" />
             </label>
             <label class="fx-field">
               <span class="fx-field__label">Subject</span>
@@ -515,6 +515,14 @@
       </template>
 
       <template v-if="active">
+        <!-- #55 (owner, 2026-10-10): a cash-and-carry client pays before we execute. Never a block — said here, so the
+             payment is checked with the client first, then confirmed with accounts. -->
+        <p v-if="cashAndCarry" class="fx-notice" role="status" data-test="cash-and-carry">
+          <strong>Cash and carry:</strong> {{ cashAndCarry.client }} pays before we execute this shipment.
+          {{ cashAndCarry.paid === true ? "The bill is paid — confirm with accounts, then execute."
+            : cashAndCarry.paid === false ? "The bill is not paid yet. Check with the client, then with accounts, before executing."
+              : "No bill is issued yet. Check payment with the client, then with accounts, before executing." }}
+        </p>
         <!--
           🔴 WHAT THE MAIL SAID, before anyone types anything. The classifier reads every
           inbound message and parks what it found; without showing it here that work was
@@ -728,6 +736,7 @@
             :job-id="active.job ? active.job.id : null"
             :mail-cargo="active && active.staged_cargo"
             @apply="onExtracted"
+            @job-changed="open(active)"
           />
         </section>
       </template>
@@ -745,6 +754,7 @@ import Vue from "vue";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import RecipientInput from "@/view/pages/freight/components/RecipientInput.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import ExtractionPanel from "@/view/pages/freight/components/ExtractionPanel.vue";
 import BlReader from "@/view/pages/freight/components/BlReader.vue";
@@ -838,7 +848,7 @@ const WORKSPACE_TABS = [
 
 export default {
   name: "JobInbox",
-  components: { Figure, StatusChip, FxDrawer, ExtractionPanel, BlReader, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor, StaffPicker, NewMail, MailBodyFrame },
+  components: { Figure, StatusChip, RecipientInput, FxDrawer, ExtractionPanel, BlReader, CostSheet, CreditsPanel, MailEditor, ClientUpdateEditor, StaffPicker, NewMail, MailBodyFrame },
   data: () => ({
     /** The New mail pop-up is open. */
     writingNew: false,
@@ -876,6 +886,8 @@ export default {
     notSent: [],
     /** ④ The payment mail's reading, when this is one (GAPS #416). */
     remittance: null,
+    /** The client pays before we execute (#55): `{ client, paid }`, or null on credit. */
+    cashAndCarry: null,
     /** Who the open conversation can be handed to — its own branch's pricing staff. */
     assignees: [],
     cargoBusy: false, cargoError: null, cargoSaved: false,
@@ -1092,11 +1104,7 @@ export default {
     // The people a conversation can be handed to.
     if (this.canAssign) this.loadOperators();
     // Operations get the branch's operator NAMES only: the staff matrix, with everyone's workload, is pricing's.
-    else if (this.designation === "operations") {
-      ApiService.get("/jobs/branch-operators")
-        .then(({ data }) => { this.operators = data.operators || []; })
-        .catch(() => { this.operators = []; });
-    }
+    else if (this.designation === "operations") this.loadBranchOperators();
   },
   watch: {
     "$route.query.thread"(id) {
@@ -1109,11 +1117,13 @@ export default {
   },
   mounted() {
     document.addEventListener("mousedown", this.closeThreadFiles);
+    window.addEventListener("f16s:job-changed", this.onJobChanged);
   },
   /* Leaving the inbox with the workspace open would strand the body class and collapse
      the rail on every other screen. */
   beforeDestroy() {
     document.removeEventListener("mousedown", this.closeThreadFiles);
+    window.removeEventListener("f16s:job-changed", this.onJobChanged);
     document.body.classList.remove("fx-split");
   },
   methods: {
@@ -1427,11 +1437,21 @@ export default {
      * THAT day — a stale one would recommend the wrong person with a confident number.
      */
     loadOperators() {
+      // Walk 4 #43: the staff matrix (everyone's workload) is pricing's and the Boss's. Operations asked for it from
+      // the workspace and was refused (403) every time; they get the names-only list instead.
+      if (!this.canAssign) return this.designation === "operations" ? this.loadBranchOperators() : undefined;
+
       const q = this.clearanceDate ? "?date=" + this.clearanceDate : "";
       ApiService.get("/jobs/staff-load" + q)
         .then(({ data }) => { this.operators = data.operators || []; })
         // Not fatal: confirming without an operator is a supported outcome, so a failed
         // lookup must not block the decision itself.
+        .catch(() => { this.operators = []; });
+    },
+    /** The branch's operators, names only — what operations need to ask for a handover. */
+    loadBranchOperators() {
+      return ApiService.get("/jobs/branch-operators")
+        .then(({ data }) => { this.operators = data.operators || []; })
         .catch(() => { this.operators = []; });
     },
     operatorName(id) {
@@ -1663,6 +1683,18 @@ export default {
       });
       this.counts = c;
     },
+    /* Walk 4 #34: the bell decided a handover (or anything else that changes a job). If that job is the one open here,
+       re-read the conversation so the header stops saying "Waiting for approval" — without resetting what is typed. */
+    onJobChanged(event) {
+      const jobId = event && event.detail ? event.detail.jobId : null;
+      const open = this.active && this.active.job;
+
+      if (!open || (jobId && Number(open.id) !== Number(jobId))) return;
+
+      ApiService.get("/inbox/threads/" + this.active.id)
+        .then(({ data }) => { this.active = data.thread; })
+        .catch(() => {});
+    },
     open(thread) {
       this.actionError = null;
       if (!this.active || this.active.id !== thread.id) { this.actionNotice = null; this.newClient = null; }
@@ -1694,6 +1726,7 @@ export default {
           this.messages = data.messages || [];
           this.notSent = data.not_sent || [];
           this.remittance = data.remittance || null;
+          this.cashAndCarry = data.cash_and_carry || null;
           this.loadAssignees(data.thread.id);
           this.signature = data.signature || null;
           /* The cost sheet hangs off the JOB, not the thread, and extraction wants the

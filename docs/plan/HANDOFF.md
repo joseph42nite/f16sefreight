@@ -44,6 +44,19 @@ Paste this into the new session:
 - **Airline deductions are a lower cost (#465):** commission and discount off the CASS bill post to
   `5010-Airline-Discounts` under Direct Costs, not income; no GST on them. #446 closed.
 
+### 2026-10-11/16
+- **Superadmin in five hubs (#472, #473):** Overview (graphs + "Needs you"), Tickets, Tenants (a new client in three
+  steps; a branch now needs its branch code), Library, Settings. Sign-ins and server errors recorded for the Overview.
+  **OpenClaw removed (#471)** — after deploying, run `composer dump-autoload`. Still to build: OpenMaus API keys,
+  "Fixes to approve", and the Push live button (waits on how code reaches the live server).
+
+### 2026-10-09/10
+- **Walks 3–7 in the how-it-works doc (#467):** every open finding from Walks 2–5 fixed or closed; the owner's
+  answers built — "To bill" and Money in ①–③ say *Amounts with GST*; a house shows its consol's arrival, IGM, filing
+  and storage clock as one read-only line (never copied); Tactical pricing and operations see client names too. A
+  replaced session now says *signed in somewhere else*. The demo's shipper address fits Cargo-IMP's 35 characters, so
+  demo waybills generate PDFs again.
+
 ### 2026-10-07
 - **A real case clicked through as joseph@ (#466):** 15 findings in the Claude Docs doc *F16s demo walk — findings
   from clicking*; all fixed but #12 (test data). Cost-sheet margin before tax; 300 requests/min and one `/me` per load;
@@ -100,8 +113,8 @@ Paste this into the new session:
 
 ## Open — noticed, not asked for (offer, don't start)
 - joseph@'s test jobs (#466): JOBA-BASEBAS-26-0003 cancelled 2026-10-07 ("Test job from an internal sender"); JOBA-BASEBAS-26-0001 **kept on the owner's word** — it has unpaid voucher PV-9480-20260918131733, so it cannot be cancelled without voiding that.
-- Walk 2 (2026-10-07, in the how-it-works doc): operator waybill steps + operations/sales/boss/accounts logins in F16s Base all walked clean. Test logins base-{operations,sales,boss,accounts,pricing}@demo.test (each needs a `roles` row). Open findings 16–18, 20–22 in the doc; pricing + FocusSea page walk and the demo company's logins not done yet.
-- Not walked yet: FocusSea pages as pricing/operations, Import, Manifest Filing.
+- Walk 2 (2026-10-07, in the how-it-works doc): test logins base-{operations,sales,boss,accounts,pricing}@demo.test (each needs a `roles` row).
+- Walk 7 (2026-10-10): see the doc's Walk 7 section for what was clicked and what is still open.
 
 ## Next (when the owner says go)
 1. CASS importer — once the sample files above arrive.
@@ -113,11 +126,15 @@ Nothing else is ready to build: every other item waits on the owner above.
 php artisan migrate --force && DB_DATABASE=f16s_test php artisan migrate --force
 php artisan db:seed --class='\FreightDemoSeeder' --force
 php artisan db:seed --class='\BillingDemoSeeder' --force
+```
+- ⚠️ **Order matters, and Billing goes LAST.** `FreightDemoSeeder` resets the demo tenants and, with them, the ledger, vouchers, receipts, payments and chart of accounts that `BillingDemoSeeder` builds (all 0 rows afterwards). Running Freight again after Billing — to print the logins again, say — empties the accounts screens. Re-run Billing after it. (Walk 4 #28.)
+- ClamAV needs a few minutes to load its signatures on first start; `FreightDemoSeeder` fails at `DemoMailAttachmentsSeeder` until `docker compose ps` shows `f16s-clamav` healthy. Inside Docker, `CLAMAV_HOST=clamav` (now in `.env.docker.example`).
+```
 php artisan help:load-bundled
 npm run prod
 ```
 - **Docker stops when the Mac sleeps** (it happened three times on 2026-10-04/05; a hung sign-in is the sign) — and can come back wedged: `docker info` says *"Docker Desktop is unable to start … backend time … context deadline exceeded"* and `compose up` fails on whichever image it reads first (*"unexpected end of JSON input"*). Quit Docker Desktop fully (`osascript -e 'quit app "Docker"'`; if `com.docker.backend` keeps the same PID, kill it — `com.docker.vmnetd` is root's and stays) and reopen it (`open -a Docker`); wait for `docker info` to show a server version, then `docker compose up -d`. The preview's workers may stay stuck on requests from before: sign in again, or restart the preview.
-- **Docker (as before):** Start Docker Desktop, then `docker compose up -d` (web, queue, db, redis, soketi, ai-server, clamav). The ai-server mounts `./python`, so it runs the current code without a rebuild — it only has to be running. `curl` is not in the queue container; test reach with `php -r 'echo file_get_contents("http://ai-server:8000/health");'`.
+- **Docker (as before):** Start Docker Desktop, then `docker compose up -d` (web, queue, **scheduler**, db, redis, soketi, ai-server, clamav). The scheduler container runs `php artisan schedule:work`: without it nothing in `app/Console/Kernel.php` fires in Docker, so the Boss's snapshot (every 30 minutes), mailbox polling and the alerts never run (Walk 4 #37). The nginx `HTTP_HOST` is `$http_host`, so absolute links keep their port (Walk 4 #29). The ai-server mounts `./python`, so it runs the current code without a rebuild — it only has to be running. `curl` is not in the queue container; test reach with `php -r 'echo file_get_contents("http://ai-server:8000/health");'`.
 - **The preview** (`.claude/launch.json` → `f16s`) serves on `:8099` with `php artisan serve`; the first requests after a start are slow (~20 s), so wait before signing in.
 - **Portals:** accounts sign in at `accounts.localhost:8099`, the Boss at `admin.localhost:8099` (FocusAir refuses the Boss), operations/pricing/sales at `focusair.` / `focussea.`. Demo logins: `demo-*@demo.test`, `tact-*@demo.test`, `core@demo.test` — password `demo1234`.
 - Locally, `.env` needs `PORTAL_DOMAIN=localhost:8099` and `PORTAL_SCHEME=http` for the staff reviews' links (#457).

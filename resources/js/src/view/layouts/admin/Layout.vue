@@ -25,6 +25,7 @@
                 container: !contentFluid
               }"
             >
+              <HubTabs />
               <transition name="fade-in-up" mode="out-in" @after-enter="scrollToTop">
                 <router-view />
               </transition>
@@ -66,6 +67,7 @@ import { mapGetters } from "vuex";
 import KTAside from "@/view/layouts/admin/aside/Aside.vue";
 import KTHeaderMobile from "@/view/layouts/admin/header/HeaderMobile.vue";
 import KTFooter from "@/view/layouts/admin/footer/Footer.vue";
+import HubTabs from "@/view/layouts/admin/HubTabs.vue";
 import HtmlClass from "@/core/services/htmlclass.service";
 import KTScrollTop from "@/view/layouts/admin/extras/ScrollTop";
 import {
@@ -76,6 +78,7 @@ import {
 export default {
   name: "Layout",
   components: {
+    HubTabs,
     KTAside,
     KTHeaderMobile,
     KTFooter,

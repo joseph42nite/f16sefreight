@@ -70,7 +70,6 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'openclaw.verify' => \App\Http\Middleware\VerifyOpenClawSignature::class,
         'gln.token' => \App\Http\Middleware\VerifyGlnToken::class,
 
         // Multi-portal access control — guide §3.4 / §3.5.

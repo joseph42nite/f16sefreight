@@ -129,6 +129,20 @@ const router = new Router({
       component: () => import("@/view/layouts/admin/Layout"),
       children: [
         {
+          // The platform portal opens on its Overview: the graphs and what needs F16s staff (owner, 2026-10-11).
+          path: "overview",
+          name: "superadmin-overview",
+          component: () => import("@/view/pages/admin/PlatformOverview.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
+          // Every client company with its branches and people, and making a new one, on one page (owner, 2026-10-11).
+          path: "tenants",
+          name: "superadmin-tenants",
+          component: () => import("@/view/pages/admin/Tenants.vue"),
+          meta: { userType: 'superadmin' }
+        },
+        {
           // §5.6 — the platform monitor and the support desk. Both read endpoints
           // behind the `superAdmin-api` guard, so they are unreachable from any
           // tenant login however the URL is typed.
@@ -610,7 +624,7 @@ router.beforeEach((to, from, next) => {
     return to.name === "portal-sign-in" ? next({ path: "/", query: { signin: "1" } }) : next();
   }
 
-  const home = () => portal === "superadmin" ? "/superadmin/all-users" : LANDING_ROUTE[store.getters.designation] || "/focus-air";
+  const home = () => portal === "superadmin" ? "/superadmin/overview" : LANDING_ROUTE[store.getters.designation] || "/focus-air";
   // Signed in with no role loaded yet (a token, but no stored context): ask the server first. Guessing sent the
   // accounts desk and the Boss to the air waybill form on every fresh visit to the portal's address (GAPS #431).
   const toHome = () => (store.getters.designation || portal === "superadmin"

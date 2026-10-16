@@ -108,7 +108,11 @@ class AuthServiceProvider extends ServiceProvider
         // one login type, so on Core EVERY user works the bills; from Tactical the roles apply as for the manifest.
         // Filing with customs and import stay on viewManifest/fileManifest — Tactical.
         $this->define('editDocuments', ['operations'],                    'core', coreForEveryone: true);
-        $this->define('viewDocuments', ['operations', 'pricing', 'boss'], 'core', coreForEveryone: true);
+        // Sales READ the bills too (owner, 2026-10-09: "sure"): the Sales menu on FocusSea already offers Bills of
+        // Lading and Consolidation, and the page it opened was refused. Reading only — `editDocuments` stays operations.
+        $this->define('viewDocuments', ['operations', 'pricing', 'boss', 'sales'], 'core', coreForEveryone: true);
+        // Printing a bill is not reading one: Sales read them, and still may not print (BlPrintTest).
+        $this->define('printDocuments', ['operations', 'pricing', 'boss'], 'core', coreForEveryone: true);
 
         // ── Analytics — explicitly 403 for operations and pricing ────────────
         $this->define('viewAnalytics', ['sales', 'boss', 'accounts'], 'tactical');

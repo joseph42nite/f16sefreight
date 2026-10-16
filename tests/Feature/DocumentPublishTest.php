@@ -58,6 +58,7 @@ class DocumentPublishTest extends TestCase
         DB::table('air_way_bills')->insert([
             'id' => $this->awbKey, 'awb_code' => '176', 'awb_no' => '80000001',
             'agent_id' => $this->branch->id, 'job_id' => $jobId, 'status' => 'generate_pdf',
+            'departure_airport' => 'BOM', 'destination_airport' => 'DXB',
             'created_at' => now(), 'updated_at' => now(),
         ]);
 
@@ -135,6 +136,22 @@ class DocumentPublishTest extends TestCase
         DB::table('air_way_bills')->where('id', $this->awbKey)->update(['job_id' => null]);
 
         $this->publish()->assertStatus(422)->assertJsonPath('reason', 'no_job');
+
+        $this->assertSame(0, DB::table('job_documents')->where('agent_id', $this->branch->id)->count());
+    }
+
+    /**
+     * Walk 7: Generate client link published a waybill with no departure or destination — one the Master AWB form
+     * itself refuses to make a PDF of — and moved the shipment to PDF Generated. The client link asks what the form
+     * asks: the route and both parties' name, address and city.
+     */
+    public function test_a_waybill_the_form_would_refuse_is_not_published(): void
+    {
+        DB::table('air_way_bills')->where('id', $this->awbKey)->update(['departure_airport' => null, 'destination_airport' => null]);
+        DB::table('way_bill_addresses')->where('awb_id', (string) $this->awbKey)->update(['cons_city' => null]);
+
+        $this->publish()->assertStatus(422)->assertJsonPath('reason', 'incomplete')
+            ->assertJsonPath('missing', ['Departure airport', 'Destination airport', 'Consignee city']);
 
         $this->assertSame(0, DB::table('job_documents')->where('agent_id', $this->branch->id)->count());
     }

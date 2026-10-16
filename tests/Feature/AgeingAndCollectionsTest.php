@@ -146,17 +146,25 @@ class AgeingAndCollectionsTest extends TestCase
         $this->assertSame(85000.0, (float) $credit['branch']['exposure']);
     }
 
-    public function test_a_bill_with_no_due_date_ages_from_its_document_date_and_says_so(): void
+    /**
+     * A bill with no due date falls due on the client's terms (#55, owner 2026-10-10) — the same date finalizing now
+     * writes and the payment grader uses: the bill's date for cash and carry (0 days), else after the credit period.
+     * The screen still says the date was worked out, not written on the bill.
+     */
+    public function test_a_bill_with_no_due_date_ages_from_the_clients_terms_and_says_so(): void
     {
-        $bill = $this->bill(9000, 0, $this->slow);
+        $bill = $this->bill(9000, 0, $this->slow);   // dated 30 days ago
         AccountsInvoice::withoutTenantScope()->where('id', $bill->id)->update(['due_date' => null]);
-
-        $document = collect($this->as($this->accounts)
+        $document = fn () => collect($this->as($this->accounts)
             ->getJson($this->url("/ageing/customer/{$this->slow->id}"))->assertOk()->json('documents'))->first();
 
-        $this->assertTrue($document['due_assumed'], 'the screen must say the due date was assumed');
-        $this->assertSame(30, $document['days_overdue'], 'dated 30 days ago, so 30 days old');
-        $this->assertSame('d1_30', $document['bucket']);
+        $this->slow->forceFill(['payment_terms_days' => 10])->save();
+        $this->assertTrue($document()['due_assumed'], 'the screen must say the due date was worked out');
+        $this->assertSame(20, $document()['days_overdue'], '10-day credit on a bill 30 days old: 20 days late');
+
+        $this->slow->forceFill(['payment_terms_days' => 0])->save();
+        $this->assertSame(30, $document()['days_overdue'], 'cash and carry: due the day it was raised');
+        $this->assertSame('d1_30', $document()['bucket']);
     }
 
     public function test_the_queue_puts_a_broken_promise_first_and_then_whoever_nobody_has_called(): void

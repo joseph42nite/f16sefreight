@@ -190,6 +190,53 @@ class ClientUpdatesTest extends TestCase
             ->assertStatus(409);
     }
 
+    /** Walk 2 #16: a handover rewrites the waiting draft, so it names the operator who now runs the shipment. */
+    public function test_a_handover_renames_the_operator_in_the_waiting_draft(): void
+    {
+        $thread = $this->thread(['assigned_ops_id' => $this->pricing->id]);
+        $before = $this->user('operations', 'Before');
+        $after = $this->user('operations', 'After');
+        $job = $this->jobFor($thread, ['ops_id' => $before->id]);
+        $stagedAt = $this->pending($thread)['staged_at'];
+
+        $job->update(['ops_id' => $after->id]);
+
+        $draft = $this->pending($thread);
+        $this->assertSame('confirmed', $draft['stage']);
+        $this->assertStringContainsString("{$after->name} from our operations team", $draft['body']);
+        $this->assertStringNotContainsString($before->name, $draft['body']);
+        // The same draft, reworded: not a new moment, nothing superseded.
+        $this->assertSame($stagedAt, $draft['staged_at']);
+        $this->assertNull($thread->fresh()->client_updates);
+    }
+
+    /**
+     * #55 (owner, 2026-10-10): a cash-and-carry client (0-day terms) pays before we execute. Nothing is blocked; the
+     * workspace says so and whether the bill is paid, so the operator checks with the client, then with accounts.
+     */
+    public function test_a_cash_and_carry_clients_shipment_says_to_check_payment_first(): void
+    {
+        $thread = $this->thread();
+        $client = \App\Customer::create(['company_id' => $this->company->id, 'name' => 'Cash Client', 'email_domain' => 'cash.test',
+            'payment_terms_days' => 0]);
+        $job = $this->jobFor($thread, ['customer_id' => $client->id]);
+        $read = fn () => $this->api($this->pricing)->getJson($this->url("/api/inbox/threads/{$thread->id}"))->assertOk()->json('cash_and_carry');
+
+        $this->assertSame(['client' => 'Cash Client', 'paid' => null], $read(), 'No bill issued yet.');
+
+        $bill = \App\AccountsInvoice::create(['agent_id' => $this->branch->id, 'job_id' => $job->id, 'customer_id' => $client->id,
+            'invoice_no' => 'INV-UPD-26-0001', 'type' => 'invoice', 'document_date' => now()->toDateString(), 'status' => 'finalized',
+            'currency' => 'INR', 'exchange_rate' => 1, 'grand_total' => 5000, 'amount_paid' => 0]);
+        $this->assertFalse($read()['paid']);
+
+        $bill->forceFill(['amount_paid' => 5000, 'status' => 'paid'])->save();
+        $this->assertTrue($read()['paid']);
+
+        // A client on credit: nothing to say.
+        $client->forceFill(['payment_terms_days' => 30])->save();
+        $this->assertNull($read());
+    }
+
     /** A newer moment replaces a draft nobody sent, and each moment is prepared once. */
     public function test_later_moments_replace_an_unsent_draft_and_come_once(): void
     {

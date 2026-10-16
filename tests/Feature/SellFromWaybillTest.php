@@ -98,4 +98,27 @@ class SellFromWaybillTest extends TestCase
         $this->assertSame(0, app(SellFromWaybill::class)->refresh($this->awbId));
         $this->assertCount(0, $this->lines());
     }
+
+    /**
+     * Walk 7: saving a waybill with no rate and no charges (demo 176-20004501, for its PDF) opened an empty draft
+     * invoice, which Money in then listed at INR 0.00. Nothing to bill opens nothing; lines it wrote before still go.
+     */
+    public function test_a_waybill_with_nothing_to_bill_opens_no_invoice(): void
+    {
+        DB::table('way_bill_consignment_data')->where('awb_id', $this->awbId)->update(['rate' => 0]);
+        DB::table('payment_info')->where('awb_id', $this->awbId)->update(['weight_charge' => 0,
+            'other_charges_due_agent_prepaid' => 0, 'other_charges_due_carrier_collect' => 0]);
+
+        $this->assertSame(0, app(SellFromWaybill::class)->refresh($this->awbId));
+        $this->assertSame(0, AccountsInvoice::withoutTenantScope()->where('job_id', $this->job->id)->count());
+
+        // A draft that already holds the waybill's lines: they are taken off, the draft stays for what people typed.
+        DB::table('way_bill_consignment_data')->where('awb_id', $this->awbId)->update(['rate' => 85]);
+        app(SellFromWaybill::class)->refresh($this->awbId);
+        DB::table('way_bill_consignment_data')->where('awb_id', $this->awbId)->update(['rate' => 0]);
+        app(SellFromWaybill::class)->refresh($this->awbId);
+
+        $this->assertCount(0, $this->lines());
+        $this->assertSame(1, AccountsInvoice::withoutTenantScope()->where('job_id', $this->job->id)->count());
+    }
 }

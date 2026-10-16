@@ -285,6 +285,32 @@ class ImportTest extends TestCase
         $this->assertDatabaseHas('job_entities', ['job_id' => $child->id, 'role' => 'consignee', 'party_id' => $this->client->id]);
     }
 
+    /**
+     * Walk 4 #41 (owner, 2026-10-10: a read-only line): a house shows its consol's arrival, IGM, filing and storage
+     * clock — read from the consol each time, never copied, so the two cannot drift. Its own fields stay its own.
+     */
+    public function test_a_house_shows_its_consols_arrival_without_copying_it(): void
+    {
+        $master = $this->as($this->ops)->postJson($this->url('/imports'))->json('job.id');
+        $this->as($this->ops)->postJson($this->url("/jobs/{$master}/import"), [
+            'arrived_at' => '2026-10-08 06:40', 'free_storage_days' => 3, 'igm_no' => '2341327', 'igm_date' => '2026-10-08',
+            'filing_status' => 'submitted',
+        ])->assertOk();
+        $child = $this->as($this->ops)->postJson($this->url("/jobs/{$master}/houses"), [])->assertCreated()->json('houses.0.id');
+
+        $consol = $this->as($this->ops)->getJson($this->url("/jobs/{$child}/import"))->assertOk()->json('consol');
+
+        $this->assertSame(Job::withoutTenantScope()->find($master)->execution_job_no, $consol['execution_job_no']);
+        $this->assertSame(['2341327', 'submitted', 3], [$consol['igm_no'], $consol['filing_status'], $consol['free_storage_days']]);
+        $this->assertStringStartsWith('2026-10-08 06:40', $consol['arrived_at']);
+        // The clock: no date written on the consol, so it runs from the consol's arrival plus its free days.
+        $this->assertSame('2026-10-11', $consol['storage_from']);
+        $this->assertNull(DB::table('air_import_details')->where('job_id', $child)->value('igm_no'), 'Nothing copied into the house.');
+
+        // A consol has no consol above it.
+        $this->assertNull($this->as($this->ops)->getJson($this->url("/jobs/{$master}/import"))->json('consol'));
+    }
+
     /** A consol made directly has no enquiry; its houses trace through it, and cannot be unlinked into nothing. */
     public function test_a_house_of_a_consol_with_no_enquiry_traces_through_it_and_stays_with_it(): void
     {

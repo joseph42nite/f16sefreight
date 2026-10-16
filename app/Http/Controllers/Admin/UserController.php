@@ -29,7 +29,8 @@ class UserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'origin_airport_code' => ['required', 'string', 'max:100'],
-            'company_name' => ['required', 'max:100'],
+            // Taken from the branch below; whatever is sent here is not trusted.
+            'company_name' => ['nullable', 'max:100'],
             // Every user has a branch, and therefore a company and a tier — that is what
             // makes tier resolution total in ProcessPdfOcrJob (guide §4.1.1). Was 'nullable',
             // which is how branchless users were created in the first place.
@@ -45,7 +46,8 @@ class UserController extends Controller
         $user = new User();
         $user->name = $request->name;
         $user->origin_airport_code = $request->origin_airport_code;
-        $user->company_name = $request->company_name;
+        // A person is in their branch's company — never the company the form happened to send (Walk 7; HANDOFF #421).
+        $user->company_name = (string) \App\Agent::whereKey($request->branch_name)->value('company_id');
         $user->branch_name = $request->branch_name;
         $user->email = $request->email;
         $user->designation = $request->designation;
@@ -70,9 +72,10 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'company_name' => ['required', 'string', 'max:100'],
+            'company_name' => ['nullable', 'max:100'],
             'branch_name' => ['required', 'integer', 'exists:agents_info,id'],
-            'plan_expiry_date' => ['required'],
+            // Never read (it is not enforced anywhere), so not demanded.
+            'plan_expiry_date' => ['nullable'],
             'can_send' => ['required'],
             // Optional on edit, so an older account with another value can still be saved unchanged.
             'designation' => ['nullable', 'in:' . implode(',', self::ROLES)],
@@ -80,7 +83,7 @@ class UserController extends Controller
 
         $user = User::find($id);
         $user->name = $request->name;
-        $user->company_name = $request->company_name;
+        $user->company_name = (string) \App\Agent::whereKey($request->branch_name)->value('company_id');
         $user->branch_name = $request->branch_name;
         $user->origin_airport_code = $request->origin_airport_code;
         // $user->daily_login_count=$request->daily_login_count;
@@ -119,8 +122,10 @@ class UserController extends Controller
 
             return response()->json($userPayload);
         } else {
+            // One session per person: this token was replaced by a newer sign-in. Said in so many words, so the
+            // sign-in page can tell them why they are there (Walk 4 #38) instead of dropping them without a reason.
             auth()->guard('user-api')->logout();
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json(['error' => 'Signed_In_Elsewhere'], 401);
         }
     }
 

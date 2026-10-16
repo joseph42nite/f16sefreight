@@ -72,11 +72,18 @@ class AgeingService
                 'j.execution_job_no as job_no',
                 DB::raw('COALESCE(c.name, p.name) AS party_name'),
                 DB::raw('COALESCE(c.email_domain, p.email) AS party_contact'),
+                // The client's terms, for a bill with no due date written on it (#55).
+                DB::raw("CASE WHEN COALESCE(i.billed_party_type, 'customer') = 'customer' THEN c.payment_terms_days END AS terms_days"),
+                DB::raw("COALESCE(i.billed_party_type, 'customer') = 'customer' AND i.customer_id IS NOT NULL AS is_client_bill"),
             ]);
 
         foreach ($rows as $row) {
-            // No due date set: the document date stands in, and the screen says so.
-            $due = Carbon::parse($row->due_date ?: $row->document_date)->startOfDay();
+            // No due date set: the client's terms decide it, as finalizing now writes it (#55, owner 2026-10-10) — the
+            // bill's date for cash and carry (0 days), else after the credit period. A partner's bill: its date. The
+            // screen says the date was worked out.
+            $terms = $row->is_client_bill ? (int) ($row->terms_days ?? config('client_grades.default_terms_days')) : 0;
+            $due = $row->due_date ? Carbon::parse($row->due_date)->startOfDay()
+                : Carbon::parse($row->document_date)->addDays($terms)->startOfDay();
 
             $row->due_assumed = $row->due_date === null;
             $row->due_on = $due->toDateString();

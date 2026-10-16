@@ -150,8 +150,8 @@ class InvoiceController extends Controller
                         'error'  => sprintf(
                             'Finalizing this invoice would put %s at %s against a limit of %s.',
                             $customer->name,
-                            number_format($check['projected'], 2),
-                            number_format($check['limit'], 2)
+                            \App\Support\Inr::format((float) $check['projected']),
+                            \App\Support\Inr::format((float) $check['limit'])
                         ),
                         'reason' => 'credit_limit_exceeded',
                         'credit' => $check,
@@ -207,10 +207,16 @@ class InvoiceController extends Controller
                 'tax_amount'  => $tax,
                 'grand_total' => $grandTotal,
                 'status'      => 'finalized',
+                // #55 (owner, 2026-10-10): due on the client's terms — the invoice date for cash and carry (0 days),
+                // else after the credit period. Written here so ageing and the payment grader read one date.
+                'due_date'    => $invoice->due_date ?? $invoice->termsDueDate(),
             ]);
 
             $this->audit->record($invoice->agent_id, 'invoice.finalized', 'invoice', $invoice->id, auth()->id());
         }, EnquirySequenceService::DEADLOCK_ATTEMPTS);
+
+        // The mail to the client's accounts, drafted now and sent only by a person (owner, 2026-10-10).
+        app(\App\Services\Billing\InvoiceMail::class)->stage($invoice->fresh());
 
         return response()->json($invoice->fresh());
     }
@@ -234,6 +240,14 @@ class InvoiceController extends Controller
             return response()->json([
                 'error'  => 'Finalize the invoice before posting it.',
                 'reason' => 'not_finalized',
+            ], 422);
+        }
+
+        // A void document is cancelled: it never reaches the ledger (Walk 7: the button was offered, and this posted it).
+        if ($invoice->status === 'void') {
+            return response()->json([
+                'error'  => 'This document is void, so it is not posted.',
+                'reason' => 'void',
             ], 422);
         }
 

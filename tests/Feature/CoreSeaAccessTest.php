@@ -84,4 +84,23 @@ class CoreSeaAccessTest extends TestCase
         $this->as($pricing)->postJson($this->url("/jobs/{$master['id']}/sea-shipment"), ['vessel_name' => 'X'])->assertForbidden();
         $this->as($pricing)->postJson($this->url("/sea-shipments/{$master['id']}/houses"), [])->assertForbidden();
     }
+    /**
+     * Sales READ the bills of lading (owner, 2026-10-09: "sure"; Walk 4 #42). Their FocusSea menu offers Bills of Lading and
+     * Consolidation, and the page it opened was refused (403) and read "Something went wrong". Reading only: they cannot make
+     * or change a bill.
+     */
+    public function test_sales_read_the_bills_but_cannot_write_them(): void
+    {
+        $ops = $this->user('tactical', 'operations', 'CSD');
+        $master = $this->as($ops)->postJson($this->url('/sea-shipments'), [])->assertCreated()->json('job');
+        $sales = User::create(['name' => 's', 'email' => 'csd-sales@test.local', 'password' => Hash::make('x'),
+            'company_name' => $ops->company_name, 'branch_name' => $ops->branch_name, 'designation' => 'sales', 'is_active' => 1]);
+
+        $this->as($sales)->getJson($this->url('/sea-shipments'))->assertOk();
+        $this->as($sales)->getJson($this->url("/jobs/{$master['id']}/sea-shipment"))->assertOk();
+        $this->as($sales)->getJson($this->url("/jobs/{$master['id']}/consol"))->assertOk();
+
+        $this->as($sales)->postJson($this->url('/sea-shipments'), [])->assertForbidden();
+        $this->as($sales)->postJson($this->url("/jobs/{$master['id']}/sea-shipment"), ['vessel_name' => 'X'])->assertForbidden();
+    }
 }

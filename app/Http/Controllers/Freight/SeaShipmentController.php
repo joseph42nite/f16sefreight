@@ -196,7 +196,7 @@ class SeaShipmentController extends Controller
      */
     public function printBl(Job $job, \App\Services\BlPdf $pdf)
     {
-        $this->authorize('viewDocuments');
+        $this->authorize('printDocuments');
 
         abort_unless($job->transport_mode === 'sea', 404, 'Only a sea shipment has a bill of lading.');
 

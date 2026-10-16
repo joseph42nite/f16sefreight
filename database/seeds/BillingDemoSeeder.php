@@ -287,8 +287,9 @@ class BillingDemoSeeder extends Seeder
         foreach ($branches as $branch) {
             if (! DB::table('accounting_periods')->where('agent_id', $branch)->where('status', 'open')->exists()) {
                 DB::table('accounting_periods')->insert([
-                    'agent_id' => $branch, 'period_name' => 'FY' . now()->format('y'),
-                    'start_date' => now()->startOfYear()->toDateString(), 'end_date' => now()->endOfYear()->toDateString(),
+                    // The financial year, 1 April to 31 March (owner, 2026-10-09), not the calendar year.
+                    'agent_id' => $branch, 'period_name' => \App\Support\FinancialYear::label(),
+                    'start_date' => \App\Support\FinancialYear::start()->toDateString(), 'end_date' => \App\Support\FinancialYear::end()->toDateString(),
                     'status' => 'open', 'created_at' => now(), 'updated_at' => now(),
                 ]);
             }

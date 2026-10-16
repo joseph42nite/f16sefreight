@@ -155,6 +155,28 @@ class InvoiceFinalizeTest extends TestCase
      * agree on — that it is REFUSED and nothing is written — until that is settled.
      * See GAPS.md.
      */
+    /**
+     * #55 (owner, 2026-10-10): a client is cash and carry (0-day terms: pay before we execute, so the bill is due on its
+     * date) or on credit (due after its credit period). Finalizing writes that due date, so ageing and the payment
+     * grader read one answer. A due date somebody typed on the draft stands.
+     */
+    public function test_finalizing_sets_the_due_date_from_the_clients_terms(): void
+    {
+        $due = function (int $terms, ?string $typed = null): ?string {
+            $this->customer->forceFill(['payment_terms_days' => $terms])->save();
+            $id = $this->draft();
+            DB::table('accounts_invoices')->where('id', $id)->update(['document_date' => '2026-10-09', 'due_date' => $typed]);
+            $this->api()->postJson($this->url("/api/invoices/{$id}/finalize"))->assertOk();
+
+            return substr((string) DB::table('accounts_invoices')->where('id', $id)->value('due_date'), 0, 10) ?: null;
+        };
+
+        $this->assertSame('2026-11-08', $due(30));
+        $this->assertSame('2026-10-24', $due(15));
+        $this->assertSame('2026-10-09', $due(0), 'Cash and carry: due on the invoice date.');
+        $this->assertSame('2026-10-20', $due(30, '2026-10-20'), 'A typed due date stands.');
+    }
+
     public function test_posting_into_a_closed_period_is_refused(): void
     {
         $invoiceId = $this->draft();

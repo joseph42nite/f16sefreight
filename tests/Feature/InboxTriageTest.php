@@ -104,6 +104,38 @@ class InboxTriageTest extends TestCase
         return $id;
     }
 
+    // ─── What the workspace is offered ───────────────────────────────────────
+
+    /**
+     * 🔴 Walk 4 #30. The workspace falls back to what the mail said, and read only the parser's `staged_cargo`. An enquiry
+     * whose cargo and route were already committed still showed Origin, Destination, Pieces and Weight as "not set",
+     * and the draft waybill saved from it had no departure or destination. It must offer the enquiry's own figures,
+     * and the parser's staged cargo still wins when there is one.
+     */
+    public function test_a_thread_with_nothing_staged_offers_what_its_enquiry_holds(): void
+    {
+        $enquiry = \App\Enquiry::create([
+            'agent_id' => $this->branch->id, 'transport_mode' => 'air', 'enquiry_no' => 'ENQA-IBXBOM-26-0901',
+            'extracted_pieces' => 6, 'extracted_weight' => 240, 'origin_code' => 'BOM', 'dest_code' => 'FRA',
+        ]);
+        $id = $this->thread(['classification' => 'customer_enquiry', 'enquiry_id' => $enquiry->id]);
+
+        $cargo = $this->api($this->pricing)->getJson($this->url("/api/inbox/threads/{$id}"))
+            ->assertOk()->json('thread.staged_cargo');
+
+        $this->assertSame(6, $cargo['pieces']);
+        $this->assertEquals(240, $cargo['gross_weight']);
+        $this->assertSame('BOM', $cargo['origin']);
+        $this->assertSame('FRA', $cargo['destination']);
+
+        // What the parser staged is still what the panel gets.
+        $staged = $this->thread(['classification' => 'customer_enquiry', 'enquiry_id' => $enquiry->id,
+            'staged_cargo' => json_encode(['pieces' => ['value' => 21, 'confidence' => 'high']])]);
+
+        $this->assertSame(21, $this->api($this->pricing)->getJson($this->url("/api/inbox/threads/{$staged}"))
+            ->assertOk()->json('thread.staged_cargo.pieces.value'));
+    }
+
     // ─── Who the enquiry is from ─────────────────────────────────────────────
 
     /**

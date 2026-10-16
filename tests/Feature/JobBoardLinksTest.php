@@ -122,6 +122,40 @@ class JobBoardLinksTest extends TestCase
         $this->assertSame('Departed on EK 511', $body['statuses'][1]['description']);
     }
 
+    /**
+     * Walk 4 #31: the drawer offered "Open the message log" for a job whose waybill was never made, and the log said
+     * "No AirwayBill Found" (404). Tracking now says whether the waybill exists, so the drawer can say "not made yet".
+     */
+    public function test_tracking_says_whether_the_waybill_has_been_made(): void
+    {
+        [$jobId] = $this->job('Intake', '176-90000005');
+        $tracking = fn () => $this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->operator),
+            'Accept' => 'application/json',
+        ])->getJson("http://focusair.localhost/api/jobs/{$jobId}/tracking")->assertOk()->json('has_waybill');
+
+        $this->assertFalse($tracking());
+
+        DB::table('air_way_bills')->insert(['id' => 17690000005, 'awb_code' => '176', 'awb_no' => '90000005',
+            'agent_id' => $this->branch->id, 'job_id' => $jobId, 'status' => 'draft', 'created_at' => now(), 'updated_at' => now()]);
+
+        $this->assertTrue($tracking());
+    }
+
+    /** The same answer on the card: its ⌸ message-log link is offered only when the log has the waybill. */
+    public function test_a_card_says_whether_its_waybill_has_been_made(): void
+    {
+        [$without] = $this->job('Sent to Airline', '176-90000006');
+        [$with] = $this->job('Sent to Airline', '176-90000007');
+        // Made before the job was linked: found by its number in the branch, as the Message Log searches.
+        DB::table('air_way_bills')->insert(['id' => 17690000007, 'awb_code' => '176', 'awb_no' => '90000007',
+            'agent_id' => $this->branch->id, 'status' => 'send', 'created_at' => now(), 'updated_at' => now()]);
+
+        $board = $this->board();
+
+        $this->assertSame([false, true], [$board[$without]['has_waybill'], $board[$with]['has_waybill']]);
+    }
+
     /** 🔒 Another operator's shipment is not on this operator's board, so it is not trackable from it either. */
     public function test_tracking_refuses_a_job_that_is_not_on_the_callers_board(): void
     {
@@ -240,14 +274,14 @@ class JobBoardLinksTest extends TestCase
             ->getJson('http://focusair.localhost/api/enquiries?unclaimed=1')->assertOk()->json('data');
     }
 
-    /** Pool card, Tactical: the client's domain and when its mail came in (user, 2026-09-16). */
-    public function test_tactical_pool_cards_show_the_domain_and_when_the_mail_came(): void
+    /** Pool card, Tactical: the client's name (owner, 2026-10-10; the domain before) and when its mail came in. */
+    public function test_tactical_pool_cards_show_the_client_and_when_the_mail_came(): void
     {
         [$users] = $this->poolEnquiry('tactical');
 
         $card = $this->pool($users['operations'])[0];
 
-        $this->assertSame('globex.test', $card['client_label']);
+        $this->assertSame('Globex Industries', $card['client_label']);
         $this->assertSame(now()->subHours(3)->startOfMinute()->toDateTimeString(), \Illuminate\Support\Carbon::parse($card['received_at'])->toDateTimeString());
     }
 

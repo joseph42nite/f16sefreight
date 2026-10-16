@@ -17,7 +17,7 @@
         <footer class="fx-modal__foot">
           <button class="fx-btn fx-btn--ghost" :disabled="busy" @click="later">Later</button>
           <button class="fx-btn fx-btn--primary" :disabled="busy" @click="connect">
-            {{ busy ? "Opening Microsoft…" : "Connect Outlook" }}
+            {{ connecting ? "Opening Microsoft…" : "Connect Outlook" }}
           </button>
         </footer>
       </div>
@@ -26,7 +26,7 @@
     <div v-else-if="showReminder" class="fx-reminder" role="status">
       <span>Your Outlook is not connected, so your mail is not here yet.</span>
       <button class="fx-btn fx-btn--primary" :disabled="busy" @click="connect">
-        {{ busy ? "Opening Microsoft…" : "Connect Outlook" }}
+        {{ connecting ? "Opening Microsoft…" : "Connect Outlook" }}
       </button>
       <button class="fx-btn fx-btn--ghost" aria-label="Hide until next sign-in" @click="hidden = true">✕</button>
     </div>
@@ -41,8 +41,13 @@ import { getMe } from "@/core/services/me";
 /** Asks pricing, operations, sales, the Boss and accounts to connect their own Outlook (user, 2026-09-16). */
 export default {
   name: "MailboxWelcome",
-  data: () => ({ state: null, busy: false, error: null, hidden: false }),
+  /* `connecting` is Connect's own: "Later" waiting on the server relabelled Connect as "Opening Microsoft…" while both
+     shared `busy` (Walk 3 #27). Either one waiting still stops both buttons. */
+  data: () => ({ state: null, connecting: false, deferring: false, error: null, hidden: false }),
   computed: {
+    busy() {
+      return this.connecting || this.deferring;
+    },
     showReminder() {
       const onMailPages = ["/settings"].includes(this.$route.path) || this.$route.path.startsWith("/mailbox-import");
       return !this.state.connected && !this.hidden && !onMailPages;
@@ -53,21 +58,21 @@ export default {
   },
   methods: {
     connect() {
-      this.busy = true;
+      this.connecting = true;
       this.error = null;
       ApiService.post("/user/mailboxes/connect", { provider: "outlook" })
         .then(({ data }) => { window.location.href = data.authorization_url; })
         .catch((e) => {
           this.error = (e.response && e.response.data && e.response.data.error) || "Could not start the Outlook sign-in.";
-          this.busy = false;
+          this.connecting = false;
         });
     },
     later() {
-      this.busy = true;
+      this.deferring = true;
       ApiService.post("/user/mailbox-prompt/later")
         .then(() => { this.state = { ...this.state, ask: false }; })
         .catch(() => { this.state = { ...this.state, ask: false }; })
-        .finally(() => { this.busy = false; });
+        .finally(() => { this.deferring = false; });
     },
   },
 };

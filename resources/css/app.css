@@ -255,6 +255,8 @@ body {
             background: var(--bg-surface); color: var(--text-primary);
             font-family: var(--font-sans); font-size: .8125rem; min-width: 14rem; }
 .fx-input:focus { border-color: var(--border-strong); }
+/* A text area keeps the height its `rows` give it — the 32 px above made every one a single line (Walk 7). */
+textarea.fx-input { height: auto; min-height: 4.5rem; padding: var(--space-2); line-height: 1.45; resize: vertical; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    §5.4 Drawer — right side, sticky footer, split by default.

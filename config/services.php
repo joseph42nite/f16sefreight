@@ -62,13 +62,6 @@ return [
      */
     // Read through config(), never env() in app code: once `config:cache` runs, env() returns null and a
     // secret check silently fails open or shut.
-    'openclaw' => ['hmac_secret' => env('OPENCLAW_HMAC_SECRET')],
-    'telegram' => [
-        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
-        'admin_chat_id' => env('TELEGRAM_ADMIN_CHAT_ID'),
-        // Set as `secret_token` when registering the bot's webhook; Telegram sends it back on every callback.
-        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
-    ],
     // The GLN/IATA status feed posts to /api/gln-response?token=… (or the X-GLN-Token header).
     'gln' => ['token' => env('GLN_WEBHOOK_TOKEN')],
     // CurrencyFreaks — the provider this key has always been for (legacy CurrencyRateController, 2024). The free plan

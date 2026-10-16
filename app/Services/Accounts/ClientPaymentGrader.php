@@ -34,7 +34,8 @@ class ClientPaymentGrader
     {
         $end = $month->copy()->endOfMonth()->startOfDay();
         $windowStart = $month->copy()->startOfMonth()->subMonths((int) config('client_grades.window_months') - 1);
-        $terms = (int) ($customer->payment_terms_days ?: config('client_grades.default_terms_days'));
+        // `??`, not `?:` — 0 days is cash and carry, due the day the bill is raised (#55), not the 30-day default.
+        $terms = (int) ($customer->payment_terms_days ?? config('client_grades.default_terms_days'));
 
         $bills = DB::table('accounts_invoices')->where('customer_id', $customer->id)
             ->whereIn('type', self::BILLS)->whereIn('status', self::ISSUED)

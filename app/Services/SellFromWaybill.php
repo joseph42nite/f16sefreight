@@ -69,7 +69,14 @@ class SellFromWaybill
         }
 
         return DB::transaction(function () use ($job, $lines) {
-            $invoice = $this->invoiceFor($job);
+            // Nothing to bill opens nothing (Walk 7): a waybill saved with no rate and no charges made an empty draft
+            // that Money in listed at INR 0.00. A draft already holding the waybill's lines still loses them.
+            $invoice = $lines ? $this->invoiceFor($job)
+                : AccountsInvoice::withoutTenantScope()->where('job_id', $job->id)->where('status', 'draft')->first();
+
+            if ($invoice === null) {
+                return 0;
+            }
 
             AccountsInvoiceItem::where('invoice_id', $invoice->id)->where('source', self::SOURCE)->delete();
 

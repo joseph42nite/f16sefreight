@@ -92,10 +92,11 @@ import Collections from "@/view/pages/freight/Collections.vue";
 
 /** The filter each document stage implies — the register is one query, the stage is which slice of it. */
 const STAGE_FILTERS = {
-  to_bill: { awaiting: true, own_drafts: false, status: "" },
-  drafts: { awaiting: false, own_drafts: true, status: "" },
-  issued: { awaiting: false, own_drafts: false, status: "" },
-  money_in: { awaiting: false, own_drafts: false, status: "" },
+  to_bill: { awaiting: true, own_drafts: false, issued: false, status: "" },
+  drafts: { awaiting: false, own_drafts: true, issued: false, status: "" },
+  // Without the drafts, as its count is (Walk 7: the list showed every draft too).
+  issued: { awaiting: false, own_drafts: false, issued: true, status: "" },
+  money_in: { awaiting: false, own_drafts: false, issued: false, status: "" },
 };
 
 export default {

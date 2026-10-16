@@ -234,6 +234,11 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::delete('/system-templates/{id}', [TemplateController::class, 'delete']);
 
     //branch related work by admin
+    // The platform Overview: the graphs and what needs F16s staff (owner, 2026-10-11).
+    Route::get('/overview', [\App\Http\Controllers\Platform\OverviewController::class, 'index']);
+    // Tenants, one page: every company with its branches and people (owner, 2026-10-11).
+    Route::get('/tenants', [\App\Http\Controllers\Platform\TenantController::class, 'index']);
+    Route::get('/tenants/{company}', [\App\Http\Controllers\Platform\TenantController::class, 'show'])->whereNumber('company');
     Route::post('/create-branch', [BranchController::class, 'register']);
     Route::put('/edit-branch/{id}', [BranchController::class, 'update']);
     Route::get('/all-branch/{id?}', [BranchController::class, 'index']);
@@ -256,8 +261,6 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     // The website's contact form submissions — read and deleted by F16s staff only.
     Route::get('/all-contacts', [ContactController::class, 'index']);
     Route::delete('/delete-contact/{id}', [ContactController::class, 'delete']);
-    // OpenClaw blog actions waiting for approval.
-    Route::get('/openclaw/pending', [\App\Http\Controllers\OpenClawController::class, 'getPendingActions']);
 });
 
 // 🔒 Sign-in and password reset are rate limited: they are where a stranger guesses.
@@ -279,9 +282,6 @@ Route::post('/gln-response', [GLNResponseController::class, 'store'])->middlewar
 Route::get('/get-public-blogs', [BlogController::class, 'index']);
 Route::get('/get-public-blog/{slug}', [BlogController::class, 'show']);
 
-// OpenClaw Integration Routes
-Route::post('/openclaw/webhook', [\App\Http\Controllers\OpenClawController::class, 'webhook'])->middleware('openclaw.verify');
-
 // 🔴 UNAUTHENTICATED BY NECESSITY. Microsoft redirects a BROWSER here with no
 // Authorization header, so the acting user is carried in `state` — a random key into a
 // short-lived cache entry, consumed on use. See MailboxController::callback.
@@ -299,7 +299,6 @@ Route::middleware('throttle:30,1')->group(function () {
 // Setu's notice that a bank consent changed or a statement is ready (GAPS #442). UNAUTHENTICATED: the body is only used
 // to find the account, which is then read from Setu with our own keys — see BankFeedController::notify.
 Route::post('/bank-feed/setu', [\App\Http\Controllers\Freight\BankFeedController::class, 'notify'])->middleware('throttle:60,1');
-Route::post('/openclaw/telegram-callback', [\App\Http\Controllers\OpenClawController::class, 'telegramCallback']);
 /*
 |--------------------------------------------------------------------------
 | Freight OS — lifecycle (guide §5.2)
@@ -406,6 +405,7 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // ── Triage (§5.1). Threads, never individual messages: a conversation is the
     // unit of work, and classifying one message of five mints a second enquiry.
     Route::get('/inbox/threads', [\App\Http\Controllers\Freight\EmailInboxController::class, 'index']);
+    Route::get('/inbox/address-book', [\App\Http\Controllers\Freight\EmailInboxController::class, 'addressBook']);
     Route::post('/inbox/compose', [\App\Http\Controllers\Freight\EmailInboxController::class, 'compose']);
     Route::get('/inbox/threads/{thread}', [\App\Http\Controllers\Freight\EmailInboxController::class, 'show']);
     Route::get('/inbox/messages/{message}/body', [\App\Http\Controllers\Freight\EmailInboxController::class, 'messageBody']);
@@ -653,7 +653,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
         Route::put('/billing/{id}', [\App\Http\Controllers\Freight\BillingController::class, 'update'])->whereNumber('id');
         // Accounts' correction of who a draft bills — moves the shipment's client with it (owner, 2026-09-29).
         Route::put('/billing/{id}/client', [\App\Http\Controllers\Freight\BillingController::class, 'changeClient'])->whereNumber('id');
+        Route::post('/billing/{id}/bill-to', [\App\Http\Controllers\Freight\BillingController::class, 'billTo'])->whereNumber('id');
         Route::post('/billing/{id}/void', [\App\Http\Controllers\Freight\BillingController::class, 'void'])->whereNumber('id');
+        Route::post('/billing/{id}/client-mail', [\App\Http\Controllers\Freight\BillingController::class, 'clientMail'])->whereNumber('id');
         Route::post('/billing/{id}/lines', [\App\Http\Controllers\Freight\BillingController::class, 'storeLine'])->whereNumber('id');
         Route::put('/billing/{id}/lines/{lineId}', [\App\Http\Controllers\Freight\BillingController::class, 'updateLine'])->whereNumber('id');
         Route::delete('/billing/{id}/lines/{lineId}', [\App\Http\Controllers\Freight\BillingController::class, 'destroyLine'])->whereNumber('id');

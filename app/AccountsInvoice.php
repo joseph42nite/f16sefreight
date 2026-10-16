@@ -84,6 +84,8 @@ class AccountsInvoice extends Model
          */
         'document_date' => 'date:Y-m-d',
         'due_date'      => 'date:Y-m-d',
+        // The invoice mail to the client's accounts: the waiting draft, then what was decided (owner, 2026-10-10).
+        'client_mail'   => 'array',
         'subtotal'      => 'decimal:2',
         'tax_amount'    => 'decimal:2',
         'grand_total'   => 'decimal:2',
@@ -136,8 +138,30 @@ class AccountsInvoice extends Model
     }
 
     /** grand_total - amount_paid. Read on every AR screen and credit check. */
+    /**
+     * When a client's bill falls due on their terms (#55, owner 2026-10-10): cash and carry (0 days) pay before we
+     * execute, so on the bill's own date; on credit, after the credit period. NULL for a bill to no client (a partner's)
+     * or a credit note, which nobody pays.
+     */
+    public function termsDueDate(): ?string
+    {
+        if ($this->customer_id === null || $this->type === 'credit_note' || $this->document_date === null) {
+            return null;
+        }
+
+        $terms = Customer::withoutTenantScope()->whereKey($this->customer_id)->value('payment_terms_days');
+
+        return \Illuminate\Support\Carbon::parse($this->document_date)
+            ->addDays((int) ($terms ?? config('client_grades.default_terms_days')))->toDateString();
+    }
+
     public function outstanding(): float
     {
+        // A void document is cancelled: nothing is left to settle on it (Walk 7).
+        if ($this->status === 'void') {
+            return 0.0;
+        }
+
         return round((float) $this->grand_total - (float) $this->amount_paid, 2);
     }
 

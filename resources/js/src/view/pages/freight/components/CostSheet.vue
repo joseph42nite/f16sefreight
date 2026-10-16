@@ -170,6 +170,8 @@
             <span v-else>{{ Number(sheet.margin.percent).toFixed(2) }}%</span>
           </dd>
         </dl>
+        <!-- Walk 4 #33: no buy line means nothing has been measured, so there is no margin to show, not a 100% one. -->
+        <p v-if="sheet.margin.costed === false" class="fx-muted">No cost entered yet, so there is no margin to show.</p>
       </section>
 
       <!--
@@ -197,14 +199,14 @@
           <header class="fx-modal__head"><h2 id="send-accounts-title" class="fx-modal__title">Send this cost sheet to accounts?</h2></header>
           <div class="fx-modal__body">
             <table class="fx-table">
-              <thead><tr><th scope="col">Charge</th><th class="fx-num" scope="col">Qty</th><th class="fx-num" scope="col">Rate</th><th class="fx-num" scope="col">Net</th></tr></thead>
+              <thead><tr><th scope="col">Charge</th><th class="fx-num" scope="col">Qty</th><th class="fx-num" scope="col">Rate</th><th class="fx-num" scope="col">Amount, before tax</th></tr></thead>
               <tbody>
                 <tr><td colspan="4"><strong>Sell — what the client is billed</strong></td></tr>
                 <tr v-for="l in sheet.sell.lines" :key="'c-sell-' + l.id">
                   <td>{{ l.description }}</td>
                   <td class="fx-num"><Figure :value="l.quantity" kind="count" /></td>
                   <td class="fx-num"><Figure :value="l.rate" kind="currency" currency-code="INR" /></td>
-                  <td class="fx-num"><Figure :value="l.net_amount" kind="currency" currency-code="INR" /></td>
+                  <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
                 </tr>
                 <tr><td colspan="3"><strong>Sell total</strong></td><td class="fx-num"><Figure :value="sheet.sell.total" kind="currency" currency-code="INR" /></td></tr>
                 <template v-if="sheet.buy">
@@ -213,7 +215,7 @@
                     <td>{{ l.description }}</td>
                     <td class="fx-num"><Figure :value="l.quantity" kind="count" /></td>
                     <td class="fx-num">—</td>
-                    <td class="fx-num"><Figure :value="l.net_amount" kind="currency" currency-code="INR" /></td>
+                    <td class="fx-num"><Figure :value="l.amount" kind="currency" currency-code="INR" /></td>
                   </tr>
                   <tr><td colspan="3"><strong>Buy total</strong></td><td class="fx-num"><Figure :value="sheet.buy.total" kind="currency" currency-code="INR" /></td></tr>
                 </template>
@@ -222,6 +224,7 @@
                   <td class="fx-num">
                     <Figure :value="sheet.margin.value" kind="currency" currency-code="INR" />
                     <span v-if="sheet.margin.percent !== null" class="fx-muted"> · {{ sheet.margin.percent }}%</span>
+                    <span v-if="sheet.margin.costed === false" class="fx-muted"> no cost entered yet</span>
                   </td>
                 </tr>
               </tbody>

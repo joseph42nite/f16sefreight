@@ -136,8 +136,29 @@ class JobController extends Controller
 
         return response()->json([
             'awb_number' => $job->awb_number,
+            'has_waybill' => $this->withWaybill(collect([$job]))->contains($job->id),
             'statuses' => $statuses->values(),
         ]);
+    }
+
+    /**
+     * The jobs whose waybill the Message Log can open (Walk 4 #31). A job can carry its AWB number long before anyone
+     * makes the waybill, and the log then says "No AirwayBill Found" (404). The log searches by number in the branch,
+     * so a waybill counts when it is linked to the job or carries its number there. One query for the whole page.
+     */
+    private function withWaybill($jobs): \Illuminate\Support\Collection
+    {
+        $numbered = $jobs->filter(fn ($j) => strlen(preg_replace('/\D/', '', (string) $j->awb_number)) === 11);
+
+        $found = DB::table('air_way_bills')
+            ->where(fn ($q) => $q->whereIn('job_id', $jobs->pluck('id'))
+                ->orWhere(fn ($q) => $q->whereIn('agent_id', $numbered->pluck('agent_id')->unique())
+                    ->whereIn(DB::raw("CONCAT(awb_code, awb_no)"), $numbered->map(fn ($j) => preg_replace('/\D/', '', $j->awb_number))->values())))
+            ->get(['job_id', 'agent_id', 'awb_code', 'awb_no']);
+
+        return $jobs->filter(fn ($j) => $found->contains(fn ($w) => (int) $w->job_id === (int) $j->id
+            || ((int) $w->agent_id === (int) $j->agent_id && $w->awb_code . $w->awb_no === preg_replace('/\D/', '', (string) $j->awb_number))))
+            ->pluck('id');
     }
 
     /**
@@ -160,7 +181,10 @@ class JobController extends Controller
             ->get(['business_id', 'condition_code'])
             ->groupBy('business_id');
 
-        $jobs->each(function (Job $job) use ($threads, $statuses) {
+        $withWaybill = $this->withWaybill($jobs);
+
+        $jobs->each(function (Job $job) use ($threads, $statuses, $withWaybill) {
+            $job->setAttribute('has_waybill', $withWaybill->contains($job->id));
             // The job's own thread first; the enquiry's when the job was never linked to one.
             $thread = $threads->firstWhere('job_id', $job->id)
                 ?? ($job->enquiry_id ? $threads->firstWhere('enquiry_id', $job->enquiry_id) : null);

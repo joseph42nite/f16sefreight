@@ -91,10 +91,11 @@ class EnquiryController extends Controller
         //
         //   Command  — the customer RECORD, so the row reaches invoicing, credit and the
         //              client group. `customer_id` travels with it.
-        //   Tactical — the DOMAIN (user, 2026-09-16), for every role. There is no accounts module to reach, so an
-        //              id is a handle to nothing, and on Tactical a client is known by the domain it writes from.
+        //   Tactical — the client's NAME once its domain is saved on a client record, else the domain it writes from:
+        //              sales first (owner, 2026-10-09: "show whatever is possible apart from accounting or assigning
+        //              jobs"), then pricing and operations too (owner, 2026-10-10). The record itself stays out of reach
+        //              below Command: no id, no relation — there is no accounts module to open it in.
         $isCommand = $context->tierAtLeast('command');
-        $namesHidden = ! $isCommand;
 
         // One query each for the page's threads and sender domains — not two per row.
         $ids = $enquiries->getCollection()->pluck('id');
@@ -107,14 +108,14 @@ class EnquiryController extends Controller
             ? DB::table('users')->whereIn('id', $enquiries->getCollection()->pluck('pricing_id')->filter())->pluck('name', 'id')
             : collect();
 
-        $enquiries->getCollection()->transform(function ($enquiry) use ($isCommand, $namesHidden, $threads, $firstMail, $pricingOwners) {
+        $enquiries->getCollection()->transform(function ($enquiry) use ($isCommand, $threads, $firstMail, $pricingOwners) {
             $enquiry->pricing_owner = $pricingOwners[$enquiry->pricing_id] ?? null;
             $domain = $firstMail[$enquiry->id]['domain'] ?? null;
             // When the client's mail came in — the pool card shows it and how long it has waited.
             $enquiry->received_at = $firstMail[$enquiry->id]['received_at'] ?? $enquiry->created_at;
 
             $enquiry->client_domain = $enquiry->customer->email_domain ?? $domain;
-            $enquiry->client_label = $namesHidden ? $enquiry->client_domain : ($enquiry->customer->name ?? $domain);
+            $enquiry->client_label = $enquiry->customer->name ?? $enquiry->client_domain;
 
             // ⚠️ The THREAD is what gets claimed, so the pool needs its id to offer the
             // button. Claiming from the board and claiming from the inbox are the same
@@ -123,7 +124,7 @@ class EnquiryController extends Controller
 
             // ⚠️ Below Command the id is REMOVED, not merely unused. A tier that cannot
             // open a customer record has no business carrying a key to one.
-            if (! $isCommand || $namesHidden) {
+            if (! $isCommand) {
                 $enquiry->makeHidden('customer');
                 $enquiry->customer_id = null;
             }

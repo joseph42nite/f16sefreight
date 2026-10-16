@@ -146,7 +146,8 @@
                                 <hr class="hr" />
                                 <!-- SHIPPER AND CONSIGNEE ADDRESS SECTION START -->
                                 <b-row class="my-4 my-md-10">
-                                    <b-col cols="12" md="6">
+                                    <!-- Side by side only from 992 px: at 800 px each half was too narrow for its boxes (Walk 7 #56). -->
+                                    <b-col cols="12" lg="6">
                                         <b-col cols="auto">
                                             <h4 class="h-color ml-2">
                                                 Shipper
@@ -305,7 +306,7 @@
                                                 later logins</b-form-checkbox>
                                         </b-form-group>
                                     </b-col>
-                                    <b-col cols="12" md="6" class="mt-6 mt-md-0 mt-lg-0">
+                                    <b-col cols="12" lg="6" class="mt-6 mt-lg-0">
                                         <b-col cols="auto">
                                             <h4 class="h-color ml-2">
                                                 Consignee
@@ -518,15 +519,16 @@
                                                 <!-- <div class="d-flex flex-column align-items-center"> -->
                                                     <!-- <div class="container"> -->
                                                         <div class="table-responsive" style="overflow: visible !important;">
-                                                        <table class="table" style="max-width:100%;width:100%;min-width:650px !important;">
+                                                        <!-- Fits its column: the wrapper cannot scroll (the airport lists drop below the rows), so a forced 650 px ran past the card at 800 px and hid the Date (Walk 4 #32). -->
+                                                        <table class="table fx-routing" style="max-width:100%;width:100%;">
                                                             <thead>
                                                                 <tr class="">
                                                                     <th class="" style="color:#355594; width: 8%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">&nbsp;</th>
-                                                                    <th class="" style="color:#355594; width: 21%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">From</th>
-                                                                    <th class="" style="color:#355594; width: 21%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">To</th>
+                                                                    <th class="" style="color:#355594; width: 18%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">From</th>
+                                                                    <th class="" style="color:#355594; width: 18%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">To</th>
                                                                     <th class="" style="color:#355594; width: 11%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">By</th>
-                                                                    <th class="" style="color:#355594; width: 14%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">Flight</th>
-                                                                    <th class="" style="color:#355594; width: 20%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">Date</th>
+                                                                    <th class="" style="color:#355594; width: 12%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">Flight</th>
+                                                                    <th class="" style="color:#355594; width: 28%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;">Date</th>
                                                                     <th class="" style="color:#355594; width: 5%; padding: 12px 6px !important; border-bottom: 1px solid rgba(53, 85, 148, 0.08) !important;"></th>
                                                                 </tr>
                                                             </thead>
@@ -2453,13 +2455,12 @@
                                     <div class="d-flex justify-content-between">
                                         <div v-if="is_generate_pdf" class="mb-24" style="box-shadow: 0px 3px 15px 0px #0013;border-radius: 12px;width: 100%;">
                                             <div class="" style="display:flex;width:96%;margin-left: 2%;margin-right: 2%;">
-                                                <div style="display:flex;justify-content: start;color:#355594;font-size:15px;line-height:71px;font-weight:500;width:100%">Cargo document created</div>
+                                                <div style="display:flex;justify-content: start;color:#355594;font-size:15px;line-height:71px;font-weight:500;width:100%">Choose the PDF</div>
                                                 <div style="display:flex;justify-content: end;line-height: 71px;align-self: center;width:100%" @click="isGeneratePdf(generateButton=0);"><img src="/media/assets/ui/cross.png" alt="cross button" style="width:24px;height: 24px;cursor: pointer;"></div>
                                             </div>
                                             <div style="width:96%;margin-left: 2%;margin-right: 2%;">
                                                 <div style="width:100%;">
-                                                    <p style="color:#4C4C4C;font-size: 13px;line-height:13px;font-weight: 400;margin: 0;">Airway bill message saved in database</p>
-                                                    <p style="color:#4C4C4C;font-size: 13px;line-height:18px;font-weight: 400;border-bottom: 1px solid #CDCDCD;padding-bottom: 15px;">PDF documents prepared</p>
+                                                                                                        <p style="color:#4C4C4C;font-size: 13px;line-height:18px;font-weight: 400;border-bottom: 1px solid #CDCDCD;padding-bottom: 15px;">Each link checks and saves the waybill first, then opens the PDF. Nothing is saved until you pick one.</p>
                                                 </div>
                                             </div>
                                             <div class="mb-16" style="width:96%;margin-left: 2%;margin-right: 2%;">
@@ -3119,29 +3120,8 @@ export default {
 
         // Clear error message if validation passes
         this.pdf_error_msg = '';
-        this.is_generate_pdf = generateButton === 1;
-            // Start the progress bar animation
-            if(generateButton == 0 && this.is_generate_pdf == 1) {
-                this.is_generate_pdf = 0;
-            }
-            
-            if(generateButton == 1 && this.is_generate_pdf == 1) {
-                this.showSpinner = true;
-                this.is_generate_pdf = 0;
-            }
-            if(generateButton == 1 && this.is_generate_pdf == 0) {
-                this.showSpinner = true;
-            }
-            setTimeout(() => {
-                if(generateButton == 1 && this.is_generate_pdf == 1) {
-                    this.showSpinner = false;
-                    this.is_generate_pdf = 1;
-                }
-                if(generateButton == 1 && this.is_generate_pdf == 0) {
-                    this.showSpinner = false;
-                    this.is_generate_pdf = 1;
-                }
-            }, 2000);
+        // Show the choice straight away: nothing is saved or made until a layout is clicked (Walk 2 #18).
+        this.is_generate_pdf = generateButton === 1 ? 1 : 0;
         },
         // generateAwbPDF() {
         //     // const itemId = this.$route.params.id;
@@ -3914,6 +3894,12 @@ export default {
 </script>
 
 <style scoped>
+/* The routing table's boxes: no room kept for an icon inside them — the calendar has its own column (Walk 4 #32). */
+.fx-routing ::v-deep .mx-input, .fx-routing ::v-deep td .form-control {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+}
+
 /* file upload css */
 .upload-container {
     max-width: 400px;

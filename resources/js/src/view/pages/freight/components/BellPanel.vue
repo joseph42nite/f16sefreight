@@ -173,12 +173,17 @@ export default {
         .then(({ data }) => { n.read_at = new Date().toISOString(); this.unread = data.unread; })
         .catch(() => {});
     },
+    /* Walk 4 #34: a handover decided here changes a job another screen may be showing — the inbox workspace said
+       "Waiting for approval" until a reload. Say so; whoever shows that job re-reads it. */
+    announceJobChanged(jobId) {
+      window.dispatchEvent(new CustomEvent("f16s:job-changed", { detail: { jobId } }));
+    },
     decide(n, decision) {
       this.busy = true;
       ApiService.post(`/jobs/${n.data.job_id}/reassign/resolve`, { decision })
         /* Reload rather than splice: the server decides what survives, and the row
            dissolving is the visible confirmation that it did. */
-        .then(() => this.load())
+        .then(() => { this.load(); this.announceJobChanged(n.data.job_id); })
         .catch(() => this.load())
         .finally(() => { this.busy = false; });
     },

@@ -9,7 +9,7 @@
 
 > ### We are building **on top of the existing F16s codebase**, not from scratch.
 >
-> This repo is a **working Laravel 9 application** with a live production deployment: AWB/HAWB PDF generation, a blog, OpenClaw webhook integration, agents, companies, users. **None of it is throwaway.**
+> This repo is a **working Laravel 9 application** with a live production deployment: AWB/HAWB PDF generation, a blog, agents, companies, users. **None of it is throwaway.**
 >
 > The planning set in `docs/plan/` describes a much larger **Freight Operations OS** to be built *around* that existing code. It is a target state, not a description of what is here today.
 
@@ -121,7 +121,7 @@ For each step: the **guide** names it → the **schema doc** gives the exact DDL
 |---|---|---|
 | **Already exist AND in the plan** | **6** | `agents_info`, `air_way_bills`, `companies`, `house_way_bills`, `pdf_processing_jobs`, `users` — these need **ALTER**, not CREATE |
 | **In the plan, not yet built** | **53** | The actual work |
-| **Exist but absent from the plan** | **22** | `airlines`, `ams`, `blogs`, `contacts`, `currency_rates`, `locations`, `openclaw_*`, `other_charges_code`, `payment_info`, `rates`, `roles`, `saved_addresses`, `settings`, `status_response`, `super_admins`, `system_templates`, `way_bill_*` — **live features, keep them** |
+| **Exist but absent from the plan** | **21** | `airlines`, `ams`, `blogs`, `contacts`, `currency_rates`, `locations`, `other_charges_code`, `payment_info`, `rates`, `roles`, `saved_addresses`, `settings`, `status_response`, `super_admins`, `system_templates`, `way_bill_*` — **live features, keep them** |
 
 40 migrations are already applied locally.
 

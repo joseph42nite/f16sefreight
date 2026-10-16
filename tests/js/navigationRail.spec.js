@@ -89,21 +89,31 @@ describe("the navigation rail", () => {
   });
 
   /**
-   * 🔒 §8.1: Command-tier surfaces are VISIBLE AND **LOCKED** below Command, never silently missing — hiding the
-   * item hides the reason to upgrade, so the lock has to explain itself. The five accounts surfaces come back
-   * with `locked: true` rather than disappearing.
+   * Walk 3 #26, decided by the owner 2026-10-09: a surface the plan does not include is HIDDEN, not shown locked. The Admin
+   * portal showed Financials locked to a Tactical Boss while FocusAir hid Kanban from Core; now both hide. The five accounts
+   * surfaces are Command-only, so a Tactical accounts login no longer sees them.
    */
-  it("shows a Tactical accounts login the Command surfaces, locked rather than missing", () => {
+  it("hides the Command surfaces from a Tactical accounts login instead of showing them locked", () => {
     const tactical = visibleNavFor({
       designation: "accounts", tier: "tactical", portalKey: "accounts",
       // Faithful to the real helper: an item with no minimum is satisfied by every tier.
       tierAtLeast: (min) => !min || min === "tactical",
     });
 
-    const locked = tactical.filter((i) => i.locked).map((i) => i.label);
+    const shown = tactical.map((i) => i.label);
 
-    expect(locked).toEqual(["Today", "Money in", "Money out", "Close the month", "How we're doing"]);
-    // Their inbox and the directory are Tactical surfaces and stay usable.
-    expect(tactical.find((i) => i.label === "Inbox").locked).toBe(false);
+    ["Today", "Money in", "Money out", "Close the month", "How we're doing"].forEach((gone) => expect(shown).not.toContain(gone));
+    // Their inbox and the directory are Tactical surfaces and stay usable — and nothing is left locked.
+    expect(shown).toContain("Inbox");
+    expect(tactical.every((i) => i.locked === false)).toBe(true);
+  });
+
+  it("hides Financials from a Tactical Boss too", () => {
+    const boss = visibleNavFor({
+      designation: "boss", tier: "tactical", portalKey: "admin",
+      tierAtLeast: (min) => !min || min === "tactical",
+    });
+
+    expect(boss.map((i) => i.label)).not.toContain("Financials");
   });
 });

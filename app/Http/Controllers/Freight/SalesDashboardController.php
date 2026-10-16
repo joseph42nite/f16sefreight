@@ -20,9 +20,12 @@ use Illuminate\Support\Facades\DB;
  * the column cannot leak from a query that never touches it.
  *
  * ═══ THE TIER SPLIT IS THE PRODUCT, NOT A FILTER ════════════════════════════
- *   Tactical  branch aggregate within the active mode. NO client attribution.
+ *   Tactical  branch aggregate within the active mode, PLUS the branch's clients by name — volume, win and loss
+ *             rates, last shipment — but NO MONEY (revenue, what is owed, credit, days to pay, health) and no
+ *             per-rep assignment (owner, 2026-10-09: "show whatever is possible apart from accounting or assigning
+ *             jobs", clients known by the email domain saved on them). This reverses the earlier "no client names".
  *   Command   the same numbers partitioned by customers.sales_id = me, plus the
- *             client book, cadence, payment behaviour and the action queue.
+ *             client book WITH its money, cadence, payment behaviour and the action queue.
  *
  * PRD.md §7.3.8 puts it exactly: *Tactical says the branch's FRA lane is softening.
  * Command says which three accounts caused it and what to say to them.* A Tactical rep
@@ -87,6 +90,10 @@ class SalesDashboardController extends Controller
             // 🔒 Command scoping is `customers.sales_id = me` — a rep sees THEIR book,
             // not the branch's. A boss is not sales-scoped and sees every branch in view.
             $payload['book'] = $this->clientBook($context, $mode, $ids);
+        } else {
+            // Tactical: the branch's clients, named, with no accounting columns at all (the SELECT leaves them out, it
+            // does not blank them) and not narrowed to a rep — who owns a client is assignment, which is not theirs.
+            $payload['book'] = $this->clientBook($context, $mode, $ids, 50, withMoney: false);
         }
 
         return response()->json($payload);
@@ -106,6 +113,7 @@ class SalesDashboardController extends Controller
 
         $context = UserContext::for(auth()->user());
         $mode = app()->bound('active_portal_scope') ? app('active_portal_scope') : null;
+        $isCommand = $context->tier === 'command';
 
         $query = DB::table('sales_action_queue')
             ->where('status', 'open')
@@ -122,10 +130,9 @@ class SalesDashboardController extends Controller
             $query->where('sales_id', $context->userId);
         } else {
             $query->whereIn('agent_id', $this->branchIds($request, $context));
-            // Tactical has no client attribution, so only branch-level actions
-            // (customer_id IS NULL) are meaningful — a per-client action would name
-            // the client the tier is not entitled to see.
-            $query->whereNull('customer_id');
+            // Tactical sees the branch's client-level findings too (owner, 2026-10-09), but not the collections call: that
+            // one is about what the client owes, which is accounting.
+            $query->where('action_type', '!=', 'collections_call');
         }
 
         $actions = $query
@@ -142,11 +149,12 @@ class SalesDashboardController extends Controller
                 'id'             => $a->id,
                 'action_type'    => $a->action_type,
                 'priority_score' => (float) $a->priority_score,
-                'impact_value'   => $a->impact_value === null ? null : (float) $a->impact_value,
+                // The rupees at stake are money: Command only.
+                'impact_value'   => $isCommand && $a->impact_value !== null ? (float) $a->impact_value : null,
                 'transport_mode' => $a->transport_mode,
                 // The deterministic inputs travel WITH the prose, so a rep can check
                 // the claim rather than trust it.
-                'facts'          => json_decode($a->fact_packet, true),
+                'facts'          => $isCommand ? json_decode($a->fact_packet, true) : $this->withoutMoney(json_decode($a->fact_packet, true)),
                 'narrated_text'  => $a->narrated_text,
                 'narrated_at'    => $a->narrated_at,
                 'expires_at'     => $a->expires_at,
@@ -534,7 +542,7 @@ class SalesDashboardController extends Controller
      * surface by default. That is the whole defence against a margin column appearing
      * in this response the day someone adds one.
      */
-    private function clientBook(UserContext $context, ?string $mode, array $ids, int $limit = 50): array
+    private function clientBook(UserContext $context, ?string $mode, array $ids, int $limit = 50, bool $withMoney = true): array
     {
         $latest = DB::table('customer_performance_snapshots')
             ->whereIn('agent_id', $ids)
@@ -555,13 +563,14 @@ class SalesDashboardController extends Controller
             ->where('s.snapshot_date', $latest)
             ->when($mode !== null, fn ($q) => $q->where('s.transport_mode', $mode))
             // 🔒 A SALES rep sees their own clients. A boss is not sales-scoped.
+            // Not on Tactical: who a client belongs to is assignment, which Tactical does not do.
             ->when(
-                $context->designation === 'sales',
+                $withMoney && $context->designation === 'sales',
                 fn ($q) => $q->where('c.sales_id', $context->userId)
             )
             ->orderByDesc('s.tonnage_ytd')
             ->limit($limit)
-            ->get([
+            ->get($withMoney ? [
                 'c.id as customer_id', 'c.name', 'c.email_domain',
                 's.transport_mode', 's.tonnage_mtd', 's.tonnage_ytd',
                 's.shipment_count_mtd', 's.enquiry_count_mtd',
@@ -572,9 +581,22 @@ class SalesDashboardController extends Controller
                 's.outstanding_0_30', 's.outstanding_31_60', 's.outstanding_60_plus',
                 's.credit_utilization', 's.client_health_score',
                 'p.risk_band', 'p.overdue_ratio', 'p.last_shipment_at', 'p.is_irregular',
+            ] : [
+                // 🔒 TACTICAL: explicit and short. Nothing from revenue, what is owed, credit, days to pay, risk band or
+                // health — each of those is built from the ledger or the payments, which is accounting.
+                'c.id as customer_id', 'c.name', 'c.email_domain',
+                's.transport_mode', 's.tonnage_mtd', 's.tonnage_ytd',
+                's.shipment_count_mtd', 's.enquiry_count_mtd',
+                's.win_rate', 's.service_loss_rate', 's.price_loss_rate',
+                's.momentum', 's.lane_hhi',
+                'p.last_shipment_at', 'p.is_irregular',
             ])
             // The score's parts, each in [0, 1] or NULL — the page shows the bars, never the bare number (PRD §7.3.4 H).
-            ->map(function ($r) use ($latest) {
+            ->map(function ($r) use ($latest, $withMoney) {
+                if (! $withMoney) {
+                    return (array) $r;
+                }
+
                 $health = app(\App\Services\Sales\ClientHealth::class);
                 $r->health = $health->components($r->momentum === null ? null : (float) $r->momentum, $r->risk_band,
                     $r->win_rate === null ? null : (float) $r->win_rate,
@@ -583,6 +605,31 @@ class SalesDashboardController extends Controller
                 return (array) $r;
             })
             ->all();
+    }
+
+    /**
+     * A finding's facts with every money figure taken out, for a tier that may not see them.
+     *
+     * @param  mixed  $facts
+     * @return mixed
+     */
+    private function withoutMoney($facts)
+    {
+        if (! is_array($facts)) {
+            return $facts;
+        }
+
+        $out = [];
+
+        foreach ($facts as $key => $value) {
+            if (is_string($key) && preg_match('/revenue|outstanding|credit|dso|margin|amount|_inr\b|owed|balance|payment/i', $key)) {
+                continue;
+            }
+
+            $out[$key] = is_array($value) ? $this->withoutMoney($value) : $value;
+        }
+
+        return $out;
     }
 
     /**

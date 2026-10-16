@@ -14,11 +14,11 @@
         <template v-else>
           <label class="fx-field" for="new-mail-to">
             <span class="fx-field__label">To</span>
-            <input id="new-mail-to" v-model="to" class="fx-input" placeholder="comma separated" />
+            <RecipientInput v-model="to" input-id="new-mail-to" />
           </label>
           <label class="fx-field" for="new-mail-cc">
             <span class="fx-field__label">Cc</span>
-            <input id="new-mail-cc" v-model="cc" class="fx-input" placeholder="comma separated" />
+            <RecipientInput v-model="cc" input-id="new-mail-cc" />
           </label>
           <label class="fx-field" for="new-mail-subject">
             <span class="fx-field__label">Subject</span>
@@ -64,11 +64,12 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
+import RecipientInput from "@/view/pages/freight/components/RecipientInput.vue";
 
 /** Start a new mail from the inbox, sent from the person's own Outlook (user, 2026-09-17). */
 export default {
   name: "NewMail",
-  components: { MailEditor },
+  components: { MailEditor, RecipientInput },
   data: () => ({
     to: "", cc: "", subject: "", body: "", includeSignature: true, files: [],
     sending: false, error: null, sentFrom: null,

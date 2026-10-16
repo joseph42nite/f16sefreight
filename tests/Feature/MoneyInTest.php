@@ -81,12 +81,24 @@ class MoneyInTest extends TestCase
         $this->assertSame([1, 48000.0], [$stages['to_bill']['count'], (float) $stages['to_bill']['amount']]);
         $this->assertSame([1, 12000.0], [$stages['drafts']['count'], (float) $stages['drafts']['amount']]);
         $this->assertSame([1, 30000.0], [$stages['issued']['count'], (float) $stages['issued']['amount']]);
+        // Walk 2 #22 (owner, 2026-10-09): the amounts are what the client is billed, GST included, and say so.
+        foreach (['to_bill', 'drafts', 'issued'] as $key) {
+            $this->assertStringContainsString('with GST', $stages[$key]['note']);
+        }
 
         // The register slices the same way, so the stage and the list under it cannot disagree.
         $this->assertSame([$handedOver->invoice_no],
             collect($this->getJson($this->url('/billing?awaiting=1'))->json('rows'))->pluck('invoice_no')->all());
         $this->assertSame([$ownDraft->invoice_no],
             collect($this->getJson($this->url('/billing?own_drafts=1'))->json('rows'))->pluck('invoice_no')->all());
+        // ③ too (Walk 7): the Issued list showed every draft beside the issued bill its count was made of.
+        $issued = $this->invoice(['grand_total' => 0])->invoice_no;
+        $this->assertNotContains($handedOver->invoice_no,
+            collect($this->getJson($this->url('/billing?issued=1'))->json('rows'))->pluck('invoice_no')->all());
+        $this->assertNotContains($ownDraft->invoice_no,
+            collect($this->getJson($this->url('/billing?issued=1'))->json('rows'))->pluck('invoice_no')->all());
+        $this->assertContains($issued,
+            collect($this->getJson($this->url('/billing?issued=1'))->json('rows'))->pluck('invoice_no')->all());
     }
 
     public function test_a_credit_note_takes_money_off_the_issued_stage(): void

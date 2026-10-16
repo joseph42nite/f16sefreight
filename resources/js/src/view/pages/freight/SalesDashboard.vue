@@ -5,7 +5,7 @@
       <h1 class="fx-page-title">{{ designation === "sales" ? "Dashboard" : "Sales" }}</h1>
       <p class="fx-page-sub">
         <template v-if="scope === 'my_book'">Your client book, {{ modeLabel }}.</template>
-        <template v-else>Branch performance, {{ modeLabel }}. Client attribution needs Command.</template>
+        <template v-else>Branch performance and the branch's clients, {{ modeLabel }}. Revenue, what is owed and payment health need Command.</template>
       </p>
     </header>
 
@@ -327,9 +327,42 @@
         </table>
       </section>
 
-      <!-- Command only. Below Command the endpoint 403s and this section never renders —
-           §8.1: the locked nav item is what explains the gap, not an empty grid here. -->
-      <section v-if="book.length" class="fx-section">
+      <!-- Tactical: the branch's clients by name (the server leaves out every accounting column), no revenue, no payments.
+           Known by the email domain saved on them (owner, 2026-10-09). -->
+      <section v-if="book.length && !branchMoney" class="fx-section">
+        <h2 class="fx-section__title">Clients</h2>
+        <div class="fx-table-wrap">
+          <table class="fx-table">
+            <thead>
+              <tr>
+                <th scope="col">Client</th>
+                <th scope="col">Email domain</th>
+                <th v-if="bookShowsMode" scope="col">Mode</th>
+                <th class="fx-num" scope="col">Tonnage YTD</th>
+                <th class="fx-num" scope="col">Shipments this month</th>
+                <th class="fx-num" scope="col">Enquiries this month</th>
+                <th class="fx-num" scope="col">Win rate</th>
+                <th scope="col">Last shipment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="c in book" :key="'t-' + c.customer_id + '-' + c.transport_mode">
+                <td>{{ c.name }}</td>
+                <td class="identifier">{{ c.email_domain || "—" }}</td>
+                <td v-if="bookShowsMode">{{ modeName(c.transport_mode) }}</td>
+                <td class="fx-num"><Figure :value="c.tonnage_ytd" kind="weight" /></td>
+                <td class="fx-num"><Figure :value="c.shipment_count_mtd" kind="count" /></td>
+                <td class="fx-num"><Figure :value="c.enquiry_count_mtd" kind="count" /></td>
+                <td class="fx-num"><Figure :value="c.win_rate" kind="count" /></td>
+                <td><Figure :value="c.last_shipment_at" kind="date" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Command: the book with its money. -->
+      <section v-if="book.length && branchMoney" class="fx-section">
         <h2 class="fx-section__title">Accounts</h2>
         <!-- Wider than the column at a narrow window: it scrolls inside, it is never cut off (GAPS #458). -->
         <div class="fx-table-wrap">

@@ -174,24 +174,24 @@ class SalesAnalyticsTest extends TestCase
     // ─── The cockpit ─────────────────────────────────────────────────────────
 
     /**
-     * 🔴 **THE TIER GAP IS THE PRODUCT.** Tactical reports at branch level with NO
-     * client attribution; a rep who could see client names on Tactical has been given
-     * the thing Command is sold for.
+     * Owner, 2026-10-09 (reverses "the tier gap is the product"): a Tactical rep gets branch figures AND the branch's clients
+     * by name, with no accounting column. What stays Command's is the money and who a client belongs to.
      */
-    public function test_a_tactical_rep_gets_branch_figures_and_no_client_names(): void
+    public function test_a_tactical_rep_gets_branch_figures_and_the_branchs_clients_without_money(): void
     {
         $this->company->update(['tier' => 'tactical']);
         $rep = $this->user('sales');
         $this->snapshot($this->customer($rep->id, 'Globex'), 'air');
 
-        $body = $this->api($rep)
+        $json = $this->api($rep)
             ->getJson($this->url('/api/sales/dashboard'))
             ->assertOk()
             ->assertJsonPath('scope', 'branch')
-            ->assertJsonMissingPath('book')
-            ->getContent();
+            ->json();
 
-        $this->assertStringNotContainsString('Globex', $body, 'No client name at Tactical.');
+        $this->assertSame(['Globex'], array_column($json['book'], 'name'));
+        $this->assertArrayNotHasKey('revenue_mtd', $json['book'][0], 'No money at Tactical.');
+        $this->assertArrayNotHasKey('outstanding_60_plus', $json['book'][0]);
     }
 
     public function test_a_command_rep_gets_the_client_book(): void
@@ -408,27 +408,30 @@ class SalesAnalyticsTest extends TestCase
     }
 
     /**
-     * On Tactical only BRANCH-level actions are meaningful: a per-client action would
-     * name the client the tier is not entitled to see.
+     * Owner, 2026-10-09: Tactical sees client-level findings too (the clients are theirs to know), but not the collections
+     * call — that one is about what the client owes, which is accounting — and not the rupees at stake.
      */
-    public function test_tactical_sees_only_branch_level_actions(): void
+    public function test_tactical_sees_client_level_findings_but_not_the_collections_call(): void
     {
         $this->company->update(['tier' => 'tactical']);
         $rep = $this->user('sales');
         $customer = $this->customer($rep->id, 'Globex');
 
-        foreach ([[$customer->id, 'churn_outreach'], [null, 'consolidation_pitch']] as [$customerId, $type]) {
+        foreach ([[$customer->id, 'churn_outreach'], [null, 'consolidation_pitch'], [$customer->id, 'collections_call']] as [$customerId, $type]) {
             DB::table('sales_action_queue')->insert([
                 'agent_id' => $this->branch->id, 'customer_id' => $customerId,
                 'transport_mode' => 'air', 'audience' => 'internal',
-                'action_type' => $type, 'priority_score' => 80.0,
+                'action_type' => $type, 'priority_score' => 80.0, 'impact_value' => 25000,
                 'fact_packet' => json_encode([]), 'created_at' => now(), 'updated_at' => now(),
             ]);
         }
 
         $body = $this->api($rep)->getJson($this->url('/api/sales/actions'))->assertOk();
 
-        $body->assertJsonCount(1, 'actions')
-             ->assertJsonPath('actions.0.action_type', 'consolidation_pitch');
+        $body->assertJsonCount(2, 'actions');
+        $types = array_column($body->json('actions'), 'action_type');
+        sort($types);
+        $this->assertSame(['churn_outreach', 'consolidation_pitch'], $types);
+        $this->assertNull($body->json('actions.0.impact_value'), 'The rupees at stake are Command\'s.');
     }
 }

@@ -83,6 +83,15 @@ describe("parsePartyBlock", () => {
       .toEqual({ name: "Hansa Logistik GmbH", address: "Grosse Elbstrasse 145", city: "Hamburg", post_code: "20457", country: "DE" });
   });
 
+  // Walk 2 #17: "Chicago IL 60654" gave the city "Chicago IL" and no state, so Generate PDF refused.
+  it("reads a US state code written beside the ZIP", () => {
+    const U = { ...C, US: "United States" };
+    expect(parsePartyBlock("Acme Inc\n350 N Orleans St\nChicago IL 60654\nUnited States", U))
+      .toEqual({ name: "Acme Inc", address: "350 N Orleans St", city: "Chicago", state: "IL", post_code: "60654", country: "US" });
+    expect(parsePartyBlock("Acme Inc, 350 N Orleans St, Chicago, IL 60654, USA", U))
+      .toMatchObject({ city: "Chicago", state: "IL", post_code: "60654", address: "350 N Orleans St" });
+  });
+
   it("does not take a P.O Box number for a post code", () => {
     expect(parsePartyBlock("Gulf Freight LLC\nP.O Box 9192\nDubai\nUAE", C))
       .toEqual({ name: "Gulf Freight LLC", address: "P.O Box 9192", city: "Dubai", country: "AE" });

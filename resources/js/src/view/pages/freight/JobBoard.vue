@@ -156,6 +156,16 @@
                   :title="'Track ' + job.awb_number"
                   @click="openTracking(job)"
                 >{{ job.awb_number }}</button>
+                <!--
+                  No AWB yet: the card shows its JOB number, and clicking it opens the mail (owner, 2026-10-09: "a job is
+                  just an AWB number waiting to be assigned"). Walk 2 #21: it was a plain span, so the click did nothing.
+                -->
+                <router-link
+                  v-else-if="cardLink(job)"
+                  class="identifier fx-card__no fx-card__awb"
+                  :to="cardLink(job)"
+                  :title="(job.thread_id ? 'Open the mail for ' : 'Open ') + (job.awb_number || job.execution_job_no)"
+                >{{ job.awb_number || job.execution_job_no || "—" }}</router-link>
                 <span v-else class="identifier fx-card__no">
                   {{ job.awb_number || job.execution_job_no || "—" }}
                 </span>
@@ -224,7 +234,7 @@
                     :aria-label="'Open the bill of lading for ' + job.execution_job_no"
                   >⚓</router-link>
                   <router-link
-                    v-if="col.key === 'transit' && job.awb_number"
+                    v-if="col.key === 'transit' && job.awb_number && job.has_waybill"
                     :to="{ path: '/message-log', query: { awb: job.awb_number } }"
                     class="fx-card__link"
                     :title="'Message log for ' + job.awb_number"
@@ -356,10 +366,15 @@
 
       <template #footer>
         <router-link
-          v-if="tracking"
+          v-if="tracking && tracking.hasWaybill"
           :to="{ path: '/message-log', query: { awb: tracking.job.awb_number } }"
           class="fx-btn"
         >Open the message log</router-link>
+        <!-- No waybill under this AWB yet: the log would only say "No AirwayBill Found" (Walk 4 #31). -->
+        <template v-else-if="tracking && tracking.hasWaybill === false">
+          <span class="fx-muted">No waybill made yet for this AWB.</span>
+          <router-link v-if="cardLink(tracking.job)" :to="cardLink(tracking.job)" class="fx-btn">Make the waybill →</router-link>
+        </template>
       </template>
     </FxDrawer>
   </div>
@@ -549,9 +564,21 @@ export default {
         })
         .catch((e) => { this.error = this.readable(e); });
     },
+    /**
+     * Where a card with no AWB takes you. The mail first (owner, 2026-10-09: "a job is just an AWB number waiting to be
+     * assigned" — open the mail). A job that never came by mail (an import booked straight onto the board) has no
+     * conversation, so it opens its own page instead: the air import screen, or the sea bill of lading.
+     */
+    cardLink(job) {
+      if (job.thread_id) return { path: "/inbox", query: { thread: job.thread_id } };
+      if (job.transport_mode === "sea") return { path: "/focus-sea/" + job.id };
+      if (job.direction === "import") return { path: "/import/" + job.id };
+
+      return null;
+    },
     openTracking(job) {
       this.closeTracking();
-      this.tracking = { job, statuses: [], loading: true, error: null, timer: null };
+      this.tracking = { job, statuses: [], hasWaybill: null, loading: true, error: null, timer: null };
       this.loadTracking();
       this.tracking.timer = setInterval(this.loadTracking, 30000);
     },
@@ -563,6 +590,7 @@ export default {
         .then(({ data }) => {
           if (this.tracking !== t) return;
           t.statuses = data.statuses || [];
+          t.hasWaybill = data.has_waybill !== false;
           t.error = null;
         })
         .catch((e) => { if (this.tracking === t) t.error = this.readable(e); })

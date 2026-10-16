@@ -265,7 +265,7 @@ class CloseMonthController extends Controller
             'step' => 4, 'key' => 'gst', 'label' => 'GST', 'blocking' => false,
             'count' => $count, 'clear' => $count === 0, 'rows' => $rows,
             'tax_charged' => round((float) $tax, 2),
-            'note' => '₹' . number_format((float) $tax, 2) . ' of tax was charged in this period. '
+            'note' => '₹' . \App\Support\Inr::format((float) $tax) . ' of tax was charged in this period. '
                 . ($count === 0
                     ? 'Every B2B document has been registered.'
                     : $count . ' document(s) have not been through the invoice registration portal.'),
@@ -354,7 +354,7 @@ class CloseMonthController extends Controller
             'overdue' => $withheld > 0 && now()->gt($due),
             'unclassified_vendors' => $unclassified,
             'note' => $withheld > 0
-                ? '₹' . number_format($withheld, 2) . ' was withheld in ' . $month
+                ? '₹' . \App\Support\Inr::format((float) $withheld) . ' was withheld in ' . $month
                     . ' and is due to the government by ' . $due->toDateString() . '.'
                     . ($unclassified > 0 ? ' ' . $unclassified . ' vendor(s) paid this period have no section set.' : '')
                 : ($unclassified > 0
@@ -396,9 +396,9 @@ class CloseMonthController extends Controller
             'note' => $balances->isEmpty()
                 ? 'Nothing has been posted into this period yet.'
                 : ($debits === $credits
-                    ? 'The ledger balances. Revenue ₹' . number_format($revenue, 2) . ' less cost ₹'
-                        . number_format($expense, 2) . ' leaves ₹' . number_format($revenue - $expense, 2) . '.'
-                    : 'THE LEDGER DOES NOT BALANCE — ₹' . number_format(abs($debits - $credits), 2)
+                    ? 'The ledger balances. Revenue ₹' . \App\Support\Inr::format((float) $revenue) . ' less cost ₹'
+                        . \App\Support\Inr::format((float) $expense) . ' leaves ₹' . \App\Support\Inr::format((float) ($revenue - $expense)) . '.'
+                    : 'THE LEDGER DOES NOT BALANCE — ₹' . \App\Support\Inr::format((float) abs($debits - $credits))
                         . ' out. No report from this period can be trusted until it is found.'),
             'to' => ['path' => '/financials', 'query' => ['view' => 'reports']],
         ];

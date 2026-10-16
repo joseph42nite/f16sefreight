@@ -120,7 +120,7 @@ class JobCostSheetController extends Controller
                 'total' => $buyTotal,
                 'tax'   => round($buy->sum(fn ($i) => (float) $i->tax_amount), 2),
             ];
-            $payload['margin'] = $this->margin($sellTotal, $buyTotal);
+            $payload['margin'] = $this->margin($sellTotal, $buyTotal, $buy->isNotEmpty());
         }
 
         return response()->json($payload);
@@ -404,13 +404,21 @@ class JobCostSheetController extends Controller
      * averages it. "We have not billed this yet" and "we lost everything on this" are
      * opposite facts.
      */
-    private function margin(float $sell, float $buy): array
+    private function margin(float $sell, float $buy, bool $costed = true): array
     {
+        // 🔴 NO COST ENTERED = NO MARGIN (GAPS, Walk 4 #33). With no buy line the "margin" was the whole sell
+        // (INR 43,200, 100.00%) — a figure nobody had measured, shown as the best result there is. An unmeasured
+        // figure is NULL, never a number, and `costed` says why so the screen can.
+        if (! $costed) {
+            return ['sell' => $sell, 'buy' => $buy, 'value' => null, 'percent' => null, 'costed' => false];
+        }
+
         return [
             'sell'    => $sell,
             'buy'     => $buy,
             'value'   => round($sell - $buy, 2),
             'percent' => $sell <= 0.0 ? null : round((($sell - $buy) / $sell) * 100, 2),
+            'costed'  => true,
         ];
     }
 

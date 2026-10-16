@@ -239,6 +239,21 @@ on iOS and Android.
 
 ## 8. Superadmin and platform
 
+### Layout — five hubs (2026-10-11)
+- The portal at `superadmin.<domain>` (F16s staff, `super_admins` table, `superAdmin-api` guard) opens on **Overview**.
+  The menu is five hubs; each hub's pages are tabs across its top — `resources/js/src/core/config/adminHubs.js`,
+  `view/layouts/admin/HubTabs.vue`, `view/layouts/admin/aside/Menu.vue`.
+- **Overview** — `PlatformOverview.vue` ← `GET /api/superadmin/overview` (`Platform\OverviewController`): shipments,
+  mail, AI spend, tickets, sign-ins (`sign_in_events`) and errors (`server_errors` + `failed_jobs`) per day, and a
+  "Needs you" list. Tabs: Health (`/superadmin/monitor`), AI usage, Mail filing.
+- **Tickets** — Support desk, Suggestion feedback. **Library** — Airlines, Domain directory, Help documents,
+  OCR templates, Blogs. **Settings** — Platform, My account.
+- **Tenants** — `Tenants.vue` ← `GET /api/superadmin/tenants`, `/tenants/{company}` (`Platform\TenantController`):
+  every company with its branches and people; **+ New client** = company → first branch → people through
+  `create-company`, `create-branch`, `create-user`. A branch needs a **branch code** (2–5 letters, one per company —
+  the second half of every document number) and may carry a GSTIN; IATA code, CASS and waybill signing are for an
+  air branch only. A person's company is always their branch's.
+
 ### Company template cache
 - `UserController::me()` caches `templates_config` for **60 seconds** under `company_templates_{companyName}`.
 - `CompanyController` clears it on `register()` and `update()` —
@@ -254,10 +269,6 @@ on iOS and Android.
   `cons_address` → *Consignee Address*, `hawb_no` → *House Airway Bill Number*, `master_origin`, `master_destination`,
   `master_pcs`, `master_weight`, ….
 - The keys are unchanged, so the forms still highlight the field in error.
-
-### OpenClaw webhooks
-- `VerifyOpenClawSignature.php` checks each request's signature and refuses a nonce already in `openclaw_nonces`.
-- Incoming actions wait in `openclaw_pending_actions` until an admin confirms them. API: `openclaw_api_docs.md`.
 
 ---
 

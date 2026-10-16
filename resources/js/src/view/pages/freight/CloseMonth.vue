@@ -312,7 +312,8 @@ export default {
         ? this.period.period_name + " is closed."
         : (this.canClose
           ? this.period.period_name + " is ready to close."
-          : "Clear " + (this.blockedBy || "the blocking step") + " before " + this.period.period_name + " can close.");
+          // The step by its title, quoted — "Clear Everything posted? before…" read as a broken sentence (Walk 7).
+          : "Clear " + (this.blockedBy ? "“" + this.blockedBy + "”" : "the blocking step") + " before " + this.period.period_name + " can close.");
     },
     /** What is still open but does not stop the close — said out loud in the confirmation, not hidden. */
     warnings() {

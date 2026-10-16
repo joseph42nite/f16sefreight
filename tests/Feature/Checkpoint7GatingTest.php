@@ -138,19 +138,64 @@ class Checkpoint7GatingTest extends TestCase
         $this->assertSame(2, (int) $body['branch']['shipment_count_mtd']);
     }
 
-    /** No client names, and no book at all — the gap IS the upsell. */
-    public function test_a_tactical_sales_user_sees_no_client_names(): void
+    /**
+     * Owner, 2026-10-09 (reverses "no client names"): a Tactical sales login sees the branch's clients BY NAME, known by the
+     * email domain saved on them — "whatever is possible apart from accounting or assigning jobs". So the book is there,
+     * it is the whole branch's (who a client belongs to is assignment, which is not Tactical's), and it carries no money.
+     */
+    public function test_a_tactical_sales_user_sees_the_branchs_clients_but_no_money(): void
     {
         $rep = $this->user('sales', $this->tacBranch, $this->tactical);
+        $other = $this->user('sales', $this->tacBranch, $this->tactical, '-b');
         $this->snapshot($this->tacBranch, $this->customer($this->tactical, 'Globex', $rep->id), 'air');
+        $this->snapshot($this->tacBranch, $this->customer($this->tactical, 'Northwind', $other->id), 'air');
 
-        $body = $this->api($rep)
+        $json = $this->api($rep)
             ->getJson($this->url('/api/sales/dashboard', 'focusair.f16sefreight.com'))
-            ->assertOk()
-            ->getContent();
+            ->assertOk()->json();
 
-        $this->assertStringNotContainsString('Globex', $body);
-        $this->assertStringNotContainsString('"book"', $body);
+        $names = array_column($json['book'], 'name');
+        sort($names);
+        $this->assertSame(['Globex', 'Northwind'], $names, 'Both clients, not only the rep\'s own.');
+        $this->assertSame('branch', $json['scope']);
+
+        // A row says who the client is and how much they ship — and carries not one accounting column.
+        foreach ($json['book'] as $row) {
+            foreach (['revenue_mtd', 'revenue_ytd', 'dso_days', 'payment_drift_days', 'outstanding_0_30', 'outstanding_31_60',
+                      'outstanding_60_plus', 'credit_utilization', 'client_health_score', 'risk_band', 'overdue_ratio', 'health'] as $money) {
+                $this->assertArrayNotHasKey($money, $row, "'{$money}' must not reach a Tactical sales response.");
+            }
+            $this->assertArrayHasKey('tonnage_ytd', $row);
+        }
+    }
+
+    /**
+     * The client-level findings come through to Tactical, minus the one that is about money (the collections call) and
+     * minus the rupees at stake.
+     */
+    public function test_a_tactical_sales_user_gets_client_findings_without_the_money_ones(): void
+    {
+        $rep = $this->user('sales', $this->tacBranch, $this->tactical);
+        $customer = $this->customer($this->tactical, 'Globex', $rep->id);
+
+        foreach ([['service_escalation', ['service_loss_rate_pct' => 45.45, 'outstanding_60_plus' => 132750]],
+                  ['collections_call', ['outstanding_60_plus' => 132750]]] as [$type, $facts]) {
+            DB::table('sales_action_queue')->insert([
+                'agent_id' => $this->tacBranch->id, 'customer_id' => $customer->id, 'sales_id' => $rep->id,
+                'transport_mode' => 'air', 'audience' => 'internal', 'action_type' => $type, 'priority_score' => 90,
+                'impact_value' => 50000, 'fact_packet' => json_encode($facts),
+                'status' => 'open', 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+
+        $actions = $this->api($rep)
+            ->getJson($this->url('/api/sales/actions', 'focusair.f16sefreight.com'))
+            ->assertOk()->json('actions');
+
+        $this->assertCount(1, $actions, 'The collections call is accounting.');
+        $this->assertSame('service_escalation', $actions[0]['action_type']);
+        $this->assertNull($actions[0]['impact_value']);
+        $this->assertSame(['service_loss_rate_pct' => 45.45], $actions[0]['facts']);
     }
 
     // ─── 2. Command: only customers.sales_id = me ────────────────────────────

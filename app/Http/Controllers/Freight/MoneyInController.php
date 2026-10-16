@@ -56,17 +56,19 @@ class MoneyInController extends Controller
 
         $overdue = $this->ageing->byParty($scope)->filter(fn ($p) => $p['overdue'] > 0);
 
+        // Walk 2 #22 (owner, 2026-10-09): ①–③ are what the client is billed, GST included, and say so — the cost sheet
+        // that fed them shows its figures before tax.
         return response()->json([
             'stages' => [
                 ['key' => 'to_bill', 'step' => 1, 'label' => 'To bill',
                  'count' => (int) $toBill->n, 'amount' => round((float) $toBill->total, 2),
-                 'note' => 'Handed over by pricing, not billed yet.'],
+                 'note' => 'Handed over by pricing, not billed yet. Amounts with GST.'],
                 ['key' => 'drafts', 'step' => 2, 'label' => 'Drafts',
                  'count' => (int) $ownDrafts->n, 'amount' => round((float) $ownDrafts->total, 2),
-                 'note' => 'Raised here and not finalized.'],
+                 'note' => 'Raised here and not finalized. Amounts with GST.'],
                 ['key' => 'issued', 'step' => 3, 'label' => 'Issued',
                  'count' => (int) $issued->n, 'amount' => round((float) $issued->total, 2),
-                 'note' => 'Numbered and gone to the client.'],
+                 'note' => 'Numbered and gone to the client. Amounts with GST.'],
                 ['key' => 'money_in', 'step' => 4, 'label' => 'Money in',
                  'count' => (int) $received->n + (int) $unplaced->n,
                  'amount' => round((float) $received->total, 2),

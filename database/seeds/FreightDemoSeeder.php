@@ -927,9 +927,10 @@ class FreightDemoSeeder extends Seeder
     {
         DB::table('accounting_periods')->insert([
             'agent_id' => $branch->id,
-            'period_name' => 'FY' . now()->format('y'),
-            'start_date' => now()->startOfYear()->toDateString(),
-            'end_date' => now()->endOfYear()->toDateString(),
+            // The financial year, 1 April to 31 March (owner, 2026-10-09) — not the calendar year this used to open.
+            'period_name' => \App\Support\FinancialYear::label(),
+            'start_date' => \App\Support\FinancialYear::start()->toDateString(),
+            'end_date' => \App\Support\FinancialYear::end()->toDateString(),
             'status' => 'open', 'created_at' => now(), 'updated_at' => now(),
         ]);
     }
@@ -1894,7 +1895,8 @@ class FreightDemoSeeder extends Seeder
             DB::table('way_bill_addresses')->insert([
                 'awb_id' => (string) $key,
                 'ship_name' => 'Müller & Co. Exports',
-                'ship_address' => 'Plot 42/A, MIDC Andheri East (Gate 3)',
+                // Within Cargo-IMP's 35 characters a line, or Generate PDF refuses every demo waybill (Walk 7).
+                'ship_address' => 'Plot 42/A, MIDC Andheri E (Gate 3)',
                 'ship_city' => 'Mumbai', 'ship_state' => 'Maharashtra',
                 'ship_country' => 'IN', 'ship_post_code' => '400093',
                 'ship_airport_code' => 'BOM',

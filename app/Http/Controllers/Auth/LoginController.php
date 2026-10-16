@@ -80,6 +80,15 @@ class LoginController extends Controller
             }
         }
 
+        // Who signed in, for the platform Overview (owner, 2026-10-16) — recorded only once the portal let them in.
+        // Never allowed to stop a sign-in: a failure to write it is logged and the person is signed in anyway.
+        rescue(fn () => \Illuminate\Support\Facades\DB::table('sign_in_events')->insert([
+            'guard' => $role, 'account_id' => $user_data->id,
+            'company_id' => $user_data instanceof User && is_numeric($user_data->company_name) ? (int) $user_data->company_name : null,
+            'agent_id' => $user_data instanceof User ? $user_data->branch_name : null,
+            'portal' => $portal->exists() ? $portal->key : null, 'created_at' => now(),
+        ]));
+
         $payload = [
             'token' => $token,
             'user'  => $userDataArray,

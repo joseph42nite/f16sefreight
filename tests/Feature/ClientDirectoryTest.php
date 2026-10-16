@@ -7,6 +7,7 @@ use App\Company;
 use App\Customer;
 use App\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -117,17 +118,26 @@ class ClientDirectoryTest extends TestCase
         $this->assertSame(['finance@initech.test', 'ops@initech.test'], \App\CustomerContact::where('customer_id', $id)->orderBy('email')->pluck('email')->all());
     }
 
-    /** Enquiries, Tactical: the client is its domain for pricing and sales (the roles with this page), with no key to a client record. */
-    public function test_tactical_enquiries_show_the_domain_as_the_client(): void
+    /**
+     * Enquiries, Tactical: every role sees the client's NAME once its domain is saved on a client record — sales
+     * (owner, 2026-10-09), then pricing and operations too (owner, 2026-10-10). None gets a key to the record: there
+     * is no accounts module to open it in.
+     */
+    public function test_tactical_enquiries_show_the_client_name_to_every_role(): void
     {
         [$company, $branch, $customer] = $this->tenant('tactical');
         $customer->update(['name' => 'Globex Industries']);
-        \App\Enquiry::create(['agent_id' => $branch->id, 'transport_mode' => 'air', 'status' => 'new', 'customer_id' => $customer->id, 'enquiry_no' => 'ENQA-TACD-26-0001']);
+        $enquiry = \App\Enquiry::create(['agent_id' => $branch->id, 'transport_mode' => 'air', 'status' => 'new', 'customer_id' => $customer->id, 'enquiry_no' => 'ENQA-TACD-26-0001']);
+        // Unclaimed, so operations meets it where they meet enquiries: the pool.
+        DB::table('email_threads')->insert(['agent_id' => $branch->id, 'thread_key' => 'thr_' . uniqid('', true), 'status' => 'triaged',
+            'classification' => 'customer_enquiry', 'enquiry_id' => $enquiry->id, 'latest_message_received_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
 
-        foreach (['pricing', 'sales'] as $role) {
-            $row = $this->as($company, $branch, $role)->getJson('http://focusair.localhost/api/enquiries')->assertOk()->json('data.0');
+        foreach (['pricing' => 'Globex Industries', 'operations' => 'Globex Industries', 'sales' => 'Globex Industries'] as $role => $label) {
+            $path = $role === 'operations' ? '/api/enquiries?unclaimed=1' : '/api/enquiries';
+            $row = $this->as($company, $branch, $role)->getJson('http://focusair.localhost' . $path)->assertOk()->json('data.0');
 
-            $this->assertSame(['globex.test', null], [$row['client_label'], $row['customer_id']], $role);
+            $this->assertSame([$label, null], [$row['client_label'], $row['customer_id']], $role);
+            $this->assertSame('globex.test', $row['client_domain'], $role);
             $this->assertArrayNotHasKey('customer', $row, $role);
         }
     }

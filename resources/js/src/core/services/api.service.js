@@ -4,6 +4,21 @@ import VueAxios from "vue-axios";
 import JwtService from "@/core/services/jwt.service";
 
 /**
+ * Rethrow a failed request as a new Error, but KEEP what the server said (Walk 4 #42).
+ *
+ * get/query/delete threw a bare `new Error(...)`, which dropped `error.response`. Every screen reads the server's
+ * reason from `e.response.data`, so a refused or failed GET always fell through to "Something went wrong." with no
+ * status and no message — the same text for "you may not" and "the server broke". post/put/patch never did this.
+ */
+function rethrow(prefix, error) {
+  const wrapped = new Error(`${prefix} ApiService ${error}`);
+  wrapped.response = error && error.response;
+  wrapped.status = error && error.response ? error.response.status : undefined;
+
+  return wrapped;
+}
+
+/**
  * Service to call HTTP request via Axios
  */
 const ApiService = {
@@ -24,8 +39,7 @@ const ApiService = {
 
   query(resource, params) {
     return Vue.axios.get(resource, params).catch(error => {
-      // console.log(error);
-      throw new Error(`[KT] ApiService ${error}`);
+      throw rethrow("[KT]", error);
     });
   },
 
@@ -38,8 +52,7 @@ const ApiService = {
   get(resource, slug = "") {
     const url = slug ? `${resource}/${slug}` : resource;
     return Vue.axios.get(url).catch(error => {
-      // console.log(error);
-      throw new Error(`[KT] ApiService ${error}`);
+      throw rethrow("[KT]", error);
     });
   },
 
@@ -103,8 +116,7 @@ const ApiService = {
    */
   delete(resource) {
     return Vue.axios.delete(resource).catch(error => {
-      // console.log(error);
-      throw new Error(`[RWV] ApiService ${error}`);
+      throw rethrow("[RWV]", error);
     });
   }
 };

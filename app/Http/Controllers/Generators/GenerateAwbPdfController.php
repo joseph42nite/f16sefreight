@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Generators;
 
+use Illuminate\Support\Facades\DB;
+
 use App\Http\Controllers\Controller;
 
 use App\AirwayBills; // Import the model
@@ -100,6 +102,23 @@ class GenerateAwbPdfController extends Controller
             return response()->json([
                 'error'  => 'This waybill is not linked to a job yet, so there is nothing to file the document against.',
                 'reason' => 'no_job',
+            ], 422);
+        }
+
+        // The client is sent what the Master AWB form would make a PDF of, no less (Walk 7: a waybill with no route was
+        // published and the shipment moved to PDF Generated). The same fields the form's Generate PDF asks for.
+        $address = DB::table('way_bill_addresses')->where('awb_id', (string) $waybill->id)->first();
+        $missing = collect([
+            'Departure airport' => $waybill->departure_airport, 'Destination airport' => $waybill->destination_airport,
+            'Shipper name' => $address->ship_name ?? null, 'Shipper address' => $address->ship_address ?? null,
+            'Shipper city' => $address->ship_city ?? null, 'Consignee name' => $address->cons_name ?? null,
+            'Consignee address' => $address->cons_address ?? null, 'Consignee city' => $address->cons_city ?? null,
+        ])->filter(fn ($v) => blank($v))->keys()->values()->all();
+
+        if ($missing) {
+            return response()->json([
+                'error' => 'The waybill is missing ' . implode(', ', $missing) . '. Fill them in and save it, then make the link.',
+                'reason' => 'incomplete', 'missing' => $missing,
             ], 422);
         }
 

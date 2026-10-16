@@ -162,7 +162,7 @@ export default {
                 this.company_form
                     .post(`/superadmin/create-company`)
                     .then(({ data }) => {
-                        this.$router.push("/superadmin/all-company");
+                        this.$router.push({ path: "/superadmin/tenants", query: { company: String(data.company.id) } });
                     })
                     .catch((err) => {
                     });

@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  * when Gmail lands (GAPS #15).
  *
  * 🔴 **ECHO SUPPRESSION IS THE POINT OF THE UPSERT.** A message sent through the portal
- * lands in the user's Sent folder and comes back on the next sync. `message_id` is UNIQUE,
+ * lands in the user's Sent folder and comes back on the next sync. `message_id` is UNIQUE per mailbox,
  * so the echo is an idempotent upsert rather than an insert — and the upsert refreshes
  * delivery metadata but must NEVER re-fire classification, SLA timers or notifications.
  * Without that, every reply we send re-opens the thread we just answered.
@@ -44,7 +44,10 @@ class MessageIngestor
             // not roll back the 48 already stored — the cursor would then re-deliver them
             // and the run makes no progress at all.
             $storedId = DB::transaction(function () use ($connection, $message, $historical, &$stats) {
+                // 🔒 An echo is the same message back in the SAME mailbox. Another branch or tenant that was sent
+                // the same mail keeps its own copy (unique per mailbox since 2026-10-17).
                 $existing = DB::table('email_messages')
+                    ->where('mailbox_connection_id', $connection->id)
                     ->where('message_id', $message->messageId)
                     ->first(['id', 'thread_key']);
 
@@ -184,7 +187,8 @@ class MessageIngestor
      */
     private function stageClassification(MailboxConnection $connection, NormalisedMessage $message): void
     {
-        $stored = EmailMessage::where('message_id', $message->messageId)->first();
+        $stored = EmailMessage::where('mailbox_connection_id', $connection->id)
+            ->where('message_id', $message->messageId)->first();
 
         if ($stored === null) {
             return;

@@ -74,7 +74,9 @@ class CollectionsController extends Controller
             ['party_type' => $partyType, 'party_id' => $partyId]);
 
         $table = $partyType === 'partner' ? 'partners' : 'customers';
-        $party = DB::table($table)->where('id', $partyId)->first();
+        // 🔒 Only a party of the user's own company — another tenant's client must read as "no such organization".
+        $party = DB::table($table)->where('id', $partyId)
+            ->where('company_id', UserContext::for(auth()->user())->companyId)->first();
 
         abort_if($party === null, 404, 'We have no such organization.');
 
@@ -307,7 +309,8 @@ class CollectionsController extends Controller
 
     private function partyName(string $partyType, int $partyId): ?string
     {
-        return DB::table($partyType === 'partner' ? 'partners' : 'customers')->where('id', $partyId)->value('name');
+        return DB::table($partyType === 'partner' ? 'partners' : 'customers')->where('id', $partyId)
+            ->where('company_id', UserContext::for(auth()->user())->companyId)->value('name');
     }
 
     /** The earlier of two dates, either of which may be missing. */

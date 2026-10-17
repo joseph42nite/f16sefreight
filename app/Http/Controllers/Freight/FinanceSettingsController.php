@@ -228,6 +228,14 @@ class FinanceSettingsController extends Controller
             return response()->json(['error' => 'That branch is not one of yours.', 'reason' => 'branch_not_found'], 404);
         }
 
+        // 🔒 The client or supplier must be this company's own — the rate list would otherwise show another tenant's name.
+        $partyOwn = DB::table($data['party_type'] === 'partner' ? 'partners' : 'customers')
+            ->where('id', $data['party_id'])->where('company_id', $context->companyId)->exists();
+
+        if (! $partyOwn) {
+            return response()->json(['error' => 'That organization is not one of yours.', 'reason' => 'party_not_found'], 404);
+        }
+
         // The lane and cargo type are optional until lane rates are built.
         DB::table('rate_cards')->insert(array_merge([
             'cargo_type' => null, 'origin_port_id' => null, 'destination_port_id' => null,

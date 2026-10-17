@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 class ProfitabilityService
 {
     /** Documents that represent real billing. A draft was never sent; a void never stood. */
-    private const BILLED = ['finalized', 'sent', 'partially_paid', 'paid'];
+    public const BILLED = ['finalized', 'sent', 'partially_paid', 'paid'];
 
     /**
      * One row per shipment: what it billed, what it cost, and what that leaves.

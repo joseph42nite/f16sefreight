@@ -269,8 +269,11 @@ class FinancialReportController extends Controller
 
         $waiting = DB::table('unposted_transactions_queue as q')
             ->leftJoin('accounts_invoices as i', fn ($j) => $j->on('i.id', '=', 'q.source_id')->where('q.source_type', '=', 'invoice'))
+            // A voucher dates by its own document date too, as in CloseMonthController::check() — by the queue row's
+            // date it would block (or miss) the wrong month.
+            ->leftJoin('accounts_purchase_vouchers as v', fn ($j) => $j->on('v.id', '=', 'q.source_id')->where('q.source_type', '=', 'purchase_voucher'))
             ->where('q.agent_id', $period->agent_id)
-            ->whereBetween(DB::raw('COALESCE(i.document_date, DATE(q.created_at))'), [$period->start_date, $period->end_date])
+            ->whereBetween(DB::raw('COALESCE(i.document_date, v.document_date, DATE(q.created_at))'), [$period->start_date, $period->end_date])
             ->count();
 
         if ($waiting > 0) {

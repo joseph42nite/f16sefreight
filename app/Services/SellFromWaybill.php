@@ -78,7 +78,9 @@ class SellFromWaybill
                 return 0;
             }
 
-            AccountsInvoiceItem::where('invoice_id', $invoice->id)->where('source', self::SOURCE)->delete();
+            // One by one, not a bulk delete: each line's `deleted` hook retotals the draft — a draft whose waybill
+            // lines all went would otherwise keep its old total.
+            AccountsInvoiceItem::where('invoice_id', $invoice->id)->where('source', self::SOURCE)->get()->each->delete();
 
             foreach ($lines as $line) {
                 $amount = round($line['quantity'] * $line['rate'], 2);

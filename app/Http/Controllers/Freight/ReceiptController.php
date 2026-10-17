@@ -125,7 +125,8 @@ class ReceiptController extends Controller
             // somebody who does not know yet, posts to the undifferentiated `1100-Bank` and says so.
             'bank_account_id' => 'nullable|integer',
             'allocations' => 'nullable|array',
-            'allocations.*.invoice_id' => 'required|integer',
+            // `distinct`: one bill twice would pass the outstanding check once per line and over-settle it.
+            'allocations.*.invoice_id' => 'required|integer|distinct',
             'allocations.*.amount' => 'required|numeric|min:0.01',
             // 🔴 `tds` is the fourth, and the one the other three were being misused for: a client who
             // deducted tax at source has PAID IN FULL, and the difference is an asset, not a cost.
@@ -152,6 +153,14 @@ class ReceiptController extends Controller
 
             if ($invoice === null || ! $this->branches()->contains('id', $invoice->agent_id)) {
                 return response()->json(['error' => 'One of those documents is not one of yours.', 'reason' => 'invoice_not_found'], 404);
+            }
+
+            // Money settles an issued bill: a draft was never sent, a void never stood, and a credit note is owed BY us.
+            if (in_array($invoice->status, ['draft', 'void'], true) || $invoice->type === 'credit_note') {
+                return response()->json([
+                    'error' => sprintf('%s cannot take a receipt — only an issued bill can be settled.', $invoice->invoice_no),
+                    'reason' => 'invoice_not_payable',
+                ], 422);
             }
 
             // 🔴 The rupees placed against it, in ITS currency (GAPS #411): a USD bill is owed in dollars, and ₹84,000

@@ -44,6 +44,9 @@ class AccountsInvoiceItem extends Model
 
             $invoice->forceFill(['subtotal' => $subtotal, 'tax_amount' => $tax, 'grand_total' => round($subtotal + $tax, 2)])
                 ->saveQuietly();
+
+            // Quietly skips UnpostedDocumentObserver, so the close-of-period queue is told the new total here.
+            app(\App\Services\UnpostedQueue::class)->refresh($invoice);
         };
 
         static::saved($retotal);

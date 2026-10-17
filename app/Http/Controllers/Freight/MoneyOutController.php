@@ -27,7 +27,8 @@ class MoneyOutController extends Controller
 
         $branches = $this->branches();
         $picked = $request->integer('agent_id') ?: null;
-        $scope = $picked ? [$picked] : $branches->pluck('id')->all();
+        // 🔒 A branch outside the user's own list is ignored, never queried (the same rule as RegisterController).
+        $scope = $picked && $branches->contains('id', $picked) ? [$picked] : $branches->pluck('id')->all();
 
         // ① Billed shipments with no purchase voucher at all — their margin is not real.
         $toCost = DB::table('accounts_invoices as i')

@@ -198,13 +198,19 @@ class Job extends Model
      */
     public function grossMarginPct(): ?float
     {
-        $revenue = (float) AccountsInvoiceItem::whereIn('invoice_id', $this->invoices()->select('id'))->sum('net_amount');
+        // The same rules as ProfitabilityService: net of tax, at each document's own rate, a credit note subtracts,
+        // drafts and voids never count.
+        $revenue = (float) \Illuminate\Support\Facades\DB::table('accounts_invoices')
+            ->where('job_id', $this->id)
+            ->whereIn('status', \App\Services\ProfitabilityService::BILLED)
+            ->selectRaw('SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * subtotal * exchange_rate) AS revenue', ['credit_note'])
+            ->value('revenue');
 
         if ($revenue <= 0.0) {
             return null;
         }
 
-        $cost = (float) AccountsPurchaseItem::whereIn('purchase_voucher_id', $this->purchaseVouchers()->select('id'))->sum('net_amount');
+        $cost = (float) AccountsPurchaseItem::whereIn('purchase_voucher_id', $this->purchaseVouchers()->select('id'))->sum('amount');
 
         return round(($revenue - $cost) / $revenue * 100, 2);
     }

@@ -3,7 +3,6 @@
 namespace App\Observers;
 
 use App\SeaShipmentDetail;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Guide §2.3 — rolls house figures up to the consolidation master.
@@ -23,14 +22,8 @@ class SeaShipmentDetailObserver
             return; // not a house under a consolidation
         }
 
-        $lockKey = "job_rollup_lock:{$parentJobId}";
-
-        if (! Cache::add($lockKey, true, 2)) {
-            return; // a roll-up for this master is already queued
-        }
-
-        // ProcessConsolRollupJob arrives with the queue work in Step 4; until then the
-        // debounce is in place and the dispatch is deliberately left unwired rather than
-        // referencing a class that does not exist.
+        // Summed from the houses every time, so a direct recompute is always right; a debounce here would drop the
+        // last save of a burst.
+        app(\App\Services\ConsolidationService::class)->rollUp((int) $parentJobId);
     }
 }

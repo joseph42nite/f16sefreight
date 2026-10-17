@@ -27,6 +27,8 @@ class JournalController extends Controller
         'invoice' => ['table' => 'accounts_invoices', 'number' => 'invoice_no', 'label' => 'Sales document'],
         'purchase_voucher' => ['table' => 'accounts_purchase_vouchers', 'number' => 'voucher_no', 'label' => 'Purchase voucher'],
         'receipt' => ['table' => 'accounts_receipts', 'number' => 'receipt_no', 'label' => 'Receipt'],
+        // A supplier payment (PaymentController posts it as `payment`).
+        'payment' => ['table' => 'accounts_payments', 'number' => 'payment_no', 'label' => 'Payment'],
         // It opens a period, not a document (GAPS #409).
         'opening_balance' => ['table' => 'accounting_periods', 'number' => 'period_name', 'label' => 'Opening balance'],
     ];
@@ -252,6 +254,7 @@ class JournalController extends Controller
             'invoice' => ['customer_id', 'billed_party_type', 'billed_party_id', 'type'],
             'purchase_voucher' => ['vendor_id'],
             'receipt' => ['payer_type', 'payer_id'],
+            'payment' => ['payee_type', 'payee_id'],
             default => [],
         };
     }
@@ -264,6 +267,7 @@ class JournalController extends Controller
                 . ($document->billed_party_id ?: $document->customer_id),
             'purchase_voucher' => 'partners:' . $document->vendor_id,
             'receipt' => ($document->payer_type === 'partner' ? 'partners:' : 'customers:') . $document->payer_id,
+            'payment' => $document->payee_id ? 'partners:' . $document->payee_id : null,
             default => null,
         };
     }
@@ -320,6 +324,10 @@ class JournalController extends Controller
                 ->join('accounts_invoices as i', 'i.id', '=', 'a.invoice_id')
                 ->where('a.receipt_id', $id)
                 ->get(['i.invoice_no as description', 'a.amount as net_amount', 'a.resolution']),
+            'payment' => DB::table('accounts_payment_allocations as a')
+                ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'a.purchase_voucher_id')
+                ->where('a.payment_id', $id)
+                ->get(['v.voucher_no as description', 'a.amount as net_amount']),
             'opening_balance' => DB::table('accounts_ledger_entries as l')
                 ->join('chart_of_accounts as c', 'c.id', '=', 'l.chart_of_account_id')
                 ->where('l.source_type', 'opening_balance')->where('l.source_id', $id)->where('l.debit_amount', '>', 0)
@@ -331,7 +339,7 @@ class JournalController extends Controller
             'type' => $type,
             'label' => $source['label'],
             'number' => $row->{$source['number']},
-            'date' => $row->document_date ?? $row->receipt_date ?? $row->start_date ?? null,
+            'date' => $row->document_date ?? $row->receipt_date ?? $row->payment_date ?? $row->start_date ?? null,
             'organization' => $this->partyNames([$type => collect([$row])])[$this->partyKey($type, $row)] ?? null,
             'total' => (float) ($row->grand_total ?? $row->amount ?? $lines->sum('net_amount')),
             'currency' => $row->currency ?? 'INR',

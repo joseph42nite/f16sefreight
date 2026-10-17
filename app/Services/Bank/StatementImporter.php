@@ -53,7 +53,16 @@ class StatementImporter
                 'currency' => strtoupper((string) ($line['currency'] ?? 'INR')),
             ];
 
-            $existing = BankTransaction::withoutTenantScope()->where('plaid_transaction_id', $reference)->first();
+            // 🔴 A repeat is the same reference on the same branch's same account — never another tenant's line. A CSV
+            // reference like `123456` is only unique inside one bank's statement, so matching it globally would
+            // overwrite (and move) somebody else's transaction.
+            $existing = BankTransaction::withoutTenantScope()
+                ->where('agent_id', $agentId)
+                ->where(fn ($q) => $bankAccountId === null
+                    ? $q->whereNull('bank_account_id')
+                    : $q->where('bank_account_id', $bankAccountId))
+                ->where(fn ($q) => $q->where('reference', $reference)->orWhere('plaid_transaction_id', $reference))
+                ->first();
 
             if ($existing !== null) {
                 // The same line again: refresh what the bank now says about it, never the match somebody made.
@@ -63,8 +72,14 @@ class StatementImporter
                 continue;
             }
 
+            // `plaid_transaction_id` is UNIQUE across all tenants: when another branch or account already holds this
+            // reference, this line's key is namespaced by its own branch and account so both can exist.
+            $key = BankTransaction::withoutTenantScope()->where('plaid_transaction_id', $reference)->exists()
+                ? "{$reference}#{$agentId}-" . ($bankAccountId ?? 0)
+                : $reference;
+
             BankTransaction::withoutTenantScope()->create($values + [
-                'plaid_transaction_id' => $reference,
+                'plaid_transaction_id' => $key,
                 'reconciliation_status' => 'unreconciled',
             ]);
             $result['imported']++;

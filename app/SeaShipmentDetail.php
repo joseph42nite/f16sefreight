@@ -17,7 +17,11 @@ class SeaShipmentDetail extends Model
         'piece_count', 'gross_weight', 'net_weight', 'chargeable_weight', 'volume_cbm',
         'filing_status', 'customs_broker_id', 'transporter_id', 'haulage_provider_id',
         'handling_agent_id', 'shipping_bill_no', 'shipping_bill_date',
-        'igm_no', 'igm_date', 'container_type',
+        'igm_no', 'igm_date',
+        // FocusSea (2026_09_28_120000_connect_focussea). `container_type` moved to sea_containers there.
+        'service_contract_no', 'ts1_code', 'ts2_code', 'ts3_code', 'etd', 'eta', 'commodity_description',
+        'hs_code', 'marks_numbers', 'package_code', 'weight_unit', 'volume_unit', 'bl_type', 'release_type',
+        'empty_depot',
     ];
 
     protected $casts = [

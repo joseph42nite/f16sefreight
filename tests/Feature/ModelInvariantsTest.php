@@ -292,7 +292,8 @@ class ModelInvariantsTest extends TestCase
         $invoice = AccountsInvoice::create([
             'agent_id' => $this->branch->id, 'job_id' => $job->id, 'customer_id' => $customer->id,
             'invoice_no' => 'INV-INVIVB-26-0001', 'type' => 'invoice',
-            'document_date' => now(), 'grand_total' => 195880,
+            'document_date' => now(), 'status' => 'finalized', 'subtotal' => 163500, 'tax_amount' => 32380,
+            'grand_total' => 195880,
         ]);
 
         AccountsInvoiceItem::create([
@@ -315,6 +316,11 @@ class ModelInvariantsTest extends TestCase
             'amount' => 128075, 'net_amount' => 128075,
         ]);
 
-        $this->assertSame(34.62, $job->grossMarginPct()); // matches the SQL verification in Batch 1c
+        // Net of tax: (163,500 − 128,075) / 163,500. The tax-inclusive 34.62 this once asserted broke the money rule.
+        $this->assertSame(21.67, $job->grossMarginPct());
+
+        // A draft never counts.
+        $invoice->forceFill(['status' => 'draft'])->saveQuietly();
+        $this->assertNull($job->grossMarginPct());
     }
 }

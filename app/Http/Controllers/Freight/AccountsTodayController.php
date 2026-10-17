@@ -35,7 +35,8 @@ class AccountsTodayController extends Controller
         $branches = $this->branches();
         $ids = $branches->pluck('id')->all();
         $picked = $request->integer('agent_id') ?: null;
-        $scope = $picked ? [$picked] : $ids;
+        // 🔒 A branch outside the user's own list is ignored, never queried (the same rule as RegisterController).
+        $scope = $picked && $branches->contains('id', $picked) ? [$picked] : $ids;
 
         return response()->json([
             'cards' => $this->cards($scope),

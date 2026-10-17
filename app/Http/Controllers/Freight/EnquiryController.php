@@ -11,6 +11,7 @@ use App\Services\AuditLogger;
 use App\Services\EnquirySequenceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Support\UserContext;
 use Illuminate\Support\Facades\DB;
 
@@ -240,7 +241,7 @@ class EnquiryController extends Controller
         $data = $request->validate([
             'transport_mode'    => ['required', 'in:air,sea,road'],
             'direction'         => ['nullable', 'in:export,import'],
-            'customer_id'       => ['nullable', 'integer', 'exists:customers,id'],
+            'customer_id'       => ['nullable', 'integer', $this->ownCustomer()],
             'extracted_pieces'  => ['nullable', 'integer', 'min:0'],
             'extracted_weight'  => ['nullable', 'numeric', 'min:0'],
             'extracted_volume'  => ['nullable', 'numeric', 'min:0'],
@@ -333,7 +334,7 @@ class EnquiryController extends Controller
             'ops_id'                 => ['nullable', 'integer', 'exists:users,id'],
             'planned_clearance_date' => ['nullable', 'date'],
             'awb_number'             => ['nullable', 'string', 'max:20'],
-            'customer_id'            => ['nullable', 'integer', 'exists:customers,id'],
+            'customer_id'            => ['nullable', 'integer', $this->ownCustomer()],
         ]);
 
         if ($enquiry->status === EnquiryStatus::Lost) {
@@ -413,5 +414,11 @@ class EnquiryController extends Controller
     private function agentId(): int
     {
         return (int) auth()->user()->branch_name;
+    }
+
+    /** 🔒 A client of the acting user's own company — never another tenant's id. */
+    private function ownCustomer(): \Illuminate\Validation\Rules\Exists
+    {
+        return Rule::exists('customers', 'id')->where('company_id', UserContext::for(auth()->user())->companyId);
     }
 }

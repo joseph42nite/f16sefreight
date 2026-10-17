@@ -7,6 +7,7 @@ use App\Services\Bank\VendorStatements;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -107,7 +108,9 @@ class VendorStatementController extends Controller
 
         $data = $request->validate([
             'agent_id' => 'required|integer',
-            'vendor_id' => 'required|integer|exists:partners,id',
+            // 🔒 A supplier of this company only.
+            'vendor_id' => ['required', 'integer', Rule::exists('partners', 'id')
+                ->where('company_id', UserContext::for(auth()->user())->companyId)],
             'period' => 'required|string|max:50',
             'statement_no' => 'nullable|string|max:60',
             'statement_date' => 'nullable|date',

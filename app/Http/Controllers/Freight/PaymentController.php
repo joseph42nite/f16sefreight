@@ -149,7 +149,8 @@ class PaymentController extends Controller
             'narration' => 'nullable|string|max:255',
             'bank_account_id' => 'nullable|integer',
             'allocations' => 'required|array|min:1',
-            'allocations.*.purchase_voucher_id' => 'required|integer',
+            // `distinct`: one voucher twice would pass the outstanding check once per line and overpay it.
+            'allocations.*.purchase_voucher_id' => 'required|integer|distinct',
             'allocations.*.amount' => 'required|numeric|min:0.01',
             // What each supplier's bill took off — an airline's commission, a discount or incentive (GAPS #444).
             // Keyed by supplier: one payment per supplier, so one figure each. Typed from their bill or statement.

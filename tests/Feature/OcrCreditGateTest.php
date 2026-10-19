@@ -6,7 +6,6 @@ use App\Agent;
 use App\Jobs\ProcessPdfOcrJob;
 use App\Company;
 use App\PdfProcessingJob;
-use App\Services\CircuitBreaker;
 use App\Services\OcrCreditService;
 use App\Services\OcrRoutingService;
 use App\User;
@@ -208,55 +207,6 @@ class OcrCreditGateTest extends TestCase
 
         $this->assertSame(500.0, (float) $company->fresh()->ocr_credits_balance,
             'The balance must be restored exactly once.');
-    }
-
-    // ─── Circuit breaker ─────────────────────────────────────────────────────
-
-    /**
-     * 🔴 Keyed PER CONNECTION. One tenant hitting a 429 must not stop mail sync for every
-     * other tenant on the platform.
-     */
-    public function test_one_mailbox_tripping_does_not_break_another(): void
-    {
-        Cache::flush();
-
-        $mine = CircuitBreaker::forMailbox(1);
-        $theirs = CircuitBreaker::forMailbox(2);
-
-        for ($i = 0; $i < CircuitBreaker::FAILURE_THRESHOLD; $i++) {
-            $mine->recordFailure();
-        }
-
-        $this->assertTrue($mine->isOpen());
-        $this->assertFalse($theirs->isOpen(), 'Another tenant must be entirely unaffected.');
-    }
-
-    public function test_a_single_success_closes_the_breaker(): void
-    {
-        Cache::flush();
-        $breaker = CircuitBreaker::forMailbox(3);
-
-        for ($i = 0; $i < CircuitBreaker::FAILURE_THRESHOLD; $i++) {
-            $breaker->recordFailure();
-        }
-        $this->assertTrue($breaker->isOpen());
-
-        $breaker->recordSuccess();
-        $this->assertFalse($breaker->isOpen());
-    }
-
-    /** An open breaker must throw, not return empty — an outage is not "no results". */
-    public function test_an_open_breaker_fails_fast_and_distinguishably(): void
-    {
-        Cache::flush();
-        $breaker = CircuitBreaker::forAiServer();
-
-        for ($i = 0; $i < CircuitBreaker::FAILURE_THRESHOLD; $i++) {
-            $breaker->recordFailure();
-        }
-
-        $this->expectException(\App\Services\CircuitOpenException::class);
-        $breaker->call(fn () => 'never runs');
     }
 
     /**

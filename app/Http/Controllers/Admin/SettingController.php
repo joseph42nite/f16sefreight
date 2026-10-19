@@ -27,14 +27,6 @@ class SettingController extends Controller
         return response()->json(['status'=>true]);
     }
 
-    public function update(Request $request){
-        $request->validate([
-            'user_notice_1' => ['required', 'string', 'max:500'],
-        ]);
-        Setting::where('id',1)->update(['user_notice_1'=>$request->user_notice_1]);
-        return "success";
-    }
-
     public function delete(Request $request){
         $request->validate([
             'carrier_code' => ['required', 'string', 'max:10'],

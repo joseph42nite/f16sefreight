@@ -23,8 +23,6 @@ use App\Http\Controllers\Data\AmsController;
 use App\Http\Controllers\Data\ReportController;
 use App\Http\Controllers\Data\CurrencyRateController;
 use App\Http\Controllers\Generators\GenerateAwbPdfController;
-use App\Http\Controllers\Generators\GenerateHawbPdfController;
-use App\Http\Controllers\Generators\GenerateConsolidationPdfController;
 use App\Http\Controllers\Admin\BlogController;
 
 

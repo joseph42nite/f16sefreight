@@ -51,6 +51,13 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer();
 
+        // The sales rollup (PRD §7.3.4): every Sales page figure, the boss's mails and staff reviews come from it. The PRD
+        // calls it nightly but it was never scheduled. Before the working day, so the morning opens on today's snapshot.
+        $schedule->command('sales:compute-snapshots')
+            ->dailyAt('05:30')
+            ->withoutOverlapping()
+            ->onOneServer();
+
         // Today's exchange rates (GAPS #411). Once a day: the free plan has no history, so a day missed is a day
         // whose foreign receipts wait for a rate — and 30 calls a month sit well inside its request limit.
         $schedule->command('fx:fetch-rates')

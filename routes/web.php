@@ -1,23 +1,5 @@
 <?php
 
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\PasswordResetRequestController;
-use App\Http\Controllers\Admin\SuperAdminController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\CompanyController;
-use App\Http\Controllers\Admin\BranchController;
-use App\Http\Controllers\Admin\SettingController;
-use App\Http\Controllers\Admin\ContactController;
-use App\Http\Controllers\Logistics\AirwayBillController;
-use App\Http\Controllers\Logistics\HousewayBillController;
-use App\Http\Controllers\Logistics\MessageLogController;
-use App\Http\Controllers\Logistics\ConsolidationController;
-use App\Http\Controllers\Logistics\GLNResponseController;
-use App\Http\Controllers\Data\RateController;
-use App\Http\Controllers\Data\LocationController;
-use App\Http\Controllers\Data\AmsController;
-use App\Http\Controllers\Data\ReportController;
-use App\Http\Controllers\Data\CurrencyRateController;
 use App\Http\Controllers\Generators\GenerateAwbPdfController;
 use App\Http\Controllers\Generators\GenerateHawbPdfController;
 use App\Http\Controllers\Generators\GenerateConsolidationPdfController;

@@ -1,0 +1,58 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; pointer-events: none; }
+    .slot { position: absolute; left: 60px; right: 60px; top: 330px; display: flex; justify-content: center; }
+    .q { padding: 22px 40px; border-radius: 26px; background: #263238; color: #FFFFFF; font-family: Inter, sans-serif; font-weight: 800; font-size: 54px;
+          box-shadow: 0 20px 40px rgba(38,50,56,.2); text-align: center; }
+    .c { padding: 24px 44px 30px; border-radius: 30px; background: #263238; color: #FFFFFF; font-family: Inter, sans-serif; text-align: center;
+          box-shadow: 0 20px 40px rgba(38,50,56,.25); max-width: 940px; }
+    .c-eye { font-weight: 700; font-size: 30px; letter-spacing: .14em; text-transform: uppercase; color: #FFBF9D; }
+    .c-t { font-weight: 800; font-size: 64px; line-height: 1.1; letter-spacing: -.02em; margin-top: 6px; }
+    .t { padding: 18px 40px 22px; border-radius: 26px; background: #FFFFFF; border: 4px solid #263238; text-align: center; font-family: Inter, sans-serif;
+          box-shadow: 0 20px 40px rgba(38,50,56,.15); max-width: 940px; }
+    .t-eye { font-weight: 700; font-size: 28px; letter-spacing: .16em; text-transform: uppercase; color: #5A6B8A; }
+    .t-term { font-weight: 800; font-size: 60px; letter-spacing: -.02em; color: #355594; line-height: 1.1; margin-top: 4px; }
+    .t-mean { font-weight: 600; font-size: 32px; color: #263238; margin-top: 4px; }
+  </style>
+  <div id="root" data-composition-id="terms" data-width="1080" data-height="1920">
+    <div id="term-0" class="clip slot" data-start="0" data-duration="3.81" data-track-index="0"><div class="c"><div class="c-eye">Demurrage &amp; detention</div><div class="c-t">Paying for a box that never moved?</div></div></div>
+    <div id="term-1" class="clip slot" data-start="17.06" data-duration="2.28" data-track-index="0"><div class="q">Why pay for standing still?</div></div>
+    <div id="term-2" class="clip slot" data-start="22.81" data-duration="3.8" data-track-index="0"><div class="t"><div class="t-eye">This is called</div><div class="t-term">Shipping line</div><div class="t-mean">runs the ship and owns the box</div></div></div>
+    <div id="term-3" class="clip slot" data-start="30.58" data-duration="3.02" data-track-index="0"><div class="t"><div class="t-eye">This is called</div><div class="t-term">Free time</div><div class="t-mean">days you keep the box at no cost</div></div></div>
+    <div id="term-4" class="clip slot" data-start="39.03" data-duration="5.56" data-track-index="0"><div class="t"><div class="t-eye">This is called</div><div class="t-term">Demurrage</div><div class="t-mean">a daily fee while the full box waits in the port</div></div></div>
+    <div id="term-5" class="clip slot" data-start="49.27" data-duration="3.05" data-track-index="0"><div class="q">Here's the catch</div></div>
+    <div id="term-6" class="clip slot" data-start="59.27" data-duration="3.3" data-track-index="0"><div class="t"><div class="t-eye">This is called</div><div class="t-term">Detention</div><div class="t-mean">a daily fee until the empty box goes back</div></div></div>
+    <div id="term-7" class="clip slot" data-start="65.23" data-duration="1.2" data-track-index="0"><div class="q">So, the difference?</div></div>
+    <div id="term-8" class="clip slot" data-start="73.0" data-duration="1.24" data-track-index="0"><div class="q">Why charge at all?</div></div>
+    <div id="term-9" class="clip slot" data-start="80.42" data-duration="1.28" data-track-index="0"><div class="q">How do you avoid it?</div></div>
+    <div id="term-10" class="clip slot" data-start="84.3" data-duration="2.39" data-track-index="0"><div class="t"><div class="t-eye">This is called</div><div class="t-term">Customs</div><div class="t-mean">the government's check on imports</div></div></div>
+    <div id="term-11" class="clip slot" data-start="92.91" data-duration="2.29" data-track-index="0"><div class="t"><div class="t-eye">This is called</div><div class="t-term">Freight</div><div class="t-mean">what you pay to move the box</div></div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.to("#term-0 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 3.61);
+    tl.fromTo("#term-1 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 17.06);
+    tl.to("#term-1 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 19.14);
+    tl.fromTo("#term-2 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 22.81);
+    tl.to("#term-2 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 26.41);
+    tl.fromTo("#term-3 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 30.58);
+    tl.to("#term-3 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 33.4);
+    tl.fromTo("#term-4 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 39.03);
+    tl.to("#term-4 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 44.39);
+    tl.fromTo("#term-5 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 49.27);
+    tl.to("#term-5 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 52.12);
+    tl.fromTo("#term-6 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 59.27);
+    tl.to("#term-6 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 62.37);
+    tl.fromTo("#term-7 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 65.23);
+    tl.to("#term-7 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 66.23);
+    tl.fromTo("#term-8 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 73.0);
+    tl.to("#term-8 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 74.04);
+    tl.fromTo("#term-9 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 80.42);
+    tl.to("#term-9 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 81.5);
+    tl.fromTo("#term-10 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 84.3);
+    tl.to("#term-10 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 86.49);
+    tl.fromTo("#term-11 > div", { opacity: 0, y: -24, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, 92.91);
+    tl.to("#term-11 > div", { opacity: 0, y: -16, duration: 0.18, ease: "power2.in" }, 95.0);
+    window.__timelines["terms"] = tl;
+  </script>
+</template>

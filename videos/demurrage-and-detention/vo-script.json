@@ -1,0 +1,24 @@
+{
+ "voice": "af_heart",
+ "speed": 1.0,
+ "first_gap": 0.2,
+ "gap": 0.12,
+ "lines": [
+  "You're importing a container of furniture: one big steel box on a ship. It reaches the port in Mumbai on time.",
+  "Then it sits there for ten days, waiting for paperwork. And a bill arrives. About a thousand dollars, almost one [lakh](/lˈæk/) rupees, for a box that never moved.",
+  "Why pay for standing still? Let me explain.",
+  "First, that box isn't yours. It belongs to the shipping line, the company that runs the ship. You're only borrowing it.",
+  "They lend it free for a few days after it lands. This is called free time. Often around five days.",
+  "Now the clock starts. Every extra day the full box waits in the port, you pay. This is called demurrage.",
+  "For a twenty-foot container, that can be around a hundred dollars a day. About nine thousand rupees. And it often rises the longer it stays.",
+  "But here's the catch. Getting it out of the port isn't the end.",
+  "You truck it to your warehouse and unload. Until the empty box goes back, a second clock runs.",
+  "This is called detention. Same idea, but outside the port: you're keeping the shipping line's box too long.",
+  "So, the difference? Demurrage: the full box is stuck inside the port. Detention: the box is out, but not yet returned.",
+  "Why charge at all? A box standing still can't carry anyone else's cargo. The fee pushes everyone to return it fast.",
+  "So how do you avoid it? Have your papers ready before the ship arrives, so customs, the government's check on imports, clears it fast. Ask for extra free days when you book. Return the empty box on time.",
+  "Freight is what you pay to move the box. Demurrage and detention are what you pay when it stops.",
+  "And the port's own storage fee? That's part two.",
+  "Until then, watch the clock on your container. More at F-sixteens e-freight dot com."
+ ]
+}

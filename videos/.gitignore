@@ -2,7 +2,7 @@
 renders/
 .hyperframes/
 .thumbnails/
-vo2/*.wav
-assets/audio/narration.wav
+**/vo2/*.wav
+**/assets/audio/narration.wav
 # packaged copy of the skill; the folder next to it is the source
 _skill/*.zip

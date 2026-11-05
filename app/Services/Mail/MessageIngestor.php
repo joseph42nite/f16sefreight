@@ -226,6 +226,8 @@ class MessageIngestor
                 // report that cannot name the source cannot tell a bad tenant rule from a bad
                 // rubric, and those have nothing in common but the symptom (2026-09-20).
                 'auto_classification_source' => $result['source'],
+                // The tenant rule that fired, so a later correction counts against it (GAPS #51).
+                'auto_classification_rule_id' => $result['matched_rule_id'],
                 'auto_classification_confidence' => $result['confidence'],
                 'auto_classification_rubric' => $result['rubric'],
                 // Import or export, when the lane or Jev said (GAPS #437) — what the enquiry it mints starts as.

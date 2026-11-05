@@ -73,6 +73,24 @@ class AccountsWorkQueueTest extends TestCase
     }
 
     /** 🔒 Pricing may read the registers but never finalize or post; that stays accounts'. */
+    /**
+     * 🔴 GAPS #482 — a draft refreshed with an unchanged total in the same second was queued TWICE: the update changed
+     * nothing, MySQL called that 0 rows affected, and refresh() took it for a missing row. Not yet posted showed
+     * double, and the month-close count with it. Time is frozen so the same second is certain, not a matter of luck.
+     */
+    public function test_a_draft_is_queued_once_however_often_it_is_refreshed(): void
+    {
+        $this->freezeSecond();
+        $invoice = \App\AccountsInvoice::create(['agent_id' => $this->branch->id, 'job_id' => $this->job->id, 'transport_mode' => 'air',
+            'customer_id' => $this->job->customer_id, 'created_by' => $this->accounts->id, 'invoice_no' => 'DRAFT-482',
+            'type' => 'invoice', 'document_date' => now()->toDateString(), 'status' => 'draft', 'currency' => 'INR', 'grand_total' => 75000]);
+
+        app(\App\Services\UnpostedQueue::class)->refresh($invoice);
+        app(\App\Services\UnpostedQueue::class)->refresh($invoice);
+
+        $this->assertSame(1, DB::table('unposted_transactions_queue')->where('source_type', 'invoice')->where('source_id', $invoice->id)->count());
+    }
+
     public function test_only_accounts_finalizes_and_posts(): void
     {
         $sheet = "http://focusair.localhost/api/jobs/{$this->job->id}/cost-sheet";

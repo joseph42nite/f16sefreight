@@ -305,6 +305,23 @@ class SchemaConstraintsTest extends TestCase
         }
     }
 
+    // ─── Waybill tenancy (GAPS #18) ─────────────────────────────────────────
+
+    /** A waybill must belong to a branch that exists, and that branch cannot vanish from under it. */
+    public function test_a_waybill_must_belong_to_a_real_branch(): void
+    {
+        // house_way_bills.id is not AUTO_INCREMENT (the legacy form supplies it), so ids are given.
+        foreach (['air_way_bills' => 990101, 'house_way_bills' => 990102] as $table => $id) {
+            $this->assertRefused('foreign key constraint', fn () => DB::table($table)->insert([
+                'id' => $id, 'agent_id' => 999999999, 'created_at' => now(), 'updated_at' => now(),
+            ]));
+
+            DB::table($table)->insert(['id' => $id, 'agent_id' => $this->agentId, 'created_at' => now(), 'updated_at' => now()]);
+        }
+
+        $this->assertRefused('foreign key constraint', fn () => DB::table('agents_info')->where('id', $this->agentId)->delete());
+    }
+
     // ─── OCR credit ledger ───────────────────────────────────────────────────
 
     /**

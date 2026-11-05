@@ -380,10 +380,9 @@ class EmailInboxController extends Controller
         $this->classifier->recordOverride([
             'agent_id'                => $thread->agent_id,
             'email_thread_id'         => $thread->id,
-            // ⚠️ NULL until the classifier records which rule fired. Today nothing sets a
-            // matched rule on the thread, so an override is attributable to the CHANGE but
-            // not yet to the rule that caused it — see GAPS.
-            'matched_rule_id'         => null,
+            // The tenant rule that filed it at ingestion, if one did — so the correction counts
+            // against that rule's override_count (GAPS #51). NULL when anything else filed it.
+            'matched_rule_id'         => $thread->auto_classification_rule_id,
             'original_classification' => $from,
             'corrected_classification' => $to,
             'email_subject'           => $this->latestSubject($thread),

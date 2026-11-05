@@ -72,14 +72,18 @@ class UnpostedQueue
             return;
         }
 
-        $updated = DB::table('unposted_transactions_queue')
-            ->where('source_type', $type)->where('source_id', $document->id)
-            ->update(['net_amount' => $this->total($document), 'updated_at' => now()]);
+        $row = DB::table('unposted_transactions_queue')->where('source_type', $type)->where('source_id', $document->id);
 
         // A document raised before this queue was written to has no row; give it one the first time it changes.
-        if ($updated === 0) {
+        // 🔴 Asked by EXISTS, not by the update's row count: MySQL counts a row whose values did not change as not
+        // affected — the same total within the same second — and that queued the document a second time (GAPS #482).
+        if (! $row->exists()) {
             $this->track($document);
+
+            return;
         }
+
+        $row->update(['net_amount' => $this->total($document), 'updated_at' => now()]);
     }
 
     public function clear(string $type, int $id): void

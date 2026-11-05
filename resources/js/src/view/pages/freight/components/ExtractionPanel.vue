@@ -98,9 +98,9 @@
         taught operators to ignore it for the times it mattered.
       -->
       <p v-if="scannedDocuments.length" class="fx-warn" role="status">
-        No selectable text in <strong>{{ scannedDocuments.join(", ") }}</strong> — reading a scan
-        with AI needs approval for a credit, which this panel cannot ask for yet, so use the paste
-        box below for those.
+        No selectable text in <strong>{{ scannedDocuments.join(", ") }}</strong> — a scan is read
+        with AI only once you approve its credit, which Extract will ask for. The paste box below
+        costs nothing.
       </p>
 
       <p v-if="rejectedFiles.length" class="fx-warn" role="status">
@@ -155,6 +155,13 @@
                 Reading with AI… {{ secondsReading(doc) }} s · usually 5–15 s
               </span>
               <span v-if="doc.error" class="fx-muted"> {{ doc.error }}</span>
+              <!-- A scan costs credits to read; a person decides, here, per document (PRD §5.1 consent, GAPS #261). -->
+              <span v-if="doc.state === 'consent'" class="fx-muted" role="status">
+                No selectable text — a scan ({{ doc.consent.pages || "?" }} page(s)). Read it with AI for
+                {{ doc.consent.cost }} {{ doc.consent.cost === 1 ? "credit" : "credits" }}?
+                <button class="fx-btn" :disabled="doc.consent.busy" @click="answerConsent(doc.uid, 'accept')">Read it</button>
+                <button class="fx-btn fx-btn--ghost" :disabled="doc.consent.busy" @click="answerConsent(doc.uid, 'decline')">No</button>
+              </span>
               <span v-if="doc.warning" class="fx-muted"> ⚠️ {{ doc.warning }}</span>
               <!-- What this document used, in credits (user, 2026-09-14). -->
               <span v-if="doc.state === 'ready' && doc.credits !== null" class="fx-muted"> · {{ doc.credits }} {{ doc.credits === 1 ? "credit" : "credits" }}</span>
@@ -192,7 +199,7 @@
                 disabled
               >Reading…</button>
               <button
-                v-else
+                v-else-if="doc.state !== 'consent'"
                 class="fx-btn fx-btn--ghost"
                 @click="extract(doc.uid)"
               >Re-extract</button>
@@ -1347,7 +1354,7 @@ export default {
         // Extract button.
         const doc = {
           uid: ++this.seq, name: file.name, file, kind: "other",
-          state: "staged", fields: null, error: null, warning: null, piecesNote: null, jobId: null, credits: null,
+          state: "staged", fields: null, error: null, warning: null, piecesNote: null, jobId: null, credits: null, consent: null,
           // "text" | "scan" | "unknown" — filled by the probe a moment later.
           readable: "unknown",
         };
@@ -1407,7 +1414,7 @@ export default {
               uid: ++this.seq, name: job.original_filename, file: null,
               kind: job.document_type === "ksr" ? "awb" : "other",
               state: "reading", fields: null, error: null, warning: null, piecesNote: null,
-              jobId: job.id, credits: null, readable: "unknown",
+              jobId: job.id, credits: null, consent: null, readable: "unknown",
               startedAt: new Date(job.created_at).getTime(),
             };
             this.documents.push(doc);
@@ -1512,13 +1519,9 @@ export default {
               // might not. A warning that fires when it is not true teaches operators to
               // ignore it for the times it is.
               clearTimeout(doc.timer);
-              // ⚠️ Reading a scan uses a credit and needs a person's approval, which this panel does not
-              // ask for yet (GAPS #261) — so it says what to do instead.
-              this.fail(
-                uid,
-                "no selectable text — this is a scan. Reading scans with AI needs approval for "
-                + "1 credit, which this panel cannot ask for yet. Use the paste box below."
-              );
+              // ⚠️ Reading a scan uses a credit, so the row asks; nothing is spent until "Read it" (GAPS #261).
+              doc.state = "consent";
+              doc.consent = { pages: data.page_count, cost: data.credit_cost, busy: false };
             } else if (data.job_status === "pending" && Date.now() - doc.startedAt > 60000) {
               // 🔴 Queued but nothing has picked it up (user, 2026-09-18: "why is the document parsing taking more than
               // 1 minute?" — the answer was that no queue worker was running, and the panel just said "reading…").
@@ -1540,6 +1543,30 @@ export default {
       };
 
       doc.timer = setTimeout(check, 1000);
+    },
+    /** The operator's answer to a scan's credit prompt: accepted, it reads on; declined, nothing is spent. */
+    answerConsent(uid, decision) {
+      const doc = this.documents.find((d) => d.uid === uid);
+      if (!doc || !doc.consent) return;
+
+      doc.consent.busy = true;
+      ApiService.post("/user/ocr-consent/" + doc.jobId, { decision })
+        .then(() => {
+          doc.consent = null;
+          if (decision === "accept") {
+            doc.state = "reading";
+            doc.startedAt = Date.now();
+            this.tick();
+            this.poll(uid);
+          } else {
+            this.fail(uid, "a scan — not read, no credit spent. Use the paste box below.");
+          }
+        })
+        .catch((e) => {
+          // Refused (the company's AI budget, no credits left): the prompt goes, the reason stays on the row.
+          doc.consent = null;
+          this.fail(uid, this.messageFor(e));
+        });
     },
     secondsReading(doc) {
       return doc.startedAt ? Math.max(0, Math.round((this.now - doc.startedAt) / 1000)) : 0;

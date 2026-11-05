@@ -27,6 +27,17 @@ Paste this into the new session:
 
 ## Where we are (GAPS #436–#466)
 
+### 2026-11-05 — the open gaps that did not need the owner
+- **Waybill tenancy (#475, GAPS #18):** `agent_id` on both waybill tables is BIGINT UNSIGNED with a RESTRICT FK;
+  the migration refuses, naming the count, if live has a waybill on a branch that does not exist.
+- **Rule attribution (#476, #51):** `email_threads.auto_classification_rule_id`, so a correction moves the rule's `override_count`.
+- **Attachments (#477, #232):** `attachments:evict-cache` daily; over 25 MB refused before the download, said why.
+- **Scan consent in the Extraction panel (#478, #261):** the row asks "Read it with AI for 1 credit?".
+- **Tons/lbs never read as kg (#479, #343).** **Demo threads match their enquiry (#480, #220).**
+- **A draft queued for posting twice (#482)** — found by the full suite; `UnpostedQueue::refresh()` asks by EXISTS.
+- **#5's remaining triggers contradict the code (#481)** — a question for the owner, below.
+
+
 ### 2026-10-06
 - **Owner's answers (#459):** no *AI Extraction* / *Re-initiation* client mails (PRD + guide no longer claim one);
   *Pre-alert SIN-BOM* stays at 2/5 — prompts stay short, the lane (branch's country, PHP) decides it.
@@ -101,6 +112,7 @@ Paste this into the new session:
 - Setu's request shapes against their sandbox (`app/Services/Bank/SetuAccountAggregator.php`, #442).
 
 ## Waiting on the owner
+- **Designation triggers (#481, GAPS #5):** may pricing create draft invoices/vouchers (the code does — cost sheet, waybill) with only accounts finalizing and posting; and may an operations user own an import's pricing? The spec'd triggers refuse both.
 - BL / house / arrival notice / DO print layouts (#433, #434).
 - ICEGATE developer-portal details (guide §12.3).
 - CASS: a client's CASSLink billing files + the CASS agent output specification, and their iiNET SFTP/APIsec setup.

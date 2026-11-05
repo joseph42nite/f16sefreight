@@ -57,12 +57,20 @@ class MailFilingService
      */
     private const WEIGHT_PATTERNS = [
         // "chargeable weight 520", "CW 520", "Ch wt 18000 kgs", "Chg wt: 18000"
-        'chargeable' => '/\b(?:chargeable|charge?able|cw|ch\.?\s*w(?:gh)?t|chg\.?\s*w(?:gh)?t)\D{0,12}?(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?)?\b/i',
+        'chargeable' => '/\b(?:chargeable|charge?able|cw|ch\.?\s*w(?:gh)?t|chg\.?\s*w(?:gh)?t)\D{0,12}?' . self::KG_FIGURE . '/i',
         // "Gross wgt 17400kgs", "GW 450", "G.W.: 450 kg", and a plain "WEIGHT : 300 kgs" / "Wt 300 kg" — the plain label
         // only with a kg unit, so a table heading ("Pcs / Weight / Time") never reads as a figure (user, 2026-09-17).
-        'gross'      => '/\b(?:gross|gw|g\.w\.?|actual)\D{0,12}?(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?)?\b|(?<!ch\s)(?<!ch\.)(?<!chg\s)\b(?:weight|wgt|wt)\b\s*[:\-=]?\s*(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?|kilograms?)\b/i',
-        'net'        => '/\b(?:net|nw)\D{0,12}?(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?)?\b/i',
+        'gross'      => '/\b(?:gross|gw|g\.w\.?|actual)\D{0,12}?' . self::KG_FIGURE . '|(?<!ch\s)(?<!ch\.)(?<!chg\s)\b(?:weight|wgt|wt)\b\s*[:\-=]?\s*(\d+(?:\.\d+)?)\s*(?:kgs?|kilos?|kilograms?)\b/i',
+        'net'        => '/\b(?:net|nw)\D{0,12}?' . self::KG_FIGURE . '/i',
     ];
+
+    /**
+     * The number after a weight label, in kg — or no figure at all. The unit is optional because forwarders write
+     * "GW 450", but a figure followed by ANOTHER unit is not kg: "gross 18 tons" was stored as 18 kg and "500 lbs" as
+     * 500 kg (GAPS #343). A sea mailbox still reads the tonnage, through TONNES; an air mail leaves it for a person.
+     * Atomic, so "18.5 tons" cannot back off to "18" and pass.
+     */
+    private const KG_FIGURE = '((?>\d+(?:\.\d+)?))(?!\s*(?:mts?|metric|tonnes?|tons?|lbs?|pounds?)\b)\s*(?:kgs?|kilos?)?\b';
 
     private const UNLABELLED_WEIGHT = '/(\d+(?:\.\d+)?)\s*(?:kgs?|kilograms?)\b/i';
 

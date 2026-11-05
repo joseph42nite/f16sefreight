@@ -151,6 +151,24 @@ class EnquiryPatternsTest extends TestCase
             $cargo['chargeable_weight']['value'], $cargo['dimensions']['value']]);
     }
 
+    /**
+     * 🔴 GAPS #343 — the unit after a weight label is optional, so "gross 18 tons" was read as 18 kg and "Ch wt 500 lbs"
+     * as 500 kg: a figure off by a thousand, at high confidence, on its way to a waybill. Another unit means no kg figure;
+     * a sea mailbox still turns the tonnage into kg.
+     */
+    public function test_a_weight_in_another_unit_is_never_read_as_kg(): void
+    {
+        $filing = app(MailFilingService::class);
+
+        $air = $filing->extractCargo("400 pcs, gross 18 tons, Ch wt 500 lbs, net 17.5 MT", 'air');
+        $this->assertArrayNotHasKey('gross_weight', $air);
+        $this->assertArrayNotHasKey('chargeable_weight', $air);
+        $this->assertArrayNotHasKey('net_weight', $air);
+
+        $this->assertSame(18000.0, $filing->extractCargo('FCL 1x20GP, gross 18 tons', 'sea')['gross_weight']['value']);
+        $this->assertSame(450.0, $filing->extractCargo('GW 450, 3 pcs', 'air')['gross_weight']['value']);
+    }
+
     // ─── The chain ───────────────────────────────────────────────────────────
 
     /** The model's answer is what gets filed, and the decision says the model said so. */

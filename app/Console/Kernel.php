@@ -91,6 +91,12 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer();
 
+        // A cached attachment's bytes go after 90 days; the mailbox still has the file (guide §4.7, GAPS #232).
+        $schedule->command('attachments:evict-cache')
+            ->dailyAt('03:00')
+            ->withoutOverlapping()
+            ->onOneServer();
+
         // Debounced via stale_nudged_at, cleared on any new client reply.
         $schedule->command('enquiries:nudge-stale')
             ->hourly()

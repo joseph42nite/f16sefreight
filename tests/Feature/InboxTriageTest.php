@@ -901,6 +901,67 @@ class InboxTriageTest extends TestCase
         $this->assertEmpty(\Illuminate\Support\Facades\Storage::disk('local')->allFiles());
     }
 
+    /**
+     * 🔴 GAPS #232 — a cached file's bytes go once its keep date passes; the row stays and says so. A file still
+     * inside its 90 days, and a job document we generated (nothing to fetch it back from), are not touched.
+     */
+    public function test_the_daily_eviction_drops_only_expired_cached_bytes(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $disk = \Illuminate\Support\Facades\Storage::disk('local');
+        $thread = $this->thread();
+        $disk->put('mail-attachments/old', 'old');
+        $disk->put('mail-attachments/new', 'new');
+        $disk->put('documents/awb/1.pdf', 'awb');
+        $old = $this->attachment($thread, ['fetch_state' => 'cached', 'file_path' => 'mail-attachments/old', 'cache_expires_at' => now()->subDay()]);
+        $new = $this->attachment($thread, ['fetch_state' => 'cached', 'file_path' => 'mail-attachments/new', 'cache_expires_at' => now()->addDay()]);
+
+        $this->artisan('attachments:evict-cache')->assertSuccessful();
+
+        $this->assertSame('evicted', DB::table('email_attachments')->where('id', $old)->value('fetch_state'));
+        $this->assertNull(DB::table('email_attachments')->where('id', $old)->value('file_path'));
+        $disk->assertMissing('mail-attachments/old');
+        $this->assertSame('cached', DB::table('email_attachments')->where('id', $new)->value('fetch_state'));
+        $disk->assertExists('mail-attachments/new');
+        $disk->assertExists('documents/awb/1.pdf');
+    }
+
+    /** An evicted file is fetched from the mailbox again on the next open, scanned again, and cached again. */
+    public function test_an_evicted_attachment_is_fetched_again(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        \Illuminate\Support\Facades\Http::fake(['*/$value' => \Illuminate\Support\Facades\Http::response('%PDF-1.4 demo', 200)]);
+        $this->scanner();
+
+        $attachmentId = $this->attachment($this->thread(), ['fetch_state' => 'evicted', 'cache_expires_at' => now()->subDay()]);
+
+        $this->api($this->pricing)->get($this->url("/api/inbox/attachments/{$attachmentId}"))->assertOk();
+
+        $row = DB::table('email_attachments')->find($attachmentId);
+        $this->assertSame('cached', $row->fetch_state);
+        $this->assertTrue(now()->addDays(89)->lt($row->cache_expires_at));
+        \Illuminate\Support\Facades\Http::assertSentCount(1);
+    }
+
+    /**
+     * 🔴 GAPS #232 — over 25 MB, clamd cannot scan the file. That used to surface as "the scanner is not available",
+     * after downloading all of it; it is now refused, and said why, before anything is fetched.
+     */
+    public function test_a_file_over_25_mb_is_refused_before_it_is_fetched(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        \Illuminate\Support\Facades\Http::fake();
+        $this->scanner();
+
+        $attachmentId = $this->attachment($this->thread(), ['size_bytes' => 30 * 1024 * 1024]);
+
+        $this->api($this->pricing)->get($this->url("/api/inbox/attachments/{$attachmentId}"))
+            ->assertStatus(422)
+            ->assertJsonPath('reason', 'too_large');
+
+        \Illuminate\Support\Facades\Http::assertNothingSent();
+    }
+
     /** ⚠️ An HTML attachment is handed over as a download, never shown as one of our own pages. */
     public function test_an_html_attachment_is_never_served_in_place(): void
     {

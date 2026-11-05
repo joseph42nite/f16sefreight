@@ -1593,14 +1593,15 @@ class FreightDemoSeeder extends Seeder
         // instead of asserted — and it cannot be seen at all unless the data contains it.
         $threads = [
             ['Quote request — 6 pallets BOM to FRA', 'ops@contoso.test', 'customer_enquiry', 'unread', 0, false, 2, null],
-            ['RE: Rates for Chennai–Dubai, 12 cartons', 'shipping@globex.test', 'customer_enquiry', 'triaged', 1, true, 4, 'converted'],
+            // {cargo} is filled from the enquiry the thread is given, so the mail and its enquiry say the same thing (GAPS #220).
+            ['RE: Rates for {cargo}', 'shipping@globex.test', 'customer_enquiry', 'triaged', 1, true, 4, 'converted'],
             // ⚠️ `new`, not `quoted`: nobody has claimed or answered it, so nothing can have been quoted — it waits in the pool.
             ['Urgent: pharma shipment next Tuesday', 'exports@northwind.test', 'customer_enquiry', 'triaged', 0, false, 1, 'new'],
             ['Flight EK511 rescheduled to 04-Sep', 'cargo@emirates.test', 'airline', 'unread', 0, false, 1, null],
             ['MAWB 176-10000004 — space confirmed', 'bookings@lufthansa.test', 'airline', 'read', 1, false, 3, null],
             ['Bill of entry filed — INBOM/2026/0442', 'filings@sharmacha.test', 'clearance', 'unread', 0, false, 2, null],
             ['Pickup scheduled 02-Sep, 0900 hrs', 'dispatch@bluedart.test', 'trucking_road', 'read', 1, false, 1, null],
-            ['Still awaiting your rate — 3 pallets BOM to SIN', 'logistics@globex.test', 'customer_enquiry', 'triaged', 1, false, 2, 'lost'],
+            ['Still awaiting your rate — {cargo}', 'logistics@globex.test', 'customer_enquiry', 'triaged', 1, false, 2, 'lost'],
         ];
 
         // One enquiry is used once. Handing two threads the same enquiry would make the
@@ -1653,6 +1654,11 @@ class FreightDemoSeeder extends Seeder
             $key = 'thr_' . $branch->id . '_' . $i . '_' . substr(md5($subject . $branch->id), 0, 8);
 
             $enquiryId = $promoteTo($promote);
+
+            // 🔴 The enquiry is picked by STATUS, so a fixed subject described some other shipment: "3 pallets BOM to
+            // SIN" sat on an enquiry for 11 pieces DEL → LHR, from another client (GAPS #220). The thread now says what
+            // its enquiry holds, and comes from that enquiry's client.
+            [$subject, $from] = $this->threadAboutItsEnquiry($subject, $from, $enquiryId);
 
             // 🔴 THE THREAD'S CLAIM AND ITS JOB'S OWNER ARE ONE FACT, so they are read
             // from one place. Threads are seeded AFTER jobs and pick their enquiry
@@ -1732,6 +1738,23 @@ class FreightDemoSeeder extends Seeder
                 ]);
             }
         }
+    }
+
+    /** @return array{0: string, 1: string} the subject with `{cargo}` filled in, and the sender at the enquiry's client */
+    private function threadAboutItsEnquiry(string $subject, string $from, ?int $enquiryId): array
+    {
+        $enquiry = $enquiryId === null ? null : DB::table('enquiries')->find($enquiryId);
+        $domain = $enquiry ? DB::table('customers')->where('id', $enquiry->customer_id)->value('email_domain') : null;
+
+        $cargo = $enquiry
+            ? trim(($enquiry->extracted_pieces ? $enquiry->extracted_pieces . ' pcs ' : '')
+                . ($enquiry->origin_code && $enquiry->dest_code ? $enquiry->origin_code . ' to ' . $enquiry->dest_code : ''))
+            : '';
+
+        return [
+            str_replace('{cargo}', $cargo !== '' ? $cargo : 'your shipment', $subject),
+            $domain ? strtok($from, '@') . '@' . $domain : $from,
+        ];
     }
 
     /**

@@ -22,6 +22,9 @@ class AttachmentStore
 {
     private const KEEP_DAYS = 90;
 
+    /** clamd's stream limit (VirusScanner): a larger file cannot be scanned, so it is never fetched. */
+    public const CAP_BYTES = 25 * 1024 * 1024;
+
     public function __construct(private VirusScanner $scanner)
     {
     }
@@ -46,6 +49,12 @@ class AttachmentStore
             return $disk->get($attachment->file_path);
         }
 
+        // Refused before the download, not after it: clamd cannot scan past 25 MB, and its refusal used to surface as
+        // "the scanner is not available" — after fetching the whole file (GAPS #232).
+        if ((int) $attachment->size_bytes > self::CAP_BYTES) {
+            throw $this->tooLarge((int) $attachment->size_bytes);
+        }
+
         $connection = MailboxConnection::find($message->mailbox_connection_id);
 
         if ($connection === null || ! $connection->is_active || blank($attachment->provider_attachment_id)
@@ -66,6 +75,11 @@ class AttachmentStore
             throw new AttachmentException('The mailbox would not return this file. Try again.', 'fetch_failed', 502);
         }
 
+        // A listing can leave the size unknown; the bytes cannot.
+        if (strlen($bytes) > self::CAP_BYTES) {
+            throw $this->tooLarge(strlen($bytes));
+        }
+
         $this->scan($bytes, $attachment);
 
         $path = 'mail-attachments/' . $attachment->id;
@@ -79,6 +93,14 @@ class AttachmentStore
         ])->save();
 
         return $bytes;
+    }
+
+    private function tooLarge(int $bytes): AttachmentException
+    {
+        return new AttachmentException(
+            'This file is ' . round($bytes / 1048576, 1) . ' MB. Files over 25 MB cannot be virus-scanned, so they are not opened here.',
+            'too_large', 422
+        );
     }
 
     /**

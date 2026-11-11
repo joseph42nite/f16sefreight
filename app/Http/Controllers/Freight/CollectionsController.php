@@ -189,6 +189,17 @@ class CollectionsController extends Controller
             return response()->json(['error' => 'That branch is not one of yours.', 'reason' => 'branch_not_found'], 404);
         }
 
+        // 🔒 The party and the bill are this company's own (2026-11-10 audit, S9). Unchecked, a follow-up could be
+        // logged against another company's client or invoice, and the answer carried that invoice's number back.
+        if ($this->partyName($data['party_type'], (int) $data['party_id']) === null) {
+            return response()->json(['error' => 'That client is not one of yours.', 'reason' => 'party_not_found'], 404);
+        }
+
+        if (! empty($data['invoice_id']) && ! DB::table('accounts_invoices')->where('id', $data['invoice_id'])
+            ->whereIn('agent_id', $this->branches()->pluck('id'))->exists()) {
+            return response()->json(['error' => 'That bill is not one of yours.', 'reason' => 'invoice_not_found'], 404);
+        }
+
         $id = DB::table('collection_follow_ups')->insertGetId(array_merge($data, [
             'channel' => $data['channel'] ?? 'email',
             'state' => 'open',
@@ -300,7 +311,9 @@ class CollectionsController extends Controller
     {
         return DB::table('collection_follow_ups as f')
             ->leftJoin('users as u', 'u.id', '=', 'f.created_by')
-            ->leftJoin('accounts_invoices as i', 'i.id', '=', 'f.invoice_id')
+            // Only a bill of these branches is named — an old row pointing elsewhere shows no number (audit S9).
+            ->leftJoin('accounts_invoices as i', fn ($join) => $join->on('i.id', '=', 'f.invoice_id')
+                ->whereIn('i.agent_id', $branchIds))
             ->where('f.party_type', $partyType)->where('f.party_id', $partyId)
             ->whereIn('f.agent_id', $branchIds)
             ->orderByDesc('f.created_at')

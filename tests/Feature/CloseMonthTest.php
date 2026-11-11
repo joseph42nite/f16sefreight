@@ -62,7 +62,7 @@ class CloseMonthTest extends TestCase
 
         return Job::create(['agent_id' => $this->branch->id, 'enquiry_id' => $enquiry->id, 'transport_mode' => 'air',
             'execution_job_no' => 'JOBA-CLSBOM-26-' . random_int(1000, 9999),
-            'customer_id' => $this->client->id, 'completed_at' => now()->subDays(10)]);
+            'customer_id' => $this->client->id, 'status' => 'Completed', 'completed_at' => now()->subDays(10)]);
     }
 
     private function invoice(Job $job, array $attributes = []): AccountsInvoice
@@ -250,5 +250,31 @@ class CloseMonthTest extends TestCase
     {
         return DB::table('chart_of_accounts')->insertGetId(['agent_id' => $this->branch->id,
             'account_code' => $code, 'account_name' => $code, 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    /** 2026-11-10 audit, M6: only a COMPLETED shipment is "finished, not billed", and completing one dates it. */
+    public function test_a_shipment_still_in_progress_or_cancelled_is_not_finished_and_unbilled(): void
+    {
+        $this->job()->forceFill(['status' => 'Verification'])->saveQuietly();
+        $this->job()->forceFill(['status' => 'Cancelled'])->saveQuietly();
+        $done = $this->job();
+
+        $steps = $this->steps();
+
+        $this->assertSame(1, $steps['billed']['count']);
+        $this->assertSame($done->execution_job_no, $steps['billed']['rows'][0]['job_no']);
+    }
+
+    public function test_completing_a_shipment_records_the_day_and_reopening_it_clears_it(): void
+    {
+        $job = $this->job();
+        $job->forceFill(['status' => 'Verification', 'completed_at' => null])->saveQuietly();
+        $job = $job->fresh();
+
+        $job->update(['status' => 'Completed']);
+        $this->assertNotNull($job->fresh()->completed_at);
+
+        $job->update(['status' => 'Verification']);
+        $this->assertNull($job->fresh()->completed_at);
     }
 }

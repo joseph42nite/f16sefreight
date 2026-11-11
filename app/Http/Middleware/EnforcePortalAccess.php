@@ -50,6 +50,15 @@ class EnforcePortalAccess
 
         // The platform portal is not a tenant context and carries no designation rules.
         if (! $portal->isTenantBound()) {
+            // 🔒 …but only for an account of ITS guard (2026-11-10 audit). A tenant token sent to the platform host
+            // used to pass here before the tier and designation checks ran, with no mode scope bound.
+            if (auth()->guard($portal->guard())->user() === null) {
+                return response()->json([
+                    'error'  => 'This portal is for platform staff.',
+                    'reason' => 'guard',
+                ], 403);
+            }
+
             return $next($request);
         }
 

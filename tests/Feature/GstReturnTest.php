@@ -772,4 +772,23 @@ class GstReturnTest extends TestCase
 
         $this->as($sales)->getJson('http://accounts.localhost/api/reports/gstr1')->assertForbidden();
     }
+
+    // ─── 2026-11-10 audit, M17 ───────────────────────────────────────────────
+
+    /** Two lines of odd paise split one way by line and another by document; the register holds the document's. */
+    public function test_odd_paise_across_lines_do_not_read_as_a_register_that_disagrees(): void
+    {
+        // 0.45 + 0.45 of tax: by line that is 0.23 + 0.23 = 0.46 CGST; by document, half of 0.90 = 0.45.
+        $id = $this->bill('INV-RTNBOM-26-0001', 'invoice', $this->local, [[2.50, 0.45, '996531'], [2.50, 0.45, '996531']]);
+
+        DB::table('gst_ledger_entries')->insert(['agent_id' => $this->branch->id,
+            'company_id' => $this->branch->company_id, 'voucher_id' => $id, 'voucher_type' => 'invoice',
+            'cgst_amount' => 0.45, 'sgst_amount' => 0.45, 'igst_amount' => 0,
+            'created_at' => now(), 'updated_at' => now()]);
+
+        $return = $this->gstr1();
+
+        $this->assertSame([], $return['warnings']);
+        $this->assertSame([0.45, 0.45], [$return['b2b'][0]['cgst'], $return['b2b'][0]['sgst']]);
+    }
 }

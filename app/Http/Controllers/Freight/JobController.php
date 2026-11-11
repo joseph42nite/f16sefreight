@@ -260,6 +260,21 @@ class JobController extends Controller
      * a delete anyway; this returns a usable error instead of a driver exception.
      *
      * **Soft, never destructive** — status plus `cancelled_at`/`cancelled_by`. The row is
+        // 🔒 The roles that run a shipment, and only on one they can see (2026-11-10 audit). The route carried no
+        // gate, so sales or accounts could move any job in the branch. Same roles as setAwbNumber(), same
+        // ownership rule as the board that offers the move.
+        abort_unless(in_array(auth()->user()->designation, ['pricing', 'operations', 'boss'], true), 403);
+        abort_unless($this->scopeToOwner(Job::forActivePortal())->whereKey($job->id)->exists(), 404);
+
+        // 🔒 A cancelled shipment does not come back through here. Reviving one is reinitiate(), which re-quotes it
+        // under a new number; a plain status change left `cancelled_at` set and the waybill detached.
+        if ($job->status === JobStatus::Cancelled) {
+            return response()->json([
+                'error'  => 'This shipment is cancelled. Re-initiate it to quote it again.',
+                'reason' => 'cancelled',
+            ], 422);
+        }
+
      * never hard-deleted; the Boss must be able to review every cancellation and its reason.
      *
      * On success the AWB/HAWB is DETACHED (`job_id → NULL`), releasing the number to stock.
@@ -296,8 +311,18 @@ class JobController extends Controller
         $postedInvoices = AccountsInvoice::withoutTenantScope()
             ->where('job_id', $job->id)->where('is_posted', true)->count();
 
-        $vouchers = AccountsPurchaseVoucher::withoutTenantScope()
-            ->where('job_id', $job->id)->where('status', '!=', 'void')->count();
+        // 🔴 A voucher that HOLDS something blocks (2026-11-10 audit, M18): cost lines, a journal, or money paid.
+        // An empty, unposted one is a shell the cost sheet made when a supplier was first picked; nothing can void
+        // a voucher by hand, so counting those left a job impossible to cancel for good. They are voided below.
+        $standing = AccountsPurchaseVoucher::withoutTenantScope()
+            ->where('job_id', $job->id)->where('status', '!=', 'void');
+        $holds = fn ($q) => $q->where('amount_paid', '>', 0)
+            ->orWhereExists(fn ($e) => $e->select(DB::raw(1))->from('accounts_purchase_items')
+                ->whereColumn('accounts_purchase_items.purchase_voucher_id', 'accounts_purchase_vouchers.id'))
+            ->orWhereExists(fn ($e) => $e->select(DB::raw(1))->from('accounts_ledger_entries')
+                ->whereColumn('accounts_ledger_entries.source_id', 'accounts_purchase_vouchers.id')
+                ->where('accounts_ledger_entries.source_type', 'purchase_voucher'));
+        $vouchers = (clone $standing)->where($holds)->count();
 
         if ($postedInvoices > 0 || $vouchers > 0) {
             return response()->json([
@@ -309,7 +334,10 @@ class JobController extends Controller
             ], 422);
         }
 
-        DB::transaction(function () use ($job, $data) {
+        DB::transaction(function () use ($job, $data, $standing) {
+            // Only the empty shells are left standing at this point; a cancelled job keeps no open voucher.
+            (clone $standing)->update(['status' => 'void']);
+
             $job->update($data + [
                 'status'       => JobStatus::Cancelled,
                 'cancelled_at' => now(),

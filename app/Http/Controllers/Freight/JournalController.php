@@ -42,12 +42,21 @@ class JournalController extends Controller
         $rows = $this->entries($request, $branches)->limit(1000)->get();
         $this->describe($rows);
 
+        // 🔴 Totalled in the database over every entry the filters name, not the 1,000 fetched (2026-11-10 audit, M12):
+        // a day book whose debits and credits stop adding up past the thousandth line reads as a ledger out of balance.
+        $totals = $this->entries($request, $branches)->reorder()->select([
+            DB::raw('COUNT(*) AS entries'),
+            DB::raw('COALESCE(SUM(l.debit_amount), 0) AS debits'),
+            DB::raw('COALESCE(SUM(l.credit_amount), 0) AS credits'),
+        ])->first();
+
         return response()->json([
             'entries' => $rows,
             'totals' => [
-                'count' => $rows->count(),
-                'debits' => round($rows->sum('debit_amount'), 2),
-                'credits' => round($rows->sum('credit_amount'), 2),
+                'count' => (int) $totals->entries,
+                'debits' => round((float) $totals->debits, 2),
+                'credits' => round((float) $totals->credits, 2),
+                'shown' => $rows->count(),
             ],
             'branches' => $branches,
             'accounts' => $this->accounts($branches),

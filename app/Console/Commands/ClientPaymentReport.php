@@ -18,7 +18,7 @@ class ClientPaymentReport extends Command
 
     public function handle(ClientPaymentReports $reports): int
     {
-        $month = $this->option('month') ? Carbon::createFromFormat('Y-m', $this->option('month'))->startOfMonth()
+        $month = $this->option('month') ? Carbon::createFromFormat('!Y-m', $this->option('month'))->startOfMonth()
             : now()->subMonthNoOverflow()->startOfMonth();
 
         $this->info(sprintf('%d card(s) for %s.', $reports->run($month), $month->format('F Y')));

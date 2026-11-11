@@ -108,4 +108,16 @@ class BossSeesEverythingTest extends TestCase
         $this->assertSame([], $this->api($chennaiPricing)->getJson("http://focusair.localhost/api/inbox/threads/{$thread}/assignees")->assertOk()->json('assignees'));
         $this->api($this->user('operations', $this->maa))->getJson("http://focusair.localhost/api/inbox/threads/{$thread}/assignees")->assertForbidden();
     }
+
+    /** 2026-11-10 audit, S11: an address that merely CONTAINS his is not his — boss@… is not on mail to notboss@…. */
+    public function test_mail_to_an_address_that_only_contains_his_is_not_his(): void
+    {
+        $his = $this->thread($this->bom, 'Desk <desk@all.test>, The Boss <' . strtoupper($this->boss->email) . '>');
+        $this->thread($this->bom, 'x' . $this->boss->email);
+        $this->thread($this->bom, 'desk@all.test', $this->boss->email . '.au');
+
+        $ids = collect($this->api($this->boss)->getJson('http://admin.localhost/api/inbox/threads')->assertOk()->json('data'))->pluck('id')->all();
+
+        $this->assertSame([$his], $ids);
+    }
 }

@@ -63,7 +63,8 @@ class VendorStatements
             $statementId = DB::table('vendor_statements')->insertGetId([
                 'agent_id' => $agentId, 'vendor_id' => $vendorId, 'vendor_type' => $vendorType, 'period' => $period,
                 'statement_no' => $meta['statement_no'] ?? null,
-                'statement_date' => isset($meta['statement_date']) ? Carbon::parse($meta['statement_date'])->toDateString() : null,
+                // Day first, as the supplier wrote it; a date that cannot be read is left empty (2026-11-10 audit, M8).
+                'statement_date' => \App\Support\StatementDate::parse($meta['statement_date'] ?? null)?->toDateString(),
                 'currency' => strtoupper((string) ($meta['currency'] ?? 'INR')),
                 'their_total' => round(collect($lines)->sum(fn ($l) => (float) ($l['amount'] ?? 0)), 2),
                 'status' => 'imported', 'imported_by' => $by, 'created_at' => now(), 'updated_at' => now(),
@@ -74,7 +75,7 @@ class VendorStatements
                     'vendor_statement_id' => $statementId,
                     'reference' => trim((string) ($line['reference'] ?? '')) ?: null,
                     'description' => $line['description'] ?? null,
-                    'charge_date' => isset($line['charge_date']) && $line['charge_date'] ? Carbon::parse($line['charge_date'])->toDateString() : null,
+                    'charge_date' => \App\Support\StatementDate::parse($line['charge_date'] ?? null)?->toDateString(),
                     'chargeable_weight' => $line['chargeable_weight'] ?? null,
                     'rate' => $line['rate'] ?? null,
                     'their_amount' => round((float) ($line['amount'] ?? 0), 2),
@@ -111,7 +112,7 @@ class VendorStatements
                 ?? ($line->matched_voucher_id ? DB::table('accounts_purchase_vouchers')->where('id', $line->matched_voucher_id)->value('job_id') : null);
             $ours = $jobId === null ? null : $this->ourCost((int) $jobId, (int) $statement->vendor_id);
             $voucherId = $jobId === null ? null : DB::table('accounts_purchase_vouchers')
-                ->where('job_id', $jobId)->where('vendor_id', $statement->vendor_id)->value('id');
+                ->where('job_id', $jobId)->where('vendor_id', $statement->vendor_id)->where('status', '!=', 'void')->value('id');
 
             // 🔴 Compared with what the airline CHARGED before its commission and discount (freight + due carrier), when
             // the line says — that is what a cost sheet books from the AWB. A company that books the net instead
@@ -179,6 +180,7 @@ class VendorStatements
             ->leftJoinSub(DB::table('accounts_purchase_items')->selectRaw('purchase_voucher_id, SUM(net_amount) AS gross')
                 ->groupBy('purchase_voucher_id'), 'i', 'i.purchase_voucher_id', '=', 'v.id')
             ->where('v.vendor_id', $statement->vendor_id)->where('v.agent_id', $statement->agent_id)->whereNotNull('v.job_id')
+            ->where('v.status', '!=', 'void')
             ->whereBetween('v.document_date', [\Illuminate\Support\Carbon::parse($until)->subDays(120)->toDateString(), $until])
             ->whereNotIn('v.id', $claimed)
             ->orderByRaw('ABS(COALESCE(i.gross, 0) - ?)', [(float) $line->their_amount])
@@ -216,10 +218,12 @@ class VendorStatements
     {
         $total = DB::table('accounts_purchase_items as i')
             ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
-            ->where('v.job_id', $jobId)->where('v.vendor_id', $vendorId)
+            ->where('v.job_id', $jobId)->where('v.vendor_id', $vendorId)->where('v.status', '!=', 'void')
             ->sum('i.net_amount');
 
-        return DB::table('accounts_purchase_vouchers')->where('job_id', $jobId)->where('vendor_id', $vendorId)->exists()
+        // A void voucher never stood (2026-11-10 audit, M9): it is neither a cost nor "something booked".
+        return DB::table('accounts_purchase_vouchers')->where('job_id', $jobId)->where('vendor_id', $vendorId)
+            ->where('status', '!=', 'void')->exists()
             ? round((float) $total, 2)
             : null;
     }

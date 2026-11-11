@@ -13,7 +13,8 @@ class Handler extends ExceptionHandler
      * @var array
      */
     protected $dontReport = [
-        //
+        // A refused double post is an answer to the user, not a server error.
+        AlreadyPosted::class,
     ];
 
     /**

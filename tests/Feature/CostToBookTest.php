@@ -206,4 +206,30 @@ class CostToBookTest extends TestCase
 
         $this->assertSame([$this->job->id], array_column($this->queue($this->accounts)['rows'], 'job_id'));
     }
+
+    /** 🔴 2026-11-10 audit, M4: while the sell side is still a draft, a cost on a posted voucher is not edited or removed. */
+    public function test_a_cost_on_a_posted_voucher_is_not_changed_or_removed(): void
+    {
+        DB::table('accounting_periods')->insert(['agent_id' => $this->branch->id, 'period_name' => 'September',
+            'start_date' => '2026-09-01', 'end_date' => '2026-09-30', 'status' => 'open', 'created_at' => now(), 'updated_at' => now()]);
+
+        $this->book($this->pricing, $this->job, [], 'focusair.localhost')->assertCreated();
+        $voucher = DB::table('accounts_purchase_vouchers')->where('job_id', $this->job->id)->first();
+        $line = DB::table('accounts_purchase_items')->where('purchase_voucher_id', $voucher->id)->first();
+        $url = "http://focusair.localhost/api/jobs/{$this->job->id}/cost-sheet/buy/{$line->id}";
+        $change = ['charge_type' => 'air_freight', 'description' => 'Carrier invoice', 'quantity' => 1, 'rate' => 30000,
+            'tax_percentage' => 18];
+
+        // Before posting it is an ordinary line.
+        $this->as($this->pricing)->putJson($url, $change)->assertOk();
+
+        DB::table('accounts_purchase_vouchers')->where('id', $voucher->id)->update(['document_date' => '2026-09-12']);
+        $this->as($this->accounts)->postJson("http://accounts.localhost/api/vouchers/{$voucher->id}/post")->assertOk();
+
+        $this->as($this->pricing)->putJson($url, ['rate' => 10000] + $change)
+            ->assertStatus(422)->assertJsonPath('reason', 'voucher_posted');
+        $this->as($this->pricing)->deleteJson($url)->assertStatus(422)->assertJsonPath('reason', 'voucher_posted');
+
+        $this->assertEquals(30000, DB::table('accounts_purchase_items')->where('id', $line->id)->value('rate'));
+    }
 }

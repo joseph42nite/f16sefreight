@@ -12,6 +12,7 @@ use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 /**
  * The decoupled Job Cost Sheet — PRD.md §6.7.
@@ -87,7 +88,9 @@ class JobCostSheetController extends Controller
 
         // 🔴 BEFORE TAX (GAPS #466): GST is collected for the government and input GST is claimed back, so neither is
         // revenue or cost — totals and margin are line amounts, as every report does (#403). The tax is its own figure.
-        $sellTotal = round($sell->sum(fn ($i) => (float) $i->amount), 2);
+        // 🔴 A credit note gives money BACK (2026-11-10 audit, M9): its lines come off the sale, they are not added to it.
+        $credited = AccountsInvoice::withoutTenantScope()->where('job_id', $job->id)->where('type', 'credit_note')->pluck('id')->flip();
+        $sellTotal = round($sell->sum(fn ($i) => (isset($credited[$i->invoice_id]) ? -1 : 1) * (float) $i->amount), 2);
         $buyTotal = round($buy->sum(fn ($i) => (float) $i->amount), 2);
 
         $payload = [
@@ -95,7 +98,7 @@ class JobCostSheetController extends Controller
             'sell' => [
                 'lines' => $sell->map(fn ($i) => $this->sellShape($i))->values(),
                 'total' => $sellTotal,
-                'tax'   => round($sell->sum(fn ($i) => (float) $i->tax_amount), 2),
+                'tax'   => round($sell->sum(fn ($i) => (isset($credited[$i->invoice_id]) ? -1 : 1) * (float) $i->tax_amount), 2),
             ],
             'vocabulary' => [
                 'charge_types' => self::chargeTypesFor($job),
@@ -145,7 +148,9 @@ class JobCostSheetController extends Controller
             'charge_basis'   => 'nullable|string|in:' . implode(',', self::CHARGE_BASES),
             'tax_status'     => 'nullable|string|in:' . implode(',', self::TAX_STATUSES),
             'tax_percentage' => 'nullable|numeric|min:0|max:100',
-            'vendor_id'      => 'nullable|integer|exists:partners,id',
+            // 🔒 A supplier of this job's company only (2026-11-10 audit).
+            'vendor_id'      => ['nullable', 'integer', Rule::exists('partners', 'id')
+                ->where('company_id', DB::table('agents_info')->where('id', $job->agent_id)->value('company_id'))],
         ]);
 
         // 🔴 Billing locks the sheet — but a supplier invoice routinely arrives AFTER the shipment is billed, and a
@@ -250,6 +255,16 @@ class JobCostSheetController extends Controller
                 'reason' => 'locked'], 422);
         }
 
+        // 🔴 A cost on a POSTED supplier voucher is not changed or removed here (2026-11-10 audit, M4). The lock above
+        // looks only at the sell invoice, so while that was still a draft a buy line could be edited after its
+        // voucher's journal was written — the payable in the ledger and the voucher then disagreed in silence.
+        if ($side === 'buy' && $this->onPostedVoucher($lineId)) {
+            return response()->json([
+                'error'  => 'This cost is on a supplier voucher that is already posted, so it cannot be changed here.',
+                'reason' => 'voucher_posted',
+            ], 422);
+        }
+
         $data = $request->validate([
             'charge_type'    => 'required|string|in:' . implode(',', self::CHARGE_TYPES),
             'description'    => 'required|string|max:255',
@@ -332,6 +347,16 @@ class JobCostSheetController extends Controller
             ], 422);
         }
 
+        // 🔴 A cost on a POSTED supplier voucher is not changed or removed here (2026-11-10 audit, M4). The lock above
+        // looks only at the sell invoice, so while that was still a draft a buy line could be edited after its
+        // voucher's journal was written — the payable in the ledger and the voucher then disagreed in silence.
+        if ($side === 'buy' && $this->onPostedVoucher($lineId)) {
+            return response()->json([
+                'error'  => 'This cost is on a supplier voucher that is already posted, so it cannot be changed here.',
+                'reason' => 'voucher_posted',
+            ], 422);
+        }
+
         // Scoped through the job, so a line id from another job cannot be deleted by
         // guessing a number.
         $deleted = $side === 'sell'
@@ -355,7 +380,8 @@ class JobCostSheetController extends Controller
     {
         return AccountsInvoiceItem::whereIn(
             'invoice_id',
-            AccountsInvoice::withoutTenantScope()->where('job_id', $job->id)->select('id')
+            // A void document never stood: its lines are not on the sheet (2026-11-10 audit, M9).
+            AccountsInvoice::withoutTenantScope()->where('job_id', $job->id)->where('status', '!=', 'void')->select('id')
         )->get();
     }
 
@@ -364,7 +390,7 @@ class JobCostSheetController extends Controller
         return AccountsPurchaseItem::query()
             ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'accounts_purchase_items.purchase_voucher_id')
             ->leftJoin('partners as p', 'p.id', '=', 'v.vendor_id')
-            ->where('v.job_id', $job->id)
+            ->where('v.job_id', $job->id)->where('v.status', '!=', 'void')
             ->orderBy('p.name')->orderBy('accounts_purchase_items.id')
             ->get(['accounts_purchase_items.*', 'p.name as vendor_name']);
     }
@@ -478,6 +504,15 @@ class JobCostSheetController extends Controller
             'at' => (string) $invoice->sent_to_accounts_at,
             'by' => DB::table('users')->where('id', $invoice->sent_to_accounts_by)->value('name'),
         ];
+    }
+
+    /** True when the buy line sits on a voucher whose journal is already written. */
+    private function onPostedVoucher(int $lineId): bool
+    {
+        return DB::table('accounts_purchase_items as i')
+            ->join('accounts_ledger_entries as l', fn ($join) => $join
+                ->on('l.source_id', '=', 'i.purchase_voucher_id')->where('l.source_type', 'purchase_voucher'))
+            ->where('i.id', $lineId)->exists();
     }
 
     private function isLocked(Job $job): bool

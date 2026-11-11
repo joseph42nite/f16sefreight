@@ -116,8 +116,13 @@ class TdsService
         // moment the fifth crosses the line, and the catch-up comes out of that fifth payment. Deducting 2%
         // of ₹25,000 instead of 2% of ₹1,05,000 less what was already taken is a short deduction on ₹80,000,
         // which is the exact shape of the notice that arrives a year later with interest on it.
+        //
+        // 🔴 What was already taken comes off ONLY in that case (2026-11-10 audit, M2). When just the single-payment
+        // threshold is crossed the chargeable amount is this payment alone, and the year's earlier deductions were
+        // for other payments: subtracting them here turned ₹700 due on a ₹35,000 payment into "already deducted"
+        // because ₹800 had been withheld from a different one.
         $chargeable = $annualCrossed ? $yearToDate : $base;
-        $due = round($chargeable * $applicable / 100 - $alreadyDeducted, 2);
+        $due = round($chargeable * $applicable / 100 - ($annualCrossed ? $alreadyDeducted : 0.0), 2);
 
         if ($due <= 0.0) {
             // Everything chargeable has already been deducted on earlier payments in this year.
@@ -258,13 +263,26 @@ class TdsService
     {
         [$from, $to] = self::financialYearRange($onDate);
 
-        return round((float) DB::table('tds_entries')
+        $registered = (float) DB::table('tds_entries')
             ->where('agent_id', $agentId)
             ->where('direction', self::OUTWARD)
             ->where('counterparty_type', 'partner')->where('counterparty_id', $vendorId)
             ->whereBetween('deducted_on', [$from, $to])
             ->when($section !== null, fn ($q) => $q->where('section', $section))
-            ->sum('tds_amount'), 2);
+            ->sum('tds_amount');
+
+        // 🔴 …plus what is withheld on payments RAISED BUT NOT YET POSTED (2026-11-10 audit, M3). The register row
+        // is cut at posting, while `paidThisYear()` counts a payment from the moment it is raised — so a second
+        // payment raised before the first was posted saw the first's base and none of its deduction, and withheld
+        // the first one's tax a second time.
+        $pending = (float) DB::table('accounts_payments')
+            ->where('agent_id', $agentId)->where('is_posted', false)
+            ->where('payee_type', 'partner')->where('payee_id', $vendorId)
+            ->whereBetween('payment_date', [$from, $to])
+            ->when($section !== null, fn ($q) => $q->where('tds_section', $section))
+            ->sum('tds_amount');
+
+        return round($registered + $pending, 2);
     }
 
     /** Write one deduction into the register. Returns its id. */

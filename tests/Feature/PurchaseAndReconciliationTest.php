@@ -429,4 +429,41 @@ class PurchaseAndReconciliationTest extends TestCase
             ->postJson($this->url("/api/reconciliation/{$txn->id}/match", $admin), ['invoice_id' => $invoice->id])
             ->assertForbidden();
     }
+
+    // ─── 2026-11-10 audit, M10 ───────────────────────────────────────────────
+
+    public function test_bank_money_is_not_matched_to_a_draft_a_void_or_a_credit_note(): void
+    {
+        $this->openPeriod();
+
+        foreach (['draft', 'void'] as $status) {
+            $invoice = $this->invoice(50000.00, 0.0, $status);
+            $this->api($this->accounts)
+                ->postJson($this->url("/api/reconciliation/{$this->bankRow(50000.00)->id}/match"), ['invoice_id' => $invoice->id])
+                ->assertStatus(422)->assertJsonPath('reason', 'invoice_not_payable');
+        }
+
+        $note = $this->invoice(50000.00);
+        $note->forceFill(['type' => 'credit_note'])->save();
+        $this->api($this->accounts)
+            ->postJson($this->url("/api/reconciliation/{$this->bankRow(50000.00)->id}/match"), ['invoice_id' => $note->id])
+            ->assertStatus(422)->assertJsonPath('reason', 'invoice_not_payable');
+
+        $this->assertSame(0, DB::table('accounts_receipts')->where('agent_id', $this->branch->id)->count());
+    }
+
+    public function test_a_match_is_gated_on_the_day_the_money_arrived_not_on_today(): void
+    {
+        $this->openPeriod();
+        $invoice = $this->invoice(100000.00);
+        $txn = $this->bankRow(100000.00);
+        // Money that arrived before this year's period began: no open period covers that day.
+        $txn->forceFill(['value_date' => now()->startOfYear()->subDays(10)->toDateString()])->save();
+
+        $this->api($this->accounts)
+            ->postJson($this->url("/api/reconciliation/{$txn->id}/match"), ['invoice_id' => $invoice->id])
+            ->assertStatus(422)->assertJsonPath('reason', 'no_open_period');
+
+        $this->assertEquals(0, (float) $invoice->fresh()->amount_paid);
+    }
 }

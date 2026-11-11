@@ -483,4 +483,62 @@ class TdsTest extends TestCase
         $this->assertSame(10000.0, $tds->baseOf(11800, 100000, 118000), 'a tenth');
         $this->assertSame(0.0, $tds->baseOf(1000, 0, 0), 'a voucher with no lines cannot be a base');
     }
+
+    // ─── The 2026-11-10 audit: M1, M2, M3 ────────────────────────────────────
+
+    /** 🔴 M2. Only the single-payment threshold is crossed, so the base is this payment — earlier deductions are not its. */
+    public function test_an_earlier_deduction_does_not_cancel_one_due_on_this_payment_alone(): void
+    {
+        // ₹40,000 paid and ₹800 withheld; now ₹35,000. The year is at ₹75,000, under the ₹1,00,000 annual line.
+        $decision = $this->decide(35000, paidYtd: 40000, deductedYtd: 800);
+
+        $this->assertTrue($decision['deduct']);
+        $this->assertSame(700.0, $decision['amount'], '2% of this payment, not 700 less the 800 taken from another');
+    }
+
+    /** …and across the annual line the earlier deductions still come off, as before. */
+    public function test_past_the_annual_threshold_earlier_deductions_still_come_off(): void
+    {
+        $decision = $this->decide(35000, paidYtd: 80000, deductedYtd: 1600);
+
+        $this->assertSame(700.0, $decision['amount'], '2% of 1,15,000 is 2,300, less the 1,600 already taken');
+    }
+
+    /** 🔴 M3. A payment raised but not yet posted has no register row, and its deduction still counts. */
+    public function test_tax_withheld_on_an_unposted_payment_counts_as_already_deducted(): void
+    {
+        $tds = app(TdsService::class);
+        $this->assertSame(0.0, $tds->deductedThisYear($this->branch->id, $this->trucker->id, '2026-09-20', '194C'));
+
+        DB::table('accounts_payments')->insert(['agent_id' => $this->branch->id, 'payee_type' => 'partner',
+            'payee_id' => $this->trucker->id, 'payment_no' => 'PAY-AUDIT-1', 'payment_date' => '2026-09-15',
+            'amount' => 117600, 'tds_amount' => 2400, 'tds_section' => '194C', 'tds_rate' => 2, 'is_posted' => false,
+            'created_at' => now(), 'updated_at' => now()]);
+
+        $this->assertSame(2400.0, $tds->deductedThisYear($this->branch->id, $this->trucker->id, '2026-09-20', '194C'));
+        $this->assertSame(0.0, $tds->deductedThisYear($this->branch->id, $this->trucker->id, '2026-09-20', '194J'),
+            'another section is another matter');
+    }
+
+    /** 🔴 M1. One journal per document: a second write for the same source is refused, and nothing is added. */
+    public function test_a_document_cannot_be_journalled_twice(): void
+    {
+        $id = $this->cost('PV-AUDIT-1', 50000, 9000);
+        $ledger = app(\App\Services\LedgerPostingService::class);
+        $entries = fn () => DB::table('accounts_ledger_entries')->where('source_type', 'purchase_voucher')
+            ->where('source_id', $id)->count();
+        $before = $entries();
+
+        try {
+            $ledger->write($ledger->linesForVoucher(\App\AccountsPurchaseVoucher::withoutGlobalScopes()->findOrFail($id)),
+                $this->branch->id, $ledger->openPeriodFor($this->branch->id, '2026-09-12')->id, $id, 'purchase_voucher');
+            $this->fail('A second journal was written for the same voucher.');
+        } catch (\App\Exceptions\AlreadyPosted $refused) {
+            $this->assertSame(422, $refused->render()->status());
+            $this->assertSame('already_posted', $refused->render()->getData(true)['reason']);
+        }
+
+        $this->assertGreaterThan(0, $before);
+        $this->assertSame($before, $entries());
+    }
 }

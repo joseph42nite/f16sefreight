@@ -139,6 +139,18 @@ class ReceiptController extends Controller
             return response()->json(['error' => 'That branch is not one of yours.', 'reason' => 'branch_not_found'], 404);
         }
 
+        // 🔒 Who paid, and the bank line it came from, are this company's own (2026-11-10 audit, S10). The screen
+        // never sends another company's, but the API took whatever id it was given.
+        if (! empty($data['payer_id']) && ! DB::table(($data['payer_type'] ?? 'customer') === 'partner' ? 'partners' : 'customers')
+            ->where('id', $data['payer_id'])->where('company_id', UserContext::for(auth()->user())->companyId)->exists()) {
+            return response()->json(['error' => 'That payer is not one of yours.', 'reason' => 'payer_not_found'], 404);
+        }
+
+        if (! empty($data['bank_transaction_id']) && ! DB::table('bank_transactions')->where('id', $data['bank_transaction_id'])
+            ->whereIn('agent_id', $this->branches()->pluck('id'))->exists()) {
+            return response()->json(['error' => 'That bank line is not one of yours.', 'reason' => 'bank_line_not_found'], 404);
+        }
+
         $allocations = $data['allocations'] ?? [];
 
         if (round(array_sum(array_column($allocations, 'amount')), 2) > round((float) $data['amount'], 2) + 0.009) {
@@ -153,6 +165,15 @@ class ReceiptController extends Controller
 
             if ($invoice === null || ! $this->branches()->contains('id', $invoice->agent_id)) {
                 return response()->json(['error' => 'One of those documents is not one of yours.', 'reason' => 'invoice_not_found'], 404);
+            }
+
+            // 🔴 A receipt settles its OWN branch's bills (2026-11-10 audit, M11): it posts to that branch's books, so
+            // money recorded under one branch against another's bill cleared a receivable the ledger never moved.
+            if ((int) $invoice->agent_id !== (int) $data['agent_id']) {
+                return response()->json([
+                    'error' => sprintf('%s was raised by another branch. Record this receipt under that branch.', $invoice->invoice_no),
+                    'reason' => 'invoice_other_branch',
+                ], 422);
             }
 
             // Money settles an issued bill: a draft was never sent, a void never stood, and a credit note is owed BY us.
@@ -202,6 +223,17 @@ class ReceiptController extends Controller
             ]);
 
             foreach ($allocations as $allocation) {
+                // 🔴 Locked and checked again inside the transaction (audit M11): the check before it read an unlocked
+                // row, so two receipts raised side by side could each place the full balance against one bill.
+                $locked = AccountsInvoice::withoutTenantScope()->lockForUpdate()->find($allocation['invoice_id']);
+
+                if ($locked === null || $allocation['settles']['invoice_amount'] > $locked->outstanding() + 0.009) {
+                    abort(response()->json([
+                        'error' => 'One of those bills was settled while you were recording this. Look at it again.',
+                        'reason' => 'over_allocated_invoice',
+                    ], 422));
+                }
+
                 $foreign = $allocation['settles']['rate'] !== 1.0;
                 $receipt->allocations()->create([
                     'invoice_id' => $allocation['invoice_id'],

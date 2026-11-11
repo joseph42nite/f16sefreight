@@ -27,7 +27,9 @@ class LoginController extends Controller
         $role = $roleRecord->role;
         $guard = $role . '-api';
         
-        if (!$token = auth()->guard($guard)->attempt($credentials)) {
+        // 🔒 A deactivated account does not sign in (2026-11-10 audit): `is_active` was set by the admin screen and
+        // read by nothing. Same 401 as a wrong password, so the answer does not confirm the account exists.
+        if (!$token = auth()->guard($guard)->attempt($credentials + ['is_active' => 1])) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
         $user_data = auth()->guard($guard)->user();

@@ -352,6 +352,18 @@ class LedgerPostingService
             ));
         }
 
+        // 🔴 ONE JOURNAL PER DOCUMENT (2026-11-10 audit, M1). The callers check "already posted" before their
+        // transaction opens, so two requests arriving together both passed it and both wrote — revenue and the
+        // receivable doubled, and the ledger still balanced, so nothing noticed. The period row is locked first so
+        // postings queue behind one another, and the look for an existing journal is itself a locking read: a plain
+        // one would answer from this transaction's snapshot and miss the journal the winner has just committed.
+        DB::table('accounting_periods')->where('id', $periodId)->lockForUpdate()->value('id');
+
+        if (DB::table('accounts_ledger_entries')->where('source_type', $sourceType)->where('source_id', $sourceId)
+            ->lockForUpdate()->exists()) {
+            throw new \App\Exceptions\AlreadyPosted($sourceType, $sourceId);
+        }
+
         foreach ($lines as $line) {
             DB::table('accounts_ledger_entries')->insert([
                 'agent_id'             => $agentId,

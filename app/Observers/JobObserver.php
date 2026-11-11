@@ -34,6 +34,26 @@ class JobObserver
     }
 
     /**
+     * 🔴 The day a shipment finished (2026-11-10 audit, M6). Nothing wrote `completed_at`, so month close and the
+     * profitability report — which both window on it — fell back to the day the job was created. Stamped here, on
+     * the observer, so every writer of `status` is covered. A job moved back out of Completed is no longer finished.
+     */
+    public function saving(Job $job): void
+    {
+        if (! $job->isDirty('status')) {
+            return;
+        }
+
+        $status = $job->status instanceof \BackedEnum ? $job->status->value : (string) $job->status;
+
+        if ($status === JobStatus::Completed->value) {
+            $job->completed_at ??= now();
+        } elseif ($job->completed_at !== null && ! $job->isDirty('completed_at')) {
+            $job->completed_at = null;
+        }
+    }
+
+    /**
      * Every status transition writes an SLA row, which is what makes "how long did
      * Verification take?" answerable. A log row per transition, rather than a timestamp
      * column per milestone, is what allows a job to RE-ENTER a milestone — a job bounced

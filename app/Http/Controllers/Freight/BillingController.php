@@ -11,6 +11,7 @@ use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -47,14 +48,26 @@ class BillingController extends Controller
         $branches = $this->branches();
         $rows = $this->register($request, $branches)->get();
 
+        // 🔴 Totalled in the database over EVERY document the filters name (2026-11-10 audit, M12). The list stops at
+        // 1,000 rows; adding up what was fetched made the total quietly wrong the day the register outgrew the list.
+        $sign = "CASE WHEN i.type = 'credit_note' THEN -1 ELSE 1 END";
+        $totals = $this->register($request, $branches)->reorder()->select([
+            DB::raw('COUNT(*) AS documents'),
+            DB::raw("COALESCE(SUM({$sign} * ROUND(i.grand_total * i.exchange_rate, 2)), 0) AS amount_inr"),
+            DB::raw("COALESCE(SUM({$sign} * CASE WHEN i.status = 'void' THEN 0 ELSE ROUND((i.grand_total - i.amount_paid) * i.exchange_rate, 2) END), 0) AS outstanding_inr"),
+            DB::raw("COALESCE(SUM(CASE WHEN i.type = 'credit_note' THEN ROUND(i.grand_total * i.exchange_rate, 2) ELSE 0 END), 0) AS credited_inr"),
+        ])->first();
+
         return response()->json([
             'rows' => $rows,
             'totals' => [
-                'count' => $rows->count(),
+                'count' => (int) $totals->documents,
                 // Only the INR column can be summed — mixed currencies have no meaningful total.
-                'amount_inr' => round($rows->sum(fn ($r) => $r->direction * $r->amount_inr), 2),
-                'outstanding_inr' => round($rows->sum(fn ($r) => $r->direction * $r->outstanding_inr), 2),
-                'credited_inr' => round($rows->where('type', 'credit_note')->sum('amount_inr'), 2),
+                'amount_inr' => round((float) $totals->amount_inr, 2),
+                'outstanding_inr' => round((float) $totals->outstanding_inr, 2),
+                'credited_inr' => round((float) $totals->credited_inr, 2),
+                // The list shows the first 1,000; the totals are for all of them.
+                'shown' => $rows->count(),
             ],
             'branches' => $branches,
             'types' => BillingDocuments::TYPES,
@@ -141,6 +154,13 @@ class BillingController extends Controller
                 continue;
             }
 
+            // A cancelled bill is not sent to anybody as one to pay (2026-11-10 audit, M14).
+            if ($invoice->status === 'void') {
+                $skipped[] = ['invoice_no' => $invoice->invoice_no, 'why' => 'It has been voided.'];
+
+                continue;
+            }
+
             $to = $this->addressesFor($invoice);
 
             if ($to === []) {
@@ -190,15 +210,21 @@ class BillingController extends Controller
 
         $rows = DB::table('accounts_invoices as i')
             ->leftJoin('customers as c', 'c.id', '=', 'i.customer_id')
+            // 🔴 A brokerage or consol bill is addressed to a PARTNER (2026-11-10 audit, M15). Read off the client
+            // alone it had no GSTIN, so it showed as "not required" and never reached the waiting list — a B2B
+            // tax invoice to a registered agent, left unregistered.
+            ->leftJoin('partners as p', fn ($join) => $join->on('p.id', '=', 'i.billed_party_id')
+                ->where('i.billed_party_type', '=', 'partner'))
             ->whereIn('i.agent_id', $branches->pluck('id'))
             ->when($request->filled('agent_id'), fn ($q) => $q->where('i.agent_id', $request->integer('agent_id')))
             // Only a numbered document can carry an IRN, and only a B2B one needs one.
             ->whereNotIn('i.status', ['draft', 'void'])
-            ->whereIn('i.type', ['invoice', 'debit_note', 'credit_note'])
+            ->whereIn('i.type', array_keys(BillingDocuments::TYPES))
             ->orderByDesc('i.document_date')
             ->limit(500)
             ->get(['i.id', 'i.invoice_no', 'i.type', 'i.document_date', 'i.grand_total', 'i.currency',
-                   'i.irn', 'i.irn_status', 'i.ack_no', 'i.ack_date', 'c.name as organization', 'c.gst_no']);
+                   'i.irn', 'i.irn_status', 'i.ack_no', 'i.ack_date',
+                   DB::raw('COALESCE(p.name, c.name) AS organization'), DB::raw('COALESCE(p.gst_no, c.gst_no) AS gst_no')]);
 
         foreach ($rows as $row) {
             // A client with no GSTIN is a B2C sale: it never goes to the IRP at all.
@@ -232,6 +258,11 @@ class BillingController extends Controller
             return response()->json(['error' => 'A draft has no number to register.', 'reason' => 'not_finalized'], 422);
         }
 
+        // A void document is cancelled: registering it now would report a sale that never stood (audit M14).
+        if ($invoice->status === 'void') {
+            return response()->json(['error' => 'A voided document cannot be given an IRN.', 'reason' => 'void'], 422);
+        }
+
         $invoice->update(array_merge($data, ['irn_status' => 'generated']));
         $this->audit->record($invoice->agent_id, 'invoice.irn_recorded', 'invoice', $invoice->id, auth()->id());
 
@@ -259,7 +290,10 @@ class BillingController extends Controller
             // A shipment invoice bills the shipment's own client, so this is needed only for a general invoice or a
             // shipment that has no client yet (checked below).
             'customer_id' => 'nullable|integer|exists:customers,id',
-            'partner_id' => 'required_if:type,brokerage,consol_invoice|nullable|integer|exists:partners,id',
+            // 🔒 A partner of this company only (2026-11-10 audit) — a bare `exists` let a bill be raised against, and
+            // mailed to, another tenant's partner.
+            'partner_id' => ['required_if:type,brokerage,consol_invoice', 'nullable', 'integer',
+                Rule::exists('partners', 'id')->where('company_id', UserContext::for(auth()->user())->companyId)],
             'basis' => 'nullable|string|max:30',
             'reason' => 'required_if:type,debit_note,credit_note|nullable|string|max:255',
             'narration' => 'nullable|string|max:255',
@@ -279,6 +313,15 @@ class BillingController extends Controller
 
         if (in_array($data['type'], BillingDocuments::NOTES, true)) {
             $parent = $this->own((int) $data['parent_invoice_id']);
+
+            // 🔴 A note amends a BILL, never another note (2026-11-10 audit, M14): a credit note against a credit
+            // note has no invoice to measure its room against, and its sign in every total is anybody's guess.
+            if (in_array($parent->type, BillingDocuments::NOTES, true)) {
+                return response()->json([
+                    'error' => 'A note cannot be raised against another note. Raise it against the invoice itself.',
+                    'reason' => 'parent_is_note',
+                ], 422);
+            }
 
             if (in_array($parent->status, ['draft', 'void'], true)) {
                 return response()->json([

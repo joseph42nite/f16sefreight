@@ -348,6 +348,16 @@ class ReconciliationController extends Controller
             ], 422);
         }
 
+        // 🔴 Money settles an issued bill (2026-11-10 audit, M10) — the same rule as a receipt typed by hand. A draft
+        // was never sent, a void never stood, and a credit note is owed BY us; matching bank money to one posted a
+        // receipt against a document that is not a receivable.
+        if (in_array($invoice->status, ['draft', 'void'], true) || $invoice->type === 'credit_note') {
+            return response()->json([
+                'error'  => sprintf('%s cannot take a receipt — only an issued bill can be settled.', $invoice->invoice_no),
+                'reason' => 'invoice_not_payable',
+            ], 422);
+        }
+
         $due = round((float) $invoice->grand_total - (float) $invoice->amount_paid, 2);
         $received = round((float) $transaction->amount, 2);
 
@@ -383,11 +393,13 @@ class ReconciliationController extends Controller
         $shortfall = round($due - $settles['invoice_amount'], 2);
         $adjustmentAccount = $shortfall > 0 ? $this->matcher->adjustmentAccountFor($resolution) : null;
 
-        $period = $this->ledger->openPeriodFor($transaction->agent_id, now()->toDateString());
+        // 🔴 The period of the day the money ARRIVED — the receipt is dated `value_date`, and a hand-typed receipt is
+        // gated on its own date. Gating on today let September's money post after September was closed.
+        $period = $this->ledger->openPeriodFor($transaction->agent_id, $valueDate);
 
         if ($period === null) {
             return response()->json([
-                'error'  => 'No open accounting period covers today, so this receipt cannot be posted.',
+                'error'  => 'No open accounting period covers the day this money arrived, so the receipt cannot be posted.',
                 'reason' => 'no_open_period',
             ], 422);
         }
@@ -401,6 +413,18 @@ class ReconciliationController extends Controller
             // The race is decided in the database — see BankReconciliationService::claim.
             if (! $this->matcher->claim($transaction, $invoice)) {
                 return null;
+            }
+
+            // 🔴 The bill is locked and looked at again: a receipt recorded since the check above may have settled
+            // it, and two matches side by side would each have found the same balance outstanding.
+            $now = AccountsInvoice::withoutTenantScope()->lockForUpdate()->find($invoice->id);
+
+            if ($now === null || in_array($now->status, ['draft', 'void'], true)
+                || $settles['invoice_amount'] > round((float) $now->grand_total - (float) $now->amount_paid, 2) + 0.009) {
+                abort(response()->json([
+                    'error'  => 'That invoice changed while you were matching it. Look at it again.',
+                    'reason' => 'invoice_changed',
+                ], 422));
             }
 
             // 🔴 **Money identified from the bank IS a receipt**, and it needs a receipt to be one. This used to

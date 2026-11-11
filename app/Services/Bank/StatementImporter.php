@@ -3,7 +3,6 @@
 namespace App\Services\Bank;
 
 use App\BankTransaction;
-use Illuminate\Support\Carbon;
 
 /**
  * Statement lines into `bank_transactions` — one road in, whichever way they arrive (user, 2026-09-19).
@@ -25,6 +24,12 @@ class StatementImporter
      */
     public function import(int $agentId, array $lines, string $provider = 'manual', ?int $bankAccountId = null): array
     {
+        // All of the statement or none of it: a failure part-way must not leave half the lines in.
+        return \Illuminate\Support\Facades\DB::transaction(fn () => $this->importLines($agentId, $lines, $provider, $bankAccountId));
+    }
+
+    private function importLines(int $agentId, array $lines, string $provider, ?int $bankAccountId): array
+    {
         $result = ['imported' => 0, 'repeated' => 0, 'skipped' => 0];
 
         foreach ($lines as $line) {
@@ -38,6 +43,18 @@ class StatementImporter
                 continue;
             }
 
+            // 🔴 Read day first, as the bank wrote it (2026-11-10 audit, M8). A line whose date cannot be read is
+            // skipped and counted — never booked on a guessed day, and never an exception that stops the import with
+            // half the statement in. A line with no date at all is today's.
+            $given = trim((string) ($line['value_date'] ?? ''));
+            $valueDate = $given === '' ? now() : \App\Support\StatementDate::parse($line['value_date']);
+
+            if ($valueDate === null) {
+                $result['skipped']++;
+
+                continue;
+            }
+
             $values = [
                 'agent_id' => $agentId,
                 // 🔴 Which of OUR accounts the line came from. A statement imported against the wrong account
@@ -45,7 +62,7 @@ class StatementImporter
                 'bank_account_id' => $bankAccountId,
                 'provider' => $provider,
                 'amount' => $amount,
-                'value_date' => Carbon::parse($line['value_date'] ?? now())->toDateString(),
+                'value_date' => $valueDate->toDateString(),
                 'direction' => ($line['direction'] ?? 'credit') === 'debit' ? 'debit' : 'credit',
                 'narration' => $line['narration'] ?? null,
                 'counterparty' => $line['counterparty'] ?? null,

@@ -1211,7 +1211,10 @@ class ConversionController extends Controller
         //============House data====================
         $awb_code = substr($awb_id, 0, 3);
         $awb_no = substr($awb_id, 3);
-        $house_data = HousewayBills::where([['awb_code', $awb_code], ['awb_no', $awb_no]])->get()->toArray();
+        // 🔒 The master's own forwarder's houses only (2026-11-10 audit, S12): an AWB number is not unique across
+        // forwarders, and by number alone another forwarder's houses went into this manifest.
+        $house_data = HousewayBills::where([['awb_code', $awb_code], ['awb_no', $awb_no]])
+            ->where('agent_id', $waybill_data['agent_id'] ?? null)->get()->toArray();
         for ($i = 0; $i < sizeof($house_data); $i++) {
             $hawb_no = $house_data[$i]['id'];
             $house_consignment_data = ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();

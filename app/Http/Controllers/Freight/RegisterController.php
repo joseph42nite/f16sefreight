@@ -31,7 +31,7 @@ class RegisterController extends Controller
         // `PurchaseVoucherController`'s own note that every figure there is summed from the items, not read
         // off a header column, which is why `grand_total` is honestly NULL for these rows rather than a
         // second query per row to compute one.
-        $rows = DB::table('gst_ledger_entries as g')
+        $base = DB::table('gst_ledger_entries as g')
             ->join('agents_info as a', 'a.id', '=', 'g.agent_id')
             ->leftJoin('accounts_invoices as i', fn ($j) => $j->on('i.id', '=', 'g.voucher_id')->where('g.voucher_type', '=', 'invoice'))
             ->leftJoin('customers as c', 'c.id', '=', 'i.customer_id')
@@ -40,8 +40,9 @@ class RegisterController extends Controller
             ->whereIn('g.agent_id', $branches->pluck('id'))
             ->when($picked, fn ($q) => $q->where('g.agent_id', $picked))
             ->when($request->filled('from'), fn ($q) => $q->whereDate('g.created_at', '>=', $request->date('from')))
-            ->when($request->filled('to'), fn ($q) => $q->whereDate('g.created_at', '<=', $request->date('to')))
-            ->orderByDesc('g.created_at')->limit(500)
+            ->when($request->filled('to'), fn ($q) => $q->whereDate('g.created_at', '<=', $request->date('to')));
+
+        $rows = (clone $base)->orderByDesc('g.created_at')->limit(500)
             ->get(['g.id', 'g.created_at', 'g.voucher_type', 'g.cgst_amount', 'g.sgst_amount', 'g.igst_amount',
                    'a.agent_name as branch', 'i.grand_total', 'i.type as document_type',
                    DB::raw('COALESCE(i.invoice_no, pv.voucher_no) as invoice_no'),
@@ -63,11 +64,24 @@ class RegisterController extends Controller
         // 🔴 NEVER one total across both directions. Output tax is a liability owed to the government; input
         // credit is an asset claimed back from it. A single sum would describe a position nobody holds — the
         // same reason the TDS register keeps its two sides apart.
-        $total = fn (string $direction) => [
-            'cgst' => round((float) $rows->where('direction', $direction)->sum('cgst_amount'), 2),
-            'sgst' => round((float) $rows->where('direction', $direction)->sum('sgst_amount'), 2),
-            'igst' => round((float) $rows->where('direction', $direction)->sum('igst_amount'), 2),
-        ];
+        //
+        // Totalled in the database over every row the filters name, not the 500 listed (2026-11-10 audit, M12).
+        $sign = "CASE WHEN i.type = 'credit_note' THEN -1 ELSE 1 END";
+        $sums = (clone $base)->groupBy('g.voucher_type')->select([
+            'g.voucher_type',
+            DB::raw("SUM({$sign} * g.cgst_amount) AS cgst"),
+            DB::raw("SUM({$sign} * g.sgst_amount) AS sgst"),
+            DB::raw("SUM({$sign} * g.igst_amount) AS igst"),
+        ])->get();
+        $total = function (string $direction) use ($sums) {
+            $of = $sums->filter(fn ($s) => ($s->voucher_type === 'purchase_voucher' ? 'input' : 'output') === $direction);
+
+            return [
+                'cgst' => round((float) $of->sum('cgst'), 2),
+                'sgst' => round((float) $of->sum('sgst'), 2),
+                'igst' => round((float) $of->sum('igst'), 2),
+            ];
+        };
 
         return response()->json([
             'rows' => $rows,

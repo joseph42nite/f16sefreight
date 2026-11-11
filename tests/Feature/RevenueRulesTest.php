@@ -263,4 +263,30 @@ class RevenueRulesTest extends TestCase
         $row = collect($this->getJson('http://accounts.localhost/api/invoices?awaiting=1')->json('data'))->firstWhere('id', $taxed);
         $this->assertEquals([24900, 9900], [$row['sell_total'], $row['margin']]);
     }
+
+    /** 2026-11-10 audit, M5: the shipment's cost is set against one document, and a void voucher is not a cost. */
+    public function test_the_register_sets_a_shipments_cost_against_one_document_only(): void
+    {
+        $invoice = $this->doc('INV-RUL-M5', 'invoice', 20000);
+        $note = $this->doc('DN-RUL-M5', 'debit_note', 2000, 'finalized', 'INR', 1, null, $invoice);
+
+        $vendor = Partner::create(['company_id' => $this->company->id, 'agent_id' => $this->branch->id,
+            'name' => 'Carrier', 'partner_type' => 'airline']);
+        foreach (['unpaid' => 15000, 'void' => 9000] as $status => $amount) {
+            $voucher = DB::table('accounts_purchase_vouchers')->insertGetId(['agent_id' => $this->branch->id, 'job_id' => $this->job->id,
+                'vendor_id' => $vendor->id, 'transport_mode' => 'air', 'voucher_no' => "PV-RUL-M5-{$status}", 'document_date' => now()->toDateString(),
+                'status' => $status, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('accounts_purchase_items')->insert(['purchase_voucher_id' => $voucher, 'charge_type' => 'freight',
+                'description' => 'Carrier', 'quantity' => 1, 'rate' => $amount, 'amount' => $amount, 'tax_percentage' => 0,
+                'tax_amount' => 0, 'net_amount' => $amount, 'created_at' => now(), 'updated_at' => now()]);
+        }
+
+        $rows = collect($this->as($this->accounts)->getJson('http://accounts.localhost/api/invoices')->assertOk()->json('data'))->keyBy('id');
+
+        $this->assertEquals([20000, 15000, 5000], [$rows[$invoice]['sell_total'], $rows[$invoice]['buy_total'], $rows[$invoice]['margin']]);
+        // The debit note is worth what it bills; the shipment's cost is not taken off a second time.
+        $this->assertEquals(2000, $rows[$note]['sell_total']);
+        $this->assertNull($rows[$note]['buy_total']);
+        $this->assertNull($rows[$note]['margin']);
+    }
 }

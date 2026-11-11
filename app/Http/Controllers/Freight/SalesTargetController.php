@@ -149,6 +149,8 @@ class SalesTargetController extends Controller
 
     private function month(?string $value): Carbon
     {
-        return ($value ? Carbon::createFromFormat('Y-m', $value) : now())->startOfMonth()->startOfDay();
+        // 🔴 `!Y-m`, not `Y-m` (2026-11-10 audit, M19): without the `!` the missing day is TODAY's, so on the 31st
+        // "2026-02" became 31 February — which is 3 March, and the target was saved to the wrong month.
+        return ($value ? Carbon::createFromFormat('!Y-m', $value) : now())->startOfMonth()->startOfDay();
     }
 }

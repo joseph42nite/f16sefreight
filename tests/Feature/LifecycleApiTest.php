@@ -240,4 +240,28 @@ class LifecycleApiTest extends TestCase
 
         return $this->api()->postJson($this->url("/api/enquiries/{$enquiry['id']}/convert"))->json('job.id');
     }
+
+    /** 2026-11-10 audit, M18: an empty, unposted voucher is a shell — it does not hold a job open for ever. */
+    public function test_an_empty_voucher_does_not_block_cancelling_and_one_with_costs_does(): void
+    {
+        $carrier = \App\Partner::create(['company_id' => $this->branch->company_id, 'agent_id' => $this->branch->id,
+            'name' => 'Carrier', 'partner_type' => 'airline']);
+        $voucher = fn (int $jobId, string $no) => DB::table('accounts_purchase_vouchers')->insertGetId([
+            'agent_id' => $this->branch->id, 'job_id' => $jobId, 'vendor_id' => $carrier->id, 'transport_mode' => 'air', 'voucher_no' => $no,
+            'document_date' => now()->toDateString(), 'status' => 'unpaid', 'created_at' => now(), 'updated_at' => now()]);
+
+        $costed = $this->makeJob();
+        DB::table('accounts_purchase_items')->insert(['purchase_voucher_id' => $voucher($costed, 'PV-LFC-M18-1'),
+            'charge_type' => 'freight', 'description' => 'Carrier', 'quantity' => 1, 'rate' => 15000, 'amount' => 15000,
+            'tax_percentage' => 0, 'tax_amount' => 0, 'net_amount' => 15000, 'created_at' => now(), 'updated_at' => now()]);
+
+        $this->api()->postJson($this->url("/api/jobs/{$costed}/cancel"), ['cancellation_reason' => 'client_cancelled'])
+            ->assertStatus(422)->assertJsonPath('reason', 'has_posted_financials');
+
+        $empty = $this->makeJob();
+        $shell = $voucher($empty, 'PV-LFC-M18-2');
+
+        $this->api()->postJson($this->url("/api/jobs/{$empty}/cancel"), ['cancellation_reason' => 'client_cancelled'])->assertOk();
+        $this->assertSame('void', DB::table('accounts_purchase_vouchers')->where('id', $shell)->value('status'));
+    }
 }

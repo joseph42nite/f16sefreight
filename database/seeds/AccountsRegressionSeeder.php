@@ -407,7 +407,8 @@ class AccountsRegressionSeeder extends Seeder
 
         return Job::withoutGlobalScopes()->create(['agent_id' => $branch->id, 'enquiry_id' => $enquiry->id,
             'transport_mode' => $mode, 'execution_job_no' => $this->sequences->next($branch->id, 'JOB' . $marker),
-            'customer_id' => $client->id, 'completed_at' => now()->subDays(30)]);
+            // Finished shipments: month close counts only Completed jobs as "finished, not billed" (audit M6).
+            'customer_id' => $client->id, 'status' => 'Completed', 'completed_at' => now()->subDays(30)]);
     }
 
     /** A finalized, posted sales document. */

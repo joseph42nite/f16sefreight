@@ -166,8 +166,9 @@ class BankAccountController extends Controller
             'ifsc_code' => 'nullable|string|max:20',
             'branch_name' => 'nullable|string|max:100',
             'currency' => 'nullable|string|size:3',
-            'provider' => 'nullable|in:setu,plaid,manual',
-            'provider_ref' => 'nullable|string|max:100',
+            // 🔒 `provider` and `provider_ref` are NOT taken from the request (2026-11-10 audit, S8). They are the
+            // bank feed's consent — written only by BankFeedService when the bank grants one. Typed in, a finance
+            // user could point their account at another company's consent id and pull its statement lines.
             'is_default' => 'nullable|boolean',
         ]);
     }

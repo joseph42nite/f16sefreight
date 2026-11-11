@@ -483,4 +483,93 @@ class BillingDeskTest extends TestCase
             'lines' => [['description' => 'Commission', 'rate' => 100]],
         ])->assertForbidden();
     }
+
+    // ─── 2026-11-10 audit, M11–M14 ───────────────────────────────────────────
+
+    public function test_a_note_cannot_be_raised_against_another_note(): void
+    {
+        $invoice = $this->invoice(10000);
+        $this->as($this->accounts)->postJson($this->url('/billing/documents'), [
+            'type' => 'credit_note', 'parent_invoice_id' => $invoice->id, 'reason' => 'Rate correction',
+            'lines' => [['description' => 'Rate correction', 'rate' => 1000]],
+        ])->assertSuccessful();
+        $note = AccountsInvoice::where('parent_invoice_id', $invoice->id)->value('id');
+
+        $this->postJson($this->url('/billing/documents'), [
+            'type' => 'debit_note', 'parent_invoice_id' => $note, 'reason' => 'A note on a note',
+            'lines' => [['description' => 'Nope', 'rate' => 100]],
+        ])->assertStatus(422)->assertJsonPath('reason', 'parent_is_note');
+    }
+
+    public function test_a_voided_document_is_not_given_an_irn(): void
+    {
+        $invoice = $this->invoice(10000);
+        DB::table('accounts_invoices')->where('id', $invoice->id)->update(['status' => 'void']);
+
+        $this->as($this->accounts)->postJson($this->url("/billing/{$invoice->id}/irn"), ['irn' => str_repeat('a', 64)])
+            ->assertStatus(422)->assertJsonPath('reason', 'void');
+        $this->assertNull($invoice->fresh()->irn);
+    }
+
+    public function test_a_document_with_no_charges_is_not_finalized_and_burns_no_number(): void
+    {
+        $job = $this->job();
+        $empty = AccountsInvoice::create([
+            'agent_id' => $this->branch->id, 'job_id' => $job->id, 'customer_id' => $this->client->id,
+            'billed_party_type' => 'customer', 'billed_party_id' => $this->client->id, 'billed_party_role' => 'client',
+            'invoice_no' => AccountsInvoice::placeholderNumber($job->id), 'type' => 'invoice',
+            'document_date' => now()->toDateString(), 'status' => 'draft',
+        ]);
+
+        $this->as($this->accounts)->postJson($this->url("/invoices/{$empty->id}/finalize"))
+            ->assertStatus(422)->assertJsonPath('reason', 'nothing_to_bill');
+
+        $this->assertSame('draft', $empty->fresh()->status);
+        $this->assertTrue($empty->fresh()->needsNumber());
+    }
+
+    public function test_a_receipt_settles_only_its_own_branchs_bills(): void
+    {
+        $invoice = $this->invoice(10000);
+        $other = Agent::create(['company_id' => $this->branch->company_id, 'agent_name' => 'DEL', 'branch_code' => 'DEL']);
+
+        $this->as($this->accounts)->postJson($this->url('/receipts'), [
+            'agent_id' => $other->id, 'payer_id' => $this->client->id, 'receipt_date' => now()->toDateString(),
+            'mode' => 'bank_transfer', 'amount' => 10000,
+            'allocations' => [['invoice_id' => $invoice->id, 'amount' => 10000]],
+        ])->assertStatus(422)->assertJsonPath('reason', 'invoice_other_branch');
+
+        $this->assertEquals(0, (float) $invoice->fresh()->amount_paid);
+    }
+
+    public function test_the_register_totals_cover_every_document_and_say_how_many_are_listed(): void
+    {
+        $this->invoice(10000);
+        $this->invoice(6000);
+
+        $totals = $this->as($this->accounts)->getJson($this->url('/billing'))->assertOk()->json('totals');
+
+        $this->assertSame([2, 2], [$totals['count'], $totals['shown']]);
+        $this->assertEquals([16000, 16000], [$totals['amount_inr'], $totals['outstanding_inr']]);
+    }
+
+    /** 2026-11-10 audit, M15: a bill to a GST-registered partner needs an IRN like any other B2B sale. */
+    public function test_a_brokerage_bill_to_a_registered_partner_waits_for_its_irn(): void
+    {
+        $this->agentPartner->forceFill(['gst_no' => '27BBBBB0000B1Z5'])->save();
+        $job = $this->job();
+
+        $brokerage = $this->as($this->accounts)->postJson($this->url('/billing/documents'), [
+            'type' => 'brokerage', 'job_id' => $job->id, 'partner_id' => $this->agentPartner->id, 'basis' => 'flat_rate',
+            'lines' => [['description' => 'Booking commission', 'rate' => 5000]],
+        ])->assertCreated()->json();
+        $this->postJson($this->url("/invoices/{$brokerage['id']}/finalize"))->assertOk();
+
+        $body = $this->getJson($this->url('/billing/e-invoice'))->assertOk()->json();
+        $row = collect($body['rows'])->firstWhere('id', $brokerage['id']);
+
+        $this->assertNotNull($row, 'a brokerage bill is on the e-invoice register');
+        $this->assertSame(['pending', 'Skyline Agents DXB'], [$row['state'], $row['organization']]);
+        $this->assertSame(1, $body['waiting']);
+    }
 }

@@ -38,6 +38,8 @@ class ProfitabilityService
 
         $cost = DB::table('accounts_purchase_items as i')
             ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
+            // A void voucher never stood, so it is not a cost (2026-11-10 audit, M9).
+            ->where('v.status', '!=', 'void')
             ->selectRaw('v.job_id, SUM(i.amount) AS cost, COUNT(DISTINCT v.id) AS vouchers')
             ->groupBy('v.job_id');
 

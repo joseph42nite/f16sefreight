@@ -50,34 +50,45 @@ class InvoiceController extends Controller
         // 🔴 NET OF TAX on both sides (user, 2026-09-26): profit is the line AMOUNT, never the tax-inclusive
         // `net_amount`. Sell and buy both carried their GST, so the margin shown was off by the difference in tax
         // — a shipment at 18% on a zero-rated cost read 18% of the sale better than it was.
-        $invoices->getCollection()->transform(function (AccountsInvoice $invoice) {
+        //
+        // Looked up once for the page, not once per row (2026-11-10 audit, M5).
+        $page = $invoices->getCollection();
+        $jobIds = $page->pluck('job_id')->filter()->unique()->values();
+
+        $sells = DB::table('accounts_invoice_items')->whereIn('invoice_id', $page->pluck('id'))
+            ->groupBy('invoice_id')->selectRaw('invoice_id, SUM(amount) AS total')->pluck('total', 'invoice_id');
+        // 🔴 A void voucher is not a cost: it never stood.
+        $buys = DB::table('accounts_purchase_items as i')
+            ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
+            ->whereIn('v.job_id', $jobIds)->where('v.status', '!=', 'void')
+            ->groupBy('v.job_id')->selectRaw('v.job_id, SUM(i.amount) AS total')->pluck('total', 'job_id');
+        // 🔴 The shipment's cost is set against ONE document — its first invoice that still stands. Taken off every
+        // document on the job, a shipment with an invoice and a debit note showed its cost twice, and a credit note
+        // showed a loss the size of the whole shipment.
+        $carriesCost = DB::table('accounts_invoices')->whereIn('job_id', $jobIds)
+            ->where('type', 'invoice')->where('status', '!=', 'void')
+            ->groupBy('job_id')->selectRaw('job_id, MIN(id) AS id')->pluck('id', 'job_id');
+        $jobNos = DB::table('jobs')->whereIn('id', $jobIds)->pluck('execution_job_no', 'id');
+        $senders = DB::table('users')->whereIn('id', $page->pluck('sent_to_accounts_by')->filter()->unique())->pluck('name', 'id');
+
+        $invoices->getCollection()->transform(function (AccountsInvoice $invoice) use ($sells, $buys, $carriesCost, $jobNos, $senders) {
             // In INR at the document's own rate — cost is booked in rupees, and a dollar sale less a rupee cost is
             // not a margin in anything.
-            $sell = (float) $invoice->items()->sum('amount') * (float) ($invoice->exchange_rate ?: 1);
-
+            $sell = (float) ($sells[$invoice->id] ?? 0) * (float) ($invoice->exchange_rate ?: 1);
             // 🔴 General billing has no shipment, so no cost side and no margin — NULL, never the whole sale shown
             // as 100% margin, which is what a cost lookup on a NULL job would have produced.
-            if ($invoice->isGeneral()) {
-                return array_merge($invoice->toArray(), [
-                    'job_no' => null, 'general' => true, 'sell_total' => round($sell, 2), 'buy_total' => null,
-                    'margin' => null, 'sent_to_accounts_at' => $invoice->sent_to_accounts_at,
-                    'sent_to_accounts_by' => DB::table('users')->where('id', $invoice->sent_to_accounts_by)->value('name'),
-                ]);
-            }
-
-            $buy = (float) DB::table('accounts_purchase_items as i')
-                ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
-                ->where('v.job_id', $invoice->job_id)->sum('i.amount');
+            $costed = ! $invoice->isGeneral() && (int) ($carriesCost[$invoice->job_id] ?? 0) === (int) $invoice->id;
+            $buy = $costed ? (float) ($buys[$invoice->job_id] ?? 0) : null;
 
             // array_merge, never `+`: with `+` the model's own `sent_to_accounts_by` (an id) would win over the name.
             return array_merge($invoice->toArray(), [
-                'job_no' => DB::table('jobs')->where('id', $invoice->job_id)->value('execution_job_no'),
+                'job_no' => $jobNos[$invoice->job_id] ?? null,
                 'sell_total' => round($sell, 2),
-                'buy_total' => round($buy, 2),
-                'margin' => $sell > 0 ? round($sell - $buy, 2) : null,
+                'buy_total' => $buy === null ? null : round($buy, 2),
+                'margin' => $buy !== null && $sell > 0 ? round($sell - $buy, 2) : null,
                 'sent_to_accounts_at' => $invoice->sent_to_accounts_at,
-                'sent_to_accounts_by' => DB::table('users')->where('id', $invoice->sent_to_accounts_by)->value('name'),
-            ]);
+                'sent_to_accounts_by' => $senders[$invoice->sent_to_accounts_by] ?? null,
+            ] + ($invoice->isGeneral() ? ['general' => true] : []));
         });
 
         return response()->json($invoices);
@@ -118,6 +129,15 @@ class InvoiceController extends Controller
         $subtotal = (float) $invoice->items()->sum('amount');
         $tax = (float) $invoice->items()->sum('tax_amount');
         $grandTotal = round($subtotal + $tax, 2);
+
+        // 🔴 A document with nothing on it is not issued (2026-11-10 audit, M13). Numbers are never recycled, so a
+        // ₹0 invoice finalized by mistake burns one and puts a blank document in the GST register for good.
+        if (! $invoice->items()->exists() || $grandTotal <= 0) {
+            return response()->json([
+                'error'  => 'This document has no charges on it. Add at least one line before finalizing.',
+                'reason' => 'nothing_to_bill',
+            ], 422);
+        }
 
         // 🔴 A foreign bill is booked at its document date's rate (GAPS #411). Still on the default of 1 — which no
         // currency trades at — means nobody set one, so it is LOOKED UP; a rate the desk typed (an agreed rate) stands.
@@ -192,7 +212,24 @@ class InvoiceController extends Controller
             // ⚠️ Re-read before deciding. This closure is REPLAYED on a deadlock, and the
             // failed attempt left its rolled-back values on the model in memory — without
             // this, a retry would keep a number whose reservation was rolled back with it.
+            //
+            // 🔴 And LOCKED (2026-11-10 audit, M13): two finalize requests side by side both passed the draft check
+            // above, and each minted a number — one of them burnt for good. The second now waits here, finds the
+            // document finalized, and stops. The totals are read again under the lock for the same reason.
+            AccountsInvoice::withoutTenantScope()->whereKey($invoice->id)->lockForUpdate()->first();
             $invoice->refresh();
+
+            if ($invoice->status !== 'draft') {
+                abort(response()->json([
+                    'error'  => 'Only a draft invoice can be finalized.',
+                    'reason' => 'not_draft',
+                    'status' => $invoice->status,
+                ], 422));
+            }
+
+            $subtotal = (float) $invoice->items()->sum('amount');
+            $tax = (float) $invoice->items()->sum('tax_amount');
+            $grandTotal = round($subtotal + $tax, 2);
 
             $invoice->update([
                 // 🔴 NOT `?:`. A draft's placeholder is truthy, so `?:` kept it and the

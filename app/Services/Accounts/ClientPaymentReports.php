@@ -58,6 +58,9 @@ class ClientPaymentReports
     private function readTheirMail(object $customer, Carbon $month, array $card): void
     {
         $mails = blank($customer->email_domain) ? collect() : DB::table('email_messages')
+            // 🔒 This company's own mailboxes only (2026-11-10 audit): the sender's domain alone also matched mail
+            // that ANOTHER tenant received from the same client, and sent it to the model under this one's name.
+            ->whereIn('agent_id', DB::table('agents_info')->where('company_id', $customer->company_id)->select('id'))
             ->where('direction', 'inbound')
             ->where('from', 'like', '%@' . strtolower($customer->email_domain) . '%')
             ->whereBetween('received_at', [$month->copy()->startOfMonth()->subDays(15), $month->copy()->endOfMonth()])

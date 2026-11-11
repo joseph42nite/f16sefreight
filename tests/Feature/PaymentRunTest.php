@@ -262,4 +262,18 @@ class PaymentRunTest extends TestCase
             'allocations' => [['purchase_voucher_id' => $voucher->id, 'amount' => 10000]],
         ])->assertForbidden();
     }
+
+    /** 2026-11-10 audit, M11: a run posts to its own branch's books, so it pays only that branch's vouchers. */
+    public function test_a_run_pays_only_its_own_branchs_vouchers(): void
+    {
+        $voucher = $this->voucher($this->carrier, 10000, 1800);
+        $other = Agent::create(['company_id' => $this->branch->company_id, 'agent_name' => 'DEL', 'branch_code' => 'DEL']);
+
+        $this->as($this->accounts)->postJson($this->url('/payments/run'), [
+            'agent_id' => $other->id, 'payment_date' => now()->toDateString(), 'mode' => 'bank_transfer',
+            'allocations' => [['purchase_voucher_id' => $voucher->id, 'amount' => 11800]],
+        ])->assertStatus(422)->assertJsonPath('reason', 'voucher_other_branch');
+
+        $this->assertSame('unpaid', $voucher->fresh()->status);
+    }
 }

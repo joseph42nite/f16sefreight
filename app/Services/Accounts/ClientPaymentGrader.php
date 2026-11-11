@@ -124,7 +124,7 @@ class ClientPaymentGrader
             ->join('accounts_receipts as r', 'r.id', '=', 'a.receipt_id')
             ->whereIn('a.invoice_id', $bills->pluck('id'))->where('r.is_posted', true)->where('r.receipt_date', '<=', $end)
             ->orderBy('r.receipt_date')
-            ->get(['a.invoice_id', 'a.amount', 'a.invoice_amount', 'r.receipt_date'])->groupBy('invoice_id');
+            ->get(['a.invoice_id', 'a.amount', 'a.invoice_amount', 'a.resolution', 'r.receipt_date'])->groupBy('invoice_id');
 
         $banked = DB::table('bank_transactions')->whereIn('matched_invoice_id', $bills->where('status', 'paid')->pluck('id'))
             ->groupBy('matched_invoice_id')->selectRaw('matched_invoice_id, MAX(value_date) AS paid_on')->pluck('paid_on', 'matched_invoice_id');
@@ -136,7 +136,11 @@ class ClientPaymentGrader
             $running = 0.0;
             foreach ($allocations[$bill->id] ?? [] as $a) {
                 $running += (float) ($a->invoice_amount ?? $a->amount);
-                if ($running >= (float) $bill->grand_total - 1) {   // within a rupee: rounding is not a balance
+                // 🔴 A short payment closed with a resolution — the client deducted TDS, or the gap was written off or
+                // given as a discount — settled the bill that day (2026-11-10 audit, M7). Waiting for the receipts to
+                // add up to the full bill left such a bill "unpaid" forever, and a client who pays on time less TDS
+                // graded as one who never pays.
+                if ($running >= (float) $bill->grand_total - 1 || $a->resolution !== null) {   // within a rupee: rounding is not a balance
                     $settled[$bill->id] = Carbon::parse($a->receipt_date)->startOfDay();
                     break;
                 }

@@ -355,4 +355,18 @@ class BossOverviewTest extends TestCase
 
         $this->api($rep)->getJson($this->url('/api/sales/staff', 'focusair.f16sefreight.com'))->assertForbidden();
     }
+
+    /** 2026-11-10 audit, M19: on the 31st, "2026-09" was read as 31 September — the 1st of October. */
+    public function test_a_target_set_on_the_31st_is_saved_to_the_month_asked_for(): void
+    {
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-10-31 11:00'));
+
+        $body = $this->api($this->boss)->putJson($this->url('/api/sales/targets'), ['month' => '2026-09', 'targets' => [
+            ['agent_id' => $this->bom->id, 'mode' => 'air', 'shipments' => 40],
+        ]])->assertOk()->json();
+
+        $this->assertSame('2026-09', $body['month']);
+        $this->assertSame(['2026-09-01'], DB::table('sales_targets')->where('agent_id', $this->bom->id)
+            ->pluck('period_month')->map(fn ($d) => substr((string) $d, 0, 10))->all());
+    }
 }

@@ -239,4 +239,19 @@ class BankAccountsTest extends TestCase
         $this->as($this->accounts)->postJson($this->url('/bank-accounts'),
             ['agent_id' => $theirBranch->id, 'name' => 'Theirs'])->assertStatus(404);
     }
+
+    /** 2026-11-10 audit, S8: the bank feed's consent is written by the feed, never typed in through this screen. */
+    public function test_the_feed_consent_cannot_be_set_from_the_request(): void
+    {
+        $made = $this->as($this->accounts)->postJson($this->url('/bank-accounts'), [
+            'agent_id' => $this->branch->id, 'name' => 'Feed account', 'bank_name' => 'HDFC', 'account_no' => '50100012349999',
+            'provider' => 'setu', 'provider_ref' => 'someone-elses-consent',
+        ])->assertCreated()->json();
+
+        $this->putJson($this->url("/bank-accounts/{$made['id']}"), ['name' => 'Feed account', 'provider' => 'setu',
+            'provider_ref' => 'someone-elses-consent'])->assertOk();
+
+        $row = DB::table('bank_accounts')->where('id', $made['id'])->first();
+        $this->assertSame([null, null], [$row->provider, $row->provider_ref]);
+    }
 }

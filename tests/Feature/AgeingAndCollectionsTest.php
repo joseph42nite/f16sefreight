@@ -271,4 +271,29 @@ class AgeingAndCollectionsTest extends TestCase
             'agent_id' => $this->branch->id, 'party_type' => 'customer', 'party_id' => $this->slow->id, 'note' => 'Hello',
         ])->assertForbidden();
     }
+
+    /** 2026-11-10 audit, S9 and S10: a follow-up or a receipt names only this company's client, bill and bank line. */
+    public function test_a_follow_up_and_a_receipt_take_only_this_companys_client_and_bill(): void
+    {
+        $rival = Company::create(['name' => 'Rival Co', 'code' => 'RVL', 'tier' => 'command']);
+        $rivalBranch = Agent::create(['company_id' => $rival->id, 'agent_name' => 'DEL', 'branch_code' => 'DEL']);
+        $theirClient = Customer::create(['company_id' => $rival->id, 'name' => 'Their Client', 'email_domain' => 'theirs.test']);
+        $theirBill = DB::table('accounts_invoices')->insertGetId(['agent_id' => $rivalBranch->id, 'customer_id' => $theirClient->id,
+            'invoice_no' => 'INV-RVLDEL-26-0001', 'type' => 'invoice', 'document_date' => now()->toDateString(), 'status' => 'sent',
+            'grand_total' => 5000, 'created_at' => now(), 'updated_at' => now()]);
+        $theirLine = DB::table('bank_transactions')->insertGetId(['agent_id' => $rivalBranch->id, 'amount' => 5000,
+            'plaid_transaction_id' => 'txn_' . uniqid('', true), 'created_at' => now(), 'updated_at' => now()]);
+
+        $chase = ['agent_id' => $this->branch->id, 'party_type' => 'customer', 'note' => 'Hello'];
+        $this->as($this->accounts)->postJson($this->url('/collections/follow-ups'), $chase + ['party_id' => $theirClient->id])
+            ->assertNotFound()->assertJsonPath('reason', 'party_not_found');
+        $this->postJson($this->url('/collections/follow-ups'), $chase + ['party_id' => $this->slow->id, 'invoice_id' => $theirBill])
+            ->assertNotFound()->assertJsonPath('reason', 'invoice_not_found');
+
+        $receipt = ['agent_id' => $this->branch->id, 'receipt_date' => now()->toDateString(), 'mode' => 'bank_transfer', 'amount' => 5000];
+        $this->postJson($this->url('/receipts'), $receipt + ['payer_id' => $theirClient->id])
+            ->assertNotFound()->assertJsonPath('reason', 'payer_not_found');
+        $this->postJson($this->url('/receipts'), $receipt + ['payer_id' => $this->slow->id, 'bank_transaction_id' => $theirLine])
+            ->assertNotFound()->assertJsonPath('reason', 'bank_line_not_found');
+    }
 }

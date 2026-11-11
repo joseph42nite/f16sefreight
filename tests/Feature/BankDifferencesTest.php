@@ -144,4 +144,18 @@ class BankDifferencesTest extends TestCase
         $threadId = DB::table('email_threads')->where('thread_key', $mine)->value('id');
         $this->postJson("http://accounts.localhost/api/inbox/threads/{$threadId}/claim")->assertForbidden();
     }
+
+    /** 2026-11-10 audit, M8: a statement's dates are day first, and a line with no readable date is skipped, not fatal. */
+    public function test_a_statement_is_read_day_first_and_an_unreadable_date_is_skipped(): void
+    {
+        $csv = "Date,Reference,Narration,Credit\n05/04/2026,UTRM8A,NEFT ONE,1000\n13/04/2026,UTRM8B,NEFT TWO,2000\nBalance,UTRM8C,NEFT THREE,3000";
+
+        $result = $this->as($this->accounts)->postJson($this->url('/reconciliation/import'), ['agent_id' => $this->branch->id, 'csv' => $csv])
+            ->assertOk()->json();
+
+        $this->assertSame([2, 1], [$result['imported'], $result['skipped']]);
+        $dates = DB::table('bank_transactions')->where('agent_id', $this->branch->id)->whereIn('reference', ['UTRM8A', 'UTRM8B'])
+            ->orderBy('reference')->pluck('value_date')->map(fn ($d) => substr((string) $d, 0, 10))->all();
+        $this->assertSame(['2026-04-05', '2026-04-13'], $dates);
+    }
 }

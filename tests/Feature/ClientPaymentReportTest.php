@@ -204,4 +204,22 @@ class ClientPaymentReportTest extends TestCase
 
         $this->assertSame('A', $row['payment']['grade']);
     }
+
+    /** 2026-11-10 audit, M7: a bill paid short and closed — TDS deducted, say — was settled the day it was closed. */
+    public function test_a_bill_closed_with_a_resolution_counts_as_paid_that_day(): void
+    {
+        $client = $this->client('Deducts TDS');
+        foreach (['2026-07-10', '2026-08-10', '2026-09-10'] as $due) {
+            $bill = $this->bill($client, $due, Carbon::parse($due)->subDays(2)->toDateString());
+            // ₹98,000 arrived; the client kept ₹2,000 as TDS and the bill was closed.
+            DB::table('accounts_receipt_allocations')->where('invoice_id', $bill)->update(['amount' => 98000, 'resolution' => 'tds']);
+            DB::table('accounts_invoices')->where('id', $bill)->update(['amount_paid' => 98000]);
+        }
+
+        $this->artisan('clients:payment-report', ['--month' => '2026-09'])->assertSuccessful();
+
+        $card = $this->card($client);
+        $this->assertSame([3, 1.0, 'A'], [$card->bills_due, (float) $card->on_time_share, $card->grade]);
+        $this->assertEquals(0, (float) $card->overdue_value);
+    }
 }

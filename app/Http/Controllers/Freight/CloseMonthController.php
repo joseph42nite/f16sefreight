@@ -116,6 +116,10 @@ class CloseMonthController extends Controller
             ->leftJoin('customers as c', 'c.id', '=', 'j.customer_id')
             ->where('j.agent_id', $period->agent_id)
             ->whereNull('j.deleted_at')
+            // 🔴 FINISHED means Completed (2026-11-10 audit, M6): a cancelled job, or one still in progress, is not
+            // work delivered and unbilled. `completed_at` is stamped by JobObserver; a job completed before that
+            // existed has none, and falls back to the day it was created.
+            ->where('j.status', 'Completed')
             ->whereBetween(DB::raw('DATE(COALESCE(j.completed_at, j.created_at))'), [$period->start_date, $period->end_date])
             ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('accounts_invoices as i')
                 ->whereColumn('i.job_id', 'j.id')->whereNotIn('i.status', ['draft', 'void']))
@@ -125,6 +129,7 @@ class CloseMonthController extends Controller
                    'j.completed_at', 'c.name as customer']);
 
         $count = DB::table('jobs as j')->where('j.agent_id', $period->agent_id)->whereNull('j.deleted_at')
+            ->where('j.status', 'Completed')
             ->whereBetween(DB::raw('DATE(COALESCE(j.completed_at, j.created_at))'), [$period->start_date, $period->end_date])
             ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('accounts_invoices as i')
                 ->whereColumn('i.job_id', 'j.id')->whereNotIn('i.status', ['draft', 'void']))
@@ -214,18 +219,23 @@ class CloseMonthController extends Controller
     private function gst(object $period): array
     {
         // A client with no GSTIN is a B2C sale and never goes to the portal at all.
+        // 🔴 A brokerage or consol bill is to a PARTNER, and a registered one needs an IRN like any other B2B sale
+        // (2026-11-10 audit, M15). Joined to the client alone, those never appeared here.
         $base = DB::table('accounts_invoices as i')
-            ->join('customers as c', 'c.id', '=', 'i.customer_id')
+            ->leftJoin('customers as c', 'c.id', '=', 'i.customer_id')
+            ->leftJoin('partners as p', fn ($join) => $join->on('p.id', '=', 'i.billed_party_id')
+                ->where('i.billed_party_type', '=', 'partner'))
             ->where('i.agent_id', $period->agent_id)
-            ->whereIn('i.type', ['invoice', 'debit_note', 'credit_note'])
+            ->whereIn('i.type', array_keys(\App\Support\BillingDocuments::TYPES))
             ->whereNotIn('i.status', ['draft', 'void'])
             ->whereBetween('i.document_date', [$period->start_date, $period->end_date])
-            ->whereNotNull('c.gst_no')->where('c.gst_no', '!=', '')
+            ->whereRaw("COALESCE(p.gst_no, c.gst_no, '') != ''")
             ->whereNull('i.irn');
 
         $count = (clone $base)->count();
         $rows = (clone $base)->orderBy('i.document_date')->limit(self::PREVIEW)
-            ->get(['i.id', 'i.invoice_no', 'i.type', 'i.document_date', 'i.grand_total', 'c.name as customer', 'c.gst_no']);
+            ->get(['i.id', 'i.invoice_no', 'i.type', 'i.document_date', 'i.grand_total',
+                   DB::raw('COALESCE(p.name, c.name) AS customer'), DB::raw('COALESCE(p.gst_no, c.gst_no) AS gst_no')]);
 
         // What the register says was charged in this period — the figure GSTR-1 is filed from. In rupees, at each
         // document's own rate, as the register and the return are (GAPS #411, #418): a USD bill's face value read

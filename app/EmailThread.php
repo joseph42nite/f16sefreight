@@ -59,11 +59,20 @@ class EmailThread extends Model
             return $query;
         }
 
-        $address = '%' . $user->email . '%';
+        // 🔒 The WHOLE address, not a piece of one (2026-11-10 audit, S11). `LIKE '%raj@acme.com%'` also matched
+        // `suraj@acme.com`, so one person read every thread addressed to the other. The address must stand on its
+        // own: nothing that could be part of an address before it or after it.
+        $address = '(^|[^a-z0-9._%+-])' . preg_quote(strtolower((string) $user->email)) . '($|[^a-z0-9._-])';
+        $on = fn ($q, string $column, string $boolean = 'or') => $q->whereRaw(
+            "LOWER(`{$column}`) REGEXP ?", [$address], $boolean);
 
         return $query->whereIn('thread_key', EmailMessage::query()->select('thread_key')
-            ->where(fn ($q) => $q->where('from', 'like', $address)->orWhere('to', 'like', $address)
-                ->orWhere('cc', 'like', $address)->orWhere('bcc', 'like', $address)));
+            ->where(function ($q) use ($on) {
+                $on($q, 'from', 'and');
+                $on($q, 'to');
+                $on($q, 'cc');
+                $on($q, 'bcc');
+            }));
     }
 
     public function isVisibleTo(User $user): bool

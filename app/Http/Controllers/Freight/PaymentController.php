@@ -177,6 +177,15 @@ class PaymentController extends Controller
                     'reason' => 'voucher_not_found'], 404);
             }
 
+            // 🔴 A run pays its OWN branch's vouchers (2026-11-10 audit, M11): the payment posts to that branch's
+            // books, so paying another branch's voucher from here cleared a payable the ledger never moved.
+            if ((int) $voucher->agent_id !== (int) $data['agent_id']) {
+                return response()->json([
+                    'error' => sprintf('%s was booked by another branch. Pay it in a run for that branch.', $voucher->voucher_no),
+                    'reason' => 'voucher_other_branch',
+                ], 422);
+            }
+
             if (round((float) $allocation['amount'], 2) > $this->outstanding($voucher) + 0.009) {
                 return response()->json([
                     'error' => sprintf('%s has only %s outstanding; you have placed %s against it.',
@@ -196,6 +205,22 @@ class PaymentController extends Controller
 
         $payments = DB::transaction(function () use ($data, $vouchers, $runRef, $deductions) {
             $made = [];
+
+            // 🔴 Locked and checked again inside the transaction (audit M11): the check above read unlocked rows, so
+            // two runs raised side by side could each pay one voucher in full.
+            $locked = AccountsPurchaseVoucher::withoutGlobalScopes()->whereIn('id', $vouchers->keys())->lockForUpdate()->get()->keyBy('id');
+
+            foreach ($data['allocations'] as $allocation) {
+                $voucher = $locked[$allocation['purchase_voucher_id']] ?? null;
+
+                if ($voucher === null || $voucher->status === 'void'
+                    || round((float) $allocation['amount'], 2) > $this->outstanding($voucher) + 0.009) {
+                    abort(response()->json([
+                        'error' => 'One of those vouchers was paid while you were building this run. Look at it again.',
+                        'reason' => 'over_allocated_voucher',
+                    ], 422));
+                }
+            }
 
             // 🔴 Grouped by SUPPLIER: each payment is one transfer to one bank account.
             foreach (collect($data['allocations'])->groupBy(fn ($a) => $vouchers[$a['purchase_voucher_id']]->vendor_id) as $vendorId => $lines) {

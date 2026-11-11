@@ -24,7 +24,8 @@ class ConsolidationController extends Controller
     {
         $awbNo = 12345678;
         $awbCode = 123;
-        $wayBill = HousewayBills::where('awb_no', $awbNo)->where('awb_code', $awbCode)->get();
+        $wayBill = HousewayBills::where('awb_no', $awbNo)->where('awb_code', $awbCode)
+            ->where('agent_id', auth()->user()->branch_name)->get();
         // dd($wayBill);
         if ($wayBill) {
             return $wayBill;
@@ -193,7 +194,8 @@ class ConsolidationController extends Controller
         ]);
 
         // Initialize query
-        $query = AirwayBills::query();
+        // 🔒 Own branch only (2026-11-10 audit): with no filter this listed every tenant's masters.
+        $query = AirwayBills::where('agent_id', auth()->user()->branch_name);
 
         // Filter by awb_code and awb_no
         if ($request->filled('awb_code') && $request->filled('awb_no')) {

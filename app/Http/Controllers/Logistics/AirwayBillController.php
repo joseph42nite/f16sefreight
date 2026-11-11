@@ -1089,8 +1089,10 @@ class AirwayBillController extends Controller
         ]);
         $awb_code = $request->input('awb_code');
         $awb_no = $request->input('awb_no');
+        // 🔒 Own branch only (2026-11-10 audit): the number alone used to return another forwarder's master.
         $data = AirwayBills::where('awb_code', $awb_code)
             ->where('awb_no', $awb_no)
+            ->where('agent_id', auth()->user()->branch_name)
             ->first();
         if ($data) {
             return response()->json([

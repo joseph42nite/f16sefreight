@@ -195,7 +195,9 @@ class GstReturnService
             // a summary return that quietly omits three lakhs of supplies is the worst of both files.
             'excluded' => [
                 'count' => count($outward['exceptions']),
-                'value' => round(array_sum(array_column($outward['exceptions'], 'taxable_value')), 2),
+                // A credit note gives value BACK, here as everywhere a total is struck (2026-11-10 audit, M17).
+                'value' => round(array_sum(array_map(
+                    fn ($e) => ($e['type'] === 'credit_note' ? -1 : 1) * $e['taxable_value'], $outward['exceptions'])), 2),
                 'rows' => $outward['exceptions'],
             ],
             'input_excluded' => $inward['excluded'],
@@ -310,6 +312,27 @@ class GstReturnService
             $rates[$key]['cgst'] = round($rates[$key]['cgst'] + $split['cgst'], 2);
             $rates[$key]['sgst'] = round($rates[$key]['sgst'] + $split['sgst'], 2);
             $rates[$key]['igst'] = round($rates[$key]['igst'] + $split['igst'], 2);
+        }
+
+        // 🔴 The register splits the DOCUMENT's tax once; the loop above split each LINE (2026-11-10 audit, M17). Two
+        // lines of ₹0.45 tax are 0.23 + 0.23 of CGST by line and 0.45 by document, so an intrastate bill with odd
+        // paise read as "the register disagrees" when nothing was wrong. The odd paise are moved between CGST and
+        // SGST on the largest rate, so the heads match the register and still add up to the tax charged.
+        if ($kind === 'intrastate' && $rates !== []) {
+            $whole = $this->split->split($headerTax, $doc->counterparty_gstin, $ourGstin);
+            $odd = round($whole['cgst'] - array_sum(array_column($rates, 'cgst')), 2);
+
+            if ($odd !== 0.0) {
+                $largest = array_key_first($rates);
+                foreach ($rates as $key => $rate) {
+                    if ($rate['cgst'] > $rates[$largest]['cgst']) {
+                        $largest = $key;
+                    }
+                }
+
+                $rates[$largest]['cgst'] = round($rates[$largest]['cgst'] + $odd, 2);
+                $rates[$largest]['sgst'] = round($rates[$largest]['sgst'] - $odd, 2);
+            }
         }
 
         // 🔴 Worked in the document's currency above — the line-vs-header check must compare like with like — and

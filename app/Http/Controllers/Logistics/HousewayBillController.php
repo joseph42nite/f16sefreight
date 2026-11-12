@@ -13,6 +13,7 @@ use App\OtherCharge;
 use App\OtherCustomInformation;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
@@ -439,9 +440,14 @@ class HousewayBillController extends Controller
 
         for ($i = 0; $i < sizeof($entries); $i++) {
             $pieces = $entries[$i]['pieces'];
-            $ConsignmentData = ConsignmentData::where([['awb_id', $hawb_no], ['pieces', $pieces]])->first();
+            // 🔴 A house waybill has ONE consignment line, found by its number alone (2026-11-10 audit, L5). It was
+            // looked up by number AND piece count, so changing the pieces inserted a second row — and every reader
+            // takes the first, so the airline kept getting the old figures. Strays from before are removed.
+            $ConsignmentData = ConsignmentData::where('awb_id', $hawb_no)->orderBy('id')->first();
             if (!isset($ConsignmentData))
                 $ConsignmentData = new ConsignmentData();
+            else
+                ConsignmentData::where('awb_id', $hawb_no)->where('id', '!=', $ConsignmentData->id)->delete();
             $ConsignmentData->awb_id = $hawb_no;
             $ConsignmentData->pieces = $pieces;
             $ConsignmentData->description = $entries[$i]['description'];
@@ -708,7 +714,45 @@ class HousewayBillController extends Controller
         return response()->json(['message' => "Special Handling Codes saved successfully."]);
     }
 
+    /**
+     * Raise a house waybill, all of it or none of it (2026-11-10 audit, L6).
+     *
+     * 🔴 The sections write up to eight tables, and a 422 half way used to leave the earlier ones saved — the same
+     * defect the master waybill had (GAPS #129). A section's 422 now rolls the whole save back. The message to the
+     * airline stays OUTSIDE the transaction: it is a network call, and row locks are not held across one.
+     */
     public function store(Request $request)
+    {
+        DB::beginTransaction();
+
+        try {
+            $saved = $this->storeSections($request);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            throw $e;
+        }
+
+        if (! is_array($saved)) {
+            DB::rollBack();
+
+            return $saved;
+        }
+
+        DB::commit();
+        [$main_return_data, $hawb_id, $status] = $saved;
+
+        $send_response = [];
+        if ($status == 'send') {
+            $send_response = $this->conversionController->sendAndRecord(HousewayBills::class, $hawb_id,
+                fn () => $this->conversionController->HouseWayBillConversion($hawb_id));
+        }
+
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
+    }
+
+    /** Every database write `store()` makes: the saved sections, or the 422 that stops them. */
+    private function storeSections(Request $request)
     {
         $this->abortUnlessOwnWaybill(HousewayBills::class, $request->first_box['hawb_no'] ?? null);
         $main_return_data = [];
@@ -812,13 +856,8 @@ class HousewayBillController extends Controller
             'as_agreed' => $request->as_agreed ?? 0,
         ];
         HousewayBills::where(['id' => $hawb_id])->update($update_arr);
-        $send_response = [];
-        if ($status == 'send') {
-            $send_response = $this->conversionController->HouseWayBillConversion($hawb_id);
-            $send_response = $send_response->getData(true);
-            HousewayBills::where(['id' => $hawb_id])->update(['t_id' => $send_response['data']['tid'], 'send_created' => $send_response['data']['created'], 'send_status' => $send_response['status']]);
-        }
-        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
+
+        return [$main_return_data, $hawb_id, $status];
     }
     public function getConsignmentError(Request $request)
     {
@@ -846,7 +885,39 @@ class HousewayBillController extends Controller
         return response()->json(['msg' => 'No error'], 200);
     }
 
+    /** Amend a house waybill, all of it or none of it — see `store()` (2026-11-10 audit, L6). */
     public function update(Request $request, $id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $saved = $this->updateSections($request, $id);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            throw $e;
+        }
+
+        if (! is_array($saved)) {
+            DB::rollBack();
+
+            return $saved;
+        }
+
+        DB::commit();
+        [$main_return_data, $hawb_id, $status] = $saved;
+
+        $send_response = [];
+        if ($status == 'send') {
+            $send_response = $this->conversionController->sendAndRecord(HousewayBills::class, $hawb_id,
+                fn () => $this->conversionController->HouseWayBillConversion($hawb_id));
+        }
+
+        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
+    }
+
+    /** Every database write `update()` makes: the saved sections, or the 422 that stops them. */
+    private function updateSections(Request $request, $id)
     {
         $this->abortUnlessOwnWaybill(HousewayBills::class, $id);
         $this->abortUnlessOwnWaybill(HousewayBills::class, $request->first_box['hawb_no'] ?? null);
@@ -868,7 +939,9 @@ class HousewayBillController extends Controller
                 $main_return_data['routing_information'] = $error_data;
         }
         // && !empty($request->totals['master_pcs']) && !empty($request->totals['master_weight'])
-        if (!empty($id)) {
+        // Only when the panel sent totals (2026-11-10 audit, L6) — the same guard `store()` has. Without it an edit
+        // from the Extraction panel crashed on `Validator::make(null, …)`.
+        if (!empty($id) && !empty($request->totals)) {
             $error_data = $this->totalAmountValume($id, $request->totals);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -944,13 +1017,8 @@ class HousewayBillController extends Controller
         if ($status != 'generate_pdf')
             $update_arr['status'] = $status;
         HousewayBills::where(['id' => $id])->update($update_arr);
-        $send_response = [];
-        if ($status == 'send') {
-            $send_response = $this->conversionController->HouseWayBillConversion($id);
-            $send_response = $send_response->getData(true);
-            HousewayBills::where(['id' => $id])->update(['t_id' => $send_response['data']['tid'], 'send_created' => $send_response['data']['created'], 'send_status' => $send_response['status']]);
-        }
-        return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
+
+        return [$main_return_data, $id, $status];
     }
 
     public function show($id)

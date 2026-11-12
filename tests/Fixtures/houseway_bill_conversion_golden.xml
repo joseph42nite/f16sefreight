@@ -50,6 +50,7 @@
       <ram:TotalChargePrepaidIndicator>true</ram:TotalChargePrepaidIndicator>
       <ram:TotalDisbursementPrepaidIndicator>true</ram:TotalDisbursementPrepaidIndicator>
       <ram:IncludedTareGrossWeightMeasure unitCode="KGM">50</ram:IncludedTareGrossWeightMeasure>
+      <ram:GrossVolumeMeasure unitCode="MTQ">100</ram:GrossVolumeMeasure>
       <ram:TotalPieceQuantity>5</ram:TotalPieceQuantity>
       <ram:SummaryDescription>General cargo</ram:SummaryDescription>
       <ram:ConsignorParty>

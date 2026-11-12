@@ -72,17 +72,75 @@ class ConversionController extends Controller
         return $specifiedLogisticsTransportMovement;
     }
 
+    /**
+     * A row a message cannot be built without, or a 422 that says which one is missing (2026-11-10 audit, L9).
+     * These were `->first()->toArray()`: a waybill saved without, say, its charges answered 500 on Send.
+     */
+    private function need(?\Illuminate\Database\Eloquent\Model $row, string $missing): array
+    {
+        abort_if($row === null, 422, $missing . '. Complete it, then send again.');
+
+        return $row->toArray();
+    }
+
+    /**
+     * Send one message and record what the gateway said (2026-11-10 audit, L3).
+     *
+     * 🔴 The reply was read as `['data']['tid']` unchecked, after the bill was already marked `send`. A refused upload
+     * has no `tid`, so the request died with a 500 and left a "sent" waybill the airline never received. Here a send
+     * that did not come back with a transaction id is recorded as FAILED, and a bill that has never been sent goes
+     * back to draft so it does not sit in the sent list.
+     *
+     * @param  class-string<\Illuminate\Database\Eloquent\Model>  $model  AirwayBills or HousewayBills
+     * @param  callable(): \Illuminate\Http\JsonResponse  $send
+     */
+    public function sendAndRecord(string $model, $id, callable $send): array
+    {
+        $failed = function (string $why, array $reply = []) use ($model, $id) {
+            $model::where('id', $id)->update(['send_status' => 'failed']);
+            $model::where('id', $id)->whereNull('t_id')->where('status', 'send')->update(['status' => 'draft']);
+
+            return ['status' => 'failed', 'error' => $why] + $reply;
+        };
+
+        try {
+            $reply = $send()->getData(true);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
+            $failed($e->getMessage());
+
+            throw $e;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $failed('The message could not be built or sent. Nothing reached the airline.');
+        }
+
+        $tid = $reply['data']['tid'] ?? null;
+
+        if (($reply['status'] ?? null) !== 'success' || ! is_string($tid) || $tid === '') {
+            return $failed('The airline gateway did not accept the message.', $reply);
+        }
+
+        $model::where('id', $id)->update([
+            't_id' => $tid,
+            'send_created' => is_string($reply['data']['created'] ?? null) ? $reply['data']['created'] : null,
+            'send_status' => $reply['status'],
+        ]);
+
+        return $reply;
+    }
+
     public function WayBillConversion($awb_id = "12312345678")
     {
         $this->abortUnlessOwnWaybill(AirwayBills::class, $awb_id);
         // Fetch data from the database (this is just sample data for now)
         $user_data = auth()->guard('user-api')->user();
         $branch_id = $user_data->branch_name;
-        $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
-        $waybill_address = WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
-        $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
-        $agent_details = Agent::where('id', $branch_id)->limit(1)->first()->toArray();
-        $payment_details = PaymentInfo::where('awb_id', $awb_id)->limit(1)->first()->toArray();
+        $waybill_data = $this->need(AirwayBills::where([['id', $awb_id]])->first(), 'This waybill does not exist');
+        $waybill_address = $this->need(WayBillAddress::where([['awb_id', $awb_id]])->limit(1)->first(), 'This waybill has no shipper and consignee addresses');
+        $consignment_data = $this->need(ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first(), 'This waybill has no consignment details');
+        $agent_details = $this->need(Agent::where('id', $branch_id)->limit(1)->first(), 'Your branch has no agent details');
+        $payment_details = $this->need(PaymentInfo::where('awb_id', $awb_id)->limit(1)->first(), 'This waybill has no charges declaration');
         $other_charges = OtherCharge::where('awb_id', $awb_id)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
 
@@ -110,7 +168,7 @@ class ConversionController extends Controller
         }
 
         // Start conversion to XML
-        $xml = new DOMDocument();
+        $xml = new \App\Support\XmlDocument();
         $xml->formatOutput = true;
 
         // Create root element
@@ -192,7 +250,7 @@ class ConversionController extends Controller
             $masterConsignment->appendChild($xml->createElement('ram:InsuranceValueAmount', $payment_details['declear_value_insurance']))->setAttribute('currencyID', $payment_details['currency']);
         }
         $masterConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
-        $masterConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] == 'P' ? 'true' : 'false'));
+        $masterConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', ($other_charges[0]['payment_type'] ?? '') == 'P' ? 'true' : 'false'));
         $masterConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
         if (!empty($waybill_data['total_volume']))
             $masterConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr($waybill_data['total_volume'], 0, 9)))->setAttribute('unitCode', $waybill_data['dimention_unit'] ?? 'MTQ');
@@ -435,8 +493,9 @@ class ConversionController extends Controller
 
         // Included Master Consignment Item
         $includedMasterConsignmentItem = $xml->createElement('ram:IncludedMasterConsignmentItem');
-        $includedMasterConsignmentItem->appendChild($xml->createElement('ram:SequenceNumeric', $i + 1));
-        $hs_code = json_decode($consignment_data['hs_code'], true);
+        // One item, so it is the first (audit L7): `$i + 1` was whatever the other-charges loop above left behind.
+        $includedMasterConsignmentItem->appendChild($xml->createElement('ram:SequenceNumeric', 1));
+        $hs_code = json_decode((string) $consignment_data['hs_code'], true) ?: [];
         $TypeCode = $xml->createElement('ram:TypeCode', $hs_code[0] ?? '');
         $TypeCode->setAttribute('listAgencyID', 1);
         $includedMasterConsignmentItem->appendChild($TypeCode);
@@ -460,7 +519,7 @@ class ConversionController extends Controller
             $includedMasterConsignmentItem->appendChild($OriginCountry);
         }
         //for the uld
-        $uld_info = json_decode($consignment_data['uld_info'], true);
+        $uld_info = json_decode((string) $consignment_data['uld_info'], true) ?: [];
         for ($j = 0; $j < sizeof($uld_info); $j++) {
             $AssociatedUnitLoadTransportEquipment = $xml->createElement('ram:AssociatedUnitLoadTransportEquipment');
             $AssociatedUnitLoadTransportEquipment->appendChild($xml->createElement('ram:ID', $uld_info[$j]['uld_serial']));
@@ -473,7 +532,7 @@ class ConversionController extends Controller
             $includedMasterConsignmentItem->appendChild($AssociatedUnitLoadTransportEquipment);
         }
         //for the pieces info
-        $pieces_info = json_decode($consignment_data['pieces_info'], true);
+        $pieces_info = json_decode((string) $consignment_data['pieces_info'], true) ?: [];
         for ($j = 0; $j < sizeof($pieces_info); $j++) {
             $TransportLogisticsPackage = $xml->createElement('ram:TransportLogisticsPackage');
             $TransportLogisticsPackage->appendChild($xml->createElement('ram:ItemQuantity', $pieces_info[$j]['pcs']));
@@ -554,11 +613,11 @@ class ConversionController extends Controller
         // Fetch data from the database (this is just sample data for now)
         $user_data = auth()->guard('user-api')->user();
         $branch_id = $user_data->branch_name;
-        $house_data = HousewayBills::where([['id', $hawb_no]])->first()->toArray();
-        $house_address = WayBillAddress::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
-        $consignment_data = ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
-        $agent_details = Agent::where('id', $branch_id)->limit(1)->first()->toArray();
-        $payment_details = PaymentInfo::where('awb_id', $hawb_no)->limit(1)->first()->toArray();
+        $house_data = $this->need(HousewayBills::where([['id', $hawb_no]])->first(), 'This house waybill does not exist');
+        $house_address = $this->need(WayBillAddress::where([['awb_id', $hawb_no]])->limit(1)->first(), 'This house waybill has no shipper and consignee addresses');
+        $consignment_data = $this->need(ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first(), 'This house waybill has no consignment details');
+        $agent_details = $this->need(Agent::where('id', $branch_id)->limit(1)->first(), 'Your branch has no agent details');
+        $payment_details = $this->need(PaymentInfo::where('awb_id', $hawb_no)->limit(1)->first(), 'This house waybill has no charges declaration');
         $other_charges = OtherCharge::where('awb_id', $hawb_no)->get()->toArray();
         $custom_info = OtherCustomInformation::where('awb_id', $hawb_no)->get()->toArray();
 
@@ -570,7 +629,7 @@ class ConversionController extends Controller
         // HousewayBills::where([['id', $hawb_no]])->update(['reference_id', $time]);
 
         // Start conversion to XML
-        $xml = new DOMDocument();
+        $xml = new \App\Support\XmlDocument();
         $xml->formatOutput = true;
 
         // Create root element
@@ -668,9 +727,11 @@ class ConversionController extends Controller
             $IncludedHouseConsignment->appendChild($xml->createElement('ram:InsuranceValueAmount', $payment_details['declear_value_insurance']))->setAttribute('currencyID', $payment_details['currency']);
         }
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalChargePrepaidIndicator', $payment_details['type_of_payment'] == 'PP' ? 'true' : 'false'));
-        $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', $other_charges[0]['payment_type'] ?? '' == 'P' ? 'true' : 'false'));
+        $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalDisbursementPrepaidIndicator', ($other_charges[0]['payment_type'] ?? '') == 'P' ? 'true' : 'false'));
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:IncludedTareGrossWeightMeasure', $consignment_data['gross_weight']))->setAttribute('unitCode', $consignment_data['weight_code'] ?? 'KGM');
-        if (!empty($waybill_data['total_volume']))
+        // The HOUSE's own volume (2026-11-10 audit, L7): this read `$waybill_data`, which does not exist here, so a house
+        // waybill's volume was never sent.
+        if (!empty($house_data['total_volume']))
             $IncludedHouseConsignment->appendChild($xml->createElement('ram:GrossVolumeMeasure', substr(($house_data['total_volume'] ?? 0), 0, 9)))->setAttribute('unitCode', $house_data['dimention_unit'] ?? 'MTQ');
         $IncludedHouseConsignment->appendChild($xml->createElement('ram:TotalPieceQuantity', $consignment_data['pieces']));
         $ident = $xml->createElement('ram:SummaryDescription');
@@ -875,7 +936,7 @@ class ConversionController extends Controller
         // ==========Included House Consignment Item===========
         $IncludedHouseConsignmentItem = $xml->createElement('ram:IncludedHouseConsignmentItem');
         $IncludedHouseConsignmentItem->appendChild($xml->createElement('ram:SequenceNumeric', 1));
-        $hs_code = json_decode($consignment_data['hs_code'], true);
+        $hs_code = json_decode((string) $consignment_data['hs_code'], true) ?: [];
         $TypeCode = $xml->createElement('ram:TypeCode', $hs_code[0] ?? '');
         $TypeCode->setAttribute('listAgencyID', 1);
         $IncludedHouseConsignmentItem->appendChild($TypeCode);
@@ -902,20 +963,20 @@ class ConversionController extends Controller
             $IncludedHouseConsignmentItem->appendChild($OriginCountry);
         }
         //for the uld
-        $uld_info = json_decode($consignment_data['uld_info'], true);
+        $uld_info = json_decode((string) $consignment_data['uld_info'], true) ?: [];
         for ($j = 0; $j < sizeof($uld_info); $j++) {
             $AssociatedUnitLoadTransportEquipment = $xml->createElement('ram:AssociatedUnitLoadTransportEquipment');
             $AssociatedUnitLoadTransportEquipment->appendChild($xml->createElement('ram:ID', $uld_info[$j]['uld_serial']));
             $AssociatedUnitLoadTransportEquipment->appendChild($xml->createElement('ram:CharacteristicCode', $uld_info[$j]['uld_type']));
-            $OperatingParty = $xml->createElement("OperatingParty");
-            $PrimaryID = $xml->createElement("PrimaryID", $uld_info[$j]['owner']);
+            $OperatingParty = $xml->createElement("ram:OperatingParty");
+            $PrimaryID = $xml->createElement("ram:PrimaryID", $uld_info[$j]['owner']);
             $PrimaryID->setAttribute('schemeAgencyID', $j + 1);
             $OperatingParty->appendChild($PrimaryID);
             $AssociatedUnitLoadTransportEquipment->appendChild($OperatingParty);
             $IncludedHouseConsignmentItem->appendChild($AssociatedUnitLoadTransportEquipment);
         }
         //for the pieces info
-        $pieces_info = json_decode($consignment_data['pieces_info'], true);
+        $pieces_info = json_decode((string) $consignment_data['pieces_info'], true) ?: [];
         for ($j = 0; $j < sizeof($pieces_info); $j++) {
             $TransportLogisticsPackage = $xml->createElement('ram:TransportLogisticsPackage');
             $TransportLogisticsPackage->appendChild($xml->createElement('ram:ItemQuantity', $pieces_info[$j]['pcs']));
@@ -1135,13 +1196,13 @@ class ConversionController extends Controller
     public function HouseManifestMessage($awb_id = "0571070525")
     {
         // Fetch data from the database (this is just sample data for now)
-        $waybill_data = AirwayBills::where([['id', $awb_id]])->first()->toArray();
-        $consignment_data = ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first()->toArray();
+        $waybill_data = $this->need(AirwayBills::where([['id', $awb_id]])->first(), 'This waybill does not exist');
+        $consignment_data = $this->need(ConsignmentData::where([['awb_id', $awb_id]])->limit(1)->first(), 'This waybill has no consignment details');
         $custom_info = OtherCustomInformation::where('awb_id', $awb_id)->get()->toArray();
         $utc_current_date = gmdate("Y-m-d H:i:s");
         $utc_current_date = str_replace(' ', 'T', $utc_current_date);
         // Start conversion to XML
-        $xml = new DOMDocument();
+        $xml = new \App\Support\XmlDocument();
         $xml->formatOutput = true;
 
         // Create root element
@@ -1161,7 +1222,9 @@ class ConversionController extends Controller
 
         // SenderParty
         $senderParty1 = $xml->createElement('ram:SenderParty');
-        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', 'TDVAGT03BASTEST/BOM1'));
+        // The sender is whoever is sending (2026-11-10 audit, L2) — as on the waybill messages. This was one test
+        // address for every forwarder, so every manifest reached the airline under somebody else's name.
+        $senderParty1->appendChild($xml->createElement('ram:PrimaryID', (string) auth()->guard('user-api')->user()?->pima_address));
         $senderParty1->firstChild->setAttribute('schemeID', 'P');
         $messageHeaderDocument->appendChild($senderParty1);
 
@@ -1217,7 +1280,8 @@ class ConversionController extends Controller
             ->where('agent_id', $waybill_data['agent_id'] ?? null)->get()->toArray();
         for ($i = 0; $i < sizeof($house_data); $i++) {
             $hawb_no = $house_data[$i]['id'];
-            $house_consignment_data = ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first()->toArray();
+            $house_consignment_data = $this->need(ConsignmentData::where([['awb_id', $hawb_no]])->limit(1)->first(),
+                "House waybill {$hawb_no} has no consignment details");
             $housewaybill = $xml->createElement('ram:IncludedHouseConsignment');
             $masterConsignment->appendChild($housewaybill);
             $housewaybill->appendChild($xml->createElement('ram:SequenceNumeric', $i + 1));
@@ -1242,11 +1306,14 @@ class ConversionController extends Controller
             $finalDestinationLocation->appendChild($xml->createElement('ram:ID', substr($house_data[$i]['destination_airport'], 0, 3)));
             $housewaybill->appendChild($finalDestinationLocation);
 
-            $special_handling_info = json_decode($house_data[$i]['special_handling_info'], true);
+            // 🔴 Its own loop variable, and nothing to loop over is not an error (2026-11-10 audit, L1). This reused
+            // the house loop's `$i`, so a house with handling codes skipped or repeated the houses after it, and a
+            // house with none crashed the manifest on `sizeof(null)`.
+            $special_handling_info = json_decode((string) $house_data[$i]['special_handling_info'], true) ?: [];
             // Handling SPH Instructions
-            for ($i = 0; $i < sizeof($special_handling_info); $i++) {
+            foreach ($special_handling_info as $handling_code) {
                 $handlingSPHInstructions = $xml->createElement('ram:HandlingSPHInstructions');
-                $handlingSPHInstructions->appendChild($xml->createElement('ram:DescriptionCode', $special_handling_info[$i]));
+                $handlingSPHInstructions->appendChild($xml->createElement('ram:DescriptionCode', $handling_code));
                 $housewaybill->appendChild($handlingSPHInstructions);
             }
 

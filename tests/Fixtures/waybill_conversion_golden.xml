@@ -173,7 +173,7 @@
       <ram:TotalChargeAmount currencyID="USD">500</ram:TotalChargeAmount>
       <ram:ConsignmentItemQuantity>1</ram:ConsignmentItemQuantity>
       <ram:IncludedMasterConsignmentItem>
-        <ram:SequenceNumeric>2</ram:SequenceNumeric>
+        <ram:SequenceNumeric>1</ram:SequenceNumeric>
         <ram:TypeCode listAgencyID="1">1234.56</ram:TypeCode>
         <ram:GrossWeightMeasure unitCode="KGM">50</ram:GrossWeightMeasure>
         <ram:GrossVolumeMeasure unitCode="MTQ">100</ram:GrossVolumeMeasure>

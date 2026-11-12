@@ -27,7 +27,8 @@ class GenerateHawbPdfController extends Controller
             'house_way_bills.destination_airport as destination_airport',
             'house_way_bills.to as to',
             'house_way_bills.to_2 as to_2',
-            'house_way_bills.to as to_3',
+            // Leg 3's own airport (2026-11-10 audit, L11) — this printed leg 1's.
+            'house_way_bills.to_3 as to_3',
             'house_way_bills.by as by',
             'house_way_bills.by_2 as by_2',
             'house_way_bills.by_3 as by_3',
@@ -191,6 +192,10 @@ class GenerateHawbPdfController extends Controller
                 ->set_option('isHtml5ParserEnabled', true);
             return $pdf->stream("hawb_{$hawb_id}_multiple.pdf");
         }
+
+        // Said, not a blank page (2026-11-10 audit, L11): these copies need the addresses, the charges declaration and
+        // the consignment line, and a draft without one of them used to answer with nothing at all.
+        abort(422, 'This house waybill is not complete yet. Add its addresses, charges and consignment details, then print the copies.');
     }
 
     // This function will work when user click on Generate Multiple PDF file with back page
@@ -206,6 +211,10 @@ class GenerateHawbPdfController extends Controller
                 ->set_option('isHtml5ParserEnabled', true);
             return $pdf->stream("hawb_{$hawb_id}_multiple.pdf");
         }
+
+        // Said, not a blank page (2026-11-10 audit, L11): these copies need the addresses, the charges declaration and
+        // the consignment line, and a draft without one of them used to answer with nothing at all.
+        abort(422, 'This house waybill is not complete yet. Add its addresses, charges and consignment details, then print the copies.');
     }
 
     // Shared query for the two "multiple" variants: inner joins (a HAWB only

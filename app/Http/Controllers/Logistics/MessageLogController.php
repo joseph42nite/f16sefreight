@@ -150,11 +150,19 @@ class MessageLogController extends Controller
             if ($houseWayBill->agent_id != $user->branch_name) {
                 return response()->json(['message' => 'Unauthorized to delete this house way bill'], 403);
             }
-            ConsignmentData::where('awb_id', $id)->delete();
-            OtherCustomInformation::where('awb_id', $id)->delete();
+            // 🔴 EVERYTHING keyed by its number goes with it, or nothing does (2026-11-10 audit, L10). The addresses,
+            // charges declaration and other charges were left behind, so a new house waybill given the same number
+            // opened with the deleted one's shipper, consignee and charges already on it.
+            \Illuminate\Support\Facades\DB::transaction(function () use ($id, $houseWayBill) {
+                ConsignmentData::where('awb_id', $id)->delete();
+                OtherCustomInformation::where('awb_id', $id)->delete();
+                \App\WayBillAddress::where('awb_id', $id)->delete();
+                \App\PaymentInfo::where('awb_id', $id)->delete();
+                \App\OtherCharge::where('awb_id', $id)->delete();
 
-            // Delete the house way bill
-            $houseWayBill->delete();
+                // Delete the house way bill
+                $houseWayBill->delete();
+            });
 
             return response()->json(['message' => 'House way bill deleted successfully']);
         } catch (\Exception $e) {

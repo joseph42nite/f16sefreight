@@ -111,11 +111,18 @@ class UserController extends Controller
         if ($request->token == $user_data->latest_token) {
             $userPayload = $user_data->toArray();
             
+            // 🔴 `users.company_name` holds the company's ID (2026-11-10 audit, L12) — the same lookup as at sign-in
+            // (LoginController), which shares this cache key. By name it matched nothing, and whichever of the two
+            // filled the cache first decided whether the user had templates.
             $companyName = $user_data->company_name;
             $templatesConfig = Cache::remember(
                 "company_templates_{$companyName}",
-                60,
-                fn() => optional(Company::where('name', $companyName)->first())->templates_config
+                3600,
+                fn() => optional(
+                    is_numeric($companyName)
+                        ? Company::find($companyName)
+                        : Company::where('name', $companyName)->first()
+                )->templates_config
             );
 
             $userPayload['templates_config'] = $templatesConfig;

@@ -233,4 +233,88 @@ class ConversionXmlGenerationTest extends TestCase
         $fixture = __DIR__ . '/../Fixtures/houseway_bill_conversion_golden.xml';
         $this->assertSame(file_get_contents($fixture), $xml);
     }
+
+    // ─── 2026-11-10 audit, L3 and L4 ─────────────────────────────────────────
+
+    private function houseWaybill(string $hawbId, string $company): User
+    {
+        [, $agent, $user] = $this->seedCommon($hawbId, $hawbId, $hawbId, $hawbId, $hawbId, $company, $company . ' Agent');
+
+        HousewayBills::create(['id' => $hawbId, 'awb_no' => substr($hawbId, 3), 'awb_code' => substr($hawbId, 0, 3),
+            'departure_airport' => 'JFK', 'destination_airport' => 'LHR', 'from' => 'JFK', 'to' => 'LHR', 'by' => 'AA',
+            'flight' => '100', 'date' => '2026-07-15 10:00:00', 'total_volume' => '100', 'total_amount' => '500',
+            'status' => 'send', 'agent_id' => $agent->id]);
+
+        return $user;
+    }
+
+    /** "RAM & SONS" is a name, not broken XML: the message is built and the ampersand is escaped. */
+    public function test_an_ampersand_in_an_address_does_not_stop_the_send()
+    {
+        Storage::fake('local');
+        $this->fakeDescartes();
+
+        $hawbId = '99911112222';
+        $user = $this->houseWaybill($hawbId, 'Ampersand Co');
+        WayBillAddress::where('awb_id', $hawbId)->update(['ship_name' => 'RAM & SONS <EXPORTS>']);
+
+        $this->actingAs($user, 'user-api');
+        app(ConversionController::class)->HouseWayBillConversion($hawbId);
+
+        $xml = Storage::disk('local')->get("xml-conversion-files/xml_houseway_bill_{$hawbId}.xml");
+        $this->assertStringContainsString('RAM &amp; SONS &lt;EXPORTS&gt;', $xml);
+        $this->assertNotFalse(simplexml_load_string($xml), 'the message is well-formed XML');
+    }
+
+    /** A reply with no transaction id is a send that failed: recorded as such, and the bill is not left "sent". */
+    public function test_a_send_the_gateway_did_not_accept_is_recorded_as_failed()
+    {
+        Storage::fake('local');
+        $this->fakeDescartes();   // answers 200 with no <tid>
+
+        $hawbId = '99933334444';
+        $this->actingAs($this->houseWaybill($hawbId, 'Refused Co'), 'user-api');
+        $conversion = app(ConversionController::class);
+
+        $reply = $conversion->sendAndRecord(HousewayBills::class, $hawbId, fn () => $conversion->HouseWayBillConversion($hawbId));
+
+        $this->assertSame('failed', $reply['status']);
+        $bill = HousewayBills::find($hawbId);
+        $this->assertSame(['draft', 'failed', null], [$bill->status, $bill->send_status, $bill->t_id]);
+    }
+
+    public function test_an_accepted_send_keeps_its_transaction_id()
+    {
+        Storage::fake('local');
+        Http::fake(['*' => Http::response('<response><tid>TID-123</tid><created>2026-07-15T10:00:00</created></response>', 200)]);
+
+        $hawbId = '99955556666';
+        $this->actingAs($this->houseWaybill($hawbId, 'Accepted Co'), 'user-api');
+        $conversion = app(ConversionController::class);
+
+        $reply = $conversion->sendAndRecord(HousewayBills::class, $hawbId, fn () => $conversion->HouseWayBillConversion($hawbId));
+
+        $this->assertSame('success', $reply['status']);
+        $bill = HousewayBills::find($hawbId);
+        $this->assertSame(['send', 'success', 'TID-123'], [$bill->status, $bill->send_status, $bill->t_id]);
+    }
+
+    /** A waybill with a section missing answers 422 and says which, instead of a 500. */
+    public function test_a_waybill_missing_a_section_says_which_one()
+    {
+        Storage::fake('local');
+        $this->fakeDescartes();
+
+        $hawbId = '99977776666';
+        $this->actingAs($this->houseWaybill($hawbId, 'Incomplete Co'), 'user-api');
+        PaymentInfo::where('awb_id', $hawbId)->delete();
+
+        try {
+            app(ConversionController::class)->HouseWayBillConversion($hawbId);
+            $this->fail('expected a 422');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertSame(422, $e->getStatusCode());
+            $this->assertStringContainsString('charges declaration', $e->getMessage());
+        }
+    }
 }

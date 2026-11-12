@@ -211,9 +211,15 @@ class ConsolidationController extends Controller
     public function manifestSend($awb_id)
     {
         $this->abortUnlessOwnWaybill(AirwayBills::class, $awb_id);
-        $send_response = [];
-        $send_response = $this->conversionController->HouseManifestMessage($awb_id);
-        AirwayBills::where('id', $awb_id)->update(['manifest_status' => 'send']);
-        return response()->json(['data' => '', 'send_response' => $send_response, 'awb_id' => $awb_id]);
+        // 🔴 Marked sent only when the gateway took it (2026-11-10 audit, L3). It was marked sent whatever came back,
+        // so a refused manifest showed as sent and nobody sent it again.
+        $send_response = $this->conversionController->HouseManifestMessage($awb_id)->getData(true);
+        $accepted = ($send_response['status'] ?? null) === 'success' && ! empty($send_response['data']['tid']);
+
+        if ($accepted) {
+            AirwayBills::where('id', $awb_id)->update(['manifest_status' => 'send']);
+        }
+
+        return response()->json(['data' => '', 'send_response' => $send_response, 'awb_id' => $awb_id], $accepted ? 200 : 502);
     }
 }

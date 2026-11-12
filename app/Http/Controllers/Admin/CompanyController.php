@@ -73,6 +73,9 @@ class CompanyController extends Controller
         
         // Bust the short-lived cache so users see new templates immediately
         Cache::forget("company_templates_{$company->name}");
+        // The key users actually read is by company ID (audit L12); forgetting only the name left the old templates
+        // in place for up to an hour.
+        Cache::forget("company_templates_{$company->id}");
         
         return response()->json(['status' => 'success', 'company' => $company]);
     }
@@ -112,6 +115,9 @@ class CompanyController extends Controller
         
         // Bust the short-lived cache so users see new templates immediately
         Cache::forget("company_templates_{$company->name}");
+        // The key users actually read is by company ID (audit L12); forgetting only the name left the old templates
+        // in place for up to an hour.
+        Cache::forget("company_templates_{$company->id}");
         
         return response()->json(['status' => 'success']);
     }

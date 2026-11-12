@@ -478,10 +478,16 @@ class AirwayBillController extends Controller
         $agent = $this->getAuthAgent();
         $awb_id = $awb_code . $awb_no;
         OtherCharge::where('awb_id', $awb_id)->delete();
+        $charges = array_values((array) $charges);
         for ($i = 0; $i < sizeof($charges); $i++) {
             $finalOtherChargeCode = isset($charges[$i]['other_code']) && !empty($charges[$i]['other_code'])
                 ? $charges[$i]['other_code']
                 : (isset($charges[$i]['other_charge_code']) ? $charges[$i]['other_charge_code'] : null);
+
+            // An empty row of the form — no code, no amount — is not a charge and not an error.
+            if (blank($finalOtherChargeCode) && blank($charges[$i]['amount'] ?? null)) {
+                continue;
+            }
 
             // Validate the data
             $validator = Validator::make(array_merge($charges[$i], ['final_other_charge_code' => $finalOtherChargeCode]), [
@@ -709,13 +715,8 @@ class AirwayBillController extends Controller
         $send_response = [];
 
         if ($request->status == 'send') {
-            $send_response = $this->conversionController->WayBillConversion($awb_id);
-            $send_response = $send_response->getData(true);
-            AirwayBills::where(['id' => $awb_id])->update([
-                't_id' => $send_response['data']['tid'],
-                'send_created' => $send_response['data']['created'],
-                'send_status' => $send_response['status'],
-            ]);
+            $send_response = $this->conversionController->sendAndRecord(AirwayBills::class, $awb_id,
+                fn () => $this->conversionController->WayBillConversion($awb_id));
         }
 
         return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
@@ -786,7 +787,12 @@ class AirwayBillController extends Controller
         }
         // for other charges 
         if (!empty($request->charges)) {
-            $main_return_data['charges'] = $this->otherCharges($request->first_box['awb_no'], $request->first_box['awb_code'], $request->charges);
+            // 🔴 A refused charge row stops the save (2026-11-10 audit, L8). The 422 was stored in the reply and ignored,
+            // AFTER the old charges had been deleted — so the waybill saved with its charges gone and said nothing.
+            $error_data = $this->otherCharges($request->first_box['awb_no'], $request->first_box['awb_code'], $request->charges);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                throw new ValidationFailed($error_data);
+            $main_return_data['charges'] = $error_data;
         }
         //For payment information
         if (!empty($request->payment_info['currency']) && !empty($request->payment_info['type_of_payment'])) {
@@ -888,13 +894,8 @@ class AirwayBillController extends Controller
         $send_response = [];
 
         if ($request->status == 'send') {
-            $send_response = $this->conversionController->WayBillConversion($awb_id);
-            $send_response = $send_response->getData(true);
-            AirwayBills::where(['id' => $awb_id])->update([
-                't_id' => $send_response['data']['tid'],
-                'send_created' => $send_response['data']['created'],
-                'send_status' => $send_response['status'],
-            ]);
+            $send_response = $this->conversionController->sendAndRecord(AirwayBills::class, $awb_id,
+                fn () => $this->conversionController->WayBillConversion($awb_id));
         }
 
         return response()->json(['data' => $main_return_data, 'send_response' => $send_response]);
@@ -971,8 +972,13 @@ class AirwayBillController extends Controller
             else
                 $main_return_data['payment_info'] = $error_data;
         }
-        if (!empty($id)) {
-            $main_return_data['charges'] = $this->otherCharges($request->first_box['awb_no'], $request->first_box['awb_code'], $request->charges);
+        // Only when the request carries charges at all (2026-11-10 audit, L8): with none sent this crashed on
+        // `sizeof(null)` after deleting the old ones. An empty list still clears them. A refused row stops the save.
+        if (!empty($id) && $request->charges !== null) {
+            $error_data = $this->otherCharges($request->first_box['awb_no'], $request->first_box['awb_code'], $request->charges);
+            if (!is_string($error_data) && $error_data->getStatusCode() == 422)
+                throw new ValidationFailed($error_data);
+            $main_return_data['charges'] = $error_data;
         }
         if (!empty($id)) {
             $main_return_data['entries'] = $this->consignmentInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->entries);

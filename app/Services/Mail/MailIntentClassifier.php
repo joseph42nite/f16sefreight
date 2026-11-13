@@ -321,8 +321,6 @@ class MailIntentClassifier
     /** The tenant the call is charged to. Scoped to the COMPANY: the AI budget and credits both are. */
     private function companyFor(EmailMessage $message): ?Company
     {
-        $companyId = DB::table('agents_info')->where('id', $message->agent_id)->value('company_id');
-
-        return $companyId === null ? null : Company::withoutGlobalScopes()->find($companyId);
+        return Company::ofBranch($message->agent_id);
     }
 }

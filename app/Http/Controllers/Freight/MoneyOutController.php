@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Freight\Concerns\CompanyBranches;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,8 @@ use Illuminate\Support\Facades\DB;
  */
 class MoneyOutController extends Controller
 {
+    use CompanyBranches;
+
     public function stages(Request $request): JsonResponse
     {
         $this->authorize('viewFinancials');
@@ -170,13 +173,5 @@ class MoneyOutController extends Controller
         $prefix = substr(preg_replace('/\D/', '', (string) $row->awb_number), 0, 3);
 
         return strlen($prefix) === 3 ? $prefix : null;
-    }
-
-    private function branches()
-    {
-        $context = UserContext::for(auth()->user());
-
-        return DB::table('agents_info')->where('company_id', $context->companyId)
-            ->orderBy('agent_name')->get(['id', 'agent_name as name']);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Freight;
 
 use App\AccountsInvoice;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Freight\Concerns\CompanyBranches;
 use App\Services\AuditLogger;
 use App\Services\Billing\BillPdf;
 use App\Support\BillingDocuments;
@@ -25,6 +26,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class BillingController extends Controller
 {
+    use CompanyBranches;
+
     public function __construct(private readonly BillPdf $pdf, private readonly AuditLogger $audit) {}
 
     /** How a register may be ordered. A free `sort` string would be an injection hole. */
@@ -988,13 +991,5 @@ class BillingController extends Controller
 
         return DB::table('customer_contacts')->where('customer_id', $invoice->customer_id)
             ->orderByDesc('message_count')->limit(3)->pluck('email')->all();
-    }
-
-    private function branches()
-    {
-        $context = UserContext::for(auth()->user());
-
-        return DB::table('agents_info')->where('company_id', $context->companyId)
-            ->orderBy('agent_name')->get(['id', 'agent_name as name']);
     }
 }

@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Concerns\BelongsToTenant;
+use App\Concerns\ScopedToActivePortal;
 use App\Enums\EnquiryStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Enquiry extends Model
 {
     use BelongsToTenant;
+    use ScopedToActivePortal;
 
     use SoftDeletes;
 
@@ -154,20 +156,5 @@ class Enquiry extends Model
             ->where('stale_nudge_count', '>=', $attempts)
             ->whereNotNull('stale_nudged_at')
             ->where('stale_nudged_at', '<=', now()->subDays($days));
-    }
-
-    /**
-     * Chain EXPLICITLY in HTTP controllers; never make it global.
-     * Queue workers, WebSocket broadcasts and crons never run BindPortalScope, so the
-     * binding is absent there and this passes through unfiltered — which is exactly
-     * right for a daemon processing a sea job.
-     */
-    public function scopeForActivePortal($query)
-    {
-        if (app()->bound('active_portal_scope')) {
-            return $query->where('transport_mode', app('active_portal_scope'));
-        }
-
-        return $query;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Freight\Concerns\CompanyBranches;
 use App\Services\AgeingService;
 use App\Services\AuditLogger;
 use App\Support\UserContext;
@@ -23,6 +24,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class CollectionsController extends Controller
 {
+    use CompanyBranches;
+
     public function __construct(private readonly AgeingService $ageing, private readonly AuditLogger $audit) {}
 
     /** The ageing: one row per party, one column per bucket. */
@@ -343,13 +346,5 @@ class CollectionsController extends Controller
             'party_type' => $request->string('party_type')->toString() ?: null,
             'q' => $request->string('q')->toString() ?: null,
         ]);
-    }
-
-    private function branches()
-    {
-        $context = UserContext::for(auth()->user());
-
-        return DB::table('agents_info')->where('company_id', $context->companyId)
-            ->orderBy('agent_name')->get(['id', 'agent_name as name']);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Freight;
 use App\AccountsPayment;
 use App\AccountsPurchaseVoucher;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Freight\Concerns\CompanyBranches;
 use App\Services\AuditLogger;
 use App\Services\EnquirySequenceService;
 use App\Services\LedgerPostingService;
@@ -28,6 +29,8 @@ use Illuminate\Support\Facades\DB;
  */
 class PaymentController extends Controller
 {
+    use CompanyBranches;
+
     public function __construct(
         private readonly EnquirySequenceService $sequences,
         private readonly LedgerPostingService $ledger,
@@ -449,13 +452,6 @@ class PaymentController extends Controller
         ));
     }
 
-    /** One of OUR bank accounts, or none — never another company's. */
-    private function bankAccount(?int $id): ?\App\BankAccount
-    {
-        return $id === null ? null : \App\BankAccount::withoutTenantScope()->where('id', $id)
-            ->whereIn('agent_id', $this->branches()->pluck('id'))->first();
-    }
-
     /** What a voucher still owes: its lines, less everything placed against it. */
     /**
      * 🔴 **A voucher is paid only once it is posted** (user, 2026-09-26; GAPS #407). A payment takes `2100-AP` DOWN;
@@ -516,13 +512,5 @@ class PaymentController extends Controller
         abort_if($payment === null, 404, 'That payment is not one of yours.');
 
         return $payment;
-    }
-
-    private function branches()
-    {
-        $context = UserContext::for(auth()->user());
-
-        return DB::table('agents_info')->where('company_id', $context->companyId)
-            ->orderBy('agent_name')->get(['id', 'agent_name as name']);
     }
 }

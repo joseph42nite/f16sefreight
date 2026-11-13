@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Freight\Concerns\CompanyBranches;
 use App\Services\Accounts\AccountsAlerts;
 use App\Services\AgeingService;
 use App\Support\UserContext;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\DB;
  */
 class AccountsTodayController extends Controller
 {
+    use CompanyBranches;
+
     public function __construct(
         private readonly AgeingService $ageing,
         private readonly AccountsAlerts $alerts,
@@ -186,13 +189,5 @@ class AccountsTodayController extends Controller
 
         // The bank to connect, a supplier bill due tomorrow, money that came in short, a client who slipped (GAPS #448).
         return array_merge($out, $this->alerts->forToday($scope));
-    }
-
-    private function branches()
-    {
-        $context = UserContext::for(auth()->user());
-
-        return DB::table('agents_info')->where('company_id', $context->companyId)
-            ->orderBy('agent_name')->get(['id', 'agent_name as name']);
     }
 }

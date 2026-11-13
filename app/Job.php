@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Concerns\BelongsToTenant;
+use App\Concerns\ScopedToActivePortal;
 use App\Enums\JobStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Job extends Model
 {
     use BelongsToTenant;
+    use ScopedToActivePortal;
 
     use SoftDeletes;
 
@@ -178,15 +180,6 @@ class Job extends Model
     public static function ownerColumnFor(?string $designation): string
     {
         return $designation === 'pricing' ? 'pricing_id' : 'ops_id';
-    }
-
-    public function scopeForActivePortal($query)
-    {
-        if (app()->bound('active_portal_scope')) {
-            return $query->where('transport_mode', app('active_portal_scope'));
-        }
-
-        return $query;
     }
 
     /**

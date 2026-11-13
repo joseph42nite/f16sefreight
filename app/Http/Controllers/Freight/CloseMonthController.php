@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Freight\Concerns\CompanyBranches;
 use App\Services\AgeingService;
 use App\Services\GstReturnService;
 use App\Support\UserContext;
@@ -27,6 +28,8 @@ use Illuminate\Support\Facades\DB;
  */
 class CloseMonthController extends Controller
 {
+    use CompanyBranches;
+
     /** How many rows of detail a step carries. It is a checklist — the full list lives on that step's screen. */
     private const PREVIEW = 20;
 
@@ -412,13 +415,5 @@ class CloseMonthController extends Controller
                         . ' out. No report from this period can be trusted until it is found.'),
             'to' => ['path' => '/financials', 'query' => ['view' => 'reports']],
         ];
-    }
-
-    private function branches()
-    {
-        $context = UserContext::for(auth()->user());
-
-        return DB::table('agents_info')->where('company_id', $context->companyId)
-            ->orderBy('agent_name')->get(['id', 'agent_name as name']);
     }
 }

@@ -95,7 +95,7 @@ class BossMailDrafter
             : 'Please look at the points above for your jobs and tell me by the end of the week what we can fix for next quarter.';
 
         $link = \App\Support\Portal::link(\App\Support\Portal::forMode($f['mode']), 'review/' . ($f['review_id'] ?? ''));
-        $body = $this->html($p) . '<p><a href="' . e($link) . '"><strong>See the details</strong></a></p>' . $this->html(['Thanks,']);
+        $body = \App\Support\MailBody::paragraphs($p) . '<p><a href="' . e($link) . '"><strong>See the details</strong></a></p>' . \App\Support\MailBody::paragraphs(['Thanks,']);
 
         return ['subject' => "Quarterly review · {$f['client']} · {$mode} · {$f['quarter']}", 'body' => $body, 'written_by' => 'template'];
     }
@@ -149,7 +149,7 @@ class BossMailDrafter
             return null;
         }
 
-        return ['subject' => $subject, 'body' => $this->html($paragraphs), 'written_by' => 'ai'];
+        return ['subject' => $subject, 'body' => \App\Support\MailBody::paragraphs($paragraphs), 'written_by' => 'ai'];
     }
 
     /** The plain version: every figure, and the ask. */
@@ -199,11 +199,6 @@ class BossMailDrafter
             )],
         };
 
-        return ['subject' => $subject, 'body' => $this->html(array_merge(['Hi team,'], $paragraphs, ['Thanks,'])), 'written_by' => 'template'];
-    }
-
-    private function html(array $paragraphs): string
-    {
-        return implode('', array_map(fn ($p) => '<p>' . e($p) . '</p>', $paragraphs));
+        return ['subject' => $subject, 'body' => \App\Support\MailBody::paragraphs(array_merge(['Hi team,'], $paragraphs, ['Thanks,'])), 'written_by' => 'template'];
     }
 }

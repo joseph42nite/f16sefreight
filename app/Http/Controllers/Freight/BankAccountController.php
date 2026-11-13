@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Freight;
 
 use App\BankAccount;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Freight\Concerns\CompanyBranches;
 use App\Services\AuditLogger;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +22,8 @@ use Illuminate\Support\Facades\DB;
  */
 class BankAccountController extends Controller
 {
+    use CompanyBranches;
+
     public function __construct(private readonly AuditLogger $audit) {}
 
     public function index(Request $request): JsonResponse
@@ -181,13 +184,5 @@ class BankAccountController extends Controller
         abort_if($account === null, 404, 'That bank account is not one of yours.');
 
         return $account;
-    }
-
-    private function branches()
-    {
-        $context = UserContext::for(auth()->user());
-
-        return DB::table('agents_info')->where('company_id', $context->companyId)
-            ->orderBy('agent_name')->get(['id', 'agent_name as name']);
     }
 }

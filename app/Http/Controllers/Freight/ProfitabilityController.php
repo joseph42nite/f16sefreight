@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Freight\Concerns\CompanyBranches;
 use App\Services\ProfitabilityService;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +22,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ProfitabilityController extends Controller
 {
+    use CompanyBranches;
+
     public function __construct(private readonly ProfitabilityService $profit) {}
 
     /** Shipment by shipment. */
@@ -171,13 +174,5 @@ class ProfitabilityController extends Controller
             'modes' => DB::table('jobs')->whereIn('agent_id', $branches->pluck('id'))
                 ->whereNotNull('transport_mode')->distinct()->orderBy('transport_mode')->pluck('transport_mode'),
         ];
-    }
-
-    private function branches()
-    {
-        $context = UserContext::for(auth()->user());
-
-        return DB::table('agents_info')->where('company_id', $context->companyId)
-            ->orderBy('agent_name')->get(['id', 'agent_name as name']);
     }
 }

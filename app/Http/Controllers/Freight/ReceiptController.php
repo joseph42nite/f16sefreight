@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Freight;
 use App\AccountsInvoice;
 use App\AccountsReceipt;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Freight\Concerns\CompanyBranches;
 use App\Services\AuditLogger;
 use App\Services\EnquirySequenceService;
 use App\Services\LedgerPostingService;
@@ -25,6 +26,8 @@ use Illuminate\Support\Facades\DB;
  */
 class ReceiptController extends Controller
 {
+    use CompanyBranches;
+
     public function __construct(
         private readonly EnquirySequenceService $sequences,
         private readonly LedgerPostingService $ledger,
@@ -422,13 +425,6 @@ class ReceiptController extends Controller
         ]);
     }
 
-    /** One of OUR bank accounts, or none — never another company's. */
-    private function bankAccount(?int $id): ?\App\BankAccount
-    {
-        return $id === null ? null : \App\BankAccount::withoutTenantScope()->where('id', $id)
-            ->whereIn('agent_id', $this->branches()->pluck('id'))->first();
-    }
-
     private function own(int $id): AccountsReceipt
     {
         $receipt = AccountsReceipt::withoutTenantScope()->where('id', $id)
@@ -437,13 +433,5 @@ class ReceiptController extends Controller
         abort_if($receipt === null, 404, 'That receipt is not one of yours.');
 
         return $receipt;
-    }
-
-    private function branches()
-    {
-        $context = UserContext::for(auth()->user());
-
-        return DB::table('agents_info')->where('company_id', $context->companyId)
-            ->orderBy('agent_name')->get(['id', 'agent_name as name']);
     }
 }

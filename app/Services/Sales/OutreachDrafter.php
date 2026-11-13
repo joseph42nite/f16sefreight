@@ -141,7 +141,7 @@ class OutreachDrafter
             return null;
         }
 
-        return ['subject' => $subject, 'body' => $this->html($paragraphs), 'written_by' => 'ai'];
+        return ['subject' => $subject, 'body' => \App\Support\MailBody::paragraphs($paragraphs), 'written_by' => 'ai'];
     }
 
     /** Every number in the email must appear in the facts — Gemma words, it does not count. */
@@ -181,11 +181,6 @@ class OutreachDrafter
             ]],
         };
 
-        return ['subject' => $subject, 'body' => $this->html(array_merge(["Dear {$client} team,"], $paragraphs, ['Kind regards,'])), 'written_by' => 'template'];
-    }
-
-    private function html(array $paragraphs): string
-    {
-        return implode('', array_map(fn ($p) => '<p>' . e($p) . '</p>', $paragraphs));
+        return ['subject' => $subject, 'body' => \App\Support\MailBody::paragraphs(array_merge(["Dear {$client} team,"], $paragraphs, ['Kind regards,'])), 'written_by' => 'template'];
     }
 }

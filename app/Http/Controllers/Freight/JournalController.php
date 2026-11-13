@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Freight;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Freight\Concerns\CompanyBranches;
 use App\Support\BillingDocuments;
 use App\Support\UserContext;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class JournalController extends Controller
 {
+    use CompanyBranches;
+
     /** Where a ledger entry came from, and where to find it again. */
     private const SOURCES = [
         'invoice' => ['table' => 'accounts_invoices', 'number' => 'invoice_no', 'label' => 'Sales document'],
@@ -364,13 +367,5 @@ class JournalController extends Controller
     {
         return DB::table('chart_of_accounts')->whereIn('agent_id', $branches->pluck('id'))
             ->select('account_code', 'account_name')->distinct()->orderBy('account_code')->get();
-    }
-
-    private function branches()
-    {
-        $context = UserContext::for(auth()->user());
-
-        return DB::table('agents_info')->where('company_id', $context->companyId)
-            ->orderBy('agent_name')->get(['id', 'agent_name as name']);
     }
 }

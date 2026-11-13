@@ -309,9 +309,7 @@ class TdsService
     public static function period(string $date): array
     {
         $month = (int) date('n', strtotime($date));
-        $year = (int) date('Y', strtotime($date));
-
-        $startYear = $month >= 4 ? $year : $year - 1;
+        $startYear = \App\Support\FinancialYear::start(\Illuminate\Support\Carbon::parse($date))->year;
         $quarter = 'Q' . (intdiv(($month - 4 + 12) % 12, 3) + 1);
 
         return [$startYear . '-' . substr((string) ($startYear + 1), 2), $quarter];

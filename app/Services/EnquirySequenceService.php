@@ -232,8 +232,6 @@ class EnquirySequenceService
      */
     public function fiscalYear(?Carbon $at = null): string
     {
-        $now = $at ? $at->copy() : now();
-
-        return $now->month >= 4 ? $now->format('y') : $now->subYear()->format('y');
+        return \App\Support\FinancialYear::start($at)->format('y');
     }
 }

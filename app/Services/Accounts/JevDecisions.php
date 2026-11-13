@@ -247,8 +247,6 @@ class JevDecisions
 
     private function companyFor(int $agentId): ?Company
     {
-        $companyId = DB::table('agents_info')->where('id', $agentId)->value('company_id');
-
-        return $companyId === null ? null : Company::withoutGlobalScopes()->find($companyId);
+        return Company::ofBranch($agentId);
     }
 }

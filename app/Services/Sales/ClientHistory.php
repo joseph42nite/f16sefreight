@@ -85,7 +85,7 @@ class ClientHistory
     /** 1 April of the financial year the date falls in. */
     public static function financialYearStart(Carbon $date): Carbon
     {
-        return Carbon::create($date->month >= 4 ? $date->year : $date->year - 1, 4, 1)->startOfDay();
+        return \App\Support\FinancialYear::start($date);
     }
 
     public static function lane(?string $origin, ?string $dest): ?string

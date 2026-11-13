@@ -32,6 +32,18 @@ class Company extends Model
         'deleted_at'       => 'datetime',
     ];
 
+    /**
+     * The company a branch belongs to, read outside any tenant scope — for jobs and services that start from a
+     * record's `agent_id` rather than from a signed-in user.
+     */
+    public static function ofBranch(?int $agentId): ?self
+    {
+        $companyId = $agentId === null ? null
+            : \Illuminate\Support\Facades\DB::table('agents_info')->where('id', $agentId)->value('company_id');
+
+        return $companyId === null ? null : self::withoutGlobalScopes()->find($companyId);
+    }
+
     public function branches()
     {
         return $this->hasMany(Agent::class, 'company_id');

@@ -92,7 +92,7 @@ class PaymentQueryDrafter
             return null;
         }
 
-        return ['subject' => $subject, 'body' => $this->html($paragraphs), 'written_by' => 'ai'];
+        return ['subject' => $subject, 'body' => \App\Support\MailBody::paragraphs($paragraphs), 'written_by' => 'ai'];
     }
 
     /** The plain version: every figure, and the ask. */
@@ -151,11 +151,6 @@ class PaymentQueryDrafter
                 ]],
         };
 
-        return ['subject' => $subject, 'body' => $this->html(array_merge(['Hello,'], $paragraphs, ['Kind regards,'])), 'written_by' => 'template'];
-    }
-
-    private function html(array $paragraphs): string
-    {
-        return implode('', array_map(fn ($p) => '<p>' . e($p) . '</p>', $paragraphs));
+        return ['subject' => $subject, 'body' => \App\Support\MailBody::paragraphs(array_merge(['Hello,'], $paragraphs, ['Kind regards,'])), 'written_by' => 'template'];
     }
 }

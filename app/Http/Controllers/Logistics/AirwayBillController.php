@@ -28,6 +28,8 @@ use phpseclib3\Net\SFTP;
 
 class AirwayBillController extends Controller
 {
+    use ChecksConsignment;
+
     use DraftPartyRules;
 
     /**
@@ -1030,33 +1032,7 @@ class AirwayBillController extends Controller
             return response()->json([], 200);
         }
         return response()->json($airwayBill, 200);
-    }
-    public function getConsignmentError(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'pieces' => 'required|digits_between:1,4',
-            'description' => 'nullable|string|max:70',
-            'rate_class' => 'nullable|string|max:1',
-            'uld_rate_class' => 'nullable|regex:/^\d[A-Za-z]{2}$/',
-            'service_code' => 'nullable|string|max:1',
-            'commodity_item' => 'nullable|regex:/^[a-zA-Z0-9]+$/|max:11',
-            'country_origin_goods' => 'nullable|string|max:2',
-            'slac' => 'nullable|string',
-
-            'gross_weight' => 'nullable|numeric|min:0.1|max:9999999',
-            'chargable_weight' => 'nullable|numeric|min:0.1|max:9999999',
-            'weight_code' => 'nullable|string|max:3',
-            'volume' => 'nullable|string',
-            // 'dimention_unit' => 'nullable|string|max:3',
-            'total_volume' => 'nullable|regex:/^[0-9]+$/|max:9',
-            'total_amount' => 'nullable|numeric|min:0.01|max:999999999',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-        return response()->json(['msg' => 'No error'], 200);
-    }
-    public function getShippers(Request $request)
+    }    public function getShippers(Request $request)
     {
         $user = auth()->guard('user-api')->user();
         if (!$user) {

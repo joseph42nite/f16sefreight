@@ -200,7 +200,7 @@ class JobCostSheetController extends Controller
         $line = DB::transaction(function () use ($job, $data, $amount, $tax, $taxPct) {
             if ($data['side'] === 'sell') {
                 return AccountsInvoiceItem::create([
-                    'invoice_id'     => $this->invoiceFor($job)->id,
+                    'invoice_id'     => AccountsInvoice::draftFor($job)->id,
                     'charge_type'    => $data['charge_type'],
                     'charge_basis'   => $data['charge_basis'] ?? null,
                     'description'    => $data['description'],
@@ -521,24 +521,6 @@ class JobCostSheetController extends Controller
             ->where('job_id', $job->id)
             ->where('status', '!=', 'draft')
             ->exists();
-    }
-
-    private function invoiceFor(Job $job): AccountsInvoice
-    {
-        $draft = AccountsInvoice::withoutTenantScope()
-            ->where('job_id', $job->id)->where('status', 'draft')->first();
-
-        return $draft ?? AccountsInvoice::create([
-            'agent_id' => $job->agent_id, 'job_id' => $job->id,
-            'transport_mode' => $job->transport_mode, 'customer_id' => $job->customer_id,
-            'created_by' => auth()->id(),
-            // A PLACEHOLDER, not a number: the column is NOT NULL and UNIQUE per branch
-            // (GAPS.md #27), so a draft cannot be left blank. Finalization replaces this
-            // with a real sequence number — see AccountsInvoice::needsNumber().
-            'invoice_no' => AccountsInvoice::placeholderNumber($job->id),
-            'type' => 'invoice', 'document_date' => now()->toDateString(),
-            'status' => 'draft', 'currency' => 'INR',
-        ]);
     }
 
     /**

@@ -53,6 +53,27 @@ class AccountsInvoice extends Model
         return self::DRAFT_NUMBER_PREFIX . ($jobId ?? 'G') . '-' . bin2hex(random_bytes(4));
     }
 
+    /**
+     * The shipment's open draft, or a new one. One draft per shipment: every sell line written before the bill is
+     * finalized lands on it, whether it came from the cost sheet or from the waybill's charges (2026-11-10 audit §6 —
+     * this was written out twice).
+     */
+    public static function draftFor(Job $job): self
+    {
+        $draft = self::withoutTenantScope()->where('job_id', $job->id)->where('status', 'draft')->first();
+
+        return $draft ?? self::create([
+            'agent_id' => $job->agent_id, 'job_id' => $job->id,
+            'transport_mode' => $job->transport_mode, 'customer_id' => $job->customer_id,
+            'created_by' => auth()->id(),
+            // A PLACEHOLDER, not a number: the column is NOT NULL and UNIQUE per branch (GAPS.md #27), so a draft
+            // cannot be left blank. Finalization replaces it with a real sequence number — see needsNumber().
+            'invoice_no' => self::placeholderNumber($job->id),
+            'type' => 'invoice', 'document_date' => now()->toDateString(),
+            'status' => 'draft', 'currency' => 'INR',
+        ]);
+    }
+
     /** Billing with no shipment behind it (user, 2026-09-26) — an invoice, or a note raised against one. */
     public function isGeneral(): bool
     {

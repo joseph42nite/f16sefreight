@@ -106,4 +106,24 @@ class ClientHealthTest extends TestCase
         $this->assertSame(['momentum' => 0, 'churn' => 0, 'win_rate' => 1, 'payment' => 0.8, 'ops' => null], $row['health']);
         $this->assertEquals(35.56, $row['client_health_score']);
     }
+
+    /** The accounts list reads every client's score in one query; it must say what the one-at-a-time reading says. */
+    public function test_scores_read_together_match_scores_read_one_by_one(): void
+    {
+        $other = \App\Customer::create(['company_id' => $this->company->id, 'name' => 'No Card Ltd', 'email_domain' => 'nocard.test']);
+        $this->card(72);
+        DB::table('client_payment_reports')->insert(['company_id' => $this->company->id, 'customer_id' => $this->client->id,
+            'month' => '2026-08-01', 'terms_days' => 30, 'bills_due' => 3, 'due_value' => 3000, 'on_time_value' => 900,
+            'score' => 30, 'grade' => 'D', 'created_at' => now(), 'updated_at' => now()]);
+
+        $health = app(\App\Services\Sales\ClientHealth::class);
+
+        foreach (['2026-09-20', '2026-10-05', '2026-12-01', '2026-08-15'] as $day) {
+            $date = \Illuminate\Support\Carbon::parse($day);
+            $together = $health->paymentScores([$this->client->id, $other->id], $date);
+
+            $this->assertSame($health->paymentScore($this->client->id, $date), $together[$this->client->id] ?? null, $day);
+            $this->assertSame($health->paymentScore($other->id, $date), $together[$other->id] ?? null, $day);
+        }
+    }
 }

@@ -104,6 +104,9 @@ class BillingController extends Controller
         ]);
     }
 
+    /** How many bills one bulk-mail request may send. */
+    private const MAIL_AT_ONCE = 25;
+
     /** Multiple Bill Printing: the chosen documents as one PDF, in the order they were chosen. */
     public function print(Request $request): Response
     {
@@ -139,6 +142,18 @@ class BillingController extends Controller
 
         if ($connection === null) {
             return response()->json(['error' => 'Connect your Outlook first (in Settings), so the bills go from you.', 'reason' => 'no_mailbox'], 422);
+        }
+
+        // 🔴 Each bill is rendered to a PDF and sent while the browser waits (2026-11-10 audit §5). Past a couple of
+        // dozen the request runs out of time part-way, with some bills gone and no list of which. Refused up front.
+        if ($invoices->count() > self::MAIL_AT_ONCE) {
+            return response()->json(['error' => 'Send at most ' . self::MAIL_AT_ONCE . ' bills at a time — you chose '
+                . $invoices->count() . '. Nothing was sent.', 'reason' => 'too_many', 'limit' => self::MAIL_AT_ONCE], 422);
+        }
+
+        // The stored token may have run out since the last sync; a send renews it first (audit §4).
+        if (($why = app(\App\Services\Mail\MailboxSyncService::class)->refusalToUse($connection)) !== null) {
+            return response()->json(['error' => $why, 'reason' => 'mailbox_not_ready'], 422);
         }
 
         $provider = app(\App\Services\Mail\MailProviderRegistry::class)->for($connection->provider);
@@ -418,24 +433,27 @@ class BillingController extends Controller
                 'exchange_rate' => $parent?->exchange_rate ?? 1,
             ]);
 
-            foreach ($data['lines'] as $line) {
-                $quantity = (float) ($line['quantity'] ?? 1);
-                $amount = round($quantity * (float) $line['rate'], 2);
-                $tax = round($amount * (float) ($line['tax_percentage'] ?? 0) / 100, 2);
+            // Totalled once after the last line, not after each (2026-11-10 audit §5).
+            \App\AccountsInvoiceItem::retotalOnce(function () use ($data, $invoice) {
+                foreach ($data['lines'] as $line) {
+                    $quantity = (float) ($line['quantity'] ?? 1);
+                    $amount = round($quantity * (float) $line['rate'], 2);
+                    $tax = round($amount * (float) ($line['tax_percentage'] ?? 0) / 100, 2);
 
-                $invoice->items()->create([
-                    'house_job_id' => $line['house_job_id'] ?? null,
-                    'charge_type' => $line['charge_type'] ?? 'other',
-                    'hsn_sac_code' => $line['hsn_sac_code'] ?? null,
-                    'description' => $line['description'],
-                    'quantity' => $quantity,
-                    'rate' => $line['rate'],
-                    'amount' => $amount,
-                    'tax_percentage' => $line['tax_percentage'] ?? 0,
-                    'tax_amount' => $tax,
-                    'net_amount' => round($amount + $tax, 2),
-                ]);
-            }
+                    $invoice->items()->create([
+                        'house_job_id' => $line['house_job_id'] ?? null,
+                        'charge_type' => $line['charge_type'] ?? 'other',
+                        'hsn_sac_code' => $line['hsn_sac_code'] ?? null,
+                        'description' => $line['description'],
+                        'quantity' => $quantity,
+                        'rate' => $line['rate'],
+                        'amount' => $amount,
+                        'tax_percentage' => $line['tax_percentage'] ?? 0,
+                        'tax_amount' => $tax,
+                        'net_amount' => round($amount + $tax, 2),
+                    ]);
+                }
+            });
 
             // The extension row each of these two documents carries (PRD §6.2).
             if ($data['type'] === 'brokerage') {

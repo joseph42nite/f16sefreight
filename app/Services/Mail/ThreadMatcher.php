@@ -59,9 +59,18 @@ class ThreadMatcher
         $subject = $message->normalisedSubject();
 
         if (filled($subject)) {
+            // 🔴 Narrowed IN THE DATABASE first (2026-11-10 audit §5). This used to load every message the branch
+            // received in 30 days for each new conversation — an import of N mails read N × 30 days of rows. A stored
+            // subject that normalises to `$subject` must contain its longest word, so that word is asked for here and
+            // the exact comparison below is unchanged: nothing that matched before is lost.
+            $words = preg_split('/\s+/', $subject, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            usort($words, fn ($x, $y) => strlen($y) <=> strlen($x));
+            $word = addcslashes($words[0] ?? '', '\\%_');
+
             $candidates = DB::table('email_messages')
                 ->where('agent_id', $agentId)
                 ->where('received_at', '>=', now()->subDays(self::HEURISTIC_DAYS))
+                ->when($word !== '', fn ($q) => $q->where('subject', 'like', '%' . $word . '%'))
                 ->get(['thread_key', 'subject', 'from', 'to']);
 
             $participants = $message->participants();

@@ -592,19 +592,44 @@ class SalesDashboardController extends Controller
                 'p.last_shipment_at', 'p.is_irregular',
             ])
             // The score's parts, each in [0, 1] or NULL — the page shows the bars, never the bare number (PRD §7.3.4 H).
-            ->map(function ($r) use ($latest, $withMoney) {
+            // 🔴 Payment scores and quarters are read ONCE for the page, not once per row: that was two queries a
+            // client, 400 on a full list (2026-11-10 audit §5).
+            ->pipe(function ($rows) use ($latest, $withMoney) {
                 if (! $withMoney) {
-                    return (array) $r;
+                    return $rows->map(fn ($r) => (array) $r);
                 }
 
                 $health = app(\App\Services\Sales\ClientHealth::class);
-                $r->health = $health->components($r->momentum === null ? null : (float) $r->momentum, $r->risk_band,
-                    $r->win_rate === null ? null : (float) $r->win_rate,
-                    $health->paymentScore((int) $r->customer_id, \Illuminate\Support\Carbon::parse($latest)), null);
-                $r->ops = $this->opsQuarters((int) $r->customer_id, $r->transport_mode, $latest);
-                return (array) $r;
+                $customerIds = $rows->pluck('customer_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+                $scores = $health->paymentScores($customerIds, \Illuminate\Support\Carbon::parse($latest));
+                $quarters = $this->opsQuartersFor($customerIds, $latest);
+
+                return $rows->map(function ($r) use ($health, $scores, $quarters, $latest) {
+                    $r->health = $health->components($r->momentum === null ? null : (float) $r->momentum, $r->risk_band,
+                        $r->win_rate === null ? null : (float) $r->win_rate,
+                        $scores[(int) $r->customer_id] ?? null, null);
+                    $r->ops = $this->opsQuarters($quarters[$r->customer_id . '|' . $r->transport_mode] ?? [], $r->transport_mode, $latest);
+
+                    return (array) $r;
+                });
             })
             ->all();
+    }
+
+    /** The closed and running quarters' rows of these clients, keyed `customer|mode`, oldest first. */
+    private function opsQuartersFor(array $customerIds, string $latest): array
+    {
+        if ($customerIds === []) {
+            return [];
+        }
+
+        $running = \App\Services\Sales\OpsScorecard::quarterStart(\Illuminate\Support\Carbon::parse($latest));
+
+        return DB::table('customer_ops_quarters')->whereIn('customer_id', $customerIds)
+            ->whereIn('quarter_start', [$running->copy()->subMonths(3)->toDateString(), $running->toDateString()])
+            ->orderBy('quarter_start')->get()
+            ->groupBy(fn ($q) => $q->customer_id . '|' . $q->transport_mode)
+            ->map(fn ($group) => $group->all())->all();
     }
 
     /**
@@ -636,15 +661,12 @@ class SalesDashboardController extends Controller
      * G, measured not scored (owner, 2026-10-05; GAPS #456): the last closed quarter's facts, then the running
      * quarter's "so far" once anything in it is measured. Each figure NULL when there was too little to say.
      */
-    private function opsQuarters(int $customerId, string $mode, string $latest): array
+    private function opsQuarters(array $rows, string $mode, string $latest): array
     {
         $running = \App\Services\Sales\OpsScorecard::quarterStart(\Illuminate\Support\Carbon::parse($latest));
-        $closed = $running->copy()->subMonths(3);
         $figures = ['days_slower', 'cancellation_rate', 'fna_rate', 'weight_gap_pct'];
 
-        return DB::table('customer_ops_quarters')->where('customer_id', $customerId)->where('transport_mode', $mode)
-            ->whereIn('quarter_start', [$closed->toDateString(), $running->toDateString()])->orderBy('quarter_start')
-            ->get()
+        return collect($rows)
             ->map(function ($q) use ($running, $mode, $figures) {
                 $row = ['quarter' => \App\Services\Sales\OpsScorecard::quarterLabel(\Illuminate\Support\Carbon::parse($q->quarter_start)),
                     'so_far' => $q->quarter_start === $running->toDateString()];

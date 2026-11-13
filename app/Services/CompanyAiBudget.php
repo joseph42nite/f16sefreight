@@ -59,13 +59,23 @@ class CompanyAiBudget
      */
     public function status(Company $company): array
     {
-        $limit = $this->limitInr($company);
+        // 🔴 This runs before every AI call — every mail filed, every document read (2026-11-10 audit §5). The team is
+        // counted once and the month's and the day's spend come from one query; it was seven.
+        $aiUsers = $this->aiUsers($company);
+        $planLimit = max(
+            (float) config("f16s.ai_monthly_limit_inr.{$company->tier}", 0),
+            $aiUsers * (float) config("f16s.ai_per_user_inr.{$company->tier}", 0)
+        );
+        $limit = (float) ($company->ai_monthly_limit_inr ?? $planLimit);
         $rate = (float) $this->usage->settings()->usd_to_inr;
-        $spent = fn ($from) => (float) DB::table('llm_usage_logs')
-            ->where('company_id', $company->id)->where('created_at', '>=', $from)->sum('cost_usd') * $rate;
 
-        $spentMonth = $spent(now()->startOfMonth());
-        $spentToday = $spent(today());
+        $spent = DB::table('llm_usage_logs')
+            ->where('company_id', $company->id)->where('created_at', '>=', now()->startOfMonth())
+            ->selectRaw('COALESCE(SUM(cost_usd), 0) AS month, COALESCE(SUM(CASE WHEN created_at >= ? THEN cost_usd ELSE 0 END), 0) AS today', [today()])
+            ->first();
+
+        $spentMonth = (float) $spent->month * $rate;
+        $spentToday = (float) $spent->today * $rate;
         $daysLeft = now()->daysInMonth - now()->day + 1;
         $todayBudget = max($limit - ($spentMonth - $spentToday), 0) / $daysLeft;
 
@@ -79,10 +89,10 @@ class CompanyAiBudget
             'used_today_percent' => $todayBudget > 0 ? round($spentToday * 100 / $todayBudget, 1) : null,
             'overridden' => $company->ai_monthly_limit_inr !== null,
             // How the plan limit is reached, for superadmin: the larger of the minimum and users × per user.
-            'ai_users' => $this->aiUsers($company),
+            'ai_users' => $aiUsers,
             'per_user' => (float) config("f16s.ai_per_user_inr.{$company->tier}", 0),
             'plan_minimum' => (float) config("f16s.ai_monthly_limit_inr.{$company->tier}", 0),
-            'plan_limit' => $this->planLimit($company),
+            'plan_limit' => $planLimit,
         ];
     }
 

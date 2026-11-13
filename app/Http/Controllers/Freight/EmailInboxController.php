@@ -130,9 +130,13 @@ class EmailInboxController extends Controller
             ->when($request->boolean('unassigned'), fn ($q) => $q->whereNull('assigned_ops_id'))
             ->when($request->filled('q'), function ($q) use ($request) {
                 $term = '%' . $request->string('q') . '%';
-                $q->whereIn('thread_key', function ($sub) use ($term) {
-                    $sub->select('thread_key')->from('email_messages')
-                        ->where('subject', 'like', $term)->orWhere('from', 'like', $term);
+                // Only this company's mail is searched (2026-11-10 audit §5): unbounded, the subquery read every
+                // tenant's messages to find the few the outer query would keep.
+                $branches = DB::table('agents_info')
+                    ->where('company_id', \App\Support\UserContext::for(auth()->user())->companyId)->pluck('id');
+                $q->whereIn('thread_key', function ($sub) use ($term, $branches) {
+                    $sub->select('thread_key')->from('email_messages')->whereIn('agent_id', $branches)
+                        ->where(fn ($w) => $w->where('subject', 'like', $term)->orWhere('from', 'like', $term));
                 });
             })
             ->with([
@@ -177,16 +181,22 @@ class EmailInboxController extends Controller
         $branches = DB::table('agents_info')->where('company_id', $context->companyId)->pluck('id');
 
         // Every address on our recent mail, with how often it appears and the name it last went by.
-        $seen = [];
-        DB::table('email_messages')->whereIn('agent_id', $branches)->latest('id')->limit(2000)
-            ->get(['from', 'to', 'cc'])->each(function ($m) use (&$seen) {
-                foreach ([$m->from, $m->to, $m->cc] as $field) {
-                    foreach (self::addresses((string) $field) as [$name, $email]) {
-                        $seen[$email]['count'] = ($seen[$email]['count'] ?? 0) + 1;
-                        $seen[$email]['name'] ??= $name ?: null;
+        // 🔴 Kept for five minutes per company (2026-11-10 audit §5): this ran on every keystroke, reading and parsing
+        // 2,000 messages each time. An address first seen in the last five minutes is the only thing a user can miss.
+        $seen = \Illuminate\Support\Facades\Cache::remember('address-book:' . $context->companyId, 300, function () use ($branches) {
+            $seen = [];
+            DB::table('email_messages')->whereIn('agent_id', $branches)->latest('id')->limit(2000)
+                ->get(['from', 'to', 'cc'])->each(function ($m) use (&$seen) {
+                    foreach ([$m->from, $m->to, $m->cc] as $field) {
+                        foreach (self::addresses((string) $field) as [$name, $email]) {
+                            $seen[$email]['count'] = ($seen[$email]['count'] ?? 0) + 1;
+                            $seen[$email]['name'] ??= $name ?: null;
+                        }
                     }
-                }
-            });
+                });
+
+            return $seen;
+        });
 
         $people = collect();
         DB::table('users')->where('company_name', $context->companyId)->where('is_active', 1)->where('id', '!=', auth()->id())

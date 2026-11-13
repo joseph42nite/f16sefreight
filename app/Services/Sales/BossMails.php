@@ -298,7 +298,8 @@ class BossMails
     {
         $rows = DB::table('email_threads as t')
             ->where('t.agent_id', $branch->id)->where('t.classification', 'customer_enquiry')->whereNotNull('t.first_response_at')
-            ->joinSub(DB::table('email_messages')->where('direction', 'inbound')->groupBy('thread_key')
+            // This branch's mail only (2026-11-10 audit §5): unbounded, it grouped every tenant's inbound messages.
+            ->joinSub(DB::table('email_messages')->where('agent_id', $branch->id)->where('direction', 'inbound')->groupBy('thread_key')
                 ->selectRaw('thread_key, MIN(received_at) AS first_in'), 'm', 'm.thread_key', '=', 't.thread_key')
             ->where('m.first_in', '>=', $date->copy()->subDays(90))
             ->get(['m.first_in', 't.first_response_at']);

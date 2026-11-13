@@ -73,4 +73,34 @@ class ClientHealth
 
         return $score === null ? null : (int) $score;
     }
+
+    /**
+     * paymentScore() for many clients in one query — the accounts list asked once per row (2026-11-10 audit §5).
+     * A client with no card in the window is absent.
+     *
+     * @param  int[]  $customerIds
+     * @return array<int, ?int>
+     */
+    public function paymentScores(array $customerIds, Carbon $date): array
+    {
+        $scores = [];
+
+        if ($customerIds === []) {
+            return $scores;
+        }
+
+        $rows = DB::table('client_payment_reports')->whereIn('customer_id', $customerIds)
+            ->where('month', '<=', $date->toDateString())
+            ->where('month', '>=', $date->copy()->startOfMonth()->subMonth()->toDateString())
+            ->orderByDesc('month')->get(['customer_id', 'score']);
+
+        foreach ($rows as $row) {
+            // Newest first: the first card seen for a client is the one paymentScore() would read.
+            if (! array_key_exists((int) $row->customer_id, $scores)) {
+                $scores[(int) $row->customer_id] = $row->score === null ? null : (int) $row->score;
+            }
+        }
+
+        return $scores;
+    }
 }

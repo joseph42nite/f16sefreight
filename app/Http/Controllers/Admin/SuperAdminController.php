@@ -149,6 +149,7 @@ class SuperAdminController extends Controller
         } else {
             $perPage = (int) $request->get('per_page', 50);
             if ($perPage <= 0) $perPage = 50;
+            $perPage = min($perPage, 500);   // the size came straight from the request (2026-11-10 audit §5)
 
             $paginator = $query->paginate($perPage);
             $shipments = collect($paginator->items());

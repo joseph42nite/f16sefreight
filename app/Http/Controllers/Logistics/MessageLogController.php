@@ -73,7 +73,8 @@ class MessageLogController extends Controller
                     ->where('awb_no', $request->awb_no);
             }
 
-            $perPage = (int) $request->input('perPage', 10);
+            // At most 200 a page: the size came straight from the request (2026-11-10 audit §5).
+            $perPage = min(max((int) $request->input('perPage', 10), 1), 200);
             $airwayBills = $query->paginate($perPage);
 
             // Eager-load house waybills only for the page items in one query

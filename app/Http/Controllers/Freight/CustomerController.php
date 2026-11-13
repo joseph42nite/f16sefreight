@@ -51,7 +51,8 @@ class CustomerController extends Controller
             // The mail addresses saved from the client's domain.
             ->withCount('contacts')
             ->orderBy('name')
-            ->paginate($request->integer('per_page') ?: 50);
+            // A page is at most 500 rows: `per_page` came straight from the request (2026-11-10 audit §5).
+            ->paginate(min(max($request->integer('per_page'), 0) ?: 50, 500));
 
         if (! $this->withAccounts()) {
             $customers->getCollection()->each->makeHidden(self::ACCOUNTS_FIELDS);

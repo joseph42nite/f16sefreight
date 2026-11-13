@@ -30,7 +30,12 @@ class ProfitabilityService
      */
     public function jobs(array $branchIds, array $filters = [])
     {
+        // 🔴 Both sub-selects are held to these branches' shipments (2026-11-10 audit §5). Unbounded, each totalled
+        // EVERY tenant's invoices and vouchers before the join threw nearly all of it away.
+        $ours = fn () => DB::table('jobs')->whereIn('agent_id', $branchIds)->select('id');
+
         $revenue = DB::table('accounts_invoices')
+            ->whereIn('job_id', $ours())
             ->whereIn('status', self::BILLED)
             ->selectRaw('job_id, SUM(CASE WHEN type = ? THEN -1 ELSE 1 END * subtotal * exchange_rate) AS revenue',
                 ['credit_note'])
@@ -40,6 +45,7 @@ class ProfitabilityService
             ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
             // A void voucher never stood, so it is not a cost (2026-11-10 audit, M9).
             ->where('v.status', '!=', 'void')
+            ->whereIn('v.job_id', $ours())
             ->selectRaw('v.job_id, SUM(i.amount) AS cost, COUNT(DISTINCT v.id) AS vouchers')
             ->groupBy('v.job_id');
 

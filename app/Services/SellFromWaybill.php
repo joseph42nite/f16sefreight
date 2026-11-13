@@ -78,22 +78,24 @@ class SellFromWaybill
                 return 0;
             }
 
-            // One by one, not a bulk delete: each line's `deleted` hook retotals the draft — a draft whose waybill
-            // lines all went would otherwise keep its old total.
-            AccountsInvoiceItem::where('invoice_id', $invoice->id)->where('source', self::SOURCE)->get()->each->delete();
+            // One by one, not a bulk delete: each line's `deleted` hook marks the draft for a retotal — a draft whose
+            // waybill lines all went would otherwise keep its old total. Totalled once, after the last line.
+            AccountsInvoiceItem::retotalOnce(function () use ($invoice, $lines) {
+                AccountsInvoiceItem::where('invoice_id', $invoice->id)->where('source', self::SOURCE)->get()->each->delete();
 
-            foreach ($lines as $line) {
-                $amount = round($line['quantity'] * $line['rate'], 2);
+                foreach ($lines as $line) {
+                    $amount = round($line['quantity'] * $line['rate'], 2);
 
-                AccountsInvoiceItem::create($line + [
-                    'invoice_id' => $invoice->id,
-                    'source' => self::SOURCE,
-                    'amount' => $amount,
-                    // Tax is the accounts side's decision; the waybill says nothing about it.
-                    'tax_status' => 'taxable', 'tax_percentage' => 0, 'tax_amount' => 0,
-                    'net_amount' => $amount,
-                ]);
-            }
+                    AccountsInvoiceItem::create($line + [
+                        'invoice_id' => $invoice->id,
+                        'source' => self::SOURCE,
+                        'amount' => $amount,
+                        // Tax is the accounts side's decision; the waybill says nothing about it.
+                        'tax_status' => 'taxable', 'tax_percentage' => 0, 'tax_amount' => 0,
+                        'net_amount' => $amount,
+                    ]);
+                }
+            });
 
             return count($lines);
         });

@@ -198,11 +198,11 @@ class TierModeGatingTest extends TestCase
         $accounts = $this->staff($company, $branch, 'accounts', 'accounts-sod@test.local');
 
         $this->assertFalse(Gate::forUser($boss)->allows('postLedger'));
-        $this->assertFalse(Gate::forUser($boss)->allows('managePeriod'));
+        $this->assertFalse(Gate::forUser($boss)->allows('managePeriods'));
         $this->assertFalse(Gate::forUser($boss)->allows('finalizeInvoice'));
 
         $this->assertTrue(Gate::forUser($accounts)->allows('postLedger'));
-        $this->assertTrue(Gate::forUser($accounts)->allows('managePeriod'));
+        $this->assertTrue(Gate::forUser($accounts)->allows('managePeriods'));
 
         // The Boss does get read-only financials, and may override a credit hold.
         $this->assertTrue(Gate::forUser($boss)->allows('viewFinancials'));

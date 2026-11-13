@@ -49,18 +49,21 @@ class EnquiryController extends Controller
             // — they type the name they know and the row appears either way.
             ->when($request->filled('client'), function ($q) use ($request) {
                 $term = '%' . $request->string('client') . '%';
+                // Both subqueries are held to this company (2026-11-10 audit §5): unbounded, they read every tenant's
+                // customers and mail to find rows the outer query would then discard.
+                $branches = DB::table('agents_info')->where('company_id', $context->companyId)->pluck('id');
 
-                $q->where(function ($w) use ($term) {
-                    $w->whereIn('customer_id', function ($sub) use ($term) {
-                        $sub->select('id')->from('customers')
-                            ->where('name', 'like', $term)
-                            ->orWhere('email_domain', 'like', $term);
+                $q->where(function ($w) use ($term, $context, $branches) {
+                    $w->whereIn('customer_id', function ($sub) use ($term, $context) {
+                        $sub->select('id')->from('customers')->where('company_id', $context->companyId)
+                            ->where(fn ($n) => $n->where('name', 'like', $term)->orWhere('email_domain', 'like', $term));
                     })
                     // The unonboarded case: no customer row, so match the domain the
                     // conversation arrived from.
                     ->orWhereIn('id', function ($sub) use ($term) {
                         $sub->select('t.enquiry_id')->from('email_threads as t')
                             ->join('email_messages as m', 'm.thread_key', '=', 't.thread_key')
+                            ->whereIn('t.agent_id', $branches)
                             ->where('m.direction', 'inbound')
                             ->where('m.from', 'like', $term)
                             ->whereNotNull('t.enquiry_id');

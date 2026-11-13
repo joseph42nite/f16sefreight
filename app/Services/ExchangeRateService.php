@@ -53,7 +53,11 @@ class ExchangeRateService
         $rate = $stored();
 
         // Today's may simply not have been fetched yet — the only day the provider can still be asked for.
-        if ($rate === null && $day === now()->toDateString() && $this->fetchLatest() > 0) {
+        // 🔴 Asked at most once in ten minutes (2026-11-10 audit §5). With the provider down, or a currency it does not
+        // carry, every page that needed a rate waited up to ten seconds on it — once per foreign invoice.
+        if ($rate === null && $day === now()->toDateString()
+            && \Illuminate\Support\Facades\Cache::add('fx:asked:' . $day, 1, 600)
+            && $this->fetchLatest() > 0) {
             $rate = $stored();
         }
 

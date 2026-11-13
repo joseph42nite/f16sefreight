@@ -572,4 +572,67 @@ class BillingDeskTest extends TestCase
         $this->assertSame(['pending', 'Skyline Agents DXB'], [$row['state'], $row['organization']]);
         $this->assertSame(1, $body['waiting']);
     }
+
+    // ─── 2026-11-10 audit §5 ─────────────────────────────────────────────────────────────────────────────────────
+
+    /** A draft was retotalled after every line; many lines written together are totalled once, to the same figures. */
+    public function test_lines_written_together_total_the_draft_once_and_correctly(): void
+    {
+        $job = $this->job();
+        $draft = AccountsInvoice::create([
+            'agent_id' => $this->branch->id, 'job_id' => $job->id, 'customer_id' => $this->client->id,
+            'billed_party_type' => 'customer', 'billed_party_id' => $this->client->id, 'billed_party_role' => 'client',
+            'invoice_no' => AccountsInvoice::placeholderNumber($job->id), 'type' => 'invoice',
+            'document_date' => now()->toDateString(), 'status' => 'draft',
+        ]);
+
+        $updates = 0;
+        DB::listen(function ($query) use (&$updates) {
+            $updates += (int) preg_match('/^update `accounts_invoices`/i', $query->sql);
+        });
+
+        \App\AccountsInvoiceItem::retotalOnce(function () use ($draft) {
+            foreach ([100, 250.50, 49.50] as $amount) {
+                $draft->items()->create(['charge_type' => 'freight', 'description' => 'Line', 'quantity' => 1, 'rate' => $amount,
+                    'amount' => $amount, 'tax_percentage' => 18, 'tax_amount' => round($amount * 0.18, 2),
+                    'net_amount' => round($amount * 1.18, 2)]);
+            }
+
+            $this->assertSame(0.0, (float) $draft->fresh()->grand_total, 'Totalled before the batch was finished.');
+        });
+
+        $this->assertSame(1, $updates, 'The draft was written once for the whole batch.');
+        $this->assertSame([400.0, 72.0, 472.0],
+            array_map('floatval', [$draft->fresh()->subtotal, $draft->fresh()->tax_amount, $draft->fresh()->grand_total]));
+
+        // Outside a batch a single line still totals the draft straight away.
+        $draft->items()->create(['charge_type' => 'other', 'description' => 'One more', 'quantity' => 1, 'rate' => 28,
+            'amount' => 28, 'tax_percentage' => 0, 'tax_amount' => 0, 'net_amount' => 28]);
+        $this->assertSame(500.0, (float) $draft->fresh()->grand_total);
+    }
+
+    /** Each bill is rendered and sent while the browser waits; too many ran out of time part-way through. */
+    public function test_bulk_mail_refuses_more_bills_than_it_can_send_in_one_request(): void
+    {
+        DB::table('mailbox_connections')->insert(['agent_id' => $this->branch->id, 'user_id' => $this->accounts->id,
+            'email_address' => 'accounts-bil@test.local', 'provider' => 'outlook', 'is_active' => 1, 'auth_state' => 'connected',
+            'expires_at' => now()->addHour(), 'created_at' => now(), 'updated_at' => now()]);
+        \Illuminate\Support\Facades\Http::fake();
+
+        $job = $this->job();
+        $ids = [];
+        for ($i = 0; $i < 26; $i++) {
+            $ids[] = DB::table('accounts_invoices')->insertGetId([
+                'agent_id' => $this->branch->id, 'job_id' => $job->id, 'customer_id' => $this->client->id,
+                'billed_party_type' => 'customer', 'billed_party_id' => $this->client->id, 'billed_party_role' => 'client',
+                'invoice_no' => 'INV-CAP-' . $i, 'type' => 'invoice', 'document_date' => now()->toDateString(),
+                'status' => 'finalized', 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+
+        $this->as($this->accounts)->postJson($this->url('/billing/mail'), ['ids' => $ids])
+            ->assertStatus(422)->assertJsonPath('reason', 'too_many')->assertJsonPath('limit', 25);
+
+        \Illuminate\Support\Facades\Http::assertNothingSent();
+    }
 }

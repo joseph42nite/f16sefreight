@@ -37,9 +37,13 @@ class VendorStatementController extends Controller
             ->get(['s.id', 's.period', 's.statement_no', 's.statement_date', 's.currency', 's.their_total', 's.status',
                    's.vendor_type', 'p.name as vendor', 'a.agent_name as branch']);
 
+        // One query for every statement's lines, not one per statement (2026-11-10 audit §5).
+        $byStatement = DB::table('vendor_statement_lines')->whereIn('vendor_statement_id', $rows->pluck('id'))
+            ->selectRaw('vendor_statement_id, state, COUNT(*) AS n, COALESCE(SUM(difference), 0) AS diff')
+            ->groupBy('vendor_statement_id', 'state')->get()->groupBy('vendor_statement_id');
+
         foreach ($rows as $row) {
-            $states = DB::table('vendor_statement_lines')->where('vendor_statement_id', $row->id)
-                ->selectRaw('state, COUNT(*) AS n, COALESCE(SUM(difference), 0) AS diff')->groupBy('state')->get();
+            $states = $byStatement->get($row->id, collect());
 
             $row->lines = (int) $states->sum('n');
             $row->by_state = $states->pluck('n', 'state');

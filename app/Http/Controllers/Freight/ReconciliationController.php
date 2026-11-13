@@ -108,7 +108,7 @@ class ReconciliationController extends Controller
 
             // Only money that fits NO open bill: a line with a candidate is bank matching's question, not this one —
             // asking here spent a credit on the demo's two Contoso lines, which fit INV-0001 (GAPS #417).
-            if ($this->matcher->candidates($row, 1) !== []) {
+            if ($this->matcher->candidates($row, 1, true) !== []) {
                 continue;
             }
 

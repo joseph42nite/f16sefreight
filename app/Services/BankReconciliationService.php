@@ -41,6 +41,9 @@ class BankReconciliationService
     /** Statuses that can still receive money. A paid or void invoice cannot. */
     private const SETTLEABLE = ['finalized', 'sent', 'partially_paid'];
 
+    /** One request's open invoices by branch, for candidates() called with `$reuseOpenInvoices`. */
+    private array $openInvoices = [];
+
     /** Under/overpayment within this fraction is a settlement, not a different invoice. */
     private const TOLERANCE = 0.02; // 2%
 
@@ -54,15 +57,25 @@ class BankReconciliationService
      *
      * @return list<array{invoice: array, confidence: string, reason: string, variance: float}>
      */
-    public function candidates(BankTransaction $transaction, int $limit = 10): array
+    public function candidates(BankTransaction $transaction, int $limit = 10, bool $reuseOpenInvoices = false): array
     {
         $amount = round((float) $transaction->amount, 2);
 
-        $open = AccountsInvoice::query()
-            ->where('agent_id', $transaction->agent_id)
-            ->whereIn('status', self::SETTLEABLE)
-            ->with('customer:id,name,email_domain')
-            ->get();
+        // 🔴 `$reuseOpenInvoices` is for a caller checking MANY lines in one request (the differences list): the
+        // branch's open invoices are then read once, not once per bank line (2026-11-10 audit §5). Never pass it
+        // where an invoice may be settled between two calls.
+        $agentId = (int) $transaction->agent_id;
+        $open = $reuseOpenInvoices && isset($this->openInvoices[$agentId])
+            ? $this->openInvoices[$agentId]
+            : AccountsInvoice::query()
+                ->where('agent_id', $agentId)
+                ->whereIn('status', self::SETTLEABLE)
+                ->with('customer:id,name,email_domain')
+                ->get();
+
+        if ($reuseOpenInvoices) {
+            $this->openInvoices[$agentId] = $open;
+        }
 
         $scored = [];
 

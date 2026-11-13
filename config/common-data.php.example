@@ -1,0 +1,52 @@
+<?php
+
+/*
+ * Copy to config/common-data.php (gitignored). Without it every Cargo Status message is stored and shown with a blank
+ * description, the airline gateway has no address to send to, and CargoStatusCodeTest and JobBoardLinksTest fail.
+ *
+ * The gateway login belongs in .env (DESCARTES_USERNAME, DESCARTES_PASSWORD), never in this file.
+ */
+
+return [
+    'descartes_username' => env('DESCARTES_USERNAME'),
+    'descartes_password' => env('DESCARTES_PASSWORD'),
+
+    // A company with "testing mode" on sends to the second address.
+    'descartes_upload_url' => env('DESCARTES_UPLOAD_URL', 'https://www.myvan.descartes.com/HttpUpload/SimpleUploadHandler.aspx'),
+    'descartes_upload_url_testing' => env('DESCARTES_UPLOAD_URL_TESTING', 'https://wwwtest.myvan.descartes.com/HttpUpload/SimpleUploadHandler.aspx'),
+
+    /*
+     * The 25 Cargo-XML status (FSU) codes. The key must be exactly three capital letters: GLNResponseController cuts
+     * the code off the end of the message id ("176-10000008RCS").
+     *
+     * ⚠️ Rebuilt on 2026-11-13 from the standard code list after the original file was lost. The wording is NOT the
+     * carrier's own; replace it from their specification when that is to hand.
+     */
+    'cargo_status_description' => [
+        'BKD' => 'Booked on a flight',
+        'PUP' => 'Picked up from the shipper',
+        'DPU' => 'Picked up from the shipper\'s door',
+        'FOH' => 'Freight on hand, not yet checked as ready for carriage',
+        'RCS' => 'Received from shipper and ready for carriage',
+        'FIW' => 'Taken into the warehouse',
+        'DOC' => 'Documents received',
+        'PRE' => 'Prepared for loading on a flight',
+        'MAN' => 'Manifested on a flight',
+        'FOW' => 'Released from the warehouse',
+        'DEP' => 'Departed on a flight',
+        'TRM' => 'To be transferred to another airline',
+        'TFD' => 'Transferred to another airline',
+        'RCT' => 'Received from another airline',
+        'ARR' => 'Arrived on a flight',
+        'RCF' => 'Received from the flight',
+        'AWR' => 'Documents arrived on a flight',
+        'NFD' => 'Arrived; consignee or agent notified',
+        'AWD' => 'Documents delivered to the consignee or agent',
+        'CRC' => 'Reported to customs',
+        'TGC' => 'Handed to customs or another government authority',
+        'CCD' => 'Cleared by customs',
+        'DLV' => 'Delivered to the consignee or agent',
+        'DDL' => 'Delivered to the consignee\'s door',
+        'DIS' => 'Discrepancy reported',
+    ],
+];

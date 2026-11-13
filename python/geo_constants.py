@@ -292,26 +292,6 @@ ASIA: Dict[str, Dict] = {
         ],
     },
 
-    "VIETNAM": {
-        "country_patterns": [r'\bVIETNAM\b', r'\bVNM\b', r'\bVIET NAM\b'],
-        "states": [
-            'HA NOI', 'HO CHI MINH CITY', 'DA NANG', 'HAI PHONG', 'CAN THO',
-            'AN GIANG', 'BA RIA VUNG TAU', 'BAC GIANG', 'BAC NINH', 'BEN TRE',
-            'BINH DINH', 'BINH DUONG', 'BINH THUAN', 'CA MAU', 'DAK LAK',
-            'DONG NAI', 'GIA LAI', 'KHANH HOA', 'KIEN GIANG', 'LAM DONG',
-            'LONG AN', 'NGHE AN', 'NINH BINH', 'PHU THO', 'QUANG NAM',
-            'QUANG NGAI', 'QUANG NINH', 'SOC TRANG', 'THAI NGUYEN', 'THANH HOA',
-        ],
-        "state_codes": [],
-        "code_guard": None,
-        "postcode_pattern": r'(?<!\d)\b(\d{6})\b(?!\d)',
-        "city_strategy": "before_postcode",
-        "cities": [
-            'HANOI', 'HO CHI MINH CITY', 'SAIGON', 'DA NANG', 'HAI PHONG',
-            'CAN THO', 'BIEN HOA', 'HUE', 'NHA TRANG', 'VUNG TAU',
-        ],
-    },
-
    "SOUTH KOREA": {
         "country_patterns": [
         r'\bSOUTH KOREA\b', r'\bKOREA\b', r'\bROK\b', r'\bREPUBLIC OF KOREA\b',
@@ -1310,55 +1290,6 @@ NORTH_AMERICA: Dict[str, Dict] = {
         "cities": [
             'KINGSTON', 'MONTEGO BAY', 'SPANISH TOWN', 'PORTMORE',
             'MANDEVILLE', 'OCHO RIOS', 'NEGRIL'
-        ],
-    },
-    "COLOMBIA": {
-        "country_patterns": [r'\bCOLOMBIA\b', r'\bCOL\b'],
-        "states": [
-            'BOGOTA', 'ANTIOQUIA', 'VALLE DEL CAUCA', 'ATLANTICO', 'CUNDINAMARCA',
-            'BOLIVAR', 'SANTANDER', 'RISARALDA', 'CALDAS', 'META'
-        ],
-        "state_codes": [],
-        "code_guard": None,
-        "postcode_pattern": r'(?<!\d)\b(\d{6})\b(?!\d)',
-        "city_strategy": "before_postcode",
-        "cities": [
-            'BOGOTA', 'MEDELLIN', 'CALI', 'BARRANQUILLA', 'CARTAGENA',
-            'BUCARAMANGA', 'PEREIRA', 'CUCUTA', 'IBAGUE', 'SANTA MARTA'
-        ],
-    },
-
-    "BRAZIL": {
-        "country_patterns": [r'\bBRAZIL\b', r'\bBRASIL\b', r'\bBRA\b'],
-        "states": [
-            'SAO PAULO', 'RIO DE JANEIRO', 'MINAS GERAIS', 'BAHIA', 'PARANA',
-            'RIO GRANDE DO SUL', 'PERNAMBUCO', 'CEARA', 'SANTA CATARINA', 'GOIAS',
-            'DISTRITO FEDERAL'
-        ],
-        "state_codes": [],
-        "code_guard": None,
-        "postcode_pattern": r'(?<!\d)\b(\d{5}-\d{3})\b(?!\d)',   # Brazilian CEP format
-        "city_strategy": "before_postcode",
-        "cities": [
-            'SAO PAULO', 'RIO DE JANEIRO', 'BRASILIA', 'SALVADOR', 'FORTALEZA',
-            'BELO HORIZONTE', 'CURITIBA', 'MANAUS', 'RECIFE', 'PORTO ALEGRE',
-            'BELEM', 'GOIANIA', 'GUARULHOS', 'CAMPINAS', 'SAO GONCALO'
-        ],
-    },
-
-    "CHILE": {
-        "country_patterns": [r'\bCHILE\b', r'\bCHL\b'],
-        "states": [
-            'SANTIAGO METROPOLITAN', 'VALPARAISO', 'BIOBIO', 'MAULE',
-            'ANTOFAGASTA', 'LOS LAGOS', 'O\'HIGGINS', 'ARAUCANIA'
-        ],
-        "state_codes": [],
-        "code_guard": None,
-        "postcode_pattern": r'(?<!\d)\b(\d{7})\b(?!\d)',   # 7-digit format common
-        "city_strategy": "before_postcode",
-        "cities": [
-            'SANTIAGO', 'VALPARAISO', 'CONCEPCION', 'ANTofAGASTA', 'TEMUCO',
-            'LA SERENA', 'IQUIQUE', 'PUERTO MONTT', 'ARICA', 'RANCAGUA'
         ],
     },
 }

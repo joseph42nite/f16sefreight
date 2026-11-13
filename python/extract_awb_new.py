@@ -16,6 +16,8 @@ from geo_constants import (
     STREET_NOISE,
     CLEAN_ADDRESS_PATTERNS,
 )
+from iata_cities import CITY_IATA
+import math
 
 # ---------------------------------------------------------------------------
 # IATA airport lookup
@@ -8407,20 +8409,35 @@ AIRPORT_IATA_MAP = {
     "zanesville": "ZZV"
 }
 
-_IATA_PATTERNS = None
+_IATA_INDEX = None
+_WORD_EDGE = re.compile(r'\b')
+
+
+def _iata_index():
+    """
+    (name -> (code, rank), every known code, the longest name's length). Built once.
+
+    `rank` settles two names of the same length found in one text: a gateway city (iata_cities.py) first, then the
+    airport names in the order the table lists them — the order the old longest-first scan gave.
+    """
+    global _IATA_INDEX
+
+    if _IATA_INDEX is None:
+        names = {}
+        for rank, (key, code) in enumerate(AIRPORT_IATA_MAP.items()):
+            names.setdefault(key.lower().strip(), (code, rank))
+        for key, code in CITY_IATA.items():
+            names[key] = (code, -1)
+
+        codes = frozenset(AIRPORT_IATA_MAP.values()) | frozenset(CITY_IATA.values())
+        _IATA_INDEX = (names, codes, max(len(name) for name in names))
+
+    return _IATA_INDEX
 
 
 def _iata_patterns():
-    """(compiled whole-word pattern, code) for every airport name, longest name first. Built once."""
-    global _IATA_PATTERNS
-
-    if _IATA_PATTERNS is None:
-        _IATA_PATTERNS = [
-            (re.compile(rf'\b{re.escape(key.lower().strip())}\b'), AIRPORT_IATA_MAP[key])
-            for key in sorted(AIRPORT_IATA_MAP.keys(), key=len, reverse=True)
-        ]
-
-    return _IATA_PATTERNS
+    """The old name for `_iata_index()`: ocr_server calls it at startup so the first document does not pay for it."""
+    return _iata_index()
 
 
 def resolve_iata(text: str) -> str:
@@ -8441,15 +8458,33 @@ def resolve_iata(text: str) -> str:
         normalized = re.sub(rf'\b{word}\b', '', normalized, flags=re.IGNORECASE)
     normalized = normalized.strip()
 
-    # Sort keys longest-first so multi-word names match before substrings
-    # We use \b to ensure we match whole words only (e.g., 'MAA' won't match 'MAAD')
+    names, codes, longest = _iata_index()
+
+    # 🔴 A box that already holds a code keeps it (2026-11-10 audit §7): 46 real codes were read as a NAME and
+    # came back as a different airport — "KOL" as Koumala, "BAY" as Bay Roberts. A city written in three letters
+    # (GOA, LEH) is the exception, and iata_cities.py says why.
+    if normalized in CITY_IATA:
+        return CITY_IATA[normalized]
+    if len(normalized) == 3 and normalized.upper() in codes:
+        return normalized.upper()
+
+    # The longest known name written in the text as whole words, so "new york" is found before "york".
     #
-    # ⚠️ The patterns are built ONCE (_iata_patterns). Sorting 8,383 names and compiling a regex
-    # for each on every call took 0.39 s per lookup — four per invoice, a second and a half of a
-    # five-second target spent before the model was even asked. Same order, same result.
-    for pattern, code in _iata_patterns():
-        if pattern.search(normalized):
-            return code
+    # ⚠️ One dictionary lookup per run of whole words, not one regex per airport: the old scan tried all 8,383
+    # names on every call. A name matches exactly where `\bname\b` did — it starts and ends on a word edge.
+    edges = [m.start() for m in _WORD_EDGE.finditer(normalized)]
+    best = None
+    for i, start in enumerate(edges):
+        for end in edges[i + 1:]:
+            if end - start > longest:
+                break
+            hit = names.get(normalized[start:end])
+            if hit is not None:
+                score = (end - start, -hit[1])
+                if best is None or score > best[0]:
+                    best = (score, hit[0])
+    if best is not None:
+        return best[1]
 
     # Fallback: return the original text uppercased so it's obvious it's unresolved
     return text.strip().upper()
@@ -8482,7 +8517,8 @@ def extract_email(text: str) -> Optional[str]:
 
 def extract_phone(text: str) -> Optional[str]:
     """Extract phone number from text."""
-    phone_pattern = r'(?:PHONE|TEL|Phone|Tel|PH|Ph)\s*:?\s*([+\d()\-][+\d\s()\-]{3,30})'
+    # ⚠️ The label must start a word: "HOTEL 12345" and "JOSEPH 682001" are not phone numbers.
+    phone_pattern = r'(?<![A-Za-z])(?:PHONE|TEL|PH)\s*[:.]?\s*([+\d()\-][+\d\s()\-]{3,30})'
     match = re.search(phone_pattern, text, re.IGNORECASE)
     if match:
         return match.group(1).strip().rstrip(' -')
@@ -8522,6 +8558,9 @@ def extract_pin(text: str, country: str = None) -> Optional[str]:
     Tier 3: Continent-scoped sweep
     Tier 4: Generic numeric fallback
     """
+    # ⚠️ A phone or fax number is not a postcode: "PH: 0484 2345678" gave the PIN 0484 (2026-11-10 audit §7).
+    text = re.sub(r'(?<![A-Za-z])(?:PHONE|TEL|PH|FAX|MOB(?:ILE)?)\s*[:.]?\s*[+\d\s()\-]{7,}', ' ', text, flags=re.IGNORECASE)
+
     # Tier 1: country known and has a compiled pattern
     if country and country in POSTCODE_PATTERNS:
         pat = POSTCODE_PATTERNS[country]
@@ -8564,9 +8603,20 @@ def extract_pin(text: str, country: str = None) -> Optional[str]:
 
 def extract_country(text: str) -> Optional[str]:
     """Extract country from address"""
+    # 🔴 The country is written LAST in an address, so of every country named, the one named furthest along wins.
+    # Taking the first country in the table's order read "INDIA GATE FOODS LLC, AL QUOZ, DUBAI, UAE" as India
+    # (2026-11-10 audit §7).
+    # ⚠️ A two-letter code that is a label is not a country: "PH: 0484 2345678" is a phone number, not the
+    # Philippines.
+    best = None
     for country_key, pattern in COUNTRY_PATTERNS.items():
-        if pattern.search(text):
-            return country_key
+        for m in pattern.finditer(text):
+            if len(m.group(0)) <= 2 and re.match(r'\s*[:.]?\s*[+(]?\d', text[m.end():]):
+                continue
+            if best is None or m.start() > best[0]:
+                best = (m.start(), country_key)
+    if best is not None:
+        return best[1]
 
     us_city_state_zip = r'\b[A-Z][A-Z\s]+,\s*[A-Z]{2}\s+\d{5}\b'
     if re.search(us_city_state_zip, text):
@@ -8850,7 +8900,6 @@ def transform_address_box(text: str) -> Dict[str, Any]:
 def transform_flight_routing(text_data: str) -> List[Dict[str, Any]]:
     """Transform flight routing data."""
     airport_pattern = r'\b[A-Z]{3}\b'
-    flight_pattern = r'\b[A-Z]{2,3}[-\s]?\d{1,6}[A-Z]{0,2}\b'
     date_pattern = r'\d{2}-[A-Z]{3}-\d{4}|\d{2}-[A-Za-z]{3}|\d{1,2}(?:st|nd|rd|th)[A-Za-z]{3,}|\d{2}/\d{2}/\d{4}'
 
     # These words will be blocked from being identified as airports
@@ -8861,6 +8910,34 @@ def transform_flight_routing(text_data: str) -> List[Dict[str, Any]]:
         'KLM', 'JAL', 'THE', 'FOR', 'LOT'
     }
 
+    # 🔴 A carrier is two characters, and one of them may be a digit — 6E (IndiGo), G9 (Air Arabia), 9W, 5X —
+    # or three letters. The old pattern took letters only, and let the gap between carrier and number be a line
+    # break, so "COK DXB" over "6E 1403" was read as flight DXB6E (2026-11-10 audit §7).
+    carrier = re.compile(r'^(?:[A-Z]{2}|[A-Z]\d|\d[A-Z]|[A-Z]{3})$')
+    number = re.compile(r'^\d{1,6}[A-Z]{0,2}$')
+    joined = re.compile(r'^(?:[A-Z]{2}|[A-Z]\d|\d[A-Z]|[A-Z]{3})-?\d{1,6}[A-Z]{0,2}$')
+
+    def flights_in(line: str):
+        """(flight number, the words it was written with) for each flight on one line, left to right."""
+        words = line.split()
+        found = []
+        i = 0
+        while i < len(words):
+            word = words[i].strip(',;/')
+            following = words[i + 1].strip(',;/') if i + 1 < len(words) else ''
+            after = words[i + 2].strip(',;/') if i + 2 < len(words) else ''
+            # "DXB 6E 1403": DXB is the airport and 6E the carrier, not carrier DXB with flight number 6E.
+            next_is_carrier = bool(re.match(r'^(?:[A-Z]\d|\d[A-Z])$', following) and number.match(after))
+            if carrier.match(word) and number.match(following) and not next_is_carrier and word not in LABEL_WORDS:
+                found.append((word + following, [words[i], words[i + 1]]))
+                i += 2
+            elif joined.match(word) and not re.match(r'^\d+$', word):
+                found.append((word.replace('-', ''), [words[i]]))
+                i += 1
+            else:
+                i += 1
+        return found
+
     results = []
     # Split input into blocks (separated by empty lines)
     blocks = [b.strip() for b in text_data.strip().split('\n\n') if b.strip()]
@@ -8868,21 +8945,30 @@ def transform_flight_routing(text_data: str) -> List[Dict[str, Any]]:
     for block in blocks:
         lines = block.split('\n')
         all_airports = []
-        
+        raw_flights = []
+
         for line in lines:
-            # 1. Find all 3-letter uppercase words
-            raw_found = re.findall(airport_pattern, line)
-            
-            # 2. Filter out words that are in the LABEL_WORDS set
-            found = [code for code in raw_found if code.upper() not in LABEL_WORDS]
-            
-            # 3. If we found valid airports, save them and stop looking in this block
+            line_flights = flights_in(re.sub(date_pattern, ' ', line))
+            raw_flights.extend(number_ for number_, _ in line_flights)
+
+            if all_airports:
+                continue
+
+            # 1. Take the dates and the flights out first: the MAY of 12-MAY-2026 is not an airport, and
+            #    neither is a three-letter carrier.
+            bare = re.sub(date_pattern, ' ', line)
+            for _, written in line_flights:
+                for word in written:
+                    bare = bare.replace(word, ' ', 1)
+
+            # 2. Find all 3-letter uppercase words that are not form labels
+            found = [code for code in re.findall(airport_pattern, bare) if code.upper() not in LABEL_WORDS]
+
+            # 3. The first line that names airports is the routing line
             if found:
                 all_airports = found
-                break
 
         transit_airports = all_airports
-        raw_flights = re.findall(flight_pattern, block)
         dates = re.findall(date_pattern, block)
 
         from datetime import datetime
@@ -8896,7 +8982,7 @@ def transform_flight_routing(text_data: str) -> List[Dict[str, Any]]:
 
         # Pair flights with dates
         flights_list = [
-            {"flight_number": re.sub(r'[-\s]', '', f), "date": normalize_routing_date(d)}
+            {"flight_number": f, "date": normalize_routing_date(d)}
             for f, d in zip(raw_flights, dates)
         ]
 
@@ -8908,46 +8994,71 @@ def transform_flight_routing(text_data: str) -> List[Dict[str, Any]]:
     return results
 
 def extract_hs_codes(text: str) -> List[str]:
-    """Extract HS codes from text"""
+    """
+    Extract HS codes from text.
+
+    Where the text labels them ("HS CODE: 8471.30.00, 84733099"), only the numbers written after a label are
+    taken — a 6-8 digit invoice number or PIN code elsewhere in the box is not an HS code (2026-11-10 audit §7).
+    With no label anywhere, any 6-8 digit number is taken, as before.
+    """
+    labelled = re.findall(
+        r'\bH\.?\s?S\.?\s?N?\.?\s*(?:CODES?|NOS?\.?|NUMBERS?)?\s*[:#\-]?\s*((?:\d[\d.]*[\s,/&]*)+)',
+        text, re.IGNORECASE,
+    )
+    if labelled:
+        codes = []
+        for run in labelled:
+            for token in re.split(r'[\s,/&]+', run):
+                digits = token.replace('.', '')
+                if re.fullmatch(r'\d{6,8}', digits) and digits not in codes:
+                    codes.append(digits)
+        if codes:
+            return codes
+
     hs_pattern = r'\b\d{6,8}\b'
     return re.findall(hs_pattern, text)
 
 def extract_dimensions(text: str) -> List[Dict[str, Any]]:
-    """Extract dimensions and their counts from text."""
+    """
+    Extract dimensions and their counts from text.
+
+    Each L x W x H is read once, with the count written against it: after it ("36X32X25=125", "59X38X15 (17)",
+    "100X50X40/2", "60*40*30*5") or before it ("(3) 40X30X20", "2/100X50X40", "3=40X30X20"). Which side a text
+    uses is decided by its first dimension, so a count between two dimensions is not given to both
+    (2026-11-10 audit §7 — "59X38X15 (17) 59X38X10 (3)" used to add a third, made-up 59X38X10 of 17).
+    Decimals are kept: "120.5X80X60.5" used to come back as "5X80X60".
+    """
+    NUM = r'\d+(?:\.\d+)?'
+    SEP = r'\s*[xX\*]\s*'
+    dimension = re.compile(r'(?<![\d.])(' + NUM + ')' + SEP + '(' + NUM + ')' + SEP + '(' + NUM + r')(?![\d.]|\.\d)')
+    count_before = re.compile(r'(?:\(\s*(\d+)\s*\)|(?<![\d.xX*])(\d+)\s*[=/])\s*$')
+    count_after = re.compile(r'\s*(?:=\s*(\d+)|\(\s*(\d+)\s*\)|/\s*(\d+)|\*\s*(\d+))(?![\d.]*\s*[xX*]\s*\d)')
+
+    matches = list(dimension.finditer(text))
+    if not matches:
+        return []
+
+    def before(m, floor):
+        hit = count_before.search(text[floor:m.start()])
+        return int(next(g for g in hit.groups() if g)) if hit else None
+
+    def after(m):
+        hit = count_after.match(text, m.end())
+        return int(next(g for g in hit.groups() if g)) if hit else None
+
+    counts_first = before(matches[0], 0) is not None
+
     dimensions = []
     seen = set()
-
-    SEP = r'\s*[xX\*]\s*'
-
-    patterns = [
-        (r'\(\s*(\d+)\s*\)\s*(\d+)' + SEP + r'(\d+)' + SEP + r'(\d+)', 'count_first'),
-        (r'(\d+)' + SEP + r'(\d+)' + SEP + r'(\d+)\s*\(\s*(\d+)\s*\)', 'count_last'),
-        (r'(\d+)' + SEP + r'(\d+)' + SEP + r'(\d+)\s*=\s*(\d+)', 'count_last'),
-        (r'(\d+)\s*=\s*(\d+)' + SEP + r'(\d+)' + SEP + r'(\d+)', 'count_first'),
-        (r'(\d+)' + SEP + r'(\d+)' + SEP + r'(\d+)\s*/\s*(\d+)', 'count_last'),
-        (r'(\d+)\s*/\s*(\d+)' + SEP + r'(\d+)' + SEP + r'(\d+)', 'count_first'),
-        (r'(\d+)\s*\*\s*(\d+)\s*\*\s*(\d+)\s*\*\s*(\d+)', 'count_last'),
-    ]
-
-    for pattern, mode in patterns:
-        for m in re.finditer(pattern, text, re.IGNORECASE):
-            g = m.groups()
-            if mode == 'count_first':
-                count, l, w, h = g
-            else:
-                l, w, h, count = g
-            dim_str = f"{l}X{w}X{h}"
-            key = (dim_str, int(count))
-            if key not in seen:
-                seen.add(key)
-                dimensions.append({'dimension': dim_str, 'count': int(count)})
-
-    # Fallback: plain NxNxN with no count
-    for m in re.finditer(r'(\d+)' + SEP + r'(\d+)' + SEP + r'(\d+)', text, re.IGNORECASE):
-        l, w, h = m.groups()
-        dim_str = f"{l}X{w}X{h}"
-        if not any(d['dimension'] == dim_str for d in dimensions):
-            dimensions.append({'dimension': dim_str, 'count': 1})
+    floor = 0
+    for m in matches:
+        count = before(m, floor) if counts_first else after(m)
+        dim_str = 'X'.join(m.groups())
+        key = (dim_str, count or 1)
+        if key not in seen:
+            seen.add(key)
+            dimensions.append({'dimension': dim_str, 'count': count or 1})
+        floor = m.end()
 
     return dimensions
 
@@ -9014,9 +9125,10 @@ def transform_piece_weight(text: str) -> Dict[str, Any]:
     parts = text.split()
 
     def is_number(s: str) -> bool:
+        # 🔴 float() also reads "NAN", "INF" and "INFINITY" as numbers. A weight of NaN is not JSON, and the
+        # whole extract answered 500 for one stray word in the box (2026-11-10 audit §7).
         try:
-            float(s)
-            return True
+            return math.isfinite(float(s))
         except ValueError:
             return False
 
@@ -9045,13 +9157,19 @@ def transform_piece_weight(text: str) -> Dict[str, Any]:
     }
 
 def transform_awb_number(text: str) -> str:
-    """Transform AWB number."""
+    """
+    Transform AWB number: the airline's three digits, a dash, the eight-digit serial.
+
+    The serial is often printed in two groups of four, and the box often has the origin airport between prefix and
+    serial ("176 COK 1234 5678"). The old rule took the first and third words whatever they were, so
+    "176 1234 5678" came back as "176-5678" — a number that looks right and is not (2026-11-10 audit §7).
+    """
     text = normalize_text(text)
     if re.match(r'^\d{3}-\d+$', text.strip()):
         return text.strip()
-    parts = text.split()
-    if len(parts) >= 3:
-        return f"{parts[0]}-{parts[2]}"
+    match = re.search(r'(?<!\d)(\d{3})(?:[\s-]*|\s+[A-Za-z]{3}\s+)(\d{4})[\s-]?(\d{4})(?!\d)', text)
+    if match:
+        return f"{match.group(1)}-{match.group(2)}{match.group(3)}"
     match = re.search(r'\d{3}-\d{5,10}', text)
     return match.group(0) if match else text
 

@@ -178,11 +178,11 @@ PIECES_PATTERN = re.compile(
     re.IGNORECASE,
 )
 GROSS_PATTERN = re.compile(
-    r"(?:gross\s*(?:weight|wt)|g\.?\s*w\.?|total\s*weight)\s*[:\-]?\s*([\d.]+)\s*(?:kgs?|kilograms?)?",
+    r"(?:gross\s*(?:weight|wt)|g\.?\s*w\.?|total\s*weight)\s*[:\-]?\s*(\d[\d,]*(?:\.\d+)?)\s*(?:kgs?|kilograms?)?",
     re.IGNORECASE,
 )
 CHARGEABLE_PATTERN = re.compile(
-    r"(?:chargeable|charge(?:able)?)\s*(?:weight|wt)\s*[:\-]?\s*([\d.]+)",
+    r"(?:chargeable|charge(?:able)?)\s*(?:weight|wt)\s*[:\-]?\s*(\d[\d,]*(?:\.\d+)?)",
     re.IGNORECASE,
 )
 
@@ -269,7 +269,8 @@ def _read_piece_weight(text: str) -> Dict[str, Any]:
     def _number(pattern) -> float:
         match = pattern.search(text)
         try:
-            return float(match.group(1)) if match else 0.0
+            # Thousands are written with a comma: "1,250.50" was read as 1.0 (2026-11-10 audit §7).
+            return float(match.group(1).replace(',', '')) if match else 0.0
         except (TypeError, ValueError):
             return 0.0
 

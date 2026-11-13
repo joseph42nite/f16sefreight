@@ -29,6 +29,30 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ocr_server")
 
+# 🔴 The largest upload read into memory. Laravel refuses a PDF over 25 MB before it gets here; this is the same rule
+# for anything that reaches the service another way (2026-11-10 audit §7 — there was no limit at all, and the whole
+# file is held in memory while it is written to disk).
+MAX_UPLOAD_BYTES = int(os.environ.get("OCR_MAX_UPLOAD_MB", "30")) * 1024 * 1024
+
+
+async def _save_upload(file: UploadFile) -> tuple[str, int]:
+    """Write the upload to a temp file a megabyte at a time. Returns (path, size); 413 once it passes the limit."""
+    size = 0
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+        path = tmp.name
+        try:
+            while chunk := await file.read(1024 * 1024):
+                size += len(chunk)
+                if size > MAX_UPLOAD_BYTES:
+                    raise HTTPException(status_code=413, detail=f"The file is larger than {MAX_UPLOAD_BYTES // (1024 * 1024)} MB.")
+                tmp.write(chunk)
+        except BaseException:
+            tmp.close()
+            os.unlink(path)
+            raise
+
+    return path, size
+
 app = FastAPI(
     title="F16s OCR Microservice", 
     description="Lightning fast, zero-cold-start PDF extraction service"
@@ -54,12 +78,9 @@ async def extract(
     tmp_path = None
     try:
         # 1. Dump incoming data stream to disk temp for pdfplumber access
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            contents = await file.read()
-            tmp.write(contents)
-            tmp_path = tmp.name
+        tmp_path, size = await _save_upload(file)
 
-        logger.info(f"Received '{file.filename}' | Template: '{document_type}' | Size: {len(contents)} bytes")
+        logger.info(f"Received '{file.filename}' | Template: '{document_type}' | Size: {size} bytes")
 
         # 2. Determine coordinates configuration source
         config_source = CONFIG_FILE_PATH
@@ -74,17 +95,22 @@ async def extract(
             except Exception as e:
                 logger.error(f"Failed to parse custom coordinates JSON: {e}. Falling back to boxes_config.json")
 
-        # 3. Execute instantaneous pre-loaded extraction
-        # No subprocess creation overhead here!
-        result = extract_all_boxes(
-            pdf_path=tmp_path, 
-            template_name=document_type, 
+        # 3. Execute the pre-loaded extraction.
+        # 🔴 In a worker thread, not on the event loop (2026-11-10 audit §7): pdfplumber is synchronous, and run
+        # inline it stopped every other request — /health included — until this waybill was read.
+        result = await run_in_threadpool(
+            extract_all_boxes,
+            pdf_path=tmp_path,
+            template_name=document_type,
             config_path=config_source,
-            page_num=0
+            page_num=0,
         )
         
         logger.info(f"Successfully extracted data from '{file.filename}'")
         return JSONResponse(content=result)
+
+    except HTTPException:
+        raise
 
     except Exception as e:
         # Detailed logging aids debugging production server logs
@@ -131,13 +157,10 @@ async def extract_unstructured(
 
     tmp_path = None
     try:
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            contents = await file.read()
-            tmp.write(contents)
-            tmp_path = tmp.name
+        tmp_path, size = await _save_upload(file)
 
         logger.info(
-            f"Unstructured '{file.filename}' | {len(contents)} bytes | allow_vision={wants_vision}"
+            f"Unstructured '{file.filename}' | {size} bytes | allow_vision={wants_vision}"
         )
 
         # 🔴 In a worker thread, not on the event loop. A model call takes seconds, and run inline it

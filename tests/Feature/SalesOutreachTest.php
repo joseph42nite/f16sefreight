@@ -181,6 +181,7 @@ class SalesOutreachTest extends TestCase
         MailboxConnection::create([
             'agent_id' => $this->branch->id, 'user_id' => $this->rep->id, 'email_address' => 'sales-out@test.local',
             'provider' => 'outlook', 'access_token' => 'token', 'is_active' => true, 'auth_state' => 'connected',
+            'expires_at' => now()->addHour(),
         ]);
         Http::fake(['*' => Http::response('', 202)]);
 

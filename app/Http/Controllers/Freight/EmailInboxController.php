@@ -720,6 +720,10 @@ class EmailInboxController extends Controller
             return response()->json(['error' => $e->getMessage(), 'reason' => $e->reason], $e->status);
         }
 
+        if (($why = app(\App\Services\Mail\MailboxSyncService::class)->refusalToUse($connection)) !== null) {
+            return response()->json(['error' => $why, 'reason' => 'mailbox_not_ready'], 422);
+        }
+
         $withSignature = $data['include_signature'] ?? true;
         $signature = $withSignature ? app(ThreadMailer::class)->signatureFor($connection, $user) : null;
         $image = $withSignature ? app(\App\Services\Mail\SignatureImage::class)->for($connection) : null;

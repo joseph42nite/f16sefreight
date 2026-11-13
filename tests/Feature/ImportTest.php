@@ -363,7 +363,8 @@ class ImportTest extends TestCase
             '*' => Http::response('', 202),
         ]);
         \App\MailboxConnection::create(['agent_id' => $this->branch->id, 'user_id' => $this->ops->id, 'email_address' => 'ops-imp@test.local',
-            'provider' => 'outlook', 'access_token' => 'token', 'is_active' => true, 'auth_state' => 'connected']);
+            'provider' => 'outlook', 'access_token' => 'token', 'is_active' => true, 'auth_state' => 'connected',
+            'expires_at' => now()->addHour()]);
         $job = $this->stagedHouse();
         $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/arrival-notice/stage"))->assertOk();
 

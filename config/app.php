@@ -54,6 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // The load balancer's addresses (comma list), or `*` when nothing else can reach the app. See TrustProxies.
+    'trusted_proxies' => env('TRUSTED_PROXIES', ''),
+
     'asset_url' => env('ASSET_URL', null),
 
     /*

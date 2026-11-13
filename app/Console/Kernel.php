@@ -26,6 +26,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        // 🔴 EVERY withoutOverlapping() CARRIES ITS OWN EXPIRY, in minutes. The default is 24 hours: a scheduler killed
+        // mid-run (a deploy, an OOM) left its lock behind and that command did not run again for a day — for
+        // mailboxes:poll, a day without mail (2026-11-10 audit §4). Each expiry is a little under the command's own
+        // interval; mailboxes:poll can be short because MailboxSyncService holds a lock per mailbox.
+
         // ⚠️ NOTHING ELSE REFILLS AN OCR CREDIT BALANCE. Without this the balance only
         // ever decreases and every tenant eventually hard-stops (guide §4.7). The command
         // is idempotent — it skips any company already granted this calendar month — so a
@@ -33,7 +38,7 @@ class Kernel extends ConsoleKernel
         // Hourly, so a new company or a plan upgrade gets its credits the same hour, not on the 1st (2026-09-17).
         $schedule->command('credits:grant-monthly')
             ->hourly()
-            ->withoutOverlapping()
+            ->withoutOverlapping(50)
             ->onOneServer();
 
         // ⚠️ awaiting_vision_consent is EXCLUDED from the 30-minute stale sweep — an
@@ -41,66 +46,66 @@ class Kernel extends ConsoleKernel
         // which also deletes the temp PDF still waiting on disk (guide §4.7).
         $schedule->command('pdf:expire-vision-consent')
             ->hourly()
-            ->withoutOverlapping()
+            ->withoutOverlapping(50)
             ->onOneServer();
 
         // The Boss's money figures (PRD §6.8, GAPS #419): half-hourly, because receivables move through the working
         // day and the dashboard warns past one hour. Built in Step 7 and never scheduled — so never run.
         $schedule->command('snapshots:compute')
             ->everyThirtyMinutes()
-            ->withoutOverlapping()
+            ->withoutOverlapping(25)
             ->onOneServer();
 
         // The sales rollup (PRD §7.3.4): every Sales page figure, the boss's mails and staff reviews come from it. The PRD
         // calls it nightly but it was never scheduled. Before the working day, so the morning opens on today's snapshot.
         $schedule->command('sales:compute-snapshots')
             ->dailyAt('05:30')
-            ->withoutOverlapping()
+            ->withoutOverlapping(180)
             ->onOneServer();
 
         // Today's exchange rates (GAPS #411). Once a day: the free plan has no history, so a day missed is a day
         // whose foreign receipts wait for a rate — and 30 calls a month sit well inside its request limit.
         $schedule->command('fx:fetch-rates')
             ->dailyAt('09:30')
-            ->withoutOverlapping()
+            ->withoutOverlapping(180)
             ->onOneServer();
 
         // Connected bank accounts' statements through Setu (GAPS #442). Hourly collects what is ready; each account asks
         // for a new statement once a day. PRD §6.4's 3-day sweep assumed a feed that pushes — an AA does not.
         $schedule->command('bank:sync-feeds')
             ->hourly()
-            ->withoutOverlapping()
+            ->withoutOverlapping(50)
             ->onOneServer();
 
         // Every client's payment report card for the month just ended (GAPS #443) — after the night's receipts are in.
         $schedule->command('clients:payment-report')
             ->monthlyOn(1, '06:15')
-            ->withoutOverlapping()
+            ->withoutOverlapping(180)
             ->onOneServer();
 
         // The desk's bell: a supplier bill due tomorrow, money in short, a client who slipped (GAPS #448). Each event
         // rings once, so hourly only means a short payment matched at 10:05 is heard by 11:00.
         $schedule->command('accounts:alerts')
             ->hourly()
-            ->withoutOverlapping()
+            ->withoutOverlapping(50)
             ->onOneServer();
 
         // Mail is kept three months after a conversation's last message; the figures stay (user, 2026-09-16).
         $schedule->command('mail:prune')
             ->dailyAt('02:30')
-            ->withoutOverlapping()
+            ->withoutOverlapping(180)
             ->onOneServer();
 
         // A cached attachment's bytes go after 90 days; the mailbox still has the file (guide §4.7, GAPS #232).
         $schedule->command('attachments:evict-cache')
             ->dailyAt('03:00')
-            ->withoutOverlapping()
+            ->withoutOverlapping(180)
             ->onOneServer();
 
         // Debounced via stale_nudged_at, cleared on any new client reply.
         $schedule->command('enquiries:nudge-stale')
             ->hourly()
-            ->withoutOverlapping()
+            ->withoutOverlapping(50)
             ->onOneServer();
 
         // 🔴 FIFTEEN MINUTES, NOT ONE. Push (Graph change notifications) is the primary
@@ -108,13 +113,12 @@ class Kernel extends ConsoleKernel
         // 1,000 mailboxes minute-polling is ~1.44M calls/day of which almost all return
         // nothing, while push gives ~1s latency for near zero calls (guide §4.2).
         //
-        // ⚠️ withoutOverlapping matters more here than elsewhere: a mailbox with a long
-        // backlog can run past 15 minutes, and a second sweep entering behind it would
-        // read the same cursor twice.
+        // ⚠️ A mailbox with a long backlog can outlast this lock; the second sweep then skips that
+        // mailbox (MailboxSyncService locks each one) and serves the rest.
         $schedule->command('mailboxes:poll')
             // Every 2 minutes until Microsoft's instant notifications are added on a public https address (user, 2026-09-16).
             ->everyTwoMinutes()
-            ->withoutOverlapping()
+            ->withoutOverlapping(10)
             ->onOneServer();
     }
 

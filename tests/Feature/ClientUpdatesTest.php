@@ -43,6 +43,8 @@ class ClientUpdatesTest extends TestCase
         $this->connectionId = DB::table('mailbox_connections')->insertGetId([
             'agent_id' => $this->branch->id, 'user_id' => $this->pricing->id, 'email_address' => 'desk-upd-' . uniqid('', true) . '@test.local',
             'provider' => 'outlook', 'is_active' => 1, 'auth_state' => 'connected', 'created_at' => now(), 'updated_at' => now(),
+            // A token still in date: a send renews an expired one first (2026-11-10 audit §4).
+            'expires_at' => now()->addHour(),
         ]);
 
         // Graph: a plain reply, or a draft with an attachment. Every call is kept to look at.

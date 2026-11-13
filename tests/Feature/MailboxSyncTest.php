@@ -816,4 +816,117 @@ class MailboxSyncTest extends TestCase
         $this->assertFalse($result['ok']);
         $this->assertStringContainsString('503', $result['error']);
     }
+
+    // ─── 2026-11-10 audit §4: answers that are not "try again in two minutes" ───────────────────────────────────
+
+    /** A revoked refresh token was retried on every sweep for ever, with nothing telling the owner. */
+    public function test_a_revoked_refresh_token_asks_for_a_reconnect_and_leaves_the_sweep(): void
+    {
+        $this->mailbox->forceFill(['expires_at' => now()->subMinute()])->save();
+        $this->route = fn (string $url) => str_contains($url, 'login.microsoftonline.com')
+            ? Http::response(['error' => 'invalid_grant', 'error_description' => 'AADSTS70000: The refresh token has expired.'], 400)
+            : null;
+
+        $result = $this->sync();
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('reauth_required', $this->mailbox->fresh()->auth_state);
+        $this->assertSame('refresh-token', $this->mailbox->fresh()->refresh_token);
+    }
+
+    /** A token endpoint that is merely down says nothing about the mailbox. */
+    public function test_a_token_endpoint_that_is_down_does_not_ask_for_a_reconnect(): void
+    {
+        $this->mailbox->forceFill(['expires_at' => now()->subMinute()])->save();
+        $this->route = fn (string $url) => str_contains($url, 'login.microsoftonline.com') ? Http::response('busy', 503) : null;
+
+        $this->assertFalse($this->sync()['ok']);
+        $this->assertSame('connected', $this->mailbox->fresh()->auth_state);
+    }
+
+    /** Graph drops a sync state it has kept too long (410). The stored cursor then failed on every run. */
+    public function test_an_expired_cursor_is_dropped_and_the_folder_read_again(): void
+    {
+        $this->mailbox->forceFill(['last_synced_at' => now()->subHours(3), 'sync_cursor' => json_encode([
+            'inbox' => 'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?$deltatoken=OLD',
+            'sentitems' => 'https://graph.microsoft.com/v1.0/me/mailFolders/sentitems/messages/delta?$deltatoken=FINE',
+        ])])->save();
+        $restarted = null;
+        $this->route = function (string $url) use (&$restarted) {
+            if (str_contains($url, 'deltatoken=OLD')) {
+                return Http::response(['error' => ['code' => 'SyncStateNotFound']], 410);
+            }
+            if (str_contains($url, 'mailFolders/inbox/messages/delta') && str_contains($url, '$filter')) {
+                $restarted = $url;
+            }
+
+            return null;
+        };
+        $this->fakeDelta([$this->graphMessage()]);
+
+        $result = $this->sync();
+
+        $this->assertTrue($result['ok'], (string) $result['error']);
+        $this->assertNotNull($restarted, 'The inbox was not read again from a date.');
+        $this->assertStringContainsString('receivedDateTime ge ' . now()->subHours(3)->subDay()->utc()->format('Y-m-d'), $restarted);
+        $this->assertStringContainsString('deltatoken=NEXT', json_decode($this->mailbox->fresh()->sync_cursor, true)['inbox']);
+    }
+
+    /** "Slow down" is obeyed: the mailbox is left alone until the time Graph gave, and its import is not failed. */
+    public function test_a_slow_down_answer_is_obeyed_and_is_not_a_failure(): void
+    {
+        $calls = 0;
+        $this->route = function (string $url) use (&$calls) {
+            if (str_contains($url, '/messages/delta')) {
+                $calls++;
+
+                return Http::response(['error' => ['code' => 'TooManyRequests']], 429, ['Retry-After' => '120']);
+            }
+
+            return null;
+        };
+
+        $first = $this->sync();
+        $second = $this->sync();
+
+        $this->assertSame('throttled', $first['skipped'] ?? null);
+        $this->assertSame('throttled', $second['skipped'] ?? null);
+        $this->assertSame(1, $calls, 'Graph was asked again inside the time it asked us to wait.');
+
+        $this->travel(121)->seconds();
+        $this->route = null;
+        $this->assertTrue($this->sync()['ok']);
+    }
+
+    /** The sweep, "sync now" and the import screen all sync; two at once read one cursor twice. */
+    public function test_a_mailbox_already_being_synced_is_skipped(): void
+    {
+        $held = \Illuminate\Support\Facades\Cache::lock('mailbox-sync:' . $this->mailbox->id, 60);
+        $this->assertTrue($held->get());
+        $this->fakeDelta([$this->graphMessage()]);
+
+        $result = $this->sync();
+
+        $this->assertSame('busy', $result['skipped'] ?? null);
+        $this->assertSame(0, $result['ingested']);
+
+        $held->release();
+        $this->assertSame(1, $this->sync()['ingested']);
+    }
+
+    /** A send used the stored token as it was, so an hour after the last sync it failed as "token expired". */
+    public function test_a_mailbox_is_renewed_before_it_is_used_outside_a_sync(): void
+    {
+        $this->mailbox->forceFill(['expires_at' => now()->subMinute()])->save();
+        $mailbox = $this->mailbox->fresh();
+
+        $this->assertNull(app(MailboxSyncService::class)->refusalToUse($mailbox));
+        $this->assertSame('fresh-token', $mailbox->access_token);
+
+        $mailbox->forceFill(['expires_at' => now()->subMinute()])->save();
+        $this->route = fn (string $url) => str_contains($url, 'login.microsoftonline.com')
+            ? Http::response(['error' => 'invalid_grant'], 400) : null;
+
+        $this->assertStringContainsString('reconnected', (string) app(MailboxSyncService::class)->refusalToUse($mailbox));
+    }
 }

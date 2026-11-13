@@ -146,6 +146,10 @@ class ProcessPdfOcrJob implements ShouldQueue
                 ->attach('file', file_get_contents($tempPath), basename($tempPath))
                 ->post($ocrUrl, $params);
 
+            if (in_array($response->status(), [502, 503, 504], true) && $this->retryLater($job)) {
+                return;
+            }
+
             if ($response->failed()) {
                 throw new \RuntimeException(
                     'FastAPI OCR error: ' . $response->status() . ' — ' . $response->body()
@@ -204,6 +208,15 @@ class ProcessPdfOcrJob implements ShouldQueue
             $this->discardTempFile($job);
 
         } catch (\Throwable $e) {
+            // The parser could not be reached at all (restarting, not up yet): try again shortly. A call that
+            // TIMED OUT is not retried — the parser has its own tries inside that time, and three more rounds would
+            // keep the user waiting minutes for the same answer.
+            if ($e instanceof \Illuminate\Http\Client\ConnectionException
+                && ! str_contains(strtolower($e->getMessage()), 'timed out')
+                && $this->retryLater($job)) {
+                return;
+            }
+
             Log::error('OCR Job Failed', [
                 'job_id' => $this->processingJobId,
                 'error'  => $e->getMessage(),
@@ -221,6 +234,26 @@ class ProcessPdfOcrJob implements ShouldQueue
                 'completed_at'  => now(),
             ]);
         }
+    }
+
+    /**
+     * Put the job back for another try when the parser was unreachable, and say whether it was.
+     *
+     * 🔴 `$tries = 3` did nothing before (2026-11-10 audit §4): handle() caught every error and marked the document
+     * failed, so the queue never saw a failure to retry. Nothing is refunded and the document is not marked failed
+     * here — the last try falls through to the catch below, which does both. On the `sync` queue there is no
+     * "later", so the first failure is final.
+     */
+    private function retryLater(PdfProcessingJob $job): bool
+    {
+        if ($this->job === null || $this->job instanceof \Illuminate\Queue\Jobs\SyncJob || $this->attempts() >= $this->tries) {
+            return false;
+        }
+
+        $job->update(['status' => 'pending', 'started_at' => null]);
+        $this->release($this->backoff);
+
+        return true;
     }
 
     /** Why the AI should not read this document, or null when it may: the daily limit, then credits. */

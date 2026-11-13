@@ -66,6 +66,10 @@ class AttachmentStore
             );
         }
 
+        if (($why = app(MailboxSyncService::class)->refusalToUse($connection)) !== null) {
+            throw new AttachmentException($why, 'fetch_failed', 502);
+        }
+
         try {
             $bytes = app(MailProviderRegistry::class)->for($connection->provider)
                 ->attachmentContent($connection, $message->provider_message_id, $attachment->provider_attachment_id);

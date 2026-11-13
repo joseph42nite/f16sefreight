@@ -3,6 +3,7 @@
 namespace App\Services\Mail;
 
 use App\MailboxConnection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -43,6 +44,43 @@ class MailboxSyncService
      */
     public function sync(MailboxConnection $connection, int $pagesPerFolder = 20): array
     {
+        $idle = ['ok' => false, 'ingested' => 0, 'echoes' => 0, 'threads_created' => 0, 'pages' => 0];
+
+        // The provider said when to come back; asking sooner only lengthens the wait.
+        if (($until = Cache::get(self::backoffKey($connection))) !== null) {
+            return $idle + ['error' => 'The mail provider asked us to slow down. Trying again after '
+                . \Illuminate\Support\Carbon::createFromTimestamp($until)->format('H:i') . '.', 'skipped' => 'throttled'];
+        }
+
+        // 🔴 ONE SYNC OF A MAILBOX AT A TIME. The sweep, "sync now" and the import screen all land here; two at once
+        // read the same cursor and file every message twice over (2026-11-10 audit §4). The lock expires by itself,
+        // so a killed run cannot hold a mailbox for longer than that.
+        $lock = Cache::lock('mailbox-sync:' . $connection->id, self::LOCK_SECONDS);
+
+        if (! $lock->get()) {
+            return $idle + ['error' => 'This mailbox is already being synced.', 'skipped' => 'busy'];
+        }
+
+        try {
+            return $this->run($connection, $pagesPerFolder);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /** Longer than a full run of 20 pages a folder should ever take. */
+    private const LOCK_SECONDS = 900;
+
+    /** The longest we will stay away on the provider's say-so. */
+    private const MAX_BACKOFF_SECONDS = 900;
+
+    private static function backoffKey(MailboxConnection $connection): string
+    {
+        return 'mailbox-backoff:' . $connection->id;
+    }
+
+    private function run(MailboxConnection $connection, int $pagesPerFolder): array
+    {
         $result = ['ok' => true, 'ingested' => 0, 'echoes' => 0,
                    'threads_created' => 0, 'pages' => 0, 'error' => null];
         $importing = $connection->backfill_status !== 'completed';
@@ -64,7 +102,14 @@ class MailboxSyncService
                 // Bounded. A mailbox with a long backlog must not hold the sweep open and
                 // starve every other connection — it resumes on the next run.
                 for ($page = 0; $page < $pagesPerFolder; $page++) {
-                    $batch = $provider->delta($connection, $folder, $pages[$folder] ?? $cursors[$folder] ?? null, $since);
+                    try {
+                        $batch = $provider->delta($connection, $folder, $pages[$folder] ?? $cursors[$folder] ?? null, $since);
+                    } catch (MailCursorExpired $e) {
+                        // The stored cursor is dead and would fail the same way on every run. Read the folder again
+                        // from a day before the last complete sync; what is already filed is recognised and skipped.
+                        unset($pages[$folder], $cursors[$folder]);
+                        $batch = $provider->delta($connection, $folder, null, $this->restartFrom($connection, $since));
+                    }
                     $stats = $this->ingestor->ingest($connection, $batch['messages'], historical: $importing);
 
                     $result['ingested'] += $stats['ingested'];
@@ -104,11 +149,19 @@ class MailboxSyncService
             if ($importing && $done) {
                 $connection->forceFill(['backfill_status' => 'completed', 'backfill_completed_at' => now()])->save();
             }
+        } catch (MailProviderThrottled $e) {
+            // Not a failure of the mailbox or of its import: come back when asked to.
+            $wait = min($e->retryAfterSeconds, self::MAX_BACKOFF_SECONDS);
+            Cache::put(self::backoffKey($connection), now()->addSeconds($wait)->getTimestamp(), $wait);
+
+            $result['ok'] = false;
+            $result['error'] = $e->getMessage();
+            $result['skipped'] = 'throttled';
         } catch (Throwable $e) {
             $result['ok'] = false;
             $result['error'] = $e->getMessage();
 
-            if ($importing && $connection->backfill_status === 'running') {
+            if ($importing && $connection->backfill_status === 'running' && ! $e instanceof MailboxNeedsReconnect) {
                 $attempts = (int) $connection->backfill_attempts + 1;
                 $connection->forceFill(['backfill_attempts' => $attempts,
                     'backfill_status' => $attempts >= self::IMPORT_ATTEMPTS ? 'failed' : 'running'])->save();
@@ -123,6 +176,36 @@ class MailboxSyncService
         }
 
         return $result;
+    }
+
+    /** Where a folder is read from again after its cursor expired. */
+    private function restartFrom(MailboxConnection $connection, ?\Illuminate\Support\Carbon $since): \Illuminate\Support\Carbon
+    {
+        if ($connection->last_synced_at !== null) {
+            return \Illuminate\Support\Carbon::parse($connection->last_synced_at)->subDay();
+        }
+
+        return $since ?? now()->subMonths(self::IMPORT_MONTHS)->startOfDay();
+    }
+
+    /**
+     * Make the mailbox usable for one call outside a sync — a send, an attachment fetch. Null when it is; otherwise
+     * what to tell the user. Sends used the stored access token as it was, so an hour after the last sync they
+     * failed with the provider's "token expired" (2026-11-10 audit §4).
+     */
+    public function refusalToUse(MailboxConnection $connection): ?string
+    {
+        try {
+            $this->ensureFreshToken($connection, $this->providers->for($connection->provider));
+
+            return null;
+        } catch (Throwable $e) {
+            report($e);
+
+            return $connection->auth_state === 'reauth_required'
+                ? 'This mailbox has to be reconnected in Settings before it can be used.'
+                : 'The mail provider could not be reached. Try again in a minute.';
+        }
     }
 
     /** The first run of an import: the window, and roughly how much there is to read. */
@@ -166,7 +249,15 @@ class MailboxSyncService
             throw new \RuntimeException('No refresh token; mailbox must be reconnected.');
         }
 
-        $tokens = $provider->refresh($connection->refresh_token);
+        try {
+            $tokens = $provider->refresh($connection->refresh_token);
+        } catch (MailboxNeedsReconnect $e) {
+            // 🔴 The same state as "no refresh token": the sweep reads only `connected` mailboxes, so this one stops
+            // being retried and Settings asks its owner to reconnect.
+            $connection->forceFill(['auth_state' => 'reauth_required'])->save();
+
+            throw $e;
+        }
 
         $connection->forceFill([
             'access_token'  => $tokens['access_token'],

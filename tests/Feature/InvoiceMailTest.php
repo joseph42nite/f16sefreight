@@ -49,7 +49,7 @@ class InvoiceMailTest extends TestCase
 
         DB::table('mailbox_connections')->insert(['agent_id' => $this->branch->id, 'user_id' => $this->accounts->id,
             'email_address' => 'accounts-iml-' . uniqid() . '@test.local', 'provider' => 'outlook', 'is_active' => 1,
-            'auth_state' => 'connected', 'created_at' => now(), 'updated_at' => now()]);
+            'auth_state' => 'connected', 'expires_at' => now()->addHour(), 'created_at' => now(), 'updated_at' => now()]);
 
         Http::fake(function ($request) {
             $this->sent[] = $request;

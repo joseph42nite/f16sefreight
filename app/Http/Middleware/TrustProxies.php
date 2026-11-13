@@ -16,6 +16,22 @@ class TrustProxies extends Middleware
     protected $proxies;
 
     /**
+     * From TRUSTED_PROXIES: a comma list of the load balancer's addresses, or `*` when the app is only reachable
+     * through it. Unset means no proxy is trusted — and behind one, every visitor then has the proxy's address and
+     * shares one sign-in rate limit (2026-11-10 audit §4).
+     */
+    protected function proxies()
+    {
+        $set = trim((string) config('app.trusted_proxies'));
+
+        if ($set === '') {
+            return null;
+        }
+
+        return $set === '*' ? '*' : array_map('trim', explode(',', $set));
+    }
+
+    /**
      * The headers that should be used to detect proxies.
      *
      * @var int

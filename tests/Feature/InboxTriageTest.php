@@ -37,6 +37,8 @@ class InboxTriageTest extends TestCase
         $this->pricing = $this->user('pricing');
 
         $this->connectionId = DB::table('mailbox_connections')->insertGetId([
+            // A token still in date: a send renews an expired one first (2026-11-10 audit §4).
+            'expires_at' => now()->addHour(),
             'agent_id' => $this->branch->id, 'user_id' => $this->pricing->id,
             'email_address' => 'inbox-ibx-' . uniqid('', true) . '@test.local',
             // ⚠️ `outlook`, not `gmail`. Gmail ingestion is deferred behind the Google

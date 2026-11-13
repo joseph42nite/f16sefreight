@@ -21,7 +21,8 @@ Route::middleware('signed')->group(function () {
     Route::get('download-multiple-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleHawbPdf'])->name('pdf.hawb-multiple');
     Route::get('download-multiple-both-page-hawb-pdf/{id}', [GenerateHawbPdfController::class, 'downloadMultipleWithBackHawbPdf'])->name('pdf.hawb-multiple-both');
     Route::get('download-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadConsolidationPdf'])->name('pdf.consolidation');
-    Route::get('download-multiple-consolidation-pdf/{awb_code}/{awb_no}', [GenerateConsolidationPdfController::class, 'downloadMultipleConsolidationPdf'])->name('pdf.consolidation-multiple');
+    // `download-multiple-consolidation-pdf` pointed at a method that was never written (2026-11-10 audit §4) and
+    // answered 500. Removed: POST /api/pdf-link now refuses that address with a 422 until the document exists.
 });
 use App\Blog;
 

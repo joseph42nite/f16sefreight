@@ -46,6 +46,10 @@ class ThreadMailer
             return $this->refused('The message is empty.', 'empty_body', 422);
         }
 
+        if (($why = app(MailboxSyncService::class)->refusalToUse($connection)) !== null) {
+            return $this->refused($why, 'mailbox_not_ready', 422);
+        }
+
         // 🔴 The signature is added HERE, from settings, never typed into the body (ui_ux_guide §composer).
         $signature = $withSignature ? $this->signatureFor($connection, $user) : null;
         $image = $withSignature ? app(SignatureImage::class)->for($connection) : null;

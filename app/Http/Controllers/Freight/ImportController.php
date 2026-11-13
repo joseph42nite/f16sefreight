@@ -337,6 +337,10 @@ class ImportController extends Controller
                     'reason' => 'no_mailbox'], 422);
             }
 
+            if (($why = app(\App\Services\Mail\MailboxSyncService::class)->refusalToUse($connection)) !== null) {
+                return response()->json(['error' => $why, 'reason' => 'mailbox_not_ready'], 422);
+            }
+
             $body = app(\App\Services\Mail\MailBody::class)->forEmail(nl2br(e($mail['body'])),
                 app(\App\Services\Mail\ThreadMailer::class)->signatureFor($connection, $user), null);
             $result = app(\App\Services\Mail\MailProviderRegistry::class)->for($connection->provider)->send(

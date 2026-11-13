@@ -25,6 +25,7 @@ class Ams extends Model
         'fe',
         'mawb',
         'hawb',
-        'dg_fee',
+        // The column was created as `de_fee` (2024_02_10_153807); AmsController returns it as `dg_fee`.
+        'de_fee',
     ];
 }

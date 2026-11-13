@@ -46,6 +46,13 @@ class PollMailboxes extends Command
         foreach ($connections as $connection) {
             $result = $sync->sync($connection);
 
+            // Another run has this mailbox, or the provider asked us to wait: neither is a failure.
+            if (isset($result['skipped'])) {
+                $this->line("  #{$connection->id} {$connection->email_address}: skipped — {$result['error']}");
+
+                continue;
+            }
+
             if (! $result['ok']) {
                 $totals['failed']++;
                 $this->warn("  #{$connection->id} {$connection->email_address}: {$result['error']}");

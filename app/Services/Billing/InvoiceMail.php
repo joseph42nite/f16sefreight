@@ -106,6 +106,10 @@ class InvoiceMail
             return ['ok' => false, 'error' => 'Connect your Outlook first (in Settings), so the invoice goes from you.', 'reason' => 'no_mailbox', 'status' => 422];
         }
 
+        if (($why = app(\App\Services\Mail\MailboxSyncService::class)->refusalToUse($connection)) !== null) {
+            return ['ok' => false, 'error' => $why, 'reason' => 'mailbox_not_ready', 'status' => 422];
+        }
+
         $pdf = app(BillPdf::class);
         $attachments = [['name' => $pdf->filename([$invoice->invoice_no]), 'mime_type' => 'application/pdf', 'bytes' => $pdf->render([$invoice])]];
         $signature = app(ThreadMailer::class)->signatureFor($connection, $by);

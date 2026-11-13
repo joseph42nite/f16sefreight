@@ -36,7 +36,8 @@ return [
 
         'database' => [
             'driver' => 'database',
-            'table' => 'jobs',
+            // 🔴 NOT `jobs`: that table is the shipments (2026_08_27_020100). Queued work goes in `queue_jobs`.
+            'table' => 'queue_jobs',
             'queue' => 'default',
             'retry_after' => 130,  // must exceed ProcessPdfOcrJob::$timeout (100s)
         ],

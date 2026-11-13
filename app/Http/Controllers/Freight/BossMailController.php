@@ -97,6 +97,10 @@ class BossMailController extends Controller
                 'reason' => 'no_mailbox'], 422);
         }
 
+        if (($why = app(\App\Services\Mail\MailboxSyncService::class)->refusalToUse($connection)) !== null) {
+            return response()->json(['error' => $why, 'reason' => 'mailbox_not_ready'], 422);
+        }
+
         $signature = ! blank($connection->signature_html)
             ? $mailBody->clean($connection->signature_html)
             : $mailBody->fromText(auth()->user()->signature_text ?? null);

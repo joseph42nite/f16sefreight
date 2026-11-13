@@ -40,9 +40,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// (`GET /user` behind `auth:api` was removed: no `api` guard is defined, so it could only answer 500 — audit §4.)
 
 // =================user section==========================
 // 🔒 No public sign-up: users are created by superadmin (/superadmin/create-user).
@@ -104,7 +102,7 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::post('/pdf-link', \App\Http\Controllers\Logistics\PdfLinkController::class);
 
     //File Upload API
-    Route::post('/upload-awb-file', [OcrController::class, 'extract'])->middleware('throttle:60,1');
+    Route::post('/upload-awb-file', [OcrController::class, 'extract'])->middleware('throttle:60,1,ocr-upload');
     Route::get('/ocr-status/{jobId}', [OcrController::class, 'status']);
     Route::get('/ocr-history', [OcrController::class, 'history']);
     // Readings still running (or just finished), so the panel picks them up again (user, 2026-09-18).
@@ -223,7 +221,7 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::put('/edit-company/{id}', [CompanyController::class, 'update']);
     Route::get('/all-company/{id?}', [CompanyController::class, 'index']);
     Route::get('/companies/{company}/outlook-approval-link', [CompanyController::class, 'outlookApprovalLink'])->whereNumber('company');
-    Route::delete('/company/{id?}', [CompanyController::class, 'delete']);
+    // No DELETE /company or /branch: the controllers never had a `delete`, so both answered 500 (audit §4).
     Route::get('/available-templates', [CompanyController::class, 'getAvailableTemplates']);
 
     // Coordinate System Management
@@ -241,7 +239,6 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     Route::put('/edit-branch/{id}', [BranchController::class, 'update']);
     Route::get('/all-branch/{id?}', [BranchController::class, 'index']);
     Route::get('/get-company-branch/{company_id?}', [BranchController::class, 'getCompanyBranch']);
-    Route::delete('/branch/{id?}', [BranchController::class, 'delete']);
 
     // Blog dynamic management
     Route::post('/create-blog', [BlogController::class, 'store']);
@@ -262,7 +259,9 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
 });
 
 // 🔒 Sign-in and password reset are rate limited: they are where a stranger guesses.
-Route::middleware('throttle:10,1')->group(function () {
+// 🔴 THE THIRD ARGUMENT NAMES THE COUNTER. Without it a nested limit counts on the same key as the api group's 300 a
+// minute, so every request of any kind used up the ten sign-ins (2026-11-10 audit §4). Give each limit its own name.
+Route::middleware('throttle:10,1,sign-in')->group(function () {
 Route::post('/Forgotpassword', [PasswordResetRequestController::class, 'sendEmail']);
 Route::post('/check-forgot-token', [PasswordResetRequestController::class, 'check_token']);
 Route::post('ForgotpasswordActual', [PasswordResetRequestController::class, 'forgot_password_actual']);
@@ -290,13 +289,13 @@ Route::get('/user/mailboxes/callback', [\App\Http\Controllers\Freight\MailboxCon
 // token IS the boundary. Rate-limited because an unauthenticated route that reads a token
 // is the one place a stranger can guess at. Every refusal is the same 404: distinguishing
 // expired from revoked from never-existed tells a prober which tokens were once real.
-Route::middleware('throttle:30,1')->group(function () {
+Route::middleware('throttle:30,1,shared-document')->group(function () {
     Route::get('/d/{token}', [\App\Http\Controllers\Freight\DocumentShareController::class, 'download']);
     Route::post('/d/{token}/respond', [\App\Http\Controllers\Freight\DocumentShareController::class, 'respond']);
 });
 // Setu's notice that a bank consent changed or a statement is ready (GAPS #442). UNAUTHENTICATED: the body is only used
 // to find the account, which is then read from Setu with our own keys — see BankFeedController::notify.
-Route::post('/bank-feed/setu', [\App\Http\Controllers\Freight\BankFeedController::class, 'notify'])->middleware('throttle:60,1');
+Route::post('/bank-feed/setu', [\App\Http\Controllers\Freight\BankFeedController::class, 'notify'])->middleware('throttle:60,1,bank-feed');
 /*
 |--------------------------------------------------------------------------
 | Freight OS — lifecycle (guide §5.2)

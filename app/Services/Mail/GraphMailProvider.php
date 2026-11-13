@@ -131,6 +131,16 @@ class GraphMailProvider implements MailProviderContract
             ->withHeaders(['Prefer' => 'odata.maxpagesize=50, outlook.body-content-type="text"'])
             ->get($url);
 
+        // 🔴 Three answers that are NOT "this mailbox is broken" (2026-11-10 audit §4): slow down, and a cursor Graph
+        // has dropped. Treated as plain failures they were retried at full speed, forever.
+        if ($response->status() === 429 || ($response->status() === 503 && $response->header('Retry-After') !== '')) {
+            throw new MailProviderThrottled(max(1, (int) $response->header('Retry-After') ?: 60));
+        }
+
+        if ($response->status() === 410 && $cursor !== null) {
+            throw new MailCursorExpired('Graph no longer has this sync state: ' . $response->body());
+        }
+
         if ($response->failed()) {
             throw new RuntimeException('Graph delta failed: ' . $response->status() . ' ' . $response->body());
         }
@@ -302,6 +312,12 @@ class GraphMailProvider implements MailProviderContract
             'client_secret' => $this->config('client_secret'),
             'scope'         => implode(' ', config('services.graph.scopes')),
         ]);
+
+        // A refresh token that is revoked or expired, or consent withdrawn: no retry will ever work.
+        if ($response->failed() && in_array($response->json('error'), ['invalid_grant', 'interaction_required', 'consent_required'], true)) {
+            throw new MailboxNeedsReconnect('Graph will not renew this mailbox: '
+                . ($response->json('error_description') ?? $response->json('error')));
+        }
 
         if ($response->failed()) {
             throw new RuntimeException('Graph token request failed: '

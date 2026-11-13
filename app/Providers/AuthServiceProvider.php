@@ -123,7 +123,6 @@ class AuthServiceProvider extends ServiceProvider
         // to get wrongly widened during development.
         $this->define('finalizeInvoice', ['accounts'], 'command');
         $this->define('postLedger',      ['accounts'], 'command');
-        $this->define('managePeriod',    ['accounts'], 'command');
         $this->define('reconcile',       ['accounts'], 'command');
 
         // Boss gets read-only on financial reports, and may override a credit hold.

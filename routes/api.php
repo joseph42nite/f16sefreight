@@ -19,8 +19,6 @@ use App\Http\Controllers\Logistics\OcrController;
 use App\Http\Controllers\Logistics\AddressBookController;
 use App\Http\Controllers\Data\RateController;
 use App\Http\Controllers\Data\LocationController;
-use App\Http\Controllers\Data\AmsController;
-use App\Http\Controllers\Data\ReportController;
 use App\Http\Controllers\Data\CurrencyRateController;
 use App\Http\Controllers\Generators\GenerateAwbPdfController;
 use App\Http\Controllers\Admin\BlogController;
@@ -53,15 +51,13 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::get('get-location', [LocationController::class, 'getLocation']);
     Route::get('get-currency-rate', [CurrencyRateController::class, 'getCurrency']);
     Route::get('get-notice', [SettingController::class, 'getNotice']);
-    Route::get('get-ams/{origin}', [AmsController::class, 'getAms']);
-    Route::post('report', [ReportController::class, 'insert']);
 
     //=========for the airway bill operations====
     //airway bills route
     Route::post('/create-focusair', [AirwayBillController::class, 'store']);
     Route::post('/get-consignment-error', [AirwayBillController::class, 'getConsignmentError']);
     Route::get('/agent-info', [AirwayBillController::class, 'get_agent']);
-    Route::get('/waybill/{awb_id?}', [ConversionController::class, 'WayBillConversion']);
+    // (GET /waybill/{id} is gone: it sent the waybill to the airline on a GET and recorded nothing. Saving sends.)
     Route::get('/get-shippers', [AirwayBillController::class, 'getShippers']);
     Route::get('/get-shipper-address', [AirwayBillController::class, 'getShipperAddress']);
     Route::get('/get-consignee-address', [AirwayBillController::class, 'getConsigneeAddress']);
@@ -72,7 +68,6 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::get('/get-awbcode-prefix/{code}', [AirwayBillController::class, 'getAwbPrefixData']);
     Route::get('/load-awb', [AirwayBillController::class, 'loadAWB']);
 
-    Route::get('/all-consolidation', [ConsolidationController::class, 'index']);
     Route::put('/update-consolidation/{id}', [ConsolidationController::class, 'update']);
     Route::post('/search-house-way-bills', [ConsolidationController::class, 'searchHouseWayBills']);
     Route::get('/fetch-airwaybill-data', [ConsolidationController::class, 'fetchTableData']);

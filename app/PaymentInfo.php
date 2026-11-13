@@ -7,11 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class PaymentInfo extends Model
 {
    protected $table = 'payment_info';
-
-   public function airWayBill()
-    {
-        return $this->belongsTo(AirWayBill::class, 'awb_id', 'id');
-    }
    protected $fillable = [
    //  'currency',
    //  'declear_value_carriage',

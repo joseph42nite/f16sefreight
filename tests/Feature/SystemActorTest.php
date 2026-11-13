@@ -88,7 +88,7 @@ class SystemActorTest extends TestCase
     {
         $actor = User::withoutGlobalScopes()->find(SystemActor::forCompany($this->company->id));
 
-        foreach (['triage', 'convert', 'assignOperator', 'postLedger', 'managePeriod', 'viewFinancials'] as $ability) {
+        foreach (['triage', 'convert', 'assignOperator', 'postLedger', 'managePeriods', 'viewFinancials'] as $ability) {
             $this->assertFalse(
                 Gate::forUser($actor)->allows($ability),
                 "The system actor must not be able to '{$ability}'."

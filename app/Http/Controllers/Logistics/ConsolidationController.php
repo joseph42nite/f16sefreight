@@ -20,19 +20,6 @@ class ConsolidationController extends Controller
     {
         $this->conversionController = $conversionController;
     }
-    public function index()
-    {
-        $awbNo = 12345678;
-        $awbCode = 123;
-        $wayBill = HousewayBills::where('awb_no', $awbNo)->where('awb_code', $awbCode)
-            ->where('agent_id', auth()->user()->branch_name)->get();
-        // dd($wayBill);
-        if ($wayBill) {
-            return $wayBill;
-        } else {
-            return response()->json(['message' => 'Record not found'], 404);
-        }
-    }
     public function searchHouseWayBills(Request $request)
     {
         $user = auth()->guard('user-api')->user();

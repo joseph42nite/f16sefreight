@@ -182,7 +182,9 @@ class ConversionXmlGenerationTest extends TestCase
             'special_handling_info' => json_encode([]),
         ]);
 
-        $this->actingAs($user, 'user-api')->getJson("/api/user/waybill/{$awbId}")->assertStatus(200);
+        // Built by the controller directly: the GET route that used to do this transmitted on a GET and is gone.
+        $this->actingAs($user, 'user-api');
+        $this->assertSame(200, app(\App\Http\Controllers\Logistics\ConversionController::class)->WayBillConversion($awbId)->getStatusCode());
 
         $xmlFile = "xml-conversion-files/xml_airway_bill_{$awbId}.xml";
         Storage::disk('local')->assertExists($xmlFile);

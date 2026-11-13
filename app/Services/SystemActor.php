@@ -105,10 +105,6 @@ class SystemActor
         return self::forCompany((int) $companyId);
     }
 
-    public static function isSystem(?User $user): bool
-    {
-        return $user?->designation === self::DESIGNATION;
-    }
 
     /** Test seam — the cache is per-process and would otherwise leak across cases. */
     public static function flushCache(): void

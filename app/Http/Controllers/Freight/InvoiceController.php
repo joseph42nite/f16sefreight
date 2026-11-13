@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  *
  * 🔒 **Two abilities, two roles, and the separation is the point.** Pricing edits the
  * cost sheet; ONLY accounts finalizes and posts. The person who sets the margin never
- * books the revenue. `postLedger` and `managePeriod` exclude even the Boss — the guide
+ * books the revenue. `postLedger` and `managePeriods` exclude even the Boss — the guide
  * calls this the single most likely permission to get wrongly widened.
  */
 class InvoiceController extends Controller

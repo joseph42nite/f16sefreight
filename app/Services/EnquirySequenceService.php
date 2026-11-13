@@ -236,14 +236,4 @@ class EnquirySequenceService
 
         return $now->month >= 4 ? $now->format('y') : $now->subYear()->format('y');
     }
-
-    /** Read the current value without reserving one. Never use this to mint a number. */
-    public function peek(int $agentId, string $prefix, ?string $fiscalYear = null): int
-    {
-        return (int) DB::table('sequence_counters')
-            ->where('agent_id', $agentId)
-            ->where('prefix', $prefix)
-            ->where('fiscal_year', $fiscalYear ?? $this->fiscalYear())
-            ->value('current_value');
-    }
 }

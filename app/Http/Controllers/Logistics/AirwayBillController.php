@@ -696,6 +696,10 @@ class AirwayBillController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->status == 'send') {
+            $this->abortUnlessMaySend();
+        }
+
         $this->abortUnlessOwnWaybill(AirwayBills::class, ($request->first_box['awb_code'] ?? '') . ($request->first_box['awb_no'] ?? ''));
 
         try {
@@ -874,6 +878,10 @@ class AirwayBillController extends Controller
      */
     public function update(Request $request, $id, $awb_no = null)
     {
+        if ($request->status == 'send') {
+            $this->abortUnlessMaySend();
+        }
+
         $this->abortUnlessOwnWaybill(AirwayBills::class, $id);
         $this->abortUnlessOwnWaybill(AirwayBills::class, ($request->first_box['awb_code'] ?? '') . ($request->first_box['awb_no'] ?? ''));
 

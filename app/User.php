@@ -42,6 +42,9 @@ class User extends Authenticatable implements JWTSubject
     protected $hidden = [
         'password',
         'remember_token',
+        // 🔒 The live sign-in token (frontend audit 2026-11-15, FS1): the platform's user list and `/user/verify` sent
+        // every person's token to the browser, and a token is enough to be that person.
+        'latest_token',
     ];
 
     /**

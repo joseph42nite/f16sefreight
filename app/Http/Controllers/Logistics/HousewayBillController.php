@@ -725,6 +725,10 @@ class HousewayBillController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->status == 'send') {
+            $this->abortUnlessMaySend();
+        }
+
         DB::beginTransaction();
 
         try {
@@ -864,6 +868,10 @@ class HousewayBillController extends Controller
     /** Amend a house waybill, all of it or none of it — see `store()` (2026-11-10 audit, L6). */
     public function update(Request $request, $id)
     {
+        if ($request->status == 'send') {
+            $this->abortUnlessMaySend();
+        }
+
         DB::beginTransaction();
 
         try {

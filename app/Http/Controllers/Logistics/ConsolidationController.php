@@ -197,6 +197,7 @@ class ConsolidationController extends Controller
     }
     public function manifestSend($awb_id)
     {
+        $this->abortUnlessMaySend();
         $this->abortUnlessOwnWaybill(AirwayBills::class, $awb_id);
         // 🔴 Marked sent only when the gateway took it (2026-11-10 audit, L3). It was marked sent whatever came back,
         // so a refused manifest showed as sent and nobody sent it again.

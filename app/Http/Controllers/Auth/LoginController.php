@@ -38,8 +38,6 @@ class LoginController extends Controller
         $userDataArray = $user_data->toArray();
 
         if ($role == 'user') {
-            User::where('id', $user_data->id)->update(['latest_token' => $token]);
-            
             // EAGER CACHED CONFIGURATION
             //
             // users.company_name stores the company ID, not the name: the admin user form's
@@ -80,6 +78,12 @@ class LoginController extends Controller
             if ($user_data instanceof User && $portal->scope() !== null) {
                 \App\Services\Mail\MailboxMode::recordSignIn($user_data, $portal->scope());
             }
+        }
+
+        // 🔒 Only now does this sign-in replace the earlier one (frontend audit 2026-11-15, FS4). Written before the
+        // portal check, a right password at the wrong portal was refused and still ended the person's real session.
+        if ($role == 'user') {
+            User::where('id', $user_data->id)->update(['latest_token' => $token]);
         }
 
         // Who signed in, for the platform Overview (owner, 2026-10-16) — recorded only once the portal let them in.

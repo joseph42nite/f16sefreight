@@ -25,4 +25,15 @@ class Controller extends BaseController
 
         abort_if($agentId !== null && (int) $agentId !== (int) auth()->user()?->branch_name, 404, 'Waybill not found.');
     }
+
+    /**
+     * 🔒 Only a person allowed to send transmits to the airline (frontend audit 2026-11-15, FS3).
+     *
+     * `users.can_send` only hid the Send button; the request itself was never checked. Refused before anything is
+     * saved, so a barred Send does not leave the waybill marked as sent.
+     */
+    protected function abortUnlessMaySend(): void
+    {
+        abort_unless((bool) auth()->user()?->can_send, 403, 'You are not allowed to send to the airline. Save it as a draft and ask someone who can.');
+    }
 }

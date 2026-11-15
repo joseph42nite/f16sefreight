@@ -96,12 +96,6 @@ class Enquiry extends Model
         return $this->hasMany(PdfProcessingJob::class, 'enquiry_id');
     }
 
-    /** Re-quote lineage: the cancelled job this enquiry was raised to replace. */
-    public function reinitiatedFromJob()
-    {
-        return $this->belongsTo(Job::class, 'reinitiated_from_job_id');
-    }
-
     public function scopeLost($query)
     {
         return $query->where('status', EnquiryStatus::Lost->value);

@@ -71,6 +71,12 @@ class MailboxConnection extends Model
         return $this->hasMany(EmailMessage::class, 'mailbox_connection_id');
     }
 
+    /** The mailbox a user's own mail goes out from: their newest one that is connected and switched on. */
+    public static function sendingFor(int $userId): ?self
+    {
+        return static::withoutGlobalScopes()->where('user_id', $userId)->syncable()->latest('id')->first();
+    }
+
     /**
      * Syncing requires ALL THREE conditions. Any one alone is insufficient.
      */

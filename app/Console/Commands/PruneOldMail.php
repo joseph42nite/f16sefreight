@@ -46,7 +46,7 @@ class PruneOldMail extends Command
                         ->merge(DB::table('email_messages')->whereIn('id', $messageIds)->whereNotNull('body_storage_path')->pluck('body_storage_path'));
                     DB::table('email_attachments')->whereIn('email_message_id', $messageIds)->delete();
                     DB::table('email_messages')->whereIn('id', $messageIds)->delete();
-                    DB::table('notifications')->whereIn(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.thread_id'))"), $ids->map(fn ($id) => (string) $id))->delete();
+                    DB::table('notifications')->whereIn('thread_ref', $ids->map(fn ($id) => (string) $id))->delete();
                     DB::table('email_threads')->whereIn('id', $ids)->delete();
 
                     // Files last, once the rows are gone for certain.

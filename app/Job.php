@@ -108,25 +108,9 @@ class Job extends Model
         return $this->belongsTo(User::class, 'ops_id');
     }
 
-    public function pendingOpsUser()
-    {
-        return $this->belongsTo(User::class, 'pending_ops_id');
-    }
-
     public function pricingOwner()
     {
         return $this->belongsTo(User::class, 'pricing_id');
-    }
-
-    /** Consolidation master. */
-    public function parentJob()
-    {
-        return $this->belongsTo(self::class, 'parent_job_id');
-    }
-
-    public function houseJobs()
-    {
-        return $this->hasMany(self::class, 'parent_job_id');
     }
 
     /**

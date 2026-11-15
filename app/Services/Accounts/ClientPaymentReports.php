@@ -30,9 +30,12 @@ class ClientPaymentReports
 
         $companies = DB::table('companies')->where('tier', 'command')->pluck('id');
 
+        // Last month's scores, read once — not once per client.
+        $before = DB::table('client_payment_reports')->whereIn('company_id', $companies)
+            ->where('month', $month->copy()->subMonth()->toDateString())->pluck('score', 'customer_id');
+
         foreach (DB::table('customers')->whereIn('company_id', $companies)->orderBy('id')->get() as $customer) {
-            $previous = DB::table('client_payment_reports')->where('customer_id', $customer->id)
-                ->where('month', $month->copy()->subMonth()->toDateString())->value('score');
+            $previous = $before[$customer->id] ?? null;
 
             $card = $this->grader->grade($customer, $month, $previous === null ? null : (int) $previous);
 

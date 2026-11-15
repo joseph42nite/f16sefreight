@@ -43,12 +43,6 @@ class BankTransaction extends Model
         return $this->belongsTo(AccountsInvoice::class, 'matched_invoice_id');
     }
 
-    /** A DEBIT — money out — is a payment against a purchase voucher. */
-    public function matchedVoucher()
-    {
-        return $this->belongsTo(AccountsPurchaseVoucher::class, 'matched_voucher_id');
-    }
-
     public function scopeUnreconciled($query)
     {
         return $query->where('reconciliation_status', 'unreconciled');

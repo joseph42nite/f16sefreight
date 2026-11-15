@@ -53,18 +53,7 @@ class NormalisedMessage
      */
     public function normalisedSubject(): string
     {
-        $subject = (string) $this->subject;
-
-        do {
-            $before = $subject;
-            $subject = preg_replace(
-                '/^\s*(re|aw|antw|fwd?|wg|tr|rv|sv|vs|res)\s*(\[\d+\])?\s*:\s*/i',
-                '',
-                $subject
-            );
-        } while ($subject !== $before);
-
-        return trim(preg_replace('/\s+/', ' ', $subject));
+        return \App\Support\MailSubject::normalise($this->subject);
     }
 
     /** Everyone on the message, lower-cased and sorted — the tier 3 participant set. */

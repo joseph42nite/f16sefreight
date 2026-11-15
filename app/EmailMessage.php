@@ -35,6 +35,16 @@ class EmailMessage extends Model
         'received_at'       => 'datetime',
     ];
 
+    /** Every message saved through the model carries its subject key — see App\Support\MailSubject. */
+    protected static function booted(): void
+    {
+        static::saving(function (self $message) {
+            if ($message->isDirty('subject') || $message->subject_key === null) {
+                $message->subject_key = \App\Support\MailSubject::key($message->subject);
+            }
+        });
+    }
+
     public function thread()
     {
         return $this->belongsTo(EmailThread::class, 'thread_key', 'thread_key');
@@ -48,17 +58,5 @@ class EmailMessage extends Model
     public function attachments()
     {
         return $this->hasMany(EmailAttachment::class, 'email_message_id');
-    }
-
-    /** Only inbound mail is classified. */
-    public function scopeClassifiable($query)
-    {
-        return $query->where('direction', 'inbound')->where('is_historical', false);
-    }
-
-    /** Still inside the undo window — cancelling here means nothing ever leaves. */
-    public function scopeCancellable($query)
-    {
-        return $query->where('send_state', 'queued')->where('scheduled_send_at', '>', now());
     }
 }

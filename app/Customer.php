@@ -74,11 +74,6 @@ class Customer extends Model
         return $this->belongsTo(Agent::class, 'branch_id');
     }
 
-    public function defaultPort()
-    {
-        return $this->belongsTo(Port::class, 'default_port_id');
-    }
-
     /**
      * The DERIVED client group: every customer row sharing (company_id, email_domain).
      *

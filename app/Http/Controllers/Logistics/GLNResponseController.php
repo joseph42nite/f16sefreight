@@ -98,13 +98,14 @@ class GLNResponseController extends Controller
 
         // ⚠️ "All pieces" is only true without a discrepancy: a DIS on the AWB (short-landed, damaged) holds it back.
         if ($stage === 'arrived' && StatusReponse::where('condition_code', 'DIS')
-            ->whereRaw("REPLACE(REPLACE(business_id, '-', ''), ' ', '') = ?", [str_replace('-', '', $number)])->exists()) {
+            ->where('awb_digits', str_replace('-', '', $number))->exists()) {
             return;
         }
 
-        // Stored as typed, so compared on the digits: 176-10000008 and 17610000008 are one waybill.
+        // Stored as typed, so compared on the digits: 176-10000008 and 17610000008 are one waybill. `awb_digits` is
+        // that comparison as an indexed column (migration 2026_11_13_000100).
         $jobs = \App\Job::withoutGlobalScopes()->where('transport_mode', 'air')
-            ->whereRaw("REPLACE(REPLACE(awb_number, '-', ''), ' ', '') = ?", [str_replace('-', '', $number)])->get();
+            ->where('awb_digits', str_replace('-', '', $number))->get();
 
         foreach ($jobs as $job) {
             app(\App\Services\ClientNotificationService::class)->prepareForJob($job, $stage);

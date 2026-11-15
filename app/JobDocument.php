@@ -23,9 +23,4 @@ class JobDocument extends Model
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
-
-    public function shareLinks()
-    {
-        return $this->hasMany(DocumentShareLink::class, 'job_document_id');
-    }
 }

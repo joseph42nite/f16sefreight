@@ -70,11 +70,6 @@ class SeaShipmentDetail extends Model
         return $this->belongsTo(Partner::class, 'transporter_id');
     }
 
-    public function haulageProvider()
-    {
-        return $this->belongsTo(Partner::class, 'haulage_provider_id');
-    }
-
     public function handlingAgent()
     {
         return $this->belongsTo(Partner::class, 'handling_agent_id');

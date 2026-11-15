@@ -100,8 +100,7 @@ class InvoiceMail
             return ['ok' => false, 'error' => 'Say who it goes to.', 'reason' => 'no_recipient', 'status' => 422];
         }
 
-        $connection = MailboxConnection::withoutGlobalScopes()->where('user_id', $by->id)->where('is_active', true)
-            ->whereNull('disconnected_at')->where('auth_state', 'connected')->latest('id')->first();
+        $connection = MailboxConnection::sendingFor($by->id);
         if ($connection === null) {
             return ['ok' => false, 'error' => 'Connect your Outlook first (in Settings), so the invoice goes from you.', 'reason' => 'no_mailbox', 'status' => 422];
         }

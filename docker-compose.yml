@@ -69,6 +69,34 @@ services:
     restart: unless-stopped
     networks: [f16s-network]
 
+  # Mailbox sync, one job per mailbox (App\Jobs\SyncMailbox). On its own because a sync can run for minutes: the
+  # worker above stops a job at 120 seconds and also reads documents. The scheduler queues these only because it
+  # has MAILBOX_SYNC_QUEUED=true below; the two settings go together.
+  mail-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.laravel
+    container_name: f16s-mail-worker
+    working_dir: /var/www
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OCR_SERVICE_URL=http://ai-server:8000
+      - AI_SERVER_URL=http://ai-server:8000
+      - CLAMAV_HOST=clamav
+    command: php artisan queue:work redis-long --queue=mailbox-sync --tries=1 --timeout=840
+    volumes:
+      - .:/var/www
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks: [f16s-network]
+
   # Runs app/Console/Kernel.php's schedule (snapshots:compute every 30 min for the Boss's figures,
   # mailboxes:poll, accounts:alerts, credits:grant-monthly, ...). Nothing else in this stack starts it:
   # supervisord runs only php-fpm and nginx, and the queue worker above only works queued jobs.
@@ -85,6 +113,7 @@ services:
       - REDIS_PORT=6379
       - OCR_SERVICE_URL=http://ai-server:8000
       - AI_SERVER_URL=http://ai-server:8000
+      - MAILBOX_SYNC_QUEUED=true
     command: php artisan schedule:work
     volumes:
       - .:/var/www

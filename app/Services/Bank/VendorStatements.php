@@ -104,15 +104,15 @@ class VendorStatements
         }
 
         $counts = array_fill_keys(array_keys(self::STATES), 0);
+        // The vouchers move between comparisons: nothing is remembered from the last one.
+        $this->costs = [];
 
         foreach (DB::table('vendor_statement_lines')->where('vendor_statement_id', $statementId)->get() as $line) {
             // A line a PERSON linked to a voucher (link(), GAPS #414) keeps that link while its reference still names
             // nothing — comparing again must not undo a decision somebody made.
             $jobId = $this->shipmentFor($statement->agent_id, (string) $line->reference)
                 ?? ($line->matched_voucher_id ? DB::table('accounts_purchase_vouchers')->where('id', $line->matched_voucher_id)->value('job_id') : null);
-            $ours = $jobId === null ? null : $this->ourCost((int) $jobId, (int) $statement->vendor_id);
-            $voucherId = $jobId === null ? null : DB::table('accounts_purchase_vouchers')
-                ->where('job_id', $jobId)->where('vendor_id', $statement->vendor_id)->where('status', '!=', 'void')->value('id');
+            [$ours, $voucherId] = $jobId === null ? [null, null] : $this->ourCost((int) $jobId, (int) $statement->vendor_id);
 
             // 🔴 Compared with what the airline CHARGED before its commission and discount (freight + due carrier), when
             // the line says — that is what a cost sheet books from the AWB. A company that books the net instead
@@ -213,20 +213,31 @@ class VendorStatements
             ->value('id');
     }
 
-    /** What this shipment's vouchers hold for THIS supplier, or null when nothing is booked for them. */
-    private function ourCost(int $jobId, int $vendorId): ?float
+    /**
+     * What this shipment's vouchers hold for THIS supplier and the first of those vouchers — [null, null] when nothing
+     * is booked for them. One query; a statement often has several lines for one shipment, so the answer is kept for
+     * the length of the comparison.
+     *
+     * @return array{0: ?float, 1: ?int}
+     */
+    private function ourCost(int $jobId, int $vendorId): array
     {
-        $total = DB::table('accounts_purchase_items as i')
-            ->join('accounts_purchase_vouchers as v', 'v.id', '=', 'i.purchase_voucher_id')
-            ->where('v.job_id', $jobId)->where('v.vendor_id', $vendorId)->where('v.status', '!=', 'void')
-            ->sum('i.net_amount');
+        return $this->costs["{$jobId}:{$vendorId}"] ??= (function () use ($jobId, $vendorId) {
+            // A void voucher never stood (2026-11-10 audit, M9): it is neither a cost nor "something booked".
+            $vouchers = DB::table('accounts_purchase_vouchers as v')
+                ->where('v.job_id', $jobId)->where('v.vendor_id', $vendorId)->where('v.status', '!=', 'void')
+                ->orderBy('v.id')
+                ->selectRaw('v.id, (select coalesce(sum(i.net_amount), 0) from accounts_purchase_items i where i.purchase_voucher_id = v.id) as total')
+                ->get();
 
-        // A void voucher never stood (2026-11-10 audit, M9): it is neither a cost nor "something booked".
-        return DB::table('accounts_purchase_vouchers')->where('job_id', $jobId)->where('vendor_id', $vendorId)
-            ->where('status', '!=', 'void')->exists()
-            ? round((float) $total, 2)
-            : null;
+            return $vouchers->isEmpty()
+                ? [null, null]
+                : [round((float) $vouchers->sum('total'), 2), (int) $vouchers->first()->id];
+        })();
     }
+
+    /** @var array<string, array{0: ?float, 1: ?int}> */
+    private array $costs = [];
 
     /**
      * The figure of theirs to hold our cost against: the gross (freight + due carrier) when the line gives it, unless
@@ -259,21 +270,10 @@ class VendorStatements
     /** A supplier's CSV as lines: reference, description, weight, rate, amount — whatever their spelling. */
     public function fromCsv(string $csv): array
     {
-        $rows = array_values(array_filter(array_map('str_getcsv', preg_split('/\R/', trim($csv)))));
-        $header = array_map(fn ($h) => strtolower(trim((string) $h)), array_shift($rows) ?: []);
-
-        $column = function (array $row, array $names) use ($header) {
-            foreach ($names as $name) {
-                $i = array_search($name, $header, true);
-
-                if ($i !== false && isset($row[$i])) {
-                    return trim((string) $row[$i]);
-                }
-            }
-
-            return '';
-        };
-        $money = fn (string $v) => (float) str_replace([',', '₹', ' '], '', $v);
+        $sheet = \App\Support\CsvSheet::read($csv);
+        $rows = $sheet->rows;
+        $column = fn (array $row, array $names) => $sheet->column($row, $names);
+        $money = fn (string $value) => \App\Support\CsvSheet::money($value);
         // A breakdown column that is absent stays NULL — "not given" is not "zero".
         $part = fn (array $row, array $names) => ($v = $column($row, $names)) === '' ? null : $money($v);
 

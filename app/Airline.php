@@ -31,10 +31,4 @@ class Airline extends Model
     ];
 
     protected $casts = ['is_active' => 'boolean'];
-
-    /** Carriers usable for classification: active, and with a domain to match on. */
-    public function scopeClassifiable($query)
-    {
-        return $query->where('is_active', true)->whereNotNull('domain');
-    }
 }

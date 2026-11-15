@@ -711,8 +711,7 @@ class EmailInboxController extends Controller
         ]);
 
         $user = auth()->user();
-        $connection = MailboxConnection::withoutGlobalScopes()->where('user_id', $user->id)->where('is_active', true)
-            ->whereNull('disconnected_at')->where('auth_state', 'connected')->latest('id')->first();
+        $connection = MailboxConnection::sendingFor($user->id);
 
         if ($connection === null) {
             return response()->json(['error' => 'Connect your Outlook first (in Settings), so the mail goes from you.', 'reason' => 'no_mailbox'], 422);

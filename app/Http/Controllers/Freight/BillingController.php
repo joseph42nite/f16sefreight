@@ -140,8 +140,7 @@ class BillingController extends Controller
         $this->authorize('finalizeInvoice');
 
         $invoices = $this->chosen($request);
-        $connection = \App\MailboxConnection::withoutGlobalScopes()->where('user_id', auth()->id())
-            ->where('is_active', true)->whereNull('disconnected_at')->where('auth_state', 'connected')->latest('id')->first();
+        $connection = \App\MailboxConnection::sendingFor((int) auth()->id());
 
         if ($connection === null) {
             return response()->json(['error' => 'Connect your Outlook first (in Settings), so the bills go from you.', 'reason' => 'no_mailbox'], 422);

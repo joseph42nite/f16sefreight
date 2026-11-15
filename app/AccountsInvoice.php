@@ -132,25 +132,9 @@ class AccountsInvoice extends Model
         return $this->morphTo(__FUNCTION__, 'billed_party_type', 'billed_party_id');
     }
 
-    /** The invoice a credit or debit note amends. */
-    public function parentInvoice()
-    {
-        return $this->belongsTo(self::class, 'parent_invoice_id');
-    }
-
     public function items()
     {
         return $this->hasMany(AccountsInvoiceItem::class, 'invoice_id');
-    }
-
-    public function brokerageDetail()
-    {
-        return $this->hasOne(AccountsInvoiceBrokerageDetail::class, 'invoice_id');
-    }
-
-    public function consolDetail()
-    {
-        return $this->hasOne(AccountsInvoiceConsolDetail::class, 'invoice_id');
     }
 
     public function creator()

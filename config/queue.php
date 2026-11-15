@@ -68,7 +68,24 @@ return [
             'block_for'   => null,
         ],
 
+        // The same Redis, for jobs that run for minutes (App\Jobs\SyncMailbox, timeout 840s). A job still running
+        // after retry_after is handed to a second worker, so this has to be longer than the longest job on it.
+        'redis-long' => [
+            'driver'      => 'redis',
+            'connection'  => 'default',
+            'queue'       => 'mailbox-sync',
+            'retry_after' => 900,
+            'block_for'   => null,
+        ],
+
     ],
+
+    /*
+     * Queue one job per mailbox from `mailboxes:poll` instead of syncing them one after another in the scheduler.
+     * 🔴 Turn it on only where a worker runs `queue:work redis-long --queue=mailbox-sync` (the `mail-worker` service
+     * in docker-compose.yml); without that worker no mail is fetched at all.
+     */
+    'mailbox_sync_queued' => (bool) env('MAILBOX_SYNC_QUEUED', false),
 
     /*
     |--------------------------------------------------------------------------

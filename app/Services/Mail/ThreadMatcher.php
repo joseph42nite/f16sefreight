@@ -2,6 +2,7 @@
 
 namespace App\Services\Mail;
 
+use App\Support\MailSubject;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -59,24 +60,28 @@ class ThreadMatcher
         $subject = $message->normalisedSubject();
 
         if (filled($subject)) {
-            // 🔴 Narrowed IN THE DATABASE first (2026-11-10 audit §5). This used to load every message the branch
-            // received in 30 days for each new conversation — an import of N mails read N × 30 days of rows. A stored
-            // subject that normalises to `$subject` must contain its longest word, so that word is asked for here and
-            // the exact comparison below is unchanged: nothing that matched before is lost.
+            // 🔴 AN INDEXED LOOKUP, not a read of the branch's month (2026-11-10 audit §5). `subject_key` is this same
+            // normalised subject, hashed (App\Support\MailSubject). Rows written without a key — a seeder, an older
+            // writer — are still looked through the old way, narrowed by the subject's longest word; the exact
+            // comparison below is applied to both, so nothing that matched before is lost.
+            $recent = fn () => DB::table('email_messages')
+                ->where('agent_id', $agentId)
+                ->where('received_at', '>=', now()->subDays(self::HEURISTIC_DAYS));
+
             $words = preg_split('/\s+/', $subject, -1, PREG_SPLIT_NO_EMPTY) ?: [];
             usort($words, fn ($x, $y) => strlen($y) <=> strlen($x));
             $word = addcslashes($words[0] ?? '', '\\%_');
 
-            $candidates = DB::table('email_messages')
-                ->where('agent_id', $agentId)
-                ->where('received_at', '>=', now()->subDays(self::HEURISTIC_DAYS))
-                ->when($word !== '', fn ($q) => $q->where('subject', 'like', '%' . $word . '%'))
-                ->get(['thread_key', 'subject', 'from', 'to']);
+            $candidates = $recent()->where('subject_key', MailSubject::key($subject))
+                ->get(['thread_key', 'subject', 'from', 'to'])
+                ->concat($recent()->whereNull('subject_key')
+                    ->when($word !== '', fn ($q) => $q->where('subject', 'like', '%' . $word . '%'))
+                    ->get(['thread_key', 'subject', 'from', 'to']));
 
             $participants = $message->participants();
 
             foreach ($candidates as $candidate) {
-                if ($this->normalise((string) $candidate->subject) !== $subject) {
+                if (MailSubject::normalise((string) $candidate->subject) !== $subject) {
                     continue;
                 }
 
@@ -111,20 +116,5 @@ class ThreadMatcher
         $mine = strtolower($mailboxAddress);
 
         return array_values(array_filter($addresses, fn ($a) => $a !== $mine && $a !== ''));
-    }
-
-    /** Same rule as NormalisedMessage::normalisedSubject, applied to a stored subject. */
-    private function normalise(string $subject): string
-    {
-        do {
-            $before = $subject;
-            $subject = preg_replace(
-                '/^\s*(re|aw|antw|fwd?|wg|tr|rv|sv|vs|res)\s*(\[\d+\])?\s*:\s*/i',
-                '',
-                $subject
-            );
-        } while ($subject !== $before);
-
-        return trim(preg_replace('/\s+/', ' ', $subject));
     }
 }

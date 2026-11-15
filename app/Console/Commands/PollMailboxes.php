@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\SyncMailbox;
 use App\MailboxConnection;
 use App\Services\Mail\MailboxSyncService;
 use Illuminate\Console\Command;
@@ -37,6 +38,18 @@ class PollMailboxes extends Command
 
         if ($connections->isEmpty()) {
             $this->info('No mailboxes are due for reconciliation.');
+
+            return self::SUCCESS;
+        }
+
+        // One job per mailbox on the mail worker, so a mailbox with a backlog does not hold up the rest. Asking for
+        // one connection by id is someone at a terminal who wants the answer now.
+        if (config('queue.mailbox_sync_queued') && ! $this->option('connection')) {
+            foreach ($connections as $connection) {
+                SyncMailbox::dispatch($connection->id)->onConnection(SyncMailbox::CONNECTION)->onQueue(SyncMailbox::QUEUE);
+            }
+
+            $this->info("{$connections->count()} mailbox(es) queued for sync.");
 
             return self::SUCCESS;
         }

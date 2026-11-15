@@ -109,7 +109,8 @@ class BellNotificationService
         return DB::table('notifications')
             ->where('type', self::REASSIGNMENT)
             ->whereNull('read_at')
-            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.job_id')) = ?", [(string) $jobId])
+            // `job_ref` is data->job_id as an indexed column (migration 2026_11_13_000100).
+            ->where('job_ref', (string) $jobId)
             ->delete();
     }
 }

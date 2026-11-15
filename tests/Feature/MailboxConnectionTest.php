@@ -103,6 +103,39 @@ class MailboxConnectionTest extends TestCase
         $this->assertStringContainsString($c->email_address, $this->sweep());
     }
 
+    /** With the mail worker on, the sweep hands each mailbox to it and syncs nothing itself. */
+    public function test_the_sweep_queues_one_job_per_mailbox_when_the_mail_worker_is_on(): void
+    {
+        \Illuminate\Support\Facades\Queue::fake();
+        config()->set('queue.mailbox_sync_queued', true);
+
+        $due = $this->connection();
+        $removed = $this->connection(['disconnected_at' => now()]);
+
+        $out = $this->sweep();
+
+        $this->assertStringContainsString('queued', $out);
+        \Illuminate\Support\Facades\Queue::assertPushedOn(\App\Jobs\SyncMailbox::QUEUE, \App\Jobs\SyncMailbox::class,
+            fn ($job) => $job->connectionId === $due->id);
+        \Illuminate\Support\Facades\Queue::assertNotPushed(\App\Jobs\SyncMailbox::class,
+            fn ($job) => $job->connectionId === $removed->id);
+        Http::assertNothingSent();
+    }
+
+    /** The job does the sync, and leaves alone a mailbox that was removed while it waited in the queue. */
+    public function test_the_queued_job_syncs_the_mailbox_unless_it_was_removed_meanwhile(): void
+    {
+        Http::fake(fn () => Http::response(['value' => [], '@odata.deltaLink' => 'd'], 200));
+
+        $removed = $this->connection(['disconnected_at' => now()]);
+        (new \App\Jobs\SyncMailbox($removed->id))->handle(app(\App\Services\Mail\MailboxSyncService::class));
+        Http::assertNothingSent();
+
+        $due = $this->connection();
+        (new \App\Jobs\SyncMailbox($due->id))->handle(app(\App\Services\Mail\MailboxSyncService::class));
+        $this->assertNotEmpty(Http::recorded(), 'the mailbox was asked for its mail');
+    }
+
     /** A superadmin tier downgrade. Skipped — but the tokens stay. */
     public function test_an_inactive_mailbox_is_skipped_but_keeps_its_tokens(): void
     {

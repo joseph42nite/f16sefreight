@@ -329,8 +329,7 @@ class ImportController extends Controller
 
         if ($data['decision'] === 'send') {
             $user = auth()->user();
-            $connection = \App\MailboxConnection::withoutGlobalScopes()->where('user_id', $user->id)->where('is_active', true)
-                ->whereNull('disconnected_at')->where('auth_state', 'connected')->latest('id')->first();
+            $connection = \App\MailboxConnection::sendingFor($user->id);
 
             if ($connection === null) {
                 return response()->json(['error' => 'Connect your Outlook first (in Settings), so the notice goes from you.',

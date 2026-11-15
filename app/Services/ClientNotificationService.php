@@ -430,7 +430,8 @@ class ClientNotificationService
     private function dissolveBell(EmailThread $thread): void
     {
         DB::table('notifications')->where('type', self::BELL_TYPE)
-            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.thread_id')) = ?", [(string) $thread->id])
+            // `thread_ref` is data->thread_id as an indexed column (migration 2026_11_13_000100).
+            ->where('thread_ref', (string) $thread->id)
             ->delete();
     }
 }

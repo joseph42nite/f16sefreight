@@ -94,6 +94,7 @@ class MessageIngestor
                     'cc'                    => implode(', ', $message->cc) ?: null,
                     'bcc'                   => implode(', ', $message->bcc) ?: null,
                     'subject'               => $message->subject,
+                    'subject_key'           => \App\Support\MailSubject::key($message->subject),
                     'body_snippet'          => $message->snippet === null
                         ? null : mb_substr($message->snippet, 0, 500),
                     'received_at'           => $message->receivedAt,

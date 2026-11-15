@@ -113,21 +113,10 @@ class StatementImporter
      */
     public function fromCsv(string $csv): array
     {
-        $rows = array_values(array_filter(array_map('str_getcsv', preg_split('/\R/', trim($csv)))));
-        $header = array_map(fn ($h) => strtolower(trim((string) $h)), array_shift($rows) ?: []);
-
-        $column = function (array $row, array $names) use ($header) {
-            foreach ($names as $name) {
-                $i = array_search($name, $header, true);
-
-                if ($i !== false && isset($row[$i])) {
-                    return trim((string) $row[$i]);
-                }
-            }
-
-            return '';
-        };
-        $money = fn (string $value) => (float) str_replace([',', '₹', ' '], '', $value);
+        $sheet = \App\Support\CsvSheet::read($csv);
+        $rows = $sheet->rows;
+        $column = fn (array $row, array $names) => $sheet->column($row, $names);
+        $money = fn (string $value) => \App\Support\CsvSheet::money($value);
 
         $lines = [];
 

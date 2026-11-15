@@ -634,6 +634,34 @@ class MailboxSyncTest extends TestCase
             'Two clients sharing a subject were merged into one thread.');
     }
 
+    /**
+     * Tier 3 through the indexed subject key (2026-11-10 audit §5): a reply with a new conversation id and no reply
+     * chain joins by subject and sender — whether the earlier row carries the key or was written without one.
+     */
+    public function test_a_reply_joins_by_subject_with_or_without_a_stored_key(): void
+    {
+        foreach ([true, false] as $keyed) {
+            $subject = $keyed ? 'Rates for the Hamburg lot' : 'Rates for the Dubai lot';
+
+            $this->fakeDelta([$this->graphMessage(['subject' => $subject])]);
+            $this->sync();
+
+            $first = DB::table('email_messages')->where('agent_id', $this->branch->id)->where('subject', $subject)->first();
+            $this->assertSame(md5($subject), $first->subject_key);
+
+            if (! $keyed) {
+                DB::table('email_messages')->where('id', $first->id)->update(['subject_key' => null]);
+            }
+
+            $this->fakeDelta([$this->graphMessage(['subject' => 'RE: Fwd:  ' . $subject])]);
+            $this->sync();
+
+            $this->assertSame(1, DB::table('email_messages')->where('agent_id', $this->branch->id)
+                ->where('subject', 'like', '%' . $subject)->distinct()->count('thread_key'),
+                $keyed ? 'the keyed row was not matched' : 'the row without a key was not matched');
+        }
+    }
+
     // ─── Direction and the SLA clock ─────────────────────────────────────────
 
     /**

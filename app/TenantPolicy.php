@@ -29,12 +29,6 @@ class TenantPolicy extends Model
 
     protected $guarded = ['id', 'policy_scope_gate'];
 
-    /** agent_id NULL = company-wide. */
-    public function scopeCompanyWide($query)
-    {
-        return $query->whereNull('agent_id');
-    }
-
     /**
      * Resolve one setting: branch override, then company-wide, then the config default.
      */

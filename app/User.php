@@ -101,11 +101,6 @@ class User extends Authenticatable implements JWTSubject
         return $this->designation === \App\Services\SystemActor::DESIGNATION;
     }
 
-    public function originPort()
-    {
-        return $this->belongsTo(Port::class, 'origin_port_id');
-    }
-
     public function getJWTIdentifier(){
         return $this->getKey();
     }

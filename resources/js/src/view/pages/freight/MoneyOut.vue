@@ -463,6 +463,9 @@ export default {
           this.total = data.total || 0;
           this.picked = {};
           this.amounts = {};
+          // With the picks (frontend audit, FM2): kept, the next run for the same supplier opened with the last run's
+          // commission and discount already typed in.
+          this.deductions = {};
         })
         .catch(() => {});
     },

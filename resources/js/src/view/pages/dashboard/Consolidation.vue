@@ -468,7 +468,7 @@
                                      <b-button class="show-btn" type="button" @click="generateAwbPDF">
                                          <b-icon icon="file-earmark-pdf" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Generate PDF</b>
                                      </b-button>
-                                     <b-button class="show-btn" type="button" @click="manifest_send()" id="manifest-send-btn">
+                                     <b-button v-if="current_user && current_user.can_send" class="show-btn" type="button" :disabled="manifestSending" @click="manifest_send()" id="manifest-send-btn">
                                          <b-icon icon="cursor" class="mr-2"></b-icon><b class="font-weight-bolder" style="font-size: 1.05rem;">Send</b>
                                      </b-button>
                                  </div>
@@ -491,11 +491,13 @@ import DatePicker from "vue2-datepicker";
 import SideBar from "@/view/layouts/public/SideBar.vue";
 import DashboardHistoryModal from "@/view/components/DashboardHistoryModal.vue";
 import ApiService from "@/core/services/api.service";
+import { mapGetters } from "vuex";
 import { loadLocations } from "@/core/services/location.cache";
 import "vue2-datepicker/index.css";
 export default {
     data() {
         return {
+            manifestSending: false,
             form: new Form({
                 id: '',
                 master_origin: '',
@@ -676,9 +678,25 @@ export default {
         mouseleave: function () {
             this.isOpen = false;
         },
+        /**
+         * Send the house manifest and say what the airline's gateway answered (frontend audit, FW5). It used to say
+         * nothing either way, including for the 502 the server gives when the gateway refuses the manifest.
+         */
         manifest_send(){
+            if (this.manifestSending) return;
+            this.manifestSending = true;
+            const say = (title, variant, text) => this.$bvToast.toast(text, { title, variant, solid: true, autoHideDelay: 8000 });
+
             ApiService.get(`/user/manifest-send/${this.form.awb_code}${this.form.awb_no}`)
-                .then(response => {});
+                .then(() => say('Sent', 'success', 'The manifest was sent to the airline.'))
+                .catch(error => {
+                    const response = error && error.response;
+                    const body = (response && response.data) || {};
+                    const why = (body.send_response && body.send_response.error) || body.message
+                        || (response ? `The server answered with an error (${response.status}).` : 'The server could not be reached.');
+                    say('Not sent', 'danger', `The manifest was NOT sent to the airline. ${why}`);
+                })
+                .finally(() => { this.manifestSending = false; });
         },
         showModal() {
             this.$refs["my-modal"].show();
@@ -792,7 +810,9 @@ export default {
                 status: 'draft'
             };
             
-            this.form.put(`/user/update-consolidation/${this.form.id}`, updateData)
+            // 🔴 The form's own `put` with `updateData` as a second argument sent the form's own fields and ignored `updateData` (vform reads the
+            // second argument as axios settings), so special-handling edits were never saved (frontend audit, FW3).
+            ApiService.put(`/user/update-consolidation/${this.form.id}`, updateData)
             .then(response => {
                 this.$bvToast.toast('House waybill updated successfully', {
                     title: 'Success',
@@ -1130,6 +1150,7 @@ export default {
         this.getOCIData();
     },
     computed: {
+        ...mapGetters({ current_user: "currentUser" }),
         filteredLocations_destination() {
             const query = this.form.master_destination.toLowerCase().trim();
             if (!query) return this.location;

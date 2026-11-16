@@ -371,6 +371,12 @@ export default {
         .catch((e) => { this.actionError = this.messageFor(e); this.gstFigures = null; })
         .finally(() => { this.gstLoading = false; });
     },
+    /** The server's own reason. This page called it without having it (frontend audit, FM4), so a failed load threw. */
+    messageFor(e) {
+      const d = (e && e.response && e.response.data) || {};
+
+      return d.error || d.message || "The figures for that month could not be loaded.";
+    },
     download(which, format) {
       const step = this.steps.find((s) => s.key === "gst");
 

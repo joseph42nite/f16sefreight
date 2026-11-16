@@ -1600,7 +1600,10 @@ export default {
     loadPreview() {
       this.preview = null;
       this.previewLoading = true;
-      ApiService.get(`/invoices/${this.selected.id}/posting-preview`)
+      // The buy side has its own preview (frontend audit, FM3): after posting a purchase voucher this asked for the
+      // INVOICE with the same id, which is an error or somebody else's journal.
+      const kind = this.view === "vouchers" ? "vouchers" : "invoices";
+      ApiService.get(`/${kind}/${this.selected.id}/posting-preview`)
         .then(({ data }) => { this.preview = data; })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.previewLoading = false; });

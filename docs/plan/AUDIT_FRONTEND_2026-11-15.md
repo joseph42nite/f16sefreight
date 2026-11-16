@@ -78,10 +78,14 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FW3 [V]** `Consolidation.vue:795` → `this.form.put(url, updateData)`: vform treats the second argument as
   axios config and sends the form's own data. Special-handling edits on a consolidation show a success toast and
   save nothing.
+  ✅ **Fixed 2026-11-16:** the edit goes through `ApiService.put` with `updateData`. Not seen in a browser.
 - **FW4 [R]** `Consolidation.vue:405, 432, 877-879` → the trash icon on a house row deletes nothing on the server;
   it removes a special-handling code from the form being edited.
+  ⏸ Left: what the trash should do (delete the house, or take it off this master) is the owner's call.
 - **FW5 [R]** `Consolidation.vue:679-682` → manifest Send has an empty `then` and no `catch`: no feedback either
   way, including the 502 for a refused manifest.
+  ✅ **Fixed 2026-11-16:** a toast says sent, or NOT sent with the gateway's or server's reason; the button is
+  hidden from a person who may not send (FS3) and cannot be double-clicked. Not seen in a browser.
 - **FW6 [R]** Things that cannot be removed once saved, because the screen sends an empty list and the controller
   skips empty lists: special-handling codes (`AirwayBillController.php:664, 823`, `HousewayBillController.php:706`),
   OCI lines (`:613-617`, also two lines with one identifier collapse into one), the last other charge on a house,
@@ -122,10 +126,13 @@ The backend audit is `AUDIT_2026-11-10.md`.
   "Place against it" is rupees, unlabelled. Typing 1000 against "USD 1,000.00" settles ₹1,000 of it.
 - **FM2 [V]** `freight/MoneyOut.vue:384, 511, 522` → the per-supplier commission and discount are never reset
   after a payment run. The next run with the same supplier arrives pre-filled with the last run's figures.
+  ✅ **Fixed 2026-11-16:** cleared with the picks when the list reloads.
 - **FM3 [V]** `freight/Financials.vue:1600-1603, 1632` → after posting a purchase voucher the drawer loads
   `/invoices/{id}/posting-preview`: an error, or the journal of an unrelated invoice with the same id.
+  ✅ **Fixed 2026-11-16:** `loadPreview` asks `/vouchers/…` on the vouchers view.
 - **FM4 [V]** `freight/CloseMonth.vue:371` → calls `this.messageFor`, which this page does not define. When a
   month's GST figures fail to load, the previous month's stay on screen while Download uses the new month.
+  ✅ **Fixed 2026-11-16:** `messageFor` is defined, so the failure shows its reason and the stale figures are dropped.
 - **FM5 [R]** `freight/MoneyIn.vue:75-81` + `Billing.vue:1026-1034` → stepping between "to bill", "drafts" and
   "issued" changes the header but not the list.
 - **FM6 [R]** `Financials.vue:1544` → the invoice Status filter is sent to the Bank register too, which reads it
@@ -166,6 +173,8 @@ The backend audit is `AUDIT_2026-11-10.md`.
   Nothing calls `POST /api/Forgotpassword`, so there is no self-service reset — and FS2 breaks the mail anyway.
 - **FA3 [V]** `public/DeepanjanCard.vue:426, 465` → the email is `@f16sefrieght.com` (misspelt). The email button
   and the downloaded contact card point at a domain the company does not own.
+  ✅ **Fixed 2026-11-16:** both lines now read `@f16sefreight.com`. Specs for this batch:
+  `tests/js/frontendAuditFixes.spec.js`.
 - **FA4 [V]** `admin/Settings.vue:86` → calls `GET /superadmin/get-airline-list`, which does not exist. The
   airline list is always empty, so no airline notice can be added.
 - **FA5 [R]** `admin/NewBlog.vue:24, 298` → "Update Blog" always sends `is_draft=0`: editing a draft publishes it.

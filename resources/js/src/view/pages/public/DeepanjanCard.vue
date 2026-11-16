@@ -423,7 +423,7 @@ export default {
   data() {
     return {
       phoneNumber: "7278178402",
-      emailId: "d.sarkar@f16sefrieght.com",
+      emailId: "d.sarkar@f16sefreight.com",
       whatsappUrl: "https://wa.me/917278178402?text=Hi%20Deepanjan%2C%20I%20accessed%20your%20digital%20card%20and%20would%20like%20to%20connect.",
       shareModalOpen: false,
       emailModalOpen: false,
@@ -462,7 +462,7 @@ export default {
         "ORG:F16s E-Freight Solutions",
         "TITLE:COO & Founder",
         "TEL;TYPE=CELL,VOICE:+917278178402",
-        "EMAIL;TYPE=PREF,INTERNET:d.sarkar@f16sefrieght.com",
+        "EMAIL;TYPE=PREF,INTERNET:d.sarkar@f16sefreight.com",
         "URL:https://f16sefreight.com",
         "URL;type=LinkedIn:https://www.linkedin.com/in/deepanjan-sarkar-b5a28b290/",
         "X-SOCIALPROFILE;type=linkedin:https://www.linkedin.com/in/deepanjan-sarkar-b5a28b290/",

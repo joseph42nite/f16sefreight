@@ -23,7 +23,10 @@ html {
 // 3rd party plugins css
 @import "~bootstrap-vue/dist/bootstrap-vue.css";
 @import "~perfect-scrollbar/css/perfect-scrollbar.css";
-@import "~@fortawesome/fontawesome-free/css/all.css";
+// Solid and regular only (FP3): no page uses a brand icon, and `all.css` carried all three families.
+@import "~@fortawesome/fontawesome-free/css/fontawesome.css";
+@import "~@fortawesome/fontawesome-free/css/solid.css";
+@import "~@fortawesome/fontawesome-free/css/regular.css";
 
 // Main demo style scss
 @import "assets/sass/style.vue";

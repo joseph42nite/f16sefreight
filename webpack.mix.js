@@ -24,6 +24,15 @@ mix.webpackConfig({
         chunkFilename: "js/chunk/[name].[chunkhash].js",
     },
     plugins: [
+        // The list of icons the app uses is rewritten from the source before every compile (build/used-icons.js), so a
+        // page that starts using a new one gets it without anyone remembering to add it.
+        {
+            apply: (compiler) => {
+                const refresh = () => require("./build/used-icons").write();
+                compiler.hooks.beforeRun.tap("UsedIcons", refresh);
+                compiler.hooks.watchRun.tap("UsedIcons", refresh);
+            },
+        },
         // Last build's chunks go, so a stale tab gets a clean 404 (and reloads — router.js)
         // rather than a file from another build; and public/js/chunk does not grow forever.
         {

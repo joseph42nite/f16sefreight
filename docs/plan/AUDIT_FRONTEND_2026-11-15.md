@@ -346,7 +346,19 @@ The backend audit is `AUDIT_2026-11-10.md`.
   globals. ⏸ jQuery and vform stay: the theme files and four pages reach jQuery through `window`.
 - **FP3 [R]** `core/plugins/bootstrap-vue.js:5-7` → all of BootstrapVue plus the whole icon set; `App.vue:10-26` →
   seven font files and all of Font Awesome in a 2.7 MB render-blocking stylesheet.
-  ⏸ Left: 17 icons are chosen at run time (`:icon=`), so trimming the icon set needs each of those checked.
+  ✅ **Fixed 2026-11-16 (icons):** the app registers the 134 Bootstrap icons its source names, not all 1,371.
+  `build/used-icons.js` writes the list (`core/plugins/bootstrap-icons.generated.js`) from the source before every
+  compile: any quoted word that is an icon's name is kept, which covers the places that choose an icon at run time
+  without following the code. `tests/js/usedIcons.spec.js` fails if the list is stale or a template names an icon
+  that is not in it, and the pre-push hook runs it. **Production build:** `vendor.js` 1,250 KB → 676 KB (313 KB →
+  187 KB gzipped). The development build shows no change: it never drops unused code. Font Awesome is down to the
+  two families used (solid, regular); that saves under 1 KB, the font files were only ever fetched when used.
+  Looked at on screen: home, contact, blog list, both waybill forms, consolidation, the board — no icon went blank.
+  ⚠️ Not from this change: on the landing page's board mock-up (`HomeBoardScreen.vue`, someone's work in progress)
+  two icons draw blank because this version of the icon library has no `send` (used twice); `ContactUs.vue` names
+  `graph-up-arrow`, which it does not have either.
+  ⏸ Left: `app.css` is 2.28 MB minified (241 KB gzipped) and render-blocking; it is the old theme's stylesheet
+  plus every page's styles, and trimming it is a job of its own. The seven font files are as they were.
 - **FP4 [R]** `public/blogData.js` (eight full articles) ships in the home page chunk to show four titles;
   `GET /get-public-blogs` returns every post with its full body.
   ✅ **Fixed 2026-11-16 (server half):** the public list no longer carries the bodies; the article is fetched with the

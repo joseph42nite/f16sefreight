@@ -135,6 +135,7 @@
                 </button>
             </div>
 
+            <div v-if="saveError" class="alert alert-danger mt-5 text-center" role="alert">{{ saveError }}</div>
             <div v-if="savedSuccessfully" class="alert alert-custom alert-light-success mt-5 text-center font-weight-bold">
                 <i class="fas fa-check-circle mr-2 text-success"></i> Saved Successfully
             </div>
@@ -147,6 +148,7 @@
 </template>
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 export default {
   data() {
@@ -183,7 +185,8 @@ export default {
       isDropdownOpen: false,
       showpass: true,
       isSubmitting: false,
-      savedSuccessfully: false
+      savedSuccessfully: false,
+      saveError: ""
     };
   },
   methods: {
@@ -207,6 +210,7 @@ export default {
       evt.preventDefault();
       this.isSubmitting = true;
       this.savedSuccessfully = false;
+      this.saveError = "";
       
       if (!this.user_form.origin_airport_code && this.searchQuery) {
           // AUTO-CAPTURE: If you type 'DXB' but don't click dropdown, intercept the raw text so validation succeeds.
@@ -218,7 +222,7 @@ export default {
         .then(({ data }) => {
           this.$router.push('/superadmin/all-users');
         })
-        .catch(err => {})
+        .catch(err => { this.saveError = serverMessage(err, "The user could not be saved."); })
         .finally(() => { this.isSubmitting = false; });
       }
       else {
@@ -227,7 +231,7 @@ export default {
            this.savedSuccessfully = true;
            setTimeout(() => { this.savedSuccessfully = false; }, 4000);
         })
-        .catch(err => {})
+        .catch(err => { this.saveError = serverMessage(err, "The user could not be saved."); })
         .finally(() => { this.isSubmitting = false; });
       }
     },

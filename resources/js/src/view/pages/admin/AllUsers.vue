@@ -168,6 +168,7 @@ export default {
           this.items=data;
           this.totalRows=this.filteredUsers.length;
         })
+        .catch((err) => this.sayFailed("The users could not be loaded", err))
         .finally(() => {
           this.isLoading = false;
         })

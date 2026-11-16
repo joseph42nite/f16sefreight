@@ -76,6 +76,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 import Swal from "sweetalert2";
 
 export default {
@@ -156,7 +157,8 @@ export default {
                 });
             })
             .catch(err => {
-                Swal.fire("Validation Fail", "Coordinate vectors must contain positive integer values.", "error");
+                // The server's own reason (FA8): every failure used to be reported as a coordinates error.
+                Swal.fire("Not saved", serverMessage(err, "The template could not be saved."), "error");
             })
             .finally(() => {
                 this.isSaving = false;

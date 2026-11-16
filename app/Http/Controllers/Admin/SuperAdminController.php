@@ -192,21 +192,9 @@ class SuperAdminController extends Controller
             return $stored;
         }
 
-        // Fallback: Generate mockup/simulated XML if it doesn't exist for test purposes
-        $awb = AirwayBills::with(['consignmentData', 'agentsInfo'])->find($awb_id);
-        if ($awb) {
-            $xml = new \SimpleXMLElement('<ShipmentMessage/>');
-            $xml->addChild('AwbNumber', $awb->awb_code . '-' . $awb->awb_no);
-            $xml->addChild('Origin', $awb->departure_airport);
-            $xml->addChild('Destination', $awb->destination_airport);
-            $xml->addChild('Pieces', $awb->consignmentData->pieces ?? 0);
-            $xml->addChild('Weight', $awb->consignmentData->gross_weight ?? 0);
-            $xml->addChild('SentAt', $awb->created_at);
-            $xml->addChild('Note', 'Simulated XML generated on the fly as file was not found');
-            return $this->xmlResponse($xml);
-        }
-
-        return response()->json(['error' => 'XML file not found'], 404);
+        // No made-up XML (2026-11-15 frontend audit, FA6): the viewer showed and downloaded a "simulated" message as
+        // the one that went to the airline. What was not kept is said to be missing.
+        return response()->json(['error' => 'The message sent for this waybill was not kept, so there is nothing to show.'], 404);
     }
 
     public function getMawbHawbs($awb_code, $awb_no)
@@ -235,21 +223,7 @@ class SuperAdminController extends Controller
             return $stored;
         }
 
-        // Fallback: Generate mockup/simulated XML if it doesn't exist for test purposes
-        $hawb = HousewayBills::with(['consignmentData'])->find($hawb_id);
-        if ($hawb) {
-            $xml = new \SimpleXMLElement('<HouseShipmentMessage/>');
-            $xml->addChild('HouseAwbNumber', $hawb->id);
-            $xml->addChild('MasterAwbNumber', $hawb->awb_code . '-' . $hawb->awb_no);
-            $xml->addChild('Destination', $hawb->destination_airport);
-            $xml->addChild('Pieces', $hawb->consignmentData->pieces ?? 0);
-            $xml->addChild('Weight', $hawb->consignmentData->gross_weight ?? 0);
-            $xml->addChild('SentAt', $hawb->created_at);
-            $xml->addChild('Note', 'Simulated HAWB XML generated on the fly as file was not found');
-            return $this->xmlResponse($xml);
-        }
-
-        return response()->json(['error' => 'XML file not found'], 404);
+        return response()->json(['error' => 'The message sent for this waybill was not kept, so there is nothing to show.'], 404);
     }
 
     /**

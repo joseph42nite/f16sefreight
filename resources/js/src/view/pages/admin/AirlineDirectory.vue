@@ -120,7 +120,7 @@ export default {
       this.loading = true;
       this.error = null;
 
-      ApiService.get("/superadmin/airlines?q=" + encodeURIComponent(this.q))
+      ApiService.get("/superadmin/airlines?per_page=500&q=" + encodeURIComponent(this.q))
         .then(({ data }) => { this.rows = data.data || []; })
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.loading = false; });

@@ -16,6 +16,7 @@
                   <span for="conform_password">Confirm Password</span>&nbsp;&nbsp;&nbsp;
                   <input type="password" id="password_confirmation" class="form-control" v-model="forget_password.password_confirmation" required>
               </div>
+              <div v-if="reset_error" class="text-danger mb-3" role="alert">{{ reset_error }}</div>
               <button type="submit" class="btn btn-primary">Reset Password</button>
             </form>
             <div class="text-danger" v-else>Forgot password token is invalid</div>
@@ -28,6 +29,7 @@
 
 <script>
 import axios from 'axios';
+import { serverMessage } from "@/core/services/serverMessage";
 export default {
     data() {
       return {
@@ -40,15 +42,17 @@ export default {
         token:'',
         has_error: true,
         password_changed:false,
+        reset_error:'',
       }
     },
     methods: {
         ResetPassword() {
+            this.reset_error = '';
             axios.post("/ForgotpasswordActual", { ...this.forget_password, token: this.token }).then(res => {
                this.password_changed=true;
             })
             .catch(err=>{
-                // console.log(err);
+                this.reset_error = serverMessage(err, 'The password could not be reset.');
             });
         }
     },

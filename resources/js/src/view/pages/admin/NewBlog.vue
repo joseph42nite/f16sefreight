@@ -19,11 +19,12 @@
             <div class="d-flex" style="gap: 12px;">
                 <b-button variant="outline-primary" @click="submitPost(true)" class="px-6 font-weight-bolder" :disabled="submitting">
                     <b-spinner small v-if="submitting" class="mr-2"></b-spinner>
-                    Save as Draft
+                    {{ isPublished ? 'Unpublish (save as draft)' : 'Save as Draft' }}
                 </b-button>
                 <b-button variant="primary" @click="submitPost(false)" class="px-8 font-weight-bolder" :disabled="submitting">
                     <b-spinner small v-if="submitting" class="mr-2"></b-spinner>
-                    {{ blogId ? 'Update' : 'Publish' }} Blog
+                    <!-- Said as it is (FA5): on a draft this button PUBLISHES, so it does not read "Update". -->
+                    {{ isPublished ? 'Update' : 'Publish' }} Blog
                 </b-button>
             </div>
         </div>
@@ -188,6 +189,10 @@ export default {
         };
     },
     computed: {
+        /** A post being edited that is already live; a new post and a draft are not. */
+        isPublished() {
+            return !!(this.blogId && this.blogData.published_at);
+        },
         blogId() {
             return this.$route.params.id || null;
         },
@@ -298,10 +303,12 @@ export default {
             fd.append('is_draft', isDraft ? '1' : '0');
             
             // Format takeaways to drop empties and append each element correctly
-            const filteredTakeaways = this.blogData.takeaways.filter(t => t.trim().length > 0);
+            const filteredTakeaways = (this.blogData.takeaways || []).filter(t => t && t.trim().length > 0);
             filteredTakeaways.forEach((t, index) => {
                 fd.append(`takeaways[${index}]`, t);
             });
+            // None left: say so, or the server keeps the old ones and they can never be cleared (FA5).
+            if (!filteredTakeaways.length) fd.append('takeaways', '');
 
             if (this.selectedFile) {
                 fd.append('image', this.selectedFile);

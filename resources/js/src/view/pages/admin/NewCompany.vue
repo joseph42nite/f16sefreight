@@ -105,6 +105,7 @@
                         </b-form-group>
                     </div>
                 </div>
+                <div v-if="saveError" class="alert alert-danger mt-3" role="alert">{{ saveError }}</div>
                 <div class="alert alert-success mt-3" role="alert" id="fade">
                     <span class="font-weight-bolder font-size-h6">Saved Successfully</span>
                 </div>
@@ -117,10 +118,12 @@
 </template>
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 export default {
     data() {
         return {
+            saveError: "",
             company_form: new Form({
                 id: "",
                 name: "",
@@ -158,21 +161,24 @@ export default {
                 return;
             }
 
+            this.saveError = "";
+            const failed = (err) => { this.saveError = serverMessage(err, "The company could not be saved."); };
+
             if (this.action == "Add") {
                 this.company_form
                     .post(`/superadmin/create-company`)
                     .then(({ data }) => {
                         this.$router.push({ path: "/superadmin/tenants", query: { company: String(data.company.id) } });
                     })
-                    .catch((err) => {
-                    });
+                    .catch(failed);
             } else {
                 this.company_form
                     .put(`/superadmin/edit-company/${this.company_form.id}`)
                     .then(({ data }) => {
                         $("#fade").fadeToggle(1000);
                         setTimeout(() => $("#fade").fadeToggle(1000), 2000);
-                    });
+                    })
+                    .catch(failed);
             }
         },
         addTemplateRow() {

@@ -142,6 +142,7 @@
                         <has-error :form="branch_form" field="ho_country"></has-error>
                     </b-form-group>
                 </div>
+                <div v-if="saveError" class="alert alert-danger mt-3" role="alert">{{ saveError }}</div>
                 <div class="alert alert-success mt-3" role="alert" id="fade">
                     <span class="font-weight-bolder font-size-h6">Saved Successfully</span>
                 </div>
@@ -154,10 +155,12 @@
 </template>
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 export default {
     data() {
         return {
+            saveError: "",
             branch_form: new Form({
                 id: "",
                 //agent details
@@ -204,20 +207,23 @@ export default {
     methods: {
         onSubmit(evt) {
             evt.preventDefault();
+            this.saveError = "";
+            const failed = (err) => { this.saveError = serverMessage(err, "The branch could not be saved."); };
+
             if (this.action == "Add") {
                 this.branch_form.post(`/superadmin/create-branch`)
                     .then(({ data }) => {
                         this.$router.push({ path: "/superadmin/tenants", query: { company: String(this.branch_form.company_id) } });
                     })
-                    .catch((err) => {
-                    });
+                    .catch(failed);
             } else {
                 this.branch_form
                     .put(`/superadmin/edit-branch/${this.branch_form.id}`)
                     .then(({ data }) => {
                         $("#fade").fadeToggle(1000);
                         $("#fade").fadeToggle(1000);
-                    });
+                    })
+                    .catch(failed);
             }
         },
         getData(id) {

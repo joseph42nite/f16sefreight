@@ -94,7 +94,8 @@ export default {
   mounted() {
     // check if current user is authenticated
     if (!this.isAuthenticated) {
-      this.$router.push({ name: "superadminlogin" });
+      // There is no "superadminlogin" route (FA9): the push threw and the page stayed up, signed out.
+      this.$router.push("/sign-in").catch(() => {});
     }
 
     // Simulate the delay page loading

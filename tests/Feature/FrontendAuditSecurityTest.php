@@ -127,4 +127,35 @@ class FrontendAuditSecurityTest extends TestCase
         $this->get('/blog/fa-live-post')->assertOk()->assertSee('Secret launch fa-live-post');
         $this->get('/blog/fa-draft-post')->assertOk()->assertDontSee('Secret launch fa-draft-post');
     }
+
+    /** FA5: the editor sends an empty `takeaways` when none are left, and a draft stays a draft unless published. */
+    public function test_a_blog_edit_can_clear_its_takeaways_and_keep_a_draft_a_draft(): void
+    {
+        $this->actingAs(\App\SuperAdmin::create(['name' => 'Editor', 'email' => 'editor-' . uniqid() . '@test.local',
+            'password' => Hash::make('x')]), 'superAdmin-api');
+        $blog = \App\Blog::forceCreate(['title' => 'Draft with points', 'slug' => 'fa-draft-points', 'category' => 'News',
+            'read_time' => '1 min', 'image_path' => '/x.png', 'excerpt' => 'x', 'content' => 'x', 'takeaways' => ['one', 'two'],
+            'published_at' => null]);
+        $form = ['_method' => 'PUT', 'title' => 'Draft with points', 'category' => 'News', 'read_time' => '1 min',
+            'excerpt' => 'x', 'content' => 'x'];
+
+        $this->postJson("/api/superadmin/edit-blog/{$blog->id}", $form + ['is_draft' => '1', 'takeaways' => ''])->assertOk();
+
+        $this->assertNull($blog->fresh()->published_at);
+        $this->assertEmpty($blog->fresh()->takeaways);
+    }
+
+    /** FA4, FA9: the notice form and the directory, which has no pager, ask for every airline. */
+    public function test_the_airline_list_can_be_asked_for_whole(): void
+    {
+        $this->actingAs(\App\SuperAdmin::create(['name' => 'Staff', 'email' => 'air-' . uniqid() . '@test.local',
+            'password' => Hash::make('x')]), 'superAdmin-api');
+        $before = \App\Airline::count();
+        foreach (range(1, 105) as $n) {
+            \App\Airline::forceCreate(['name' => "Audit Air {$n}", 'prefix' => (string) (800 + $n), 'code' => 'Z' . chr(64 + ($n % 26) + 1)]);
+        }
+
+        $this->assertCount(100, $this->getJson('/api/superadmin/airlines')->assertOk()->json('data'));
+        $this->assertCount(min($before + 105, 500), $this->getJson('/api/superadmin/airlines?per_page=500')->assertOk()->json('data'));
+    }
 }

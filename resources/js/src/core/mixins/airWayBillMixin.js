@@ -1,8 +1,12 @@
 import ApiService from "@/core/services/api.service";
+import { noticesFor } from "@/core/services/airlineNotice";
 
 export default {
     data() {
         return {
+            // The platform's notices, and the airline the waybill number's prefix belongs to.
+            airlineNotices: [],
+            awb_airline_code: '',
             validationErrors: [],
             hs_code_error: [],
             uld_error: [],
@@ -64,6 +68,15 @@ export default {
         };
     },
     computed: {
+        /**
+         * What F16s staff want said about this waybill's airline. The airline is the one the number's prefix
+         * names; until that is known, the carrier of the first flight.
+         */
+        airlineNotice() {
+            const routing = this.form.routing_information || {};
+
+            return noticesFor(this.airlineNotices, this.awb_airline_code || routing.by);
+        },
         isPrepaid() {
             const prepaidTypes = ['PP'];
             return prepaidTypes.includes(this.form.payment_info.type_of_payment);
@@ -204,6 +217,10 @@ export default {
         },
     },
     mounted() {
+        // A notice is extra: the form works without it, so a failure here is not shown.
+        ApiService.get(`/user/get-notice`)
+            .then(({ data }) => { this.airlineNotices = Array.isArray(data) ? data : []; })
+            .catch(() => {});
         window.addEventListener('click', this.closeAllDropdowns);
     },
     beforeDestroy() {

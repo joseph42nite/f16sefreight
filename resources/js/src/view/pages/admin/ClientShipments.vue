@@ -484,10 +484,10 @@
         </div>
         <div class="d-flex align-items-center justify-content-between justify-content-md-end w-100 w-md-auto mt-1 mt-md-0 pt-2 pt-md-0 xml-header-actions">
           <div class="d-flex align-items-center">
-            <button class="xml-action-btn mr-2" @click="copyXml" title="Copy to clipboard">
+            <button class="xml-action-btn mr-2" :disabled="xmlMissing" @click="copyXml" title="Copy to clipboard">
               <i class="fas fa-copy mr-1"></i> Copy
             </button>
-            <button class="xml-action-btn xml-action-btn--primary mr-2 mr-md-3" @click="downloadXml" title="Download XML">
+            <button class="xml-action-btn xml-action-btn--primary mr-2 mr-md-3" :disabled="xmlMissing" @click="downloadXml" title="Download XML">
               <i class="fas fa-download mr-1"></i> Download
             </button>
           </div>
@@ -520,6 +520,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 import SkeletonTable from "../../components/SkeletonTable.vue";
 import Swal from 'sweetalert2';
 import DatePicker from "vue2-datepicker";
@@ -567,6 +568,7 @@ export default {
       pageOptions: [50, 100],
       localFilteredItems: null,
       xmlContent: "",
+      xmlMissing: false,
       selectedAwbId: "",
       pollTimer: null,
       lastUpdated: "",
@@ -680,21 +682,10 @@ export default {
         return;
       }
 
-      // Search in currently loaded items first
-      const localMatches = this.items.filter(item => {
-        const awbCode = item.awb_code ? String(item.awb_code).toLowerCase() : "";
-        const awbNo = item.awb_no ? String(item.awb_no).toLowerCase() : "";
-        const combined = `${awbCode}-${awbNo}`;
-        return combined.includes(search) || awbCode.includes(search) || awbNo.includes(search);
-      });
-
-      if (localMatches.length > 0) {
-        this.localFilteredItems = localMatches;
-      } else {
-        // Not found locally, fallback to server search
-        this.localFilteredItems = null;
-        this.applyFilters();
-      }
+      // Always asked of the server (FA7): a match on the page in view used to stop the search there, hiding every
+      // other shipment with that number on the other pages.
+      this.localFilteredItems = null;
+      this.applyFilters();
     },
     scheduleNextPoll() {
       this.clearPollTimer();
@@ -738,7 +729,8 @@ export default {
         months: [],
         fna_status: null
       };
-      this.fetchShipments();
+      // From page one (FA7): the old page number may not exist in the new result.
+      this.applyFilters();
     },
     setDateFilterType(type) {
       this.dateFilterType = type;
@@ -747,13 +739,11 @@ export default {
       } else {
         this.filters.dates = [];
       }
-      this.fetchShipments();
+      this.applyFilters();
     },
     downloadCsv() {
-      const isDateFilterActive = (this.filters.dates && this.filters.dates.length > 0) ||
-                                 (this.filters.months && this.filters.months.length > 0);
-
-      if (isDateFilterActive) {
+      // Every shipment the filters match, not the page in view (FA7).
+      {
         this.isLoading = true;
         const params = {
           ...this.filters,
@@ -771,8 +761,6 @@ export default {
           .finally(() => {
             this.isLoading = false;
           });
-      } else {
-        this.generateAndDownloadCsv(this.items);
       }
     },
     generateAndDownloadCsv(items) {
@@ -869,16 +857,18 @@ export default {
     viewXml(awbId) {
       this.selectedAwbId = awbId;
       this.xmlContent = "Loading XML content...";
+      this.xmlMissing = true;
       this.$bvModal.show("xml-viewer-modal");
 
       ApiService.get(`/superadmin/shipment-xml/${awbId}`)
         .then(response => {
           // If response is XML string
           this.xmlContent = typeof response.data === 'string' ? response.data : new XMLSerializer().serializeToString(response.data);
+          this.xmlMissing = false;
         })
         .catch(err => {
           console.error("Failed to fetch XML file", err);
-          this.xmlContent = "Error: XML file could not be found or retrieved.";
+          this.xmlContent = serverMessage(err, "The XML could not be retrieved.");
         });
     },
     viewHawbs(mawbItem) {
@@ -902,18 +892,22 @@ export default {
     viewHawbXml(hawbId) {
       this.selectedAwbId = hawbId;
       this.xmlContent = "Loading HAWB XML content...";
+      this.xmlMissing = true;
       this.$bvModal.show("xml-viewer-modal");
 
       ApiService.get(`/superadmin/hawb-xml/${hawbId}`)
         .then(response => {
           this.xmlContent = typeof response.data === 'string' ? response.data : new XMLSerializer().serializeToString(response.data);
+          this.xmlMissing = false;
         })
         .catch(err => {
           console.error("Failed to fetch HAWB XML file", err);
-          this.xmlContent = "Error: HAWB XML file could not be found or retrieved.";
+          this.xmlContent = serverMessage(err, "The XML could not be retrieved.");
         });
     },
     copyXml() {
+      // A reason is not the message (FA6): nothing to copy or keep when the XML was not found.
+      if (this.xmlMissing) return;
       navigator.clipboard.writeText(this.xmlContent)
         .then(() => {
           Swal.fire({
@@ -929,6 +923,7 @@ export default {
         });
     },
     downloadXml() {
+      if (this.xmlMissing) return;
       const blob = new Blob([this.xmlContent], { type: "application/xml" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);

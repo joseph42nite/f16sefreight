@@ -233,19 +233,36 @@ The backend audit is `AUDIT_2026-11-10.md`.
   `tests/js/frontendAuditFixes.spec.js`.
 - **FA4 [V]** `admin/Settings.vue:86` → calls `GET /superadmin/get-airline-list`, which does not exist. The
   airline list is always empty, so no airline notice can be added.
+  ✅ **Fixed 2026-11-16:** the list comes from `/superadmin/airlines` (carriers with a two-letter code). Seen filled
+  in the browser. Nothing in the app showed these notices to a user
+  (`GET /user/get-notice` had no caller). ✅ **Shown 2026-11-16 (owner's call):** the master and house waybill forms
+  show the notices filed under the airline the waybill prefix names, else the first flight's carrier, as plain text
+  (`core/services/airlineNotice.js`, `tests/js/airlineNotice.spec.js`). Seen in the browser on the master form.
 - **FA5 [R]** `admin/NewBlog.vue:24, 298` → "Update Blog" always sends `is_draft=0`: editing a draft publishes it.
   Takeaways cannot be cleared on edit (`:301-304`).
+  ✅ **Fixed 2026-11-16:** on a draft the button reads "Publish Blog" (it always published; "Save as Draft" keeps a
+  draft a draft), on a live post "Update Blog" and "Unpublish (save as draft)". An empty takeaways list is sent, so
+  it clears. Test in `FrontendAuditSecurityTest`.
 - **FA6 [R]** `Admin/SuperAdminController.php:187-246` + `admin/ClientShipments.vue:874-910` → when the stored XML
   is missing the server makes up a "simulated" XML and the viewer shows and downloads it as the shipment's message.
+  ✅ **Fixed 2026-11-16:** no XML is made up; the server answers 404 with the reason, the viewer shows it and Copy
+  and Download are disabled. Seen in the browser.
 - **FA7 [R]** `admin/ClientShipments.vue` → CSV export is one page unless a date filter is set (`:752-774`); AWB
   search only asks the server when the page has no match (`:674-698`); changing filters keeps the old page number
   (`:724-744`).
+  ✅ **Fixed 2026-11-16:** the CSV is always every shipment the filters match; the search always asks the server
+  (seen in the browser); a filter change starts from page one. ⚠️ An export with no filter is every shipment in one
+  answer.
 - **FA8 [R]** Saves that fail silently: `admin/NewUsers.vue:217-231`, `NewCompany.vue:170`, `NewBranch.vue:215`,
   `public/PasswordForgotForm.vue:47-53`, `admin/AllUsers.vue:163`, `adminList.mixin.js:38-58`.
   `EditSystemTemplate.vue:158` reports every failure as a coordinates error.
+  ✅ **Fixed 2026-11-16:** each shows the server's reason (`core/services/serverMessage.js`); the admin lists say when
+  loading or deleting failed.
 - **FA9 [R]** `admin/Account.vue:122` pushes `/login` and `layouts/admin/Layout.vue:96` pushes `superadminlogin`;
   neither route exists. `admin/AirlineDirectory.vue:123` shows only the first 100 airlines.
   `admin/Settings.vue:90` deletes every notice for a carrier with no confirmation.
+  ✅ **Fixed 2026-11-16:** both go to `/sign-in`; the directory asks for up to 500 airlines (the server took no
+  `per_page`); the delete asks first. Specs for this group: `tests/js/adminFixes.spec.js`.
 
 ## 5. Core: sign-in, errors, state
 

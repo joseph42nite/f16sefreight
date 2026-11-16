@@ -1,4 +1,5 @@
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /**
  * Shared state + helpers for the superadmin listing pages
@@ -22,6 +23,14 @@ export default {
     };
   },
   methods: {
+    /** A failure is said, not swallowed (FA8): an empty list after an error read as "there are none". */
+    sayFailed(title, error) {
+      const text = serverMessage(error);
+
+      if (this.$bvToast) this.$bvToast.toast(text, { title, variant: "danger", solid: true, autoHideDelay: 8000 });
+      else alert(title + ": " + text);
+    },
+
     /** Keep the pagination total in sync with client-side filtering. */
     onFiltered(filteredItems) {
       this.totalRows = filteredItems.length;
@@ -42,6 +51,7 @@ export default {
           this.items = transform ? transform(data) : data;
           this.totalRows = this.items.length;
         })
+        .catch((error) => this.sayFailed("The list could not be loaded", error))
         .finally(() => {
           this.isLoading = false;
         });
@@ -54,7 +64,11 @@ export default {
      */
     confirmRemove(url, message = "Are you sure you want to proceed?") {
       if (!confirm(message)) return Promise.resolve(false);
-      return ApiService.delete(url).then(() => true);
+      return ApiService.delete(url).then(() => true).catch((error) => {
+        this.sayFailed("Not deleted", error);
+
+        return false;
+      });
     },
   },
 };

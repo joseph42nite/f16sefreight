@@ -38,7 +38,8 @@ class AirlineDirectoryController extends Controller
             // this screen exists for.
             ->orderByRaw('domain IS NOT NULL')
             ->orderBy('name')
-            ->paginate(100);
+            // 100 unless asked, 500 at most: the screen has no pager, so it asks for them all (FA9).
+            ->paginate(min(max($request->integer('per_page'), 0) ?: 100, 500));
 
         return response()->json($airlines);
     }

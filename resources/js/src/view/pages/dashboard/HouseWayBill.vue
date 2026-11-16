@@ -120,6 +120,11 @@
                                                         <has-error :form="form" field="awb_code" :class="{ 'd-block': form.errors.has('awb_code') }"></has-error>
                                                         <has-error :form="form" field="awb_no" :class="{ 'd-block': form.errors.has('awb_no') }"></has-error>
                                                         <p style="font-weight:400;font-size:12px;line-height:18px;" v-if="awb_prefix_message" class="mt-2 mb-0 text-muted">{{ awb_prefix_message }}</p>
+                                                        <!-- The platform's notice for this airline (superadmin → Settings). Plain text: never v-html. -->
+                                                        <div v-if="airlineNotice.length" class="alert alert-warning mt-2 mb-0 py-2" role="status" style="font-size:12px;line-height:18px;white-space:pre-line;">
+                                                            <strong>Notice for this airline</strong>
+                                                            <div v-for="(line, i) in airlineNotice" :key="'notice-' + i">{{ line }}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3472,9 +3477,11 @@ export default {
             if (awb_code && awb_code.length === 3) {
                 ApiService.get(`/user/get-awbcode-prefix/${awb_code}`)
                     .then((response) => {
+                        this.awb_airline_code = '';
                         if (response.data) {
                             const { name, code} = response.data;
                             this.awb_prefix_message = `Message will be sent to ${name} (${code})`;
+                            this.awb_airline_code = code || '';
                         } else {
                             this.awb_prefix_message = `No agreement found for: ${awb_code} You will not be able to send the message to this carrier - only generate a PDF.`;
                         }
@@ -3486,6 +3493,7 @@ export default {
                 }
             else {
                 this.awb_prefix_message = "";
+                this.awb_airline_code = '';
             }
         }, 500),
     },

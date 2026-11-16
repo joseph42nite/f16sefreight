@@ -140,10 +140,9 @@ class ClientShipmentsTest extends TestCase
         $response = $this->actingAs($superAdmin, 'superAdmin-api')
             ->getJson('/api/superadmin/shipment-xml/' . $awb->id);
 
-        $response->assertStatus(200);
-        $this->assertStringContainsString('111-22223333', $response->getContent());
-        $this->assertStringContainsString('JFK', $response->getContent());
-        $this->assertStringContainsString('LHR', $response->getContent());
+        // No stored message: said to be missing, never made up (2026-11-15 frontend audit, FA6).
+        $response->assertStatus(404)->assertJsonPath('error', 'The message sent for this waybill was not kept, so there is nothing to show.');
+        $this->assertStringNotContainsString('Simulated', $response->getContent());
 
         // 8. Test superadmin location endpoint
         $response = $this->actingAs($superAdmin, 'superAdmin-api')

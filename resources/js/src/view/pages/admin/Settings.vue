@@ -17,12 +17,13 @@
                         <label>Airline</label>
                         <select v-model="msg_form.airline" class="form-control custom-select">
                             <option value="">Select Airline</option>
-                            <option v-for="airline in all_airline" :key="airline.carrier_prefix" :value="airline.carrier_code">
-                                {{ airline.carrier_code }}
+                            <option v-for="airline in all_airline" :key="airline.id" :value="airline.code">
+                                {{ airline.code }} — {{ airline.name }}
                             </option>
                         </select>
                     </div>
                     <button class="admin-pill-btn w-100 justify-content-center" @click="submit">Save</button>
+                    <p v-if="error" class="text-danger mt-3 mb-0" role="alert">{{ error }}</p>
                 </div>
             </div>
         </div>
@@ -57,6 +58,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 export default {
     data() {
         return {
@@ -66,16 +68,18 @@ export default {
             }),    
             all_airline:[],
             all_notice:[],
+            error:'',
         };
     },
     methods: {
         submit() {
+            this.error = '';
             this.msg_form.post(`/superadmin/add-notice`).then(({ data }) => {
               alert("Added successfull");
               this.msg_form.airline='';
               this.msg_form.message='';
               this.get_notice();
-            });
+            }).catch((err) => { this.error = serverMessage(err, 'The notice could not be saved.'); });
         },
         get_notice(){
             ApiService.get(`/superadmin/get-notice`).then(({ data }) => {
@@ -83,14 +87,20 @@ export default {
             });
         },
         get_airline(){
-            ApiService.get(`/superadmin/get-airline-list`).then(({ data }) => {
-                this.all_airline=data;
-            });
+            // The platform airline list (FA4): the route asked before never existed, so this was always empty.
+            // A notice is filed under the two-letter code, so a carrier without one cannot be chosen.
+            ApiService.get(`/superadmin/airlines?per_page=500`).then(({ data }) => {
+                this.all_airline=(data.data || []).filter((a) => a.code)
+                    .sort((a, b) => String(a.code).localeCompare(String(b.code)));
+            }).catch((err) => { this.error = serverMessage(err, 'The airline list could not be loaded.'); });
         },
         delete_notice(carrier_code){
+            // It removes EVERY notice filed under the carrier, so it asks first (FA9).
+            if (!confirm(`Delete every notice for ${carrier_code}?`)) return;
+            this.error = '';
             ApiService.post(`/superadmin/delete-notice`,{'carrier_code':carrier_code}).then(({ data }) => {
                 this.get_notice();
-            });
+            }).catch((err) => { this.error = serverMessage(err, 'The notice could not be deleted.'); });
         }
     },
     mounted() {

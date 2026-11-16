@@ -71,47 +71,26 @@
     "components/toggle";
 
 // 4: Plugins
+//
+// 🔴 Only the libraries the app has (2026-11-15 frontend audit, FP3). The theme shipped a stylesheet for each of
+// forty jQuery-era plugins; thirty-three of them are not installed and none of their classes is written anywhere in
+// resources/js/src or resources/views (checked 2026-11-16, class by class). Their rules were in the page-blocking
+// stylesheet of every visitor. To use one of them again, install it and put its line back:
+//   blockui, bootstrap-datepicker, bootstrap-daterangepicker, tempusdominus-bootstrap-4, bootstrap-markdown,
+//   bootstrap-maxlength, bootstrap-notify, bootstrap-select, bootstrap-session-timeout, bootstrap-switch,
+//   bootstrap-timepicker, bootstrap-touchspin, ckeditor, datatables, duallistbox, fullcalendar, gmaps,
+//   ion-range-slider, jquery-repeater, jqvmap, jstree, kanban, nouislider, recaptcha, select2, summernote, tagify,
+//   tinymce, typeahead, uppy, draggable, prismjs, leaflet
+// ⚠️ `toastr` stays although toastr is not installed: its rules are written for `.toast`, which is also the class
+// of the app's own pop-up notices (BootstrapVue toasts), and they are what gives those their look.
 @import
-    "vendors/plugins/blockui",
-    "vendors/plugins/bootstrap-datepicker",
-    "vendors/plugins/bootstrap-daterangepicker",
-    "vendors/plugins/tempusdominus-bootstrap-4",
-    "vendors/plugins/bootstrap-markdown",
-    "vendors/plugins/bootstrap-maxlength",
-    "vendors/plugins/bootstrap-notify",
-    "vendors/plugins/bootstrap-select",
-    "vendors/plugins/bootstrap-session-timeout",
-    "vendors/plugins/bootstrap-switch",
-    "vendors/plugins/bootstrap-timepicker",
-    "vendors/plugins/bootstrap-touchspin",
-    "vendors/plugins/ckeditor",
-    "vendors/plugins/datatables",
     "vendors/plugins/dropzone",
-    "vendors/plugins/duallistbox",
     "vendors/plugins/fontawesome5",
-    "vendors/plugins/fullcalendar",
-    "vendors/plugins/gmaps",
-    "vendors/plugins/ion-range-slider",
-    "vendors/plugins/jquery-repeater",
-    "vendors/plugins/jqvmap",
-    "vendors/plugins/jstree",
-    "vendors/plugins/kanban",
-    "vendors/plugins/nouislider",
     "vendors/plugins/perfect-scrollbar",
     "vendors/plugins/quill",
-    "vendors/plugins/recaptcha",
-    "vendors/plugins/select2",
-    "vendors/plugins/summernote",
     "vendors/plugins/sweetalert2",
-    "vendors/plugins/tagify",
-    "vendors/plugins/tinymce",
     "vendors/plugins/toastr",
-    "vendors/plugins/typeahead",
-    "vendors/plugins/uppy",
-    "vendors/plugins/draggable",
-    "vendors/plugins/prismjs",
-    "vendors/plugins/apexcharts",
-    "vendors/plugins/leaflet";
+    "vendors/plugins/apexcharts";
 
 
 // 5: Layout

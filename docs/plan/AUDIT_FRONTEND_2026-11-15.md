@@ -357,8 +357,21 @@ The backend audit is `AUDIT_2026-11-10.md`.
   ⚠️ Not from this change: on the landing page's board mock-up (`HomeBoardScreen.vue`, someone's work in progress)
   two icons draw blank because this version of the icon library has no `send` (used twice); `ContactUs.vue` names
   `graph-up-arrow`, which it does not have either.
-  ⏸ Left: `app.css` is 2.28 MB minified (241 KB gzipped) and render-blocking; it is the old theme's stylesheet
-  plus every page's styles, and trimming it is a job of its own. The seven font files are as they were.
+  **The main stylesheet, measured 2026-11-16/17.** `app.css` is 2.28 MB minified (241 KB gzipped) and the page waits
+  for it. About three quarters of it (1.96 MB of 2.64 MB in the development build) styles classes that are written
+  nowhere in `resources/js/src` or `resources/views`: the old theme's button variants (474 KB, 440 of it unused),
+  its layout skins (`.aside-*`, `.header-*`, 300 KB), `.symbol-*`, `.hover-*`, and a spacing and colour utility set of
+  4,743 classes of which 53 are used.
+  ✅ **Step one, done 2026-11-17:** `style.vue.scss` no longer imports the stylesheets of 33 jQuery-era plugins the
+  app does not have (fullcalendar, datatables, select2, summernote, …). 944 rules, 130 KB of the theme; `app.css`
+  2,729 KB → 2,582 KB in the development build. Checked two ways: every removed rule was compared against every
+  class the app and its libraries write (which is how `toastr` was kept: its `.toast` rules also style the app's own
+  pop-up notices), and the computed style of every element was recorded on 16 screens before and compared after —
+  15 identical element for element (11,300 elements); the landing page differs only in animations caught mid-way.
+  ⏸ **Step two, not started:** the other ~1.8 MB can only go with a purge step in the build (keep a rule only if
+  the classes it needs are written somewhere), because the theme generates those families in loops. That is a new
+  build dependency and a real styling risk; the before/after comparison above is the safety net for it. The seven
+  font files are as they were.
 - **FP4 [R]** `public/blogData.js` (eight full articles) ships in the home page chunk to show four titles;
   `GET /get-public-blogs` returns every post with its full body.
   ✅ **Fixed 2026-11-16 (server half):** the public list no longer carries the bodies; the article is fetched with the

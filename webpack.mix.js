@@ -43,6 +43,14 @@ mix.webpackConfig({
                     chunks: "initial",
                     priority: 20,
                 },
+                // The chart library on its own (2026-11-15 frontend audit, FP1/FP2): two pages draw charts, and as a
+                // module shared by two lazy pages it would otherwise sit in "common", which the public home page loads.
+                charts: {
+                    test: /[\\/]node_modules[\\/](apexcharts|vue-apexcharts)[\\/]/,
+                    name: "charts",
+                    chunks: "async",
+                    priority: 30,
+                },
                 common: {
                     name: "common",
                     minChunks: 2,

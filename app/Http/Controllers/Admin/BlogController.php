@@ -19,7 +19,9 @@ class BlogController extends Controller
             $blogs = Blog::whereNotNull('published_at')
                 ->orderBy('published_at', 'desc')
                 ->orderBy('created_at', 'desc')
-                ->get();
+                // A list of cards (2026-11-15 frontend audit, FP4): the full article is fetched with the article.
+                // Every body of every post used to ride along to show four titles on the home page.
+                ->get()->makeHidden('content');
         } else {
             $blogs = Blog::orderBy('created_at', 'desc')->get();
         }

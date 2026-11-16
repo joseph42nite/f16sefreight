@@ -311,15 +311,30 @@ The backend audit is `AUDIT_2026-11-10.md`.
 
 - **FP1 [R]** `webpack.mix.js:46-52` → one "common" chunk takes every module shared by two lazy pages, and the
   public home page loads it (2.3 MB in the development build).
+  ⏸ Left: splitting it changes which stylesheet each page gets (`common.css` is linked by hand in the page shell), so
+  it needs every screen looked at afterwards. The chart library is kept out of it (see FP2).
 - **FP2 [R]** `main.js:8-52`, `core/plugins/metronic.js` → jQuery, apexcharts, vform and 33 theme modules are in the
   main bundle for every visitor; apexcharts is used by one component, jQuery by four pages, the 33 globals by nothing.
+  ✅ **Fixed 2026-11-16 (theme scripts and charts):** the theme's scripts load with the platform admin layout, the
+  only thing that uses them (they find each other through `window`, so the plugin is imported there, first); the
+  chart library is registered in `FxChart.vue` and has its own `charts` chunk. `app.js` went from 1.48 MB to 0.70 MB
+  in the development build. Seen in the browser: the admin layout with its menu, and a tenant page with no theme
+  globals. ⏸ jQuery and vform stay: the theme files and four pages reach jQuery through `window`.
 - **FP3 [R]** `core/plugins/bootstrap-vue.js:5-7` → all of BootstrapVue plus the whole icon set; `App.vue:10-26` →
   seven font files and all of Font Awesome in a 2.7 MB render-blocking stylesheet.
+  ⏸ Left: 17 icons are chosen at run time (`:icon=`), so trimming the icon set needs each of those checked.
 - **FP4 [R]** `public/blogData.js` (eight full articles) ships in the home page chunk to show four titles;
   `GET /get-public-blogs` returns every post with its full body.
+  ✅ **Fixed 2026-11-16 (server half):** the public list no longer carries the bodies; the article is fetched with the
+  article. ⏸ `blogData.js` in the home chunk is left: the home page files hold someone else's uncommitted work.
 - **FP5 [R]** Waybill forms: the full airport list (about 20,000 rows) is made reactive and filtered twice per
   render; each form is one 2,400-line template re-rendered per keystroke; every update sends the record four times
   (`FocusAir.vue:3296, 3516-3532`).
+  ✅ **Fixed 2026-11-16 (the airport list):** `location.cache.js` freezes the list, so Vue no longer makes ~20,000 rows
+  reactive on every form. 🔴 Found on the way: `LocationController` cached the list for good **even when it was
+  empty**, so a call made before the airports were loaded (or by a test run sharing the cache) left every waybill
+  form with no airports; an empty list is no longer kept (`tests/Feature/LocationListCacheTest.php`). ⏸ The big
+  template and the four saves per update are left: they belong with moving the shared waybill code into the mixin.
 
 The committed `public/js` files are a development build, so absolute sizes overstate production.
 

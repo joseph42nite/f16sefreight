@@ -63,6 +63,9 @@
 }
 </style>
 <script>
+// First: the theme's scripts find each other through `window` (KTUtil, KTOffcanvas, …), and only this layout's
+// parts use them. They were in the main bundle for every visitor (2026-11-15 frontend audit, FP2).
+import "@/core/plugins/metronic";
 import { mapGetters } from "vuex";
 import KTAside from "@/view/layouts/admin/aside/Aside.vue";
 import KTHeaderMobile from "@/view/layouts/admin/header/HeaderMobile.vue";

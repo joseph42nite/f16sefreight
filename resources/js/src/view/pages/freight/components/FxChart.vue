@@ -29,8 +29,12 @@
  * system entirely — and would keep its light-mode palette when dark mode is switched
  * on. Reading `--status-*` off the document at build time keeps one source of truth.
  */
+import VueApexCharts from "vue-apexcharts";
+
 export default {
   name: "FxChart",
+  // Registered here, not globally in main.js (FP2): the chart library is 500 KB that only the pages with a chart need.
+  components: { apexchart: VueApexCharts },
   props: {
     title: { type: String, required: true },
     type: { type: String, default: "line" },

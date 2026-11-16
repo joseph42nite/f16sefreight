@@ -7,7 +7,6 @@ import App from "./App.vue";
 import router from "./router";
 window.$ = window.jQuery = require("jquery");
 import store from "@/core/services/store";
-import VueApexCharts from "vue-apexcharts";
 import consoleRecorder from "@/core/services/console.recorder";
 import ApiService from "@/core/services/api.service";
 import JwtService from "@/core/services/jwt.service";
@@ -38,7 +37,6 @@ Vue.directive('click-outside', {
 
 import { Form, HasError, AlertError } from "vform";
 window.Form = Form;
-Vue.component("apexchart", VueApexCharts);
 
 // Start recording console errors immediately — a bug report is only as good as the
 // logs that were captured BEFORE somebody thought to file one.
@@ -50,7 +48,8 @@ Vue.component(AlertError.name, AlertError);
 import "@/core/plugins/bootstrap-vue";
 import "@/core/plugins/perfect-scrollbar";
 import "@/core/plugins/inline-svg";
-import "@/core/plugins/metronic";
+// The theme's own scripts are the platform admin layout's alone and load with it (frontend audit, FP2); the chart
+// library loads with the one chart component that draws with it.
 
 // API service init
 ApiService.init();

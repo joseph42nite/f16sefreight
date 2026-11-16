@@ -18,7 +18,9 @@ export function loadLocations() {
 
     inFlight = ApiService.get(`/user/get-location`)
         .then(({ data }) => {
-            cache = data;
+            // Frozen (2026-11-15 frontend audit, FP5): Vue leaves a frozen list alone, where it used to walk all
+            // ~20,000 rows and make every field of each reactive, on every form that opened. Nothing edits the list.
+            cache = Array.isArray(data) ? Object.freeze(data) : data;
             inFlight = null;
             return cache;
         })

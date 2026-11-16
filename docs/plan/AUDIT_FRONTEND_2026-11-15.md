@@ -94,24 +94,39 @@ The backend audit is `AUDIT_2026-11-10.md`.
   skips empty lists: special-handling codes (`AirwayBillController.php:664, 823`, `HousewayBillController.php:706`),
   OCI lines (`:613-617`, also two lines with one identifier collapse into one), the last other charge on a house,
   and the consignment on either form. The old rows come back on reload and go to the airline.
+  ✅ **Fixed 2026-11-16:** on an update the list sent is the list: an empty one removes the rows, a request with no list
+  leaves them; customs lines are replaced whole after every row is checked, so two with one identifier stay two.
+  🔴 The tests for this found that **no other charge or customs line could be saved at all**: both controllers wrote
+  `agent_id` to `other_charges_code` and `way_bill_custom_info`, which never had the column, so the save answered 500
+  (both tables were empty on dev). Migration `2026_11_16_000000` adds it. Tests in `AirwayBillDraftTest` and
+  `HouseWaybillDraftTest`.
 - **FW7 [R]** `FocusAir.vue:2887-2891` → an airport the location table does not know becomes the text
   "undefined, undefined", passes validation and is saved as origin or destination. `HouseWayBill.vue` guards this.
+  ✅ **Fixed 2026-11-16:** an unknown airport leaves the box as it was.
 - **FW8 [R]** `FocusAir.vue:2906-2917`, `HouseWayBill.vue:2770-2781` → `flight_number.slice(0, 2)`: a
   three-letter carrier ("UAE501") is saved as carrier "UA", flight "E501".
+  ✅ **Fixed 2026-11-16:** `airWayBillMixin.splitFlight`, used by both forms. A three-letter code leaves the carrier
+  box EMPTY (it takes two characters), so the form refuses it instead of saving another airline.
 - **FW9 [R]** `HouseWayBill.vue:2843` → the OCR's rate class loses its first two characters ("Q" becomes "");
   fixed in `FocusAir.vue:2980`. `HouseWayBill.vue:3230` → a house draft with no consignment row throws while
   loading and shows blank parties; `FocusAir.vue:3573` has the check.
+  ✅ **Fixed 2026-11-16:** both.
 - **FW10 [R]** `FocusAir.vue` `onSubmit` does not run `iataViolations()`; the house form does. A master can be
   sent with over-length name or address lines.
+  ✅ **Fixed 2026-11-16:** checked before a Send; a draft may still be saved as it is.
 - **FW11 [R]** `core/mixins/airWayBillMixin.js:178-204` → emptying a shipper, consignee or notify name replaces
   the whole address object: backspacing a name wipes address, city, country and phone.
+  ✅ **Fixed 2026-11-16:** only the address-book pick is dropped.
 - **FW12 [R]** `airWayBillMixin.js:281-291, 415-430` → OCI rows and other-charge rows share one `editIndex`.
   Click edit on one list, then add to the other, and a row is overwritten.
+  ✅ **Fixed 2026-11-16:** customs lines have their own `ociEditIndex`.
 - **FW13 [R]** `airWayBillMixin.js:493-501` → after an entry is added every text field is reset to `''`,
   including the units; the next piece row is stored with no unit and the XML's `?? 'CMT'` fallback does not catch
   an empty string.
+  ✅ **Fixed 2026-11-16:** the units go back to `KGM` and `CMT`.
 - **FW14 [R]** `core/config/awbMapping.js:124, 162` → drafts from the extraction panel carry `weight_code "K"` and
   `dimention_unit "CMT"`; the forms and the XML use KGM/LBR and CMQ/MTQ/FTQ/INQ.
+  ✅ **Fixed 2026-11-16:** `KGM` and `MTQ` (the form's own default for a volume).
 - **FW15 [R]** `FocusAir.vue:1337-1613` → about 18 inputs (issue signature, place and date, agent account, IATA
   code/CASS) are not part of the saved form; edits are discarded. The consignment Volume input and its unit
   (`:1029-1037`) also save nothing.
@@ -120,9 +135,14 @@ The backend audit is `AUDIT_2026-11-10.md`.
   document's (`:2996`); a missing shipper name or flight throws and abandons the rest of the mapping (`:2905-2992`).
 - **FW17 [R]** `HouseWayBill.vue:3381` → the master-number list asks for status `all`, which matches nothing: the
   list is always empty.
+  ✅ **Fixed 2026-11-16:** on the server: `all` is every status, newest 100. Seen filled in the browser.
 - **FW18 [V]** `components/DashboardHistoryModal.vue:71` → "Multipage PDF" for a consolidation points at a removed
   route; a tab flashes and closes.
+  ✅ **Fixed 2026-11-16:** the link is removed.
 - **FW19 [R]** "Send & Clear" (`FocusAir.vue:2493`, `HouseWayBill.vue:2358`) has the same handler as "Send".
+  ⏸ Left with FW15 and FW16: what "Clear" should do, which of the 18 unsaved boxes should be saved, and the
+  document-reading mapping each need a decision or a real document to test against. Specs for FW7–FW14 and FW18:
+  `tests/js/waybillFormFixes.spec.js`; the master and house screens were loaded in the browser after the change.
 
 ## 3. Fix first — accounts and inbox
 

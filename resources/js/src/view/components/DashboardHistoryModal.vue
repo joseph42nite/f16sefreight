@@ -68,9 +68,7 @@
                             <a href="#" class="download-link" @click.prevent="openPdf(`/download-consolidation-pdf/${String(item.awb_code)}/${String(item.awb_no)}`)">
                                 <b-icon icon="file-earmark-pdf" class="mr-2"></b-icon> Consolidation PDF
                             </a>
-                            <a href="#" class="download-link" @click.prevent="openPdf(`/download-multiple-consolidation-pdf/${String(item.awb_code)}/${String(item.awb_no)}`)">
-                                <b-icon icon="files" class="mr-2"></b-icon> Multipage PDF
-                            </a>
+<!-- "Multipage PDF" is gone (frontend audit, FW18): its route was removed, so the tab flashed and closed. -->
                         </template>
 
                         <!-- House WayBill Downloads -->

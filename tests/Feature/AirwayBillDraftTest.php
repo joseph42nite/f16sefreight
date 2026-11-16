@@ -241,4 +241,51 @@ class AirwayBillDraftTest extends TestCase
             'consignee_address' => ['cons_name' => 'SILVER MOON COMMERCIAL BROKERAG CO', 'cons_city' => 'Amman'],
         ]))->assertStatus(422);
     }
+
+    /**
+     * 🔴 What is taken off the form is taken off the waybill (frontend audit 2026-11-15, FW6). An empty list was
+     * skipped, so removed customs lines, handling codes and the consignment came back on reload and went to the airline.
+     */
+    public function test_an_update_removes_what_was_taken_off_the_form(): void
+    {
+        $line = fn (string $info) => ['country_code' => 'IN', 'info_identifier' => 'SHP', 'custom_info_identifier' => 'T', 'supplementary_info' => $info];
+        $this->submit($this->draft(['oci_entries' => [$line('ONE'), $line('TWO')], 'tableCodes' => ['EAW', 'PER']]))->assertOk();
+
+        // Two lines with one identifier stay two lines.
+        $this->assertSame(['ONE', 'TWO'], DB::table('way_bill_custom_info')->where('awb_id', '17690000001')->orderBy('id')->pluck('supplementary_info')->all());
+        $this->assertSame('["EAW","PER"]', DB::table('air_way_bills')->where('id', '17690000001')->value('special_handling_info'));
+
+        $update = fn (array $changes) => $this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->user), 'Accept' => 'application/json',
+        ])->putJson('http://focusair.localhost/api/user/update-airway-bill/17690000001', array_merge($this->draft(), $changes));
+
+        // A request that carries no lists leaves them alone.
+        $update(['entries' => null])->assertOk();
+        $this->assertSame(2, DB::table('way_bill_custom_info')->where('awb_id', '17690000001')->count());
+        $this->assertSame(1, DB::table('way_bill_consignment_data')->where('awb_id', '17690000001')->count());
+
+        // One line kept, the codes and the consignment removed.
+        $update(['oci_entries' => [$line('TWO')], 'tableCodes' => [], 'entries' => []])->assertOk();
+        $this->assertSame(['TWO'], DB::table('way_bill_custom_info')->where('awb_id', '17690000001')->pluck('supplementary_info')->all());
+        $this->assertSame('[]', DB::table('air_way_bills')->where('id', '17690000001')->value('special_handling_info'));
+        $this->assertSame(0, DB::table('way_bill_consignment_data')->where('awb_id', '17690000001')->count());
+
+        // A refused line changes nothing.
+        $update(['oci_entries' => [$line('bad!')]])->assertStatus(422);
+        $this->assertSame(['TWO'], DB::table('way_bill_custom_info')->where('awb_id', '17690000001')->pluck('supplementary_info')->all());
+
+        $update(['oci_entries' => []])->assertOk();
+        $this->assertSame(0, DB::table('way_bill_custom_info')->where('awb_id', '17690000001')->count());
+    }
+
+    /** FW17: the house form's master-number picker asks for "all", which used to be read as a status and match nothing. */
+    public function test_the_master_list_for_all_statuses_is_not_empty(): void
+    {
+        $this->submit($this->draft())->assertOk();
+
+        $list = $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->user), 'Accept' => 'application/json'])
+            ->getJson('http://focusair.localhost/api/user/get-airway-bills/all')->assertOk()->json();
+
+        $this->assertSame(['90000001'], array_column($list, 'awb_no'));
+    }
 }

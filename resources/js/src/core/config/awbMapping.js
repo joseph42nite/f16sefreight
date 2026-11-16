@@ -121,7 +121,7 @@ export function buildPayload(target, fields, identity) {
       // 🔴 `chargable_weight` (the endpoint's spelling) was hardcoded empty while the value sat
       // in `chargeable` just above, so a chargeable weight never reached a draft at all —
       // extracted, pasted or typed.
-      country_origin_goods: "", slac: "", weight_code: "K", chargable_weight: chargeable || "", rate: "",
+      country_origin_goods: "", slac: "", weight_code: "KGM", chargable_weight: chargeable || "", rate: "",
       hsCodes: [], uld_infos: [],
       itemss: [],
     };
@@ -155,11 +155,13 @@ export function buildPayload(target, fields, identity) {
   // ── Totals ────────────────────────────────────────────────────────────────
   // ⚠️ Only sent when BOTH are present: `totalAmountValume` requires volume AND amount,
   // and amount is commercial — it never comes from a scanned packing list.
+  // The codes the forms and the airline message use (frontend audit, FW14): KGM for weight, MTQ for a volume. "K" and
+  // "CMT" (a length) went into the draft and from there into the message.
   const volume = raw(fields.volume);
   const amount = raw(fields.amount);
 
   if (volume && amount) {
-    payload.totals = { total_volume: volume, total_amount: amount, dimention_unit: "CMT" };
+    payload.totals = { total_volume: volume, total_amount: amount, dimention_unit: "MTQ" };
   }
 
   return payload;

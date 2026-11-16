@@ -592,6 +592,11 @@ class AirwayBillController extends Controller
         $agent = $this->getAuthAgent();
 
         $awb_id = $awb_code . $awb_no;
+        // 🔴 The list sent IS the list (frontend audit 2026-11-15, FW6). Rows were matched by identifier and only ever
+        // added or changed, so a line removed on screen came back on reload and went to the airline, and two lines
+        // with one identifier collapsed into one. Every row is checked first, so a refused row changes nothing.
+        $oci_entries = array_values((array) $oci_entries);
+
         foreach ($oci_entries as $oci_entry) {
             $validator = Validator::make(
                 $oci_entry,
@@ -609,24 +614,20 @@ class AirwayBillController extends Controller
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
+        }
 
-            $oci_info_identifier = $oci_entry['info_identifier'];
-            $OtherCustomInfo = OtherCustomInformation::where([
-                ['awb_id', $awb_id],
-                ['info_identifier', $oci_info_identifier]
-            ])->first();
-            if (!isset($OtherCustomInfo)) {
-                $OtherCustomInfo = new OtherCustomInformation();
-            }
+        OtherCustomInformation::where('awb_id', $awb_id)->delete();
+
+        foreach ($oci_entries as $oci_entry) {
+            $OtherCustomInfo = new OtherCustomInformation();
             $OtherCustomInfo->awb_id = "$awb_id";
-            $OtherCustomInfo->info_identifier = $oci_info_identifier;
+            $OtherCustomInfo->info_identifier = $oci_entry['info_identifier'];
             $OtherCustomInfo->country_code = $oci_entry['country_code'];
-            $OtherCustomInfo->custom_info_identifier = $oci_entry['custom_info_identifier'];
+            $OtherCustomInfo->custom_info_identifier = $oci_entry['custom_info_identifier'] ?? null;
             $OtherCustomInfo->supplementary_info = $oci_entry['supplementary_info'];
+            // (The column came with migration 2026_11_16_000000: without it every save of a customs line answered 500.)
             $OtherCustomInfo->agent_id = $agent->id ?? null;
-            if (!$OtherCustomInfo->save()) {
-                Log::error('Failed to save OtherCustomInformation for AWB:', ['awb_id' => $awb_id, 'oci_entry' => $oci_entry]);
-            }
+            $OtherCustomInfo->save();
         }
         return "Other Custom Information saved successfully";
     }
@@ -661,7 +662,8 @@ class AirwayBillController extends Controller
         $agent = $this->getAuthAgent();
 
         $awb_id = $awb_code . $awb_no;
-        if (empty($tableCodes)) {
+        // An empty LIST clears the codes (frontend audit 2026-11-15, FW6); only a request with no list at all leaves them.
+        if (! is_array($tableCodes)) {
             return response()->json(['message' => "Code is missing in tableCodes entry."], 400);
         }
         $handlingCode = AirwayBills::where('id', $awb_id)->first();
@@ -945,7 +947,8 @@ class AirwayBillController extends Controller
             else
                 $main_return_data['custom_origin'] = $error_data;
         }
-        if (!empty($id) && !empty($request->oci_entries)) {
+        // An empty list removes the lines (FW6); a request with no list leaves them.
+        if (!empty($id) && is_array($request->oci_entries)) {
             $error_data = $this->otherCustomInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->oci_entries);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 throw new ValidationFailed($error_data);
@@ -990,7 +993,11 @@ class AirwayBillController extends Controller
                 throw new ValidationFailed($error_data);
             $main_return_data['charges'] = $error_data;
         }
-        if (!empty($id)) {
+        if (!empty($id) && is_array($request->entries)) {
+            // The consignment taken off the form is taken off the waybill (FW6): the old row used to stay.
+            if ($request->entries === []) {
+                ConsignmentData::where('awb_id', $request->first_box['awb_code'] . $request->first_box['awb_no'])->delete();
+            }
             $main_return_data['entries'] = $this->consignmentInformation($request->first_box['awb_no'], $request->first_box['awb_code'], $request->entries);
         }
         if (!empty($id)) {
@@ -1034,6 +1041,10 @@ class AirwayBillController extends Controller
         $query = AirwayBills::with(['paymentInfo', 'wayBillAddress', 'savedAddress', 'consignmentData', 'otherCharge', 'otherCustomInformation'])->where('agent_id', $agentId);
         if ($status == 'send')
             $airwayBill = $query->whereIn('status', ['send', 'generate_pdf'])->orderBy('created_at', 'desc')->limit(10)->get();
+        // "all" is every status (frontend audit 2026-11-15, FW17). The house form's master-number picker asks for it; read
+        // as a status it matched nothing, so the picker was always empty. A picker needs more than the newest ten.
+        elseif ($status == 'all')
+            $airwayBill = $query->orderBy('created_at', 'desc')->limit(100)->get();
         else
             $airwayBill = $query->where('status', $status)->orderBy('created_at', 'desc')->limit(10)->get();
         if ($airwayBill->isEmpty()) {

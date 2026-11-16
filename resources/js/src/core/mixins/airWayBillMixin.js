@@ -12,7 +12,10 @@ export default {
                 custom_info_identifier: '',
                 supplementary_info: '',
             },
+            // One per list (frontend audit, FW12): shared, an edit begun on the customs lines was finished by adding a
+            // charge, which overwrote a charge row.
             editIndex: null,
+            ociEditIndex: null,
             isConsignmentAdded: false,
             showSpinner: false,
             successMessage: '',
@@ -177,28 +180,25 @@ export default {
         },
         "form.shipper_address.ship_name"(newVal) {
             if (!newVal) {
+                // Only the pick is dropped (frontend audit, FW11). The whole address object used to be replaced, so
+                // backspacing a name wiped the address, city, country and phone typed under it.
                 this.selectedShipper = null;
-                this.form.shipper_address = {
-                    ship_name: "",
-                };
                 this.filteredShippers = this.shippers;
             }
         },
         "form.consignee_address.cons_name"(newVal) {
             if (!newVal) {
+                // Only the pick is dropped (frontend audit, FW11). The whole address object used to be replaced, so
+                // backspacing a name wiped the address, city, country and phone typed under it.
                 this.selectedConsignee = null;
-                this.form.consignee_address = {
-                    cons_name: "",
-                };
                 this.filteredConsignees = this.consignees;
             }
         },
         "form.also_notify_address.also_name"(newVal) {
             if (!newVal) {
+                // Only the pick is dropped (frontend audit, FW11). The whole address object used to be replaced, so
+                // backspacing a name wiped the address, city, country and phone typed under it.
                 this.selectAlsoNotify = null;
-                this.form.also_notify_address = {
-                    also_name: "",
-                };
                 this.filteredAlsoNotify = this.alsoNotify;
             }
         },
@@ -219,6 +219,21 @@ export default {
             if (event.target && event.target.tagName === "INPUT") {
                 event.preventDefault();
             }
+        },
+        /**
+         * A flight number read from a document, as the two boxes the form has (frontend audit, FW8).
+         *
+         * It used to be cut after two characters whatever it was, so "UAE501" was saved as carrier "UA" — another
+         * airline — flight "E501". The carrier box takes the two-character code only, so a three-letter prefix
+         * leaves it EMPTY for the operator to fill: a blank the form refuses, not a wrong airline it accepts.
+         */
+        splitFlight(number) {
+            const text = String(number || "").replace(/\s+/g, "").toUpperCase();
+            const threeLetter = text.match(/^([A-Z]{3})(\d.*)$/);
+
+            if (threeLetter) return { carrier: "", flight: threeLetter[2] };
+
+            return { carrier: text.slice(0, 2), flight: text.slice(2) };
         },
         getCurrentDate() {
             return new Date().toLocaleDateString("en-CA");
@@ -288,7 +303,7 @@ export default {
             }
         },
         editOciInfo(index) {
-            this.editIndex = index;
+            this.ociEditIndex = index;
             this.oci_info = { ...this.form.oci_entries[index] };
         },
         addOtherCustomInfo() {
@@ -296,9 +311,9 @@ export default {
                 alert('Please fill in all fields');
                 return;
             }
-            if (this.editIndex !== null) {
-                this.form.oci_entries[this.editIndex] = { ...this.oci_info };
-                this.editIndex = null;
+            if (this.ociEditIndex !== null) {
+                this.$set(this.form.oci_entries, this.ociEditIndex, { ...this.oci_info });
+                this.ociEditIndex = null;
             } else {
                 this.form.oci_entries.push({ ...this.oci_info });
             }
@@ -491,7 +506,7 @@ export default {
                     hs_code: JSON.stringify(this.consignment_list.hsCodes)
                 };
                 if (this.edit_entry_index !== null) {
-                    this.form.entries[this.edit_entry_index] = updatedEntry;
+                    this.$set(this.form.entries, this.edit_entry_index, updatedEntry);
                     this.edit_entry_index = null;
                 } else {
                     this.form.entries.push(updatedEntry);
@@ -509,6 +524,10 @@ export default {
                         }
                     }
                 }
+                // The units go back to their defaults, not to nothing (frontend audit, FW13): the next row was stored
+                // with no unit, and the message's `?? 'CMT'` fallback does not catch an empty string.
+                this.consignment_list.weight_code = 'KGM';
+                this.consignment_list.unit = 'CMT';
                 this.isConsignmentAdded = this.form.entries.length > 0;
             })
             .catch(error => {

@@ -2246,7 +2246,7 @@
                                                             </b-col>
                                                             <b-col cols="12" md="auto" class="mb-1">
                                                                 <b-button class="show-btn px-5" @click="addOtherCustomInfo">
-                                                                    {{ editIndex !== null ? 'Update' : 'Add' }}
+                                                                    {{ ociEditIndex !== null ? 'Update' : 'Add' }}
                                                                 </b-button>
                                                             </b-col>
                                                         </b-row>
@@ -2768,18 +2768,18 @@ export default {
                   }
                 });
                 if(transit.flights[0]){
-                    this.form.routing_information.by = transit.flights[0]?.flight_number?.slice(0,2);
-                    this.form.routing_information.flight = transit.flights[0]?.flight_number?.slice(2);
+                    this.form.routing_information.by = this.splitFlight(transit.flights[0]?.flight_number).carrier;
+                    this.form.routing_information.flight = this.splitFlight(transit.flights[0]?.flight_number).flight;
                     this.form.routing_information.date = this.formatDate(transit.flights[0].date);
                 }
                 if(transit.flights[1]){
-                    this.form.routing_information.by_2 =transit.flights[1]?.flight_number?.slice(0,2);
-                    this.form.routing_information.flight_2 =transit.flights[1]?.flight_number?.slice(2);
+                    this.form.routing_information.by_2 = this.splitFlight(transit.flights[1]?.flight_number).carrier;
+                    this.form.routing_information.flight_2 = this.splitFlight(transit.flights[1]?.flight_number).flight;
                     this.form.routing_information.date_2 = this.formatDate(transit.flights[1].date);
                 }
                 if(transit.flights[2]){
-                    this.form.routing_information.by_3 =transit.flights[2]?.flight_number?.slice(0,2);
-                    this.form.routing_information.flight_3 =transit.flights[2]?.flight_number?.slice(2);
+                    this.form.routing_information.by_3 = this.splitFlight(transit.flights[2]?.flight_number).carrier;
+                    this.form.routing_information.flight_3 = this.splitFlight(transit.flights[2]?.flight_number).flight;
                     this.form.routing_information.date_3 = this.formatDate(transit.flights[2].date);
                 }
             }
@@ -2841,7 +2841,9 @@ export default {
             
             if (piece_weight) {
                 let rate_class = piece_weight.rate_class? (piece_weight.rate_class.length > 2? piece_weight.rate_class.slice(2): piece_weight.rate_class.slice(0)): null;
-                this.consignment_list.rate_class=piece_weight.rate_class?.slice(2);
+                // The value worked out on the line above (frontend audit, FW9): this line cut two characters off again
+                // whatever the length, so a rate class of "Q" became "".
+                this.consignment_list.rate_class=rate_class || '';
                 this.consignment_list.pieces=piece_weight.no_of_pieces;
                 this.consignment_list.rate=piece_weight.rate;
                 this.consignment_list.gross_weight=piece_weight.gross_weight;
@@ -3226,14 +3228,15 @@ export default {
                     // this.consignment_list = this.existingData.consignment_data;
                     // this.form.entries = this.existingData.consignment_data;
                     // console.log("entries", this.form.entries);
+                    // A draft saved before its consignment has none (frontend audit, FW9): reading it threw here and the
+                    // parties below were never filled in.
                     const entry = this.existingData.consignment_data;
-                    const parsedEntry = {
+                    this.form.entries = entry ? [{
                         ...entry,
                         hsCodes: entry.hs_code ? JSON.parse(entry.hs_code) : [],
                         itemss: entry.pieces_info ? JSON.parse(entry.pieces_info) : [],
                         uld_infos: entry.uld_info ? JSON.parse(entry.uld_info) : [],
-                    };
-                    this.form.entries = [parsedEntry];
+                    }] : [];
                     if(!this.form.entries){
                         this.isConsignmentAdded = true;
                     }

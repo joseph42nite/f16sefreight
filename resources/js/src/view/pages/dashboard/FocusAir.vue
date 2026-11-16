@@ -2371,7 +2371,7 @@
                                                                             <b-form-group style="display: flex;width: 240px;" id="fieldset-horizontal"
                                                                                 class="form-control-sm col-form-label align-items-end justify-content-end">
                                                                                 <b-button class="show-btn px-5" @click="addOtherCustomInfo">
-                                                                                    {{ editIndex !== null ? 'Update' : 'Add' }}
+                                                                                    {{ ociEditIndex !== null ? 'Update' : 'Add' }}
                                                                                 </b-button>
                                                                             </b-form-group>
                                                                         </td>
@@ -2886,36 +2886,36 @@ export default {
                     transit?.transit_airports?.[2]
                 ];
                 ApiService.post(`/user/get-airport-by-airport-code`, {"airport_code": all_airport_short_code}).then((response2) => {
-                    response2 = response2.data?.data;
-                    this.form.routing_information.departure_airport = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
-                    this.form.routing_information.destination_airport = `${response2[1]['iata_code']}, ${response2[1]['destination']}`;
-                    this.form.routing_information.from = `${response2[0]['iata_code']}, ${response2[0]['destination']}`;
+                    // An airport the table does not know comes back as "" (frontend audit, FW7). Read as a row it became
+                    // the text "undefined, undefined", which passed validation and was saved as the origin or destination.
+                    const rows = response2.data?.data || [];
+                    const place = (i) => (rows[i] && rows[i].iata_code ? `${rows[i].iata_code}, ${rows[i].destination}` : "");
+                    const routing = this.form.routing_information;
+
+                    if (place(0)) { routing.departure_airport = place(0); routing.from = place(0); }
+                    if (place(1)) routing.destination_airport = place(1);
                     // Transit hops only filled when transit data is present
                     if (transit) {
-                        this.form.routing_information.to = `${response2[2] ? response2[2]['iata_code'] : response2[1]['iata_code']}, ${response2[2] ? response2[2]['destination'] : response2[1]['destination']}`;
-                        if (transit.transit_airports[1]) {
-                            this.form.routing_information.to_2 = `${response2[3] ? response2[3]['iata_code'] : response2[1]['iata_code']}, ${response2[3] ? response2[3]['destination'] : response2[1]['destination']}`;
-                        }
-                        if (transit.transit_airports[2]) {
-                            this.form.routing_information.to_3 = `${response2[4] ? response2[4]['iata_code'] : response2[1]['iata_code']}, ${response2[4] ? response2[4]['destination'] : response2[1]['destination']}`;
-                        }
+                        if (place(2) || place(1)) routing.to = place(2) || place(1);
+                        if (transit.transit_airports[1] && (place(3) || place(1))) routing.to_2 = place(3) || place(1);
+                        if (transit.transit_airports[2] && (place(4) || place(1))) routing.to_3 = place(4) || place(1);
                     }
                 });
                 // Flight numbers and dates only when transit is available
                 if (transit) {
                     if (transit.flights[0]) {
-                        this.form.routing_information.by = transit.flights[0]?.flight_number?.slice(0, 2);
-                        this.form.routing_information.flight = transit.flights[0]?.flight_number?.slice(2);
+                        this.form.routing_information.by = this.splitFlight(transit.flights[0]?.flight_number).carrier;
+                        this.form.routing_information.flight = this.splitFlight(transit.flights[0]?.flight_number).flight;
                         this.form.routing_information.date = this.formatDate(transit.flights[0].date);
                     }
                     if (transit.flights[1]) {
-                        this.form.routing_information.by_2 = transit.flights[1]?.flight_number?.slice(0, 2);
-                        this.form.routing_information.flight_2 = transit.flights[1]?.flight_number?.slice(2);
+                        this.form.routing_information.by_2 = this.splitFlight(transit.flights[1]?.flight_number).carrier;
+                        this.form.routing_information.flight_2 = this.splitFlight(transit.flights[1]?.flight_number).flight;
                         this.form.routing_information.date_2 = this.formatDate(transit.flights[1].date);
                     }
                     if (transit.flights[2]) {
-                        this.form.routing_information.by_3 = transit.flights[2]?.flight_number?.slice(0, 2);
-                        this.form.routing_information.flight_3 = transit.flights[2]?.flight_number?.slice(2);
+                        this.form.routing_information.by_3 = this.splitFlight(transit.flights[2]?.flight_number).carrier;
+                        this.form.routing_information.flight_3 = this.splitFlight(transit.flights[2]?.flight_number).flight;
                         this.form.routing_information.date_3 = this.formatDate(transit.flights[2].date);
                     }
                 }
@@ -3376,6 +3376,15 @@ export default {
             this.main_error_msg='';
             this.successMessage='';
             const asked = this.form.status;
+            // Nothing goes to the airline with a line over its limit (frontend audit, FW10): the house form checked
+            // this before a send and the master did not. A draft may still be saved as it is.
+            if (asked === 'send') {
+                const iata = this.iataViolations();
+                if (iata.length > 0) {
+                    this.main_error_msg = iata.join('<br>');
+                    return;
+                }
+            }
             $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             // Prepare form data for submission - convert display dates to proper format
             // const preparedFormData = this.prepareFormDataForSubmission();

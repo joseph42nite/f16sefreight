@@ -615,6 +615,11 @@ class HousewayBillController extends Controller
     {
         $agent = $this->getAuthAgent();
 
+        // 🔴 The list sent IS the list (frontend audit 2026-11-15, FW6). Rows were matched by identifier and only ever
+        // added or changed, so a line removed on screen came back on reload and went to the airline, and two lines
+        // with one identifier collapsed into one. Every row is checked first, so a refused row changes nothing.
+        $oci_entries = array_values((array) $oci_entries);
+
         foreach ($oci_entries as $oci_entry) {
             $validator = Validator::make(
                 $oci_entry,
@@ -632,24 +637,20 @@ class HousewayBillController extends Controller
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
+        }
 
-            $oci_info_identifier = $oci_entry['info_identifier'];
-            $OtherCustomInfo = OtherCustomInformation::where([
-                ['awb_id', $hawb_no],
-                ['info_identifier', $oci_info_identifier]
-            ])->first();
-            if (!isset($OtherCustomInfo)) {
-                $OtherCustomInfo = new OtherCustomInformation();
-            }
-            $OtherCustomInfo->awb_id = $hawb_no;
-            $OtherCustomInfo->info_identifier = $oci_info_identifier;
+        OtherCustomInformation::where('awb_id', $hawb_no)->delete();
+
+        foreach ($oci_entries as $oci_entry) {
+            $OtherCustomInfo = new OtherCustomInformation();
+            $OtherCustomInfo->awb_id = "$hawb_no";
+            $OtherCustomInfo->info_identifier = $oci_entry['info_identifier'];
             $OtherCustomInfo->country_code = $oci_entry['country_code'];
-            $OtherCustomInfo->custom_info_identifier = $oci_entry['custom_info_identifier'];
+            $OtherCustomInfo->custom_info_identifier = $oci_entry['custom_info_identifier'] ?? null;
             $OtherCustomInfo->supplementary_info = $oci_entry['supplementary_info'];
+            // (The column came with migration 2026_11_16_000000: without it every save of a customs line answered 500.)
             $OtherCustomInfo->agent_id = $agent->id ?? null;
-            if (!$OtherCustomInfo->save()) {
-                Log::error('Failed to save OtherCustomInformation for AWB:', ['awb_id' => $hawb_no, 'oci_entry' => $oci_entry]);
-            }
+            $OtherCustomInfo->save();
         }
         return "Other Custom Information saved successfully";
     }
@@ -703,7 +704,8 @@ class HousewayBillController extends Controller
     {
         $agent = $this->getAuthAgent();
 
-        if (empty($tableCodes)) {
+        // An empty LIST clears the codes (frontend audit 2026-11-15, FW6); only a request with no list at all leaves them.
+        if (! is_array($tableCodes)) {
             return response()->json(['message' => "Code is missing in tableCodes entry."], 400);
         }
         $handlingCode = HousewayBills::where('id', $hawb_no)->first();
@@ -939,7 +941,8 @@ class HousewayBillController extends Controller
             else
                 $main_return_data['custom_origin'] = $error_data;
         }
-        if (!empty($id) && !empty($request->oci_entries)) {
+        // An empty list removes the lines (FW6); a request with no list leaves them.
+        if (!empty($id) && is_array($request->oci_entries)) {
             $error_data = $this->otherCustomInformation($id, $request->oci_entries);
             if (!is_string($error_data) && $error_data->getStatusCode() == 422)
                 return $error_data;
@@ -976,13 +979,18 @@ class HousewayBillController extends Controller
             else
                 $main_return_data['payment_info'] = $error_data;
         }
-        if (!empty($id) && !empty($request->charges)) {
-            $main_return_data['charges'] = $this->otherCharges($id, $request->charges);
+        // Empty lists are honoured (frontend audit 2026-11-15, FW6): the last charge, the consignment and the handling
+        // codes could not be removed, because an empty list was skipped and the old rows stayed.
+        if (!empty($id) && is_array($request->charges)) {
+            $main_return_data['charges'] = $this->otherCharges($id, array_values($request->charges));
         }
-        if (!empty($id) && !empty($request->entries)) {
-            $main_return_data['entries'] = $this->consignmentInformation($id, $request->entries);
+        if (!empty($id) && is_array($request->entries)) {
+            if ($request->entries === []) {
+                ConsignmentData::where('awb_id', $id)->delete();
+            }
+            $main_return_data['entries'] = $this->consignmentInformation($id, array_values($request->entries));
         }
-        if (!empty($id) && !empty($request->tableCodes) && is_array($request->tableCodes)) {
+        if (!empty($id) && is_array($request->tableCodes)) {
             $main_return_data['tableCodes'] = $this->saveSpecialHandlingCode($id, $request->tableCodes);
         }
 

@@ -69,4 +69,33 @@ class HouseWaybillDraftTest extends TestCase
     {
         $this->submit('generate_pdf')->assertStatus(422);
     }
+
+    /** FW6 (frontend audit 2026-11-15): an empty list on an update removes the rows; a request with no list leaves them. */
+    public function test_an_update_removes_what_was_taken_off_the_form(): void
+    {
+        $this->submit('draft')->assertOk();
+        $line = ['country_code' => 'IN', 'info_identifier' => 'SHP', 'custom_info_identifier' => 'T', 'supplementary_info' => 'ONE'];
+        $charge = ['other_charge_code' => 'MY', 'amount' => '100', 'due' => 'C', 'payment_type' => 'PP'];
+        $update = fn (array $changes) => $this->withHeaders([
+            'Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->user), 'Accept' => 'application/json',
+        ])->putJson('http://focusair.localhost/api/user/update-houseway-bill/HDRTEST001', $changes + [
+            'first_box' => ['hawb_no' => 'HDRTEST001', 'awb_code' => '176', 'awb_no' => '90000002'],
+            'shipper_address' => ['ship_name' => 'TRAILSPEC GEARS PRIVATE LIMITED', 'ship_city' => 'KALAMASEERY'],
+            'status' => 'draft',
+        ]);
+        $stored = fn () => [
+            \Illuminate\Support\Facades\DB::table('way_bill_custom_info')->where('awb_id', 'HDRTEST001')->count(),
+            \Illuminate\Support\Facades\DB::table('other_charges_code')->where('awb_id', 'HDRTEST001')->count(),
+            \Illuminate\Support\Facades\DB::table('house_way_bills')->where('id', 'HDRTEST001')->value('special_handling_info'),
+        ];
+
+        $update(['oci_entries' => [$line], 'charges' => [$charge], 'tableCodes' => ['PER']])->assertOk();
+        $this->assertSame([1, 1, '["PER"]'], $stored());
+
+        $update([])->assertOk();
+        $this->assertSame([1, 1, '["PER"]'], $stored());
+
+        $update(['oci_entries' => [], 'charges' => [], 'tableCodes' => []])->assertOk();
+        $this->assertSame([0, 0, '[]'], $stored());
+    }
 }

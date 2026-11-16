@@ -11,7 +11,8 @@ import VueApexCharts from "vue-apexcharts";
 import consoleRecorder from "@/core/services/console.recorder";
 import ApiService from "@/core/services/api.service";
 import JwtService from "@/core/services/jwt.service";
-import { VERIFY_AUTH } from "@/core/services/store/auth.module";
+import { VERIFY_AUTH, LOGOUT, SET_ERROR } from "@/core/services/store/auth.module";
+import { LANDING_ROUTE } from "@/core/config/navigation";
 import { RESET_LAYOUT_CONFIG } from "@/core/services/store/config.module";
 
 import VueMeta from 'vue-meta';
@@ -54,6 +55,14 @@ import "@/core/plugins/metronic";
 // API service init
 ApiService.init();
 
+// A call refused because the session is over (FK2): sign out here and say why on the sign-in page, instead of leaving
+// each screen to show its own error until the next navigation. The token is gone after the first, so one redirect.
+ApiService.onUnauthorized = (reason) => {
+  store.dispatch(LOGOUT)
+    .then(() => { if (reason) store.commit(SET_ERROR, reason); })
+    .then(() => router.push({ name: "userlogin" }).catch(() => {}));
+};
+
 // Remove this to disable mock API
 // MockService.init();
 
@@ -62,7 +71,8 @@ router.beforeEach((to, from, next) => {
   if (to.path === '/' && store.getters.isAuthenticated) {
     const role = JwtService.getRole();
     if (role === 'user') {
-      return next('/focus-air');
+      // Where this person's day starts, as at sign-in (FK5): everyone used to be sent to the waybill screen.
+      return next(LANDING_ROUTE[store.getters.designation] || '/focus-air');
     } else if (role === 'superAdmin') {
       return next('/superadmin/overview');
     }
@@ -74,7 +84,9 @@ router.beforeEach((to, from, next) => {
  }
  else{
   let userType=to.meta.userType;
-  Promise.all([store.dispatch(VERIFY_AUTH,{userType})]).then(next);
+  // Waited for (FK1): the page is not entered until the session has been checked. `false` means the person was
+  // signed out and is already on the way to the sign-in page.
+  store.dispatch(VERIFY_AUTH,{userType}).then((ok) => (ok === false ? next(false) : next()));
  }
   // reset config to initial state
   store.dispatch(RESET_LAYOUT_CONFIG);

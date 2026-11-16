@@ -21,20 +21,55 @@ function rethrow(prefix, error) {
 /**
  * Service to call HTTP request via Axios
  */
+/**
+ * Whether a refused call means "your session is over" (frontend audit, FK2).
+ *
+ * A 401 while a token is held, on anything but the sign-in calls themselves — and not on a platform route asked by a
+ * tenant, which is refused for the wrong kind of account, not for an ended session.
+ */
+export function sessionEnded(error, token, role) {
+  const response = error && error.response;
+  const url = String((error && error.config && error.config.url) || "");
+
+  if (!response || response.status !== 401 || !token || token === "undefined") return false;
+  // Signing in, checking the session, signing out and the password reset answer 401 for their own reasons.
+  if (/\/(login|verify|logout|check-forgot-token|Forgotpassword\w*)(\?|$)/i.test(url)) return false;
+  if (role === "user" && /(^|\/)(superadmin|admin)\//.test(url)) return false;
+
+  return true;
+}
+
 const ApiService = {
+  /** Set by main.js: what to do when the session turns out to be over. Given the server's reason, if it sent one. */
+  onUnauthorized: null,
+
   init() {
     Vue.use(VueAxios, axios);
     Vue.axios.defaults.baseURL = "/api";
     this.setHeader();
+
+    // 🔴 The only interceptor (FK2). Without it an expired token showed a per-page error on every call until the next
+    // navigation happened to check it. The failure is still passed on, so each screen's own handling runs as before.
+    Vue.axios.interceptors.response.use((response) => response, (error) => {
+      if (this.onUnauthorized && sessionEnded(error, JwtService.getToken(), JwtService.getRole())) {
+        const data = error.response.data;
+
+        this.onUnauthorized(data && typeof data.error === "string" ? data.error : null);
+      }
+
+      return Promise.reject(error);
+    });
   },
 
   /**
-   * Set the default HTTP request headers
+   * Set the default HTTP request headers. With no token there is no header (FK3): after a sign-out the old token
+   * stayed on axios, and with none stored it sent "Bearer null".
    */
   setHeader() {
-    Vue.axios.defaults.headers.common[
-      "Authorization"
-    ] = `Bearer ${JwtService.getToken()}`;
+    const token = JwtService.getToken();
+
+    if (token && token !== "undefined") Vue.axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    else delete Vue.axios.defaults.headers.common["Authorization"];
   },
 
   query(resource, params) {

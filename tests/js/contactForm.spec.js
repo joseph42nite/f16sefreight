@@ -86,6 +86,6 @@ describe("the pages", () => {
     const source = read("core/services/store/auth.module.js");
 
     expect(source).not.toMatch(/\.catch\(\(\{ response \}\) => \{\s+if \(response\.status == 401\)/);
-    expect(source).toMatch(/if \(!response\) return;/);
+    expect(source).toMatch(/if \(!response\) return true;/);
   });
 });

@@ -244,7 +244,20 @@ export default {
         },
         startOcrPolling(jobId) {
             this.stopOcrPolling();
+            // Five minutes at most (FK6): it asked every 0.8 s for as long as the window stayed open.
+            let asked = 0;
+            const giveUp = (why) => {
+                this.stopOcrPolling();
+                this.isUploading = false;
+                this.ocrStatusMessage = '';
+                alert(why);
+            };
             this.ocrPollInterval = setInterval(() => {
+                asked += 1;
+                if (asked > 375) {
+                    giveUp('The document is taking too long to read. Try again, or fill the waybill in by hand.');
+                    return;
+                }
                 ApiService.get(`/user/ocr-status/${jobId}`)
                 .then(res => {
                     const data = res.data;
@@ -267,9 +280,10 @@ export default {
                         alert('Parsing failure: ' + (data.error || 'Unknown engine error'));
                     }
                 }).catch(err => {
-                    this.stopOcrPolling();
-                    this.isUploading = false;
-                    this.ocrStatusMessage = '';
+                    // Said, not dropped: the spinner used to vanish with no word of what happened.
+                    giveUp('The reading could not be checked'
+                        + (err && err.response ? ` (${err.response.status})` : ': the server could not be reached')
+                        + '. Try the upload again.');
                 });
             }, 800);
         },

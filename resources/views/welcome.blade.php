@@ -41,11 +41,6 @@
         "@type": "WebSite",
         "name": "F16s",
         "url": "https://f16sefreight.com/",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": "https://f16sefreight.com/search?q={search_term_string}",
-            "query-input": "required name=search_term_string"
-        },
         "logo": "https://f16sefreight.com/media/assets/logos/blue-logo.png",
         "sameAs": [
             "https://www.linkedin.com/company/f16s",
@@ -69,8 +64,9 @@
     <link rel="preload" as="image" href="/media/assets/logos/white-logo.png">
 
     <!-- Stylesheets (extracted from JS by webpack) -->
-    <link rel="stylesheet" href="/vendor.css">
-    <link rel="stylesheet" href="/common.css">
+    {{-- Versioned like the scripts (frontend audit, FK7), so a deploy cannot pair new scripts with cached styles. --}}
+    <link rel="stylesheet" href="{{ mix('/vendor.css') }}">
+    <link rel="stylesheet" href="{{ mix('/common.css') }}">
     <link rel="stylesheet" href="{{ mix('/css/app.css') }}">
 </head>
 <body>

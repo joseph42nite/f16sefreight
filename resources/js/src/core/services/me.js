@@ -9,6 +9,12 @@ const SHARE_MS = 5000;
 let pending = null;
 let askedAt = 0;
 
+/** Signed out, or signed in as someone else (FK4): the shared answer was the previous person's for up to five seconds. */
+export function forgetMe() {
+  pending = null;
+  askedAt = 0;
+}
+
 export function getMe({ fresh = false } = {}) {
   if (!fresh && pending && Date.now() - askedAt < SHARE_MS) return pending;
 

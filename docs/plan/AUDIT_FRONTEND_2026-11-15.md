@@ -269,19 +269,32 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FK1 [V]** `main.js:77` + `auth.module.js:88-114` → `VERIFY_AUTH` does not return its promise, so the route
   guard does not wait for it. Protected pages mount and call the API before the token is checked, and a
   `POST /verify` goes out on every navigation.
+  ✅ **Fixed 2026-11-16:** `VERIFY_AUTH` returns its promise and the guard waits for it. A passed check is reused for
+  30 seconds and simultaneous checks share one request. Seen in the browser: one `/verify` per page load, none on
+  the navigations after it.
 - **FK2 [R]** `core/services/api.service.js` → no axios interceptor anywhere. An expired token on an ordinary call
   shows per-page errors until the next navigation.
+  ✅ **Fixed 2026-11-16:** one response interceptor (`api.service.js` `sessionEnded`): a 401 on an ordinary call while a
+  token is held signs the person out and opens the sign-in page with the server's reason. Not for the sign-in,
+  verify, logout and password-reset calls, nor a platform route asked by a tenant. Seen in the browser.
 - **FK3 [R]** `auth.module.js:98-107` → `.catch(({ response }) => response.status …)` throws when there is no
   response (offline, timeout). `:147-158` → sign-out leaves the old `Authorization` header on axios; with no token
   it sends `Bearer null`.
-  ✅ **Fixed 2026-11-16 (first half):** no response no longer throws. The stale header on sign-out is left.
+  ✅ **Fixed 2026-11-16:** no response no longer throws; `setHeader` removes the header when there is no token, and
+  runs on sign-in and sign-out.
 - **FK4 [R]** `core/services/me.js:8-19` → the shared `/me` promise is not cleared on sign-out; signing in as
   someone else within five seconds shows the previous person's profile.
+  ✅ **Fixed 2026-11-16:** `forgetMe()` on sign-in and sign-out.
 - **FK5 [R]** `main.js:62-69` → a signed-in user on the main domain is always sent to `/focus-air`, whatever their
   role. `Header.vue:41` shows the signed-in menu for any stored token, expired or not.
+  ✅ **Fixed 2026-11-16 (first half):** the home page sends a signed-in person to their own start (`LANDING_ROUTE`),
+  as sign-in does. Seen in the browser. ⏸ The public header still trusts a stored token until a call is refused.
 - **FK6 [P]** `components/OcrUploadModal.vue:245-274` → polls every 0.8 s with no cap; any error stops it silently.
+  ✅ **Fixed 2026-11-16:** it gives up after five minutes and says why; an error is said too.
 - **FK7 [R]** `welcome.blade.php:72-73` → `vendor.css` and `common.css` are not versioned; after a deploy a browser
   can pair new scripts with old styles. `:44-47` advertises a `/search` page that does not exist.
+  ✅ **Fixed 2026-11-16:** both go through `mix()` (hashed in a production build, as the scripts are); the search
+  action is removed. Specs for this group: `tests/js/sessionHandling.spec.js`.
 
 ## 6. Speed
 

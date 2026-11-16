@@ -1487,10 +1487,10 @@
                                                                         </div>
                                                                         <div class="d-flex mb-6">
                                                                             <div style="padding:0px 20px;">
-                                                                                <b-form-radio name="participate" size="sm" v-model="agent_information.participate" value="0" style="font-size: 14px;">Participant</b-form-radio>
+                                                                                <b-form-radio name="participate" size="sm" v-model="agent_information.participant" value="0" style="font-size: 14px;">Participant</b-form-radio>
                                                                             </div>
                                                                             <div style="padding:0px 20px;">
-                                                                                <b-form-radio name="participate" size="sm" v-model="agent_information.participate" value="1" style="font-size: 14px;">Office</b-form-radio>
+                                                                                <b-form-radio name="participate" size="sm" v-model="agent_information.participant" value="1" style="font-size: 14px;">Office</b-form-radio>
                                                                             </div>
                                                                         </div>
                                                                         <div v-if="agent_information.participate === '0'">
@@ -1503,7 +1503,7 @@
                                                                                     </div>
                                                                                 </template>
                                                                                 <div class="custom-dropdown dropdown-container" ref="dropdownContainer_participant" @click="toggleDropdown('participant')">
-                                                                                    <input type="text" v-model="agent_information.participate_airport" placeholder="Search location" id="participant" class="form-control" 
+                                                                                    <input type="text" v-model="agent_information.participant_airport" placeholder="Search location" id="participant" class="form-control" 
                                                                                         autocomplete="off" :class="{ 'is-invalid': form.errors.has('participate_airport') }">
                                                                                     <div v-if="activeDropdown === 'participant' && getFilteredLocations(agent_information.participate_airport).length" class="dropdown-options">
                                                                                         <div v-for="(item, index) in getFilteredLocations(agent_information.participate_airport)" 
@@ -2493,7 +2493,6 @@
                                         <b-button class="show-btn mr-2" type="button" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';">Generate PDF</b-button>
                                         <div v-if="current_user.can_send">
                                             <b-button class="show-btn mr-2" type="submit" @click="form.status='send';">Send</b-button>
-                                            <b-button class="show-btn mr-2" type="submit" @click="form.status='send';">Send & Clear</b-button>
                                         </div>
                                         <div v-if="form.first_box.status!='send'">
                                            <b-button class="show-btn" type="submit" @click="form.status='draft';">{{submitButtonText}}</b-button>
@@ -3245,6 +3244,8 @@ export default {
                     return;
                 }
             }
+            // The branch's details, if a box was changed: asked before anything is sent (FW15).
+            if (!this.branchDetailsAllowSend(asked)) return;
             $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             
             if (this.mode === 'add') {

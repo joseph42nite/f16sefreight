@@ -185,4 +185,53 @@ class FrontendAuditSecurityTest extends TestCase
             'read_time' => '1 min', 'excerpt' => 'x', 'content' => '<p>ok</p><script>alert(5)</script>'])->assertOk();
         $this->assertSame('<p>ok</p>', \App\Blog::find($id)->content);
     }
+
+    /** FS14 (owner, 2026-11-16): the two business cards are kept out of search results; ordinary pages are not. */
+    public function test_the_business_cards_tell_crawlers_to_skip_them(): void
+    {
+        foreach (['/joseph-ceo-938204719284', '/deepanjan-coo-839204817294'] as $card) {
+            $this->get($card)->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+        }
+
+        $this->get('/blogs-and-news')->assertOk()->assertHeaderMissing('X-Robots-Tag');
+        $this->get('/')->assertOk()->assertHeaderMissing('X-Robots-Tag');
+        $this->assertStringNotContainsString('joseph-ceo', (string) @file_get_contents(public_path('robots.txt')));
+    }
+
+    /** FW15 (owner, 2026-11-16): a yes to "save these to the branch for future shipments?", asked on Send. */
+    public function test_branch_details_changed_on_a_waybill_form_are_saved_to_the_callers_own_branch(): void
+    {
+        $sender = $this->person(['can_send' => 1]);
+        $other = \App\Agent::create(['company_id' => $sender->company_name, 'agent_name' => 'Other branch', 'branch_code' => 'OTH',
+            'iata_agent_code' => '1111111']);
+        $this->actingAs($sender, 'user-api');
+        $save = fn (array $body) => $this->putJson('/api/user/agent-info', $body);
+
+        $save(['iata_agent_code' => '1234567', 'iata_agent_cass' => '0042', 'agent_issue_sign' => 'A. Rao', 'participant' => '1'])
+            ->assertOk()->assertJsonPath('saved', ['iata_agent_code', 'iata_agent_cass', 'agent_issue_sign', 'participant']);
+
+        $mine = \App\Agent::find($sender->branch_name);
+        $this->assertSame(['1234567', '0042', 'A. Rao'], [$mine->iata_agent_code, $mine->iata_agent_cass, $mine->agent_issue_sign]);
+        $this->assertSame('1111111', $other->fresh()->iata_agent_code);
+        // The form reads them back from the same place.
+        $this->getJson('/api/user/agent-info')->assertOk()->assertJsonPath('0.iata_agent_code', '1234567');
+
+        // A box emptied is emptied; one not sent is left alone.
+        $save(['agent_issue_sign' => null])->assertOk();
+        $this->assertNull($mine->fresh()->agent_issue_sign);
+        $this->assertSame('1234567', $mine->fresh()->iata_agent_code);
+
+        // The shapes the platform's own branch screen asks for, and never a column the form does not show.
+        $save(['iata_agent_code' => '12AB'])->assertStatus(422)->assertJsonPath('errors.iata_agent_code.0', 'The IATA code is seven digits.');
+        $save(['agent_name' => ''])->assertStatus(422);
+        $save(['company_id' => 999, 'branch_code' => 'HACK'])->assertStatus(422);
+        $this->assertNotSame('HACK', $mine->fresh()->branch_code);
+    }
+
+    public function test_a_person_who_may_not_send_cannot_change_the_branch_details(): void
+    {
+        $this->actingAs($this->person(['can_send' => 0]), 'user-api');
+
+        $this->putJson('/api/user/agent-info', ['iata_agent_code' => '1234567'])->assertStatus(403);
+    }
 }

@@ -73,6 +73,10 @@ The backend audit is `AUDIT_2026-11-10.md`.
   without checking them as that kind. Seen in the browser. Specs: `tests/js/securityLeftovers.spec.js`.
 - **FS14 [R]** `public/JosephCard.vue`, `DeepanjanCard.vue` → two personal mobile numbers and emails are in the
   public bundle with no `noindex`. They are business cards by design: a decision to confirm.
+  ✅ **Fixed 2026-11-16 (owner: keep them, ask search engines to skip them):** both cards carry
+  `noindex, nofollow, noarchive, nosnippet` as a page tag and as an `X-Robots-Tag` header from the server
+  (`routes/web.php`), for crawlers that run no script. Not listed in `robots.txt`, which would publish the two
+  addresses. ⚠️ This keeps them out of search results; anyone holding the address can still open the card.
 
 ## 2. Fix first — airline waybill screens
 
@@ -96,7 +100,9 @@ The backend audit is `AUDIT_2026-11-10.md`.
   ✅ **Fixed 2026-11-16:** the edit goes through `ApiService.put` with `updateData`. Not seen in a browser.
 - **FW4 [R]** `Consolidation.vue:405, 432, 877-879` → the trash icon on a house row deletes nothing on the server;
   it removes a special-handling code from the form being edited.
-  ⏸ Left: what the trash should do (delete the house, or take it off this master) is the owner's call.
+  ✅ **Fixed 2026-11-16 (owner: "do it"):** the trash deletes that house waybill through the route that already
+  existed and had no caller (`DELETE /user/house-way-bills/{id}`), after asking; the row goes, a refusal is said.
+  Clicked through in the browser on a throwaway draft: No kept it, Yes deleted it (gone from the database).
 - **FW5 [R]** `Consolidation.vue:679-682` → manifest Send has an empty `then` and no `catch`: no feedback either
   way, including the 502 for a refused manifest.
   ✅ **Fixed 2026-11-16:** a toast says sent, or NOT sent with the gateway's or server's reason; the button is
@@ -141,6 +147,15 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FW15 [R]** `FocusAir.vue:1337-1613` → about 18 inputs (issue signature, place and date, agent account, IATA
   code/CASS) are not part of the saved form; edits are discarded. The consignment Volume input and its unit
   (`:1029-1037`) also save nothing.
+  ✅ **Fixed 2026-11-16 (owner's rule):** they are the BRANCH's details. Nothing is saved while typing; on **Send**,
+  if a box differs from what the branch has, one question lists the changes: "Save for future shipments" writes them
+  to the caller's own branch (`PUT /user/agent-info`, only for a person who may send) and then sends; "Don't save"
+  puts the boxes back and sends with the branch's saved details; closing the question sends nothing. Both forms,
+  through `airWayBillMixin` and `core/services/branchDetails.js`. Two participant boxes were bound to names that do
+  not exist (`participate`, `participate_airport`) and always showed empty; they now show the branch's values.
+  🔴 Found by its test: the IATA code and CASS were whole-number columns, so "0042" was stored and sent to the
+  airline as 42. Migration `2026_11_16_020000` makes them text and puts the lost leading zeros back.
+  Clicked through in the browser with the send itself blocked. ⏸ The consignment Volume box is left.
 - **FW16 [R]** OCR mapping: the email goes into the Fax field (`FocusAir.vue:2942, 2965`); address cut to 30 and
   goods description to 70 characters without notice; a second import appends its dimension rows to the first
   document's (`:2996`); a missing shipper name or flight throws and abandons the rest of the mapping (`:2905-2992`).
@@ -151,6 +166,7 @@ The backend audit is `AUDIT_2026-11-10.md`.
   route; a tab flashes and closes.
   ✅ **Fixed 2026-11-16:** the link is removed.
 - **FW19 [R]** "Send & Clear" (`FocusAir.vue:2493`, `HouseWayBill.vue:2358`) has the same handler as "Send".
+  ✅ **Fixed 2026-11-16 (owner: remove it):** the button is gone from both forms. Seen in the browser.
   ⏸ Left with FW15 and FW16: what "Clear" should do, which of the 18 unsaved boxes should be saved, and the
   document-reading mapping each need a decision or a real document to test against. Specs for FW7–FW14 and FW18:
   `tests/js/waybillFormFixes.spec.js`; the master and house screens were loaded in the browser after the change.

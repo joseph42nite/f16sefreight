@@ -17,6 +17,8 @@ module.exports = {
     },
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/resources/js/src/$1',
+        // A stylesheet imported from a page's script is nothing to a test; without this the page cannot be loaded.
+        '\\.(css|scss)$': '<rootDir>/tests/js/styleStub.js',
     },
     testMatch: ['<rootDir>/tests/js/**/*.spec.js'],
     transformIgnorePatterns: ['/node_modules/(?!(bootstrap-vue|vue-treeselect)/)'],

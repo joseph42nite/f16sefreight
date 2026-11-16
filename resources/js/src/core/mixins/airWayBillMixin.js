@@ -1,12 +1,16 @@
 import ApiService from "@/core/services/api.service";
 import { noticesFor } from "@/core/services/airlineNotice";
 import { loadLocations } from "@/core/services/location.cache";
+import { branchDetailsOn, changedBranchDetails, branchDetailsQuestion } from "@/core/services/branchDetails";
 
 export default {
     data() {
         return {
             // The platform's notices, and the airline the waybill number's prefix belongs to.
             airlineNotices: [],
+            // The branch's details as the server gave them, to tell on Send whether a box was changed (FW15).
+            branchDetailsLoaded: null,
+            branchDetailsSettled: false,
             awb_airline_code: '',
             validationErrors: [],
             hs_code_error: [],
@@ -148,6 +152,10 @@ export default {
         },
     },
     watch: {
+        // Replaced whole when the branch's details arrive (getAgent); typing in a box does not come through here.
+        agent_information(details) {
+            this.branchDetailsLoaded = branchDetailsOn(details, this.iata_cass);
+        },
         'form.totals.dimention_unit': function() {
             this.calculateTotalVolume();
         },
@@ -898,6 +906,84 @@ export default {
             }
 
             return bestMatch;
+        },
+        /**
+         * Before a Send (owner, 2026-11-16; frontend audit FW15): were the branch's details changed on this form?
+         * Nothing is saved while typing. If a box differs, the person is asked whether to save it to the branch for
+         * this and future shipments. Resolves true to go on with the send, false to stop it.
+         *
+         *   Save       → the branch is updated first; the send goes on only if that worked.
+         *   Don't save → the boxes go back to what the branch has, which is what is sent.
+         *   Closed     → nothing is sent.
+         */
+        settleBranchDetails() {
+            const changes = changedBranchDetails(this.branchDetailsLoaded, branchDetailsOn(this.agent_information, this.iata_cass));
+
+            if (!changes.length) return Promise.resolve(true);
+
+            return this.$bvModal.msgBoxConfirm(branchDetailsQuestion(changes), {
+                title: 'Save the branch details?',
+                okTitle: 'Save for future shipments',
+                cancelTitle: "Don't save",
+                okVariant: 'primary',
+                bodyClass: 'branch-details-question',
+                centered: true,
+                noCloseOnBackdrop: true,
+            }).then((answer) => {
+                if (answer === null) return false;
+
+                if (answer === false) {
+                    changes.forEach((c) => this.putBranchDetail(c.key, c.from));
+
+                    return true;
+                }
+
+                const body = {};
+                changes.forEach((c) => { body[c.key] = c.to === '' ? null : c.to; });
+
+                return ApiService.put('/user/agent-info', body)
+                    .then(() => {
+                        this.branchDetailsLoaded = branchDetailsOn(this.agent_information, this.iata_cass);
+
+                        return true;
+                    })
+                    .catch((error) => {
+                        const data = error && error.response && error.response.data;
+                        const first = data && data.errors && Object.values(data.errors)[0];
+
+                        this.main_error_msg = 'The branch details were NOT saved, so nothing was sent. '
+                            + ((first && first[0]) || (data && (data.error || data.message)) || 'The server could not be reached.');
+
+                        return false;
+                    });
+            });
+        },
+        /** One branch box, wherever the form keeps it. */
+        putBranchDetail(key, value) {
+            if (this.iata_cass && key in this.iata_cass) this.$set(this.iata_cass, key, value || null);
+            else this.$set(this.agent_information, key, value || null);
+        },
+        /**
+         * The gate both forms' onSubmit goes through. True means "go on now"; false means the question is being
+         * asked and onSubmit will be called again if the answer allows it.
+         */
+        branchDetailsAllowSend(asked) {
+            if (asked !== 'send' || this.branchDetailsSettled) {
+                this.branchDetailsSettled = false;
+
+                return true;
+            }
+
+            // Nothing was changed: no question, and the send goes on in the same click.
+            if (!changedBranchDetails(this.branchDetailsLoaded, branchDetailsOn(this.agent_information, this.iata_cass)).length) return true;
+
+            this.settleBranchDetails().then((go) => {
+                if (!go) return;
+                this.branchDetailsSettled = true;
+                this.onSubmit();
+            });
+
+            return false;
         },
         /*
          * ── Moved here from FocusAir.vue and HouseWayBill.vue (2026-11-15 frontend audit, duplicates) ──────────

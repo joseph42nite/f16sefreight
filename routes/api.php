@@ -57,6 +57,8 @@ Route::group(['middleware' => 'auth:user-api', 'prefix' => 'user'], function () 
     Route::post('/create-focusair', [AirwayBillController::class, 'store']);
     Route::post('/get-consignment-error', [AirwayBillController::class, 'getConsignmentError']);
     Route::get('/agent-info', [AirwayBillController::class, 'get_agent']);
+    // A yes to "save these to the branch for future shipments?", asked on Send (frontend audit FW15).
+    Route::put('/agent-info', [AirwayBillController::class, 'update_agent']);
     // (GET /waybill/{id} is gone: it sent the waybill to the airline on a GET and recorded nothing. Saving sends.)
     Route::get('/get-shippers', [AirwayBillController::class, 'getShippers']);
     Route::get('/get-shipper-address', [AirwayBillController::class, 'getShipperAddress']);

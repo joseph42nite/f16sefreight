@@ -2360,7 +2360,6 @@
                                         <b-button class="show-btn mr-2" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';">Generate PDF</b-button>
                                         <div v-if="current_user.can_send">
                                             <b-button class="show-btn mr-2" type="submit" @click="form.status='send';">Send</b-button>
-                                            <b-button class="show-btn mr-2" type="submit" @click="form.status='send';">Send & Clear</b-button>
                                         </div>
                                         <div v-if="form.first_box.status!='send'">
                                             <b-button class="show-btn" type="submit" @click="form.status='draft';">{{submitButtonText}}</b-button>
@@ -2975,6 +2974,9 @@ export default {
                 this.generatePDFAfterSave = '';
                 return;
             }
+
+            // The branch's details, if a box was changed: asked before anything is sent (FW15).
+            if (!this.branchDetailsAllowSend(this.form.status)) return;
 
             $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             this.main_error_msg='';

@@ -638,6 +638,7 @@ export default {
             location: [],
             isOpen: false,
             consolidation: [],
+            deletingHouse: null,
             editIndex: null,
             edit_entry_index: null,
             isFetching: false,
@@ -866,8 +867,29 @@ export default {
                 });
             }
         },
-        deleteConsolidation(index) {
-            this.form.tableCodes.splice(index, 1);
+        /**
+         * The trash on a house row deletes that house waybill (owner, 2026-11-16; frontend audit FW4). It used to take
+         * a handling code off the form being edited and delete nothing, so the row was still there on reload.
+         * Asked first: the server removes the house waybill and everything filed under it, for good.
+         */
+        deleteConsolidation(id) {
+            if (this.deletingHouse) return;
+            if (!confirm(`Delete house waybill ${id}? Its parties, pieces and charges go with it. This cannot be undone.`)) return;
+
+            const say = (title, variant, text) => this.$bvToast.toast(text, { title, variant, solid: true, autoHideDelay: 8000 });
+
+            this.deletingHouse = id;
+            ApiService.delete(`/user/house-way-bills/${id}`)
+                .then(() => {
+                    this.consolidation = this.consolidation.filter((house) => house.id !== id);
+                    if (this.form && String(this.form.id) === String(id)) this.mode = '';
+                    say('Deleted', 'success', `House waybill ${id} was deleted.`);
+                })
+                .catch((error) => {
+                    const data = error && error.response && error.response.data;
+                    say('Not deleted', 'danger', `House waybill ${id} was NOT deleted. ${(data && (data.error || data.message)) || 'The server could not be reached.'}`);
+                })
+                .finally(() => { this.deletingHouse = null; });
         },
         openForm(mode, id = null) {
             this.mode = mode;

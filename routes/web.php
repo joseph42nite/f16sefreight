@@ -36,6 +36,16 @@ Route::get('/login', function () {
     return view('welcome');
 })->name('login');
 
-Route::get('{any}', function () {
-    return view('welcome');
+Route::get('{any}', function ($any = '') {
+    $page = response()->view('welcome');
+
+    // The two business cards are handed out one person at a time (owner, 2026-11-16; frontend audit FS14): every
+    // crawler is told to keep them out of its results and keep no copy. Said in a header, because the page's own
+    // tags are written by script and a crawler that runs none would not see them. NOT listed in robots.txt: that
+    // file is public and would publish the two addresses.
+    if (preg_match('#^(joseph-ceo|deepanjan-coo)-\d+/?$#', $any)) {
+        $page->header('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+    }
+
+    return $page;
 })->where('any', '(?!api/)(?!download-).*$');

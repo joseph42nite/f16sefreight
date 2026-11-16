@@ -73,6 +73,58 @@ class AirwayBillController extends Controller
         $data = Agent::where('id', $branch_name)->get(['agent_name', 'agent_address', 'agent_issue_sign', 'agent_issue_loc_code', 'agent_issue_date', 'agent_pincode', 'agent_city', 'agent_account', 'office_airport', 'office_function_designator', 'office_company_designator', 'iata_agent_code', 'iata_agent_cass', 'office_file_reference', 'participant', 'participant_airport', 'prticipant_identifer', 'participant_code', 'participant_file_reference', 'ho_name', 'ho_address', 'ho_city', 'ho_pincode', 'ho_state', 'ho_country']);
         return json_encode($data);
     }
+    /**
+     * The branch's own details, changed from a waybill form (owner, 2026-11-16; frontend audit FW15).
+     *
+     * The form asks the person on Send whether a box they changed should be saved to the branch for this and future
+     * shipments; a yes arrives here. Only the caller's OWN branch, only the boxes the form shows, and only for a
+     * person who may send — they are what goes on every waybill the branch issues. Same shapes as the platform's
+     * own branch screen (`Admin\BranchController::rules`).
+     */
+    public function update_agent(Request $request)
+    {
+        $this->abortUnlessMaySend();
+
+        $data = $request->validate([
+            'agent_name' => ['sometimes', 'required', 'string', 'max:100'],
+            'agent_address' => ['sometimes', 'required', 'string', 'max:255'],
+            'agent_city' => ['sometimes', 'required', 'string', 'max:100'],
+            'agent_pincode' => ['sometimes', 'required', 'string', 'max:10'],
+            'agent_account' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'iata_agent_code' => ['sometimes', 'nullable', 'regex:/^[0-9]{7}$/'],
+            'iata_agent_cass' => ['sometimes', 'nullable', 'regex:/^[0-9]{4}$/'],
+            'agent_issue_sign' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'agent_issue_loc_code' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'agent_issue_date' => ['sometimes', 'nullable', 'date'],
+            'office_airport' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'office_function_designator' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'office_company_designator' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'office_file_reference' => ['sometimes', 'nullable', 'string', 'max:100'],
+            // A yes/no on the form, a 0/1 column.
+            'participant' => ['sometimes', 'nullable', 'in:0,1'],
+            'participant_airport' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'prticipant_identifer' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'participant_code' => ['sometimes', 'nullable', 'string', 'max:100'],
+        ], [
+            'iata_agent_code.regex' => 'The IATA code is seven digits.',
+            'iata_agent_cass.regex' => 'The CASS number is four digits.',
+        ]);
+
+        if ($data === []) {
+            return response()->json(['error' => 'Nothing to save.'], 422);
+        }
+
+        $user = auth()->guard('user-api')->user();
+        $agent = Agent::findOrFail($user->branch_name);
+        $agent->forceFill($data)->save();
+
+        \Illuminate\Support\Facades\Log::info('Branch details changed from a waybill form', [
+            'agent_id' => $agent->id, 'user_id' => $user->id, 'fields' => array_keys($data),
+        ]);
+
+        return response()->json(['status' => true, 'saved' => array_keys($data)]);
+    }
+
     private function saveShipperAddress($awb_no, $awb_code, $shipper_address, $is_shipper_address_save)
     {
         $user = auth()->guard('user-api')->user();

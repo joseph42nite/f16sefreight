@@ -412,6 +412,9 @@ export default {
     return {
       title: "Deepanjan | COO & Founder - F16s E-Freight Solutions",
       meta: [
+        // A card handed to one person at a time (owner, 2026-11-16; frontend audit FS14): search engines are asked
+        // to keep it out of their results and to keep no copy. The server says the same in a header (routes/web.php).
+        { name: "robots", content: "noindex, nofollow, noarchive, nosnippet" },
         { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" },
         { name: "description", content: "Digital business card for Deepanjan, COO & Founder of F16s E-Freight Solutions. Connect via WhatsApp, phone, email or LinkedIn instantly." },
         { property: "og:title", content: "Deepanjan | COO & Founder - F16s E-Freight Solutions" },

@@ -531,6 +531,7 @@ import {
   formRoute, masterKey, mailDeviations, parsePartyBlock, routeDeviations, TARGETS, volumetricWeight, withoutWorkedOutParts,
 } from "@/core/config/awbMapping";
 import { cleanParty } from "@/core/config/awbFieldRules";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /**
  * The parts a shipment is assembled from.
@@ -1793,8 +1794,7 @@ export default {
         .finally(() => { this.saving = false; });
     },
     messageFor(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "something went wrong";
+      return serverMessage(e, "something went wrong");
     },
   },
   mounted() {

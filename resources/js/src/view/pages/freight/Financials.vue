@@ -1057,11 +1057,12 @@
 import { yearChoices } from "@/core/config/financialYear";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
-import { WHOLE_LIST } from "@/core/config/format";
+import { WHOLE_LIST, inr } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 const STATUSES = ["draft", "finalized", "sent", "partially_paid", "paid", "void"];
 
@@ -1514,7 +1515,7 @@ export default {
         .finally(() => { this.busy = false; });
     },
     money(value) {
-      return "INR " + Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+      return inr(value);
     },
     branchName(id) {
       const b = this.branches.find((x) => x.id === id);
@@ -1635,8 +1636,7 @@ export default {
         .finally(() => { this.busy = false; });
     },
     messageFor(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

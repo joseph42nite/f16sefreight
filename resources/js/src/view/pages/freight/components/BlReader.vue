@@ -75,6 +75,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /**
  * Reading a BL or a carrier's booking into the sea bill (guide Step 12.4).
@@ -210,9 +211,7 @@ export default {
         .finally(() => { this.busy = false; });
     },
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      if (d.errors) return Object.values(d.errors).flat().join(" ");
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.", { all: true });
     },
   },
 };

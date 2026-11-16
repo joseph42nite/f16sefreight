@@ -288,6 +288,7 @@ import { LOAD_CONTEXT } from "@/core/services/store/context.module";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import TeamMails from "@/view/pages/freight/components/TeamMails.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
   name: "BossDashboard",
@@ -391,8 +392,7 @@ export default {
       ApiService.get(url)
         .then(({ data }) => { this.periods = data.periods || []; this.error = null; })
         .catch((e) => {
-          const d = (e.response && e.response.data) || {};
-          this.error = d.error || d.message || "Something went wrong.";
+          this.error = serverMessage(e, "Something went wrong.");
         })
         .finally(() => { this.loading = false; });
     },

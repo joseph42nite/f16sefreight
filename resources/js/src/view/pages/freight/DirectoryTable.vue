@@ -247,6 +247,7 @@
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 const SHAPES = {
   "/customers": {
@@ -381,10 +382,7 @@ export default {
           this.load();
         })
         .catch((e) => {
-          const d = (e.response && e.response.data) || {};
-          this.saveError = d.errors
-            ? Object.values(d.errors).flat().join(" ")
-            : (d.error || d.message || "Could not save.");
+          this.saveError = serverMessage(e, "Could not save.", { all: true });
         })
         .finally(() => { this.saving = false; });
     },
@@ -453,8 +451,7 @@ export default {
           this.tdsEditing = null;
         })
         .catch((e) => {
-          const d = (e.response && e.response.data) || {};
-          this.tdsError = d.errors ? Object.values(d.errors).flat().join(" ") : (d.error || d.message || "Could not save.");
+          this.tdsError = serverMessage(e, "Could not save.", { all: true });
         })
         .finally(() => { this.tdsSaving = false; });
     },
@@ -483,8 +480,7 @@ export default {
       request
         .then(() => { this.client = null; this.load(); })
         .catch((e) => {
-          const d = (e.response && e.response.data) || {};
-          this.saveError = d.errors ? Object.values(d.errors).flat().join(" ") : (d.error || d.message || "Could not save.");
+          this.saveError = serverMessage(e, "Could not save.", { all: true });
         })
         .finally(() => { this.saving = false; });
     },
@@ -507,8 +503,7 @@ export default {
           if (this.endpoint === "/partners") this.loadTdsSections();
         })
         .catch((e) => {
-          const d = (e.response && e.response.data) || {};
-          this.error = d.error || d.message || "Something went wrong.";
+          this.error = serverMessage(e, "Something went wrong.");
         })
         .finally(() => { this.loading = false; });
     },

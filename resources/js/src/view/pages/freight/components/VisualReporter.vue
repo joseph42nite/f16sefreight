@@ -77,6 +77,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import recorder from "@/core/services/console.recorder";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /**
  * A CSS selector path for one element.
@@ -228,8 +229,7 @@ export default {
           recorder.clear();
         })
         .catch((e) => {
-          const d = (e.response && e.response.data) || {};
-          this.error = d.error || d.message || "Could not send the report.";
+          this.error = serverMessage(e, "Could not send the report.");
         })
         .finally(() => { this.busy = false; });
     },

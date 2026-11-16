@@ -17,7 +17,6 @@
 <template>
     <b-container fluid class="body-color">
         <!-- Include Page Loader -->
-        <!-- <PageLoader></PageLoader> -->
         <!-- Include Header -->
 
         <div class="d-flex flex-column flex-lg-row">
@@ -206,7 +205,6 @@ import SideBar from "@/view/layouts/public/SideBar.vue";
 import SkeletonTable from "../../components/SkeletonTable.vue";
 import ApiService from "@/core/services/api.service";
 import { mapGetters } from "vuex";
-// import PageLoader from '../../components/PageLoader.vue';
 
 export default {
     name: "MessageLog",
@@ -510,7 +508,6 @@ export default {
     components: {
         SideBar,
         SkeletonTable
-        // PageLoader
     },
 };
 </script>

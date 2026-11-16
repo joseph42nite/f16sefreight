@@ -219,6 +219,8 @@
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import { serverMessage } from "@/core/services/serverMessage";
+import { inr } from "@/core/config/format";
 
 const VIEWS = [
   { key: "jobs", label: "By shipment" },
@@ -277,7 +279,7 @@ export default {
       this.load();
     },
     money(value) {
-      return "INR " + Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+      return inr(value);
     },
     query() {
       const params = [];
@@ -342,24 +344,7 @@ export default {
      * A refusal nobody can read is a refusal nobody can act on, and it wasted an afternoon.
      */
     messageFor(e) {
-      const response = e.response;
-      const data = response && response.data;
-
-      if (data && data.error) return data.error;
-
-      // A 422 carries the field errors; show the first, which is the one the person has to fix.
-      if (data && data.errors) {
-        const first = Object.values(data.errors)[0];
-
-        return Array.isArray(first) ? first[0] : String(first);
-      }
-
-      if (data && data.message) return data.message;
-
-      // Nothing readable came back: say what actually happened rather than "something".
-      return response
-        ? `The server refused that (${response.status}).`
-        : "Could not reach the server. Check your connection and try again.";
+      return serverMessage(e);
     },
   },
 };

@@ -26,30 +26,21 @@ let checking = { key: null, promise: null };
 export const VERIFY_AUTH = "verifyAuth";
 export const LOGIN = "login";
 export const LOGOUT = "logout";
-export const REGISTER = "register";
-export const UPDATE_PASSWORD = "updateUser";
-export const UPDATE_Source ="updateSource";
 
 // mutation types
 export const PURGE_AUTH = "logOut";
 export const SET_AUTH = "setUser";
-export const SET_PASSWORD = "setPassword";
 export const SET_Source = "setSource";
 export const SET_ERROR = "setError";
-export const SAVE_FORM_DATA ="saveFormData";
 
 const state = {
   errors: null,
   user: {},
   user_source:JwtService.getSource(),
-  formData: {},
   isAuthenticated: !!JwtService.getToken()
 };
 
 const getters = {
-  getFormData(state) {
-    return state.formData;
-  },
   currentUser(state) {
     return state.user;
   },
@@ -155,25 +146,10 @@ const actions = {
     context.commit(PURGE_AUTH);
     toSignIn();
     return Promise.resolve(false);
-  },
-  [UPDATE_PASSWORD](context, payload) {
-    const password = payload;
-
-    return ApiService.put("password", password).then(({ data }) => {
-      context.commit(SET_PASSWORD, data);
-      return data;
-    });
-  },
-  [UPDATE_Source](context, source) {
-      JwtService.saveSource(source);
-      context.commit(SET_Source, source);
   }
 };
 
 const mutations = {
-  [SAVE_FORM_DATA](state, formData) {
-    state.formData = formData;
-  },
   [SET_ERROR](state, error) {
     state.errors = error;
   },
@@ -184,9 +160,6 @@ const mutations = {
     state.isAuthenticated = true;
     state.user = user;
     state.errors = {};
-  },
-  [SET_PASSWORD](state, password) {
-    state.user.password = password;
   },
   [PURGE_AUTH](state) {
     // Clear the cached shell shape too, or the next user briefly sees the previous

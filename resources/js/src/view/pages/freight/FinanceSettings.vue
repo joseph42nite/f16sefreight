@@ -487,9 +487,10 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
-import { WHOLE_LIST } from "@/core/config/format";
+import { WHOLE_LIST, inr } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /** Settings → Finance (PRD §2.4): the chart of accounts and the rate cards, per branch (user, 2026-09-18). */
 export default {
@@ -545,7 +546,7 @@ export default {
   },
   methods: {
     money(value) {
-      return "INR " + Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+      return inr(value);
     },
     blankBank() {
       return { id: null, agent_id: this.branches.length ? this.branches[0].id : null,
@@ -744,9 +745,7 @@ export default {
         .finally(() => { this.busy = false; });
     },
     messageFor(e) {
-      const d = (e.response && e.response.data) || {};
-      const invalid = d.errors && Object.values(d.errors)[0];
-      return (invalid && invalid[0]) || d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

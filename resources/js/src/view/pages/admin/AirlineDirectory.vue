@@ -103,6 +103,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 
 const EMPTY = { name: "", prefix: "", code: "", country: "", domain: "", airline_address: "", is_active: true };
 
@@ -148,9 +149,7 @@ export default {
         .finally(() => { this.saving = false; });
     },
     messageFor(e) {
-      const d = (e.response && e.response.data) || {};
-      if (d.errors) return Object.values(d.errors).flat().join(" ");
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.", { all: true });
     },
   },
 };

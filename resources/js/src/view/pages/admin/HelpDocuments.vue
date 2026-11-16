@@ -97,6 +97,7 @@
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import { HELP_TARGETS } from "@/core/config/helpTargets";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
   name: "HelpDocuments",
@@ -148,9 +149,7 @@ export default {
         .catch((e) => { this.error = this.readable(e); });
     },
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      const first = d.errors && Object.values(d.errors)[0];
-      return (first && first[0]) || d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

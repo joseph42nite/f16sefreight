@@ -1,5 +1,6 @@
 import ApiService from "@/core/services/api.service";
 import { noticesFor } from "@/core/services/airlineNotice";
+import { loadLocations } from "@/core/services/location.cache";
 
 export default {
     data() {
@@ -282,9 +283,6 @@ export default {
                 this.consignment_list.hsCodes.splice(index, 1);
             }
         },
-        displayModal() {
-            this.$refs.modalConsignment.show();
-        },
         closeModal() {
             this.$refs.modalConsignment.hide();
         },
@@ -413,9 +411,6 @@ export default {
             if (this.consignment_list.itemss.length > index) {
                 this.consignment_list.itemss.splice(index, 1);
             }
-        },
-        calculateTotalCharges() {
-            this.form.totals.total_amount = this.calculateTotalAmount();
         },
         getOriginCode(airportString) {
             if (airportString) {
@@ -903,6 +898,89 @@ export default {
             }
 
             return bestMatch;
+        },
+        /*
+         * ── Moved here from FocusAir.vue and HouseWayBill.vue (2026-11-15 frontend audit, duplicates) ──────────
+         * Each of these was written out in both pages, identical. One copy, so a fix lands once.
+         */
+        handleUseMyEmailChange(checked) {
+            if (checked) {
+                this.form.awb_email = localStorage.getItem('fna_default_email') || '';
+            } else {
+                this.form.awb_email = '';
+            }
+        },
+        handleAwbEmailInput(val) {
+            if (val) {
+                localStorage.setItem('fna_default_email', val);
+            }
+        },
+        handleSaveAndGeneratePDF(pdf_generate_type) {
+            // onSubmit() opens the PDF on a successful save (see generatePDFAfterSave).
+            this.generatePDFAfterSave = pdf_generate_type;
+            // 🔴 A PDF link saves; it never sends (FW2). The status was left as whatever was clicked last, so a PDF
+            // link clicked after a Send transmitted the waybill to the airline a second time.
+            this.form.status = 'generate_pdf';
+            this.onSubmit();
+        },
+        getLocation() {
+            loadLocations().then(data => {
+                this.location = data;
+            });
+        },
+        fetchAllAddressBook() {
+            ApiService.get('/user/get-shippers').then(response => {
+                const all = response.data;
+                this.shippers = all.filter(s => s.address_type === 'shipper_address');
+                this.consignees = all.filter(s => s.address_type === 'consignee_address');
+                this.alsoNotify = all.filter(s => s.address_type === 'also_notify_address');
+                this.filteredShippers = this.shippers;
+                this.filteredConsignees = this.consignees;
+                this.filteredAlsoNotify = this.alsoNotify;
+            });
+        },
+        deleteSplCode(index) {
+            this.form.tableCodes.splice(index, 1);
+        },
+        handleDateChange(date, field) {
+            const keys = field.split('.');
+            let target = this;
+
+            for (let i = 0; i < keys.length - 1; i++) {
+                target = target[keys[i]];
+            }
+            target[keys[keys.length - 1]] = date;
+        },
+        addManualCode() {
+            if (!Array.isArray(this.form.tableCodes)) {
+                this.form.tableCodes = [];
+            }
+            const code = this.selectedCode || this.custom_special_handling_code.trim();
+
+            if (code) {
+                if (!this.form.tableCodes.includes(code)) {
+                    this.form.tableCodes.push(code);
+                    // console.log("Table codes:", this.form.tableCodes);
+                } else {
+                    alert('This code is already added.');
+                }
+            } else {
+                alert('Please select or enter a code.');
+            }
+
+            this.selectedCode = '';
+            this.custom_special_handling_code = '';
+        },
+        validateNumericInput(evt,field, maxLength) {
+            evt = evt || window.event;
+            const charCode = evt.which || evt.keyCode;
+            if (charCode < 48 || charCode > 57) {
+                evt.preventDefault();
+            }
+
+            if (this.form.first_box[field].length >= maxLength) {
+                evt.preventDefault();
+            }
         },
     }
 };

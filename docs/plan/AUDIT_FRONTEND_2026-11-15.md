@@ -355,6 +355,29 @@ The committed `public/js` files are a development build, so absolute sizes overs
   `reloadPageWithContent` and a dozen smaller methods; the OTP modal that nothing opens; `UPDATE_PASSWORD`
   (calls a route that does not exist).
 
+> **2026-11-16: first pass.**
+> **Removed (each checked to have no caller anywhere in `resources/js/src` or `tests/js`):** `core/config/i18n/*`,
+> `layouts/public/Layout.vue`, `components/PageLoader.vue` and its commented-out references, `store/store.js`,
+> `profile.module.js`, `breadcrumbs.module.js`, `error/Error.vue`; in the auth store `UPDATE_PASSWORD`, `SET_PASSWORD`,
+> `REGISTER`, `UPDATE_Source`, `SAVE_FORM_DATA` and `getFormData`; in the waybill screens `converXml`,
+> `prepareFormDataForSubmission`, `validateFormFields`, `reloadPageWithContent`, `issueDateChange` and the modal and
+> hover stubs (`handleOk`, `toggleModal`, `showModal`, `hideModal`, `mouseover`, `mouseleave`); in `Consolidation.vue`
+> also `updateform`, `getAgent`, `getCurrentUser`, `handleRadioChange`; in the mixin `calculateTotalCharges`,
+> `displayModal`. About 1,000 lines.
+> **Merged:** `messageFor` / `readable` and the same logic written inline, in 36 pages, now call
+> `core/services/serverMessage.js` (`{ all: true }` where a page listed every field's complaint); `money()` in 8 pages
+> calls `format.js` `inr`. The wording of a few fallbacks changes: with no answer from the server every page now says
+> it could not be reached, and a validation failure shows the field's message where some showed Laravel's summary.
+> **Moved into `airWayBillMixin.js`:** the ten methods that were the same in `FocusAir.vue` and `HouseWayBill.vue`
+> (`handleSaveAndGeneratePDF`, `getLocation`, `fetchAllAddressBook`, `addManualCode`, `deleteSplCode`,
+> `handleDateChange`, `validateNumericInput`, the two email handlers; `onSelect` was already there and defined twice more).
+> **Left:** `processExtractedData`, `onSubmit`, `openForm`, `onAWBInput`, `getAgent`, `isGeneratePdf` and the three
+> `fill…Details` differ between the two forms (60 to 120 lines each for the big three), so merging them is a change
+> of behaviour to be made with a real waybill of each kind to hand; the templates and styles; the two business
+> cards (FS14 first); the two `OcrUploadModal.vue`; blob download (9) and compose-and-send (4); the OTP modal
+> (`Header.vue` holds someone else's work); `HomeFeatureGrid.vue`, `HomeStatsSection.vue`, `HomePartnersTicker.vue`
+> (the home page is someone's work in progress); `JobBoard.vue`'s own `readable` (same reason).
+
 ## 8. Tests
 
 40 jest specs. About 32 run real modules or mount real components. Six assert on source text read from disk, so

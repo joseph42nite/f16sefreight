@@ -140,6 +140,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /* The box vocabulary from python/boxes_config.json — the same names FocusAir.vue
    already consumes, so nothing here needs a second mapping. */
@@ -312,8 +313,7 @@ export default {
       this.$emit("close");
     },
     messageFor(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

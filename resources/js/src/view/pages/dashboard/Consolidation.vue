@@ -2,7 +2,6 @@
     <div class="body-color">
         <div class="container-fluid">
             <!-- Include Page Loader -->
-            <!-- <PageLoader></PageLoader> -->
             <div class="d-flex flex-column flex-lg-row">
                 <SideBar></SideBar>
                 <div style="background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 30px rgba(53, 85, 148, 0.1); z-index: 1; border-radius: 32px; flex: 1; min-width: 0;">
@@ -672,12 +671,6 @@ export default {
             const pdfUrl = `/download-consolidation-pdf/${String(awb_code)}/${String(awb_no)}`;
             openPdf(pdfUrl);
         },
-        mouseover: function () {
-            this.isOpen = true;
-        },
-        mouseleave: function () {
-            this.isOpen = false;
-        },
         /**
          * Send the house manifest and say what the airline's gateway answered (frontend audit, FW5). It used to say
          * nothing either way, including for the 502 the server gives when the gateway refuses the manifest.
@@ -697,18 +690,6 @@ export default {
                     say('Not sent', 'danger', `The manifest was NOT sent to the airline. ${why}`);
                 })
                 .finally(() => { this.manifestSending = false; });
-        },
-        showModal() {
-            this.$refs["my-modal"].show();
-        },
-        hideModal() {
-            this.$refs["my-modal"].hide();
-        },
-        toggleModal() {
-            this.$refs["my-modal"].toggle("#toggle-btn");
-        },
-        handleOk(bvModalEvent) {
-            bvModalEvent.preventDefault();
         },
         // location
         getLocation() {
@@ -774,15 +755,6 @@ export default {
                     this.existingData = null;
                     console.error("Failed to fetch data for updating:", error);
                 });
-        },
-        updateform(id){
-            this.form.put(`/user/update-consolidation/${this.form.id}`)
-            .then(response => {
-                // Waybill updated successfully
-            })
-            .catch(error => {
-                console.error("Error updating waybill:", error);
-            });
         },
         updateHouseWayBill() {
             if (!this.form.id) {
@@ -934,23 +906,6 @@ export default {
                 console.error("Error fetching countries:", error);
             });
         },
-        getAgent(){
-            ApiService.get(`/user/agent-info/`)
-                .then(({ data }) => {
-                if (Array.isArray(data) && data.length > 0) {
-                    this.agent_information = data[0];
-                    this.iata_cass = {
-                        iata_agent_code: this.agent_information.iata_agent_code || null,
-                        iata_agent_cass: this.agent_information.iata_agent_cass || null
-                    };
-                } else {
-                    this.agent_information = data;
-                }
-                })
-                .catch(error => {
-                    console.error("Error fetching agent information:", error);
-                });
-        },
         getOCIData(){
             ApiService.get('/user/get-oci-data').then(({ data }) => {
             if (data && data.oci_custom_info_identifier) {
@@ -984,11 +939,6 @@ export default {
                 .catch(error => {
                     console.error("Failed to fetch data for updating:", error);
                 });
-        },
-        handleRadioChange() {
-            const selectedCode = this.selectedCode;
-            this.form.tableCodes = [];
-            this.form.tableCodes.push(selectedCode);
         },
         addManualCode() {
             if (!Array.isArray(this.form.tableCodes)) {
@@ -1098,11 +1048,6 @@ export default {
                 hour: '2-digit',
                 minute: '2-digit'
             });
-        },
-        getCurrentUser() {
-            // You can get this from your auth store or API
-            // For now, returning a placeholder
-            return 'Current User';
         },
         selectAndSearchAwb(item) {
             // Fill the search fields with the selected AWB data

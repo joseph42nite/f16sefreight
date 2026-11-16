@@ -4,8 +4,11 @@
  *
  * The admin screens swallowed their failures (2026-11-15 frontend audit, FA8): a save that did nothing looked like
  * a save that worked.
+ *
+ * One copy (the audit's duplicates list): about twenty pages each carried their own `messageFor` or `readable`,
+ * and one that forgot its copy was FM4.
  */
-export function serverMessage(error, fallback = "") {
+export function serverMessage(error, fallback = "", { all = false } = {}) {
   const response = error && error.response;
   const data = response && response.data;
 
@@ -13,7 +16,8 @@ export function serverMessage(error, fallback = "") {
 
   if (data && data.errors && typeof data.errors === "object") {
     const first = Object.values(data.errors)[0];
-    const text = Array.isArray(first) ? first[0] : first;
+    // `all`: every field's complaint at once, for a form with many boxes; otherwise the first, the one to fix now.
+    const text = all ? Object.values(data.errors).flat().join(" ") : (Array.isArray(first) ? first[0] : first);
 
     if (text) return String(text);
   }

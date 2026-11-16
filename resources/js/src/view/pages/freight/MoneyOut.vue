@@ -367,11 +367,12 @@
 </template>
 
 <script>
-import { localToday } from "@/core/config/format";
+import { localToday, inr } from "@/core/config/format";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
   name: "MoneyOut",
@@ -438,7 +439,7 @@ export default {
   },
   methods: {
     money(value) {
-      return "INR " + Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+      return inr(value);
     },
     load() {
       this.loading = true;
@@ -504,8 +505,7 @@ export default {
       ApiService.post(`/jobs/${b.job_id}/cost-sheet/lines`, body)
         .then(() => { this.booking = null; this.load(); })
         .catch((e) => {
-          const d = (e.response && e.response.data) || {};
-          this.actionError = d.error || d.message || "The cost could not be booked.";
+          this.actionError = serverMessage(e, "The cost could not be booked.");
         })
         .finally(() => { this.busy = false; });
     },

@@ -222,6 +222,7 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 
 // Tab 11's words — the filing and the bill read the same status.
 const STATUSES = [
@@ -333,9 +334,7 @@ export default {
       return `${this.when(entry.at)}  ${entry.status.toUpperCase()}  ${entry.by || "system"}${entry.note ? " — " + entry.note : ""}`;
     },
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      if (d.errors) return Object.values(d.errors).flat().join(" ");
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.", { all: true });
     },
   },
 };

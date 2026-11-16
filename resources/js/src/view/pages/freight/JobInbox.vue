@@ -766,6 +766,7 @@ import ClientUpdateEditor from "@/view/pages/freight/components/ClientUpdateEdit
 import StaffPicker from "@/view/pages/freight/components/StaffPicker.vue";
 import NewMail from "@/view/pages/freight/components/NewMail.vue";
 import MailBodyFrame from "@/view/pages/freight/components/MailBodyFrame.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /** PRD §5.2.3: what one mail can carry, all attachments together. The server enforces it too. */
 const ATTACHMENT_CAP_BYTES = 25 * 1024 * 1024;
@@ -1301,8 +1302,7 @@ export default {
       ApiService.patch("/enquiries/" + this.active.enquiry.id, "cargo", { direction })
         .then(() => { this.active.enquiry.direction = direction; })
         .catch((e) => {
-          const d = (e.response && e.response.data) || {};
-          this.cargoError = d.error || d.message || "The direction could not be saved.";
+          this.cargoError = serverMessage(e, "The direction could not be saved.");
         })
         .finally(() => { this.cargoBusy = false; });
     },
@@ -1820,8 +1820,7 @@ export default {
         .finally(() => { this.busy = false; });
     },
     messageFor(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

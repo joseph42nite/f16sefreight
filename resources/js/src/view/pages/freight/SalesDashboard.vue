@@ -469,6 +469,7 @@ import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 import HealthBars from "@/view/pages/freight/components/HealthBars.vue";
 import TeamMails from "@/view/pages/freight/components/TeamMails.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /** What each suggested email is about, in the rep's words. */
 const TYPE_LABELS = {
@@ -748,8 +749,7 @@ export default {
           if (branches) this.branchRows = branches.data.branches || [];
         })
         .catch((e) => {
-          const d = (e.response && e.response.data) || {};
-          this.error = d.error || d.message || "Something went wrong.";
+          this.error = serverMessage(e, "Something went wrong.");
         })
         .finally(() => { this.loading = false; });
     },

@@ -77,11 +77,15 @@ describe.each(["dashboard/FocusAir.vue", "dashboard/HouseWayBill.vue"])("%s", (p
   });
 
   it("a PDF link saves and never sends", () => {
-    const method = source.slice(source.indexOf("handleSaveAndGeneratePDF(pdf_generate_type) {"));
-    const body = method.slice(0, method.indexOf("\n        },"));
+    // One copy, in the mixin both pages share; run, not read.
+    expect(source).not.toMatch(/handleSaveAndGeneratePDF\(pdf_generate_type\) \{/);
 
-    expect(body.indexOf("this.form.status = 'generate_pdf';")).toBeGreaterThan(-1);
-    expect(body.indexOf("this.form.status = 'generate_pdf';")).toBeLessThan(body.indexOf("this.onSubmit();"));
+    const page = { form: { status: "send" }, generatePDFAfterSave: null, onSubmit: jest.fn(function () { this.sentAs = this.form.status; }) };
+    mixin.methods.handleSaveAndGeneratePDF.call(page, "classic");
+
+    expect(page.onSubmit).toHaveBeenCalledTimes(1);
+    expect(page.sentAs).toBe("generate_pdf");
+    expect(page.generatePDFAfterSave).toBe("classic");
   });
 
   it("does not submit on Enter", () => {

@@ -102,6 +102,7 @@
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { WHOLE_LIST } from "@/core/config/format";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
   name: "EntityPanel",
@@ -184,8 +185,7 @@ export default {
         .finally(() => { this.busy = false; });
     },
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

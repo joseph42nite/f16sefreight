@@ -123,6 +123,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 
 const STATUSES = [
   { key: "proposed", label: "Waiting" },
@@ -222,8 +223,7 @@ export default {
                                         hour: "2-digit", minute: "2-digit" });
     },
     messageFor(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

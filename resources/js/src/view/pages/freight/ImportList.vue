@@ -62,6 +62,7 @@ import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /**
  * Import, both portals (GAPS #434). The server answers for the portal it is called from, so this one page is
@@ -100,8 +101,7 @@ export default {
         .finally(() => { this.creating = false; });
     },
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

@@ -66,6 +66,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
   name: "CreditsPanel",
@@ -75,8 +76,7 @@ export default {
     ApiService.get("/user/credits")
       .then(({ data }) => { this.data = data; })
       .catch((e) => {
-        const d = (e.response && e.response.data) || {};
-        this.error = d.error || d.message || "Could not load credits.";
+        this.error = serverMessage(e, "Could not load credits.");
       });
   },
   methods: {

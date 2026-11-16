@@ -106,7 +106,6 @@ router.beforeEach((to, from, next) => {
 new Vue({
   router,
   store,
-  // i18n,
   // vuetify,
   render: h => h(App)
 }).$mount("#app");

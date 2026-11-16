@@ -413,10 +413,11 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
-import { termsLabel } from "@/core/config/format";
+import { termsLabel, inr } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 const TABS = [
   { key: "details", label: "Details" },
@@ -486,7 +487,7 @@ export default {
         .finally(() => { this.busy = false; });
     },
     money(value) {
-      return "INR " + Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+      return inr(value);
     },
     query() {
       const params = [];
@@ -567,22 +568,7 @@ export default {
     },
     /* The server's own words — including a 422's field errors, which carry `errors`, never `error`. */
     messageFor(e) {
-      const response = e.response;
-      const data = response && response.data;
-
-      if (data && data.error) return data.error;
-
-      if (data && data.errors) {
-        const first = Object.values(data.errors)[0];
-
-        return Array.isArray(first) ? first[0] : String(first);
-      }
-
-      if (data && data.message) return data.message;
-
-      return response
-        ? `The server refused that (${response.status}).`
-        : "Could not reach the server. Check your connection and try again.";
+      return serverMessage(e);
     },
   },
 };

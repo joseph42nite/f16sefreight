@@ -83,6 +83,11 @@ export function termsLabel(days) {
   return Number(days) === 0 ? "Cash and carry" : `${Number(days)} days credit`;
 }
 
+/** Rupees as the accounts screens print them: "INR 1,23,456.00". One copy of what eight pages each defined. */
+export function inr(value) {
+  return "INR " + Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
+}
+
 /**
  * To the paisa, the way the server rounds a money figure: 300.30000000000004 is 300.3 and 1.005 is 1.01 (half
  * away from zero, as PHP's round). Shifted as text, because 1.005 * 100 is 100.49999999999999.

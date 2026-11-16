@@ -217,6 +217,7 @@ import { WHOLE_LIST } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import EntityPanel from "@/view/pages/freight/components/EntityPanel.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 const FILING = [
   { value: "not_filed", label: "Not filed" }, { value: "submitted", label: "Submitted" },
@@ -372,9 +373,7 @@ export default {
         });
     },
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      if (d.errors) return Object.values(d.errors).flat().join(" ");
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.", { all: true });
     },
   },
 };

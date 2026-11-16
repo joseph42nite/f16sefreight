@@ -184,6 +184,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
   name: "AiUsage",
@@ -224,8 +225,7 @@ export default {
       return Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
     },
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

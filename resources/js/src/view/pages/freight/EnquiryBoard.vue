@@ -165,6 +165,7 @@ import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import Figure from "@/view/pages/freight/components/Figure.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /**
  * Mirrors `App\Enums\EnquiryStatus` exactly.
@@ -272,8 +273,7 @@ export default {
     /* §11.3 — surface the server's reason, not a generic failure. The API returns a
        `reason` code precisely so the UI can be specific about what went wrong. */
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

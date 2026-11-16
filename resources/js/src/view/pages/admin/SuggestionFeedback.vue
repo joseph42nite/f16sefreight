@@ -74,6 +74,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /** The suggestion types, as the Sales page names them. */
 const LABELS = {
@@ -91,8 +92,7 @@ export default {
     ApiService.get("/superadmin/suggestion-feedback")
       .then(({ data }) => { this.data = data; })
       .catch((e) => {
-        const d = (e.response && e.response.data) || {};
-        this.error = d.error || d.message || "Could not load the feedback.";
+        this.error = serverMessage(e, "Could not load the feedback.");
       })
       .finally(() => { this.loading = false; });
   },

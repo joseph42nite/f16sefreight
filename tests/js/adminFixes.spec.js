@@ -124,3 +124,37 @@ describe("routes that do not exist (FA9)", () => {
     expect(read("view/pages/admin/AirlineDirectory.vue")).toMatch(/\/superadmin\/airlines\?per_page=500&q=/);
   });
 });
+
+describe("the shared helpers the pages now use (duplicates)", () => {
+  const { inr } = require("../../resources/js/src/core/config/format");
+
+  it("serverMessage can give every field's complaint at once", () => {
+    const refused = { response: { status: 422, data: { errors: { a: ["A is needed."], b: ["B is too long."] } } } };
+
+    expect(serverMessage(refused, "", { all: true })).toBe("A is needed. B is too long.");
+    expect(serverMessage(refused)).toBe("A is needed.");
+  });
+
+  it("inr prints rupees the Indian way", () => {
+    expect(inr(123456.5)).toBe("INR 1,23,456.50");
+    expect(inr(null)).toBe("INR 0.00");
+  });
+
+  it("no page keeps its own copy of either", () => {
+    const pages = path.join(__dirname, "../../resources/js/src/view");
+    const own = [];
+    const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
+      const file = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) return walk(file);
+      // Left alone: files holding someone else's uncommitted work when this was done.
+      if (!entry.name.endsWith(".vue") || /JobBoard|HelpAssistant|[\\/]board[\\/]/.test(file)) return;
+
+      const source = fs.readFileSync(file, "utf8");
+      if (/d\.error \|\| d\.message \|\| "/.test(source) || /return "INR " \+ Number\(/.test(source)) own.push(entry.name);
+    });
+    walk(pages);
+
+    expect(own).toEqual([]);
+  });
+});

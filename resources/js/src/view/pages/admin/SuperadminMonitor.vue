@@ -84,6 +84,7 @@
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
   name: "SuperadminMonitor",
@@ -140,8 +141,7 @@ export default {
         .finally(() => { this.logLoading = false; });
     },
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

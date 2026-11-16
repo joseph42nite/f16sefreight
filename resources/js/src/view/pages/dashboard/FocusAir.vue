@@ -2,8 +2,6 @@
     <!-- <div class="">
         <div class="container-fluid"> -->
         <b-container fluid class="body-color">
-            <!-- Include PageLoader -->
-            <!-- <PageLoader></PageLoader> -->
             <!-- Include Header -->
 
             <div class="d-flex flex-column flex-lg-row">
@@ -2517,7 +2515,6 @@ import { saveOutcome, failureMessage } from "@/core/services/waybillSend";
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
-import { loadLocations } from "@/core/services/location.cache";
 import { checkAll } from "@/core/config/iata";
 import "vue2-datepicker/index.css";
 import debounce from 'lodash.debounce';
@@ -2526,7 +2523,6 @@ import SideBar from "@/view/layouts/public/SideBar.vue";
 import { mapGetters } from "vuex";
 import OcrUploadModal from "@/view/components/OcrUploadModal.vue";
 import DashboardHistoryModal from "@/view/components/DashboardHistoryModal.vue";
-// import PageLoader from "../../components/PageLoader.vue";
 import airWayBillMixin from "@/core/mixins/airWayBillMixin";
 
 export default {
@@ -2851,18 +2847,6 @@ export default {
     },
     
     methods: {
-        handleUseMyEmailChange(checked) {
-            if (checked) {
-                this.form.awb_email = localStorage.getItem('fna_default_email') || '';
-            } else {
-                this.form.awb_email = '';
-            }
-        },
-        handleAwbEmailInput(val) {
-            if (val) {
-                localStorage.setItem('fna_default_email', val);
-            }
-        },
         processExtractedData(response) {
             // Reset the form and UI states to clear any previously populated data
             this.form.reset();
@@ -3129,23 +3113,6 @@ export default {
         // Show the choice straight away: nothing is saved or made until a layout is clicked (Walk 2 #18).
         this.is_generate_pdf = generateButton === 1 ? 1 : 0;
         },
-        // generateAwbPDF() {
-        //     // const itemId = this.$route.params.id;
-        //     const itemId =  this.existingData.id
-        //     console.log("sdfnjbf",itemId);
-        //     const pdfUrl = `/download-awb-pdf/${itemId}`; // Construct the URL for the PDF
-        //     openPdf(pdfUrl); // Open the PDF in a new tab
-        // },
-        // generateAwbPDF() {
-        //     if (!this.validateFormFields()) {
-        //         return;
-        //     }
-        //     const itemId = this.$route.params.id;
-        //     console.log("dknfehjf", itemId);
-        //     const pdfUrl = `/download-awb-pdf/${itemId}`;
-        //     console.log("skfnjfer",pdfUrl);
-        //     openPdf(pdfUrl);
-        // },
         generateAwbPDF(pdf_generate_type) {
             this.generatePDFAfterSave='';
             if (!this.existingData || !this.existingData.id) {
@@ -3154,14 +3121,6 @@ export default {
             }
             const pdfUrl = `/${pdf_generate_type}/${this.existingData.id}`;
             openPdf(pdfUrl);
-        },
-        handleSaveAndGeneratePDF(pdf_generate_type) {
-            // onSubmit() opens the PDF on a successful save (see generatePDFAfterSave).
-            this.generatePDFAfterSave = pdf_generate_type;
-            // 🔴 A PDF link saves; it never sends (FW2). The status was left as whatever was clicked last, so a PDF
-            // link clicked after a Send transmitted the waybill to the airline a second time.
-            this.form.status = 'generate_pdf';
-            this.onSubmit();
         },
         formatBackendError(msg) {
             if (!msg) return "";
@@ -3203,119 +3162,15 @@ export default {
             // Capitalize first letter
             return cleanMsg.charAt(0).toUpperCase() + cleanMsg.slice(1);
         },
-        validateFormFields() {
-            const requiredFields = {
-                "AWB prefix": this.form.first_box.awb_code, // AWB prefix
-                "AWB number": this.form.first_box.awb_no, // AWB number
-                "Shipper address": this.form.shipper_address.ship_address, // Shipper address
-                "Shipper city": this.form.shipper_address.ship_address, // Shipper city
-                "Consignee address": this.form.consignee_address.cons_address, // Consignee address
-                "Consignee city": this.form.consignee_address.cons_city, // Consignee city
-                "Routing by (carrier code) on row 1 is mandatory": this.form.routing_information.by // Routing by carrier code
-            };
-            const missingFields = Object.entries(requiredFields)
-            .filter(([field, value]) => !value || (typeof value === 'string' && value.trim() === ''))
-            .map(([field]) => field);
-            if (missingFields.length > 0) {
-                alert(`The following fields are mandatory:\n- ${missingFields.join("\n- ")}`);
-                return false;
-            }
-            return true;
-        },
-        mouseover: function () {
-            this.isOpen = true;
-        },
-        mouseleave: function () {
-            this.isOpen = false;
-        },
-        converXml(awb_no){
-            ApiService.get(`/user/waybill/${awb_no}`)
-                .then(({ data }) => {
-                    // console.log(data);
-                });
-        },
         // showModal() {
         //     this.$refs["my-modal"].show();
         // },
         // hideModal() {
         //     this.$refs["my-modal"].hide();
         // },
-        toggleModal() {
-            this.$refs["my-modal"].toggle("#toggle-btn");
-        },
-        handleOk(bvModalEvent) {
-            bvModalEvent.preventDefault();
-        },
 
-        handleDateChange(date, field) {
-            const keys = field.split('.');
-            let target = this;
-
-            for (let i = 0; i < keys.length - 1; i++) {
-                target = target[keys[i]];
-            }
-            target[keys[keys.length - 1]] = date;
-        },
         
-        // for remove
-        prepareFormDataForSubmission() {
-            const formData = { ...this.form };
-            
-            // Convert display dates back to proper format for backend
-            if (formData.routing_information) {
-                if (formData.routing_information.date) {
-                    if (typeof formData.routing_information.date === 'string' && formData.routing_information.date.length <= 10) {
-                        // If it's a formatted string like "02Sept", convert it back to proper date
-                        const date = new Date(formData.routing_information.date);
-                        if (!isNaN(date.getTime())) {
-                            formData.routing_information.date = date.toISOString().slice(0, 19).replace('T', ' ');
-                        }
-                    } else if (formData.routing_information.date instanceof Date) {
-                        // If it's already a Date object, format it
-                        formData.routing_information.date = formData.routing_information.date.toISOString().slice(0, 19).replace('T', ' ');
-                    }
-                }
-                if (formData.routing_information.date_2) {
-                    if (typeof formData.routing_information.date_2 === 'string' && formData.routing_information.date_2.length <= 10) {
-                        const date = new Date(formData.routing_information.date_2);
-                        if (!isNaN(date.getTime())) {
-                            formData.routing_information.date_2 = date.toISOString().slice(0, 19).replace('T', ' ');
-                        }
-                    } else if (formData.routing_information.date_2 instanceof Date) {
-                        formData.routing_information.date_2 = formData.routing_information.date_2.toISOString().slice(0, 19).replace('T', ' ');
-                    }
-                }
-                if (formData.routing_information.date_3) {
-                    if (typeof formData.routing_information.date_3 === 'string' && formData.routing_information.date_3.length <= 10) {
-                        const date = new Date(formData.routing_information.date_3);
-                        if (!isNaN(date.getTime())) {
-                            formData.routing_information.date_3 = date.toISOString().slice(0, 19).replace('T', ' ');
-                        }
-                    } else if (formData.routing_information.date_3 instanceof Date) {
-                        formData.routing_information.date_3 = formData.routing_information.date_3.toISOString().slice(0, 19).replace('T', ' ');
-                    }
-                }
-            }
-            
-            return formData;
-        },
         // location
-        getLocation() {
-            loadLocations().then(data => {
-                this.location = data;
-            });
-        },
-        fetchAllAddressBook() {
-            ApiService.get('/user/get-shippers').then(response => {
-                const all = response.data;
-                this.shippers = all.filter(s => s.address_type === 'shipper_address');
-                this.consignees = all.filter(s => s.address_type === 'consignee_address');
-                this.alsoNotify = all.filter(s => s.address_type === 'also_notify_address');
-                this.filteredShippers = this.shippers;
-                this.filteredConsignees = this.consignees;
-                this.filteredAlsoNotify = this.alsoNotify;
-            });
-        },
         fillShipperDetails() {
             if (this.selectedShipper) {
                 ApiService.get(`/user/get-shipper-address?id=${this.selectedShipper}`)
@@ -3391,8 +3246,6 @@ export default {
                 }
             }
             $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
-            // Prepare form data for submission - convert display dates to proper format
-            // const preparedFormData = this.prepareFormDataForSubmission();
             
             if (this.mode === 'add') {
                 // Update the existing form with prepared data
@@ -3446,11 +3299,6 @@ export default {
                     this.generatePDFAfterSave = '';
                     this.main_error_msg = failureMessage(error, this.formatBackendError);
                 });
-            }
-        },
-        onSelect(value) {
-            if (value) {
-                window.location.href = value;
             }
         },
         getAirwayBills(status) {
@@ -3703,42 +3551,8 @@ export default {
             }
             // console.log("Updated Table Codes:", this.form.tableCodes);
         },
-        addManualCode() {
-            if (!Array.isArray(this.form.tableCodes)) {
-                this.form.tableCodes = [];
-            }
-            const code = this.selectedCode || this.custom_special_handling_code.trim();
-
-            if (code) {
-                if (!this.form.tableCodes.includes(code)) {
-                    this.form.tableCodes.push(code);
-                    // console.log("Table codes:", this.form.tableCodes);
-                } else {
-                    alert('This code is already added.');
-                }
-            } else {
-                alert('Please select or enter a code.');
-            }
-
-            this.selectedCode = '';
-            this.custom_special_handling_code = '';
-        },
-        deleteSplCode(index) {
-            this.form.tableCodes.splice(index, 1);
-        },
 
 
-        validateNumericInput(evt,field, maxLength) {
-            evt = evt || window.event;
-            const charCode = evt.which || evt.keyCode;
-            if (charCode < 48 || charCode > 57) {
-                evt.preventDefault();
-            }
-
-            if (this.form.first_box[field].length >= maxLength) {
-                evt.preventDefault();
-            }
-        },
         onAWBInput: debounce(function () {
             const { awb_code, awb_no } = this.form.first_box;
             if (awb_code && awb_code.length === 3) {
@@ -3784,31 +3598,6 @@ export default {
                 this.$router.go(0);
                 this.getAirWayBill(this.awbId);
             }
-        },
-        reloadPageWithContent() {
-            const awbId = this.awbId;
-            if (!awbId) {
-                // console.error('AWB ID is missing');
-                return;
-            }
-               ApiService.get(`/user/airway-bill/${awbId}`)
-                .then(response => {
-                    this.existingData = response.data;
-                    if (this.existingData) {
-                        this.awbDetails = false;
-                        this.openForm('update', this.existingData.id);
-                        // this.$router.push({ path: `/edit-airway-bill/${awbId}` });
-                       
-                    }else{
-                        this.awbDetails = false;
-                    }
-                })
-                .catch(error => {
-                    this.existingData = null;
-                    // this.awbError = "No data found for this AWB ID.";
-                    this.awbDetails = false;
-                    // console.error("Failed to fetch data for updating:", error);
-                });
         },
 
     },
@@ -3903,7 +3692,6 @@ export default {
         DatePicker,
 
         SideBar,
-        // PageLoader
     },
 };
 </script>

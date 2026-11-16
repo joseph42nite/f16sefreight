@@ -293,6 +293,7 @@
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
   name: "CloseMonth",
@@ -373,9 +374,7 @@ export default {
     },
     /** The server's own reason. This page called it without having it (frontend audit, FM4), so a failed load threw. */
     messageFor(e) {
-      const d = (e && e.response && e.response.data) || {};
-
-      return d.error || d.message || "The figures for that month could not be loaded.";
+      return serverMessage(e, "The figures for that month could not be loaded.");
     },
     download(which, format) {
       const step = this.steps.find((s) => s.key === "gst");

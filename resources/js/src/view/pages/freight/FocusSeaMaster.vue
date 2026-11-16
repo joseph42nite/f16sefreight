@@ -380,6 +380,7 @@ import Figure from "@/view/pages/freight/components/Figure.vue";
 import EntityPanel from "@/view/pages/freight/components/EntityPanel.vue";
 import BlReader from "@/view/pages/freight/components/BlReader.vue";
 import CostSheet from "@/view/pages/freight/components/CostSheet.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 /* PRD §5.8 — twelve tabs, in the document's own order. */
 const TABS = [
@@ -660,9 +661,7 @@ export default {
         .finally(() => { this.saving = false; });
     },
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      if (d.errors) return Object.values(d.errors).flat().join(" ");
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.", { all: true });
     },
   },
 };

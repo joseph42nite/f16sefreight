@@ -2380,14 +2380,12 @@ import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
 import { checkAll } from "@/core/config/iata";
-import { loadLocations } from "@/core/services/location.cache";
 import debounce from 'lodash.debounce';
 import "vue2-datepicker/index.css";
 import SideBar from "@/view/layouts/public/SideBar.vue";
 import { mapGetters } from "vuex";
 import OcrUploadModal from "@/view/components/OcrUploadModal.vue";
 import DashboardHistoryModal from "@/view/components/DashboardHistoryModal.vue";
-// import PageLoader from "../../components/PageLoader.vue";
 import airWayBillMixin from "@/core/mixins/airWayBillMixin";
 
 export default {
@@ -2703,18 +2701,6 @@ export default {
     },
 
     methods: {
-        handleUseMyEmailChange(checked) {
-            if (checked) {
-                this.form.awb_email = localStorage.getItem('fna_default_email') || '';
-            } else {
-                this.form.awb_email = '';
-            }
-        },
-        handleAwbEmailInput(val) {
-            if (val) {
-                localStorage.setItem('fna_default_email', val);
-            }
-        },
 
         processExtractedData(response) {
             // Reset the form and UI states to clear any previously populated data
@@ -2957,14 +2943,6 @@ export default {
         //         console.error('Error while saving data:', error);
         //     });
         // },
-        handleSaveAndGeneratePDF(pdf_generate_type) {
-            // onSubmit() opens the PDF on a successful save (see generatePDFAfterSave).
-            this.generatePDFAfterSave = pdf_generate_type;
-            // 🔴 A PDF link saves; it never sends (FW2). The status was left as whatever was clicked last, so a PDF
-            // link clicked after a Send transmitted the waybill to the airline a second time.
-            this.form.status = 'generate_pdf';
-            this.onSubmit();
-        },
         generateHawbPDF(pdf_generate_type) {
             this.generatePDFAfterSave = false;
             if (!this.existingData || !this.existingData.id) {
@@ -2972,26 +2950,6 @@ export default {
             }
             const pdfUrl = `/${pdf_generate_type}/${this.existingData.id}`;
             openPdf(pdfUrl);
-        },
-        validateFormFields() {
-            const requiredFields = {
-                "HAWB Number is mandatory": this.form.first_box.hawb_no,
-                "AWB prefix is mandatory": this.form.first_box.awb_code, // AWB prefix
-                "AWB number is mandatory": this.form.first_box.awb_no, // AWB number
-                "Shipper address is mandatory": this.form.shipper_address.ship_address, // Shipper address
-                "Shipper city is mandatory": this.form.shipper_address.ship_address, // Shipper city
-                "Consignee address is mandatory": this.form.consignee_address.cons_address, // Consignee address
-                "Consignee city is mandatory": this.form.consignee_address.cons_city, // Consignee city
-                "Routing by (carrier code) on row 1 is mandatory": this.form.routing_information.by // Routing by carrier code
-            };
-            const missingFields = Object.entries(requiredFields)
-            .filter(([field, value]) => !value || (typeof value === 'string' && value.trim() === ''))
-            .map(([field]) => field);
-            if (missingFields.length > 0) {
-                alert(`The following fields are mandatory:\n- ${missingFields.join("\n- ")}`);
-                return false;
-            }
-            return true;
         },
         handleEditNavigation(id) {
             this.$bvModal.hide('modal-s-house');
@@ -3004,77 +2962,9 @@ export default {
                 window.location.reload();
             }
         },
-        mouseover: function () {
-            this.isOpen = true;
-        },
-        mouseleave: function () {
-            this.isOpen = false;
-        },
-        converXml(awb_no){
-            ApiService.get(`/user/waybill/${awb_no}`)
-                .then(({ data }) => {
-                    // console.log(data);
-                });
-        },
-        toggleModal() {
-            this.$refs["my-modal"].toggle("#toggle-btn");
-        },
-        handleOk(bvModalEvent) {
-            bvModalEvent.preventDefault();
-        },
 
-        handleDateChange(date, field) {
-            const keys = field.split('.');
-            let target = this;
-
-            for (let i = 0; i < keys.length - 1; i++) {
-                target = target[keys[i]];
-            }
-            
-            // Store the actual date value for backend processing
-            target[keys[keys.length - 1]] = date;
-        },
-        issueDateChange(date) {
-            this.form.agent_issue_date = this.formatDate(date);
-        },
         
         // Prepare form data for submission - convert display dates back to proper format
-        prepareFormDataForSubmission() {
-            const formData = { ...this.form };
-            
-            // Convert display dates back to proper format for backend
-            if (formData.routing_information) {
-                if (formData.routing_information.date && typeof formData.routing_information.date === 'string') {
-                    // If it's a formatted string like "02Sept", convert it back to proper date
-                    const date = new Date(formData.routing_information.date);
-                    if (!isNaN(date.getTime())) {
-                        formData.routing_information.date = date.toISOString().slice(0, 19).replace('T', ' ');
-                    }
-                }
-                if (formData.routing_information.date_2 && typeof formData.routing_information.date_2 === 'string') {
-                    if (formData.routing_information.date_2.length <= 10) {
-                        const date = new Date(formData.routing_information.date_2);
-                        if (!isNaN(date.getTime())) {
-                            formData.routing_information.date_2 = date.toISOString().slice(0, 19).replace('T', ' ');
-                        }
-                    } else if (formData.routing_information.date_2 instanceof Date) {
-                        formData.routing_information.date_2 = formData.routing_information.date_2.toISOString().slice(0, 19).replace('T', ' ');
-                    }
-                }
-                if (formData.routing_information.date_3 && typeof formData.routing_information.date_3 === 'string') {
-                    if (formData.routing_information.date_3.length <= 10) {
-                        const date = new Date(formData.routing_information.date_3);
-                        if (!isNaN(date.getTime())) {
-                            formData.routing_information.date_3 = date.toISOString().slice(0, 19).replace('T', ' ');
-                        }
-                    } else if (formData.routing_information.date_3 instanceof Date) {
-                        formData.routing_information.date_3 = formData.routing_information.date_3.toISOString().slice(0, 19).replace('T', ' ');
-                    }
-                }
-            }
-            
-            return formData;
-        },
         onSubmit() {
             // ⚠️ Checked BEFORE the request, not after. An over-long line is an EDI
             // transmission error the server would accept and the gateway would refuse,
@@ -3146,11 +3036,6 @@ export default {
                     this.main_error_msg = failureMessage(error);
                     console.error('Update Failed:', error);
                 });
-            }
-        },
-        onSelect(value) {
-            if (value) {
-                window.location.href = value;
             }
         },
         getHousewayBills(status) {
@@ -3264,11 +3149,6 @@ export default {
                 console.error("Error fetching countries:", error);
             });
         },
-        getLocation() {
-            loadLocations().then(data => {
-                this.location = data;
-            });
-        },
         getOtherChargesCode(){
             ApiService.get('/user/other-charges').then(({ data }) => {
                 this.other_charges_code = Object.keys(data).map(key => ({
@@ -3308,17 +3188,6 @@ export default {
                 .catch(error => {
                     console.error("Error fetching agent information:", error);
                 });
-        },
-        fetchAllAddressBook() {
-            ApiService.get('/user/get-shippers').then(response => {
-                const all = response.data;
-                this.shippers = all.filter(s => s.address_type === 'shipper_address');
-                this.consignees = all.filter(s => s.address_type === 'consignee_address');
-                this.alsoNotify = all.filter(s => s.address_type === 'also_notify_address');
-                this.filteredShippers = this.shippers;
-                this.filteredConsignees = this.consignees;
-                this.filteredAlsoNotify = this.alsoNotify;
-            });
         },
         fillShipperDetails() {
             if (this.selectedShipper) {
@@ -3428,27 +3297,6 @@ export default {
         //     this.selectedCode = '';
         //     this.manualCode = '';
         // },
-        addManualCode() {
-            if (!Array.isArray(this.form.tableCodes)) {
-                this.form.tableCodes = [];
-            }
-            const code = this.selectedCode || this.custom_special_handling_code.trim();
-            if (code) {
-                if (!this.form.tableCodes.includes(code)) {
-                    this.form.tableCodes.push(code);
-                    // console.log("Table codes:", this.form.tableCodes);
-                } else {
-                    alert('This code is already added.');
-                }
-            } else {
-                alert('Please select or enter a code.');
-            }
-            this.selectedCode = '';
-            this.custom_special_handling_code = '';
-        },
-        deleteSplCode(index) {
-            this.form.tableCodes.splice(index, 1);
-        },
         getOriginCode(airportString) {
             if (airportString) {
                 return airportString.split(',')[0];
@@ -3460,16 +3308,6 @@ export default {
                 return airportString.split(',')[0];
             }
             return '';
-        },
-        validateNumericInput(evt,field, maxLength) {
-            evt = evt || window.event;
-            const charCode = evt.which || evt.keyCode;
-            if (charCode < 48 || charCode > 57) {
-                evt.preventDefault();
-            }
-            if (this.form.first_box[field].length >= maxLength) {
-                evt.preventDefault();
-            }
         },
         onAWBInput: debounce(function () {
             const { awb_code } = this.form.first_box;
@@ -3576,7 +3414,6 @@ export default {
         DatePicker,
         SideBar,
         OcrUploadModal,
-        // PageLoader
     },
 };
 </script>

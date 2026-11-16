@@ -298,6 +298,7 @@ import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { WHOLE_LIST } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
   name: "CostSheet",
@@ -410,8 +411,7 @@ export default {
         .finally(() => { this.busy = false; });
     },
     readable(e) {
-      const d = (e.response && e.response.data) || {};
-      return d.error || d.message || "Something went wrong.";
+      return serverMessage(e, "Something went wrong.");
     },
   },
 };

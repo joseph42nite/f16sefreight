@@ -265,6 +265,8 @@ Route::post('ForgotpasswordActual', [PasswordResetRequestController::class, 'for
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/auth/login', [LoginController::class, 'login']);
 Route::post('/contact', [ContactController::class, 'store']);
+// The landing page's "Talk to us" form: work emails only (App\Support\WorkEmail), 5 a minute per visitor.
+Route::post('/talk-to-us', [ContactController::class, 'storeLead'])->middleware('throttle:5,1,talk-to-us');
 });
 
 //gln response url

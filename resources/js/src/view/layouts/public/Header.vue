@@ -4,7 +4,8 @@
             <div class="container-fluid d-flex align-items-center justify-content-between">
                 <div class="navbar-header-logo">
                     <b-navbar-brand :to="isAuthenticated ? '/focus-air' : '/'" style="">
-                        <img :src="logoSrc" alt="f16s logo" id="main-logo" />
+                        <!-- The logo image, restored 2026-11-16 (owner): the <f16s-wordmark> it was swapped for has no component. -->
+                        <img :src="logoSrc" alt="F16s" id="main-logo" />
                     </b-navbar-brand>
                 </div>
                 <!-- Group Avatar & Toggler for reliable right-aligned stack -->
@@ -188,6 +189,7 @@ export default {
         logoSrc() {
             return "/media/assets/logos/white-logo.png";
         },
+
     },
 };
 </script>
@@ -466,8 +468,10 @@ a.menu-link {
 }
 
 @media (max-width: 991px) {
+    /* The header sits on the hero's rounded card: keep the logo and the menu button well inside its corners
+       (owner, 2026-11-16: "too close to the edges"). */
     .navbar {
-        padding: 20px 20px !important;
+        padding: 26px 40px !important;
     }
     .nav-header-menu {
         width: 100%;
@@ -520,6 +524,9 @@ a.menu-link {
 }
 
 @media (max-width: 767px) {
+    .navbar {
+        padding: 22px 30px !important;
+    }
     .navbar-header-logo {
         max-width: 180px;
     }

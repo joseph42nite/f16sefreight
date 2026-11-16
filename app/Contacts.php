@@ -11,7 +11,10 @@ class Contacts extends Model
         'first_name',
         'last_name',
         'email',
+        'company',
+        'designation',
         'phone',
         'message',
+        'source',
     ];
 }

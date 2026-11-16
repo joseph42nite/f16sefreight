@@ -63,7 +63,8 @@ export default {
 .aff-section {
     display: flex; align-items: center; gap: 2rem; padding: 1.25rem 1.5rem; background: #fff;
     border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; overflow: hidden;
-    position: relative; z-index: 10; top: -8.5rem; width: 100%; max-width: 100%; left: 0;
+    /* It used to be pulled up over the old hero; under the statement (landing redesign, 2026-11-12) it sits in flow. */
+    position: relative; z-index: 10; width: 100%; max-width: 100%; left: 0; margin-bottom: 6rem;
 }
 .aff-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; display: block; }
 .aff-heading { font-size: 15px; font-weight: 600; color: #355594; display: block; }

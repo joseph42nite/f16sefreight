@@ -64,6 +64,8 @@
           {label:'Full Name',key:"first_name"},
           // {label:'Last Name',key:"last_name"},  // Merged above in template
           {label:'Email',key:"email"},
+          {label:'Company',key:"company"},
+          {label:'Designation',key:"designation"},
           {label:'Phone', key:"phone" },
           {label:'Message',key:"message"},
           {label:"Action",key:"action"}

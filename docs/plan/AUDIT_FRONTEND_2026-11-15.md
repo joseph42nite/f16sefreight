@@ -327,8 +327,16 @@ The backend audit is `AUDIT_2026-11-10.md`.
 
 - **FP1 [R]** `webpack.mix.js:46-52` → one "common" chunk takes every module shared by two lazy pages, and the
   public home page loads it (2.3 MB in the development build).
-  ⏸ Left: splitting it changes which stylesheet each page gets (`common.css` is linked by hand in the page shell), so
-  it needs every screen looked at afterwards. The chart library is kept out of it (see FP2).
+  ✅ **Fixed 2026-11-16:** the heavy libraries that only some signed-in screens use each have a file of their own
+  (`webpack.mix.js`): `editor` (the mail composer's rich-text editor, 945 KB), `pdf-support` (what pdf.js needs,
+  315 KB), `datepicker` (212 KB), `alerts` (129 KB), beside `charts` from FP2. `common` went from 2.36 MB to 0.78 MB
+  in the development build, and the public home page loads 0.76 MB of it where it loaded 2.32 MB. **No stylesheet
+  changed:** `common.css` is the same size to the byte (the date picker's styles are kept in it on purpose, because
+  the waybill forms restyle the picker in `app.css`, which must come after). Clicked through: the home page, the
+  master waybill form (pickers drawn, `datepicker` loaded), the inbox composer (`editor` loaded, editor mounted),
+  a PDF read in the page (`pdf-support` + `pdfjs`, a one-page file parsed), and two platform pages (`alerts`).
+  ⏸ What is left in `common` is the app's own shared code (components, the waybill mixin); the home page still
+  loads it. Getting that off the public site means letting webpack split by page, which does move stylesheets.
 - **FP2 [R]** `main.js:8-52`, `core/plugins/metronic.js` → jQuery, apexcharts, vform and 33 theme modules are in the
   main bundle for every visitor; apexcharts is used by one component, jQuery by four pages, the 33 globals by nothing.
   ✅ **Fixed 2026-11-16 (theme scripts and charts):** the theme's scripts load with the platform admin layout, the

@@ -51,6 +51,29 @@ mix.webpackConfig({
                     chunks: "async",
                     priority: 30,
                 },
+                // 🔴 Heavy libraries that only some signed-in screens use, each in a file of its own (2026-11-15 frontend
+                // audit, FP1). As modules shared by two or more lazy pages they all sat in "common", which EVERY page
+                // loads, the public home page included: 2.3 MB to show a landing page that uses none of them.
+                // Each loads with the screens that import it, and with nothing else.
+                editor: {       // the mail composer's rich-text editor
+                    test: /[\\/]node_modules[\\/](tiptap[^\\/]*|prosemirror-[^\\/]+|highlight\.js|lowlight|orderedmap|rope-sequence|w3c-keyname)[\\/]/,
+                    name: "editor", chunks: "async", priority: 30, enforce: true,
+                },
+                pdfSupport: {   // what the in-page PDF viewer needs besides pdf.js itself
+                    test: /[\\/]node_modules[\\/](pdfvuer|web-streams-polyfill|dommatrix|buffer|base64-js|ieee754)[\\/]/,
+                    name: "pdf-support", chunks: "async", priority: 30, enforce: true,
+                },
+                datepicker: {   // the waybill forms and the platform's shipments screen
+                    test: /[\\/]node_modules[\\/](vue2-datepicker|vuejs-datepicker|date-format-parse)[\\/]/,
+                    // The SCRIPT only. Its stylesheet stays where it was, in common.css, which is linked before app.css:
+                    // the waybill forms restyle the picker there, and a picker stylesheet arriving later would win.
+                    type: "javascript/auto",
+                    name: "datepicker", chunks: "async", priority: 30, enforce: true,
+                },
+                alerts: {       // five platform admin pages
+                    test: /[\\/]node_modules[\\/]sweetalert2[\\/]/,
+                    name: "alerts", chunks: "async", priority: 30, enforce: true,
+                },
                 common: {
                     name: "common",
                     minChunks: 2,

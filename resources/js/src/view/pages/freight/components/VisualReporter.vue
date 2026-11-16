@@ -35,7 +35,8 @@
             <dt>Console</dt>
             <dd>{{ captured.console_logs.length }} recent entries</dd>
             <dt>Screenshot</dt>
-            <dd>{{ shot ? "attached" : shotError || "not captured" }}</dd>
+            <!-- Said as it is (FC4): the image is shown below for the reporter and is not posted with the ticket. -->
+            <dd>{{ shot ? "captured for you to check; not sent with the report" : shotError || "not captured" }}</dd>
             <template v-if="transcript.length">
               <dt>Help conversation</dt>
               <dd>{{ transcript.length }} question(s) attached</dd>

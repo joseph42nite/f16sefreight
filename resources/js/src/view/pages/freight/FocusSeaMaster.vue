@@ -374,7 +374,7 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
-import { date as formatDate } from "@/core/config/format";
+import { date as formatDate, WHOLE_LIST } from "@/core/config/format";
 import Field from "@/view/pages/freight/components/Field.vue";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import EntityPanel from "@/view/pages/freight/components/EntityPanel.vue";
@@ -486,7 +486,7 @@ export default {
     },
   },
   created() {
-    ApiService.get("/partners").then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
+    ApiService.get("/partners" + WHOLE_LIST).then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
   },
   methods: {
     printBl() {

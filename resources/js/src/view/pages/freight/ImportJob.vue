@@ -213,6 +213,7 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { WHOLE_LIST } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import EntityPanel from "@/view/pages/freight/components/EntityPanel.vue";
@@ -223,6 +224,9 @@ const FILING = [
 ];
 const AIR_FIELDS = ["awb_number", "consol_type", "carrier_name", "flight_number", "flight_date", "pol_code", "pod_code",
   "piece_count", "gross_weight", "chargeable_weight", "arrived_at", "free_storage_days", "storage_from", "filing_status"];
+
+/** The boxes a person may empty again; the rest keep their stored value when left blank. */
+const CLEARABLE = ["igm_no", "igm_date", "handling_agent_id", "arrived_at", "free_storage_days", "storage_from"];
 
 /** One import shipment, either mode (GAPS #434): arrival and customs, parties, houses, arrival notice, delivery order. */
 export default {
@@ -287,7 +291,7 @@ export default {
         ? { to: (staged.to || []).join(", "), subject: staged.subject || "", body: staged.body || "" }
         : { to: "", subject: "", body: "" };
       if (data.document === "master" && this.canWrite && !this.clients.length) {
-        ApiService.get("/customers").then(({ data: c }) => { this.clients = c.data || []; }).catch(() => {});
+        ApiService.get("/customers" + WHOLE_LIST).then(({ data: c }) => { this.clients = c.data || []; }).catch(() => {});
       }
       if (data.document === "master" && this.canWrite) {
         ApiService.get(`/jobs/unassociated?transport_mode=${data.mode}&direction=import`)
@@ -299,6 +303,15 @@ export default {
     clean(obj) {
       return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== "" && v !== undefined));
     },
+    /**
+     * `clean`, except that the boxes named are sent as null when emptied (FC5): a wrong IGM number or date could
+     * be corrected but never taken off. Only columns that may be empty on the server are named.
+     */
+    emptied(obj, names) {
+      const sent = this.clean(obj);
+      names.forEach((k) => { if (k in obj && (obj[k] === "" || obj[k] === null)) sent[k] = null; });
+      return sent;
+    },
     commit(call) {
       this.busy = true;
       this.actionError = null;
@@ -309,7 +322,7 @@ export default {
     },
     save() {
       const body = this.data.mode === "air" ? this.form : Object.fromEntries(Object.entries(this.form).filter(([k]) => !AIR_FIELDS.includes(k)));
-      this.commit(() => ApiService.post(`/jobs/${this.jobId}/import`, this.clean(body)));
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/import`, this.emptied(body, CLEARABLE)));
     },
     addHouse() {
       this.commit(() => ApiService.post(`/jobs/${this.jobId}/houses`, this.clean(this.newHouse)))
@@ -330,7 +343,7 @@ export default {
       this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice`));
     },
     saveOrder() {
-      this.commit(() => ApiService.post(`/jobs/${this.jobId}/delivery-order`, this.clean(this.order)));
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/delivery-order`, this.emptied(this.order, ["do_given_to", "fee"])));
     },
     link() {
       this.busy = true;

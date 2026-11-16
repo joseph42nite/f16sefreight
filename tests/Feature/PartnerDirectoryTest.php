@@ -41,6 +41,21 @@ class PartnerDirectoryTest extends TestCase
         return $this;
     }
 
+    /** FM7: a pick-list asks for the whole list; the register's page stays 50. */
+    public function test_a_pick_list_can_ask_for_more_than_the_first_fifty(): void
+    {
+        [$company, $branch] = $this->tenant('command');
+        foreach (range(1, 55) as $n) {
+            Partner::create(['company_id' => $company->id, 'agent_id' => $branch->id, 'name' => sprintf('Carrier %02d', $n),
+                'partner_type' => 'transporter']);
+        }
+
+        $this->as($company, $branch, 'pricing');
+        $this->assertCount(50, $this->getJson('http://focusair.localhost/api/partners')->assertOk()->json('data'));
+        $this->assertCount(56, $this->getJson('http://focusair.localhost/api/partners?per_page=500')->assertOk()->json('data'));
+        $this->assertCount(56, $this->getJson('http://focusair.localhost/api/partners?per_page=9999')->assertOk()->json('data'));
+    }
+
     public function test_tactical_lists_partners_without_any_tax_figure(): void
     {
         [$company, $branch] = $this->tenant('tactical');

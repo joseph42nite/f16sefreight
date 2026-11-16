@@ -450,7 +450,9 @@
             </td>
             <td v-if="canPost" class="fx-row-actions">
               <button v-if="!t.matched_invoice" class="fx-btn" :disabled="busy" @click="findCandidates(t)">Find the invoice</button>
-              <button v-else class="fx-btn fx-btn--ghost" :disabled="busy" @click="unmatch(t)">Unmatch</button>
+              <!-- A match posts its receipt at once, so it could never be unmatched: the server refused every time
+                   (FM10). What undoes it is said here instead of a button that only produces an error. -->
+              <span v-else class="fx-muted">In the ledger. To undo it, reverse the receipt with a contra entry.</span>
             </td>
           </tr>
         </tbody>
@@ -1055,6 +1057,7 @@
 import { yearChoices } from "@/core/config/financialYear";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { WHOLE_LIST } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
@@ -1335,15 +1338,6 @@ export default {
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
-    unmatch(row) {
-      this.busy = true;
-      this.actionError = null;
-
-      ApiService.post(`/reconciliation/${row.id}/unmatch`, {})
-        .then(() => this.load())
-        .catch((e) => { this.actionError = this.messageFor(e); })
-        .finally(() => { this.busy = false; });
-    },
     importStatement() {
       this.busy = true;
       this.actionError = null;
@@ -1378,7 +1372,7 @@ export default {
     loadVendors() {
       this.vendorForm.vendor_id = null;
       this.loadVendorStatements();
-      ApiService.get("/partners" + (this.vendorForm.vendor_type ? "?type=" + encodeURIComponent(this.vendorForm.vendor_type) : ""))
+      ApiService.get("/partners" + WHOLE_LIST + (this.vendorForm.vendor_type ? "&type=" + encodeURIComponent(this.vendorForm.vendor_type) : ""))
         .then(({ data }) => { this.vendors = data.data || []; })
         .catch((e) => { this.actionError = this.messageFor(e); });
     },
@@ -1541,7 +1535,9 @@ export default {
       const params = [];
 
       if (this.view === "awaiting") params.push("awaiting=1");
-      if (this.view !== "vouchers" && this.status) params.push("status=" + encodeURIComponent(this.status));
+      // The Status box belongs to the two invoice views, and only shows there (FM6): sent to the bank register it
+      // was read as a reconciliation status and emptied the list with no filter in sight to clear.
+      if (["invoices", "awaiting"].includes(this.view) && this.status) params.push("status=" + encodeURIComponent(this.status));
       if (this.view === "invoices" && this.outstanding) params.push("outstanding=1");
 
       if (this.branchId) params.push("agent_id=" + this.branchId);

@@ -1721,9 +1721,14 @@ export default {
       // whatever the operator had typed appeared to vanish. Removing a tab means removing
       // every place that selects it.
       this.tab = "extraction";
+      // The latest click wins (FC6): two conversations clicked quickly could land in either order, and the slower
+      // answer used to replace the one the person was looking at.
+      this.openSeq = (this.openSeq || 0) + 1;
+      const asked = this.openSeq;
       // Returned so an outcome action can re-open the thread and know when it has landed.
       return ApiService.get("/inbox/threads/" + thread.id)
         .then(({ data }) => {
+          if (asked !== this.openSeq) return;
           this.active = data.thread;
           this.pending = data.thread.classification;
           this.messages = data.messages || [];

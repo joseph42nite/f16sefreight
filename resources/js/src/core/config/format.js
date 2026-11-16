@@ -83,4 +83,23 @@ export function termsLabel(days) {
   return Number(days) === 0 ? "Cash and carry" : `${Number(days)} days credit`;
 }
 
+/**
+ * To the paisa, the way the server rounds a money figure: 300.30000000000004 is 300.3 and 1.005 is 1.01 (half
+ * away from zero, as PHP's round). Shifted as text, because 1.005 * 100 is 100.49999999999999.
+ */
+export function paise(value) {
+  const n = Number(value) || 0;
+  const shifted = Number(Math.abs(n) + "e2");
+
+  if (Number.isNaN(shifted)) return Math.round(n * 100) / 100;
+
+  return Math.sign(n) * Number(Math.round(shifted) + "e-2");
+}
+
+/**
+ * For a pick-list of clients or partners: the whole list, not the register's first page of 50, or the 51st
+ * cannot be chosen (FM7). 500 is the server's own ceiling for a page.
+ */
+export const WHOLE_LIST = "?per_page=500";
+
 export default { isEmpty, date, dateTime, weight, volume, currency, count, localToday, termsLabel };

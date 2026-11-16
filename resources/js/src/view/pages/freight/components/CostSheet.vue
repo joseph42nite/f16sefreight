@@ -296,6 +296,7 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { WHOLE_LIST } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 
 export default {
@@ -335,7 +336,7 @@ export default {
   },
   created() {
     this.load();
-    ApiService.get("/partners")
+    ApiService.get("/partners" + WHOLE_LIST)
       .then(({ data }) => { this.partners = data.data || []; })
       .catch(() => { /* the vendor list is optional until a buy line is added */ });
   },

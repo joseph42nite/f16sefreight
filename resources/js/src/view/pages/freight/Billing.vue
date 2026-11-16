@@ -780,7 +780,9 @@
                 <th scope="col">Date</th>
                 <th scope="col">Due</th>
                 <th class="fx-num" scope="col">Outstanding</th>
-                <th class="fx-num" scope="col">Place against it</th>
+                <!-- 🔴 The money that arrived is RUPEES, whatever the bill is in (FM1): the server turns it into the
+                     bill's currency at the day's rate. Unlabelled, 1000 typed beside "USD 1,000.00" read as dollars. -->
+                <th class="fx-num" scope="col">Rupees placed against it</th>
                 <th scope="col">If it is short</th>
               </tr>
             </thead>
@@ -790,7 +792,10 @@
                 <td><Figure :value="d.document_date" kind="date" /></td>
                 <td><Figure v-if="d.due_date" :value="d.due_date" kind="date" /><span v-else class="fx-muted">—</span></td>
                 <td class="fx-num"><Figure :value="d.outstanding" kind="currency" :currency-code="d.currency || 'INR'" /></td>
-                <td><input v-model.number="allocation[d.id]" type="number" step="0.01" min="0" class="fx-input fx-num" /></td>
+                <td>
+                  <input v-model.number="allocation[d.id]" type="number" step="0.01" min="0" class="fx-input fx-num" />
+                  <div v-if="isForeign(d)" class="fx-muted">In INR: it settles {{ d.currency }} at the receipt day's rate.</div>
+                </td>
                 <td>
                   <!-- 🔴 A client who deducted TDS paid correctly and in full: tax already paid on our own
                        behalf, an ASSET (1400-TDS-Receivable) — not owed, not a write-off, not a discount. -->
@@ -872,7 +877,7 @@
 </template>
 
 <script>
-import { localToday } from "@/core/config/format";
+import { localToday, paise, WHOLE_LIST } from "@/core/config/format";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import InvoiceMailCard from "@/view/pages/freight/components/InvoiceMailCard.vue";
@@ -937,7 +942,7 @@ export default {
     creditBlock: null, canOverride: false, overrideReason: "",
     header: {}, newLine: {}, editingLine: null, lineDraft: {},
     /** The forms. */
-    raise: null, creditRoom: null, jobs: [], partners: [], clients: [],
+    raise: null, creditRoom: null, jobs: [], partners: [], clients: [], parents: null,
     receipt: null, openDocuments: [], allocation: {}, resolution: {},
     voidFor: null, irnFor: null,
     loading: true, busy: false, error: null, actionError: null, mailResult: null,
@@ -978,9 +983,15 @@ export default {
     isNote() {
       return this.raise && ["debit_note", "credit_note"].includes(this.raise.type);
     },
-    /** Only a numbered, unvoided invoice can carry a note. */
+    stageKey() {
+      return this.initialView + "|" + JSON.stringify(this.stageFilter || {});
+    },
+    /**
+     * Only a numbered, unvoided invoice can carry a note. Asked of the server when the form opens (FM8): the rows on
+     * screen are whatever tab is showing, and on the notes tabs that is no invoice at all.
+     */
     billable() {
-      return this.rows.filter((r) => r.type === "invoice" && !["draft", "void"].includes(r.status));
+      return (this.parents || this.rows).filter((r) => r.type === "invoice" && !["draft", "void"].includes(r.status));
     },
     raiseTotal() {
       return this.raise ? this.raise.lines.reduce((sum, l) => sum + this.lineNet(l), 0) : 0;
@@ -1005,7 +1016,7 @@ export default {
       return linesOk && !!this.raise.job_id && !!this.raise.partner_id;
     },
     placedTotal() {
-      return Object.values(this.allocation).reduce((sum, v) => sum + (Number(v) || 0), 0);
+      return paise(Object.values(this.allocation).reduce((sum, v) => sum + (Number(v) || 0), 0));
     },
     receiptValid() {
       return !!(this.receipt && this.receipt.agent_id && Number(this.receipt.amount) > 0
@@ -1025,8 +1036,10 @@ export default {
   },
   watch: {
     // The pipeline changed stage: swap the register under it without remounting the drawer state.
-    initialView(view) {
-      this.view = view;
+    // 🔴 Watched as ONE key (FM5): "to bill", "drafts" and "issued" share a view and differ only in the filter, so
+    // watching the view alone changed the header and left the old list under it.
+    stageKey() {
+      this.view = this.initialView;
       this.document = null;
       Object.assign(this.filters, { awaiting: false, own_drafts: false, issued: false }, this.stageFilter || {});
       this.load();
@@ -1040,6 +1053,9 @@ export default {
       this.mailResult = null;
       this.load();
     },
+    isForeign(doc) {
+      return !!doc.currency && doc.currency !== "INR";
+    },
     typeLabel(type) {
       return (this.types[type] && this.types[type].label) || type;
     },
@@ -1051,9 +1067,11 @@ export default {
       return String(Number(value || 0));
     },
     lineNet(line) {
-      const amount = (Number(line.quantity) || 0) * (Number(line.rate) || 0);
+      // Rounded as the server rounds (FM9): the amount, then its tax, then the two added — or the total shown
+      // before saving can be a paisa off the one saved.
+      const amount = paise((Number(line.quantity) || 0) * (Number(line.rate) || 0));
 
-      return Math.round(amount * (1 + (Number(line.tax_percentage) || 0) / 100) * 100) / 100;
+      return paise(amount + paise(amount * (Number(line.tax_percentage) || 0) / 100));
     },
     blankLine() {
       return { description: "", hsn_sac_code: "", quantity: 1, rate: 0, tax_percentage: 18 };
@@ -1145,7 +1163,7 @@ export default {
       this.billTo = data.bill_to || [];
       this.officeDraft = this.document.customer_id;
       if (this.can.change_client && !this.clients.length) {
-        ApiService.get("/customers").then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
+        ApiService.get("/customers" + WHOLE_LIST).then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
       }
       this.header = {
         document_date: (this.document.document_date || "").slice(0, 10),
@@ -1310,8 +1328,11 @@ export default {
       if (against) this.loadCreditRoom();
 
       ApiService.get("/jobs?per_page=50").then(({ data }) => { this.jobs = data.data || data.rows || []; }).catch(() => {});
-      ApiService.get("/partners").then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
-      ApiService.get("/customers").then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
+      ApiService.get("/partners" + WHOLE_LIST).then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
+      ApiService.get("/customers" + WHOLE_LIST).then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
+      ApiService.get("/billing?types[]=invoice&issued=1")
+        .then(({ data }) => { this.parents = data.rows || []; })
+        .catch(() => { this.parents = null; });
     },
     loadCreditRoom() {
       this.creditRoom = null;
@@ -1349,7 +1370,7 @@ export default {
         receipt_date: localToday(), mode: "bank_transfer", reference: "", amount: 0,
       };
 
-      ApiService.get("/customers").then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
+      ApiService.get("/customers" + WHOLE_LIST).then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
     },
     loadOpenDocuments() {
       this.openDocuments = [];
@@ -1377,7 +1398,7 @@ export default {
         if (billed && billed.agent_id) this.receipt.agent_id = billed.agent_id;
         this.openDocuments.filter((d) => bills.includes(d.id) && (d.currency || "INR") === "INR")
           .forEach((d) => { this.$set(this.allocation, d.id, Number(d.outstanding)); });
-        this.receipt.amount = Object.values(this.allocation).reduce((s, v) => s + Number(v || 0), 0);
+        this.receipt.amount = paise(Object.values(this.allocation).reduce((s, v) => s + Number(v || 0), 0));
       });
     },
     saveReceipt() {

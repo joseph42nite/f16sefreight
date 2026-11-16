@@ -37,7 +37,8 @@ class PartnerController extends Controller
             ->when($request->filled('type'), fn ($q) => $q->ofType($request->string('type')))
             ->when($request->filled('q'), fn ($q) => $q->where('name', 'like', '%' . $request->string('q') . '%'))
             ->orderBy('name')
-            ->paginate(50);
+            // 50 unless asked, 500 at most — as `CustomerController` does, so a pick-list can hold them all (FM7).
+            ->paginate(min(max($request->integer('per_page'), 0) ?: 50, 500));
 
         // Which branch each partner belongs to — the Boss sees every branch's (user, 2026-09-16).
         $branches = \Illuminate\Support\Facades\DB::table('agents_info')

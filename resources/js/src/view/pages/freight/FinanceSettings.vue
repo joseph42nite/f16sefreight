@@ -487,6 +487,7 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { WHOLE_LIST } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 
@@ -539,8 +540,8 @@ export default {
   created() {
     this.load();
     this.loadBanks();
-    ApiService.get("/customers").then(({ data }) => { this.customers = data.data || []; }).catch(() => {});
-    ApiService.get("/partners").then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
+    ApiService.get("/customers" + WHOLE_LIST).then(({ data }) => { this.customers = data.data || []; }).catch(() => {});
+    ApiService.get("/partners" + WHOLE_LIST).then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
   },
   methods: {
     money(value) {

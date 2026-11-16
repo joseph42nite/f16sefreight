@@ -101,6 +101,7 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { WHOLE_LIST } from "@/core/config/format";
 
 export default {
   name: "EntityPanel",
@@ -132,8 +133,8 @@ export default {
   },
   created() {
     this.load();
-    ApiService.get("/customers").then(({ data }) => { this.customers = data.data || []; }).catch(() => {});
-    ApiService.get("/partners").then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
+    ApiService.get("/customers" + WHOLE_LIST).then(({ data }) => { this.customers = data.data || []; }).catch(() => {});
+    ApiService.get("/partners" + WHOLE_LIST).then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
   },
   methods: {
     load() {

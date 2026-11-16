@@ -535,7 +535,8 @@ export default {
           this.chaseDraft = { ...this.chaseDraft, sent: true };
 
           return ApiService.post("/collections/follow-ups", {
-            agent_id: this.branches.length ? this.branches[0].id : null,
+            // Filed under the branch chosen in "Log a chase", not always the first one (FC6).
+            agent_id: this.chase.agent_id || (this.branches.length ? this.branches[0].id : null),
             party_type: this.party.party.type, party_id: this.party.party.id, channel: "email",
             note: "Chasing mail sent: " + this.chaseDraft.subject,
             next_action_date: null, promised_amount: null, promised_date: null,

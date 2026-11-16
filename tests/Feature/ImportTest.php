@@ -103,6 +103,20 @@ class ImportTest extends TestCase
         $this->assertDatabaseHas('air_import_details', ['job_id' => $job->id, 'free_storage_days' => 3, 'filing_status' => 'submitted']);
     }
 
+    /** FC5: a wrong IGM number or date must be removable, not only replaceable. */
+    public function test_an_igm_number_sent_as_null_is_taken_off(): void
+    {
+        $job = $this->house();
+        $save = fn (array $body) => $this->as($this->ops)->postJson($this->url("/jobs/{$job->id}/import"), $body)->assertOk();
+
+        $save(['flight_number' => 'EK542', 'igm_no' => '2345678', 'igm_date' => '2026-09-29', 'filing_status' => 'submitted']);
+        $save(['igm_no' => null, 'igm_date' => null, 'filing_status' => 'submitted'])->assertJsonPath('import.igm_no', null);
+
+        $this->assertDatabaseHas('air_import_details', ['job_id' => $job->id, 'igm_no' => null, 'igm_date' => null]);
+        // What was left out keeps its value.
+        $this->assertDatabaseHas('air_shipment_details', ['job_id' => $job->id, 'flight_number' => 'EK542']);
+    }
+
     public function test_a_malformed_mawb_or_filing_status_is_refused(): void
     {
         $job = $this->house();

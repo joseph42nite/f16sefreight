@@ -148,7 +148,9 @@ The backend audit is `AUDIT_2026-11-10.md`.
 
 - **FM1 [R]** `freight/Billing.vue:791-793` → "Record a receipt" shows Outstanding in the bill's currency while
   "Place against it" is rupees, unlabelled. Typing 1000 against "USD 1,000.00" settles ₹1,000 of it.
-  ⏸ Left: read by the reviewer only; the server side needs checking before the column is relabelled.
+  ✅ **Fixed 2026-11-16:** the server was checked: the figure typed IS rupees, turned into the bill's currency at the
+  receipt day's rate (`ReceiptController::store`, GAPS #411). The column now reads "Rupees placed against it" and a
+  foreign bill's row says so. Header seen in the browser; the demo data has no foreign bill to show the row note.
 - **FM2 [V]** `freight/MoneyOut.vue:384, 511, 522` → the per-supplier commission and discount are never reset
   after a payment run. The next run with the same supplier arrives pre-filled with the last run's figures.
   ✅ **Fixed 2026-11-16:** cleared with the picks when the list reloads.
@@ -160,19 +162,31 @@ The backend audit is `AUDIT_2026-11-10.md`.
   ✅ **Fixed 2026-11-16:** `messageFor` is defined, so the failure shows its reason and the stale figures are dropped.
 - **FM5 [R]** `freight/MoneyIn.vue:75-81` + `Billing.vue:1026-1034` → stepping between "to bill", "drafts" and
   "issued" changes the header but not the list.
+  ✅ **Fixed 2026-11-16:** `Billing.vue` watches the view and the stage's filter as one key. Seen in the browser: the
+  three stages list 3, 2 and 42 rows, each matching its count.
 - **FM6 [R]** `Financials.vue:1544` → the invoice Status filter is sent to the Bank register too, which reads it
   as a reconciliation status: an empty list with no visible filter to clear.
+  ✅ **Fixed 2026-11-16:** Status goes only to the two invoice views that show the box.
 - **FM7 [R]** Pick-lists filled from page one only (50 rows): receipt payer, bill client, shipment, partner
   (`Billing.vue:1148, 1312, 1352`), rate cards (`FinanceSettings.vue:542`), `ImportJob.vue:290`,
   `EntityPanel.vue:135`, `FocusSeaMaster.vue:489`, `CostSheet.vue:338`, `Financials.vue:1381`. Client or supplier
   number 51 cannot be chosen. Registers with no pager show only the newest 50 (`Financials.vue:1553`,
   `DirectoryTable.vue:502`, `ManifestFiling.vue:273`).
+  ✅ **Fixed 2026-11-16 (clients and partners):** every client and partner pick-list asks for `per_page=500`
+  (`format.js` `WHOLE_LIST`); `PartnerController::index` now takes `per_page`, 500 at most, as the client list did.
+  ⏸ Left: the shipment list on a new bill is still the newest 50 (`JobController` holds someone else's uncommitted
+  work), a company with more than 500 clients needs a searched box, and the three registers still have no pager.
 - **FM8 [R]** `Billing.vue:982-984` → the "against which invoice" list for a new debit or credit note is taken
   from the rows on screen; on the notes tabs it is empty and the form cannot be submitted.
+  ✅ **Fixed 2026-11-16:** the form asks the server for the issued invoices when it opens. Seen in the browser (32).
 - **FM9 [R]** `Billing.vue:1053-1057` → the line total is rounded once; the server rounds amount, then tax, then
   adds. The total shown before saving can differ from the saved one by a paisa. `:1380` posts a floating-point sum
   (300.30000000000004) as a receipt amount.
+  ✅ **Fixed 2026-11-16:** `format.js` `paise` rounds as PHP does; a line is amount, then tax, then the sum; the
+  receipt amount and the placed total are rounded.
 - **FM10 [R]** `Financials.vue:453` → "Unmatch" can never succeed (already noted in the backend audit).
+  ✅ **Fixed 2026-11-16:** the button is gone; a matched line says it is in the ledger and is undone by a contra entry.
+  The server route is left as it was.
 - **FC1 [V]** `freight/components/ExtractionPanel.vue:1058-1063` + `JobInbox.vue:732-740` → the extraction panel
   is one instance that survives a change of conversation; its `jobId` watcher adds the new job's readings and
   clears nothing. Shipment A's waybill number and documents show under shipment B, and saving can write A's
@@ -189,10 +203,17 @@ The backend audit is `AUDIT_2026-11-10.md`.
   ✅ **Fixed 2026-11-16:** all seven senders split on `,` or `;`.
 - **FC4 [R]** `freight/components/VisualReporter.vue:38, 211-222` → says "Screenshot: attached"; the image is
   never posted.
+  ✅ **Fixed 2026-11-16 (wording):** it says the screenshot is for the reporter to check and is not sent. Sending it
+  still waits on where images are stored (GAPS #35).
 - **FC5 [R]** `ImportJob.vue:300-333` → empty fields are dropped before save, so a wrong IGM number or date cannot
   be cleared.
+  ✅ **Fixed 2026-11-16:** an emptied IGM number, IGM date, handling agent, arrival, free days, storage date, and the
+  delivery order's "given to" and fee are sent as null. Test in `ImportTest`. Flight and weight boxes still keep their
+  stored value when blanked: those columns may not be empty.
 - **FC6 [P]** `Collections.vue:481, 536` → follow-ups are always filed under the first branch. `JobInbox.vue:1722`
   → no "latest request wins" when two conversations are clicked quickly.
+  ✅ **Fixed 2026-11-16:** the chasing mail's follow-up uses the branch chosen in "Log a chase"; the inbox drops the
+  answer to any click but the latest. Specs for this group: `tests/js/accountsInboxFixes.spec.js`.
 
 ## 4. Public site and admin
 

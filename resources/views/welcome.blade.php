@@ -126,7 +126,14 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-JCFDX15593');
+      // The password-reset address carries the one-time token and the email (frontend audit, FS11): analytics is told
+      // the page, never those. The router's later page views are not sent at all on that page.
+      (function () {
+        var reset = /^\/PasswordForgotForm(\/|$)/i.test(window.location.pathname);
+        gtag('config', 'G-JCFDX15593', reset
+          ? { page_location: window.location.origin + '/PasswordForgotForm', page_path: '/PasswordForgotForm', page_referrer: '' }
+          : {});
+      })();
     </script>
 </body>
 

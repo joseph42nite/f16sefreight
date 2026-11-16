@@ -163,7 +163,7 @@
 <script>
 import { mapState } from "vuex";
 import ApiService from "@/core/services/api.service";
-import { LOGIN } from "@/core/services/store/auth.module";
+import { LOGIN, SET_ERROR } from "@/core/services/store/auth.module";
 import { portalFromHost, portalSignInUrl, SIGN_IN_PORTALS } from "@/core/config/portalHosts";
 
 export default {
@@ -233,6 +233,14 @@ export default {
                 .finally(() => { this.resetSending = false; });
         },
         login() {
+            // 🔴 Only ON a portal's own address (frontend audit, FS12). On the bare main domain no portal is chosen, and
+            // `portalHosts.js` says the password goes only to the portal picked — so none is sent from here.
+            if (!this.currentPortal) {
+                this.$store.commit(SET_ERROR, "Choose the portal you work in first; you sign in on its own page.");
+
+                return;
+            }
+
             this.loading = true;
             const { email, password, otp } = this.user_form;
 

@@ -196,7 +196,8 @@ export default {
         { name: 'twitter:image', content: absoluteImageUrl }
       ],
       script: [
-        { innerHTML: JSON.stringify(schema), type: 'application/ld+json' }
+        // `<` written as \u003c (FS6): the sanitiser is off for this block, and a title holding a closing script tag ended it.
+        { innerHTML: JSON.stringify(schema).replace(/</g, '\\u003c'), type: 'application/ld+json' }
       ],
       __dangerouslyDisableSanitizers: ['script']
     }

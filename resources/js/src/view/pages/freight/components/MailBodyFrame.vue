@@ -5,6 +5,12 @@
       styles cannot flatten it and its styles cannot leak out. No scripts run inside (sandbox without allow-scripts);
       links open in a new tab. The server has already removed anything unsafe.
     -->
+    <!-- Pictures from the internet stay off until asked for (frontend audit, FS10): loading one tells the sender the
+         mail was opened, when, and from where. Pictures sent inside the mail itself always show. -->
+    <p v-if="html !== null && hasRemoteImages && !showImages" class="fx-muted fx-mail-body__images">
+      Pictures from the internet are hidden.
+      <button type="button" class="fx-btn fx-btn--ghost" @click="showImages = true">Show pictures</button>
+    </p>
     <iframe
       v-if="html !== null"
       ref="frame"
@@ -29,10 +35,18 @@ export default {
     /** Shown while the full mail loads, or if it cannot be fetched. */
     snippet: { type: String, default: "" },
   },
-  data: () => ({ html: null, height: 60 }),
+  data: () => ({ html: null, height: 60, showImages: false }),
   computed: {
+    /** A picture fetched from somewhere else — not one carried in the mail (data:, cid:) or served by this app. */
+    hasRemoteImages() {
+      return /<img\b[^>]*\bsrc\s*=\s*["']?\s*(https?:)?\/\//i.test(this.html || "")
+        || /url\(\s*["']?\s*(https?:)?\/\//i.test(this.html || "");
+    },
     document() {
-      return '<!doctype html><html><head><meta charset="utf-8"><base target="_blank">'
+      // The frame's own rule, so nothing is fetched whatever the markup tries (img, background, srcset).
+      const policy = this.showImages ? "" : '<meta http-equiv="Content-Security-Policy" content="img-src \'self\' data: blob: cid:">';
+
+      return '<!doctype html><html><head><meta charset="utf-8">' + policy + '<base target="_blank">'
         + "<style>body{margin:0;font:13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#1f2933;overflow-wrap:anywhere}"
         + "h1,h2,h3,h4,h5,h6{font-size:1em;margin:0 0 6px}"
         // A wide table keeps its words whole and scrolls sideways in the frame (GAPS #466): squeezed to the frame with
@@ -48,6 +62,7 @@ export default {
   methods: {
     load() {
       this.html = null;
+      this.showImages = false;
       ApiService.get("/inbox/messages/" + this.messageId + "/body")
         .then(({ data }) => { this.html = data.html || ""; })
         .catch(() => { this.html = null; });

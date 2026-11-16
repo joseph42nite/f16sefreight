@@ -39,6 +39,9 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FS6 [R]** `public/BlogPost.vue:46` (`v-html`) and `:199-201` (JSON-LD with the sanitiser off) → blog bodies
   from the admin editor are stored and rendered unsanitised; a title containing `</script>` breaks out of the
   JSON-LD. Only a superadmin can write one, so it is stored XSS behind one account — which FS1 makes worth having.
+  ✅ **Fixed 2026-11-16:** a body is cleaned whenever it is saved (`Blog::setContentAttribute`,
+  `App\Services\Blog\BlogBody`: only what the editor's toolbar can make), migration `2026_11_16_010000` cleans the
+  rows already stored, and the JSON-LD writes `<` as `\u003c`. Test in `FrontendAuditSecurityTest`.
 - **FS7 [R]** `layouts/admin/aside/Menu.vue:39-41`, `layouts/public/Header.vue:166-170` → these two logouts only
   clear `localStorage`; neither calls the server logout, so the token stays valid. Only
   `layouts/freight/ProfileMenu.vue` does it properly.
@@ -54,12 +57,20 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FS10 [R]** `freight/components/MailBodyFrame.vue:8-17` → inbound mail images load automatically (tracking
   pixels: the sender learns the mail was opened and from where). No script can run: the body is purified
   server-side and shown in a sandboxed frame.
+  ✅ **Fixed 2026-11-16:** pictures fetched from the internet are blocked by the frame's own content policy until the
+  reader chooses "Show pictures"; pictures carried in the mail always show. Asked again for each mail.
 - **FS11 [P]** `router.js:117` + `welcome.blade.php:128-133` → the reset token and email are in the URL path and
   Google Analytics records the page location on every page.
+  ✅ **Fixed 2026-11-16:** on the reset page analytics is given the bare page address, without the token, the email or
+  the referrer. The token is still in the address bar and the browser's history: moving it out means a new link
+  format in the mail.
 - **FS12 [R]** `layouts/public/AuthModals.vue:208-224` → on the bare main domain the sign-in form still posts the
   password to `/api/login`, though `portalHosts.js` says it must only go to the chosen portal.
+  ✅ **Fixed 2026-11-16:** with no portal chosen nothing is sent; the form says to choose the portal first.
 - **FS13 [R]** `core/services/store/auth.module.js:98-104` → any 401 from `/{userType}/verify` purges the session,
   so a signed-in tenant who opens a `/superadmin/*` URL is signed out.
+  ✅ **Fixed 2026-11-16:** the guard sends a person on a page for the other kind of account back to their own start,
+  without checking them as that kind. Seen in the browser. Specs: `tests/js/securityLeftovers.spec.js`.
 - **FS14 [R]** `public/JosephCard.vue`, `DeepanjanCard.vue` → two personal mobile numbers and emails are in the
   public bundle with no `noindex`. They are business cards by design: a decision to confirm.
 

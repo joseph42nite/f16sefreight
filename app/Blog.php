@@ -25,4 +25,13 @@ class Blog extends Model
         'takeaways' => 'array',
         'published_at' => 'date'
     ];
+
+    /**
+     * Cleaned on the way IN, whoever saves it (2026-11-15 frontend audit, FS6): the public page prints the body as
+     * HTML, so nothing that can run may be stored.
+     */
+    public function setContentAttribute($value): void
+    {
+        $this->attributes['content'] = $value === null ? null : (new \App\Services\Blog\BlogBody())->clean($value);
+    }
 }

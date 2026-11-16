@@ -158,4 +158,31 @@ class FrontendAuditSecurityTest extends TestCase
         $this->assertCount(100, $this->getJson('/api/superadmin/airlines')->assertOk()->json('data'));
         $this->assertCount(min($before + 105, 500), $this->getJson('/api/superadmin/airlines?per_page=500')->assertOk()->json('data'));
     }
+
+    /** FS6: the public page prints a blog body as HTML, so nothing that can run is ever stored. */
+    public function test_a_blog_body_is_stored_without_anything_that_can_run(): void
+    {
+        $this->actingAs(\App\SuperAdmin::create(['name' => 'Editor', 'email' => 'fs6-' . uniqid() . '@test.local',
+            'password' => Hash::make('x')]), 'superAdmin-api');
+        $body = '<h3>Rates</h3><p class="ql-align-center">Up <strong>4%</strong> <span style="color: rgb(230, 0, 0); position: fixed;">now</span>'
+            . '<script>alert(1)</script><img src="x" onerror="alert(2)"> <a href="javascript:alert(3)">bad</a>'
+            . ' <a href="https://example.com" target="_blank" onclick="alert(4)">good</a></p><iframe src="https://evil.test"></iframe>';
+
+        // Saved through the model, as the controller's create does (which also wants an image file).
+        $id = \App\Blog::create(['title' => 'FS6 body', 'slug' => 'fs6-body-' . uniqid(), 'category' => 'News',
+            'read_time' => '1 min', 'image_path' => '/x.png', 'excerpt' => 'x', 'content' => $body])->id;
+        $stored = \App\Blog::find($id)->content;
+
+        foreach (['<script', 'onerror', 'onclick', 'javascript:', '<iframe', 'position'] as $gone) {
+            $this->assertStringNotContainsStringIgnoringCase($gone, $stored);
+        }
+        foreach (['<h3>Rates</h3>', 'class="ql-align-center"', '<strong>4%</strong>', 'href="https://example.com"', 'color:'] as $kept) {
+            $this->assertStringContainsString($kept, $stored);
+        }
+
+        // And on an edit.
+        $this->postJson("/api/superadmin/edit-blog/{$id}", ['_method' => 'PUT', 'title' => 'FS6 body edited', 'category' => 'News',
+            'read_time' => '1 min', 'excerpt' => 'x', 'content' => '<p>ok</p><script>alert(5)</script>'])->assertOk();
+        $this->assertSame('<p>ok</p>', \App\Blog::find($id)->content);
+    }
 }

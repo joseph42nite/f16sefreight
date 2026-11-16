@@ -84,6 +84,18 @@ router.beforeEach((to, from, next) => {
  }
  else{
   let userType=to.meta.userType;
+
+  // A page for the OTHER kind of account (frontend audit, FS13): a tenant who opened a /superadmin address was
+  // checked as platform staff, refused, and signed out of their own session. They are sent back to their own
+  // start instead; the server still refuses everything behind such a page.
+  const role = JwtService.getRole();
+  const token = JwtService.getToken();
+  const wrongKind = token && token !== 'undefined'
+    && ((role === 'user' && userType === 'superadmin') || (role === 'superAdmin' && userType === 'user'));
+
+  if (wrongKind) {
+    return next(role === 'user' ? (LANDING_ROUTE[store.getters.designation] || '/focus-air') : '/superadmin/overview');
+  }
   // Waited for (FK1): the page is not entered until the session has been checked. `false` means the person was
   // signed out and is already on the way to the sign-in page.
   store.dispatch(VERIFY_AUTH,{userType}).then((ok) => (ok === false ? next(false) : next()));

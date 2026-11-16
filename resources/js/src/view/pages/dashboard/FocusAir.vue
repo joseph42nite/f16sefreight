@@ -68,7 +68,7 @@
                     <hr class="hr" />
 
                     <template> 
-                        <b-form @submit.prevent="onSubmit">
+                        <b-form @submit.prevent="onSubmit" @keydown.enter="noEnterSubmit">
                             <div class="container py-8 px-6 px-sm-8 px-md-10">
                                 <!-- AWB NO & AWB CODE SECTION START -->
                                 <div class="mx-2 mx-sm-8">
@@ -2508,6 +2508,7 @@
 </template>
 <script>
 import { openPdf } from "@/core/services/pdfLink";
+import { saveOutcome, failureMessage } from "@/core/services/waybillSend";
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
@@ -3152,6 +3153,9 @@ export default {
         handleSaveAndGeneratePDF(pdf_generate_type) {
             // onSubmit() opens the PDF on a successful save (see generatePDFAfterSave).
             this.generatePDFAfterSave = pdf_generate_type;
+            // 🔴 A PDF link saves; it never sends (FW2). The status was left as whatever was clicked last, so a PDF
+            // link clicked after a Send transmitted the waybill to the airline a second time.
+            this.form.status = 'generate_pdf';
             this.onSubmit();
         },
         formatBackendError(msg) {
@@ -3370,6 +3374,8 @@ export default {
 
         onSubmit() {
             this.main_error_msg='';
+            this.successMessage='';
+            const asked = this.form.status;
             $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             // Prepare form data for submission - convert display dates to proper format
             // const preparedFormData = this.prepareFormDataForSubmission();
@@ -3386,21 +3392,17 @@ export default {
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateAwbPDF(this.generatePDFAfterSave);
                         }
-                        this.successMessage = '-e-AWB Saved in database -Pass';
+                        // 🔴 A Send is a success only if the airline's gateway took it (frontend audit 2026-11-15, FW1).
+                        const outcome = saveOutcome(asked, response.data, 'e-AWB');
+                        this.successMessage = outcome.success;
+                        this.main_error_msg = outcome.error;
                     } else {}
                 })
                 .catch(error => {
                     $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
-                    var main_error_msg='';
-                    if (error.response) {
-                        if (error.response.status === 422) {
-                            const errors=error.response.data.errors
-                            for (const field in errors) {
-                                main_error_msg+=`${this.formatBackendError(errors[field][0])}<br>`;
-                            }
-                        }
-                    }
-                    this.main_error_msg=main_error_msg;
+                    // Every refusal says something (FW1): only a 422 with field errors used to be shown.
+                    this.generatePDFAfterSave = '';
+                    this.main_error_msg = failureMessage(error, this.formatBackendError);
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {
@@ -3418,21 +3420,17 @@ export default {
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateAwbPDF(this.generatePDFAfterSave);
                         }
-                        this.successMessage = '-e-AWB Saved in database -Pass';
+                        // 🔴 A Send is a success only if the airline's gateway took it (frontend audit 2026-11-15, FW1).
+                        const outcome = saveOutcome(asked, response.data, 'e-AWB');
+                        this.successMessage = outcome.success;
+                        this.main_error_msg = outcome.error;
                     } else {}
                 })
                 .catch(error => {
                     $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
-                    var main_error_msg='';
-                    if (error.response) {
-                        if (error.response.status === 422) {
-                            const errors=error.response.data.errors
-                            for (const field in errors) {
-                                main_error_msg+=`${this.formatBackendError(errors[field][0])}<br>`;
-                            }
-                        }
-                    }
-                    this.main_error_msg=main_error_msg;
+                    // Every refusal says something (FW1): only a 422 with field errors used to be shown.
+                    this.generatePDFAfterSave = '';
+                    this.main_error_msg = failureMessage(error, this.formatBackendError);
                 });
             }
         },

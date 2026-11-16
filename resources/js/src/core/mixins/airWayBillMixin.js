@@ -210,6 +210,16 @@ export default {
         window.removeEventListener('click', this.closeAllDropdowns);
     },
     methods: {
+        /**
+         * Enter in a text box does not submit the waybill (frontend audit 2026-11-15, FW2). The browser "clicks" the
+         * form's first submit button on Enter, and that button is Send: a stray Enter transmitted to the airline.
+         * Only plain inputs are stopped; Enter still works on buttons and makes a new line in a text area.
+         */
+        noEnterSubmit(event) {
+            if (event.target && event.target.tagName === "INPUT") {
+                event.preventDefault();
+            }
+        },
         getCurrentDate() {
             return new Date().toLocaleDateString("en-CA");
         },

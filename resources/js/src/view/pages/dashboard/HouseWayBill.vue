@@ -59,7 +59,7 @@
 
                     <hr class="hr" />
 
-                    <b-form @submit.prevent="onSubmit">
+                    <b-form @submit.prevent="onSubmit" @keydown.enter="noEnterSubmit">
                             <div class="container py-8 px-6 px-sm-8 px-md-10">
                                 <div class="mx-2 mx-sm-8">
                                     <b-row class="mt-0 mb-4 mt-md-0 mb-md-10">
@@ -2370,6 +2370,7 @@
 </template> 
 <script>
 import { openPdf } from "@/core/services/pdfLink";
+import { saveOutcome, failureMessage } from "@/core/services/waybillSend";
 import Datepicker from "vuejs-datepicker";
 import DatePicker from "vue2-datepicker";
 import ApiService from "@/core/services/api.service";
@@ -2952,6 +2953,9 @@ export default {
         handleSaveAndGeneratePDF(pdf_generate_type) {
             // onSubmit() opens the PDF on a successful save (see generatePDFAfterSave).
             this.generatePDFAfterSave = pdf_generate_type;
+            // 🔴 A PDF link saves; it never sends (FW2). The status was left as whatever was clicked last, so a PDF
+            // link clicked after a Send transmitted the waybill to the airline a second time.
+            this.form.status = 'generate_pdf';
             this.onSubmit();
         },
         generateHawbPDF(pdf_generate_type) {
@@ -3071,11 +3075,14 @@ export default {
             const iata = this.iataViolations();
             if (iata.length > 0) {
                 this.main_error_msg = iata.join('<br>');
+                this.generatePDFAfterSave = '';
                 return;
             }
 
             $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
             this.main_error_msg='';
+            this.successMessage='';
+            const asked = this.form.status;
             // this.form.agent_head_office.ho_name=this.agent_information.ho_name;
             if (this.mode === 'add') {
                 // Create a new Form instance with prepared data
@@ -3088,23 +3095,19 @@ export default {
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateHawbPDF(this.generatePDFAfterSave);
                         }
-                        this.successMessage = '-e-HSWB Saved in database -Pass';
+                        // 🔴 A Send is a success only if the airline's gateway took it (frontend audit 2026-11-15, FW1).
+                        const outcome = saveOutcome(asked, response.data, 'e-HSWB');
+                        this.successMessage = outcome.success;
+                        this.main_error_msg = outcome.error;
                     } else {
                         console.error('ID is missing in response data');
                     }
                 })
                 .catch(error => {
                     $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
-                    var main_error_msg='';
-                    if (error.response) {
-                        if (error.response.status === 422) {
-                            const errors=error.response.data.errors
-                            for (const field in errors) {
-                                main_error_msg+=`${errors[field][0]}<br>`;
-                            }
-                        }
-                    }
-                    this.main_error_msg=main_error_msg;
+                    // Every refusal says something (FW1): only a 422 with field errors used to be shown.
+                    this.generatePDFAfterSave = '';
+                    this.main_error_msg = failureMessage(error);
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {
@@ -3122,22 +3125,18 @@ export default {
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
                             this.generateHawbPDF(this.generatePDFAfterSave);
                         }
-                        this.successMessage = '-e-HSWB Saved in database -Pass';
+                        // 🔴 A Send is a success only if the airline's gateway took it (frontend audit 2026-11-15, FW1).
+                        const outcome = saveOutcome(asked, response.data, 'e-HSWB');
+                        this.successMessage = outcome.success;
+                        this.main_error_msg = outcome.error;
                     } else {
                     }
                 })
                 .catch(error => {
                     $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
-                    var main_error_msg='';
-                    if (error.response) {
-                        if (error.response.status === 422) {
-                            const errors=error.response.data.errors
-                            for (const field in errors) {
-                                main_error_msg+=`${errors[field][0]}<br>`;
-                            }
-                        }
-                    }
-                    this.main_error_msg=main_error_msg;
+                    // Every refusal says something (FW1): only a 422 with field errors used to be shown.
+                    this.generatePDFAfterSave = '';
+                    this.main_error_msg = failureMessage(error);
                     console.error('Update Failed:', error);
                 });
             }

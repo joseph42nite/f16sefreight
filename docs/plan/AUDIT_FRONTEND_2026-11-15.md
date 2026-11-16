@@ -65,9 +65,16 @@ The backend audit is `AUDIT_2026-11-10.md`.
   shown.** On HTTP 200 the screen prints "-e-AWB Saved in database -Pass" and never reads `send_response`, which
   says whether the gateway accepted. Only a 422 with an `errors` object is displayed; the "complete it, then send
   again" 422, and any 403/404/500, leave the message empty. A refused message looks like a successful save.
+  ✅ **Fixed 2026-11-16:** both screens read `send_response` through `core/services/waybillSend.js`: "Sent to the
+  airline" only with a transaction id, otherwise "NOT SENT" with the server's reason; every refusal now shows a
+  message. Seen in the browser for a 422 (field errors shown). ⚠️ The "Sent" and "NOT SENT" wording is covered by unit tests
+  only: the dev company is not in testing mode, so a real Send would go to the live gateway.
 - **FW2 [R]** `FocusAir.vue:3152-3156`, `HouseWayBill.vue:2952-2956` → the PDF layout links call `onSubmit()`
   without resetting `form.status`. After a Send, clicking a PDF link sends the waybill to the airline again. **[P]**
   Enter in any text input does the same, because "Send" is the form's first submit button.
+  ✅ **Fixed 2026-11-16:** a PDF link sets `form.status = 'generate_pdf'` before saving, and Enter in a text box no
+  longer submits (`airWayBillMixin.noEnterSubmit`). Specs: `tests/js/waybillSend.spec.js`. Checked in the browser on the
+  master screen: a PDF link with the status left at `send` posted `generate_pdf`, and Enter in a text box was cancelled.
 - **FW3 [V]** `Consolidation.vue:795` → `this.form.put(url, updateData)`: vform treats the second argument as
   axios config and sends the form's own data. Special-handling edits on a consolidation show a success toast and
   save nothing.

@@ -2,7 +2,7 @@
 
 - **What this is:** the visual language of the public landing page (`resources/js/src/view/pages/public/Home.vue` and its `components/Home*.vue`). Use it for any new section, and for the About, Services and Product pages when they are brought in line.
 - **What it is not:** this file is not the source for claims; that is `docs/LANDING_PAGE.md`.
-- **Last updated:** 2026-11-13
+- **Last updated:** 2026-11-16
 
 ## 1. The idea in one line
 
@@ -13,6 +13,10 @@
 
 It should feel calm, light and clear: never dark, never busy, never "enterprise grey".
 
+**Fewer boxes.** Not every section needs cards (owner, 2026-11-16: "too many cards").
+- Use cards where the cards *are* the content: Products, Plans, the AI tiles and the steps on the line.
+- Elsewhere, put words straight on the paper or the sky, split by thin rules or set around a picture: Safe and in control, Blog, FAQ, and the takeaways under the line.
+
 ## 2. Page structure: sheets over sky
 
 | Layer | What it is | Where |
@@ -21,11 +25,30 @@ It should feel calm, light and clear: never dark, never busy, never "enterprise 
 | **Sheet 1** | Off-white `#F8F6F1`, radius 56px, a soft blue shadow on its top edge (`0 -20px 50px rgba(40,90,170,.14)`), pulled up 56px over the sky | `Home.vue` `.lp-sheet` |
 | **Blue band** | The hero's blue gradient again, with two cloud images (`mix-blend-mode: screen`), pulled up under sheet 1's curved bottom | `.lp-blue` |
 | **Sheet 2** | Off-white again, top corners only, curving up over the band | `.lp-sheet--next` |
+| **Sky cards** | Inset cards in the hero's blue with drifting clouds, radius 36px, sitting on sheet 2: the "Stop guessing" banner and the Talk to us form | `HomeCta.vue`, `HomeLeadForm.vue` |
 
 **Rules:**
 - **Alternate the layers.** Paper, then sky, then paper. Never put two blue bands back to back.
 - **Use a band for a story, not for features.** A blue band holds one big idea told as a picture: today that is "How it connects".
-- **Phones:** radii drop to 32px.
+- **Phones:** radii drop to 32px (sky cards 26px).
+
+**The page, top to bottom** (`Home.vue`):
+
+| # | Section | Layer | § |
+|---|---|---|---|
+| 1 | Hero: "Every shipment, on one clear board." | sky | §19 |
+| 2 | Why F16s: feature cards | sheet 1 | §7 |
+| 3 | Airlines: two drifting rows of logos | sheet 1 | |
+| 4 | AI in F16s: widget board | sheet 1 | §7 |
+| 5 | How it connects: steps on a winding line | blue band | §9 |
+| 6 | Products: Air / Sea / Road | sheet 2 | §6 |
+| 7 | "Stop guessing" banner | sky card | §18 |
+| 8 | Plans: Core / Tactical / Command | sheet 2 | §12 |
+| 9 | Safe and in control: the shield | sheet 2 | §13 |
+| 10 | Blog: picture wall | sheet 2 | §14 |
+| 11 | FAQ | sheet 2 | §17 |
+| 12 | Talk to us: the form | sky card | §16 |
+| — | Footer | its own | §21 |
 
 ## 3. Colour
 
@@ -89,7 +112,7 @@ The gradient runs top to bottom. The sky is light: if it starts to look navy, it
 - **Shadows are soft, blue-tinted and low-contrast,** for example `0 10px 30px rgba(38,68,127,.06)`.
   - On hover they grow (`0 22px 44px …/.14`), and the card lifts 4px.
   - Never use black shadows.
-- **No borders on cards.** Separation comes from paper against white plus a shadow. Borders appear only on glass pills over the blue.
+- **No borders on cards.** Separation comes from paper against white plus a shadow. Borders appear only on glass pills over the blue, and on form fields (§16), where a border shows the box you type in.
 - **Icons:** bootstrap-vue `b-icon`, sitting in a rounded square of the card's soft tone. One icon per card.
 
 ## 6. Pictures: real objects, placed in their world
@@ -106,8 +129,8 @@ The gradient runs top to bottom. The sky is light: if it starts to look navy, it
     - A soft line of foam at the waterline.
     - Keep the front water translucent: a solid band reads as a stripe, not as sea.
   - **Truck:** on a slate road with a green verge and white edges. A dashed yellow centre line moves, so it drives.
+  - **Laptop (hero):** shows the real product board, nothing floating around it.
 - **Contrast between world and card:** set the card's tone against its world. The sea card is butter, so the blue water reads as sea under a sunny sky. The road card is mint, so the grey road runs through green. The air card is sky blue with clouds.
-  - **Laptop:** shows the real product board.
 - The world runs to the card's edges, by bleeding past the padding.
 - Clouds belong to the sky and the air card only. Don't scatter them on sea or road.
 
@@ -131,6 +154,12 @@ The gradient runs top to bottom. The sky is light: if it starts to look navy, it
     - The blue band's two clouds drift in opposite directions (40s and 52s).
     - The hero's clouds drift too.
   - **Road:** the centre line runs.
+- **The jet is the recurring mark in motion,** always the same top-view silhouette:
+  - Hero: crosses the sky above the title on a faint contrail (14s).
+  - Banner: takes off from a runway and climbs on a contrail (7s).
+  - Plans: flies past the waybill, shows as a contact on the radar.
+  - Footer: crosses the giant wordmark (22s).
+  - It never flies over words people are reading.
 - **Entrances:** tiles spring in once, when they reach 85% of the viewport.
   - They start at opacity 0, 26px down, scale .94.
   - They stagger.
@@ -162,11 +191,12 @@ When a section is a sequence, join the cards with a line the reader can follow.
 
 1. Paper or sky? Follow the alternation in §2.
 2. Heading with `.lp-head`: eyebrow, two-line title, short sub.
-3. Cards in one pastel family, white or tone gradient, with the radius from §5.
+3. Cards only if the cards are the content (§1, fewer boxes). If so, one pastel family, white or tone gradient, with the radius from §5.
 4. A picture of the product or the object in its world, rather than a bullet list.
 5. One gentle motion with a reduced-motion fallback.
-6. Check widths of 375, 768 and 1366 for no sideways scroll.
-7. Record it in `docs/LANDING_PAGE.md`.
+6. Any button is `LpButton` (§20). Headings centred (§15).
+7. Check widths of 375, 768 and 1366 for no sideways scroll.
+8. Record it in `docs/LANDING_PAGE.md`, and here if it sets a new pattern.
 
 ## 12. Plans: same cards as Products, one picture per plan
 
@@ -174,7 +204,8 @@ When a section is a sequence, join the cards with a line the reader can follow.
   - Same gradient, radius, badge, check list and white pill link, so the two sections read as one family.
   - Tones: Core sky, Tactical violet, Command peach.
   - The badge carries the tier line ("Documents", "Everything in Core, plus" …).
-  - The link is "Ask about <plan>" to `/contact-us`.
+  - The button is "Ask about <plan>" (`LpButton`, size sm) to `/contact-us`.
+  - "Prices on request. Talk to us and we'll set it up with you." sits as one line under the cards.
 - **One picture per plan, all built on the F16s jet** (`#lpl-jet` in `HomePlans.vue`, a top-view fighter silhouette). Each picture is a different shape, so the plans tell apart at a glance:
   - **Core: the waybill.** A white AWB with a blue header, lines and a barcode. A navy "approved" stamp carries the jet, and a jet flies past on a dashed trail. *Documents.*
   - **Tactical: the radar.** A navy radar scope with a turning sweep, jobs as glowing blips and the jet as a contact, with two job cards floating beside it. *Operations on one board.*
@@ -233,7 +264,8 @@ When a section is a sequence, join the cards with a line the reader can follow.
 - **Work emails only.** The hint under the email field says so before anyone types.
   - Gmail, Outlook, Yahoo and other free mailboxes are refused as soon as the field loses focus.
   - The server refuses them again, and also refuses domains that can't receive mail.
-- **Button and done state:** one blue gradient pill, "Request a walkthrough". After sending, the panel turns into a green tick with "Thanks, <first name>."
+- **Button and done state:** "Request a walkthrough" is the white `LpButton`, sitting on the blue under the panel (§20). After sending, the panel turns into a green tick with "Thanks, <first name>."
+- **It is the last section on the page,** just above the footer. Get started (hero, banner), Talk to us (footer) and "Still have a question?" (FAQ) all lead here.
 
 ## 17. FAQ: a classic list
 
@@ -244,11 +276,12 @@ When a section is a sequence, join the cards with a line the reader can follow.
   - One question is open at a time.
 - **Under the list:** "Still have a question? Talk to us ↓", which scrolls to the form.
 
-## 18. Closing call to action: take-off
+## 18. "Stop guessing" banner: take-off
 
-- **The card:** the hero's sky card again, radius 36px.
+- **Position:** between Products and Plans (moved up from the foot of the page on 2026-11-16, owner).
+- **The card:** a sky card, like the hero's, radius 36px.
   - Centred copy: "Ready when you are" pill, "Stop guessing. / Start running every shipment.", one sub-line.
-  - Two buttons: **Get started**, solid white, which scrolls to the Talk to us form; and **See how it works**, glass.
+  - Two buttons (`LpButton`): **Get started**, solid, which scrolls to the Talk to us form; and **See how it works**, ghost.
 - **The story behind the words:**
   - A runway in perspective at the foot of the card, with a rolling dashed centre line and blinking amber edge lights.
   - The F16s jet takes off from it and climbs to the top right on a 7s loop. A white contrail draws in behind it, then fades.
@@ -262,12 +295,12 @@ When a section is a sequence, join the cards with a line the reader can follow.
 - **Copy:** "Freight forwarding, made clear" pill, then "Every shipment, / on one clear board.", then one sub-line of shipped facts: mail read every 2 minutes, AI-drafted waybills, e-AWBs sent straight to the airlines, air and sea.
 - **Buttons:** **Get started**, which scrolls to the Talk to us form, and **See how it works**.
 - **Works with:** a quiet line of small white items under the buttons: Air, Sea, Outlook & Microsoft 365.
-- **Jet:** the F16s jet crosses the sky above the title on a faint contrail (14s loop). It stays clear of the words, and the page closes with the same jet.
+- **Jet:** the F16s jet crosses the sky above the title on a faint contrail (14s loop). It stays clear of the words. The banner and the footer carry the same jet.
 - **The laptop:** shows the real board, with nothing floating around it.
   - The story chips (New mail, AWB drafted, e-AWB sent, Departed) were tried and removed on 2026-11-16 (owner).
   - Descartes is not named in the hero (owner); it is named further down the page.
 - **Kept as before:** the sticky sky card, the white sheet sliding over it and the parallax.
-- The "Stop guessing" banner (§18) now sits between Products and Plans, not at the foot of the page. The page ends with the Talk to us form.
+- **Search text:** the page title, meta description and structured data say only what the page says. No "3 seconds" or "150+ airlines".
 
 ## 20. Buttons: one component, the hero's style
 
@@ -293,4 +326,11 @@ When a section is a sequence, join the cards with a line the reader can follow.
 - **Bottom row:** © line, plus LinkedIn, Instagram and YouTube as round white buttons. Facebook was removed because it pointed nowhere.
 - **Foot:** a giant pale "F16s." wordmark, written in full like the logo with its dot, every letter visible (24vw, max 360px). The jet slowly crosses it (22s; parked with reduced motion).
 - **Phones:** one column for the brand, link columns two across, socials above the © line.
+
+## 22. Header
+
+- **Shared by every public page** (`layouts/public/Header.vue`). On the home page it sits on the hero's blue: white logo, glass nav pill, white Sign in outline, white Contact Us.
+- **Logo:** the white logo image (`/media/assets/logos/white-logo.png`) with a soft navy shadow: 60px tall on desktop, 52 / 48px on smaller laptops, 48px on tablet, 45px on phones.
+  - A type wordmark (`<f16s-wordmark>`) was swapped in on 2026-11-16 without a component behind it and showed nothing; the image was restored (owner).
+- **Side room:** on tablet and phone the logo and the menu button sit well inside the hero card's rounded corners: about 26px in on tablet (padding 26px 40px) and 22px on phones (22px 30px).
 

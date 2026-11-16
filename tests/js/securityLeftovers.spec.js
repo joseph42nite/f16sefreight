@@ -68,19 +68,13 @@ describe("the reset link and analytics (FS11)", () => {
   });
 });
 
-describe("signing in (FS12, FS13)", () => {
+// FS13 (the wrong kind of account) is run in authGuard.spec.js.
+describe("signing in (FS12)", () => {
   it("sends no password from the bare main domain", () => {
     const modal = read("resources/js/src/view/layouts/public/AuthModals.vue");
     const login = modal.slice(modal.indexOf("\n        login() {"));
 
     expect(login.indexOf("if (!this.currentPortal)")).toBeGreaterThan(-1);
     expect(login.indexOf("if (!this.currentPortal)")).toBeLessThan(login.indexOf(".dispatch(LOGIN"));
-  });
-
-  it("does not check a tenant as platform staff, which signed them out", () => {
-    const main = read("resources/js/src/main.js");
-
-    expect(main).toMatch(/role === 'user' && userType === 'superadmin'/);
-    expect(main.indexOf("if (wrongKind)")).toBeLessThan(main.indexOf("store.dispatch(VERIFY_AUTH"));
   });
 });

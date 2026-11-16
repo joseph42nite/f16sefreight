@@ -386,6 +386,21 @@ they pass or fail on wording, not behaviour (`airlineDeductionWords`, `generateP
 only the sign-in error banner. No test for the route guards, the auth store, the contact form, password reset or
 the blog pages. Nothing runs the specs automatically.
 
+> **2026-11-16.** Now 54 specs. Added, each one RUN, not read:
+> `authGuard.spec.js` (the route guard, lifted out of `main.js` into `core/services/authGuard.js` so it can be called:
+> public pages, the home page when signed in, waiting for the session check, the wrong kind of account);
+> `authStore.spec.js` (the real store against a pretend server: checking a session, one check per load, a 401, no
+> answer, sign-in, sign-out); `passwordReset.spec.js` (the page mounted: a good and a bad link, a reset, a refusal);
+> `blogPost.spec.js` (an article mounted: its body and takeaways, the offline fallback, the search-engine block);
+> `adminScreens.spec.js` (the airline directory and the airline notices mounted, and the list helper every admin
+> table shares); `contactForm.spec.js` came with FA1.
+> **Still true:** the six older specs named above read source text, and so do most of the specs written for this
+> audit's fixes inside the big single-file pages (`frontendAuditFixes`, `waybillFormFixes`, `accountsInboxFixes`,
+> parts of `adminFixes`, `sessionHandling`, `securityLeftovers`): those pages do not mount in jest as they are.
+> The other admin pages are untested. **The specs now run before every push** (owner's call, 2026-11-16): the
+> pre-push hook runs `jest` first and a failure stops the push (`SKIP_TESTS=1 git push` skips it once). ⚠️ The hook
+> is in `.git/hooks`, which git does not carry: it is on this machine only, and there is still no CI.
+
 ## 9. Checked and found fine
 
 - Every admin and tenant API group is guarded on the server; the client guards are convenience only.

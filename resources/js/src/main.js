@@ -12,6 +12,7 @@ import ApiService from "@/core/services/api.service";
 import JwtService from "@/core/services/jwt.service";
 import { VERIFY_AUTH, LOGOUT, SET_ERROR } from "@/core/services/store/auth.module";
 import { LANDING_ROUTE } from "@/core/config/navigation";
+import { makeAuthGuard } from "@/core/services/authGuard";
 import { RESET_LAYOUT_CONFIG } from "@/core/services/store/config.module";
 
 import VueMeta from 'vue-meta';
@@ -65,41 +66,18 @@ ApiService.onUnauthorized = (reason) => {
 // Remove this to disable mock API
 // MockService.init();
 
+// Who may enter which page (core/services/authGuard.js, where it is tested). The layout config is reset on every
+// navigation, as it always was.
+const authGuard = makeAuthGuard({
+  isAuthenticated: () => store.getters.isAuthenticated,
+  getRole: JwtService.getRole,
+  getToken: JwtService.getToken,
+  userStart: () => LANDING_ROUTE[store.getters.designation] || "/focus-air",
+  verify: (userType) => store.dispatch(VERIFY_AUTH, { userType }),
+});
+
 router.beforeEach((to, from, next) => {
-  // If user is authenticated and tries to access the landing page "/", redirect to their dashboard
-  if (to.path === '/' && store.getters.isAuthenticated) {
-    const role = JwtService.getRole();
-    if (role === 'user') {
-      // Where this person's day starts, as at sign-in (FK5): everyone used to be sent to the waybill screen.
-      return next(LANDING_ROUTE[store.getters.designation] || '/focus-air');
-    } else if (role === 'superAdmin') {
-      return next('/superadmin/overview');
-    }
-  }
-
-  // Ensure we checked auth before each page load.
-  if (!to.matched.some((record) => record.meta.userType)) {
-    next();
- }
- else{
-  let userType=to.meta.userType;
-
-  // A page for the OTHER kind of account (frontend audit, FS13): a tenant who opened a /superadmin address was
-  // checked as platform staff, refused, and signed out of their own session. They are sent back to their own
-  // start instead; the server still refuses everything behind such a page.
-  const role = JwtService.getRole();
-  const token = JwtService.getToken();
-  const wrongKind = token && token !== 'undefined'
-    && ((role === 'user' && userType === 'superadmin') || (role === 'superAdmin' && userType === 'user'));
-
-  if (wrongKind) {
-    return next(role === 'user' ? (LANDING_ROUTE[store.getters.designation] || '/focus-air') : '/superadmin/overview');
-  }
-  // Waited for (FK1): the page is not entered until the session has been checked. `false` means the person was
-  // signed out and is already on the way to the sign-in page.
-  store.dispatch(VERIFY_AUTH,{userType}).then((ok) => (ok === false ? next(false) : next()));
- }
-  // reset config to initial state
+  authGuard(to, from, next);
   store.dispatch(RESET_LAYOUT_CONFIG);
 });
 

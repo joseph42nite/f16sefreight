@@ -1,6 +1,6 @@
 /**
  * Sign-in, session and error handling (2026-11-15 frontend audit, FK1–FK7). `sessionEnded`, the header and the shared
- * `/me` are run; the guard and the store are read from the source, because they pull in the whole router.
+ * `/me` are run here; the guard and the store are run in authGuard.spec.js and authStore.spec.js.
  */
 import Vue from "vue";
 import ApiService, { sessionEnded } from "@/core/services/api.service";
@@ -67,33 +67,11 @@ describe("the shared /me (FK4)", () => {
   });
 });
 
-describe("the route guard and the store", () => {
-  const store = read("resources/js/src/core/services/store/auth.module.js");
-  const main = read("resources/js/src/main.js");
-
-  it("waits for the session check before entering a page (FK1)", () => {
-    expect(store).toMatch(/checking\.promise = ApiService\.post\(`\/\$\{kind\}\/verify`/);
-    expect(store).toMatch(/return checking\.promise;/);
-    expect(main).toMatch(/store\.dispatch\(VERIFY_AUTH,\{userType\}\)\.then\(\(ok\) => \(ok === false \? next\(false\) : next\(\)\)\)/);
-  });
-
-  it("does not ask the server on every navigation (FK1)", () => {
-    expect(store).toMatch(/Date\.now\(\) - verified\.at < VERIFY_EVERY_MS/);
-  });
-
-  it("signs out when a call says the session is over (FK2)", () => {
-    expect(main).toMatch(/ApiService\.onUnauthorized = \(reason\) => \{\s+store\.dispatch\(LOGOUT\)/);
-  });
-
-  it("clears the header and the shared profile on sign-out and sign-in (FK3, FK4)", () => {
-    const purge = store.slice(store.indexOf("[PURGE_AUTH](state)"));
-
-    expect(purge).toMatch(/ApiService\.setHeader\(\);\s+forgetMe\(\);/);
-    expect(store.slice(store.indexOf("[LOGIN]"), store.indexOf("[LOGOUT]"))).toMatch(/ApiService\.setHeader\(\);\s+forgetMe\(\);/);
-  });
-
-  it("sends a signed-in person on the home page to their own start (FK5)", () => {
-    expect(main).toMatch(/next\(LANDING_ROUTE\[store\.getters\.designation\] \|\| '\/focus-air'\)/);
+describe("a call that says the session is over (FK2)", () => {
+  // The guard and the store are run in authGuard.spec.js and authStore.spec.js; this wiring lives in main.js, which
+  // starts the whole app when loaded, so it is read.
+  it("signs the person out", () => {
+    expect(read("resources/js/src/main.js")).toMatch(/ApiService\.onUnauthorized = \(reason\) => \{\s+store\.dispatch\(LOGOUT\)/);
   });
 });
 

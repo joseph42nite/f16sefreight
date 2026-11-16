@@ -136,6 +136,7 @@
 <script>
 import { mapGetters } from "vuex";
 import { LOGOUT } from "@/core/services/store/auth.module";
+import ApiService from "@/core/services/api.service";
 import AuthModals from "@/view/layouts/public/AuthModals.vue";
 
 export default {
@@ -164,8 +165,10 @@ export default {
         },
 
         logout() {
-            this.$store
-                .dispatch(LOGOUT)
+            // End the session on the server too (frontend audit, FS7): clearing the browser left the token valid.
+            ApiService.post("/user/logout", {})
+                .catch(() => {})
+                .then(() => this.$store.dispatch(LOGOUT))
                 .then(() => (window.location.href = "/"));
         },
 

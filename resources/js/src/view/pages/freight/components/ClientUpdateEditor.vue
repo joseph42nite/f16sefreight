@@ -58,7 +58,7 @@ export default {
   methods: {
     values() {
       return {
-        to: this.to.split(",").map((s) => s.trim()).filter(Boolean),
+        to: this.to.split(/[,;]/).map((s) => s.trim()).filter(Boolean),
         subject: this.subject,
         body: this.body,
       };

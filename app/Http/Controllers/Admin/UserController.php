@@ -38,7 +38,7 @@ class UserController extends Controller
             'can_send' => ['required'],
             'designation' => ['required', 'in:' . implode(',', self::ROLES)],
             'email' => ['required', 'string', 'email', 'max:100', 'unique:users'],
-            'password' => ['required', 'string', 'min:4'],
+            'password' => ['required', 'string', 'min:6'],
         ]);
 
         $current_date = date("Y-m-d");

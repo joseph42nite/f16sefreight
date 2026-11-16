@@ -523,7 +523,7 @@ export default {
     /** Sent from the person's own mailbox — and logged, because a chase nobody recorded did not happen. */
     sendChase() {
       const form = new FormData();
-      this.chaseDraft.toLine.split(",").map((a) => a.trim()).filter(Boolean).forEach((a) => form.append("to[]", a));
+      this.chaseDraft.toLine.split(/[,;]/).map((a) => a.trim()).filter(Boolean).forEach((a) => form.append("to[]", a));
       form.append("subject", this.chaseDraft.subject);
       form.append("body", this.chaseDraft.body);
       form.append("include_signature", "1");

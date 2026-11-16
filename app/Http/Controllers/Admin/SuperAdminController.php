@@ -31,10 +31,20 @@ class SuperAdminController extends Controller
         return json_encode(['status'=>true,'message'=>"Data updated successful"]);
     }
     public function update_password(Request $request){
+        // 🔒 The current password is asked for (frontend audit 2026-11-15, FS8): a token alone — a borrowed screen, a
+        // stolen token — was enough to take the platform account over. And six characters, as the screen always said.
         $request->validate([
-            'password' => ['required', 'confirmed','min:4'],
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'confirmed', 'min:6'],
         ]);
-        $id=auth()->guard('superAdmin-api')->user()->id;
+        $staff = auth()->guard('superAdmin-api')->user();
+
+        if (! Hash::check($request->current_password, $staff->password)) {
+            return response()->json(['message' => 'The current password is not right.',
+                'errors' => ['current_password' => ['The current password is not right.']]], 422);
+        }
+
+        $id = $staff->id;
         SuperAdmin::where('id', $id)->update(['password'=>Hash::make($request->password)]);
         return json_encode(['status'=>true,'message'=>"Password updated successful"]);
     }

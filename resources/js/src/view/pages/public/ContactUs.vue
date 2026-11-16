@@ -120,53 +120,55 @@
             
             <div class="modal-right-pane">
                 <div class="form-scroll-container">
-                    <form class="ultra-form">
+                    <form class="ultra-form" @submit.prevent="send('query')">
                         <h3 class="form-section-title mb-6">Query Details</h3>
                         <b-row>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <input v-model="forms.query.name" type="text" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Full Name</label>
                                 </div>
                             </b-col>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="email" class="floating-input" placeholder=" " required />
+                                    <input v-model="forms.query.email" type="email" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Email Address</label>
                                 </div>
                             </b-col>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <input v-model="forms.query.company" type="text" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Company Name</label>
                                 </div>
                             </b-col>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="text" class="floating-input" placeholder=" " />
+                                    <input v-model="forms.query.userId" type="text" class="floating-input" placeholder=" " />
                                     <label class="floating-label">User ID (Optional)</label>
                                 </div>
                             </b-col>
                             <b-col md="12" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="text" class="floating-input" placeholder=" " />
+                                    <input v-model="forms.query.ticket" type="text" class="floating-input" placeholder=" " />
                                     <label class="floating-label">Ticket Number (if existing)</label>
                                 </div>
                             </b-col>
                             <b-col md="12" class="mb-8">
                                 <div class="floating-input-group">
-                                    <textarea class="floating-input" rows="4" placeholder=" " required></textarea>
+                                    <textarea v-model="forms.query.message" class="floating-input" rows="4" placeholder=" " required></textarea>
                                     <label class="floating-label">Detailed Description</label>
                                 </div>
                             </b-col>
                         </b-row>
                         
                         <div class="form-actions mt-4">
-                            <button type="button" class="ultra-submit-btn">
+                            <button type="submit" class="ultra-submit-btn" :disabled="sending === 'query'">
                                 <span>Submit Request</span>
                                 <b-icon icon="arrow-right" class="btn-icon"></b-icon>
                             </button>
-                            <p class="form-note mt-4">You'll receive a confirmation email with your Ticket Number.</p>
+                            <p v-if="sent === 'query'" class="form-note mt-4" role="status" style="color:#0f7b4f;font-weight:600;">Thank you. Your message has reached us and we will reply by email.</p>
+                            <p v-if="failed.query" class="form-note mt-4" role="alert" style="color:#b42318;font-weight:600;">{{ failed.query }}</p>
+                            <p class="form-note mt-4">We will reply to the email address you give here.</p>
                         </div>
                     </form>
                 </div>
@@ -205,42 +207,42 @@
             
             <div class="modal-right-pane">
                 <div class="form-scroll-container">
-                    <form class="ultra-form" @submit.prevent="handleSubmit">
+                    <form class="ultra-form" @submit.prevent="send('quote')">
                         <h3 class="form-section-title mb-6">Business Profile</h3>
                         <b-row>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <input v-model="forms.quote.name" type="text" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Full Name</label>
                                 </div>
                             </b-col>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="email" class="floating-input" placeholder=" " required />
+                                    <input v-model="forms.quote.email" type="email" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Work Email</label>
                                 </div>
                             </b-col>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <input v-model="forms.quote.phone" type="text" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Phone Number</label>
                                 </div>
                             </b-col>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <input v-model="forms.quote.designation" type="text" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Designation</label>
                                 </div>
                             </b-col>
                             <b-col md="12" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <input v-model="forms.quote.company" type="text" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Company Name</label>
                                 </div>
                             </b-col>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="number" class="floating-input" placeholder=" " required />
+                                    <input v-model.number="forms.quote.employees" type="number" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Number of Employees</label>
                                 </div>
                             </b-col>
@@ -257,10 +259,12 @@
                         </b-row>
                         
                         <div class="form-actions mt-4">
-                            <button type="submit" class="ultra-submit-btn">
+                            <button type="submit" class="ultra-submit-btn" :disabled="sending === 'quote'">
                                 <span>Get Your Quote</span>
                                 <b-icon icon="arrow-right" class="btn-icon"></b-icon>
                             </button>
+                            <p v-if="sent === 'quote'" class="form-note mt-4" role="status" style="color:#0f7b4f;font-weight:600;">Thank you. Your message has reached us and we will reply by email.</p>
+                            <p v-if="failed.quote" class="form-note mt-4" role="alert" style="color:#b42318;font-weight:600;">{{ failed.quote }}</p>
                             <p class="form-note mt-4">An expert will contact you within 1 business day.</p>
                         </div>
                     </form>
@@ -300,24 +304,24 @@
             
             <div class="modal-right-pane">
                 <div class="form-scroll-container">
-                    <form class="ultra-form">
+                    <form class="ultra-form" @submit.prevent="send('feedback')">
                         <h3 class="form-section-title mb-6">Drop us a line</h3>
                         <b-row>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="text" class="floating-input" placeholder=" " required />
+                                    <input v-model="forms.feedback.name" type="text" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Full Name</label>
                                 </div>
                             </b-col>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="email" class="floating-input" placeholder=" " required />
+                                    <input v-model="forms.feedback.email" type="email" class="floating-input" placeholder=" " required />
                                     <label class="floating-label">Email Address</label>
                                 </div>
                             </b-col>
                             <b-col md="6" class="mb-5">
                                 <div class="floating-input-group">
-                                    <input type="text" class="floating-input" placeholder=" " />
+                                    <input v-model="forms.feedback.company" type="text" class="floating-input" placeholder=" " />
                                     <label class="floating-label">Company (Optional)</label>
                                 </div>
                             </b-col>
@@ -335,17 +339,19 @@
                             </b-col>
                             <b-col md="12" class="mb-8">
                                 <div class="floating-input-group">
-                                    <textarea class="floating-input" rows="4" placeholder=" " required></textarea>
+                                    <textarea v-model="forms.feedback.message" class="floating-input" rows="4" placeholder=" " required></textarea>
                                     <label class="floating-label">Your Message</label>
                                 </div>
                             </b-col>
                         </b-row>
                         
                         <div class="form-actions mt-4">
-                            <button type="button" class="ultra-submit-btn">
+                            <button type="submit" class="ultra-submit-btn" :disabled="sending === 'feedback'">
                                 <span>Send Message</span>
                                 <b-icon icon="arrow-right" class="btn-icon"></b-icon>
                             </button>
+                            <p v-if="sent === 'feedback'" class="form-note mt-4" role="status" style="color:#0f7b4f;font-weight:600;">Thank you. Your message has reached us and we will reply by email.</p>
+                            <p v-if="failed.feedback" class="form-note mt-4" role="alert" style="color:#b42318;font-weight:600;">{{ failed.feedback }}</p>
                             <p class="form-note mt-4">Thanks for taking the time to connect with us.</p>
                         </div>
                     </form>
@@ -358,6 +364,14 @@
 </template>
 
 <script>
+import ApiService from "@/core/services/api.service";
+import { contactPayload, contactError } from "@/core/services/contactForm";
+
+const blank = () => ({
+    query: { name: "", email: "", company: "", userId: "", ticket: "", message: "" },
+    quote: { name: "", email: "", phone: "", designation: "", company: "", employees: "" },
+    feedback: { name: "", email: "", company: "", message: "" },
+});
 
 export default {
     name: "ContactUs",
@@ -378,13 +392,39 @@ export default {
                 { value: 'Focus Air - Pro Plan', text: 'Focus Air - Pro Plan' }
             ],
             selectedProductTypeOptions: "",
-            selectedQueryTypeOptions: ""
+            selectedQueryTypeOptions: "",
+            // 🔴 None of the three forms was bound or posted (frontend audit, FA1): every enquiry was lost.
+            forms: blank(),
+            sending: null, sent: null,
+            failed: { query: "", quote: "", feedback: "" },
         };
     },
     methods: {
-        handleSubmit() {
-            // Handle quote submission logic
-            console.log("Form submitted");
+        /** Post one of the three forms to the contacts list F16s staff read. */
+        send(key) {
+            if (this.sending) return;
+
+            const form = this.forms[key];
+            const payload = {
+                query: () => contactPayload("Support query", form, { company: "Company", userId: "User ID", ticket: "Ticket number" }),
+                quote: () => contactPayload("Quote request", { ...form, product: this.selectedProductTypeOptions },
+                    { company: "Company", designation: "Designation", employees: "Employees", product: "Product of interest" }),
+                feedback: () => contactPayload("Message", { ...form, topic: this.selectedQueryTypeOptions }, { topic: "Topic", company: "Company" }),
+            }[key]();
+
+            this.sending = key;
+            this.sent = null;
+            this.failed[key] = "";
+
+            ApiService.post("/contact", payload)
+                .then(() => {
+                    this.sent = key;
+                    this.forms[key] = blank()[key];
+                    if (key === "quote") this.selectedProductTypeOptions = "";
+                    if (key === "feedback") this.selectedQueryTypeOptions = "";
+                })
+                .catch((error) => { this.failed[key] = contactError(error); })
+                .finally(() => { this.sending = null; });
         }
     },
     mounted() {

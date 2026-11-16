@@ -95,7 +95,12 @@ const actions = {
         .then(({ data }) => {
           context.commit(SET_AUTH, data);
         })
-        .catch(({ response }) => {
+        .catch((error) => {
+          // No answer at all (offline, a timeout) is not a refusal (frontend audit, FK3): reading `.status` of nothing
+          // threw here. The person stays signed in and the next check decides.
+          const response = error && error.response;
+          if (!response) return;
+
           if (response.status == 401) {
               // Kept past the purge, so the sign-in page can say why (Walk 4 #38: "you signed in somewhere else").
               const reason = response.data && response.data.error;

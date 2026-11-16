@@ -83,7 +83,8 @@
                                         </button>
                                     </div>
                                     <div class="text-right mt-2" style="text-align: right; width: 100%;">
-                                        <router-link to="/contact-us" class="forgot-pwd" @click.native="internal_show_login = false">Forgot Password?</router-link>
+                                        <button type="button" class="forgot-pwd forgot-pwd--button" :disabled="resetSending" @click="forgot">Forgot Password?</button>
+                                        <p v-if="resetNote" class="form-note mt-2 mb-0" role="status">{{ resetNote }}</p>
                                     </div>
                                 </b-col>
                             </b-row>
@@ -161,6 +162,7 @@
 
 <script>
 import { mapState } from "vuex";
+import ApiService from "@/core/services/api.service";
 import { LOGIN } from "@/core/services/store/auth.module";
 import { portalFromHost, portalSignInUrl, SIGN_IN_PORTALS } from "@/core/config/portalHosts";
 
@@ -182,6 +184,7 @@ export default {
             portals: SIGN_IN_PORTALS,
             currentPortal: portalFromHost(window.location.hostname),
             switchingTo: null,
+            resetSending: false, resetNote: "",
         };
     },
     computed: {
@@ -204,6 +207,30 @@ export default {
 
             this.switchingTo = SIGN_IN_PORTALS.find((p) => p.key === key).label;
             window.location.href = portalSignInUrl(key, window.location);
+        },
+        /**
+         * Ask for the reset mail (frontend audit, FA2). The link went to the contact page, whose forms were dead, so
+         * nobody could reset a password. The server answers the same whether or not the address has an account.
+         */
+        forgot() {
+            const email = String(this.user_form.email || "").trim();
+
+            if (!/^\S+@\S+\.\S+$/.test(email)) {
+                this.resetNote = "Type your email address above first, then choose Forgot Password again.";
+
+                return;
+            }
+
+            this.resetSending = true;
+            this.resetNote = "";
+            ApiService.post("/Forgotpassword", { email })
+                .then(({ data }) => { this.resetNote = (data && data.data) || "If that address has an account, a reset link is on its way."; })
+                .catch((error) => {
+                    this.resetNote = error && error.response && error.response.status === 429
+                        ? "Too many tries just now. Please wait a minute and try again."
+                        : "The reset link could not be sent. Please try again.";
+                })
+                .finally(() => { this.resetSending = false; });
         },
         login() {
             this.loading = true;
@@ -250,6 +277,8 @@ export default {
 .floating-input:focus ~ .floating-label, .floating-input:not(:placeholder-shown) ~ .floating-label { top: 6px; font-size: 0.75rem; color: #355594; font-weight: 600; }
 .pass-toggle { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #355594; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; cursor: pointer; }
 .forgot-pwd { font-size: 0.85rem; color: #355594; font-weight: 600; text-decoration: none; }
+.forgot-pwd--button { background: none; border: 0; padding: 0; cursor: pointer; }
+.forgot-pwd--button:disabled { opacity: 0.6; cursor: default; }
 .ultra-submit-btn { background: #355594; border: none; border-radius: 999px; padding: 10px 10px 10px 22px; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(53, 85, 148, 0.25); cursor: pointer; width: auto; }
 .ultra-submit-btn:hover { background: #28447a; transform: translateY(-2px); box-shadow: 0 15px 35px rgba(53, 85, 148, 0.35); }
 .ultra-submit-btn span { color: white; font-weight: 500; margin-right: 14px; }

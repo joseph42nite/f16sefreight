@@ -27,7 +27,8 @@ Route::middleware('signed')->group(function () {
 use App\Blog;
 
 Route::get('blog/{slug}', function ($slug) {
-    $blog = Blog::where('slug', $slug)->first();
+    // Published posts only (frontend audit 2026-11-15, FS9): a draft's title, excerpt and image went into the page head.
+    $blog = Blog::where('slug', $slug)->whereNotNull('published_at')->first();
     return view('welcome', compact('blog'));
 });
 

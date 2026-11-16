@@ -321,7 +321,7 @@ export default {
     decideNotice(decision) {
       const body = { decision };
       if (decision === "send") {
-        Object.assign(body, { to: this.noticeMail.to.split(",").map((a) => a.trim()).filter(Boolean),
+        Object.assign(body, { to: this.noticeMail.to.split(/[,;]/).map((a) => a.trim()).filter(Boolean),
           subject: this.noticeMail.subject, body: this.noticeMail.body });
       }
       this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice/decide`, body));

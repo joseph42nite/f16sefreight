@@ -90,7 +90,7 @@ import ApiService from "@/core/services/api.service";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 
-const list = (text) => String(text || "").split(",").map((x) => x.trim()).filter(Boolean);
+const list = (text) => String(text || "").split(/[,;]/).map((x) => x.trim()).filter(Boolean);
 
 export default {
   name: "TeamMails",

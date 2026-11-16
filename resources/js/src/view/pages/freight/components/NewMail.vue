@@ -83,7 +83,7 @@ export default {
       e.target.value = "";
     },
     send() {
-      const split = (v) => v.split(",").map((a) => a.trim()).filter(Boolean);
+      const split = (v) => v.split(/[,;]/).map((a) => a.trim()).filter(Boolean);
       const form = new FormData();
       split(this.to).forEach((a) => form.append("to[]", a));
       split(this.cc).forEach((a) => form.append("cc[]", a));

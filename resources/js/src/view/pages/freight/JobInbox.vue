@@ -732,6 +732,7 @@
           <ExtractionPanel
             v-show="active.enquiry && active.job && active.job.transport_mode !== 'sea'"
             ref="extraction"
+            :key="'extraction-' + (active.job ? active.job.id : 'none')"
             :prefill-awb="jobAwb"
             :job-id="active.job ? active.job.id : null"
             :mail-cargo="active && active.staged_cargo"
@@ -1122,6 +1123,7 @@ export default {
   /* Leaving the inbox with the workspace open would strand the body class and collapse
      the rail on every other screen. */
   beforeDestroy() {
+    clearTimeout(this.claimRefresh);
     document.removeEventListener("mousedown", this.closeThreadFiles);
     window.removeEventListener("f16s:job-changed", this.onJobChanged);
     document.body.classList.remove("fx-split");
@@ -1256,7 +1258,8 @@ export default {
       this.composing = true;
     },
     send() {
-      const split = (v) => v.split(",").map((a) => a.trim()).filter(Boolean);
+      // Commas or semicolons, as the address box itself accepts (frontend audit, FC3).
+      const split = (v) => v.split(/[,;]/).map((a) => a.trim()).filter(Boolean);
 
       this.sending = true;
       this.sendError = null;
@@ -1767,7 +1770,14 @@ export default {
           // Say it went: the sent mail only appears in the conversation once the mailbox syncs it back (user, 2026-09-17).
           else if (r && r.ok) this.actionNotice = "Claimed — the acknowledgement was sent. It appears in the conversation within about 2 minutes.";
           else this.actionNotice = "Claimed — it's yours.";
-          setTimeout(() => { this.open(this.active); }, 60000);
+          // A minute on, pull in the acknowledgement the mailbox has synced back. 🔴 Never over a reply being written,
+          // and never onto another conversation (frontend audit, FC2): reopening closes the composer, and this
+          // timer was never cleared, so a reply typed within the minute was lost.
+          clearTimeout(this.claimRefresh);
+          const claimed = data.id;
+          this.claimRefresh = setTimeout(() => {
+            if (this.active && this.active.id === claimed && !this.composing) this.open(this.active);
+          }, 60000);
         })
         /* 409 is a real outcome, not a failure: someone got there first. */
         .catch((e) => { this.claimDraft = null; this.actionError = this.messageFor(e); this.load(); })

@@ -42,11 +42,15 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FS7 [R]** `layouts/admin/aside/Menu.vue:39-41`, `layouts/public/Header.vue:166-170` → these two logouts only
   clear `localStorage`; neither calls the server logout, so the token stays valid. Only
   `layouts/freight/ProfileMenu.vue` does it properly.
+  ✅ **Fixed 2026-11-16:** both call the server's logout first (`/superadmin/logout`, `/user/logout`).
 - **FS8 [R]** `Admin/SuperAdminController.php:32-39` + `admin/Account.vue` → the superadmin password change does
   not ask for the current password and accepts 4 characters (the screen says 6). User passwords set from
   `NewUsers` are also `min:4`.
+  ✅ **Fixed 2026-11-16:** the change needs `current_password` and six characters; the screen has the new box and
+  shows the server's reason. New users' passwords are `min:6`. Test in `FrontendAuditSecurityTest`.
 - **FS9 [R]** `routes/web.php:30-33` → `/blog/{slug}` prints a draft's title, excerpt and image into the page head
   with no `published_at` check. The API route does 404 drafts.
+  ✅ **Fixed 2026-11-16:** the route reads published posts only.
 - **FS10 [R]** `freight/components/MailBodyFrame.vue:8-17` → inbound mail images load automatically (tracking
   pixels: the sender learns the mail was opened and from where). No script can run: the body is purified
   server-side and shown in a sandboxed frame.
@@ -124,6 +128,7 @@ The backend audit is `AUDIT_2026-11-10.md`.
 
 - **FM1 [R]** `freight/Billing.vue:791-793` → "Record a receipt" shows Outstanding in the bill's currency while
   "Place against it" is rupees, unlabelled. Typing 1000 against "USD 1,000.00" settles ₹1,000 of it.
+  ⏸ Left: read by the reviewer only; the server side needs checking before the column is relabelled.
 - **FM2 [V]** `freight/MoneyOut.vue:384, 511, 522` → the per-supplier commission and discount are never reset
   after a payment run. The next run with the same supplier arrives pre-filled with the last run's figures.
   ✅ **Fixed 2026-11-16:** cleared with the picks when the list reloads.
@@ -152,11 +157,16 @@ The backend audit is `AUDIT_2026-11-10.md`.
   is one instance that survives a change of conversation; its `jobId` watcher adds the new job's readings and
   clears nothing. Shipment A's waybill number and documents show under shipment B, and saving can write A's
   number onto B.
+  ✅ **Fixed 2026-11-16:** the panel is keyed by the job, so each shipment gets its own; readings still running are
+  picked up again from the server as before. Not seen in a browser.
 - **FC2 [V]** `JobInbox.vue:1770` → one minute after a claim, an uncleared timer reopens the conversation, which
   closes the composer. A reply being typed is lost.
+  ✅ **Fixed 2026-11-16:** the timer is kept, cleared, and skips the reopen while a reply is open or another
+  conversation is showing.
 - **FC3 [R]** Recipients are split on `,` or `;` by the input but on `,` only by the four senders
   (`JobInbox.vue:1259`, `NewMail.vue:83`, `Financials.vue:1510`, `Collections.vue:526`): "a@x.com; b@y.com" is
   sent as one address and refused.
+  ✅ **Fixed 2026-11-16:** all seven senders split on `,` or `;`.
 - **FC4 [R]** `freight/components/VisualReporter.vue:38, 211-222` → says "Screenshot: attached"; the image is
   never posted.
 - **FC5 [R]** `ImportJob.vue:300-333` → empty fields are dropped before save, so a wrong IGM number or date cannot
@@ -169,8 +179,13 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FA1 [V]** `public/ContactUs.vue:123-388` → **all three contact forms are dead.** No input is bound, two
   buttons have no handler, and the quote form only writes to the console. Nothing calls `POST /api/contact`;
   every enquiry is lost.
+  ✅ **Fixed 2026-11-16:** the three forms are bound and post to `/api/contact` (`core/services/contactForm.js`); what
+  the server has no column for goes into the message, labelled. Seen working on the dev site. The note promising a
+  confirmation email with a ticket number is gone: no such mail is sent.
 - **FA2 [R]** "Forgot password?" (`PortalSignIn.vue:40` (wip), `AuthModals.vue:86`) links to the contact page.
   Nothing calls `POST /api/Forgotpassword`, so there is no self-service reset — and FS2 breaks the mail anyway.
+  ✅ **Fixed 2026-11-16:** in `AuthModals.vue` the link asks for the reset mail for the address typed above.
+  ⏸ `PortalSignIn.vue` still links to the contact page: it holds someone else's uncommitted work.
 - **FA3 [V]** `public/DeepanjanCard.vue:426, 465` → the email is `@f16sefrieght.com` (misspelt). The email button
   and the downloaded contact card point at a domain the company does not own.
   ✅ **Fixed 2026-11-16:** both lines now read `@f16sefreight.com`. Specs for this batch:
@@ -201,6 +216,7 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FK3 [R]** `auth.module.js:98-107` → `.catch(({ response }) => response.status …)` throws when there is no
   response (offline, timeout). `:147-158` → sign-out leaves the old `Authorization` header on axios; with no token
   it sends `Bearer null`.
+  ✅ **Fixed 2026-11-16 (first half):** no response no longer throws. The stale header on sign-out is left.
 - **FK4 [R]** `core/services/me.js:8-19` → the shared `/me` promise is not cleared on sign-out; signing in as
   someone else within five seconds shows the previous person's profile.
 - **FK5 [R]** `main.js:62-69` → a signed-in user on the main domain is always sent to `/focus-air`, whatever their

@@ -98,4 +98,33 @@ class FrontendAuditSecurityTest extends TestCase
 
         $this->assertSame($token, $user->fresh()->latest_token);
     }
+
+    /** FS8: a token alone must not be enough to take the platform account over. */
+    public function test_the_platform_password_changes_only_with_the_current_one(): void
+    {
+        $staff = \App\SuperAdmin::create(['name' => 'Staff', 'email' => 'staff-' . uniqid() . '@test.local', 'password' => Hash::make('old-pass-1')]);
+        $this->actingAs($staff, 'superAdmin-api');
+        $change = fn (array $form) => $this->putJson('/api/superadmin/update-password', $form);
+
+        $change(['password' => 'new-pass-1', 'password_confirmation' => 'new-pass-1'])->assertStatus(422);
+        $change(['current_password' => 'a-guess', 'password' => 'new-pass-1', 'password_confirmation' => 'new-pass-1'])
+            ->assertStatus(422)->assertJsonValidationErrors('current_password');
+        $change(['current_password' => 'old-pass-1', 'password' => 'four', 'password_confirmation' => 'four'])->assertStatus(422);
+        $this->assertTrue(Hash::check('old-pass-1', $staff->fresh()->password));
+
+        $change(['current_password' => 'old-pass-1', 'password' => 'new-pass-1', 'password_confirmation' => 'new-pass-1'])->assertOk();
+        $this->assertTrue(Hash::check('new-pass-1', $staff->fresh()->password));
+    }
+
+    /** FS9: the page shell for a blog post carries the post's title and excerpt, so a draft has none. */
+    public function test_a_draft_blog_post_is_not_printed_into_the_page_head(): void
+    {
+        $post = fn (string $slug, $publishedAt) => \App\Blog::forceCreate(['title' => 'Secret launch ' . $slug, 'slug' => $slug,
+            'category' => 'News', 'read_time' => '1 min', 'image_path' => '/x.png', 'excerpt' => 'x', 'content' => 'x', 'published_at' => $publishedAt]);
+        $post('fa-draft-post', null);
+        $post('fa-live-post', now());
+
+        $this->get('/blog/fa-live-post')->assertOk()->assertSee('Secret launch fa-live-post');
+        $this->get('/blog/fa-draft-post')->assertOk()->assertDontSee('Secret launch fa-draft-post');
+    }
 }

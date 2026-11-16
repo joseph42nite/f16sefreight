@@ -59,6 +59,13 @@
 
           <b-form @submit.prevent="submitPassword" class="fw-700">
              <div class="admin-form-group">
+               <label>Current Password</label>
+               <b-form-input v-model="password_form.current_password" type="password" required autocomplete="current-password" placeholder="The password you signed in with"></b-form-input>
+             </div>
+
+             <div v-if="passwordError" class="text-danger mb-4" role="alert">{{ passwordError }}</div>
+
+             <div class="admin-form-group">
                <label>New Password</label>
                <b-form-input v-model="password_form.password" type="password" required placeholder="Enter min 6 chars"></b-form-input>
              </div>
@@ -93,7 +100,9 @@ export default {
         name: "",
         email: "",
       }),
+      passwordError: "",
       password_form: new Form({  
+        current_password: "",
         password: "",
         password_confirmation: "",
       }),
@@ -117,13 +126,17 @@ export default {
     },
     submitPassword() {
         this.isUpdatingPass = true;
+        this.passwordError = "";
         ApiService.put(`/superadmin/update-password`, this.password_form)
             .then(({ data }) => {
+                // `/login` is not a route in this app (FA9); the sign-in page is.
                 this.$store.dispatch(LOGOUT)
-                .then(() => this.$router.push('/login'));
+                .then(() => this.$router.push('/sign-in').catch(() => {}));
             })
             .catch(err => {
-               alert("Password update failed. Please try again.");
+               const body = (err && err.response && err.response.data) || {};
+               const first = body.errors && Object.values(body.errors)[0];
+               this.passwordError = (first && [].concat(first)[0]) || body.message || "The password was not changed. Please try again.";
             })
             .finally(() => {
                 this.isUpdatingPass = false;

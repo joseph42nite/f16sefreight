@@ -25,6 +25,7 @@
 
 <script>
 import { LOGOUT } from "@/core/services/store/auth.module";
+import ApiService from "@/core/services/api.service";
 import { ADMIN_HUBS, hubFor } from "@/core/config/adminHubs";
 
 export default {
@@ -37,7 +38,11 @@ export default {
   },
   methods: {
     logout() {
-      this.$store.dispatch(LOGOUT).then(() => this.$router.push("/"));
+      // End the session on the server too (frontend audit, FS7): clearing the browser left the token valid.
+      ApiService.post("/superadmin/logout", {})
+        .catch(() => {})
+        .then(() => this.$store.dispatch(LOGOUT))
+        .then(() => this.$router.push("/"));
     },
   },
 };

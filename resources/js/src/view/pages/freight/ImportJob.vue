@@ -211,6 +211,7 @@
 </template>
 
 <script>
+import { showFile } from "@/core/services/download";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { WHOLE_LIST } from "@/core/config/format";
@@ -359,10 +360,7 @@ export default {
       this.actionError = null;
       ApiService.query(`/jobs/${this.jobId}/${path}`, { responseType: "blob" })
         .then(({ data }) => {
-          const url = window.URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
-          if (tab) tab.location = url;
-          else window.open(url, "_blank");
-          setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+          showFile(data, "application/pdf", tab);
           if (path === "delivery-order.pdf") this.load();
         })
         .catch(() => {

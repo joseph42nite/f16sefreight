@@ -1057,6 +1057,7 @@
 </template>
 
 <script>
+import { saveFile } from "@/core/services/download";
 import { yearChoices } from "@/core/config/financialYear";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
@@ -1484,14 +1485,7 @@ export default {
 
       this.busy = true;
       ApiService.query("/reports/tds/form-26q?" + params.join("&"), { responseType: "blob" })
-        .then(({ data }) => {
-          const url = window.URL.createObjectURL(new Blob([data], { type: "text/csv" }));
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `Form26Q-${this.tdsYear}-${this.tdsQuarter}.csv`;
-          link.click();
-          setTimeout(() => window.URL.revokeObjectURL(url), 30000);
-        })
+        .then(({ data }) => saveFile(data, `Form26Q-${this.tdsYear}-${this.tdsQuarter}.csv`, "text/csv"))
         .catch(() => { this.error = "The return could not be built."; })
         .finally(() => { this.busy = false; });
     },

@@ -216,6 +216,7 @@
 </template>
 
 <script>
+import { saveFile } from "@/core/services/download";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
@@ -325,14 +326,7 @@ export default {
       const params = this.query();
 
       ApiService.query(`/profitability/export${params}${params ? "&" : "?"}by=${by}`, { responseType: "blob" })
-        .then(({ data }) => {
-          const url = window.URL.createObjectURL(new Blob([data], { type: "text/csv" }));
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `profitability-${by}.csv`;
-          link.click();
-          setTimeout(() => window.URL.revokeObjectURL(url), 30000);
-        })
+        .then(({ data }) => saveFile(data, `profitability-${by}.csv`, "text/csv"))
         .catch(() => { this.actionError = "The export could not be built."; })
         .finally(() => { this.busy = false; });
     },

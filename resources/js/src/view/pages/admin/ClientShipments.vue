@@ -519,6 +519,7 @@
 </template>
 
 <script>
+import { saveFile } from "@/core/services/download";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
 import SkeletonTable from "../../components/SkeletonTable.vue";
@@ -820,15 +821,7 @@ export default {
         ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))
       ].join("\n");
 
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `shipments_export_${new Date().toISOString().slice(0,10)}.csv`);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      saveFile(csvContent, `shipments_export_${new Date().toISOString().slice(0,10)}.csv`, "text/csv;charset=utf-8;");
     },
     rowClass(item, type) {
       if (!item || type !== 'row') return '';
@@ -932,14 +925,8 @@ export default {
     },
     downloadXml() {
       if (this.xmlMissing) return;
-      const blob = new Blob([this.xmlContent], { type: "application/xml" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
       const isMawb = this.selectedAwbId.includes('-');
-      link.download = isMawb ? `xml_airway_bill_${this.selectedAwbId}.xml` : `xml_houseway_bill_${this.selectedAwbId}.xml`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      saveFile(this.xmlContent, isMawb ? `xml_airway_bill_${this.selectedAwbId}.xml` : `xml_houseway_bill_${this.selectedAwbId}.xml`, "application/xml");
     },
     copyFnaReason(reason) {
       const text = reason || 'Message not specified';

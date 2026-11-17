@@ -494,6 +494,15 @@ The committed `public/js` files are a development build, so absolute sizes overs
 > (`Header.vue` holds someone else's work); `HomeFeatureGrid.vue`, `HomeStatsSection.vue`, `HomePartnersTicker.vue`
 > (the home page is someone's work in progress); `JobBoard.vue`'s own `readable` (same reason).
 
+> **2026-11-17: file downloads.** Handing a file to the browser was written out in eleven pages; it is
+> `core/services/download.js` now (`saveFile`, `showFile`). `MailFiling.vue` and `MoneyOut.vue` freed the file the
+> moment the link was clicked, which some browsers treat as cancelling the download: every page now frees it 30
+> seconds later. Tests in `download.spec.js`. Run in the browser against the server, with the save itself held
+> back: the ageing, day book, billing and profitability exports. Not clicked: the other seven. Left as they are:
+> the attachment and document viewers in `JobInbox.vue` and `FocusSeaMaster.vue` and the two business cards, which
+> do something different with the file. The icon list lost `download`: the only place the word was quoted was the
+> removed code.
+
 ## 8. Tests
 
 40 jest specs. About 32 run real modules or mount real components. Six assert on source text read from disk, so

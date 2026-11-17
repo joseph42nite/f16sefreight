@@ -290,6 +290,7 @@
 </template>
 
 <script>
+import { saveFile } from "@/core/services/download";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
@@ -394,12 +395,7 @@ export default {
       ApiService.query(`/reports/${which}${query}`, { responseType: "blob" })
         .then(({ data }) => {
           const type = format === "csv" ? "text/csv" : "application/json";
-          const url = window.URL.createObjectURL(new Blob([data], { type }));
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = `${which.toUpperCase()}-${month}.${format === "csv" ? "csv" : "json"}`;
-          link.click();
-          setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+          saveFile(data, `${which.toUpperCase()}-${month}.${format === "csv" ? "csv" : "json"}`, type);
         })
         .catch(() => { this.actionError = "The return could not be built."; })
         .finally(() => { this.downloading = false; });

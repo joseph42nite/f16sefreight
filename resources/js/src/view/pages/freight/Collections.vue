@@ -358,6 +358,7 @@
 </template>
 
 <script>
+import { saveFile } from "@/core/services/download";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
@@ -462,14 +463,7 @@ export default {
     exportCsv() {
       this.busy = true;
       ApiService.query("/ageing/export" + this.query(), { responseType: "blob" })
-        .then(({ data }) => {
-          const url = window.URL.createObjectURL(new Blob([data], { type: "text/csv" }));
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = "ageing.csv";
-          link.click();
-          setTimeout(() => window.URL.revokeObjectURL(url), 30000);
-        })
+        .then(({ data }) => saveFile(data, "ageing.csv", "text/csv"))
         .catch(() => { this.actionError = "The export could not be built."; })
         .finally(() => { this.busy = false; });
     },

@@ -367,6 +367,7 @@
 </template>
 
 <script>
+import { saveFile } from "@/core/services/download";
 import { localToday, inr } from "@/core/config/format";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
@@ -536,13 +537,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.query(`/payments/runs/${runRef}/bank-file`, { responseType: "blob" })
-        .then(({ data }) => {
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(data);
-          link.download = runRef + "-bank-upload.csv";
-          link.click();
-          URL.revokeObjectURL(link.href);
-        })
+        .then(({ data }) => saveFile(data, runRef + "-bank-upload.csv"))
         .catch(() => { this.actionError = "The bank file could not be made."; })
         .finally(() => { this.busy = false; });
     },

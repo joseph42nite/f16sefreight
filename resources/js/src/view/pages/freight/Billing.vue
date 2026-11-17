@@ -877,6 +877,7 @@
 </template>
 
 <script>
+import { saveFile, showFile } from "@/core/services/download";
 import { localToday, paise, WHOLE_LIST, inr } from "@/core/config/format";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
@@ -1292,18 +1293,8 @@ export default {
         .finally(() => { this.busy = false; });
     },
     openFile(data, mime, download) {
-      const url = window.URL.createObjectURL(new Blob([data], { type: mime }));
-
-      if (download) {
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = download;
-        link.click();
-      } else {
-        window.open(url, "_blank");
-      }
-
-      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+      if (download) saveFile(data, download, mime);
+      else showFile(data, mime);
     },
     mailBills() {
       this.busy = true;

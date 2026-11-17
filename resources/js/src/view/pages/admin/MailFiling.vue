@@ -119,6 +119,7 @@
 </template>
 
 <script>
+import { saveFile } from "@/core/services/download";
 import ApiService from "@/core/services/api.service";
 
 /** Super admin: how the regex files mail and how often people change it (user, 2026-09-17). */
@@ -142,13 +143,7 @@ export default {
     exportCsv() {
       this.exporting = true;
       ApiService.query("/admin/classification-overrides/export", { params: this.params(), responseType: "blob" })
-        .then(({ data }) => {
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(data);
-          link.download = "mail-filing-changes.csv";
-          link.click();
-          URL.revokeObjectURL(link.href);
-        })
+        .then(({ data }) => saveFile(data, "mail-filing-changes.csv"))
         .catch(() => { this.error = "Could not export the changes."; })
         .finally(() => { this.exporting = false; });
     },

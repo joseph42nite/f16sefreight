@@ -266,6 +266,7 @@
 </template>
 
 <script>
+import { saveFile } from "@/core/services/download";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
@@ -387,14 +388,7 @@ export default {
       const account = this.filters.account ? joiner + "account=" + encodeURIComponent(this.filters.account) : "";
 
       ApiService.query("/journal/export" + params + account, { responseType: "blob" })
-        .then(({ data }) => {
-          const url = window.URL.createObjectURL(new Blob([data], { type: "text/csv" }));
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = "day-book.csv";
-          link.click();
-          setTimeout(() => window.URL.revokeObjectURL(url), 30000);
-        })
+        .then(({ data }) => saveFile(data, "day-book.csv", "text/csv"))
         .catch(() => { this.actionError = "The export could not be built."; })
         .finally(() => { this.busy = false; });
     },

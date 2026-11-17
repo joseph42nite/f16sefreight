@@ -109,7 +109,7 @@
                 <div class="alert alert-success mt-3" role="alert" id="fade">
                     <span class="font-weight-bolder font-size-h6">Saved Successfully</span>
                 </div>
-                <button class="btn font-weight-bolder font-size-h6 py-3 w-100 create_btn text-white mt-3">
+                <button class="btn font-weight-bolder font-size-h6 py-3 w-100 create_btn text-white mt-3" :disabled="missing">
                     {{ action }} company
                 </button>
             </div>
@@ -125,6 +125,8 @@ export default {
     data() {
         return {
             saveError: "",
+            // The record asked for is not there (deleted, or a mistyped address): nothing to edit, so nothing to save.
+            missing: false,
             company_form: new Form({
                 id: "",
                 name: "",
@@ -209,7 +211,12 @@ export default {
         },
         getData(id) {
             ApiService.get(`/superadmin/all-company/${id}`).then(({ data }) => {
-                const payload = data[0];
+                const payload = data && data[0];
+                if (!payload) {
+                    this.missing = true;
+                    this.saveError = "This company could not be found. It may have been deleted.";
+                    return;
+                }
                 // Ensure we instantiate object shape to protect bindings if remote payload is null
                 if (!payload.templates_config) {
                      payload.templates_config = { allowed_templates: [], default_focus_air: '', default_house_air: '' };
@@ -227,6 +234,9 @@ export default {
                     }
                 }
                 this.company_form.fill(payload);
+            }).catch((err) => {
+                this.missing = true;
+                this.saveError = serverMessage(err, "The company could not be loaded.");
             });
         },
         fetchAvailableTemplates() {

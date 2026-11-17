@@ -146,7 +146,7 @@
                 <div class="alert alert-success mt-3" role="alert" id="fade">
                     <span class="font-weight-bolder font-size-h6">Saved Successfully</span>
                 </div>
-                <button class="btn font-weight-bolder font-size-h6 py-3 w-100 create_btn text-white mt-3">
+                <button class="btn font-weight-bolder font-size-h6 py-3 w-100 create_btn text-white mt-3" :disabled="missing">
                     {{ action }} Branch
                 </button>
             </div>
@@ -162,6 +162,8 @@ export default {
     data() {
         return {
             saveError: "",
+            // The record asked for is not there (deleted, or a mistyped address): nothing to edit, so nothing to save.
+            missing: false,
             branch_form: new Form({
                 id: "",
                 //agent details
@@ -228,8 +230,16 @@ export default {
         },
         getData(id) {
             ApiService.get(`/superadmin/all-branch/${id}`).then(({ data }) => {
+                if (!data || !data[0]) {
+                    this.missing = true;
+                    this.saveError = "This branch could not be found. It may have been deleted.";
+                    return;
+                }
                 this.branch_form.fill(data[0]);
                 this.searchQuery=data[0].agent_issue_loc_code;
+            }).catch((err) => {
+                this.missing = true;
+                this.saveError = serverMessage(err, "The branch could not be loaded.");
             });
         },
         getCompany() {

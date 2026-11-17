@@ -41,6 +41,17 @@ describe("saves that failed silently (FA8)", () => {
     expect(source).not.toMatch(/\.catch\(\(?err\)? => \{\s*\}\)/);
   });
 
+  it.each([
+    ["view/pages/admin/NewCompany.vue", "This company could not be found. It may have been deleted."],
+    ["view/pages/admin/NewBranch.vue", "This branch could not be found. It may have been deleted."],
+  ])("%s says so when the record to edit is not there, and cannot be saved", (file, words) => {
+    const source = read(file);
+
+    expect(source).toContain(words);
+    expect(source.match(/this\.missing = true/g)).toHaveLength(2); // not found, and could not be loaded
+    expect(source).toMatch(/create_btn[^>]*:disabled="missing"/);
+  });
+
   it("the reset form says why a reset was refused", () => {
     const source = read("view/pages/public/PasswordForgotForm.vue");
 

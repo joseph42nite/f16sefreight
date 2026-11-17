@@ -582,7 +582,7 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* Inter comes from App.vue, served from our own site: an import from Google here held up every page. */
 
 /* Main Wrapper Settings */
 .card-page-wrapper {

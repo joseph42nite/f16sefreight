@@ -11,11 +11,17 @@
 @import "~@fontsource/roboto/500.css";
 @import "~@fontsource/roboto/700.css";
 
-// Inter: used by nav, footer, blog, public pages
+// Inter: used by nav, footer, blog, public pages. All seven weights the pages ask for are served from our own
+// site: two card pages used to pull the family from Google Fonts, and because their styles land in the one shared
+// stylesheet, every page of every portal waited on that outside request before it could paint. A weight costs a
+// few lines here; its file is fetched only by a page that uses it.
+@import "~@fontsource/inter/300.css";
 @import "~@fontsource/inter/400.css";
 @import "~@fontsource/inter/500.css";
 @import "~@fontsource/inter/600.css";
 @import "~@fontsource/inter/700.css";
+@import "~@fontsource/inter/800.css";
+@import "~@fontsource/inter/900.css";
 
 html {
   scroll-behavior: smooth;

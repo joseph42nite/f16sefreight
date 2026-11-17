@@ -383,7 +383,14 @@ The backend audit is `AUDIT_2026-11-10.md`.
   ⚠️ What the check did not reach: screens that need data the demo does not have (a filled consolidation, a
   sea shipment, the tenant admin portal, the sales and boss dashboards), hover states, and print. If something looks
   wrong, `PURGE_THEME=off npx mix` builds the stylesheet whole, and `node build/purge-theme.js --why <class>` says
-  why a class is kept or dropped. The seven font files are as they were.
+  why a class is kept or dropped.
+  ✅ **Fonts, done 2026-11-17:** the font files themselves were never the cost (a browser fetches only the weight
+  and script a page uses). The cost was an `@import` of Inter from Google Fonts in two card pages
+  (`JosephCard.vue`, `DeepanjanCard.vue`): their styles land in the one shared stylesheet, so **every page of every
+  portal made a render-blocking request to Google** before it could paint. Both imports are gone; App.vue now
+  serves the three weights only Google was supplying (300, 800, 900) from our own site. Checked in the browser:
+  no request to Google, and a line of text set in each weight measures the same width as before (within 0.03px).
+  `tests/js/ownFonts.spec.js` fails if any page imports a font from an outside service again.
 - **FP4 [R]** `public/blogData.js` (eight full articles) ships in the home page chunk to show four titles;
   `GET /get-public-blogs` returns every post with its full body.
   ✅ **Fixed 2026-11-16 (server half):** the public list no longer carries the bodies; the article is fetched with the

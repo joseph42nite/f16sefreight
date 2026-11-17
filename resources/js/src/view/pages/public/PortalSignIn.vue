@@ -54,6 +54,7 @@ const MESSAGES = {
   Blocked: "Account blocked. Contact your admin.",
   Daily_Limit: "Daily sign-in limit exceeded.",
   Expired: "Plan expired. Please renew.",
+  Signed_In_Elsewhere: "You were signed out because this account signed in somewhere else. One session per person is allowed.",
 };
 
 /**
@@ -79,6 +80,9 @@ export default {
   },
   created() {
     document.title = this.portalLabel + " · Sign in";
+    // Sent here because a newer sign-in ended this session (Walk 4 #38): say so rather than a bare form.
+    const reason = this.$store.state.auth.errors;
+    if (reason === "Signed_In_Elsewhere") this.error = MESSAGES[reason];
   },
   // Signed in, the app's pages set no title of their own — so "Accounts · Sign in" stayed on the tab all day (GAPS #420).
   beforeDestroy() {

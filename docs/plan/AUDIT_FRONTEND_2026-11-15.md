@@ -501,7 +501,9 @@ the blog pages. Nothing runs the specs automatically.
 > parts of `adminFixes`, `sessionHandling`, `securityLeftovers`): those pages do not mount in jest as they are.
 > The other admin pages are untested. **The specs now run before every push** (owner's call, 2026-11-16): the
 > pre-push hook runs `jest` first and a failure stops the push (`SKIP_TESTS=1 git push` skips it once). ⚠️ The hook
-> is in `.git/hooks`, which git does not carry: it is on this machine only, and there is still no CI.
+> is in `.git/hooks`, which git does not carry: it is on this machine only. **2026-11-17:** GitHub now runs the same
+> specs on every push and pull request (`.github/workflows/frontend-tests.yml`), wherever the push comes from. The
+> server suite is not run there: it needs MySQL and Redis and takes about 12 minutes.
 
 ## 9. Checked and found fine
 

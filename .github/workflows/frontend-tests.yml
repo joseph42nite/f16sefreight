@@ -1,0 +1,31 @@
+# The frontend tests, run by GitHub on every push and pull request (2026-11-15 frontend audit, section 8).
+#
+# The same tests already run before a push, but from a hook in .git/hooks, which git does not carry: it exists on
+# one machine only. This runs them wherever the push comes from, and shows the result on the commit and the PR.
+# The server (PHP) suite is not run here: it needs MySQL and Redis and takes about 12 minutes.
+name: Frontend tests
+
+on:
+  push:
+  pull_request:
+
+# A newer push to the same branch makes the older run pointless.
+concurrency:
+  group: frontend-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  jest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx jest --silent

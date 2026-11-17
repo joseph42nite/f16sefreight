@@ -69,6 +69,19 @@
                                     <p class="text-muted font-size-sm mt-2">Maximum file size: 10MB</p>
                                 </div>
 
+                                <!-- Mode 3: a scan. Reading it spends a credit, so it is asked, with the price. -->
+                                <div v-else-if="consent" class="text-center py-2" @click.stop>
+                                    <h4 class="font-weight-bolder mb-3" style="color: #1e3a6e;">This document has no readable text</h4>
+                                    <p class="text-muted mb-5">
+                                        It looks like a scan, so reading it needs vision OCR:
+                                        <strong>{{ consentPrice }}</strong>. Nothing has been charged yet.
+                                    </p>
+                                    <b-button variant="primary" class="mr-3" :disabled="deciding" @click.stop="decide('accept')">
+                                        {{ deciding ? 'Working…' : 'Use vision (' + consentPrice + ')' }}
+                                    </b-button>
+                                    <b-button variant="light" :disabled="deciding" @click.stop="decide('decline')">Don't read it</b-button>
+                                </div>
+
                                 <!-- Mode 2: Minimal & Clean Loading State -->
                                 <div v-else class="text-center d-flex flex-column align-items-center justify-content-center py-4">
                                     <div class="clean-loader-wrapper mb-6">
@@ -91,7 +104,7 @@
                                     Selected: {{ selectedFile.name }}
                                 </div>
 
-                                <button class="ultra-submit-btn" @click="submitUpload">
+                                <button v-if="!consent" class="ultra-submit-btn" @click="submitUpload">
                                     <span v-if="!isUploading">Extract</span>
                                     <span v-else>Processing...</span>
                                     <b-icon v-if="!isUploading" icon="arrow-right" class="btn-icon"></b-icon>
@@ -108,6 +121,8 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { readingStep, consentPrice } from "@/core/services/readingStatus";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
     name: "OcrUploadModal",
@@ -132,12 +147,18 @@ export default {
             ocrPollInterval: null,
             ocrJobId: null,
             ocrStatusMessage: '',
+            /** Set while a scan waits for a yes or no on a vision read: `{ cost, pages }`. */
+            consent: null,
+            deciding: false,
             fetchedConfig: null // Direct runtime payload fallback
         };
     },
     computed: {
         currentUser() {
             return this.$store.getters.currentUser;
+        },
+        consentPrice() {
+            return this.consent ? consentPrice(this.consent.cost, this.consent.pages) : '';
         },
         templatesConfig() {
             // Prioritize directly fetched, fallback to Vuex
@@ -260,24 +281,24 @@ export default {
                 }
                 ApiService.get(`/user/ocr-status/${jobId}`)
                 .then(res => {
-                    const data = res.data;
-                    if (data.job_status === 'processing') {
-                        this.ocrStatusMessage = 'Extracting IATA fields...';
-                    }
-
-                    if (data.job_status === 'completed') {
+                    const reading = readingStep(res.data);
+                    if (reading.step === 'working') {
+                        if (reading.message) this.ocrStatusMessage = reading.message;
+                    } else if (reading.step === 'done') {
                         this.stopOcrPolling();
                         this.ocrStatusMessage = '';
                         this.isUploading = false;
                         this.$bvModal.hide('upload-file-modal');
-                        this.$emit('extracted', data.data);
+                        this.$emit('extracted', reading.data);
                         this.selectedFile = null;
                         this.$refs.fileInput.value = '';
-                    } else if (data.job_status === 'failed') {
+                    } else if (reading.step === 'consent') {
+                        // 🔴 Stop and ASK: the reading waits for an answer, and asking again does not move it.
                         this.stopOcrPolling();
-                        this.isUploading = false;
                         this.ocrStatusMessage = '';
-                        alert('Parsing failure: ' + (data.error || 'Unknown engine error'));
+                        this.consent = { cost: reading.cost, pages: reading.pages };
+                    } else {
+                        giveUp(reading.why);
                     }
                 }).catch(err => {
                     // Said, not dropped: the spinner used to vanish with no word of what happened.
@@ -286,6 +307,30 @@ export default {
                         + '. Try the upload again.');
                 });
             }, 800);
+        },
+        /** The answer to "use vision?". A yes sends the reading back to work; a no ends it, with nothing charged. */
+        decide(decision) {
+            if (this.deciding || !this.ocrJobId) return;
+            this.deciding = true;
+            const stop = (why) => {
+                this.consent = null;
+                this.isUploading = false;
+                this.ocrStatusMessage = '';
+                alert(why);
+            };
+
+            ApiService.post(`/user/ocr-consent/${this.ocrJobId}`, { decision })
+                .then(({ data }) => {
+                    if (data.job_status === 'processing') {
+                        this.consent = null;
+                        this.ocrStatusMessage = 'Reading the scan...';
+                        this.startOcrPolling(this.ocrJobId);
+                    } else {
+                        stop(data.error || 'The scan was not read. Nothing was charged.');
+                    }
+                })
+                .catch((error) => stop(serverMessage(error, 'The answer could not be sent. Nothing was charged.')))
+                .finally(() => { this.deciding = false; });
         },
         stopOcrPolling() {
             if (this.ocrPollInterval) {

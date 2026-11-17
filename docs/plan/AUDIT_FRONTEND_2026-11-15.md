@@ -503,6 +503,16 @@ The committed `public/js` files are a development build, so absolute sizes overs
 > do something different with the file. The icon list lost `download`: the only place the word was quoted was the
 > removed code.
 
+> **2026-11-17: the two upload windows.** They are not two copies: `freight/components/OcrUploadModal.vue` was
+> imported by nothing and is removed (320 lines); the waybill forms use `view/components/OcrUploadModal.vue`.
+> 🔴 **Found comparing them:** the one in use did not know a scan. The server parks a document with no readable
+> text at `awaiting_vision_consent` until somebody says whether to spend a credit; the window never asked, kept
+> polling for five minutes and then said the document was taking too long. It now stops and asks, with the price
+> ("1 credit, 2 pages"); a yes sends the reading back to work, a no ends it with nothing charged, a refusal (no
+> credits) is said in the server's words, and a `cancelled` reading ends the wait. `core/services/readingStatus.js`,
+> tests in `waybillUploadConsent.spec.js`. The question was drawn in the browser by setting the window's state;
+> ⏸ not run with a real scan, which would spend a credit on a yes.
+
 ## 8. Tests
 
 40 jest specs. About 32 run real modules or mount real components. Six assert on source text read from disk, so

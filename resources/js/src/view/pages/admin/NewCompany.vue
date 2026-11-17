@@ -119,6 +119,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
+import { flash } from "@/core/services/flash";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 export default {
     data() {
@@ -175,8 +176,7 @@ export default {
                 this.company_form
                     .put(`/superadmin/edit-company/${this.company_form.id}`)
                     .then(({ data }) => {
-                        $("#fade").fadeToggle(1000);
-                        setTimeout(() => $("#fade").fadeToggle(1000), 2000);
+                        flash(document.getElementById("fade"));
                     })
                     .catch(failed);
             }

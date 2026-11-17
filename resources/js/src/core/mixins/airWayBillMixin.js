@@ -236,6 +236,13 @@ export default {
         window.removeEventListener('click', this.closeAllDropdowns);
     },
     methods: {
+        /** The Save and Send buttons, out of reach while a save is on its way and back when it has answered. */
+        submitButtons(on) {
+            document.querySelectorAll(".submit-button").forEach((el) => {
+                el.style.pointerEvents = on ? "auto" : "none";
+                el.style.opacity = on ? "1" : "0.5";
+            });
+        },
         /**
          * Enter in a text box does not submit the waybill (frontend audit 2026-11-15, FW2). The browser "clicks" the
          * form's first submit button on Enter, and that button is Send: a stray Enter transmitted to the airline.

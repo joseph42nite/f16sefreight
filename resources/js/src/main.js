@@ -5,7 +5,6 @@ import Vue from "vue";
 
 import App from "./App.vue";
 import router from "./router";
-window.$ = window.jQuery = require("jquery");
 import store from "@/core/services/store";
 import consoleRecorder from "@/core/services/console.recorder";
 import ApiService from "@/core/services/api.service";

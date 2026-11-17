@@ -2978,7 +2978,7 @@ export default {
             // The branch's details, if a box was changed: asked before anything is sent (FW15).
             if (!this.branchDetailsAllowSend(this.form.status)) return;
 
-            $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
+            this.submitButtons(false);
             this.main_error_msg='';
             this.successMessage='';
             const asked = this.form.status;
@@ -2988,7 +2988,7 @@ export default {
                 const form = new Form({ ...this.form });
                 form.post('/user/create-houseway-bill')
                 .then(response => {
-                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
+                    this.submitButtons(true);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
@@ -3003,7 +3003,7 @@ export default {
                     }
                 })
                 .catch(error => {
-                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
+                    this.submitButtons(true);
                     // Every refusal says something (FW1): only a 422 with field errors used to be shown.
                     this.generatePDFAfterSave = '';
                     this.main_error_msg = failureMessage(error);
@@ -3018,7 +3018,7 @@ export default {
                 const form = new Form({ ...this.form });
                 form.put(`/user/update-houseway-bill/${this.existingData.id}`)
                 .then(response => {
-                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
+                    this.submitButtons(true);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
@@ -3032,7 +3032,7 @@ export default {
                     }
                 })
                 .catch(error => {
-                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
+                    this.submitButtons(true);
                     // Every refusal says something (FW1): only a 422 with field errors used to be shown.
                     this.generatePDFAfterSave = '';
                     this.main_error_msg = failureMessage(error);

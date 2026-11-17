@@ -156,6 +156,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
+import { flash } from "@/core/services/flash";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 export default {
     data() {
@@ -220,8 +221,7 @@ export default {
                 this.branch_form
                     .put(`/superadmin/edit-branch/${this.branch_form.id}`)
                     .then(({ data }) => {
-                        $("#fade").fadeToggle(1000);
-                        $("#fade").fadeToggle(1000);
+                        flash(document.getElementById("fade"), { fadeOutAt: 1000 });
                     })
                     .catch(failed);
             }

@@ -1,3 +1,8 @@
+// jQuery, for the theme's own scripts only (card.js, quick-panel.js, search.js reach it through `window`). It used to
+// be set up in main.js, which put it in every visitor's download; this file loads with the platform admin layout.
+import jQuery from "jquery";
+window.$ = window.jQuery = jQuery;
+
 // Keenthemes plugins
 import KTUtil from "@/assets/js/components/util.js";
 window.KTUtil = KTUtil;

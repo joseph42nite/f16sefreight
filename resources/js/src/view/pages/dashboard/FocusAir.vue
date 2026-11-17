@@ -3246,7 +3246,7 @@ export default {
             }
             // The branch's details, if a box was changed: asked before anything is sent (FW15).
             if (!this.branchDetailsAllowSend(asked)) return;
-            $('.submit-button').css({'pointer-events':'none','opacity': '0.5'});
+            this.submitButtons(false);
             
             if (this.mode === 'add') {
                 // Update the existing form with prepared data
@@ -3254,7 +3254,7 @@ export default {
                 this.from= { ...this.form };
                 this.form.post(`/user/create-focusair`)
                 .then(response => {
-                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
+                    this.submitButtons(true);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
@@ -3267,14 +3267,14 @@ export default {
                     } else {}
                 })
                 .catch(error => {
-                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
+                    this.submitButtons(true);
                     // Every refusal says something (FW1): only a 422 with field errors used to be shown.
                     this.generatePDFAfterSave = '';
                     this.main_error_msg = failureMessage(error, this.formatBackendError);
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {
-                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
+                    this.submitButtons(true);
                     return;
                 }
                 // Update the existing form with prepared data
@@ -3282,7 +3282,7 @@ export default {
                 this.from= { ...this.form };
                 this.form.put(`/user/update-airway-bill/${this.existingData.id}`)
                 .then(response => {
-                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
+                    this.submitButtons(true);
                     if (response.data && response.data.data.first_box && response.data.data.first_box.original && response.data.data.first_box.original.data && response.data.data.first_box.original.data.id) {
                         this.existingData = response.data.data.first_box.original.data;
                         if (this.generatePDFAfterSave && this.existingData && this.existingData.id) {
@@ -3295,7 +3295,7 @@ export default {
                     } else {}
                 })
                 .catch(error => {
-                    $('.submit-button').css({'pointer-events':'auto','opacity': '1'});
+                    this.submitButtons(true);
                     // Every refusal says something (FW1): only a 422 with field errors used to be shown.
                     this.generatePDFAfterSave = '';
                     this.main_error_msg = failureMessage(error, this.formatBackendError);

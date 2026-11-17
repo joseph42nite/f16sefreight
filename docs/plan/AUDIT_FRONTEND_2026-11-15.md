@@ -349,7 +349,14 @@ The backend audit is `AUDIT_2026-11-10.md`.
   only thing that uses them (they find each other through `window`, so the plugin is imported there, first); the
   chart library is registered in `FxChart.vue` and has its own `charts` chunk. `app.js` went from 1.48 MB to 0.70 MB
   in the development build. Seen in the browser: the admin layout with its menu, and a tenant page with no theme
-  globals. ⏸ jQuery and vform stay: the theme files and four pages reach jQuery through `window`.
+  globals.
+  ✅ **jQuery, done 2026-11-17:** it is out of the main bundle. The four pages that used it no longer do: the two
+  waybill forms dim their Save and Send buttons through `submitButtons()` in the waybill mixin, and the two platform
+  forms fade their "Saved" notice with `core/services/flash.js` (`tests/js/flash.spec.js`). The theme's own scripts
+  still reach it through `window`, so it is imported in `core/plugins/metronic.js`, which loads with the platform
+  admin layout only. `app.js` 711 KB → 431 KB in the development build. Seen in the browser: no jQuery on the home
+  page or a tenant page; the waybill form's buttons dim and come back; on the platform, a company saved and its
+  notice faded in and out. ⏸ vform stays in the main bundle (32 KB): sign-in and most forms use it.
 - **FP3 [R]** `core/plugins/bootstrap-vue.js:5-7` → all of BootstrapVue plus the whole icon set; `App.vue:10-26` →
   seven font files and all of Font Awesome in a 2.7 MB render-blocking stylesheet.
   ✅ **Fixed 2026-11-16 (icons):** the app registers the 134 Bootstrap icons its source names, not all 1,371.

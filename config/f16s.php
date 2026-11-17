@@ -257,4 +257,10 @@ return [
     */
     'default_portal' => null,
 
+    /*
+     | The most shipments one CSV export from the platform's shipments screen may carry. An export with no filter
+     | used to load every waybill ever sent into one answer (2026-11-15 frontend audit, FA7); past this many the
+     | file holds the newest ones and the screen says so.
+     */
+    'shipment_export_limit' => 5000,
 ];

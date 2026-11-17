@@ -753,6 +753,14 @@ export default {
         ApiService.query(`/superadmin/client-shipments`, { params })
           .then(({ data }) => {
             this.generateAndDownloadCsv(data.shipments);
+            // A capped export says so (FA7), so nobody takes a partial file for the whole list.
+            if (data.truncated) {
+              Swal.fire(
+                "Only part of the list is in the file",
+                `The file holds the newest ${data.shipments.length.toLocaleString()} of ${Number(data.total_awb).toLocaleString()} shipments. Narrow the filters (a client, or a month) to export the rest.`,
+                "warning"
+              );
+            }
           })
           .catch(err => {
             console.error("Failed to export shipments", err);

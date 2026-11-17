@@ -283,8 +283,12 @@ The backend audit is `AUDIT_2026-11-10.md`.
   search only asks the server when the page has no match (`:674-698`); changing filters keeps the old page number
   (`:724-744`).
   ✅ **Fixed 2026-11-16:** the CSV is always every shipment the filters match; the search always asks the server
-  (seen in the browser); a filter change starts from page one. ⚠️ An export with no filter is every shipment in one
-  answer.
+  (seen in the browser); a filter change starts from page one.
+  ✅ **The export is capped, 2026-11-17:** with no filter it was every waybill ever sent, loaded whole in one
+  answer. It now carries at most `config('f16s.shipment_export_limit')` shipments (5,000), newest first; the
+  answer says `truncated`, and the screen then warns "Only part of the list is in the file" with both counts and
+  how to get the rest. `tests/Feature/ClientShipmentsTest.php` covers the cap; seen in the browser with a
+  whole export (286 rows, no warning) and a capped one (the warning).
 - **FA8 [R]** Saves that fail silently: `admin/NewUsers.vue:217-231`, `NewCompany.vue:170`, `NewBranch.vue:215`,
   `public/PasswordForgotForm.vue:47-53`, `admin/AllUsers.vue:163`, `adminList.mixin.js:38-58`.
   `EditSystemTemplate.vue:158` reports every failure as a coordinates error.

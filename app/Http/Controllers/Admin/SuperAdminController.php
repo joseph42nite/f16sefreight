@@ -154,8 +154,11 @@ class SuperAdminController extends Controller
             ->withCount('houseWayBills')
             ->orderBy('updated_at', 'desc');
 
+        $exportLimit = max(1, (int) config('f16s.shipment_export_limit', 5000));
         if ($request->get('export') === 'all') {
-            $shipments = $query->get();
+            // Capped (FA7): with no filter this was every waybill ever sent, loaded whole with its relations.
+            // The newest come first, so those are the ones a capped file holds; the screen says when it is capped.
+            $shipments = $query->limit($exportLimit)->get();
         } else {
             $perPage = (int) $request->get('per_page', 50);
             if ($perPage <= 0) $perPage = 50;
@@ -173,6 +176,11 @@ class SuperAdminController extends Controller
             'total_awb' => $totalAwb,
             'total_hawb' => (int) $totalHawb,
         ];
+
+        if ($request->get('export') === 'all') {
+            $responseData['export_limit'] = $exportLimit;
+            $responseData['truncated'] = $totalAwb > $shipments->count();
+        }
 
         if ($request->get('export') !== 'all') {
             $responseData['pagination'] = [

@@ -136,6 +136,26 @@ class ClientShipmentsTest extends TestCase
                 'total_hawb'
             ]);
 
+        $response->assertJsonPath('truncated', false)->assertJsonPath('export_limit', 5000);
+
+        // 6d. An export is capped, and says so (FA7): with no filter it used to be every waybill in one answer.
+        AirwayBills::create([
+            'id' => '11122223334', 'awb_code' => '111', 'awb_no' => '22223334', 'agent_id' => $agent->id,
+        ]);
+        config(['f16s.shipment_export_limit' => 1]);
+        $response = $this->actingAs($superAdmin, 'superAdmin-api')
+            ->getJson('/api/superadmin/client-shipments?export=all&company_id=' . $company->id);
+        $response->assertStatus(200)
+            ->assertJsonPath('truncated', true)
+            ->assertJsonPath('export_limit', 1)
+            ->assertJsonPath('total_awb', 2)
+            ->assertJsonCount(1, 'shipments');
+        // The list itself is not capped by it.
+        $this->actingAs($superAdmin, 'superAdmin-api')
+            ->getJson('/api/superadmin/client-shipments?company_id=' . $company->id)
+            ->assertStatus(200)->assertJsonCount(2, 'shipments');
+        config(['f16s.shipment_export_limit' => 5000]);
+
         // 7. Test XML view endpoint
         $response = $this->actingAs($superAdmin, 'superAdmin-api')
             ->getJson('/api/superadmin/shipment-xml/' . $awb->id);

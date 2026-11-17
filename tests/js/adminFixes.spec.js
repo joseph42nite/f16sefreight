@@ -52,6 +52,12 @@ describe("saves that failed silently (FA8)", () => {
     expect(source).toMatch(/create_btn[^>]*:disabled="missing"/);
   });
 
+  it("a capped shipments export says the file is only part of the list (FA7)", () => {
+    const source = read("view/pages/admin/ClientShipments.vue");
+
+    expect(source).toMatch(/if \(data\.truncated\) \{\s*Swal\.fire\(\s*"Only part of the list is in the file"/);
+  });
+
   it("the reset form says why a reset was refused", () => {
     const source = read("view/pages/public/PasswordForgotForm.vue");
 

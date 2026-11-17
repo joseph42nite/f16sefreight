@@ -155,7 +155,12 @@ The backend audit is `AUDIT_2026-11-10.md`.
   not exist (`participate`, `participate_airport`) and always showed empty; they now show the branch's values.
   🔴 Found by its test: the IATA code and CASS were whole-number columns, so "0042" was stored and sent to the
   airline as 42. Migration `2026_11_16_020000` makes them text and puts the lost leading zeros back.
-  Clicked through in the browser with the send itself blocked. ⏸ The consignment Volume box is left.
+  Clicked through in the browser with the send itself blocked.
+  ✅ **The consignment Volume box, removed 2026-11-17 (owner's decision):** the box, the unit list beside it (bound to
+  nothing) and the always-empty "Vol." column of the consignments table are gone from both forms. The server never
+  had anywhere to store the value and no message carried it. Total Volume, which is saved and sent, is untouched
+  and still worked out from the pieces' dimensions. Seen in the browser on both forms: a consignment added, 16
+  headings over 16 cells, Total Volume 0.40 m³ for two pieces of 100×50×40 cm; nothing was saved.
 - **FW16 [R]** OCR mapping: the email goes into the Fax field (`FocusAir.vue:2942, 2965`); address cut to 30 and
   goods description to 70 characters without notice; a second import appends its dimension rows to the first
   document's (`:2996`); a missing shipper name or flight throws and abandons the rest of the mapping (`:2905-2992`).
@@ -290,6 +295,12 @@ The backend audit is `AUDIT_2026-11-10.md`.
   `admin/Settings.vue:90` deletes every notice for a carrier with no confirmation.
   ✅ **Fixed 2026-11-16:** both go to `/sign-in`; the directory asks for up to 500 airlines (the server took no
   `per_page`); the delete asks first. Specs for this group: `tests/js/adminFixes.spec.js`.
+- **FA10 [R], found 2026-11-17 while testing** `admin/NewCompany.vue`, `NewBranch.vue` → opening the edit form with
+  an id that does not exist (a deleted record, a mistyped address) threw in the console and showed an empty form
+  whose button would send a save for nothing.
+  ✅ **Fixed 2026-11-17:** both forms say "This company (branch) could not be found. It may have been deleted." and
+  the button is off; a load the server refuses says why. Seen in the browser for both, with a real record and
+  the "add" form unchanged.
 
 ## 5. Core: sign-in, errors, state
 

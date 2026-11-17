@@ -61,3 +61,16 @@ describe("accounts screens", () => {
     expect(source).toMatch(/\n    messageFor\(e\) \{/);
   });
 });
+
+describe("the consignment Volume box (FW15, owner's decision 2026-11-17: remove it)", () => {
+  it.each(["dashboard/FocusAir.vue", "dashboard/HouseWayBill.vue"])("%s has no box that saves nothing", (page) => {
+    const source = read(page);
+
+    expect(source).not.toMatch(/consignment_list\.volume/);
+    expect(source).not.toMatch(/form\.entries\.dimention_unit"/);
+    expect(source).not.toMatch(/entry\.volume/);
+    // The total, which IS saved and sent, stays.
+    expect(source).toMatch(/v-model="form\.totals\.total_volume"/);
+    expect(source).toMatch(/v-model="form\.totals\.dimention_unit"/);
+  });
+});

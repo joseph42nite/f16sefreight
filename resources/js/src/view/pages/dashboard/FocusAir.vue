@@ -1021,27 +1021,6 @@
                                                             </tr>
                                                         </tbody>
                                                     </table>
-                                                    <table class="table-sm">
-                                                        <tr>
-                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;">Volume</th>
-                                                            <th style="padding-bottom:0px;font-size: 13px !important;font-weight:500;"></th>
-                                                        </tr>
-                                                        <tbody>
-                                                            <tr>
-                                                                <td class="editable-cell">
-                                                                    <b-form-input id="input-horizontal" class="form-control w-100" v-model="consignment_list.volume"></b-form-input>
-                                                                </td>
-                                                                <td class="editable-cell">
-                                                                    <b-form-select class="form-control w-100" v-model="this.form.entries.dimention_unit">
-                                                                        <option value="CMQ">cm³</option> <!-- CC Cubic centimetre-->
-                                                                        <option value="MTQ">m³</option> <!-- MC  Cubic Metre-->  
-                                                                        <option value="FTQ">ft³</option> <!-- CF  Cubic Foot--> 
-                                                                        <option value="INQ">in³</option> <!-- CI  Cubic inch--> 
-                                                                    </b-form-select>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
                                                 </div>
                                                 <h5 class="mt-10 mb-2" style="font-size:13px;font-weight: 500;">ULD Information</h5>
                                                 <div class="table-responsive">
@@ -1123,7 +1102,6 @@
                                                         <th style="font-size: 12px; font-weight: 600 !important; min-width: 110px; padding: 10px 8px;" class="">Chrg. Wgt.</th>
                                                         <th style="font-size: 12px; font-weight: 600 !important; min-width: 80px; padding: 10px 8px;" class="">Rate</th>
                                                         <th style="font-size: 12px; font-weight: 600 !important; min-width: 260px; padding: 10px 8px;" class="">Detailed Pcs. Info</th>
-                                                        <th style="font-size: 12px; font-weight: 600 !important; min-width: 80px; padding: 10px 8px;" class="">Vol.</th>
                                                         <th style="font-size: 12px; font-weight: 600 !important; min-width: 100px; padding: 10px 8px;" class="">Rate Class</th>
                                                         <th style="font-size: 12px; font-weight: 600 !important; min-width: 120px; padding: 10px 8px;" class="">UID Rate Class</th>
                                                         <th style="font-size: 12px; font-weight: 600 !important; min-width: 90px; padding: 10px 8px;" class="">Charge</th>
@@ -1169,7 +1147,6 @@
                                                                 </span>
                                                             </div>
                                                         </td>
-                                                        <td class="align-middle">{{ entry.volume }}</td>
                                                         <td class="align-middle"><span class="badge badge-secondary" v-if="entry.rate_class">{{ entry.rate_class }}</span></td>
                                                         <td class="align-middle">{{ entry.uld_rate_class }}</td>
                                                         <td class="align-middle"><strong>{{ form.totals.total_amount }}</strong></td>

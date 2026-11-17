@@ -61,7 +61,6 @@ export default {
                 width: '',
                 height: '',
                 unit: 'CMT',
-                volume: '',
                 uld_type: '',
                 uld_serial: '',
                 owner: '',

@@ -164,6 +164,14 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FW16 [R]** OCR mapping: the email goes into the Fax field (`FocusAir.vue:2942, 2965`); address cut to 30 and
   goods description to 70 characters without notice; a second import appends its dimension rows to the first
   document's (`:2996`); a missing shipper name or flight throws and abandons the rest of the mapping (`:2905-2992`).
+  ✅ **Fixed 2026-11-17 (the code faults):** both forms read a document through one module,
+  `core/services/documentMapping.js`. The email is no longer written into Fax (the form has no email box, so it is
+  dropped); a missing name, address, description, flight list or dimension no longer throws; the goods of the last
+  document (dimension rows, pieces, weights, rate, description) are emptied before the next is read; and when an
+  address or description is cut, a notice that stays open says which and by how much. Tests in
+  `documentMapping.spec.js`. Tried on both forms in the browser with made-up documents, nothing saved or sent.
+  ⏸ Not checked against a real document: whether the reader's own output (field names, the 30 and 70 limits) is
+  right for real waybills.
 - **FW17 [R]** `HouseWayBill.vue:3381` → the master-number list asks for status `all`, which matches nothing: the
   list is always empty.
   ✅ **Fixed 2026-11-16:** on the server: `all` is every status, newest 100. Seen filled in the browser.

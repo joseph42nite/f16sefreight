@@ -2486,6 +2486,7 @@
     </div> -->
 </template>
 <script>
+import { partyFields, cargoFields, flightsOf } from "@/core/services/documentMapping";
 import { openPdf } from "@/core/services/pdfLink";
 import { saveOutcome, failureMessage } from "@/core/services/waybillSend";
 import Datepicker from "vuejs-datepicker";
@@ -2829,6 +2830,11 @@ export default {
             this.showShipper = false;
             this.showConsignee = false;
             this.isConsignmentAdded = false;
+            // The goods are this document's alone: a second document used to add its dimension rows under the
+            // first one's, and kept its pieces and weights where it gave none (frontend audit, FW16).
+            this.clearReadConsignment();
+            // What had to be cut to fit a box, said once the form is filled.
+            const cuts = [];
 
             // Injected existing extraction pipeline
             console.log('Processing received payload:', response);
@@ -2862,26 +2868,27 @@ export default {
                     // Transit hops only filled when transit data is present
                     if (transit) {
                         if (place(2) || place(1)) routing.to = place(2) || place(1);
-                        if (transit.transit_airports[1] && (place(3) || place(1))) routing.to_2 = place(3) || place(1);
-                        if (transit.transit_airports[2] && (place(4) || place(1))) routing.to_3 = place(4) || place(1);
+                        if (transit.transit_airports?.[1] && (place(3) || place(1))) routing.to_2 = place(3) || place(1);
+                        if (transit.transit_airports?.[2] && (place(4) || place(1))) routing.to_3 = place(4) || place(1);
                     }
                 });
                 // Flight numbers and dates only when transit is available
+                const flights = flightsOf(transit);
                 if (transit) {
-                    if (transit.flights[0]) {
-                        this.form.routing_information.by = this.splitFlight(transit.flights[0]?.flight_number).carrier;
-                        this.form.routing_information.flight = this.splitFlight(transit.flights[0]?.flight_number).flight;
-                        this.form.routing_information.date = this.formatDate(transit.flights[0].date);
+                    if (flights[0]) {
+                        this.form.routing_information.by = this.splitFlight(flights[0]?.flight_number).carrier;
+                        this.form.routing_information.flight = this.splitFlight(flights[0]?.flight_number).flight;
+                        this.form.routing_information.date = this.formatDate(flights[0].date);
                     }
-                    if (transit.flights[1]) {
-                        this.form.routing_information.by_2 = this.splitFlight(transit.flights[1]?.flight_number).carrier;
-                        this.form.routing_information.flight_2 = this.splitFlight(transit.flights[1]?.flight_number).flight;
-                        this.form.routing_information.date_2 = this.formatDate(transit.flights[1].date);
+                    if (flights[1]) {
+                        this.form.routing_information.by_2 = this.splitFlight(flights[1]?.flight_number).carrier;
+                        this.form.routing_information.flight_2 = this.splitFlight(flights[1]?.flight_number).flight;
+                        this.form.routing_information.date_2 = this.formatDate(flights[1].date);
                     }
-                    if (transit.flights[2]) {
-                        this.form.routing_information.by_3 = this.splitFlight(transit.flights[2]?.flight_number).carrier;
-                        this.form.routing_information.flight_3 = this.splitFlight(transit.flights[2]?.flight_number).flight;
-                        this.form.routing_information.date_3 = this.formatDate(transit.flights[2].date);
+                    if (flights[2]) {
+                        this.form.routing_information.by_3 = this.splitFlight(flights[2]?.flight_number).carrier;
+                        this.form.routing_information.flight_3 = this.splitFlight(flights[2]?.flight_number).flight;
+                        this.form.routing_information.date_3 = this.formatDate(flights[2].date);
                     }
                 }
             }
@@ -2896,16 +2903,14 @@ export default {
                     console.log('Auto-matched shipper (90%+ similarity):', matchedShipper.name);
                     this.selectShipper(matchedShipper);
                 } else {
-                    this.form.shipper_address.ship_name = shipper.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-                    this.form.shipper_address.ship_address = shipper.address.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 30).trim();
-                    this.form.shipper_address.ship_city=shipper.city;
-                    this.form.shipper_address.ship_post_code=shipper.pin;
-                    this.form.shipper_address.ship_state=shipper.state;
+                    // A missing name or address no longer stops the rest of the form being filled, and the email
+                    // is not written into the Fax box (frontend audit, FW16).
+                    const read = partyFields(shipper, 'ship_', 'Shipper');
+                    Object.assign(this.form.shipper_address, read.fields);
+                    cuts.push(...read.cuts);
                     if(shipper.country){
                         this.form.shipper_address.ship_country=this.countryCodeByName(shipper.country);
                     }
-                    this.form.shipper_address.ship_phone=shipper.phone;
-                    this.form.shipper_address.ship_fax=shipper.email;
                 }
             }
             
@@ -2918,17 +2923,13 @@ export default {
                     console.log('Auto-matched consignee (90%+ similarity):', matchedConsignee.name);
                     this.selectConsignee(matchedConsignee);
                 } else {
-                    this.form.consignee_address.cons_name = consignee.name.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+                    const read = partyFields(consignee, 'cons_', 'Consignee');
+                    Object.assign(this.form.consignee_address, read.fields);
                     this.form.consignee_address.cons_name_2=consignee.eori;
-                    this.form.consignee_address.cons_address = consignee.address.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 30).trim();
-                    this.form.consignee_address.cons_city=consignee.city;
-                    this.form.consignee_address.cons_post_code=consignee.pin;
-                    this.form.consignee_address.cons_state=consignee.state;
+                    cuts.push(...read.cuts);
                     if(consignee.country){
                         this.form.consignee_address.cons_country=this.countryCodeByName(consignee.country);
                     }
-                    this.form.consignee_address.cons_phone=consignee.phone;
-                    this.form.consignee_address.cons_fax=consignee.email;
                     if(consignee.eori){
                         this.oci_info.supplementary_info=consignee.eori;
                         this.oci_info.custom_info_identifier="CNE";
@@ -2954,23 +2955,14 @@ export default {
             }
             
             if (cargo_data) {
-                this.consignment_list.hsCodes=cargo_data.hs_codes;
-                this.consignment_list.description = cargo_data.description.replace(/[&/=]/g, ' ').slice(0, 70).trim();
-                if (cargo_data.dimensions) {
-                    for(let i=0;i<cargo_data.dimensions.length;i++){
-                        let dimensions_data=cargo_data.dimensions[i].dimension.split('X');
-                        this.consignment_list.itemss.push({
-                            pcs: cargo_data.dimensions[i].count,
-                            wgt: '',
-                            length: dimensions_data[0]??'',
-                            width: dimensions_data[1]??'',
-                            height: dimensions_data[2]??'',
-                            unit: 'CMT'
-                        });
-                    }
-                }
+                const goods = cargoFields(cargo_data);
+                this.consignment_list.hsCodes = goods.hsCodes;
+                this.consignment_list.description = goods.description;
+                this.consignment_list.itemss.push(...goods.rows);
+                cuts.push(...goods.cuts);
             }
             this.$refs.modalConsignment.show();
+            this.sayWhatWasCut(cuts);
 
             // Payment Remaining
             if (response.chrg_code) {

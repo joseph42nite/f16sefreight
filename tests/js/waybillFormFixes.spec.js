@@ -27,7 +27,7 @@ describe("splitFlight (FW8)", () => {
   });
 
   it.each([["master", master], ["house", house]])("the %s form uses it for all three flights", (_, source) => {
-    expect(source.match(/this\.splitFlight\(transit\.flights\[\d\]\?\.flight_number\)\.carrier/g)).toHaveLength(3);
+    expect(source.match(/this\.splitFlight\(flights\[\d\]\?\.flight_number\)\.carrier/g)).toHaveLength(3);
     expect(source).not.toMatch(/flight_number\?\.slice\(0, ?2\)/);
   });
 });

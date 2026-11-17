@@ -1,5 +1,6 @@
 import ApiService from "@/core/services/api.service";
 import { noticesFor } from "@/core/services/airlineNotice";
+import { cutNotice } from "@/core/services/documentMapping";
 import { loadLocations } from "@/core/services/location.cache";
 import { branchDetailsOn, changedBranchDetails, branchDetailsQuestion } from "@/core/services/branchDetails";
 
@@ -621,6 +622,23 @@ export default {
             } else {
                 this.form.totals.total_amount = chargeableWeight * this.consignment_list.rate;
             }
+        },
+        /** Empties what a read document fills in the consignment pop-up, before the next document is read (FW16). */
+        clearReadConsignment() {
+            ['rate_class', 'pieces', 'rate', 'gross_weight', 'chargable_weight', 'description'].forEach((key) => {
+                this.consignment_list[key] = '';
+            });
+            this.consignment_list.itemss = [];
+            this.consignment_list.hsCodes = [];
+        },
+        /**
+         * After a document is read: which boxes got less than the document had (frontend audit, FW16). It stays
+         * until closed, since the operator has to compare it with the document.
+         */
+        sayWhatWasCut(cuts) {
+            const notice = cutNotice(cuts);
+            if (!notice) return;
+            this.$bvToast.toast(notice, { title: 'Some text was cut short', variant: 'warning', solid: true, noAutoHide: true });
         },
         handleAddConsignment() {
             if (this.isConsignmentAdded) {

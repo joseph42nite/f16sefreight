@@ -19,7 +19,7 @@
 
       <label v-if="endpoint === '/partners'" class="fx-field">
         <span class="fx-field__label">Type</span>
-        <select v-model="type" class="fx-input" @change="load">
+        <select v-model="type" class="fx-input" @change="search">
           <option value="">All</option>
           <option v-for="t in types" :key="t" :value="t">{{ t.replace(/_/g, ' ') }}</option>
         </select>
@@ -239,6 +239,7 @@
         </tr>
       </tbody>
     </table>
+    <Pager :page="page" :last-page="lastPage" :total="total" :noun="endpoint === '/partners' ? 'partners' : 'clients'" :busy="loading" @go="goTo" />
     <p v-if="tdsError" class="fx-error" role="alert">{{ tdsError }}</p>
   </div>
 </template>
@@ -248,6 +249,8 @@ import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import { serverMessage } from "@/core/services/serverMessage";
+import { pagingMixin } from "@/core/services/paging";
+import Pager from "@/view/pages/freight/components/Pager.vue";
 
 const SHAPES = {
   "/customers": {
@@ -286,7 +289,8 @@ const SHAPES = {
 
 export default {
   name: "DirectoryTable",
-  components: { Figure },
+  components: { Figure, Pager },
+  mixins: [pagingMixin],
   props: { endpoint: { type: String, required: true } },
   data: () => ({
     rows: [], types: [], loading: true, error: null, query: "", type: "", timer: null,
@@ -487,16 +491,17 @@ export default {
     /* Debounced so a search does not fire a request per keystroke. */
     debouncedLoad() {
       clearTimeout(this.timer);
-      this.timer = setTimeout(this.load, 250);
+      this.timer = setTimeout(this.search, 250);
     },
     load() {
       this.loading = true;
-      const params = [];
+      const params = [this.pageParam()];
       if (this.query) params.push("q=" + encodeURIComponent(this.query));
       if (this.type) params.push("type=" + encodeURIComponent(this.type));
 
-      ApiService.get(this.endpoint + (params.length ? "?" + params.join("&") : ""))
+      ApiService.get(this.endpoint + "?" + params.join("&"))
         .then(({ data }) => {
+          if (this.readPaging(data, (data.data || []).length)) return;
           this.rows = data.data || [];
           this.withAccounts = !!data.with_accounts;
           this.error = null;

@@ -31,7 +31,7 @@
       <!-- One accounts login runs the whole company; the branch picker is how it looks at one at a time. -->
       <label v-if="branches.length > 1" class="fx-field">
         <span class="fx-field__label">Branch</span>
-        <select v-model="branchId" class="fx-input" @change="load">
+        <select v-model="branchId" class="fx-input" @change="search">
           <option :value="null">All branches</option>
           <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
         </select>
@@ -41,14 +41,14 @@
     <div v-if="view === 'invoices' || view === 'awaiting'" class="fx-toolbar">
       <label class="fx-field">
         <span class="fx-field__label">Status</span>
-        <select v-model="status" class="fx-input" @change="load">
+        <select v-model="status" class="fx-input" @change="search">
           <option value="">All</option>
           <option v-for="s in STATUSES" :key="s" :value="s">{{ s.replace(/_/g, " ") }}</option>
         </select>
       </label>
 
       <label class="fx-checkbox">
-        <input v-model="outstanding" type="checkbox" @change="load" />
+        <input v-model="outstanding" type="checkbox" @change="search" />
         Outstanding only
       </label>
     </div>
@@ -458,6 +458,7 @@
         </tbody>
       </table>
       </div>
+      <Pager :page="page" :last-page="lastPage" :total="total" :noun="pagerNoun" :busy="loading" @go="goTo" />
       <p v-if="!rows.length" class="fx-muted">Nothing is waiting to be reconciled.</p>
 
       <section v-if="bankRow" class="fx-section">
@@ -886,6 +887,8 @@
         </tr>
       </tbody>
     </table>
+    <!-- The bank register draws its own, under its list; the two read-only registers come whole. -->
+    <Pager v-if="['invoices', 'awaiting', 'vouchers'].includes(view)" :page="page" :last-page="lastPage" :total="total" :noun="pagerNoun" :busy="loading" @go="goTo" />
 
     <FxDrawer
       :open="!!selected"
@@ -1063,6 +1066,8 @@ import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 import { serverMessage } from "@/core/services/serverMessage";
+import { pagingMixin } from "@/core/services/paging";
+import Pager from "@/view/pages/freight/components/Pager.vue";
 
 const STATUSES = ["draft", "finalized", "sent", "partially_paid", "paid", "void"];
 
@@ -1111,7 +1116,8 @@ const TABS = [
 
 export default {
   name: "Financials",
-  components: { Figure, StatusChip, FxDrawer, MailEditor },
+  components: { Figure, StatusChip, FxDrawer, MailEditor, Pager },
+  mixins: [pagingMixin],
   data: () => ({
     rows: [], loading: true, error: null,
     status: "", outstanding: false,
@@ -1150,6 +1156,10 @@ export default {
     VOUCHER_TABS: [{ key: "journal", label: "Journal" }],
   }),
   computed: {
+    /** What the pager counts in the register that is open. */
+    pagerNoun() {
+      return { vouchers: "vouchers", bank: "bank entries" }[this.view] || "invoices";
+    },
     /** Jev's pick first, the rest as the matcher ordered them. */
     orderedCandidates() {
       return [...this.candidates].sort((a, b) => (this.isJevPick(b) ? 1 : 0) - (this.isJevPick(a) ? 1 : 0));
@@ -1231,6 +1241,9 @@ export default {
     },
     showView(key) {
       this.view = key;
+      // Each register starts on its own first page.
+      this.page = 1;
+      this.lastPage = 1;
       this.deselect();
       this.reportData = null;
 
@@ -1533,7 +1546,7 @@ export default {
       }
 
       this.loading = true;
-      const params = [];
+      const params = [this.pageParam()];
 
       if (this.view === "awaiting") params.push("awaiting=1");
       // The Status box belongs to the two invoice views, and only shows there (FM6): sent to the bank register it
@@ -1547,8 +1560,9 @@ export default {
         vouchers: "/vouchers", gst: "/registers/gst", unposted: "/registers/unposted", bank: "/reconciliation",
       }[this.view] || "/invoices";
 
-      ApiService.get(path + (params.length ? "?" + params.join("&") : ""))
+      ApiService.get(path + "?" + params.join("&"))
         .then(({ data }) => {
+          if (this.readPaging(data, (data.data || data.rows || []).length)) return;
           // The registers answer with their own shape: rows plus the totals that belong under them.
           this.rows = data.data || data.rows || [];
           this.totals = data.totals !== undefined ? data.totals : (data.total !== undefined ? data.total : null);

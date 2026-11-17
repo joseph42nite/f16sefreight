@@ -19,39 +19,39 @@
     <div class="fx-toolbar">
       <label class="fx-field">
         <span class="fx-field__label">Filing type</span>
-        <select v-model="filters.filing_type" class="fx-input" @change="load">
+        <select v-model="filters.filing_type" class="fx-input" @change="search">
           <option value="">All</option>
           <option v-for="t in types" :key="t" :value="t">{{ t }}</option>
         </select>
       </label>
       <label class="fx-field">
         <span class="fx-field__label">{{ mode === "air" ? "Job no" : "Consol job no" }}</span>
-        <input v-model.trim="filters.job_no" class="fx-input" @keyup.enter="load" />
+        <input v-model.trim="filters.job_no" class="fx-input" @keyup.enter="search" />
       </label>
       <label class="fx-field">
         <span class="fx-field__label">Transaction status</span>
-        <select v-model="filters.status" class="fx-input" @change="load">
+        <select v-model="filters.status" class="fx-input" @change="search">
           <option value="">All</option>
           <option v-for="s in statuses" :key="s.value" :value="s.value">{{ s.label }}</option>
         </select>
       </label>
       <label class="fx-field">
         <span class="fx-field__label">Custom house</span>
-        <input v-model.trim="filters.custom_house_code" class="fx-input identifier" maxlength="6" :placeholder="housePlaceholder" @keyup.enter="load" />
+        <input v-model.trim="filters.custom_house_code" class="fx-input identifier" maxlength="6" :placeholder="housePlaceholder" @keyup.enter="search" />
       </label>
       <label class="fx-field">
         <span class="fx-field__label">From</span>
-        <input v-model="filters.from" type="date" class="fx-input" @change="load" />
+        <input v-model="filters.from" type="date" class="fx-input" @change="search" />
       </label>
       <label class="fx-field">
         <span class="fx-field__label">To</span>
-        <input v-model="filters.to" type="date" class="fx-input" @change="load" />
+        <input v-model="filters.to" type="date" class="fx-input" @change="search" />
       </label>
       <label class="fx-field">
         <span class="fx-field__label">ICEGATE ID</span>
-        <input v-model.trim="filters.icegate_id" class="fx-input identifier" maxlength="20" @keyup.enter="load" />
+        <input v-model.trim="filters.icegate_id" class="fx-input identifier" maxlength="20" @keyup.enter="search" />
       </label>
-      <button class="fx-btn" @click="load">Search</button>
+      <button class="fx-btn" @click="search">Search</button>
       <button v-if="canWrite" class="fx-btn fx-btn--primary" @click="openSubmit">Submit CGM Data</button>
     </div>
 
@@ -101,6 +101,7 @@
         </tr>
       </tbody>
     </table>
+    <Pager :page="page" :last-page="lastPage" :total="total" noun="filings" :busy="loading" @go="goTo" />
 
     <!-- ── Submit CGM Data — PRD §5.8 ───────────────────────────────────────── -->
     <div v-if="submit" class="fx-modal" role="dialog" aria-modal="true" aria-labelledby="submit-title">
@@ -223,6 +224,8 @@
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
+import { pagingMixin } from "@/core/services/paging";
+import Pager from "@/view/pages/freight/components/Pager.vue";
 
 // Tab 11's words — the filing and the bill read the same status.
 const STATUSES = [
@@ -233,6 +236,8 @@ const STATUSES = [
 
 export default {
   name: "ManifestFiling",
+  components: { Pager },
+  mixins: [pagingMixin],
   data: () => ({
     // Set by the server from the portal this page is opened in.
     mode: null, types: [], jobs: [], jobSearch: "",
@@ -270,9 +275,14 @@ export default {
   methods: {
     load() {
       this.loading = true;
-      const query = Object.entries(this.filters).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
-      ApiService.get("/manifest-filings" + (query ? "?" + query : ""))
-        .then(({ data }) => { this.filings = data.data || []; this.error = null; })
+      const query = [this.pageParam()]
+        .concat(Object.entries(this.filters).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v)}`)).join("&");
+      ApiService.get("/manifest-filings?" + query)
+        .then(({ data }) => {
+          if (this.readPaging(data, (data.data || []).length)) return;
+          this.filings = data.data || [];
+          this.error = null;
+        })
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.loading = false; });
     },

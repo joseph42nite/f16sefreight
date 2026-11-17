@@ -27,8 +27,8 @@ The backend audit is `AUDIT_2026-11-10.md`.
   controller reads it (it appears in `app/` only where the admin sets it), and the Consolidation manifest "Send"
   (`Consolidation.vue:471`) is not gated even on screen. A user barred from sending can still transmit.
   ✅ **Fixed 2026-11-15 (server side):** `Controller::abortUnlessMaySend()` answers 403 before anything is saved, on
-  master and house create/update with `status: send` and on `manifest-send`. Still open on screen: the Consolidation
-  "Send" button is shown to a barred user, who now gets the 403.
+  master and house create/update with `status: send` and on `manifest-send`. The Consolidation "Send" button has
+  been hidden from a barred user since `021b43fe` (checked 2026-11-17).
 - **FS4 [V]** `Auth/LoginController.php:41` vs `:74` → `latest_token` is overwritten before the portal check. A
   correct password on the wrong portal is refused, but has already ended the person's real session elsewhere.
   ✅ **Fixed 2026-11-15:** the token is written after the portal check. Tests for FS1–FS4:
@@ -207,7 +207,13 @@ The backend audit is `AUDIT_2026-11-10.md`.
   ✅ **Fixed 2026-11-16 (clients and partners):** every client and partner pick-list asks for `per_page=500`
   (`format.js` `WHOLE_LIST`); `PartnerController::index` now takes `per_page`, 500 at most, as the client list did.
   ⏸ Left: the shipment list on a new bill is still the newest 50 (`JobController` holds someone else's uncommitted
-  work), a company with more than 500 clients needs a searched box, and the three registers still have no pager.
+  work) and a company with more than 500 clients needs a searched box.
+  ✅ **Fixed 2026-11-17 (the three registers):** the manifest filings, the client and partner directories and the
+  accounts lists (invoices, awaiting, vouchers, bank) ask for a page and draw "Previous / Page 2 of 3 / Next" under
+  the list when there is a second page (`core/services/paging.js`, `components/Pager.vue`). A filter starts again
+  from page one; a page past the end falls back to the last. Tests in `paging.spec.js`. Clicked through on the
+  partner list against the server, two rows a page. The dev data has no list over 50 rows, so on the filings and
+  accounts pages only "loads as before, no pager for one page" was seen.
 - **FM8 [R]** `Billing.vue:982-984` → the "against which invoice" list for a new debit or credit note is taken
   from the rows on screen; on the notes tabs it is empty and the form cannot be submitted.
   ✅ **Fixed 2026-11-16:** the form asks the server for the issued invoices when it opens. Seen in the browser (32).

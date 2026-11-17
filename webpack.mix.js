@@ -87,11 +87,25 @@ mix.webpackConfig({
                     test: /[\\/]node_modules[\\/]sweetalert2[\\/]/,
                     name: "alerts", chunks: "async", priority: 30, enforce: true,
                 },
+                // Stylesheets that two or more lazy pages import from a library (the date picker's, the tree select's)
+                // stay together in common.css, which the page links before app.css. Styles only: see "shared".
                 common: {
                     name: "common",
+                    type: "css/mini-extract",
                     minChunks: 2,
                     chunks: "async",
                     priority: 10,
+                    reuseExistingChunk: true,
+                },
+                // Our own code that two or more lazy pages share. No name, on purpose: with one name it was a single
+                // file that EVERY page loaded, so the public home page downloaded the billing, collections and waybill
+                // screens to show a landing page. Without one, webpack makes a file per group of pages that share
+                // the same code, and a page loads only the files it uses.
+                shared: {
+                    type: "javascript/auto",
+                    minChunks: 2,
+                    chunks: "async",
+                    priority: 5,
                     reuseExistingChunk: true,
                 },
             },

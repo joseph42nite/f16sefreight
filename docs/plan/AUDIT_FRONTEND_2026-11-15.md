@@ -335,8 +335,14 @@ The backend audit is `AUDIT_2026-11-10.md`.
   the waybill forms restyle the picker in `app.css`, which must come after). Clicked through: the home page, the
   master waybill form (pickers drawn, `datepicker` loaded), the inbox composer (`editor` loaded, editor mounted),
   a PDF read in the page (`pdf-support` + `pdfjs`, a one-page file parsed), and two platform pages (`alerts`).
-  ⏸ What is left in `common` is the app's own shared code (components, the waybill mixin); the home page still
-  loads it. Getting that off the public site means letting webpack split by page, which does move stylesheets.
+  ✅ **The app's own shared code, done 2026-11-17:** `common` is now styles only (`common.css`, as before), and
+  our shared scripts go through a cache group with no name (`shared`), so webpack makes one file per group of
+  pages that share the same code and a page loads only the ones it uses. Development build, scripts fetched
+  beside the entry files: **home page 759 KB of `common` → 20 KB** (the blog titles); the billing screen 346 KB
+  in all, the master waybill form 728 KB. The worry that stylesheets would move did not happen: `app.css`,
+  `common.css` and `vendor.css` are **byte-identical** to the build before. Checked in the browser: every one of
+  the 80 lazy route components loads, and the home page, master waybill form (date pickers drawn), inbox,
+  billing and the platform's company list open with no console error. Not measured on a production build.
 - **FP2 [R]** `main.js:8-52`, `core/plugins/metronic.js` → jQuery, apexcharts, vform and 33 theme modules are in the
   main bundle for every visitor; apexcharts is used by one component, jQuery by four pages, the 33 globals by nothing.
   ✅ **Fixed 2026-11-16 (theme scripts and charts):** the theme's scripts load with the platform admin layout, the

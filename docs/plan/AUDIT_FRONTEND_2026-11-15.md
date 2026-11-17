@@ -353,7 +353,13 @@ The backend audit is `AUDIT_2026-11-10.md`.
   in all, the master waybill form 728 KB. The worry that stylesheets would move did not happen: `app.css`,
   `common.css` and `vendor.css` are **byte-identical** to the build before. Checked in the browser: every one of
   the 80 lazy route components loads, and the home page, master waybill form (date pickers drawn), inbox,
-  billing and the platform's company list open with no console error. Not measured on a production build.
+  billing and the platform's company list open with no console error.
+  ✅ **Production build, checked 2026-11-17** (everything in FP1–FP3 together, which is what ships): `app.js` is
+  121 KB and `vendor.js` 676 KB. The public home page loads **909 KB of script (256 KB compressed) and 1,208 KB of
+  stylesheets (162 KB compressed)**, with no request to an outside font service. In the browser on that build: all
+  80 lazy route components load; the home page, the board, the master waybill form (date pickers and icons drawn,
+  no jQuery), the inbox, billing and the platform's company list (jQuery present, menu drawn) open with no console
+  error. The development build was put back afterwards.
 - **FP2 [R]** `main.js:8-52`, `core/plugins/metronic.js` → jQuery, apexcharts, vform and 33 theme modules are in the
   main bundle for every visitor; apexcharts is used by one component, jQuery by four pages, the 33 globals by nothing.
   ✅ **Fixed 2026-11-16 (theme scripts and charts):** the theme's scripts load with the platform admin layout, the

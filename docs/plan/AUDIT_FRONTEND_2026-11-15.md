@@ -368,10 +368,22 @@ The backend audit is `AUDIT_2026-11-10.md`.
   class the app and its libraries write (which is how `toastr` was kept: its `.toast` rules also style the app's own
   pop-up notices), and the computed style of every element was recorded on 16 screens before and compared after —
   15 identical element for element (11,300 elements); the landing page differs only in animations caught mid-way.
-  ⏸ **Step two, not started:** the other ~1.8 MB can only go with a purge step in the build (keep a rule only if
-  the classes it needs are written somewhere), because the theme generates those families in loops. That is a new
-  build dependency and a real styling risk; the before/after comparison above is the safety net for it. The seven
-  font files are as they were.
+  ✅ **Step two, done 2026-11-17:** `build/purge-theme.js`, a PostCSS plugin of our own (no new dependency), drops a
+  theme rule when the classes it needs are written nowhere. "Written" is spelt out at the top of that file: a word
+  in our source; a word in a library we ship, all the way down the dependency tree; a prefix or an ending a script
+  holds, joined to such a word; Bootstrap's grid. Only the theme's stylesheet (App.vue) goes through it; no page's
+  own styles do. **Production `app.css`: 2,149 KB → 1,048 KB (227 KB → 131 KB gzipped).**
+  How it was checked (`build/style-check/`): the computed style of every element was recorded on about 60 screens
+  across the four portals before, and compared after; then pop-ups, notices, a validation error, an open calendar,
+  an alert, the phone-width menus and five phone-width screens were each styled with both stylesheets in one sitting
+  and compared. **Everything matches** except the landing page's own running animations. The comparison caught
+  three real faults on the way, all fixed and pinned by `tests/js/purgeTheme.spec.js`: a class inside `:not()` was
+  treated as required (the platform pages gained 15px at the top); the blog editor's toolbar classes come from a
+  library our library depends on; BootstrapVue builds `navbar-toggler-icon` by adding an ending to a base name.
+  ⚠️ What the check did not reach: screens that need data the demo does not have (a filled consolidation, a
+  sea shipment, the tenant admin portal, the sales and boss dashboards), hover states, and print. If something looks
+  wrong, `PURGE_THEME=off npx mix` builds the stylesheet whole, and `node build/purge-theme.js --why <class>` says
+  why a class is kept or dropped. The seven font files are as they were.
 - **FP4 [R]** `public/blogData.js` (eight full articles) ships in the home page chunk to show four titles;
   `GET /get-public-blogs` returns every post with its full body.
   ✅ **Fixed 2026-11-16 (server half):** the public list no longer carries the bodies; the article is fetched with the

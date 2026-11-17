@@ -13,6 +13,10 @@ mix.alias({
 
 mix.disableSuccessNotifications();
 
+// The old theme's stylesheet without the rules no page can use, about half of the stylesheet (build/purge-theme.js, which
+// says exactly what counts as "can use"). Only the theme goes through it; every page's own styles are left alone.
+mix.options({ postCss: [require("./build/purge-theme").plugin()] });
+
 if (mix.inProduction()) {
     mix.version();
 }

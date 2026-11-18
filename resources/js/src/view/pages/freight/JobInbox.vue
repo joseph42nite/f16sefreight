@@ -753,6 +753,7 @@
 import { mapGetters } from "vuex";
 import Vue from "vue";
 import ApiService from "@/core/services/api.service";
+import { mailForm } from "@/core/services/mail";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import RecipientInput from "@/view/pages/freight/components/RecipientInput.vue";
@@ -1259,25 +1260,10 @@ export default {
       this.composing = true;
     },
     send() {
-      // Commas or semicolons, as the address box itself accepts (frontend audit, FC3).
-      const split = (v) => v.split(/[,;]/).map((a) => a.trim()).filter(Boolean);
-
       this.sending = true;
       this.sendError = null;
 
-      // Multipart, because files go with it.
-      const form = new FormData();
-      split(this.draft.to).forEach((a) => form.append("to[]", a));
-      split(this.draft.cc).forEach((a) => form.append("cc[]", a));
-      form.append("subject", this.draft.subject);
-      form.append("body", this.draft.body);
-      form.append("include_signature", this.draft.includeSignature ? "1" : "0");
-      form.append("mode", this.draft.mode);
-      if (this.draft.inReplyTo) form.append("in_reply_to", this.draft.inReplyTo);
-      this.draft.attachmentIds.forEach((id) => form.append("attachment_ids[]", id));
-      this.draft.files.forEach((f) => form.append("files[]", f));
-
-      ApiService.post("/inbox/threads/" + this.active.id + "/reply", form)
+      ApiService.post("/inbox/threads/" + this.active.id + "/reply", mailForm(this.draft))
         .then(({ data }) => {
           this.composing = false;
           this.sentOk = true;

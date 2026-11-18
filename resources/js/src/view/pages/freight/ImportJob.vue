@@ -214,6 +214,7 @@
 import { showFile } from "@/core/services/download";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { addressList } from "@/core/services/mail";
 import { WHOLE_LIST } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
@@ -336,7 +337,7 @@ export default {
     decideNotice(decision) {
       const body = { decision };
       if (decision === "send") {
-        Object.assign(body, { to: this.noticeMail.to.split(/[,;]/).map((a) => a.trim()).filter(Boolean),
+        Object.assign(body, { to: addressList(this.noticeMail.to),
           subject: this.noticeMail.subject, body: this.noticeMail.body });
       }
       this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice/decide`, body));

@@ -87,10 +87,9 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { addressList } from "@/core/services/mail";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
-
-const list = (text) => String(text || "").split(/[,;]/).map((x) => x.trim()).filter(Boolean);
 
 export default {
   name: "TeamMails",
@@ -169,7 +168,7 @@ export default {
       this.sending = true;
       this.sendError = null;
       ApiService.post(`${this.endpoint}/${m.id}/send`, {
-        to: list(this.form.to), cc: list(this.form.cc), subject: this.form.subject, body: this.form.body,
+        to: addressList(this.form.to), cc: addressList(this.form.cc), subject: this.form.subject, body: this.form.body,
       })
         .then(() => { this.mails = this.mails.filter((x) => x.id !== m.id); this.composing = null; })
         .catch((err) => { this.sendError = this.error(err, "Not sent. Try again."); })

@@ -63,6 +63,8 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { mailForm } from "@/core/services/mail";
+import { serverMessage } from "@/core/services/serverMessage";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
 import RecipientInput from "@/view/pages/freight/components/RecipientInput.vue";
 
@@ -83,24 +85,16 @@ export default {
       e.target.value = "";
     },
     send() {
-      const split = (v) => v.split(/[,;]/).map((a) => a.trim()).filter(Boolean);
-      const form = new FormData();
-      split(this.to).forEach((a) => form.append("to[]", a));
-      split(this.cc).forEach((a) => form.append("cc[]", a));
-      form.append("subject", this.subject);
-      form.append("body", this.body);
-      form.append("include_signature", this.includeSignature ? "1" : "0");
-      this.files.forEach((f) => form.append("files[]", f));
+      const form = mailForm({
+        to: this.to, cc: this.cc, subject: this.subject, body: this.body,
+        includeSignature: this.includeSignature, files: this.files,
+      });
 
       this.sending = true;
       this.error = null;
       ApiService.post("/inbox/compose", form)
         .then(({ data }) => { this.sentFrom = data.from; })
-        .catch((e) => {
-          const d = e.response && e.response.data;
-          const invalid = d && d.errors && Object.values(d.errors)[0];
-          this.error = (invalid && invalid[0]) || (d && d.error) || "The mail could not be sent.";
-        })
+        .catch((e) => { this.error = serverMessage(e, "The mail could not be sent."); })
         .finally(() => { this.sending = false; });
     },
   },

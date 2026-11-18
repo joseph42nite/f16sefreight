@@ -513,6 +513,13 @@ The committed `public/js` files are a development build, so absolute sizes overs
 > tests in `waybillUploadConsent.spec.js`. The question was drawn in the browser by setting the window's state;
 > ⏸ not run with a real scan, which would spend a credit on a yes.
 
+> **2026-11-18: writing and sending a mail.** The address split was written in eight pages and the multipart
+> mail form in four; both are `core/services/mail.js` now (`addressList`, `mailForm`). The reply and new-mail
+> windows, the bank query and the chasing mail build their form with `mailForm`; the arrival notice, team mails,
+> the client update and the bill's mail card split with `addressList`. `NewMail.vue` reads a refusal through
+> `serverMessage` like every other page, so with no answer from the server it now says the server could not be
+> reached and no longer "The mail could not be sent." Tests in `mail.spec.js`.
+
 ## 8. Tests
 
 40 jest specs. About 32 run real modules or mount real components. Six assert on source text read from disk, so

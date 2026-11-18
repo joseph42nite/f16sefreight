@@ -1061,6 +1061,7 @@ import { saveFile } from "@/core/services/download";
 import { yearChoices } from "@/core/config/financialYear";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { mailForm } from "@/core/services/mail";
 import { WHOLE_LIST, inr } from "@/core/config/format";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
@@ -1508,11 +1509,7 @@ export default {
     },
     /** Sent from the person's own mailbox, through the same path as any other mail they write. */
     sendQuery() {
-      const form = new FormData();
-      this.queryDraft.toLine.split(/[,;]/).map((a) => a.trim()).filter(Boolean).forEach((a) => form.append("to[]", a));
-      form.append("subject", this.queryDraft.subject);
-      form.append("body", this.queryDraft.body);
-      form.append("include_signature", "1");
+      const form = mailForm({ to: this.queryDraft.toLine, subject: this.queryDraft.subject, body: this.queryDraft.body });
 
       this.busy = true;
       this.actionError = null;

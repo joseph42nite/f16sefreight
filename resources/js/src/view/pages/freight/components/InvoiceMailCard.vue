@@ -27,6 +27,7 @@
 </template>
 
 <script>
+import { addressList } from "@/core/services/mail";
 import RecipientInput from "@/view/pages/freight/components/RecipientInput.vue";
 
 /**
@@ -55,9 +56,7 @@ export default {
     },
   },
   methods: {
-    list(text) {
-      return String(text || "").split(/[,;]/).map((s) => s.trim()).filter(Boolean);
-    },
+    list: addressList,
     decide(decision) {
       this.$emit("decide", decision === "skip" ? { decision } : {
         decision, to: this.list(this.to), cc: this.list(this.cc), subject: this.subject, body: this.body,

@@ -71,7 +71,9 @@ describe("the pages", () => {
     "components/ClientUpdateEditor.vue", "components/TeamMails.vue"])("%s takes semicolons between addresses (FC3)", (file) => {
     const source = read("view/pages/freight/" + file);
 
-    expect(source).toMatch(/split\(\/\[,;\]\/\)/);
+    // The split itself is one function now, tested in mail.spec.js.
+    expect(source).toMatch(/addressList\(|mailForm\(/);
+    expect(source).not.toMatch(/split\(","\)\.map\(\(\w+\) => \w+\.trim\(\)\)/);
   });
 
   it.each([["view/layouts/admin/aside/Menu.vue", "/superadmin/logout"], ["view/layouts/public/Header.vue", "/user/logout"]])(

@@ -30,6 +30,7 @@
 </template>
 
 <script>
+import { addressList } from "@/core/services/mail";
 export default {
   name: "ClientUpdateEditor",
   props: {
@@ -58,7 +59,7 @@ export default {
   methods: {
     values() {
       return {
-        to: this.to.split(/[,;]/).map((s) => s.trim()).filter(Boolean),
+        to: addressList(this.to),
         subject: this.subject,
         body: this.body,
       };

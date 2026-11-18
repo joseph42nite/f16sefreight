@@ -361,6 +361,7 @@
 import { saveFile } from "@/core/services/download";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
+import { mailForm } from "@/core/services/mail";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
@@ -518,11 +519,7 @@ export default {
     },
     /** Sent from the person's own mailbox — and logged, because a chase nobody recorded did not happen. */
     sendChase() {
-      const form = new FormData();
-      this.chaseDraft.toLine.split(/[,;]/).map((a) => a.trim()).filter(Boolean).forEach((a) => form.append("to[]", a));
-      form.append("subject", this.chaseDraft.subject);
-      form.append("body", this.chaseDraft.body);
-      form.append("include_signature", "1");
+      const form = mailForm({ to: this.chaseDraft.toLine, subject: this.chaseDraft.subject, body: this.chaseDraft.body });
 
       this.busy = true;
       this.actionError = null;

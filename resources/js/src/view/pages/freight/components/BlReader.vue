@@ -12,6 +12,7 @@
     </div>
 
     <p v-if="error" class="fx-error" role="alert">{{ error }}</p>
+    <p v-if="waiting && busy" class="fx-notice" role="status">{{ waiting }}</p>
 
     <!-- A scan costs credits to read; a person decides (PRD §5.1 consent). -->
     <div v-if="consent" class="fx-notice" role="status">
@@ -76,6 +77,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
+import { readingStep, QUEUED_TOO_LONG } from "@/core/services/readingStatus";
 
 /**
  * Reading a BL or a carrier's booking into the sea bill (guide Step 12.4).
@@ -95,7 +97,7 @@ export default {
     jobId: { type: [Number, String], default: null },
     mode: { type: String, default: "form" },
   },
-  data: () => ({ ROLE, busy: false, error: null, reading: null, consent: null, bill: null, modelError: null, take: {}, takeBox: {}, notice: null }),
+  data: () => ({ ROLE, busy: false, error: null, reading: null, consent: null, bill: null, modelError: null, take: {}, takeBox: {}, notice: null, waiting: null, startedAt: 0 }),
   computed: {
     anyTaken() {
       return Object.values(this.take).some(Boolean) || Object.values(this.takeBox).some(Boolean);
@@ -114,37 +116,48 @@ export default {
       body.append("type", "bill_of_lading");
       if (this.jobId) body.append("job_id", this.jobId);
 
-      Object.assign(this, { busy: true, error: null, bill: null, consent: null, notice: null, modelError: null });
+      Object.assign(this, { busy: true, error: null, bill: null, consent: null, notice: null, modelError: null, waiting: null });
       ApiService.post("/user/upload-awb-file", body)
-        .then(({ data }) => { this.reading = data.job_id; this.poll(); })
+        .then(({ data }) => { this.reading = data.job_id; this.startedAt = Date.now(); this.poll(); })
         .catch((e) => { this.error = this.readable(e); this.busy = false; });
     },
     poll() {
       ApiService.get("/user/ocr-status/" + this.reading)
         .then(({ data }) => {
-          if (data.job_status === "completed") return this.show(data);
-          if (data.job_status === "awaiting_vision_consent") {
-            this.consent = { pages: data.page_count, cost: data.credit_cost };
+          const reading = readingStep(data);
+
+          if (reading.step === "done") return this.show(data);
+          if (reading.step === "consent") {
+            this.consent = { pages: reading.pages, cost: reading.cost };
             this.busy = false;
             return null;
           }
-          if (data.job_status === "failed") {
-            this.error = data.failure_code === "upgrade_required"
-              ? "Reading documents with AI is on the Tactical plan." : (data.error || "The document could not be read.");
+          if (reading.step === "failed") {
+            // `cancelled` ends the wait too: it was asked about again every second and a half, for ever.
+            this.error = this.whyNotRead(reading);
+            this.waiting = null;
             this.busy = false;
             return null;
           }
+          // Queued and not picked up: said, so "Reading…" is not all there is to look at.
+          this.waiting = reading.queued && Date.now() - this.startedAt > QUEUED_TOO_LONG
+            ? "Still waiting to start. The background worker does not seem to be running." : null;
           this.timer = setTimeout(this.poll, 1500);
           return null;
         })
-        .catch((e) => { this.error = this.readable(e); this.busy = false; });
+        .catch((e) => { this.error = this.readable(e); this.waiting = null; this.busy = false; });
+    },
+    whyNotRead(reading) {
+      if (reading.code === "upgrade_required") return "Reading documents with AI is on the Tactical plan.";
+      if (reading.code === "cancelled") return reading.error || "This reading was cancelled.";
+      return reading.error || "The document could not be read.";
     },
     answer(decision) {
       this.busy = true;
       ApiService.post("/user/ocr-consent/" + this.reading, { decision })
         .then(() => {
           this.consent = null;
-          if (decision === "accept") this.poll();
+          if (decision === "accept") { this.startedAt = Date.now(); this.poll(); }
           else this.busy = false;
         })
         .catch((e) => { this.error = this.readable(e); this.busy = false; });

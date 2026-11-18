@@ -5,7 +5,14 @@
  * scan with no readable text is parked at `awaiting_vision_consent` until somebody says whether to spend a credit
  * on reading it; the window never asked, so it sat on "Extracting…" for five minutes and then said the document
  * was taking too long. A reading can also be `cancelled`.
+ *
+ * The bill-of-lading reader (`BlReader.vue`) reads its answers here too: it did not know `cancelled` either, and
+ * asked again every second and a half for as long as the page stayed open.
  */
+
+/** How long a document may sit queued before the page says no worker seems to be running. */
+export const QUEUED_TOO_LONG = 60000;
+
 export function readingStep(answer) {
   const data = answer || {};
 
@@ -16,11 +23,13 @@ export function readingStep(answer) {
       // The price goes with the question: a yes/no with no figure is not a decision.
       return { step: "consent", cost: Number(data.credit_cost) || 1, pages: Number(data.page_count) || null };
     case "failed":
-      return { step: "failed", why: "Parsing failure: " + (data.error || "Unknown engine error") };
+      // `error` and `code` are the server's own, for a page that words a failure itself.
+      return { step: "failed", why: "Parsing failure: " + (data.error || "Unknown engine error"), error: data.error || null, code: data.failure_code || null };
     case "cancelled":
-      return { step: "failed", why: data.error || "This reading was cancelled." };
+      return { step: "failed", why: data.error || "This reading was cancelled.", error: data.error || null, code: "cancelled" };
     default:
-      return { step: "working", message: data.job_status === "processing" ? "Extracting IATA fields..." : null };
+      // `queued`: nothing has picked the document up yet. A page that waits long on this has no worker running.
+      return { step: "working", message: data.job_status === "processing" ? "Extracting IATA fields..." : null, queued: data.job_status === "pending" };
   }
 }
 

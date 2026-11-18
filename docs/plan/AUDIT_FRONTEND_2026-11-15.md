@@ -534,6 +534,18 @@ The committed `public/js` files are a development build, so absolute sizes overs
 > browser: name, role, links, the share address and its QR code, the styles, the `noindex` tag, and the contact
 > file's name with the save itself held back.
 
+> **2026-11-18: waiting for a document to be read.** "OCR upload-and-poll written three times": the waybill upload
+> window, the bill-of-lading reader (`BlReader.vue`) and the inbox's extraction panel each read
+> `/user/ocr-status` their own way. The reader now reads it through `core/services/readingStatus.js`, as the upload
+> window does. 🔴 **Found comparing them:** the reader did not know `cancelled`, so a cancelled reading was asked
+> about every second and a half for as long as the page stayed open, under a button stuck on "Reading…". It ends
+> now and says the reading was cancelled. A document still queued after a minute says the background worker does
+> not seem to be running, as the extraction panel already did. Failures are worded as before. Tests in
+> `blReader.spec.js`. Run in the browser with the server's answers canned (nothing uploaded, no credit spent): the
+> dev data has no sea shipment, so the built reader was mounted on the Bills of Lading page by hand.
+> ⏸ Left: `ExtractionPanel.vue` keeps its own check. It already handles every status, and it holds a timer and
+> a state per document, so sharing the check would save about ten lines.
+
 ## 8. Tests
 
 40 jest specs. About 32 run real modules or mount real components. Six assert on source text read from disk, so

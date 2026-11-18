@@ -60,3 +60,94 @@ describe("BlReader (guide Step 12.4)", () => {
     expect(wrapper.text()).toContain("Left as the master has them: vessel name");
   });
 });
+
+/**
+ * Frontend audit §7 ("OCR upload-and-poll written three times"): the reader had its own copy of the status check,
+ * and it did not know `cancelled`. It reads the answer through `readingStatus.js` now.
+ */
+describe("BlReader waiting for a reading", () => {
+  const waitingOn = (answers) => {
+    jest.useFakeTimers();
+    ApiService.get.mockReset();
+    answers.forEach((data) => ApiService.get.mockResolvedValueOnce({ data }));
+    const wrapper = mount(BlReader, { propsData: { jobId: 7 } });
+    wrapper.setData({ reading: 55, busy: true, startedAt: Date.now() });
+    return wrapper;
+  };
+  const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
+
+  afterEach(() => jest.useRealTimers());
+
+  it("asks again while the document is being read, then shows it", async () => {
+    const wrapper = waitingOn([{ job_status: "processing" }, { job_status: "completed", bill: JSON.parse(JSON.stringify(BILL)) }]);
+
+    wrapper.vm.poll();
+    await settle();
+    expect(wrapper.vm.busy).toBe(true);
+
+    jest.advanceTimersByTime(1500);
+    await settle();
+
+    expect(ApiService.get).toHaveBeenCalledTimes(2);
+    expect(wrapper.vm.bill.fields).toHaveLength(3);
+    expect(wrapper.vm.busy).toBe(false);
+  });
+
+  it("stops on a cancelled reading and says so", async () => {
+    const wrapper = waitingOn([{ job_status: "cancelled" }]);
+
+    wrapper.vm.poll();
+    await settle();
+    jest.advanceTimersByTime(60000);
+    await settle();
+
+    expect(ApiService.get).toHaveBeenCalledTimes(1);
+    expect(wrapper.vm.busy).toBe(false);
+    expect(wrapper.text()).toContain("This reading was cancelled.");
+  });
+
+  it("words a failure as before", async () => {
+    let wrapper = waitingOn([{ job_status: "failed", failure_code: "upgrade_required", error: "plan" }]);
+    wrapper.vm.poll();
+    await settle();
+    expect(wrapper.vm.error).toBe("Reading documents with AI is on the Tactical plan.");
+
+    wrapper = waitingOn([{ job_status: "failed", error: "The PDF is password protected." }]);
+    wrapper.vm.poll();
+    await settle();
+    expect(wrapper.vm.error).toBe("The PDF is password protected.");
+
+    wrapper = waitingOn([{ job_status: "failed" }]);
+    wrapper.vm.poll();
+    await settle();
+    expect(wrapper.vm.error).toBe("The document could not be read.");
+  });
+
+  it("asks before a scan is read, with the price", async () => {
+    const wrapper = waitingOn([{ job_status: "awaiting_vision_consent", page_count: 2, credit_cost: 1 }]);
+
+    wrapper.vm.poll();
+    await settle();
+
+    expect(wrapper.vm.consent).toEqual({ pages: 2, cost: 1 });
+    expect(wrapper.text()).toContain("This looks like a scan (2 page(s)). Read it with AI for 1 credit(s)?");
+  });
+
+  it("says so when the document has sat in the queue for a minute", async () => {
+    const wrapper = waitingOn([{ job_status: "pending" }, { job_status: "pending" }, { job_status: "processing" }]);
+
+    wrapper.vm.poll();
+    await settle();
+    expect(wrapper.vm.waiting).toBeNull();
+
+    wrapper.setData({ startedAt: Date.now() - 61000 });
+    jest.advanceTimersByTime(1500);
+    await settle();
+    expect(wrapper.text()).toContain("The background worker does not seem to be running.");
+
+    // Picked up: the notice goes.
+    jest.advanceTimersByTime(1500);
+    await settle();
+    expect(wrapper.vm.waiting).toBeNull();
+  });
+});

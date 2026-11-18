@@ -34,11 +34,13 @@ describe("readingStep", () => {
 
   it("ends on a failure or a cancellation, with the reason", () => {
     expect(readingStep({ job_status: "failed", error: "no pages" }).why).toBe("Parsing failure: no pages");
-    expect(readingStep({ job_status: "cancelled" })).toEqual({ step: "failed", why: "This reading was cancelled." });
+    expect(readingStep({ job_status: "cancelled" })).toEqual({ step: "failed", why: "This reading was cancelled.", error: null, code: "cancelled" });
+    expect(readingStep({ job_status: "failed", failure_code: "upgrade_required", error: "plan" })).toMatchObject({ code: "upgrade_required", error: "plan" });
   });
 
   it("keeps waiting otherwise", () => {
-    expect(readingStep({ job_status: "pending" })).toEqual({ step: "working", message: null });
+    expect(readingStep({ job_status: "pending" })).toEqual({ step: "working", message: null, queued: true });
+    expect(readingStep({ job_status: "processing" }).queued).toBe(false);
     expect(readingStep({ job_status: "processing" }).message).toBe("Extracting IATA fields...");
     expect(readingStep(undefined).step).toBe("working");
   });

@@ -101,7 +101,7 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
-import { WHOLE_LIST } from "@/core/config/format";
+import { wholeList } from "@/core/services/wholeList";
 import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
@@ -134,8 +134,8 @@ export default {
   },
   created() {
     this.load();
-    ApiService.get("/customers" + WHOLE_LIST).then(({ data }) => { this.customers = data.data || []; }).catch(() => {});
-    ApiService.get("/partners" + WHOLE_LIST).then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
+    wholeList("/customers").then((rows) => { this.customers = rows; }).catch(() => {});
+    wholeList("/partners").then((rows) => { this.partners = rows; }).catch(() => {});
   },
   methods: {
     load() {

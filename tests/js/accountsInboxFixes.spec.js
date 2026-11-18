@@ -4,7 +4,7 @@
  */
 const fs = require("fs");
 const path = require("path");
-const { paise, WHOLE_LIST } = require("../../resources/js/src/core/config/format");
+const { paise } = require("../../resources/js/src/core/config/format");
 
 const read = (page) => fs.readFileSync(path.join(__dirname, "../../resources/js/src/view/pages/freight", page), "utf8");
 
@@ -55,16 +55,15 @@ describe("Billing", () => {
 });
 
 describe("pick-lists hold the whole list (FM7)", () => {
-  it("asks for the server's largest page", () => expect(WHOLE_LIST).toBe("?per_page=500"));
-
+  // What the helper asks the server for is tested in wholeList.spec.js.
   it.each([
     ["Billing.vue", 4], ["FinanceSettings.vue", 2], ["ImportJob.vue", 1], ["FocusSeaMaster.vue", 1],
     ["components/EntityPanel.vue", 2], ["components/CostSheet.vue", 1], ["Financials.vue", 1],
   ])("%s", (page, lists) => {
     const source = read(page);
 
-    expect((source.match(/ApiService\.get\("\/(customers|partners)" \+ WHOLE_LIST/g) || []).length).toBe(lists);
-    expect(source).not.toMatch(/ApiService\.get\("\/(customers|partners)"\)/);
+    expect((source.match(/wholeList\("\/(customers|partners)"/g) || []).length).toBe(lists);
+    expect(source).not.toMatch(/ApiService\.get\("\/(customers|partners)"/);
   });
 });
 

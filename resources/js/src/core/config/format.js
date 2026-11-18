@@ -101,10 +101,4 @@ export function paise(value) {
   return Math.sign(n) * Number(Math.round(shifted) + "e-2");
 }
 
-/**
- * For a pick-list of clients or partners: the whole list, not the register's first page of 50, or the 51st
- * cannot be chosen (FM7). 500 is the server's own ceiling for a page.
- */
-export const WHOLE_LIST = "?per_page=500";
-
 export default { isEmpty, date, dateTime, weight, volume, currency, count, localToday, termsLabel };

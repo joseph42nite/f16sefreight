@@ -1062,7 +1062,8 @@ import { yearChoices } from "@/core/config/financialYear";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { mailForm } from "@/core/services/mail";
-import { WHOLE_LIST, inr } from "@/core/config/format";
+import { inr } from "@/core/config/format";
+import { wholeList } from "@/core/services/wholeList";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
@@ -1388,8 +1389,8 @@ export default {
     loadVendors() {
       this.vendorForm.vendor_id = null;
       this.loadVendorStatements();
-      ApiService.get("/partners" + WHOLE_LIST + (this.vendorForm.vendor_type ? "&type=" + encodeURIComponent(this.vendorForm.vendor_type) : ""))
-        .then(({ data }) => { this.vendors = data.data || []; })
+      wholeList("/partners", { type: this.vendorForm.vendor_type })
+        .then((rows) => { this.vendors = rows; })
         .catch((e) => { this.actionError = this.messageFor(e); });
     },
     importVendorStatement() {

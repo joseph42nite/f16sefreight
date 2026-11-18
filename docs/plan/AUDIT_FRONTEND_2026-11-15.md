@@ -216,6 +216,11 @@ The backend audit is `AUDIT_2026-11-10.md`.
   (`format.js` `WHOLE_LIST`); `PartnerController::index` now takes `per_page`, 500 at most, as the client list did.
   ⏸ Left: the shipment list on a new bill is still the newest 50 (`JobController` holds someone else's uncommitted
   work) and a company with more than 500 clients needs a searched box.
+  ✅ **Fixed 2026-11-18 (more than 500):** the twelve client and partner pick-lists read every page the server
+  says there is (`core/services/wholeList.js`), 500 rows at a time, so client 501 can be chosen. A company with
+  thousands of clients gets a long list, not a searched box; that is still the better answer for it. Tests in
+  `wholeList.spec.js`. Run on the billing page against the server with the page size held to 3 (the dev data has
+  4 clients and 10 partners): both lists came back whole, over 2 and 4 requests. Not opened: the other six pages.
   ✅ **Fixed 2026-11-17 (the three registers):** the manifest filings, the client and partner directories and the
   accounts lists (invoices, awaiting, vouchers, bank) ask for a page and draw "Previous / Page 2 of 3 / Next" under
   the list when there is a second page (`core/services/paging.js`, `components/Pager.vue`). A filter starts again

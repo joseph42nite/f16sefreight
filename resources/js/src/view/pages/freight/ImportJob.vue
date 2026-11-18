@@ -215,7 +215,7 @@ import { showFile } from "@/core/services/download";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { addressList } from "@/core/services/mail";
-import { WHOLE_LIST } from "@/core/config/format";
+import { wholeList } from "@/core/services/wholeList";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import EntityPanel from "@/view/pages/freight/components/EntityPanel.vue";
@@ -294,7 +294,7 @@ export default {
         ? { to: (staged.to || []).join(", "), subject: staged.subject || "", body: staged.body || "" }
         : { to: "", subject: "", body: "" };
       if (data.document === "master" && this.canWrite && !this.clients.length) {
-        ApiService.get("/customers" + WHOLE_LIST).then(({ data: c }) => { this.clients = c.data || []; }).catch(() => {});
+        wholeList("/customers").then((rows) => { this.clients = rows; }).catch(() => {});
       }
       if (data.document === "master" && this.canWrite) {
         ApiService.get(`/jobs/unassociated?transport_mode=${data.mode}&direction=import`)

@@ -296,7 +296,7 @@
 <script>
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
-import { WHOLE_LIST } from "@/core/config/format";
+import { wholeList } from "@/core/services/wholeList";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import { serverMessage } from "@/core/services/serverMessage";
 
@@ -337,8 +337,8 @@ export default {
   },
   created() {
     this.load();
-    ApiService.get("/partners" + WHOLE_LIST)
-      .then(({ data }) => { this.partners = data.data || []; })
+    wholeList("/partners")
+      .then((rows) => { this.partners = rows; })
       .catch(() => { /* the vendor list is optional until a buy line is added */ });
   },
   methods: {

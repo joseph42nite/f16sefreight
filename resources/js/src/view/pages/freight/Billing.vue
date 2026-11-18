@@ -878,7 +878,8 @@
 
 <script>
 import { saveFile, showFile } from "@/core/services/download";
-import { localToday, paise, WHOLE_LIST, inr } from "@/core/config/format";
+import { localToday, paise, inr } from "@/core/config/format";
+import { wholeList } from "@/core/services/wholeList";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import InvoiceMailCard from "@/view/pages/freight/components/InvoiceMailCard.vue";
@@ -1165,7 +1166,7 @@ export default {
       this.billTo = data.bill_to || [];
       this.officeDraft = this.document.customer_id;
       if (this.can.change_client && !this.clients.length) {
-        ApiService.get("/customers" + WHOLE_LIST).then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
+        wholeList("/customers").then((rows) => { this.clients = rows; }).catch(() => {});
       }
       this.header = {
         document_date: (this.document.document_date || "").slice(0, 10),
@@ -1320,8 +1321,8 @@ export default {
       if (against) this.loadCreditRoom();
 
       ApiService.get("/jobs?per_page=50").then(({ data }) => { this.jobs = data.data || data.rows || []; }).catch(() => {});
-      ApiService.get("/partners" + WHOLE_LIST).then(({ data }) => { this.partners = data.data || []; }).catch(() => {});
-      ApiService.get("/customers" + WHOLE_LIST).then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
+      wholeList("/partners").then((rows) => { this.partners = rows; }).catch(() => {});
+      wholeList("/customers").then((rows) => { this.clients = rows; }).catch(() => {});
       ApiService.get("/billing?types[]=invoice&issued=1")
         .then(({ data }) => { this.parents = data.rows || []; })
         .catch(() => { this.parents = null; });
@@ -1362,7 +1363,7 @@ export default {
         receipt_date: localToday(), mode: "bank_transfer", reference: "", amount: 0,
       };
 
-      ApiService.get("/customers" + WHOLE_LIST).then(({ data }) => { this.clients = data.data || []; }).catch(() => {});
+      wholeList("/customers").then((rows) => { this.clients = rows; }).catch(() => {});
     },
     loadOpenDocuments() {
       this.openDocuments = [];

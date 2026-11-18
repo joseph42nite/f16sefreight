@@ -577,6 +577,17 @@ the blog pages. Nothing runs the specs automatically.
 > specs on every push and pull request (`.github/workflows/frontend-tests.yml`), wherever the push comes from. The
 > server suite is not run there: it needs MySQL and Redis and takes about 12 minutes.
 
+> **2026-11-18: two more admin pages.** `adminTenants.spec.js` mounts Companies & branches (`Tenants.vue`, where a
+> new client is made) and the domain directory (whose approvals apply to every tenant): 17 tests, each run.
+> 🔴 **Found writing them:** on Companies & branches a form stayed open when another company was picked from the
+> list. A branch or a person being typed for one company was then saved under the company picked last, and with
+> the new-client form open, picking a company seemed to do nothing. Picking a company now closes the form first.
+> The page's own copy of the refusal wording goes through `serverMessage` like the rest, so with no answer from
+> the server it says the server could not be reached. Run in the browser on the superadmin site, nothing saved:
+> a half-typed branch closed when a second company was picked, and so did the new-client form.
+> **Still untested:** the other admin pages (users, companies, branches, blogs, help documents, support tickets,
+> AI usage, the monitor, client shipments).
+
 ## 9. Checked and found fine
 
 - Every admin and tenant API group is guarded on the server; the client guards are convenience only.

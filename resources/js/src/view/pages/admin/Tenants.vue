@@ -15,7 +15,7 @@
       <!-- The companies, with how many branches and people each has. -->
       <ul class="fx-tenants__list" aria-label="Companies">
         <li v-for="c in shown" :key="c.id">
-          <button type="button" class="fx-tenants__item" :class="{ 'is-active': open && open.company.id === c.id }" @click="openCompany(c.id)">
+          <button type="button" class="fx-tenants__item" :class="{ 'is-active': open && open.company.id === c.id }" @click="choose(c.id)">
             <strong>{{ c.name }}</strong>
             <span class="fx-muted">{{ c.code || "no code" }} · {{ tierLabel(c.tier) }} · {{ c.branches }} {{ c.branches === 1 ? "branch" : "branches" }} · {{ c.people }} {{ c.people === 1 ? "person" : "people" }}</span>
             <span v-if="!c.branches" class="fx-tag fx-tag--warn">no branch yet</span>
@@ -175,6 +175,7 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 
 const TIERS = { core: "Core", tactical: "Tactical", command: "Command" };
 
@@ -208,10 +209,19 @@ export default {
       return TIERS[t] || t || "—";
     },
     message(e, fallback) {
-      const d = e && e.response && e.response.data;
-      const errors = d && d.errors;
-      if (errors) return Object.values(errors).flat().join(" ");
-      return (d && (d.error || d.message)) || fallback;
+      // Every field's complaint at once: these forms have many boxes.
+      return serverMessage(e, fallback, { all: true });
+    },
+    /**
+     * A company picked from the list. 🔴 Any form that was open closes first: a branch or a person being typed for
+     * one company stayed on the page when another was picked, and Save then put it under the company picked last.
+     */
+    choose(id) {
+      this.step = null;
+      this.wizard = false;
+      this.formError = null;
+
+      return this.openCompany(id);
     },
     load() {
       return ApiService.get("/superadmin/tenants")

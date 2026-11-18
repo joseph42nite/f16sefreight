@@ -525,6 +525,15 @@ The committed `public/js` files are a development build, so absolute sizes overs
 > `serverMessage` like every other page, so with no answer from the server it now says the server could not be
 > reached and no longer "The mail could not be sent." Tests in `mail.spec.js`.
 
+> **2026-11-18: the two business cards.** `JosephCard.vue` and `DeepanjanCard.vue` are 31 lines each now: who the
+> person is, and the page's title and tags. The card is one component, `public/components/BusinessCard.vue`, and
+> what it derives from the person (title and tags, the WhatsApp link, the contact file) is
+> `core/services/businessCard.js`. 1,600 lines fewer. The contact file is handed over through `saveFile`: the cards
+> freed it the moment the link was clicked, the fault fixed in the other downloads on 2026-11-17. The routes are
+> untouched. Tests in `businessCard.spec.js` compare each card with what the old one said. Both opened in the
+> browser: name, role, links, the share address and its QR code, the styles, the `noindex` tag, and the contact
+> file's name with the save itself held back.
+
 ## 8. Tests
 
 40 jest specs. About 32 run real modules or mount real components. Six assert on source text read from disk, so

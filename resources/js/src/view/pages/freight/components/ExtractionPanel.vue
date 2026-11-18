@@ -532,6 +532,7 @@ import {
 } from "@/core/config/awbMapping";
 import { cleanParty } from "@/core/config/awbFieldRules";
 import { serverMessage } from "@/core/services/serverMessage";
+import { readingStep, QUEUED_TOO_LONG } from "@/core/services/readingStatus";
 
 /**
  * The parts a shipment is assembled from.
@@ -556,6 +557,8 @@ import { serverMessage } from "@/core/services/serverMessage";
  * parser then does another.
  */
 const TEXT_LAYER_MIN_CHARS = 120;
+// What a row says when its document has sat queued for a minute. Kept as one text so the row can take it back.
+const WAITING_TO_START = "waiting to start — the background worker does not seem to be running";
 
 const KINDS = [
   { key: "other", label: "Other document" },
@@ -1491,7 +1494,10 @@ export default {
       const check = () => {
         ApiService.get("/user/ocr-status/" + doc.jobId)
           .then(({ data }) => {
-            if (data.job_status === "completed") {
+            // The same reading of the answer as the waybill upload window and the bill-of-lading reader.
+            const reading = readingStep(data);
+
+            if (reading.step === "done") {
               clearTimeout(doc.timer);
               doc.fields = this.withCountryCodes(flattenRoute(flattenCargo(flattenParties(data.fields || {}, this.countries)), this.countries));
               // What the piece count was taken from — "TOTAL CTNS 26" — so the panel can say so.
@@ -1509,7 +1515,7 @@ export default {
               const fills = { ...this.assignment };
               GROUPS.forEach((g) => { if (!fills[g.key]) fills[g.key] = doc.uid; });
               this.assignment = fills;
-            } else if (data.job_status === "awaiting_vision_consent") {
+            } else if (reading.step === "consent") {
               // 🔴 THIS is when a scan is known to be a scan — the parser found no text
               // layer and said so. Until this was handled the job polled forever, because
               // the loop only ever looked for `completed` and `failed`.
@@ -1522,14 +1528,18 @@ export default {
               clearTimeout(doc.timer);
               // ⚠️ Reading a scan uses a credit, so the row asks; nothing is spent until "Read it" (GAPS #261).
               doc.state = "consent";
-              doc.consent = { pages: data.page_count, cost: data.credit_cost, busy: false };
-            } else if (data.job_status === "pending" && Date.now() - doc.startedAt > 60000) {
+              doc.consent = { pages: reading.pages, cost: reading.cost, busy: false };
+            } else if (reading.step === "failed") {
+              clearTimeout(doc.timer);
+              this.fail(uid, reading.error || "could not be read");
+            } else if (reading.queued && Date.now() - doc.startedAt > QUEUED_TOO_LONG) {
               // 🔴 Queued but nothing has picked it up (user, 2026-09-18: "why is the document parsing taking more than
               // 1 minute?" — the answer was that no queue worker was running, and the panel just said "reading…").
-              doc.warning = "waiting to start — the background worker does not seem to be running";
-            } else if (data.job_status === "failed" || data.job_status === "cancelled") {
-              clearTimeout(doc.timer);
-              this.fail(uid, data.error || "could not be read");
+              doc.warning = WAITING_TO_START;
+            } else if (!reading.queued && doc.warning === WAITING_TO_START) {
+              // 🔴 Picked up after all. The notice used to stay on the row for the whole reading, saying no worker
+              // was running while one read the document.
+              doc.warning = null;
             }
           })
           .catch((e) => {

@@ -543,8 +543,14 @@ The committed `public/js` files are a development build, so absolute sizes overs
 > not seem to be running, as the extraction panel already did. Failures are worded as before. Tests in
 > `blReader.spec.js`. Run in the browser with the server's answers canned (nothing uploaded, no credit spent): the
 > dev data has no sea shipment, so the built reader was mounted on the Bills of Lading page by hand.
-> ⏸ Left: `ExtractionPanel.vue` keeps its own check. It already handles every status, and it holds a timer and
-> a state per document, so sharing the check would save about ten lines.
+> **Later the same day: the extraction panel too.** `ExtractionPanel.vue` reads the answer through
+> `readingStatus.js` as well, so all three read it one way; each still keeps its own timer, since the panel waits
+> on several documents at once. 🔴 **Found doing it:** a row that had said "waiting to start — the background
+> worker does not seem to be running" kept saying it after a worker picked the document up, for the whole
+> reading. The row takes the notice back now; any other warning is left alone. Tests in
+> `extractionWaiting.spec.js`. Run in the browser with the server's answers canned (nothing uploaded, no credit
+> spent), the built panel mounted on the inbox by hand: queued, the notice; picked up, the notice gone; cancelled,
+> the row ends on "could not be read" and nothing more is asked.
 
 ## 8. Tests
 

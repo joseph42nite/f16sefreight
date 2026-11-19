@@ -128,7 +128,7 @@
                     </div>
                 </b-collapse>
 
-                <auth-modals :show-login.sync="show_login_modal" :show-otp.sync="otp_verification_modal"></auth-modals>
+                <auth-modals :show-login.sync="show_login_modal"></auth-modals>
             </div>
         </b-navbar>
     </div>
@@ -138,6 +138,7 @@
 import { mapGetters } from "vuex";
 import { LOGOUT } from "@/core/services/store/auth.module";
 import ApiService from "@/core/services/api.service";
+import JwtService from "@/core/services/jwt.service";
 import AuthModals from "@/view/layouts/public/AuthModals.vue";
 
 export default {
@@ -148,15 +149,35 @@ export default {
     data() {
         return {
             show_login_modal: false,
-            otp_verification_modal: false,
             avatarLogoSrc: "/media/assets/ui/user-avatar.png",
         };
     },
     /* Arriving from another portal's sign-in (?signin=1): open the box straight away. */
     mounted() {
         if (this.$route.query.signin && !this.isAuthenticated) this.show_login_modal = true;
+        this.checkStoredSession();
     },
     methods: {
+        /**
+         * A stored token is asked about once (frontend audit, FK5): a public page checks nothing, so the signed-in
+         * menu stayed up for a session that had ended. Only a plain refusal signs out; with no answer the menu stays.
+         * The person is left on the page they are reading, not sent to sign in.
+         */
+        checkStoredSession() {
+            const token = JwtService.getToken();
+            const kind = { user: "user", superAdmin: "superadmin" }[JwtService.getRole()];
+
+            if (!this.isAuthenticated || !token || token === "undefined" || !kind) return Promise.resolve();
+
+            ApiService.setHeader();
+
+            return ApiService.post(`/${kind}/verify`, { token }).catch((error) => {
+                if (error && error.response && error.response.status === 401 && JwtService.getToken() === token) {
+                    return this.$store.dispatch(LOGOUT);
+                }
+            });
+        },
+
         hasActiveChildren(match) {
             return this.$route["path"].indexOf(match) !== -1;
         },
@@ -399,7 +420,6 @@ a.menu-link {
 .ultra-close-btn:hover { background: #ef4444; color: white; transform: rotate(90deg); }
 .modal-left-pane { flex: 0 0 40%; padding: 4rem 3.5rem; position: relative; overflow: hidden; color: white; display: flex; flex-direction: column; }
 .login-pane { background: linear-gradient(135deg, #1e3a6e 0%, #355594 100%); }
-.otp-pane { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
 .pane-content { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
 .pane-icon-wrapper { width: 80px; height: 80px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 24px; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); }
 .pane-title { font-size: 2.25rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.5px; line-height: 1.1; }

@@ -277,7 +277,9 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FA2 [R]** "Forgot password?" (`PortalSignIn.vue:40` (wip), `AuthModals.vue:86`) links to the contact page.
   Nothing calls `POST /api/Forgotpassword`, so there is no self-service reset — and FS2 breaks the mail anyway.
   ✅ **Fixed 2026-11-16:** in `AuthModals.vue` the link asks for the reset mail for the address typed above.
-  ⏸ `PortalSignIn.vue` still links to the contact page: it holds someone else's uncommitted work.
+  ✅ **Fixed 2026-11-19 (`PortalSignIn.vue`, once its owner's work was committed):** "Forgot password?" on a portal's
+  own sign-in page asks for the reset mail for the address typed above, as the website's box does. On the platform
+  admin page it still goes to the contact page: staff accounts are not reset by mail. `publicSignIn.spec.js`.
 - **FA3 [V]** `public/DeepanjanCard.vue:426, 465` → the email is `@f16sefrieght.com` (misspelt). The email button
   and the downloaded contact card point at a domain the company does not own.
   ✅ **Fixed 2026-11-16:** both lines now read `@f16sefreight.com`. Specs for this batch:
@@ -349,7 +351,9 @@ The backend audit is `AUDIT_2026-11-10.md`.
 - **FK5 [R]** `main.js:62-69` → a signed-in user on the main domain is always sent to `/focus-air`, whatever their
   role. `Header.vue:41` shows the signed-in menu for any stored token, expired or not.
   ✅ **Fixed 2026-11-16 (first half):** the home page sends a signed-in person to their own start (`LANDING_ROUTE`),
-  as sign-in does. Seen in the browser. ⏸ The public header still trusts a stored token until a call is refused.
+  as sign-in does. Seen in the browser. ✅ **Fixed 2026-11-19 (second half):** the public header asks about a stored token once when it loads; a plain
+  refusal signs the person out where they are (no redirect), and no answer leaves the menu as it was.
+  `publicSignIn.spec.js`.
 - **FK6 [P]** `components/OcrUploadModal.vue:245-274` → polls every 0.8 s with no cap; any error stops it silently.
   ✅ **Fixed 2026-11-16:** it gives up after five minutes and says why; an error is said too.
 - **FK7 [R]** `welcome.blade.php:72-73` → `vendor.css` and `common.css` are not versioned; after a deploy a browser
@@ -498,6 +502,9 @@ The committed `public/js` files are a development build, so absolute sizes overs
 > cards (FS14 first); the two `OcrUploadModal.vue`; blob download (9) and compose-and-send (4); the OTP modal
 > (`Header.vue` holds someone else's work); `HomeFeatureGrid.vue`, `HomeStatsSection.vue`, `HomePartnersTicker.vue`
 > (the home page is someone's work in progress); `JobBoard.vue`'s own `readable` (same reason).
+> **2026-11-19, checked again:** the two business cards are one `BusinessCard.vue` and there is one
+> `OcrUploadModal.vue`; both were merged since. The OTP box that nothing opened is removed from `AuthModals.vue` and
+> `Header.vue` (about 55 lines; the server has no one-time code).
 
 > **2026-11-17: file downloads.** Handing a file to the browser was written out in eleven pages; it is
 > `core/services/download.js` now (`saveFile`, `showFile`). `MailFiling.vue` and `MoneyOut.vue` freed the file the
@@ -573,7 +580,8 @@ the blog pages. Nothing runs the specs automatically.
 > parts of `adminFixes`, `sessionHandling`, `securityLeftovers`): those pages do not mount in jest as they are.
 > The other admin pages are untested. **The specs now run before every push** (owner's call, 2026-11-16): the
 > pre-push hook runs `jest` first and a failure stops the push (`SKIP_TESTS=1 git push` skips it once). ⚠️ The hook
-> is in `.git/hooks`, which git does not carry: it is on this machine only. **2026-11-17:** GitHub now runs the same
+> is in `.git/hooks`, which git does not carry: it is on this machine only. ✅ **2026-11-19:** the hook is in the
+> repository as `.githooks/pre-push`; `npm install` points git at it (`prepare` in `package.json`). **2026-11-17:** GitHub now runs the same
 > specs on every push and pull request (`.github/workflows/frontend-tests.yml`), wherever the push comes from. The
 > server suite is not run there: it needs MySQL and Redis and takes about 12 minutes.
 

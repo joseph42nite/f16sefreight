@@ -1,0 +1,53 @@
+#!/bin/sh
+# Runs the frontend tests, then mirrors this working copy to the external drive, on every `git push`
+# (mirror set up 2026-11-12; tests added 2026-11-16).
+#
+# Kept in the repository (2026-11-19) so that every clone has it: `.git/hooks` is not carried by git. Git is pointed
+# here by `git config core.hooksPath .githooks`, which `npm install` does (the "prepare" script in package.json).
+# The backup half does nothing on a machine without the drive.
+#
+# The project lives on the Mac's internal disk for speed; the copy on "Mac Valhalla" is a backup, updated here.
+# Runs in the background so the push is not slowed down, and does nothing when the drive is not plugged in.
+# node_modules and .hyperframes render caches are skipped (and left alone on the drive). Log: ~/Library/Logs/f16s-drive-sync.log
+
+SRC="$(git rev-parse --show-toplevel)/"
+
+# ── Frontend tests first (added 2026-11-16) ─────────────────────────────────────────────────────────────────────────
+# A failing test stops the push, and the backup copy below with it. About 25 seconds.
+#   Skip once:            SKIP_TESTS=1 git push
+#   Only run the tests:   F16S_HOOK_TESTS_ONLY=1 .githooks/pre-push
+# If node is not on this shell's PATH (some git apps start with a bare one) the tests are skipped with a warning
+# rather than blocking every push.
+if [ "${SKIP_TESTS:-0}" = "1" ]; then
+  echo "pre-push: frontend tests skipped (SKIP_TESTS=1)." >&2
+else
+  PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
+  if command -v npx >/dev/null 2>&1 && [ -x "${SRC}node_modules/.bin/jest" ]; then
+    echo "pre-push: running the frontend tests…" >&2
+    if ! (cd "$SRC" && npx jest --silent >/tmp/f16s-pre-push-jest.log 2>&1); then
+      tail -40 /tmp/f16s-pre-push-jest.log >&2
+      echo "pre-push: frontend tests FAILED, so nothing was pushed. Full output: /tmp/f16s-pre-push-jest.log" >&2
+      echo "pre-push: to push anyway, once: SKIP_TESTS=1 git push" >&2
+      exit 1
+    fi
+    echo "pre-push: frontend tests passed." >&2
+  else
+    echo "pre-push: node or jest not found, so the frontend tests were NOT run." >&2
+  fi
+fi
+[ "${F16S_HOOK_TESTS_ONLY:-0}" = "1" ] && exit 0
+DEST="/Volumes/Mac Valhalla/Projects/f16sefreight/"
+LOG="$HOME/Library/Logs/f16s-drive-sync.log"
+
+if [ ! -d "/Volumes/Mac Valhalla/Projects" ]; then
+  echo "drive-sync: Mac Valhalla is not plugged in; skipped the backup copy." >&2
+  exit 0
+fi
+
+(
+  echo "=== $(date '+%Y-%m-%d %H:%M:%S') sync started"
+  rsync -a --delete --exclude node_modules --exclude .DS_Store --exclude .hyperframes "$SRC" "$DEST" && echo "=== done" || echo "=== FAILED"
+) >> "$LOG" 2>&1 &
+
+echo "drive-sync: copying to Mac Valhalla in the background (log: $LOG)" >&2
+exit 0

@@ -7,7 +7,8 @@
         "hot": "mix watch --hot",
         "prod": "mix --production",
         "test:unit": "jest",
-        "test:unit:watch": "jest --watch"
+        "test:unit:watch": "jest --watch",
+        "prepare": "git config core.hooksPath .githooks || true"
     },
     "dependencies": {
         "@babel/polyfill": "^7.4.4",

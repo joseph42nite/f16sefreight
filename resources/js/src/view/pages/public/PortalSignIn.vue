@@ -36,8 +36,11 @@
         </ul>
       </div>
 
+      <p v-if="resetNote" class="fx-signin__note" role="status">{{ resetNote }}</p>
       <p class="fx-signin__foot">
-        <a :href="siteUrl('/contact-us')">Forgot password?</a>
+        <!-- Staff accounts are not reset by mail: they still go to the contact page. -->
+        <a v-if="portal === 'superadmin'" :href="siteUrl('/contact-us')">Forgot password?</a>
+        <button v-else type="button" class="fx-signin__link fx-signin__forgot" :disabled="resetSending" @click="forgot">Forgot password?</button>
         <a :href="siteUrl('/')">About F16s</a>
       </p>
     </section>
@@ -46,6 +49,7 @@
 
 <script>
 import { LOGIN } from "@/core/services/store/auth.module";
+import ApiService from "@/core/services/api.service";
 import { mainSiteUrl, portalFromHost, portalSignInUrl, SIGN_IN_PORTALS } from "@/core/config/portalHosts";
 
 /** Server error codes, in words (the same set the website's sign-in box shows). */
@@ -67,6 +71,7 @@ export default {
     portal: portalFromHost(window.location.hostname),
     email: "", password: "", showPassword: false,
     busy: false, error: null, switching: false,
+    resetSending: false, resetNote: "",
   }),
   computed: {
     portalLabel() {
@@ -100,6 +105,29 @@ export default {
           this.error = MESSAGES[code] || (typeof code === "string" ? code : "Could not sign in.");
         })
         .finally(() => { this.busy = false; });
+    },
+    /**
+     * Ask for the reset mail (frontend audit, FA2), as the website's sign-in box does. The link went to the contact
+     * page, so nobody on a portal could reset a password. The server answers the same whether or not the address
+     * has an account.
+     */
+    forgot() {
+      if (!/^\S+@\S+\.\S+$/.test(this.email)) {
+        this.resetNote = "Type your email address above first, then choose Forgot password again.";
+
+        return;
+      }
+
+      this.resetSending = true;
+      this.resetNote = "";
+      ApiService.post("/Forgotpassword", { email: this.email })
+        .then(({ data }) => { this.resetNote = (data && data.data) || "If that address has an account, a reset link is on its way."; })
+        .catch((error) => {
+          this.resetNote = error && error.response && error.response.status === 429
+            ? "Too many tries just now. Please wait a minute and try again."
+            : "The reset link could not be sent. Please try again.";
+        })
+        .finally(() => { this.resetSending = false; });
     },
     signInUrl(key) {
       return portalSignInUrl(key, window.location);
@@ -135,5 +163,7 @@ export default {
 .fx-signin__portals a:hover { background: var(--bg-sunken, #f1f5f9); }
 .fx-signin__portals span { color: var(--text-secondary, #64748b); font-weight: 400; font-size: .75rem; }
 .fx-signin__foot { display: flex; justify-content: space-between; margin: 20px 0 0; font-size: .8125rem; }
-.fx-signin__foot a { color: var(--text-secondary, #64748b); }
+.fx-signin__foot a, .fx-signin__forgot { color: var(--text-secondary, #64748b); font-weight: 400; }
+.fx-signin__forgot:disabled { opacity: .6; cursor: default; }
+.fx-signin__note { margin: 16px 0 0; padding: 8px 12px; border-radius: 8px; background: var(--bg-sunken, #f1f5f9); color: var(--text-primary, #1e293b); font-size: .8125rem; }
 </style>

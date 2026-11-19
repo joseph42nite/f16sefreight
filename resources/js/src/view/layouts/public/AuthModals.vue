@@ -104,59 +104,6 @@
                 </div>
             </div>
         </b-modal>
-
-        <!-- Otp verification Modal box -->
-        <b-modal id="otp-modal" v-model="internal_show_otp" :hide-header="true" :hide-footer="true" centered size="xl" modal-class="ultra-premium-modal">
-            <div class="modal-split-layout">
-                <button class="ultra-close-btn" @click="internal_show_otp = false">
-                    <b-icon icon="x"></b-icon>
-                </button>
-                <div class="modal-left-pane otp-pane">
-                    <div class="pane-content">
-                        <div class="pane-icon-wrapper mb-8">
-                            <b-icon icon="shield-check" font-scale="2.5"></b-icon>
-                        </div>
-                        <h2 class="pane-title">Verify Identity</h2>
-                        <p class="pane-subtitle">For your security, we've sent a one-time verification code to your registered email address.</p>
-                        
-                        <div class="pane-footer mt-auto">
-                            <div class="pane-feature">
-                                <b-icon icon="lock" class="me-3"></b-icon>
-                                <span>Bank-grade Security</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="pane-decoration"></div>
-                </div>
-                
-                <div class="modal-right-pane">
-                    <div class="form-scroll-container">
-                        <form @submit.prevent="login" class="ultra-form">
-                            <h3 class="form-section-title mb-6">Enter OTP</h3>
-                            <b-row>
-                                <b-col md="12" class="mb-6">
-                                    <div class="floating-input-group">
-                                        <input type="text" class="floating-input" v-model="user_form.otp" placeholder=" " required />
-                                        <label class="floating-label">Verification Code (E.g: 801801)</label>
-                                    </div>
-                                </b-col>
-                            </b-row>
-                            
-                            <div class="form-actions mt-6 d-flex flex-column align-items-center w-100">
-                                <button type="submit" class="ultra-submit-btn" :disabled="loading">
-                                    <span v-if="!loading">Verify & Proceed</span>
-                                    <b-spinner v-else small label="Verifying..."></b-spinner>
-                                    <b-icon v-if="!loading" icon="arrow-right" class="btn-icon"></b-icon>
-                                </button>
-                                <p class="form-note mt-4">
-                                    Problem receiving OTP? <a href="#" class="text-primary font-weight-bold">Resend Email</a>
-                                </p>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </b-modal>
     </div>
 </template>
 
@@ -169,15 +116,13 @@ import { portalFromHost, portalSignInUrl, SIGN_IN_PORTALS } from "@/core/config/
 export default {
     name: "AuthModals",
     props: {
-        showLogin: { type: Boolean, default: false },
-        showOtp: { type: Boolean, default: false }
+        showLogin: { type: Boolean, default: false }
     },
     data() {
         return {
             user_form: {
                 email: "",
                 password: "",
-                otp: "",
             },
             showPass: true,
             loading: false,
@@ -195,10 +140,6 @@ export default {
             get() { return this.showLogin; },
             set(val) { this.$emit('update:showLogin', val); }
         },
-        internal_show_otp: {
-            get() { return this.showOtp; },
-            set(val) { this.$emit('update:showOtp', val); }
-        }
     },
     methods: {
         /** Another portal is another address: go there, with the sign-in box open. */
@@ -242,13 +183,12 @@ export default {
             }
 
             this.loading = true;
-            const { email, password, otp } = this.user_form;
+            const { email, password } = this.user_form;
 
             this.$store
-                .dispatch(LOGIN, { email, password, otp })
+                .dispatch(LOGIN, { email, password })
                 .then(() => {
                     this.internal_show_login = false;
-                    this.internal_show_otp = false;
                 })
                 .catch(() => {
                     // Error is handled via mapState errors
@@ -268,7 +208,6 @@ export default {
 .ultra-close-btn:hover { background: #ef4444; color: white; transform: rotate(90deg); }
 .modal-left-pane { flex: 0 0 40%; padding: 4rem 3.5rem; position: relative; overflow: hidden; color: white; display: flex; flex-direction: column; }
 .login-pane { background: linear-gradient(135deg, #1e3a6e 0%, #355594 100%); }
-.otp-pane { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
 .pane-content { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
 .pane-icon-wrapper { width: 80px; height: 80px; background: rgba(255,255,255,0.25); border-radius: 24px; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); }
 .pane-title { font-size: 2.25rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.5px; line-height: 1.1; }

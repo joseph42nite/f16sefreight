@@ -612,8 +612,24 @@ the blog pages. Nothing runs the specs automatically.
 > where it only said "Failed to delete record." The other three pages needed no change. Run in the browser on the
 > superadmin site: the account page with the save held back and a refusal canned showed the reason and no
 > "Saved"; the overview loaded its list and budget line.
-> **Still untested:** the company, branch and contact lists, system templates, client shipments, and the edit
-> forms (new company, branch, user, blog).
+>
+> ✅ **2026-11-19: the company, branch and contact lists and the two system template pages.**
+> `adminRegistries.spec.js` mounts the five: 24 tests, each run. 🔴 **Found writing them:**
+> - **System template list:** a failed load had no handler, so the table said "No system templates defined" (FA8).
+>   The reason is shown above the table now, and "none defined" only when the server said so. A refused delete was
+>   titled "Access Blocked" whatever the cause; it is "Not deleted" with the server's reason.
+> - **System template form:** a failed load was only written to the console, leaving an empty grid with the save
+>   button live; and an address naming a template that is not there opened as if it were, so saving would have
+>   created it. Both are said on the page now, with saving held back.
+> - **Every admin list** (companies, branches, contacts, users, blogs): a search that matched nothing read
+>   "Showing 1 to 0 of 0"; it reads "Showing 0 to 0 of 0".
+> - **Company list:** a company with no name stopped the table drawing; the approval link's failure was a browser
+>   `alert`, and a browser that would not copy was reported as a lost connection. Both are a notice now.
+>
+> Run in the browser on the superadmin site: the search count on the company list; the approval link with a canned
+> refusal; the template list with a canned failed load, then loaded again; the form at an address with no such
+> template. The dev database has no system templates, so opening an existing one is covered by the jest test only.
+> **Still untested:** client shipments, and the edit forms (new company, branch, user, blog).
 
 ## 9. Checked and found fine
 

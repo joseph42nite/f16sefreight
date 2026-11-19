@@ -7,7 +7,7 @@
                 </b-button>
                 <h2 class="font-weight-bolder text-dark">{{ isEditMode ? 'Configure Coordinates' : 'Define New System Template' }}</h2>
             </div>
-            <b-button variant="success" size="lg" class="font-weight-bolder px-10 shadow-sm" @click="saveData" :disabled="isSaving">
+            <b-button variant="success" size="lg" class="font-weight-bolder px-10 shadow-sm" @click="saveData" :disabled="isSaving || loadingSchema || !!loadError">
                 <b-spinner small v-if="isSaving" class="mr-2"></b-spinner>
                 {{ isSaving ? 'Saving...' : 'Commit & Propagate Changes' }}
             </b-button>
@@ -33,6 +33,8 @@
             <h5 class="font-weight-bolder border-bottom pb-3 mb-7 text-primary d-flex align-items-center">
                 <i class="flaticon2-cube-1 mr-2 text-primary"></i> Physical Bound Map [X1, Y1, X2, Y2]
             </h5>
+
+            <div v-if="loadError" class="alert alert-danger" role="alert">{{ loadError }}</div>
 
             <div v-if="loadingSchema" class="p-10 text-center text-muted">
                 <b-spinner class="mb-4"></b-spinner>
@@ -87,6 +89,7 @@ export default {
             coords: {},
             loadingSchema: true,
             isSaving: false,
+            loadError: null,
             isEditMode: false
         };
     },
@@ -96,6 +99,7 @@ export default {
     methods: {
         async loadSchemaAndData() {
             this.loadingSchema = true;
+            this.loadError = null;
             try {
                 const { data } = await ApiService.get("/superadmin/system-templates");
                 this.schemaKeys = data.schema || [];
@@ -125,12 +129,15 @@ export default {
                         });
                     } else {
                         this.coords = emptyGrid;
+                        // A key that is not there (deleted, or a mistyped address) is said: saving would create it.
+                        if (!existing) this.loadError = `There is no template called "${targetKey}". Go back to the list and pick one.`;
                     }
                 } else {
                     this.coords = emptyGrid;
                 }
             } catch (err) {
-                console.error("Schema acquisition failure", err);
+                // Said on the page, with saving held back: the grid used to stay empty with no word of why.
+                this.loadError = serverMessage(err, "The template could not be loaded.");
             } finally {
                 this.loadingSchema = false;
             }

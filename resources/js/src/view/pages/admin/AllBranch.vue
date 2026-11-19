@@ -60,7 +60,7 @@
             <!-- Pagination -->
             <div class="admin-pagination-wrap">
                 <div class="text-muted font-weight-bold font-size-sm">
-                    Showing {{ items.length ? (currentPage - 1) * perPage + 1 : 0 }} to {{ Math.min(currentPage * perPage, totalRows) }} of {{ totalRows }}
+                    Showing {{ totalRows ? (currentPage - 1) * perPage + 1 : 0 }} to {{ Math.min(currentPage * perPage, totalRows) }} of {{ totalRows }}
                 </div>
                 <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" size="sm" class="my-0"></b-pagination>
             </div>

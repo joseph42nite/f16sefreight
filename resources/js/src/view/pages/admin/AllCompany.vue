@@ -45,7 +45,7 @@
                     <template #cell(name)="data">
                         <div class="d-flex align-items-center">
                             <div class="symbol symbol-35 symbol-light-success mr-3">
-                                <span class="symbol-label font-size-h5 font-weight-bolder">{{ data.item.name.charAt(0).toUpperCase() }}</span>
+                                <span class="symbol-label font-size-h5 font-weight-bolder">{{ (data.item.name || "?").charAt(0).toUpperCase() }}</span>
                             </div>
                             <span class="font-weight-bolder text-dark">{{ data.item.name }}</span>
                         </div>
@@ -73,7 +73,7 @@
             <!-- Pagination -->
             <div class="admin-pagination-wrap">
                 <div class="text-muted font-weight-bold font-size-sm">
-                    Showing {{ items.length ? (currentPage - 1) * perPage + 1 : 0 }} to {{ Math.min(currentPage * perPage, totalRows) }} of {{ totalRows }}
+                    Showing {{ totalRows ? (currentPage - 1) * perPage + 1 : 0 }} to {{ Math.min(currentPage * perPage, totalRows) }} of {{ totalRows }}
                 </div>
                 <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" size="sm" class="my-0"></b-pagination>
             </div>
@@ -110,7 +110,8 @@ export default {
             ApiService.get(`/superadmin/companies/${company.id}/outlook-approval-link`)
                 .then(({ data }) => navigator.clipboard.writeText(data.url))
                 .then(() => { this.copied = company.id; })
-                .catch((e) => alert((e.response && e.response.data && e.response.data.error) || "Could not copy the link."));
+                // A refusal with no answer is the browser's (no clipboard), not the connection.
+                .catch((e) => this.sayFailed("The link was not copied", e.response ? e : { response: { data: { error: "This browser would not copy the link." } } }));
         },
         get_company() {
             return this.loadItems(`/superadmin/all-company/0`);

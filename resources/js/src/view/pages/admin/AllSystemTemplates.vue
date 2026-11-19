@@ -7,6 +7,8 @@
             </router-link>
         </div>
 
+        <div v-if="loadError" class="alert alert-danger" role="alert">{{ loadError }}</div>
+
         <div class="bg-white p-4 p-md-8 rounded shadow-sm border">
             <div class="table-responsive">
                 <table class="table table-vertical-center table-head-custom table-borderless">
@@ -47,7 +49,7 @@
                                 </b-button>
                             </td>
                         </tr>
-                        <tr v-if="!loading && items.length === 0">
+                        <tr v-if="!loading && !loadError && items.length === 0">
                             <td colspan="4" class="text-center p-10 text-muted">No system templates defined. Click 'Create New' to bootstrap.</td>
                         </tr>
                     </tbody>
@@ -59,13 +61,15 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
+import { serverMessage } from "@/core/services/serverMessage";
 import Swal from "sweetalert2";
 
 export default {
     data() {
         return {
             items: [],
-            loading: true
+            loading: true,
+            loadError: null
         };
     },
     mounted() {
@@ -74,9 +78,14 @@ export default {
     methods: {
         fetchData() {
             this.loading = true;
+            this.loadError = null;
             ApiService.get("/superadmin/system-templates")
                 .then(({ data }) => {
                     this.items = data.templates || [];
+                })
+                // A failed load is said: an empty table read as "no templates defined".
+                .catch((err) => {
+                    this.loadError = serverMessage(err, "The templates could not be loaded.");
                 })
                 .finally(() => {
                     this.loading = false;
@@ -106,8 +115,7 @@ export default {
                             this.fetchData();
                         })
                         .catch(err => {
-                            const msg = err.response?.data?.message || "Failed to perform excision.";
-                            Swal.fire("Access Blocked", msg, "error");
+                            Swal.fire("Not deleted", serverMessage(err, "The template could not be deleted."), "error");
                         });
                 }
             });

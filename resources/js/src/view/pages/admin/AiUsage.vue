@@ -200,9 +200,10 @@ export default {
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.loading = false; });
     },
-    apply(data) {
+    /** `keepForm`: a customer's limit was saved, and what is being typed into Limits is not that answer's to replace. */
+    apply(data, { keepForm = false } = {}) {
       this.data = data;
-      this.form = { ...data.settings };
+      if (!keepForm) this.form = { ...data.settings };
       // Only an override shows in the box; an empty box follows the plan (the placeholder says how much).
       this.limits = Object.fromEntries(data.by_company.map((c) => [c.id, c.budget.overridden ? c.budget.limit : ""]));
       this.error = null;
@@ -210,7 +211,9 @@ export default {
     saveLimit(c) {
       const value = this.limits[c.id];
       ApiService.put(`/superadmin/ai-usage/companies/${c.id}/limit`, { ai_monthly_limit_inr: value === "" || value === null ? null : Number(value) })
-        .then(({ data }) => { this.apply(data); })
+        // 🔴 The Limits boxes are left as typed: saving one customer's limit used to put them back to what was last
+        // saved, without a word.
+        .then(({ data }) => { this.apply(data, { keepForm: true }); })
         .catch((e) => { this.error = this.readable(e); });
     },
     save() {

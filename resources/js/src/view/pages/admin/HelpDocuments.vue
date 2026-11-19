@@ -145,7 +145,11 @@ export default {
       if (!window.confirm("Delete “" + d.title + "”? The assistant stops answering from it.")) return;
 
       ApiService.delete("/superadmin/help-documents/" + d.id)
-        .then(() => this.load())
+        .then(() => {
+          // 🔴 The form may be set to replace this very document: left so, "Replace" then posted to one that is gone.
+          if (this.replacing && this.replacing.id === d.id) this.resetForm();
+          this.load();
+        })
         .catch((e) => { this.error = this.readable(e); });
     },
     readable(e) {

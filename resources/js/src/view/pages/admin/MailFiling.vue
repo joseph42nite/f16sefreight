@@ -125,19 +125,28 @@ import ApiService from "@/core/services/api.service";
 /** Super admin: how the regex files mail and how often people change it (user, 2026-09-17). */
 export default {
   name: "MailFiling",
-  data: () => ({ data: null, companies: [], periods: [7, 30, 90], companyId: null, days: 30, loading: false, error: null, exporting: false }),
+  data: () => ({ data: null, companies: [], periods: [7, 30, 90], companyId: null, days: 30, loading: false, error: null, exporting: false, asked: 0 }),
   created() { this.load(); },
   methods: {
     params() {
       return { days: this.days, ...(this.companyId ? { company_id: this.companyId } : {}) };
     },
     load() {
+      // 🔴 Only the answer to the latest question is shown. Two changes of company or period in a row could land
+      // out of order, and the page then showed one company's figures under another's name.
+      const mine = ++this.asked;
+
       this.loading = true;
       this.error = null;
       ApiService.query("/admin/mail-filing", { params: this.params() })
-        .then(({ data }) => { this.data = data; this.companies = data.companies; this.periods = data.periods; })
-        .catch(() => { this.error = "Could not load the mail filing figures."; })
-        .finally(() => { this.loading = false; });
+        .then(({ data }) => {
+          if (mine !== this.asked) return;
+          this.data = data;
+          this.companies = data.companies || [];
+          this.periods = data.periods || this.periods;
+        })
+        .catch(() => { if (mine === this.asked) this.error = "Could not load the mail filing figures."; })
+        .finally(() => { if (mine === this.asked) this.loading = false; });
     },
     /** Downloaded through the signed-in request — a plain link carries no sign-in and is refused. */
     exportCsv() {

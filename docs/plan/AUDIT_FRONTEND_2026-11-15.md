@@ -595,8 +595,18 @@ the blog pages. Nothing runs the specs automatically.
 > console (FA8); it is said now. Run in the browser on the superadmin site: the users list and its company filter
 > load; the dev queue is empty, so the refusal was shown with one made-up ticket on the page and the server's
 > answer canned. Nothing was saved.
-> **Still untested:** the other admin pages (companies, branches, contacts, blogs, help documents, system
-> templates, AI usage, the monitor, the overview, mail filing, client shipments, and the edit forms).
+> **2026-11-19: help documents, mail filing, AI usage.** `adminLibraryUsage.spec.js` mounts the three: 20 tests,
+> each run. 🔴 **Found writing them.** Help documents: with the form set to replace a document, deleting that
+> document left the form as it was, and "Replace" then posted to one that was gone; the form goes back to
+> "Upload a document". Mail filing: two changes of company or period in a row could be answered out of order, and
+> the page then showed one company's figures under another's name; only the answer to the latest question is
+> shown. AI usage: saving one customer's limit put the Limits boxes back to what was last saved, dropping a
+> half-typed budget without a word; they are left as typed. Run in the browser on the superadmin site with the
+> saves and the delete held back, so nothing changed: a typed budget stayed after a customer's limit was saved,
+> mail filing loaded its nine companies and three sections, and deleting the document being replaced put the
+> form back.
+> **Still untested:** the other admin pages (companies, branches, contacts, blogs, system templates, the monitor,
+> the overview, client shipments, and the edit forms).
 
 ## 9. Checked and found fine
 

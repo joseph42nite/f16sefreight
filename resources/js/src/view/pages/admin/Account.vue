@@ -37,6 +37,7 @@
                </button>
              </div>
 
+             <div v-if="profileError" class="text-danger mt-4" role="alert">{{ profileError }}</div>
              <div v-if="profileSaved" class="alert alert-custom alert-light-success mt-4 mb-0 py-3">
                <div class="alert-text font-weight-bold text-center"><i class="fas fa-check-circle text-success mr-2"></i> Saved Successfully</div>
              </div>
@@ -92,6 +93,7 @@
 import ApiService from "@/core/services/api.service";
 import { mapGetters } from "vuex";
 import { LOGOUT} from "@/core/services/store/auth.module";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
   data() {        
@@ -108,6 +110,7 @@ export default {
       }),
       isSavingProfile: false,
       profileSaved: false,
+      profileError: "",
       isUpdatingPass: false
     };
   },
@@ -115,11 +118,14 @@ export default {
     onSubmit() {
       this.isSavingProfile = true;
       this.profileSaved = false;
+      this.profileError = "";
       ApiService.put(`/superadmin/upadte-detail`, this.user_form)
         .then(({ data }) => {
            this.profileSaved = true;
            setTimeout(() => { this.profileSaved = false; }, 4000);
         })
+        // 🔴 Said (FA8): a refused save had no catch at all, so the button came back and nothing told you it failed.
+        .catch((err) => { this.profileError = serverMessage(err, "Your details were not saved. Please try again."); })
         .finally(() => {
            this.isSavingProfile = false;
         });

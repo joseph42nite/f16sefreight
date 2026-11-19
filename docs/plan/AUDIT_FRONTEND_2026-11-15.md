@@ -605,8 +605,15 @@ the blog pages. Nothing runs the specs automatically.
 > saves and the delete held back, so nothing changed: a typed budget stayed after a customer's limit was saved,
 > mail filing loaded its nine companies and three sections, and deleting the document being replaced put the
 > form back.
-> **Still untested:** the other admin pages (companies, branches, contacts, blogs, system templates, the monitor,
-> the overview, client shipments, and the edit forms).
+> **2026-11-19: the overview, the monitor, suggestion feedback, the blog list, the staff account page.**
+> `adminOverviewAccount.spec.js` mounts the five: 22 tests, each run. 🔴 **Found writing them, on the account
+> page:** a refused save of the name had no handler at all, so the button came back and nothing said it had failed
+> (FA8); the reason is shown under the form now. The blog list gives the server's reason when a delete is refused,
+> where it only said "Failed to delete record." The other three pages needed no change. Run in the browser on the
+> superadmin site: the account page with the save held back and a refusal canned showed the reason and no
+> "Saved"; the overview loaded its list and budget line.
+> **Still untested:** the company, branch and contact lists, system templates, client shipments, and the edit
+> forms (new company, branch, user, blog).
 
 ## 9. Checked and found fine
 

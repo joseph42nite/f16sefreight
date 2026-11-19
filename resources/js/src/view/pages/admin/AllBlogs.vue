@@ -109,6 +109,7 @@ import ApiService from "@/core/services/api.service";
 import SkeletonTable from "../../components/SkeletonTable.vue";
 import Swal from 'sweetalert2';
 import adminListMixin from "@/core/mixins/adminList.mixin";
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
     name: "superadminallblogs",
@@ -197,7 +198,8 @@ export default {
                         this.fetchBlogs();
                     })
                     .catch(err => {
-                        Swal.fire('Error', 'Failed to delete record.', 'error');
+                        // The server's own reason, where it gives one.
+                        Swal.fire('Not deleted', serverMessage(err, 'Failed to delete record.'), 'error');
                     });
                 }
             });

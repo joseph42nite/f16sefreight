@@ -355,6 +355,10 @@
           <b-spinner variant="primary" class="mb-3"></b-spinner>
           <p class="text-muted font-weight-bold">Fetching associated House AWBs...</p>
         </div>
+        <div v-else-if="hawbsError" class="text-center py-10" role="alert">
+          <i class="fas fa-exclamation-triangle text-danger font-size-h1 mb-3"></i>
+          <p class="text-danger font-weight-bold">{{ hawbsError }}</p>
+        </div>
         <div v-else-if="!hawbsList || hawbsList.length === 0" class="text-center py-10">
           <i class="fas fa-info-circle text-muted font-size-h1 mb-3"></i>
           <p class="text-muted font-weight-bold">No House Air Waybills found for this shipment.</p>
@@ -575,7 +579,15 @@ export default {
       lastUpdated: "",
       selectedMawb: null,
       hawbsList: [],
-      isHawbsLoading: false
+      isHawbsLoading: false,
+      // Said in the window: a failed load used to read "No House Air Waybills found for this shipment."
+      hawbsError: "",
+      // Only the latest question's answer is shown: a slow earlier one (the 60 s refresh, the page before, the
+      // waybill opened before) used to land on top of it.
+      shipmentsAsked: 0,
+      hawbsAsked: 0,
+      xmlAsked: 0,
+      closed: false
     };
   },
   components: {
@@ -617,10 +629,11 @@ export default {
     fetchCompanies() {
       ApiService.get(`/superadmin/all-company`)
         .then(({ data }) => {
-          this.companies = data;
+          this.companies = Array.isArray(data) ? data : [];
         })
         .catch(err => {
-          console.error("Failed to load companies", err);
+          // Said: the client filter was simply empty, with nothing to show why.
+          this.$bvToast.toast(serverMessage(err), { title: "The clients could not be loaded", variant: "danger", solid: true, autoHideDelay: 8000 });
         });
     },
     fetchShipments(showLoading = true) {
@@ -634,9 +647,11 @@ export default {
         per_page: this.perPage,
         search: this.searchText
       };
+      const asked = ++this.shipmentsAsked;
 
       ApiService.query(`/superadmin/client-shipments`, { params })
         .then(({ data }) => {
+          if (asked !== this.shipmentsAsked) return;
           this.localFilteredItems = null;
           this.items = data.shipments;
           this.totalAwb = data.total_awb;
@@ -656,12 +671,13 @@ export default {
           });
         })
         .catch(err => {
-          console.error("Failed to load shipments", err);
-          if (showLoading) {
-            Swal.fire("Error", "Could not retrieve shipments data.", "error");
+          // A background refresh fails quietly: "Updated at" keeps the time of the list in view.
+          if (showLoading && asked === this.shipmentsAsked) {
+            Swal.fire("The shipments could not be loaded", serverMessage(err, "Could not retrieve shipments data."), "error");
           }
         })
         .finally(() => {
+          if (asked !== this.shipmentsAsked) return;
           this.isLoading = false;
           this.scheduleNextPoll();
         });
@@ -690,6 +706,8 @@ export default {
     },
     scheduleNextPoll() {
       this.clearPollTimer();
+      // The page is gone: an answer arriving after it was left used to start the 60 s refresh again, for good.
+      if (this.closed) return;
 
       // Check Operating Hours (10:00 AM to 10:00 PM)
       const now = new Date();
@@ -764,8 +782,7 @@ export default {
             }
           })
           .catch(err => {
-            console.error("Failed to export shipments", err);
-            Swal.fire("Error", "Could not retrieve export data.", "error");
+            Swal.fire("Not exported", serverMessage(err, "Could not retrieve export data."), "error");
           })
           .finally(() => {
             this.isLoading = false;
@@ -860,34 +877,39 @@ export default {
       this.xmlContent = "Loading XML content...";
       this.xmlMissing = true;
       this.$bvModal.show("xml-viewer-modal");
+      const asked = ++this.xmlAsked;
 
       ApiService.get(`/superadmin/shipment-xml/${awbId}`)
         .then(response => {
+          if (asked !== this.xmlAsked) return;
           // If response is XML string
           this.xmlContent = typeof response.data === 'string' ? response.data : new XMLSerializer().serializeToString(response.data);
           this.xmlMissing = false;
         })
         .catch(err => {
-          console.error("Failed to fetch XML file", err);
+          if (asked !== this.xmlAsked) return;
           this.xmlContent = serverMessage(err, "The XML could not be retrieved.");
         });
     },
     viewHawbs(mawbItem) {
       this.selectedMawb = mawbItem;
       this.hawbsList = [];
+      this.hawbsError = "";
       this.isHawbsLoading = true;
       this.$bvModal.show("hawbs-list-modal");
+      const asked = ++this.hawbsAsked;
 
       ApiService.get(`/superadmin/mawb-hawbs/${mawbItem.awb_code}/${mawbItem.awb_no}`)
         .then(({ data }) => {
-          this.hawbsList = data;
+          if (asked !== this.hawbsAsked) return;
+          this.hawbsList = Array.isArray(data) ? data : [];
         })
         .catch(err => {
-          console.error("Failed to fetch HAWBs", err);
-          Swal.fire("Error", "Could not retrieve House AWBs.", "error");
+          if (asked !== this.hawbsAsked) return;
+          this.hawbsError = serverMessage(err, "The House AWBs could not be loaded.");
         })
         .finally(() => {
-          this.isHawbsLoading = false;
+          if (asked === this.hawbsAsked) this.isHawbsLoading = false;
         });
     },
     viewHawbXml(hawbId) {
@@ -895,14 +917,16 @@ export default {
       this.xmlContent = "Loading HAWB XML content...";
       this.xmlMissing = true;
       this.$bvModal.show("xml-viewer-modal");
+      const asked = ++this.xmlAsked;
 
       ApiService.get(`/superadmin/hawb-xml/${hawbId}`)
         .then(response => {
+          if (asked !== this.xmlAsked) return;
           this.xmlContent = typeof response.data === 'string' ? response.data : new XMLSerializer().serializeToString(response.data);
           this.xmlMissing = false;
         })
         .catch(err => {
-          console.error("Failed to fetch HAWB XML file", err);
+          if (asked !== this.xmlAsked) return;
           this.xmlContent = serverMessage(err, "The XML could not be retrieved.");
         });
     },
@@ -925,7 +949,7 @@ export default {
     },
     downloadXml() {
       if (this.xmlMissing) return;
-      const isMawb = this.selectedAwbId.includes('-');
+      const isMawb = String(this.selectedAwbId).includes('-');
       saveFile(this.xmlContent, isMawb ? `xml_airway_bill_${this.selectedAwbId}.xml` : `xml_houseway_bill_${this.selectedAwbId}.xml`, "application/xml");
     },
     copyFnaReason(reason) {
@@ -955,6 +979,7 @@ export default {
     document.addEventListener("visibilitychange", this.handleVisibilityChange);
   },
   beforeDestroy() {
+    this.closed = true;
     this.clearPollTimer();
     document.removeEventListener("visibilitychange", this.handleVisibilityChange);
   }

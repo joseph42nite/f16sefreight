@@ -649,7 +649,23 @@ the blog pages. Nothing runs the specs automatically.
 >
 > ✅ **The 5 s jest timeout:** raised to 30 s in `jest.config.js`. With the machine busy (a video render was
 > running) three mounted-form tests failed on time alone and passed by themselves.
-> **Still untested:** client shipments.
+>
+> ✅ **2026-11-19: client shipments, the last admin page.** `adminClientShipments.spec.js` mounts it: 24 tests,
+> each run. 🔴 **Found writing them:**
+> - **The 60 s refresh outlived the page:** an answer arriving after the page was left started the refresh again,
+>   and it then ran for as long as the app stayed open. It stops with the page now.
+> - **A slow answer landed on a newer one:** the list (a background refresh or the page before, arriving after a
+>   new filter), the house waybills window and the XML window each showed whichever answer came last. Each shows
+>   the answer to the latest question now.
+> - **House waybills window:** a failed load read "No House Air Waybills found for this shipment" behind an error
+>   box (FA8). The reason is shown in the window.
+> - **XML download:** threw when the house waybill's id was a number, not text.
+> - **Failures said in the server's words:** the list, the export, and the client filter, which was simply empty.
+>
+> **Left as found, for a decision:** the list shows `updated_at` as "Time & Date Sent" and sorts by it, while the
+> export's "Date Sent" column and the date filter use `created_at`. One of the two is wrong; which is not for the
+> frontend to guess.
+> **Every admin page is now mounted by a test.**
 
 ## 9. Checked and found fine
 

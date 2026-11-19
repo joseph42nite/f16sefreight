@@ -57,9 +57,13 @@
       <p v-else class="fx-muted">This chat is closed.</p>
     </section>
 
+    <!--
+      🔴 Said above the queue, not in place of it. A refused "Resolve" or one missed chat check used to take the
+      whole table off the page until the next quiet reload, 15 seconds later.
+    -->
+    <p v-if="error" class="fx-error" role="alert">{{ error }}</p>
     <p v-if="loading" class="fx-muted">Loading…</p>
-    <p v-else-if="error" class="fx-error" role="alert">{{ error }}</p>
-    <p v-else-if="!tickets.length" class="fx-muted">Nothing in the queue.</p>
+    <p v-else-if="!tickets.length" class="fx-muted">{{ loaded ? "Nothing in the queue." : "The queue could not be loaded." }}</p>
 
     <table v-else class="fx-table">
       <thead>
@@ -123,7 +127,7 @@ export default {
   name: "SupportDeskTickets",
   components: { Figure, StatusChip },
   data: () => ({
-    tickets: [], status: "", loading: true, busy: false, error: null,
+    tickets: [], status: "", loading: true, loaded: false, busy: false, error: null,
     /** The chat open beside the queue: { ticket, status, messages }. */
     chat: null, draft: "", chatTimer: null, queueTimer: null,
   }),
@@ -168,11 +172,15 @@ export default {
       const body = this.draft.trim();
       if (!body || this.busy || !this.chat) return;
 
+      // The chat this reply belongs to: "Back to the queue" may be pressed before the answer arrives.
+      const chat = this.chat;
+
       this.busy = true;
-      ApiService.post("/admin/tickets/" + this.chat.ticket.id + "/messages", { body })
+      ApiService.post("/admin/tickets/" + chat.ticket.id + "/messages", { body })
         .then(({ data }) => {
-          this.chat.messages.push(data);
-          if (this.chat.status === "open") this.chat.status = "investigating";
+          // The 3-second check can bring the reply back before this answer arrives: once, not twice.
+          if (!chat.messages.some((m) => m.id === data.id)) chat.messages.push(data);
+          if (chat.status === "open") chat.status = "investigating";
           this.draft = "";
         })
         .catch((e) => { this.error = this.readable(e); })
@@ -191,7 +199,7 @@ export default {
     load(quiet = false) {
       if (!quiet) this.loading = true;
       ApiService.get("/admin/tickets" + (this.status ? "?status=" + this.status : ""))
-        .then(({ data }) => { this.tickets = data.data || []; this.error = null; })
+        .then(({ data }) => { this.tickets = data.data || []; this.loaded = true; this.error = null; })
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.loading = false; });
     },

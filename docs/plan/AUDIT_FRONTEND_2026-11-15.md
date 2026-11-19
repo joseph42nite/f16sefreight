@@ -585,8 +585,18 @@ the blog pages. Nothing runs the specs automatically.
 > The page's own copy of the refusal wording goes through `serverMessage` like the rest, so with no answer from
 > the server it says the server could not be reached. Run in the browser on the superadmin site, nothing saved:
 > a half-typed branch closed when a second company was picked, and so did the new-client form.
-> **Still untested:** the other admin pages (users, companies, branches, blogs, help documents, support tickets,
-> AI usage, the monitor, client shipments).
+> **2026-11-19: the support desk and the user registry.** `adminSupportUsers.spec.js` mounts both: 17 tests, each
+> run. 🔴 **Found writing them, on the support desk:** a refused "Investigating" or "Resolve", or one missed chat
+> check, took the whole queue off the page and put the reason in its place until the next quiet reload 15 seconds
+> later; the reason is now said above the queue, which stays. A queue that could not be loaded said "Nothing in
+> the queue" once its error cleared; it says it could not be loaded. A reply could show twice when the 3-second
+> check brought it back before the send was answered, and a send answered after "Back to the queue" raised an
+> error; both are handled. **On the user registry:** a company list that failed to load was only written to the
+> console (FA8); it is said now. Run in the browser on the superadmin site: the users list and its company filter
+> load; the dev queue is empty, so the refusal was shown with one made-up ticket on the page and the server's
+> answer canned. Nothing was saved.
+> **Still untested:** the other admin pages (companies, branches, contacts, blogs, help documents, system
+> templates, AI usage, the monitor, the overview, mail filing, client shipments, and the edit forms).
 
 ## 9. Checked and found fine
 

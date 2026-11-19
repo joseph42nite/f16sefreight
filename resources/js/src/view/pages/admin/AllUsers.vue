@@ -178,9 +178,8 @@ export default {
         .then(({ data }) => {
           this.companies = data;
         })
-        .catch(err => {
-          console.error("Failed to load companies", err);
-        });
+        // Said (FA8): without the companies the filter offers nothing and the column shows bare numbers.
+        .catch((err) => this.sayFailed("The companies could not be loaded", err));
     },
     getCompanyDisplayName(val) {
       if (!val) return "—";

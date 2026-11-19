@@ -30,7 +30,7 @@ describe("serverMessage", () => {
 
 describe("saves that failed silently (FA8)", () => {
   it.each([
-    ["view/pages/admin/NewUsers.vue", /this\.saveError = serverMessage\(err/g, 2],
+    ["view/pages/admin/NewUsers.vue", /this\.saveError = serverMessage\(err/g, 3],
     ["view/pages/admin/NewCompany.vue", /\.catch\(failed\)/g, 2],
     ["view/pages/admin/NewBranch.vue", /\.catch\(failed\)/g, 2],
   ])("%s shows why", (file, pattern, times) => {

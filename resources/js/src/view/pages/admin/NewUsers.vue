@@ -129,12 +129,13 @@
                 </div>
                 <div v-else></div>
 
-                <button type="submit" class="admin-pill-btn btn-lg" :disabled="isSubmitting">
+                <button type="submit" class="admin-pill-btn btn-lg" :disabled="isSubmitting || missing">
                    <span v-if="isSubmitting"><b-spinner small class="mr-2"></b-spinner>Saving...</span>
                    <span v-else>{{ action == 'Add' ? 'Create User Profile' : 'Update Settings' }}</span>
                 </button>
             </div>
 
+            <div v-if="listError" class="alert alert-warning mt-5 text-center" role="alert">{{ listError }}</div>
             <div v-if="saveError" class="alert alert-danger mt-5 text-center" role="alert">{{ saveError }}</div>
             <div v-if="savedSuccessfully" class="alert alert-custom alert-light-success mt-5 text-center font-weight-bold">
                 <i class="fas fa-check-circle mr-2 text-success"></i> Saved Successfully
@@ -186,7 +187,11 @@ export default {
       showpass: true,
       isSubmitting: false,
       savedSuccessfully: false,
-      saveError: ""
+      saveError: "",
+      // The record asked for is not there (deleted, or a mistyped address): nothing to edit, so nothing to save.
+      missing: false,
+      listError: "",
+      branchesAsked: 0
     };
   },
   methods: {
@@ -212,10 +217,9 @@ export default {
       this.savedSuccessfully = false;
       this.saveError = "";
       
-      if (!this.user_form.origin_airport_code && this.searchQuery) {
-          // AUTO-CAPTURE: If you type 'DXB' but don't click dropdown, intercept the raw text so validation succeeds.
-          this.user_form.origin_airport_code = this.searchQuery.split('(')[0].trim().toUpperCase();
-      }
+      // The box is what is saved: 'DXB' typed without picking from the list counts, and a code typed over an
+      // earlier pick replaces it (it used to keep the old code while the box showed the new one).
+      this.user_form.origin_airport_code = String(this.searchQuery || "").split('(')[0].trim().toUpperCase() || null;
 
       if(this.action=='Add'){
         this.user_form.post(`/superadmin/create-user`)
@@ -238,15 +242,27 @@ export default {
     getData(id){
       ApiService.get(`/superadmin/all-user/${id}`)
         .then(({ data }) => {
+          if (!data || !data[0]) {
+            this.missing = true;
+            this.saveError = "This user could not be found. They may have been deleted.";
+            return;
+          }
           this.user_form.fill(data[0])
-          this.searchQuery=data[0].origin_airport_code;
+          this.searchQuery=data[0].origin_airport_code || "";
           this.getBranch('edit');
+        })
+        .catch((err) => {
+          this.missing = true;
+          this.saveError = serverMessage(err, "The user could not be loaded.");
         })
     },
     getLocation(){
       ApiService.get(`/superadmin/get-location`)
         .then(({ data }) => {
-          this.location=data;
+          this.location = Array.isArray(data) ? data : [];
+        })
+        .catch((err) => {
+          if (!this.listError) this.listError = "The airport list could not be loaded: " + serverMessage(err, "the code can still be typed.");
         })
     },
     getCompany() {
@@ -254,17 +270,27 @@ export default {
             for(let i=0;i<data.length;i++){
                 this.all_company.push({"value":data[i].id,"text":data[i].name})
             }
+        }).catch((err) => {
+            this.listError = "The companies could not be loaded: " + serverMessage(err, "reload the page to try again.");
         });
     },
     getBranch(operation){
+      const none = [{ value: null, text: 'Select Branch' }];
+      // Only the latest company's branches are shown: two quick picks used to leave both companies' in the list.
+      const asked = ++this.branchesAsked;
+
+      this.all_branch = none;
       if(operation=='add'){
-        this.all_branch=[{ value: null, text: 'Select Branch' }];
         this.user_form.branch_name=null;
       }
+      // No company chosen: nothing to ask for (it used to ask for the branches of "null").
+      if (!this.user_form.company_name) return;
+
         ApiService.get(`/superadmin/get-company-branch/${this.user_form.company_name}`).then(({ data }) => {
-            for(let i=0;i<data.length;i++){
-                this.all_branch.push({"value":data[i].id,"text":data[i].agent_city})
-            }
+            if (asked !== this.branchesAsked) return;
+            this.all_branch = none.concat((data || []).map((b) => ({ value: b.id, text: b.agent_city })));
+        }).catch((err) => {
+            if (asked === this.branchesAsked) this.listError = "The branches could not be loaded: " + serverMessage(err, "pick the company again to retry.");
         });
     },
     normalizer(node) {
@@ -297,18 +323,18 @@ export default {
       if (!this.searchQuery) {
         return this.location.slice(0, 20); // Limit to top 20 to avoid browser lag with 20k records
       }
-      const query = this.searchQuery.toLowerCase();
+      const query = String(this.searchQuery).toLowerCase();
       const filtered = this.location.filter(item => {
           return (
-              item.iata_code.toLowerCase().includes(query) ||
+              (item.iata_code || "").toLowerCase().includes(query) ||
               (item.destination && item.destination.toLowerCase().includes(query))
           );
       });
       
       // Sort to prioritize IATA code matches on top
       filtered.sort((a, b) => {
-        const aIata = a.iata_code.toLowerCase();
-        const bIata = b.iata_code.toLowerCase();
+        const aIata = (a.iata_code || "").toLowerCase();
+        const bIata = (b.iata_code || "").toLowerCase();
         const aDest = (a.destination || "").toLowerCase();
         const bDest = (b.destination || "").toLowerCase();
 

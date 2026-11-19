@@ -629,7 +629,27 @@ the blog pages. Nothing runs the specs automatically.
 > Run in the browser on the superadmin site: the search count on the company list; the approval link with a canned
 > refusal; the template list with a canned failed load, then loaded again; the form at an address with no such
 > template. The dev database has no system templates, so opening an existing one is covered by the jest test only.
-> **Still untested:** client shipments, and the edit forms (new company, branch, user, blog).
+>
+> ✅ **2026-11-19: the four edit forms (company, branch, user, blog post).** `adminEditForms.spec.js` mounts them:
+> 40 tests, each run. 🔴 **Found writing them:**
+> - **User form:** a user that was not there, or would not load, opened as an empty "Edit" form with saving live
+>   (the company and branch forms already said so; this one had been missed). A code typed over the airport already
+>   chosen was not saved: the old code was kept while the box showed the new one. Picking two companies quickly left
+>   both companies' branches in the list, and with no company chosen it asked the server for the branches of "null".
+> - **Branch form:** its click listener was never removed, so after the form was closed every click anywhere in the
+>   app threw an error in the console. An airport with no code stopped the airport search (also on the user form).
+> - **Company form:** removing a template that was a default left the default set, unseen; the server then refused
+>   the save with "default must be in the allowed list" while the box showed nothing chosen.
+> - **Blog form:** a post that was not there, or would not load, opened empty with both save buttons live. A post
+>   with an empty excerpt or reading time was saved with the word "null" in it. Takeaways that could not be read
+>   left the form half filled. A refused save gave only "The given data was invalid."; it gives the field's reason.
+>   "Copied" was said whether or not the browser copied.
+> - **Branch and user forms:** a list the form needs (companies, branches, airports) that did not arrive is said
+>   on the form; it used to be an empty dropdown.
+>
+> ✅ **The 5 s jest timeout:** raised to 30 s in `jest.config.js`. With the machine busy (a video render was
+> running) three mounted-form tests failed on time alone and passed by themselves.
+> **Still untested:** client shipments.
 
 ## 9. Checked and found fine
 

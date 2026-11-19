@@ -190,7 +190,16 @@ export default {
             this.company_form.templates_config.allowed_templates.push({ key: '', label: '' });
         },
         removeTemplateRow(index) {
-            this.company_form.templates_config.allowed_templates.splice(index, 1);
+            const config = this.company_form.templates_config;
+            const [removed] = config.allowed_templates.splice(index, 1);
+
+            // A default naming the removed template went on being saved, and the server refused it, while the
+            // box showed nothing chosen.
+            if (removed && removed.key && !config.allowed_templates.some((t) => t.key === removed.key)) {
+                ["default_focus_air", "default_house_air"].forEach((name) => {
+                    if (config[name] === removed.key) config[name] = "";
+                });
+            }
         },
         addTemplateFromPill(key) {
             if (!this.company_form.templates_config.allowed_templates) {
@@ -241,7 +250,10 @@ export default {
         },
         fetchAvailableTemplates() {
             ApiService.get('/superadmin/available-templates').then(({data}) => {
-                this.availableTemplates = data;
+                this.availableTemplates = Array.isArray(data) ? data : [];
+            }).catch(() => {
+                // Only the suggestions: a key can still be typed.
+                this.availableTemplates = [];
             });
         }
     },

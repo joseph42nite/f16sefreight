@@ -17,17 +17,19 @@
                 </div>
             </div>
             <div class="d-flex" style="gap: 12px;">
-                <b-button variant="outline-primary" @click="submitPost(true)" class="px-6 font-weight-bolder" :disabled="submitting">
+                <b-button variant="outline-primary" @click="submitPost(true)" class="px-6 font-weight-bolder" :disabled="submitting || !!loadError">
                     <b-spinner small v-if="submitting" class="mr-2"></b-spinner>
                     {{ isPublished ? 'Unpublish (save as draft)' : 'Save as Draft' }}
                 </b-button>
-                <b-button variant="primary" @click="submitPost(false)" class="px-8 font-weight-bolder" :disabled="submitting">
+                <b-button variant="primary" @click="submitPost(false)" class="px-8 font-weight-bolder" :disabled="submitting || !!loadError">
                     <b-spinner small v-if="submitting" class="mr-2"></b-spinner>
                     <!-- Said as it is (FA5): on a draft this button PUBLISHES, so it does not read "Update". -->
                     {{ isPublished ? 'Update' : 'Publish' }} Blog
                 </b-button>
             </div>
         </div>
+
+        <div v-if="loadError" class="alert alert-danger" role="alert">{{ loadError }}</div>
 
         <div class="row">
             <div class="col-lg-8">
@@ -148,6 +150,7 @@ import ApiService from "@/core/services/api.service";
 import { quillEditor } from 'vue-quill-editor';
 import 'quill/dist/quill.snow.css';
 import Swal from 'sweetalert2';
+import { serverMessage } from "@/core/services/serverMessage";
 
 export default {
     name: "NewBlog",
@@ -157,6 +160,8 @@ export default {
     data() {
         return {
             submitting: false,
+            // The post asked for did not arrive: said, with saving held back, where the form used to open empty.
+            loadError: "",
             selectedFile: null,
             previewImage: null,
             blogData: {
@@ -210,13 +215,20 @@ export default {
             this.blogData.takeaways.push("");
         },
         copyLink(path) {
-            navigator.clipboard.writeText(path);
-            this.$bvToast.toast(`Copied "${path}" to clipboard!`, {
-                title: 'Copied',
-                variant: 'info',
-                solid: true,
-                autoHideDelay: 1500
-            });
+            // Said only once it is copied: a browser that refused was told "Copied" all the same.
+            Promise.resolve()
+                .then(() => navigator.clipboard.writeText(path))
+                .then(() => this.$bvToast.toast(`Copied "${path}" to clipboard!`, {
+                    title: 'Copied',
+                    variant: 'info',
+                    solid: true,
+                    autoHideDelay: 1500
+                }))
+                .catch(() => this.$bvToast.toast(`This browser would not copy it. The path is ${path}`, {
+                    title: 'Not copied',
+                    variant: 'warning',
+                    solid: true
+                }));
         },
         copyShareableLink() {
             if (!this.blogData.slug) return;
@@ -269,18 +281,21 @@ export default {
             // Let's use current system logic if they fetch specific ones.
             ApiService.get(`/superadmin/all-blogs-internal`)
                 .then(({data}) => {
-                    const target = data.data.find(b => b.id == this.blogId);
-                    if (target) {
-                        this.blogData = { ...target };
-                        this.previewImage = target.image_path;
-                        // Handle array casting validation
-                        if (typeof target.takeaways === 'string') {
-                            this.blogData.takeaways = JSON.parse(target.takeaways);
-                        }
-                        if (!Array.isArray(this.blogData.takeaways)) {
-                            this.blogData.takeaways = [""];
-                        }
+                    const target = ((data && data.data) || []).find(b => b.id == this.blogId);
+                    if (!target) {
+                        this.loadError = "This post could not be found. It may have been deleted.";
+                        return;
                     }
+                    let takeaways = target.takeaways;
+                    // Handle array casting validation
+                    if (typeof takeaways === 'string') {
+                        try { takeaways = JSON.parse(takeaways); } catch (e) { takeaways = null; }
+                    }
+                    this.blogData = { ...target, takeaways: Array.isArray(takeaways) ? takeaways : [""] };
+                    this.previewImage = target.image_path;
+                })
+                .catch((err) => {
+                    this.loadError = serverMessage(err, "The post could not be loaded.");
                 });
         },
         submitPost(isDraft = false) {
@@ -294,9 +309,10 @@ export default {
             // Use raw FormData to pack images
             const fd = new FormData();
             fd.append('title', this.blogData.title);
-            fd.append('category', this.blogData.category);
-            fd.append('read_time', this.blogData.read_time);
-            fd.append('excerpt', this.blogData.excerpt);
+            // An empty box is sent empty: a post with no excerpt used to be saved with the word "null" as one.
+            fd.append('category', this.blogData.category || '');
+            fd.append('read_time', this.blogData.read_time || '');
+            fd.append('excerpt', this.blogData.excerpt || '');
             fd.append('content', this.blogData.content);
             fd.append('meta_title', this.blogData.meta_title || '');
             fd.append('meta_description', this.blogData.meta_description || '');
@@ -335,8 +351,7 @@ export default {
                 this.$router.push('/superadmin/all-blogs');
             })
             .catch(err => {
-                const msg = err.response?.data?.message || 'An error occurred while saving the blog post.';
-                Swal.fire('Error', msg, 'error');
+                Swal.fire('Not saved', serverMessage(err, 'An error occurred while saving the blog post.'), 'error');
             })
             .finally(() => {
                 this.submitting = false;

@@ -142,6 +142,7 @@
                         <has-error :form="branch_form" field="ho_country"></has-error>
                     </b-form-group>
                 </div>
+                <div v-if="listError" class="alert alert-warning mt-3" role="alert">{{ listError }}</div>
                 <div v-if="saveError" class="alert alert-danger mt-3" role="alert">{{ saveError }}</div>
                 <div class="alert alert-success mt-3" role="alert" id="fade">
                     <span class="font-weight-bolder font-size-h6">Saved Successfully</span>
@@ -162,6 +163,8 @@ export default {
     data() {
         return {
             saveError: "",
+            // The companies or the airports did not arrive: said, since without a company the branch cannot be saved.
+            listError: "",
             // The record asked for is not there (deleted, or a mistyped address): nothing to edit, so nothing to save.
             missing: false,
             branch_form: new Form({
@@ -247,13 +250,17 @@ export default {
                 for(let i=0;i<data.length;i++){
                     this.all_company.push({"value":data[i].id,"text":data[i].name})
                 }
+            }).catch((err) => {
+                this.listError = "The companies could not be loaded: " + serverMessage(err, "reload the page to try again.");
             });
         },
         getLocation(){
             ApiService.get(`/superadmin/get-location`)
                 .then(({ data }) => {
-                this.location=data;
-            })
+                this.location = Array.isArray(data) ? data : [];
+            }).catch((err) => {
+                if (!this.listError) this.listError = "The airport list could not be loaded: " + serverMessage(err, "the code can still be typed.");
+            });
         },
         normalizer(node) {
             return {
@@ -273,7 +280,7 @@ export default {
         },
         closeDropdown(event) {
             const dropdownContainer = this.$refs.dropdownContainer;
-            if (!dropdownContainer.contains(event.target)) {
+            if (dropdownContainer && !dropdownContainer.contains(event.target)) {
                 this.isDropdownOpen = false;
             }
         },
@@ -287,6 +294,10 @@ export default {
         }
         window.addEventListener('click', this.closeDropdown);
     },
+    beforeDestroy() {
+        // Left on, it threw on every click anywhere in the app after the form was closed.
+        window.removeEventListener('click', this.closeDropdown);
+    },
     computed: {
         get_item: function () {
             if (this.$route.params.id) return this.$route.params.id;
@@ -296,10 +307,10 @@ export default {
             if (!this.searchQuery) {
                 return this.location.slice(0, 20); // Limit to top 20 to avoid browser lag with 20k records
             }
-            const query = this.searchQuery.toLowerCase();
+            const query = String(this.searchQuery).toLowerCase();
             const filtered = this.location.filter(item => {
                 return (
-                    item.iata_code.toLowerCase().includes(query) ||
+                    (item.iata_code || "").toLowerCase().includes(query) ||
                     (item.destination && item.destination.toLowerCase().includes(query))
                 );
             });
@@ -308,7 +319,7 @@ export default {
     },
     watch: {
         searchQuery(val) {
-            this.branch_form.agent_issue_loc_code = val;
+            this.branch_form.agent_issue_loc_code = val || "";
         }
     }
 };

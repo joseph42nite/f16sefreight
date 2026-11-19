@@ -20,6 +20,9 @@ module.exports = {
         // A stylesheet imported from a page's script is nothing to a test; without this the page cannot be loaded.
         '\\.(css|scss)$': '<rootDir>/tests/js/styleStub.js',
     },
+    // The default 5 s is too short for a mounted form while the machine is busy (a build, a video render): the
+    // heavy specs failed on time alone and passed when run by themselves.
+    testTimeout: 30000,
     testMatch: ['<rootDir>/tests/js/**/*.spec.js'],
     transformIgnorePatterns: ['/node_modules/(?!(bootstrap-vue|vue-treeselect)/)'],
 };

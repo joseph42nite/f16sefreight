@@ -768,4 +768,13 @@ What the click-through left for a decision, and what was done with each answer.
 - **Logo overlap at about 800 px:** looked at on the new shell at 800 px wide: the logo, the rail and the header do
   not overlap. Not a fault.
 
+- **Browser pass, 2026-11-21:** seen working on the dev site: the home page's blog tiles (the bundled file is
+  fetched only because the dev database has no posts), the sent and first-created dates and the date filter on
+  client shipments, the tour for operations, accounts, the Boss and pricing and at phone width (375 px, every box
+  on screen), the ICEGATE wording, an enquiry row opening its mail, the cost sheet's sent date, and the board's
+  "Moved to…" notice with the request held back. The other notices were not clicked one by one.
+  🔴 Found: opening a shipment that is not yours showed "No query results for model [App\Job] 1172".
+  ✅ Fixed: `serverMessage` says "That could not be found. It may have been removed, or it is not yours to open."
+  on every page that uses it.
+
 Tests: `tests/js/ownerAnswers.spec.js`.

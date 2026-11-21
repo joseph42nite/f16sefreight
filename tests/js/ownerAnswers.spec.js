@@ -344,3 +344,20 @@ describe("the shipment on a new bill", () => {
     jest.useRealTimers();
   });
 });
+
+describe("a record that is not there, or not this person's to open", () => {
+  const { serverMessage } = require("@/core/services/serverMessage");
+  const refused = (status, data) => ({ response: { status, data } });
+
+  it("is said in plain words, not in the framework's", () => {
+    const words = serverMessage(refused(404, { message: "No query results for model [App\\Job] 1172" }), "Something went wrong.");
+
+    expect(words).toBe("That could not be found. It may have been removed, or it is not yours to open.");
+    expect(words).not.toMatch(/model|App/);
+  });
+
+  it("leaves every other message from the server as it is", () => {
+    expect(serverMessage(refused(422, { message: "The period is closed." }))).toBe("The period is closed.");
+    expect(serverMessage(refused(404, { error: "This shipment has no waybill yet." }))).toBe("This shipment has no waybill yet.");
+  });
+});

@@ -22,6 +22,12 @@ export function serverMessage(error, fallback = "", { all = false } = {}) {
     if (text) return String(text);
   }
 
+  // The framework's own words for a record that is not there, or not this person's to open: "No query results for
+  // model [App\\Job] 1172" was shown as it came (found clicking through, 2026-11-21).
+  if (data && typeof data.message === "string" && /^No query results for model/.test(data.message)) {
+    return "That could not be found. It may have been removed, or it is not yours to open.";
+  }
+
   if (data && typeof data.message === "string" && data.message) return data.message;
   if (response) return fallback || `The server refused that (${response.status}).`;
 

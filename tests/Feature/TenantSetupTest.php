@@ -108,4 +108,28 @@ class TenantSetupTest extends TestCase
         $this->assertSame(['Anu', 'boss', 'Kochi'], [$one['people'][0]['name'], $one['people'][0]['designation'], $one['people'][0]['branch']]);
         $this->assertArrayNotHasKey('password', $one['people'][0]);
     }
+
+    /**
+     * The "System (F16s)" user is how the app signs its own actions in the audit log. It is needed, and it is not a
+     * person: staff do not see it among a company's people, and cannot open, change or delete it (owner, 2026-11-21).
+     */
+    public function test_the_system_user_is_not_shown_to_staff_and_cannot_be_changed_or_deleted(): void
+    {
+        $company = Company::create(['name' => 'Kerala Freight', 'code' => 'KRL', 'tier' => 'tactical']);
+        $branch = $this->staff()->postJson($this->url('/create-branch'), $this->branch(['company_id' => $company->id]))->assertOk()->json('agent.id');
+        $system = \App\Services\SystemActor::forCompany($company->id);
+        $this->assertDatabaseHas('users', ['id' => $system, 'designation' => 'system']);
+
+        $opened = $this->staff()->getJson($this->url('/tenants/' . $company->id))->assertOk();
+        $this->assertSame([], $opened->json('people'));
+        $this->assertSame(0, $opened->json('branches.0.people'));
+        $this->assertSame(0, collect($this->staff()->getJson($this->url('/tenants'))->assertOk()->json('companies'))->firstWhere('id', $company->id)['people']);
+
+        $this->assertNotContains($system, array_column($this->staff()->getJson($this->url('/all-user'))->assertOk()->json(), 'id'));
+        $this->assertSame([], $this->staff()->getJson($this->url('/all-user/' . $system))->assertOk()->json());
+
+        $this->staff()->putJson($this->url('/edit-user/' . $system), ['name' => 'Renamed', 'branch_name' => $branch, 'designation' => 'boss', 'email' => 'renamed@test.local'])->assertStatus(404);
+        $this->staff()->deleteJson($this->url('/user/' . $system))->assertStatus(404);
+        $this->assertDatabaseHas('users', ['id' => $system, 'designation' => 'system', 'name' => \App\Services\SystemActor::NAME]);
+    }
 }

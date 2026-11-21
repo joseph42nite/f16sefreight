@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Platform;
 
+use App\Services\SystemActor;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,9 @@ class TenantController extends Controller
     public function index(): JsonResponse
     {
         $branches = DB::table('agents_info')->selectRaw('company_id, COUNT(*) AS n')->groupBy('company_id')->pluck('n', 'company_id');
-        $people = DB::table('users')->selectRaw('company_name, COUNT(*) AS n')->groupBy('company_name')->pluck('n', 'company_name');
+        // The "System (F16s)" user is how the app signs its own actions in the audit log: not a person, so not counted
+        // or listed among a company's people (owner, 2026-11-21).
+        $people = DB::table('users')->where('designation', '!=', SystemActor::DESIGNATION)->selectRaw('company_name, COUNT(*) AS n')->groupBy('company_name')->pluck('n', 'company_name');
 
         $companies = DB::table('companies')->orderBy('name')->get(['id', 'name', 'code', 'tier', 'created_at'])
             ->map(fn ($c) => [
@@ -33,7 +36,7 @@ class TenantController extends Controller
         $row = DB::table('companies')->where('id', $company)->first(['id', 'name', 'code', 'tier', 'created_at']);
         abort_if($row === null, 404);
 
-        $people = DB::table('users')->where('company_name', (string) $company)->orderBy('name')
+        $people = DB::table('users')->where('company_name', (string) $company)->where('designation', '!=', SystemActor::DESIGNATION)->orderBy('name')
             ->get(['id', 'name', 'email', 'designation', 'branch_name', 'is_active']);
         $perBranch = $people->countBy('branch_name');
 

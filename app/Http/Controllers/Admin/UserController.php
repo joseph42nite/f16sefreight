@@ -17,10 +17,12 @@ class UserController extends Controller
 
     public function index($id = 0)
     {
+        // The "System (F16s)" user is how the app signs its own actions in the audit log. It is not a person: staff
+        // do not see it, and cannot open, change or delete it (owner, 2026-11-21).
         if ($id)
-            $data = User::where([['id', $id]])->limit(1)->get()->toArray();
+            $data = User::realPeople()->where([['id', $id]])->limit(1)->get()->toArray();
         else
-            $data = User::orderBy('created_at', 'desc')->get()->toArray();
+            $data = User::realPeople()->orderBy('created_at', 'desc')->get()->toArray();
 
         return json_encode($data);
     }
@@ -70,6 +72,8 @@ class UserController extends Controller
     }
     public function update(Request $request, $id)
     {
+        abort_if(optional(User::find($id))->isSystemActor(), 404);
+
         $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'company_name' => ['nullable', 'max:100'],
@@ -152,6 +156,7 @@ class UserController extends Controller
     public function delete($id)
     {
         $user = User::find($id);
+        abort_if(optional($user)->isSystemActor(), 404);
         Role::where(['email' => $user['email'], 'role' => 'user'])->delete();
         $user->delete();
         return "User deleted";

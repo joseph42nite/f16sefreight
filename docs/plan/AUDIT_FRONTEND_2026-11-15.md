@@ -735,6 +735,9 @@ What the click-through left for a decision, and what was done with each answer.
 - **"Update Draft" on a waybill that is not a draft:** ✅ reads "Save changes" (owner, 2026-11-21) when the waybill
   open has any status other than draft (in practice `generate_pdf`: the button is hidden once it is `send`).
   ⚠️ Unchanged underneath: that button still saves with status `draft`, so the waybill moves back to Drafts.
-- ⏸ **Still open:** whether the "System (F16s)" user should be listed among a company's people.
+- **The "System (F16s)" user:** needed (it is the name the app's own actions are recorded under in the audit log),
+  and hidden (owner, 2026-11-21). ✅ On the server: not counted or listed among a company's people on the tenants
+  page, not in the all-users list, and staff cannot open, change or delete it (404). The audit history still shows
+  its name. `TenantSetupTest::test_the_system_user_is_not_shown_to_staff_and_cannot_be_changed_or_deleted`.
 
 Tests: `tests/js/ownerAnswers.spec.js`.

@@ -3418,9 +3418,14 @@ export default {
                     }
                     // this.form.entries = JSON.parse(this.existingData.consignment_data.pieces_info);
                     // this.consignment_list = this.existingData.consignment_data;
-                    this.form.consignee_address = this.existingData.way_bill_address;
-                    this.form.shipper_address = this.existingData.way_bill_address;
-                    this.form.also_notify_address = this.existingData.way_bill_address;
+                    // A draft saved before any party was typed has no address row. Assigning that nothing made the
+                    // form throw while drawing ("ship_name of null"), so the screen froze on the empty form it had
+                    // before: the blank boxes the form starts with are kept instead.
+                    if (this.existingData.way_bill_address) {
+                        this.form.consignee_address = this.existingData.way_bill_address;
+                        this.form.shipper_address = this.existingData.way_bill_address;
+                        this.form.also_notify_address = this.existingData.way_bill_address;
+                    }
                     this.form.awb_email=this.existingData.awb_email;
                     this.form.as_agreed=this.existingData.as_agreed;
                 } else {

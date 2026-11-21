@@ -58,6 +58,14 @@ describe("wording and titles", () => {
     expect(source).toMatch(/>ULD Rate Class</);
   });
 
+  it.each(["dashboard/FocusAir.vue", "dashboard/HouseWayBill.vue"])("%s opens a draft that has no parties yet", (file) => {
+    const source = page(file);
+
+    // Assigned only when there is one: a null here made the form throw while drawing and freeze.
+    expect(source).toMatch(/if \(this\.existingData\.way_bill_address\) \{\s+this\.form\.consignee_address = this\.existingData\.way_bill_address;/);
+    expect(source.match(/this\.form\.shipper_address = this\.existingData\.way_bill_address;/g)).toHaveLength(1);
+  });
+
   it("the contact page promises no ticket number", () => {
     expect(page("public/ContactUs.vue")).not.toMatch(/Ticket Number will be generated/);
   });

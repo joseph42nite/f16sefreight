@@ -20,7 +20,7 @@
       shipped nothing — it is a branch nobody has computed. Run <code>sales:compute-snapshots</code>.
     </p>
     <p v-else-if="staleness && staleness.is_stale" class="fx-warn" role="status">
-      Figures are {{ staleness.age_minutes }} minutes old. The rollup is overdue.
+      Figures are {{ ageInWords }} old. The rollup is overdue.
     </p>
 
     <!-- The period every chart on this page is drawn over (user, 2026-09-16). -->
@@ -498,6 +498,15 @@ export default {
     branchPick: "", branchOptions: [], branchRows: [], staff: null, tier: null,
   }),
   computed: {
+    /** "3653 minutes old" read as nothing: minutes up to two hours, then hours, then days. */
+    ageInWords() {
+      const minutes = Math.max(0, Math.round(Number(this.staleness && this.staleness.age_minutes) || 0));
+
+      if (minutes < 120) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+      if (minutes < 2880) return `${Math.round(minutes / 60)} hours`;
+
+      return `${Math.round(minutes / 1440)} days`;
+    },
     ...mapGetters(["designation"]),
     isBoss() {
       return this.designation === "boss";

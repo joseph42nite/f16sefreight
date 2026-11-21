@@ -45,6 +45,51 @@ describe("the XML view", () => {
   });
 });
 
+describe("the new invoice form", () => {
+  // Imported here: the page brings the whole billing screen with it.
+  const Billing = require("@/view/pages/freight/Billing.vue").default;
+  const missing = (raise, more = {}) => Billing.computed.raiseMissing.call({ raise, isNote: false, jobClient: null, ...more });
+  const line = { description: "Freight", rate: 100 };
+
+  it("says a shipment is still needed, where the button was simply off", () => {
+    expect(missing({ type: "invoice", general: false, job_id: null, customer_id: 26, lines: [line] }))
+      .toEqual(["a shipment (or tick Not for a shipment)"]);
+  });
+
+  it("asks for a branch and a client when it is not for a shipment", () => {
+    expect(missing({ type: "invoice", general: true, agent_id: null, customer_id: null, lines: [line] }))
+      .toEqual(["a branch", "a client"]);
+  });
+
+  it("asks for the lines to be filled", () => {
+    expect(missing({ type: "invoice", general: true, agent_id: 4, customer_id: 26, lines: [{ description: "", rate: 0 }] }))
+      .toEqual(["a description on every line", "a rate above nought on every line"]);
+  });
+
+  it("asks a note for its invoice and a reason", () => {
+    expect(missing({ type: "credit_note", parent_invoice_id: null, reason: " ", lines: [line] }, { isNote: true }))
+      .toEqual(["the invoice it corrects", "a reason"]);
+  });
+
+  it("says nothing when the document can be raised", () => {
+    expect(missing({ type: "invoice", general: true, agent_id: 4, customer_id: 26, lines: [line] })).toEqual([]);
+    expect(missing(null)).toEqual([]);
+  });
+});
+
+describe("the sales dashboard", () => {
+  const SalesDashboard = require("@/view/pages/freight/SalesDashboard.vue").default;
+  const age = (age_minutes) => SalesDashboard.computed.ageInWords.call({ staleness: { age_minutes } });
+
+  it("says how old the figures are in minutes, hours or days", () => {
+    expect(age(1)).toBe("1 minute");
+    expect(age(45)).toBe("45 minutes");
+    expect(age(180)).toBe("3 hours");
+    expect(age(3653)).toBe("3 days");
+    expect(age(null)).toBe("0 minutes");
+  });
+});
+
 describe("wording and titles", () => {
   it.each(["public/Solutions.vue", "public/BlogsAndNews.vue", "public/PasswordForgotForm.vue"])("%s has a tab title of its own", (file) => {
     expect(page(file)).toMatch(/metaInfo: \{\s+title: "/);

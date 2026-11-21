@@ -719,6 +719,8 @@
           </label>
 
           <p class="fx-muted">Total {{ money(raiseTotal) }}. It is raised as a draft — finalize it to give it a number.</p>
+          <!-- What keeps "Raise it" off: the button was simply dead, with nothing to say a shipment was still wanted. -->
+          <p v-if="raiseMissing.length" class="fx-muted" role="status">Still needed: {{ raiseMissing.join(", ") }}.</p>
           <p v-if="actionError" class="fx-error" role="alert">{{ actionError }}</p>
         </div>
         <footer class="fx-modal__foot">
@@ -1005,6 +1007,28 @@ export default {
       const job = this.jobs.find((j) => j.id === this.raise.job_id);
       if (!job || !job.customer_id) return null;
       return this.clients.find((c) => c.id === job.customer_id) || job.customer || { name: "the shipment's client" };
+    },
+    /** What is still missing before the document can be raised, in the form's own words. Empty when it can be. */
+    raiseMissing() {
+      if (!this.raise) return [];
+      const missing = [];
+      const lines = this.raise.lines || [];
+
+      if (this.isNote) {
+        if (!this.raise.parent_invoice_id) missing.push("the invoice it corrects");
+        if (!(this.raise.reason || "").trim()) missing.push("a reason");
+      } else if (this.raise.type === "invoice") {
+        if (this.raise.general) { if (!this.raise.agent_id) missing.push("a branch"); }
+        else if (!this.raise.job_id) missing.push("a shipment (or tick Not for a shipment)");
+        if (!this.raise.customer_id && !this.jobClient) missing.push("a client");
+      } else {
+        if (!this.raise.job_id) missing.push("a shipment");
+        if (!this.raise.partner_id) missing.push("a partner");
+      }
+      if (!lines.every((l) => l.description)) missing.push("a description on every line");
+      if (!lines.every((l) => Number(l.rate) > 0)) missing.push("a rate above nought on every line");
+
+      return missing;
     },
     raiseValid() {
       if (!this.raise) return false;

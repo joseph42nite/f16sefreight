@@ -40,7 +40,7 @@
                 </td>
               </template>
               <template v-else>
-                <td>{{ l.description }} <span class="fx-muted">({{ label(l.charge_type) }})</span></td>
+                <td>{{ l.description }} <span v-if="!sameWords(l.description, l.charge_type)" class="fx-muted">({{ label(l.charge_type) }})</span></td>
                 <td class="fx-num"><Figure :value="l.quantity" kind="count" /></td>
                 <td class="fx-num"><Figure :value="l.rate" kind="currency" currency-code="INR" /></td>
                 <td class="fx-num">
@@ -120,7 +120,7 @@
               </template>
               <template v-else>
                 <td>
-                  {{ l.description }} <span class="fx-muted">({{ label(l.charge_type) }})</span>
+                  {{ l.description }} <span v-if="!sameWords(l.description, l.charge_type)" class="fx-muted">({{ label(l.charge_type) }})</span>
                   <!-- Each supplier is paid against its own voucher, so each line says who is owed it. -->
                   <span v-if="l.vendor" class="fx-muted"> · {{ l.vendor }}</span>
                 </td>
@@ -183,7 +183,7 @@
       <section class="fx-section">
         <h3 class="fx-section__title">Accounts</h3>
         <p v-if="sheet.sent_to_accounts" class="fx-muted">
-          Sent to accounts {{ String(sheet.sent_to_accounts.at).slice(0, 16) }}<template v-if="sheet.sent_to_accounts.by"> by {{ sheet.sent_to_accounts.by }}</template>.
+          Sent to accounts {{ sentAt }}<template v-if="sheet.sent_to_accounts.by"> by {{ sheet.sent_to_accounts.by }}</template>.
           Sending again replaces what they see.
         </p>
         <p v-else class="fx-muted">Accounts do not see this sheet until you send it.</p>
@@ -299,6 +299,7 @@ import ApiService from "@/core/services/api.service";
 import { wholeList } from "@/core/services/wholeList";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import { serverMessage } from "@/core/services/serverMessage";
+import { dateTime } from "@/core/config/format";
 
 export default {
   name: "CostSheet",
@@ -316,6 +317,12 @@ export default {
     quantityTouched: false,
   }),
   computed: {
+    /** When it went to accounts, written as every other date here is (09-Oct-2026 16:31), not as the server stores it. */
+    sentAt() {
+      const at = this.sheet && this.sheet.sent_to_accounts && this.sheet.sent_to_accounts.at;
+
+      return dateTime(String(at || "").replace(" ", "T")) || String(at || "").slice(0, 16);
+    },
     ...mapGetters(["designation"]),
     /* Pricing owns the rates; accounts finalizes them. The server re-checks. */
     canEdit() {
@@ -344,6 +351,10 @@ export default {
   methods: {
     label(v) {
       return String(v).replace(/_/g, " ");
+    },
+    /** A line named after its own charge read "air freight (air freight)": the kind is said only when it adds something. */
+    sameWords(description, chargeType) {
+      return String(description || "").trim().toLowerCase() === this.label(chargeType || "").trim().toLowerCase();
     },
     load() {
       this.loading = true;

@@ -90,6 +90,25 @@ describe("the sales dashboard", () => {
   });
 });
 
+describe("the cost sheet", () => {
+  const CostSheet = require("@/view/pages/freight/components/CostSheet.vue").default;
+  const label = CostSheet.methods.label;
+  const same = (description, type) => CostSheet.methods.sameWords.call({ label }, description, type);
+  const sentAt = (at) => CostSheet.computed.sentAt.call({ sheet: at === undefined ? null : { sent_to_accounts: { at } } });
+
+  it("names the kind of charge only when the line's own words differ", () => {
+    expect(same("air freight", "air_freight")).toBe(true);
+    expect(same(" Air Freight ", "air_freight")).toBe(true);
+    expect(same("Pharma uplift", "air_freight")).toBe(false);
+    expect(same("", "air_freight")).toBe(false);
+  });
+
+  it("writes when it went to accounts the way every other date is written", () => {
+    expect(sentAt("2026-10-09 16:31:07")).toBe("09-Oct-2026 16:31");
+    expect(sentAt(undefined)).toBe("");
+  });
+});
+
 describe("wording and titles", () => {
   it.each(["public/Solutions.vue", "public/BlogsAndNews.vue", "public/PasswordForgotForm.vue"])("%s has a tab title of its own", (file) => {
     expect(page(file)).toMatch(/metaInfo: \{\s+title: "/);

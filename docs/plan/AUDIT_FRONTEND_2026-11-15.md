@@ -578,6 +578,9 @@ the blog pages. Nothing runs the specs automatically.
 > **Still true:** the six older specs named above read source text, and so do most of the specs written for this
 > audit's fixes inside the big single-file pages (`frontendAuditFixes`, `waybillFormFixes`, `accountsInboxFixes`,
 > parts of `adminFixes`, `sessionHandling`, `securityLeftovers`): those pages do not mount in jest as they are.
+> **2026-11-21, looked at again:** the six older specs are left as they are. `templateConditions` compiles every
+> template and walks it, so it is not a wording check. The other five guard fixed wording, a column class and a CSS
+> rule: there is no behaviour behind them for a mounted test to run, and jsdom lays nothing out.
 > The other admin pages are untested. **The specs now run before every push** (owner's call, 2026-11-16): the
 > pre-push hook runs `jest` first and a failure stops the push (`SKIP_TESTS=1 git push` skips it once). ⚠️ The hook
 > is in `.git/hooks`, which git does not carry: it is on this machine only. ✅ **2026-11-19:** the hook is in the

@@ -444,6 +444,9 @@ export default {
             return;
             }
 
+            // Only the latest search is shown: a slow "not found" used to land on top of the search made after it.
+            const asked = this.searchesAsked = (this.searchesAsked || 0) + 1;
+
             this.form.post(`/user/search-airway-bills`, {
                 params: {
                     awb_code: this.form.masterStart,
@@ -453,6 +456,7 @@ export default {
             .then(response => {
                 // this.airway_bill = response.data.airway_bill;
                 // this.data_items = response.data.house_way_bills;
+                if (asked !== this.searchesAsked) return;
                 this.data_items = response.data;
                 this.currentPage = 1;
                 this.searchPerformed = true;
@@ -461,7 +465,11 @@ export default {
 
             })
             .catch(error => {
+                if (asked !== this.searchesAsked) return;
                 this.searchPerformed = true;
+                // The list from before is not the answer: it stayed on screen under "not found".
+                this.data_items = [];
+                this.totalRows = 0;
                 if (error.response && error.response.data && error.response.data.message) {
                 this.errorMessage = error.response.data.message;
                 } else {
@@ -500,6 +508,7 @@ export default {
             this.form.masterStart = "";
             this.form.masterEnd = "";
             this.searchPerformed = false;
+            this.searchesAsked = (this.searchesAsked || 0) + 1;
             this.errorMessage = '';
             this.currentPage = 1;
             this.allAirwayBill(1);

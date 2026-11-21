@@ -66,6 +66,14 @@ describe("wording and titles", () => {
     expect(page("dashboard/MessageLog.vue")).toMatch(/show-empty empty-text="No messages found for that waybill\."/);
   });
 
+  it("a failed message log search does not leave the list from before on screen", () => {
+    const source = page("dashboard/MessageLog.vue");
+    const failed = source.slice(source.indexOf(".catch(error => {", source.indexOf("searchAWB() {")));
+
+    expect(failed.indexOf("this.data_items = [];")).toBeGreaterThan(-1);
+    expect(failed.indexOf("this.data_items = [];")).toBeLessThan(failed.indexOf("clearSearch() {"));
+  });
+
   it("the profile card is given names, not ids", () => {
     const source = read("app/Http/Controllers/Logistics/AddressBookController.php");
 

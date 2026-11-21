@@ -1,6 +1,7 @@
 <template>
     <div class="mt-10 p-5">
         <b-form @submit="onSubmit" class="w-md-50 fw-700">
+            <router-link to="/superadmin/tenants" class="text-muted font-weight-bold d-inline-block mb-3"><i class="fas fa-arrow-left mr-2"></i>Back to companies</router-link>
             <h3 class="fw-700">{{ action }} company</h3>
             <div class="bg-white p-10 rounded">
                 <div class="d-flex mb-7">

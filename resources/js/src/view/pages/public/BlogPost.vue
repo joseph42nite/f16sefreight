@@ -2,7 +2,14 @@
   <b-container fluid class="main-wrapper p-0">
 
 
-    <b-container class="content-container py-12">
+    <!-- An address with no post behind it said nothing: an empty article frame was drawn. -->
+    <b-container v-if="notFound" class="content-container py-12 text-center" role="alert">
+      <h1 class="post-title mb-6">This post could not be found</h1>
+      <p class="mb-8">It may have been moved or taken down.</p>
+      <router-link to="/blogs-and-news">See all blogs &amp; news</router-link>
+    </b-container>
+
+    <b-container v-else class="content-container py-12">
       <!-- PROGRESS BAR (FOR READING) -->
       <div class="reading-progress-container">
           <div class="reading-progress-bar" :style="{ width: readingProgress + '%' }"></div>
@@ -179,6 +186,10 @@ export default {
       }
     };
 
+    if (this.notFound) {
+      return { title: 'Post not found | F16s E-Freight Solutions', meta: [{ name: 'robots', content: 'noindex' }] };
+    }
+
     return {
       title: this.post.meta_title || this.post.metaTitle || this.post.title,
       meta: [
@@ -210,6 +221,7 @@ export default {
       copyStatus: 'Copy Link',
       copyMessageStatus: 'Copy Message for Sharing',
       post: {},
+      notFound: false,
       relatedPosts: []
     };
   },
@@ -232,6 +244,8 @@ export default {
     fetchPost(slug) {
       // 1. Immediate fallback lookup
       const offlinePost = fallbackBlogs.find(b => b.slug === slug);
+      this.notFound = false;
+      if (!offlinePost) this.post = {};
       if (offlinePost) {
         this.setPost(offlinePost);
       }
@@ -257,8 +271,9 @@ export default {
             this.setPost(formattedPost);
           }
         })
-        .catch(() => {
-            console.log("Static fallback content maintained.");
+        .catch((error) => {
+            // Not on the server and not built in: say so. With no answer at all the built-in copy, if any, stays.
+            if (!offlinePost && error && error.response && this.$route.params.slug === slug) this.notFound = true;
         });
         
       // Fetch related fallback logic, or grab other public ones

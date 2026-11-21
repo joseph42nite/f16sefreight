@@ -111,7 +111,7 @@
                         <SkeletonTable v-if="isLoading" :rows="10" :columns="5" />
                         <template v-else>
                             <div class="message-table-wrapper">
-                                <b-table :items="normalizedItems" :fields="fields" small responsive class="w-100 custom-table">
+                                <b-table :items="normalizedItems" :fields="fields" small responsive show-empty empty-text="No messages found for that waybill." class="w-100 custom-table">
                                 <!-- Index -->
                                 <template #cell(index)="row">
                                     <span class="font-weight-bold text-muted">{{ (currentPage - 1) * perPage + row.index + 1 }}</span>

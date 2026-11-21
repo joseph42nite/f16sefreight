@@ -63,8 +63,9 @@ class AddressBookController extends Controller
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
-                'branch' => $user->branch_name,
-                'company' => $user->company_name,
+                // The names, not the ids the columns hold: the profile card read "Branch / Agent 4", "Company Name 4".
+                'branch' => optional($user->branch)->agent_name ?: optional($user->branch)->agent_city,
+                'company' => optional($user->company)->name,
             ],
             'data' => $addresses
         ]);

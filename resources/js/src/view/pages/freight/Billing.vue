@@ -758,7 +758,7 @@
             <label class="fx-field">
               <span class="fx-field__label">How</span>
               <select v-model="receipt.mode" class="fx-input">
-                <option v-for="m in modes" :key="m" :value="m">{{ m.replace(/_/g, " ") }}</option>
+                <option v-for="m in modes" :key="m" :value="m">{{ m === "upi" ? "UPI" : m.replace(/_/g, " ") }}</option>
               </select>
             </label>
             <label class="fx-field">

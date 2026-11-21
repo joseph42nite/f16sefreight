@@ -1116,11 +1116,11 @@
                                                              <th style="font-size: 12px; font-weight: 600 !important; min-width: 80px; padding: 10px 8px;" class="">Rate</th>
                                                              <th style="font-size: 12px; font-weight: 600 !important; min-width: 260px; padding: 10px 8px;" class="">Detailed Pcs. Info</th>
                                                              <th style="font-size: 12px; font-weight: 600 !important; min-width: 100px; padding: 10px 8px;" class="">Rate Class</th>
-                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 120px; padding: 10px 8px;" class="">UID Rate Class</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 120px; padding: 10px 8px;" class="">ULD Rate Class</th>
                                                              <th style="font-size: 12px; font-weight: 600 !important; min-width: 90px; padding: 10px 8px;" class="">Charge</th>
                                                              <th style="font-size: 12px; font-weight: 600 !important; min-width: 115px; padding: 10px 8px;" class="">HS Code</th>
                                                              <th style="font-size: 12px; font-weight: 600 !important; min-width: 120px; padding: 10px 8px;" class="">Origin Country</th>
-                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 160px; padding: 10px 8px;" class="">UID information</th>
+                                                             <th style="font-size: 12px; font-weight: 600 !important; min-width: 160px; padding: 10px 8px;" class="">ULD information</th>
                                                              <th style="font-size: 12px; font-weight: 600 !important; min-width: 80px; padding: 10px 8px;" class="">Slac</th>
                                                              <th style="font-size: 12px; font-weight: 600 !important; min-width: 80px; padding: 10px 8px;" class=""></th>
                                                          </tr>
@@ -1783,7 +1783,7 @@
                                                         </div>
                                                     </div>
                                                 </b-tab>
-                                                <b-tab title="Exta Print Information">
+                                                <b-tab title="Extra Print Information">
                                                         <div class="ml-3 mt-8">
                                                             <h6 class="h-color" style="font-size: 15px;font-weight:500">Extra information printed of Air Way Bill (Only printed - not saved or sent
                                                                 to Airlines):</h6>

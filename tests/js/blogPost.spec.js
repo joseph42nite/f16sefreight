@@ -76,3 +76,16 @@ it("a title cannot end the search-engine block early (FS6)", async () => {
   expect(block).not.toContain("<");
   expect(JSON.parse(block).headline).toBe('Rates </script><script>alert(1)</script>');
 });
+
+it("says the post could not be found when the server has none at that address", async () => {
+  const wrapper = await open({
+    "/get-public-blog/air-rates-q4": Object.assign(new Error("Not Found"), { response: { status: 404, data: {} } }),
+    "/get-public-blogs": { success: true, data: [] },
+  });
+
+  expect(wrapper.find("[role=alert]").text()).toContain("This post could not be found");
+  expect(wrapper.find(".article-body").exists()).toBe(false);
+  expect(BlogPost.metaInfo.call(wrapper.vm)).toEqual({
+    title: "Post not found | F16s E-Freight Solutions", meta: [{ name: "robots", content: "noindex" }],
+  });
+});

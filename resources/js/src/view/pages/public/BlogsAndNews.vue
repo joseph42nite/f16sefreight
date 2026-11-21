@@ -111,6 +111,14 @@ import ApiService from "@/core/services/api.service";
 
 export default {
   name: "BlogsAndNews",
+  // Its own tab title: without one the tab kept the title of the page before.
+  metaInfo: {
+    title: "Blogs & News | F16s E-Freight Solutions",
+    meta: [
+      { name: 'description', content: 'Guides and news on air freight, e-AWB, consolidation and freight forwarding software from the F16s team.' },
+      { property: 'og:title', content: 'Blogs & News | F16s E-Freight Solutions' }
+    ]
+  },
   data() {
     return {
       selectedCategory: 'All',

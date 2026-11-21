@@ -31,6 +31,11 @@
 import axios from 'axios';
 import { serverMessage } from "@/core/services/serverMessage";
 export default {
+    // Its own tab title, and kept out of search results: the address carries a reset token.
+    metaInfo: {
+        title: "Reset your password | F16s E-Freight Solutions",
+        meta: [{ name: 'robots', content: 'noindex, nofollow' }]
+    },
     data() {
       return {
         forget_password:{

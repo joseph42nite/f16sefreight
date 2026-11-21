@@ -142,6 +142,14 @@
 
 export default {
   name: "Solutions",
+  // Its own tab title: without one the tab kept the title of the page before.
+  metaInfo: {
+    title: "Solutions for Freight Forwarders | F16s E-Freight Solutions",
+    meta: [
+      { name: 'description', content: 'How F16s helps freight forwarders go digital: e-AWB, consolidation, documents and messaging to airlines in one place.' },
+      { property: 'og:title', content: 'Solutions for Freight Forwarders | F16s E-Freight Solutions' }
+    ]
+  },
   components: { 
   },
   data() {

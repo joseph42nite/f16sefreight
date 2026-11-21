@@ -32,7 +32,7 @@
                             <img src="/media/assets/vectors/customer-support.svg" class="feature-icon-vector" alt="Support Icon" aria-hidden="true" />
                         </div>
                         <h3 class="feature-title">Have a Dispute or Query?</h3>
-                        <p class="feature-desc">Facing any issues or have a query regarding our services? We’re committed to resolving them quickly. A Ticket Number will be generated for tracking.</p>
+                        <p class="feature-desc">Facing any issues or have a query regarding our services? We’re committed to resolving them quickly, and we reply to the email address you give.</p>
                         <div class="feature-footer mt-auto pt-6">
                             <div class="feature-link">
                                 <span>Submit Query</span>

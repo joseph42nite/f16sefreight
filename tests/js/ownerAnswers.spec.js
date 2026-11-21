@@ -106,6 +106,19 @@ describe("the waybill forms", () => {
     });
   });
 
+  it.each([
+    ["view/pages/dashboard/FocusAir.vue"], ["view/pages/dashboard/HouseWayBill.vue"],
+  ])("%s names its save button after what is open", (file) => {
+    const label = eval("(function " + read(file).match(/submitButtonText\(\) \{[\s\S]*?\n        \}/)[0] + ")");
+    const on = (mode, status) => label.call({ mode, form: { first_box: { status } } });
+
+    expect(on("add", "")).toBe("Add Draft");
+    expect(on("update", "draft")).toBe("Update Draft");
+    expect(on("update", "")).toBe("Update Draft");
+    expect(on("update", "generate_pdf")).toBe("Save changes");
+    expect(on("update", "send")).toBe("Save changes");
+  });
+
   describe("Clear", () => {
     const { location } = window;
 

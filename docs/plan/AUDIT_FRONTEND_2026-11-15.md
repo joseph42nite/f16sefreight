@@ -732,7 +732,9 @@ What the click-through left for a decision, and what was done with each answer.
   codes per address in ten minutes, the same answer whether or not the address has an account, and a code cannot be
   used where a link's token is expected or the other way round. The mailed link of the website's own form is
   unchanged. `PasswordResetTest`, `publicSignIn.spec.js`.
-- ⏸ **Still open:** the label of "Update Draft" on a sent waybill (proposed: "Save changes"), and whether the
-  "System (F16s)" user should be listed among a company's people.
+- **"Update Draft" on a waybill that is not a draft:** ✅ reads "Save changes" (owner, 2026-11-21) when the waybill
+  open has any status other than draft (in practice `generate_pdf`: the button is hidden once it is `send`).
+  ⚠️ Unchanged underneath: that button still saves with status `draft`, so the waybill moves back to Drafts.
+- ⏸ **Still open:** whether the "System (F16s)" user should be listed among a company's people.
 
 Tests: `tests/js/ownerAnswers.spec.js`.

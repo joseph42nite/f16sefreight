@@ -3657,7 +3657,10 @@ export default {
         ...mapGetters({ current_user: "currentUser"}),
 
         submitButtonText() {
-            return this.mode === 'add' ? 'Add Draft' : 'Update Draft';
+            if (this.mode === 'add') return 'Add Draft';
+            // Only a draft is "updated" as a draft (owner, 2026-11-21): a waybill already printed or sent is not one.
+            const status = this.form.first_box && this.form.first_box.status;
+            return !status || status === 'draft' ? 'Update Draft' : 'Save changes';
         },
         formattedAWBId() {
             if (this.awbId && this.awbId.length > 3) {

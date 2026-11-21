@@ -37,10 +37,28 @@
       </div>
 
       <p v-if="resetNote" class="fx-signin__note" role="status">{{ resetNote }}</p>
+
+      <!-- The mailed code and the new password, on this same page (owner, 2026-11-21). -->
+      <form v-if="resetAsked" class="fx-signin__form fx-signin__reset" @submit.prevent="resetPassword">
+        <p v-if="resetError" class="fx-signin__error" role="alert">{{ resetError }}</p>
+        <label class="fx-signin__field">
+          <span>6-digit code from the mail</span>
+          <input v-model.trim="resetCode" class="fx-signin__code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required />
+        </label>
+        <label class="fx-signin__field">
+          <span>New password</span>
+          <input v-model="newPassword" :type="showPassword ? 'text' : 'password'" autocomplete="new-password" minlength="6" maxlength="25" required />
+        </label>
+        <label class="fx-signin__field">
+          <span>New password again</span>
+          <input v-model="newPasswordAgain" :type="showPassword ? 'text' : 'password'" autocomplete="new-password" minlength="6" maxlength="25" required />
+        </label>
+        <button type="submit" class="fx-signin__submit" :disabled="resetSaving">{{ resetSaving ? "Saving…" : "Set new password" }}</button>
+        <button type="button" class="fx-signin__link" @click="closeReset">Cancel</button>
+      </form>
+
       <p class="fx-signin__foot">
-        <!-- Staff accounts are not reset by mail: they still go to the contact page. -->
-        <a v-if="portal === 'superadmin'" :href="siteUrl('/contact-us')">Forgot password?</a>
-        <button v-else type="button" class="fx-signin__link fx-signin__forgot" :disabled="resetSending" @click="forgot">Forgot password?</button>
+        <button type="button" class="fx-signin__link fx-signin__forgot" :disabled="resetSending" @click="forgot">{{ resetAsked ? "Send a new code" : "Forgot password?" }}</button>
         <a :href="siteUrl('/')">About F16s</a>
       </p>
     </section>
@@ -72,6 +90,7 @@ export default {
     email: "", password: "", showPassword: false,
     busy: false, error: null, switching: false,
     resetSending: false, resetNote: "",
+    resetAsked: false, resetCode: "", newPassword: "", newPasswordAgain: "", resetSaving: false, resetError: "",
   }),
   computed: {
     portalLabel() {
@@ -107,9 +126,8 @@ export default {
         .finally(() => { this.busy = false; });
     },
     /**
-     * Ask for the reset mail (frontend audit, FA2), as the website's sign-in box does. The link went to the contact
-     * page, so nobody on a portal could reset a password. The server answers the same whether or not the address
-     * has an account.
+     * Ask for the reset code (owner, 2026-11-21): six digits by mail, typed back below with the new password. For
+     * every portal, Platform Admin included. The server answers the same whether or not the address has an account.
      */
     forgot() {
       if (!/^\S+@\S+\.\S+$/.test(this.email)) {
@@ -120,14 +138,51 @@ export default {
 
       this.resetSending = true;
       this.resetNote = "";
-      ApiService.post("/Forgotpassword", { email: this.email })
-        .then(({ data }) => { this.resetNote = (data && data.data) || "If that address has an account, a reset link is on its way."; })
+      this.resetError = "";
+      ApiService.post("/forgot-password/code", { email: this.email })
+        .then(({ data }) => {
+          this.resetNote = (data && data.data) || "If that address has an account, a 6-digit code is on its way.";
+          this.resetAsked = true;
+        })
         .catch((error) => {
           this.resetNote = error && error.response && error.response.status === 429
             ? "Too many tries just now. Please wait a minute and try again."
-            : "The reset link could not be sent. Please try again.";
+            : "The code could not be sent. Please try again.";
         })
         .finally(() => { this.resetSending = false; });
+    },
+    resetPassword() {
+      this.resetError = "";
+
+      if (this.newPassword !== this.newPasswordAgain) {
+        this.resetError = "The two new passwords are not the same.";
+
+        return;
+      }
+
+      this.resetSaving = true;
+      ApiService.post("/forgot-password/reset", {
+        email: this.email, code: this.resetCode, password: this.newPassword, password_confirmation: this.newPasswordAgain,
+      })
+        .then(() => {
+          this.closeReset();
+          this.password = "";
+          this.resetNote = "Your password is changed. Sign in with the new one.";
+        })
+        .catch((error) => {
+          const response = error && error.response;
+          const fields = response && response.status === 422 && response.data && response.data.errors;
+
+          if (fields) this.resetError = [].concat(Object.values(fields)[0])[0];
+          else if (response && response.status === 429) this.resetError = "Too many tries just now. Please wait a minute and try again.";
+          else if (response && response.status === 401) this.resetError = "That code is wrong or has expired. Send a new code and try again.";
+          else this.resetError = "The password could not be changed. Please try again.";
+        })
+        .finally(() => { this.resetSaving = false; });
+    },
+    closeReset() {
+      this.resetAsked = false;
+      this.resetCode = this.newPassword = this.newPasswordAgain = this.resetError = "";
     },
     signInUrl(key) {
       return portalSignInUrl(key, window.location);
@@ -165,5 +220,7 @@ export default {
 .fx-signin__foot { display: flex; justify-content: space-between; margin: 20px 0 0; font-size: .8125rem; }
 .fx-signin__foot a, .fx-signin__forgot { color: var(--text-secondary, #64748b); font-weight: 400; }
 .fx-signin__forgot:disabled { opacity: .6; cursor: default; }
+.fx-signin__reset { margin-top: 12px; }
+.fx-signin__code { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
 .fx-signin__note { margin: 16px 0 0; padding: 8px 12px; border-radius: 8px; background: var(--bg-sunken, #f1f5f9); color: var(--text-primary, #1e293b); font-size: .8125rem; }
 </style>

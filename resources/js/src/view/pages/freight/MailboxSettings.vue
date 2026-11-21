@@ -168,6 +168,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { getMe } from "@/core/services/me";
 import MailEditor from "@/view/pages/freight/components/MailEditor.vue";
@@ -237,14 +238,14 @@ export default {
       this.busy = "img-" + c.id;
       this.connectError = null;
       ApiService.post("/user/mailboxes/" + c.id + "/signature-image", form)
-        .then(({ data }) => { this.$set(c, "signature_image", data.signature_image); })
+        .then(({ data }) => { this.$set(c, "signature_image", data.signature_image); say(this, "Image added."); })
         .catch((e) => { this.connectError = this.messageFor(e); })
         .finally(() => { this.busy = null; });
     },
     removeImage(c) {
       this.busy = "img-" + c.id;
       ApiService.delete("/user/mailboxes/" + c.id + "/signature-image")
-        .then(() => { this.$set(c, "signature_image", null); })
+        .then(() => { this.$set(c, "signature_image", null); say(this, "Image removed."); })
         .catch((e) => { this.connectError = this.messageFor(e); })
         .finally(() => { this.busy = null; });
     },
@@ -308,7 +309,7 @@ export default {
       this.busy = c.id;
 
       ApiService.post("/user/mailboxes/" + c.id + "/sync")
-        .then(() => this.load())
+        .then(() => { say(this, "Mailbox synced."); return this.load(); })
         .catch((e) => { this.connectError = this.messageFor(e); })
         .finally(() => { this.busy = null; });
     },
@@ -324,7 +325,7 @@ export default {
       this.busy = c.id;
 
       ApiService.post("/user/mailboxes/" + c.id + "/disconnect")
-        .then(() => this.load())
+        .then(() => { say(this, "Mailbox disconnected."); return this.load(); })
         .catch((e) => { this.connectError = this.messageFor(e); })
         .finally(() => { this.busy = null; });
     },

@@ -183,6 +183,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
 
@@ -213,7 +214,7 @@ export default {
       ApiService.put(`/superadmin/ai-usage/companies/${c.id}/limit`, { ai_monthly_limit_inr: value === "" || value === null ? null : Number(value) })
         // 🔴 The Limits boxes are left as typed: saving one customer's limit used to put them back to what was last
         // saved, without a word.
-        .then(({ data }) => { this.apply(data, { keepForm: true }); })
+        .then(({ data }) => { this.apply(data, { keepForm: true }); say(this, "Limit saved."); })
         .catch((e) => { this.error = this.readable(e); });
     },
     save() {

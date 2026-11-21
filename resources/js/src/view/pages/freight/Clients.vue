@@ -411,6 +411,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { termsLabel, inr } from "@/core/config/format";
@@ -482,7 +483,7 @@ export default {
     confirmJev(card, chosen) {
       this.busy = true;
       ApiService.post(`/customers/${this.selected.id}/payment-reports/${card.id}/jev`, { chosen })
-        .then(({ data }) => { this.payments = data.cards || []; })
+        .then(({ data }) => { this.payments = data.cards || []; say(this, "Recorded."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -561,8 +562,10 @@ export default {
         ? ApiService.put(`/customers/${this.form.id}`, body)
         : ApiService.post("/customers", body);
 
+      const done = this.form.id ? "Client saved." : "Client added.";
+
       call
-        .then(() => { this.form = null; this.selected = null; this.load(); })
+        .then(() => { this.form = null; this.selected = null; this.load(); say(this, done); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },

@@ -211,6 +211,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { showFile } from "@/core/services/download";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
@@ -315,24 +316,25 @@ export default {
       names.forEach((k) => { if (k in obj && (obj[k] === "" || obj[k] === null)) sent[k] = null; });
       return sent;
     },
-    commit(call) {
+    /** `done` is what to say at the top of the screen once the server has taken it. */
+    commit(call, done = "") {
       this.busy = true;
       this.actionError = null;
       return call()
-        .then(({ data }) => this.bind(data))
+        .then(({ data }) => { say(this, done); return this.bind(data); })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
     },
     save() {
       const body = this.data.mode === "air" ? this.form : Object.fromEntries(Object.entries(this.form).filter(([k]) => !AIR_FIELDS.includes(k)));
-      this.commit(() => ApiService.post(`/jobs/${this.jobId}/import`, this.emptied(body, CLEARABLE)));
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/import`, this.emptied(body, CLEARABLE)), "Saved.");
     },
     addHouse() {
-      this.commit(() => ApiService.post(`/jobs/${this.jobId}/houses`, this.clean(this.newHouse)))
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/houses`, this.clean(this.newHouse)), "House bill added.")
         .then(() => { this.newHouse = { customer_id: null, hbl_number: "" }; });
     },
     stageNotice() {
-      this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice/stage`));
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice/stage`), "Arrival notice ready to send.");
     },
     decideNotice(decision) {
       const body = { decision };
@@ -340,18 +342,18 @@ export default {
         Object.assign(body, { to: addressList(this.noticeMail.to),
           subject: this.noticeMail.subject, body: this.noticeMail.body });
       }
-      this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice/decide`, body));
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice/decide`, body), decision === "send" ? "Arrival notice sent." : "Arrival notice mail skipped.");
     },
     issueNotice() {
-      this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice`));
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/arrival-notice`), "Arrival notice issued.");
     },
     saveOrder() {
-      this.commit(() => ApiService.post(`/jobs/${this.jobId}/delivery-order`, this.emptied(this.order, ["do_given_to", "fee"])));
+      this.commit(() => ApiService.post(`/jobs/${this.jobId}/delivery-order`, this.emptied(this.order, ["do_given_to", "fee"])), "Delivery order saved.");
     },
     link() {
       this.busy = true;
       ApiService.post(`/jobs/${this.jobId}/link-hbl`, { house_id: this.linkId })
-        .then(() => { this.linkId = ""; this.load(); })
+        .then(() => { this.linkId = ""; this.load(); say(this, "House bill linked."); })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
     },

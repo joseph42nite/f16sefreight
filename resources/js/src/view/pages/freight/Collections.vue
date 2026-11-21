@@ -358,6 +358,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { saveFile } from "@/core/services/download";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
@@ -497,6 +498,7 @@ export default {
           this.party = { ...this.party, follow_ups: data.follow_ups };
           this.chase = { ...this.chase, note: "", promised_amount: null, promised_date: "", next_action_date: "" };
           this.load();
+          say(this, "Follow-up logged.");
         })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
@@ -505,7 +507,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/collections/follow-ups/${followUp.id}/close`, { state })
-        .then(({ data }) => { this.party = { ...this.party, follow_ups: data.follow_ups }; this.load(); })
+        .then(({ data }) => { this.party = { ...this.party, follow_ups: data.follow_ups }; this.load(); say(this, "Follow-up closed."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },

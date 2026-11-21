@@ -238,7 +238,7 @@ describe("exporting the shipments", () => {
 
     expect(asked(query)).toMatchObject({ export: "all", company_id: 5 });
     expect(asked(query).page).toBeUndefined();
-    expect(csv.split("\n")[0]).toBe("AWB Number,Client/Company,HAWB Count,Origin,Destination,Pieces,Weight,Date Sent,Time Sent,FNA Status");
+    expect(csv.split("\n")[0]).toBe("AWB Number,Client/Company,HAWB Count,Origin,Destination,Pieces,Weight,Date Sent,Time Sent,Date Created,Time Created,FNA Status");
     expect(csv.split("\n")[1]).toContain('"157-12345675","Blue ""Sky"", Ltd","2","COK","DXB","4","120.5 K"');
     expect(name).toMatch(/^shipments_export_\d{4}-\d{2}-\d{2}\.csv$/);
     expect(type).toContain("text/csv");

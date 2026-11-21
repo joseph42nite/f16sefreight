@@ -13,7 +13,7 @@
       AND the message format is built from its specification; until then a filing made on ICEGATE is recorded here.
     -->
     <p v-if="connection && !connection.can_transmit" class="fx-warn" role="status">
-      {{ connection.reason }} Filings made on ICEGATE directly can be recorded here (Manual or Email).
+      {{ connectionNotice }} Filings made on ICEGATE directly can be recorded here (Manual or Email).
     </p>
 
     <div class="fx-toolbar">
@@ -221,6 +221,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
@@ -248,6 +249,12 @@ export default {
     loading: false, busy: false, error: null, actionError: null,
   }),
   computed: {
+    /** Why Auto File is off, for the operator: the server's own reason names its settings, which mean nothing here. */
+    connectionNotice() {
+      return this.connection && this.connection.missing && this.connection.missing.length
+        ? "Automatic filing with ICEGATE is not switched on for your company yet. Ask F16s support to switch it on."
+        : "Automatic filing with ICEGATE is not ready yet: F16s is still building it.";
+    },
     ...mapGetters(["designation"]),
     housePlaceholder() {
       return this.mode === "air" ? "INMAA4" : "INNSA1";
@@ -310,7 +317,7 @@ export default {
       const { job_id, ...body } = this.submit;
       if (!body.filed_at) delete body.filed_at;
       ApiService.post(`/jobs/${job_id}/manifest-filings`, body)
-        .then(() => { this.submit = null; this.load(); })
+        .then(() => { this.submit = null; this.load(); say(this, "Filing recorded."); })
         .catch((e) => {
           const d = (e.response && e.response.data) || {};
           if (d.violations) this.violations = d.violations;
@@ -326,7 +333,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/manifest-filings/${this.outcomeFor.id}/outcome`, { status: this.outcomeFor.answer, note: this.outcomeFor.note || null })
-        .then(() => { this.outcomeFor = null; this.load(); })
+        .then(() => { this.outcomeFor = null; this.load(); say(this, "Outcome recorded."); })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
     },

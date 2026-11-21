@@ -460,6 +460,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
@@ -687,6 +688,7 @@ export default {
         .then(() => {
           this.emails = this.emails.filter((x) => x.id !== e.id);
           this.composing = null;
+          say(this, "Mail sent.");
         })
         .catch((err) => { this.sendError = this.readable(err, "Not sent. Try again."); })
         .finally(() => { this.sending = false; });
@@ -699,6 +701,7 @@ export default {
           this.emails = this.emails.filter((x) => x.id !== e.id);
           this.dismissing = null;
           this.loadDismissed();
+          say(this, "Dismissed.");
         })
         .catch((err) => { d.error = this.readable(err, "Not dismissed. Try again."); });
     },

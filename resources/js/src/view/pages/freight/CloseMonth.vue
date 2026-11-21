@@ -290,6 +290,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { saveFile } from "@/core/services/download";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
@@ -432,7 +433,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/reports/periods/${this.period.id}/reopen`, { reason: this.reopening.reason })
-        .then(() => { this.reopening = null; this.load(); })
+        .then(() => { this.reopening = null; this.load(); say(this, "Period reopened."); })
         .catch((e) => {
           const data = e.response && e.response.data;
           this.actionError = (data && (data.error || data.message)) || "The period would not reopen.";
@@ -445,7 +446,7 @@ export default {
       // 🔴 The server checks the unposted queue again independently — this screen shows the rule early, it does
       // not replace it.
       ApiService.post(`/reports/periods/${this.period.id}/close`, {})
-        .then(() => { this.confirming = false; this.load(); })
+        .then(() => { this.confirming = false; this.load(); say(this, "Period closed."); })
         .catch((e) => {
           this.actionError = (e.response && e.response.data && e.response.data.error) || "The period would not close.";
         })

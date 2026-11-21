@@ -1057,6 +1057,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { saveFile } from "@/core/services/download";
 import { yearChoices } from "@/core/config/financialYear";
 import { mapGetters } from "vuex";
@@ -1307,6 +1308,7 @@ export default {
           this.newPeriod = { ...this.newPeriod, period_name: "", start_date: "", end_date: "" };
           this.yearPick = "";
           this.loadPeriods();
+          say(this, "Period opened.");
         })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
@@ -1315,7 +1317,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/reports/periods/${period.id}/close`, {})
-        .then(() => this.loadPeriods())
+        .then(() => { say(this, "Period closed."); return this.loadPeriods(); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -1351,7 +1353,7 @@ export default {
         ...(this.jev.bill ? { bill_decision_id: this.jev.bill.id } : {}),
         ...(this.jev.short && candidate.variance < 0 ? { short_decision_id: this.jev.short.id } : {}),
       })
-        .then(() => { this.bankRow = null; this.candidates = []; this.load(); })
+        .then(() => { this.bankRow = null; this.candidates = []; this.load(); say(this, "Matched."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -1402,6 +1404,7 @@ export default {
           this.vendorForm = { ...this.vendorForm, csv: "", statement_no: "" };
           this.importingVendor = false;
           this.loadVendorStatements();
+          say(this, "Statement imported.");
         })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
@@ -1419,7 +1422,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/vendor-statements/${this.vendorStatement.id}/compare`, {})
-        .then(({ data }) => { this.showStatement(data); this.loadVendorStatements(); })
+        .then(({ data }) => { this.showStatement(data); this.loadVendorStatements(); say(this, "Compared again."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -1430,13 +1433,13 @@ export default {
         voucher_id: Number(String(this.lineLinks[line.id]).replace("voucher_", "")),
         ...(line.jev ? { decision_id: line.jev.id } : {}),
       })
-        .then(({ data }) => { this.showStatement(data); this.loadVendorStatements(); })
+        .then(({ data }) => { this.showStatement(data); this.loadVendorStatements(); say(this, "Line linked."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
     dispute(line, note) {
       ApiService.post(`/vendor-statements/${this.vendorStatement.id}/lines/${line.id}/dispute`, { dispute_note: note })
-        .then(({ data }) => this.showStatement(data))
+        .then(({ data }) => { say(this, "Marked as disputed."); return this.showStatement(data); })
         .catch((e) => { this.actionError = this.messageFor(e); });
     },
     draftVendorQuery() {
@@ -1612,13 +1615,13 @@ export default {
         .finally(() => { this.previewLoading = false; });
     },
     finalize() {
-      this.commit(`/invoices/${this.selected.id}/finalize`);
+      this.commit(`/invoices/${this.selected.id}/finalize`, "Finalized.");
     },
     post() {
       // The buy side posts through its own endpoint — same segregation, different document.
       this.commit(this.view === "vouchers"
         ? `/vouchers/${this.selected.id}/post`
-        : `/invoices/${this.selected.id}/post`);
+        : `/invoices/${this.selected.id}/post`, "Posted to the ledger.");
     },
     /**
      * Both commits share this because both can be REFUSED for a reason the user
@@ -1627,7 +1630,7 @@ export default {
      * accounting period covers this document date" is actionable, "something went
      * wrong" is not.
      */
-    commit(path) {
+    commit(path, done = "") {
       this.busy = true;
       this.actionError = null;
 
@@ -1637,6 +1640,7 @@ export default {
           if (i !== -1) this.$set(this.rows, i, { ...this.rows[i], ...data });
           this.selected = { ...this.selected, ...data };
           this.loadPreview();
+          say(this, done);
         })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });

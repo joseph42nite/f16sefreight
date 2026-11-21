@@ -283,6 +283,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { localToday } from "@/core/config/format";
 import { LOAD_CONTEXT } from "@/core/services/store/context.module";
 import ApiService from "@/core/services/api.service";
@@ -365,7 +366,7 @@ export default {
       });
 
       ApiService.put("/sales/targets", { month: this.targetMonth, targets })
-        .then(({ data }) => { this.targets = data; this.editingTargets = false; this.targetsError = null; })
+        .then(({ data }) => { this.targets = data; this.editingTargets = false; this.targetsError = null; say(this, "Targets saved."); })
         .catch((e) => {
           const d = (e.response && e.response.data) || {};
           this.targetsError = d.message || d.error || "Targets were not saved.";

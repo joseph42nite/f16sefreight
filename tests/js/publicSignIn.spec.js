@@ -92,23 +92,26 @@ describe("a portal's sign-in page", () => {
     expect(wrapper.find("[role=status]").text()).toContain("Type your email address above first");
   });
 
-  it("asks the server for the reset mail, and shows its answer", async () => {
+  it("asks the server for the reset code, shows its answer and opens the boxes for it", async () => {
     const { wrapper } = open();
-    const post = jest.spyOn(ApiService, "post").mockResolvedValue({ data: { data: "If that address has an account, a reset link is on its way." } });
+    const post = jest.spyOn(ApiService, "post").mockResolvedValue({ data: { data: "If that address has an account, a 6-digit code is on its way. It works for 10 minutes." } });
 
+    expect(wrapper.find(".fx-signin__reset").exists()).toBe(false);
     await wrapper.find("input[type=email]").setValue("asha@example.test");
     await forgot(wrapper).trigger("click");
     await flush();
 
-    expect(post).toHaveBeenCalledWith("/Forgotpassword", { email: "asha@example.test" });
-    expect(wrapper.find("[role=status]").text()).toBe("If that address has an account, a reset link is on its way.");
+    expect(post).toHaveBeenCalledWith("/forgot-password/code", { email: "asha@example.test" });
+    expect(wrapper.find("[role=status]").text()).toContain("a 6-digit code is on its way");
+    expect(wrapper.find(".fx-signin__reset").exists()).toBe(true);
+    expect(forgot(wrapper).text()).toBe("Send a new code");
     expect(forgot(wrapper).attributes("disabled")).toBeUndefined();
   });
 
   it.each([
     [429, "Too many tries just now. Please wait a minute and try again."],
-    [500, "The reset link could not be sent. Please try again."],
-  ])("says so when the reset is refused with %i", async (status, words) => {
+    [500, "The code could not be sent. Please try again."],
+  ])("says so when the code is refused with %i", async (status, words) => {
     const { wrapper } = open();
     jest.spyOn(ApiService, "post").mockRejectedValue(refused(status, {}));
 
@@ -117,14 +120,68 @@ describe("a portal's sign-in page", () => {
     await flush();
 
     expect(wrapper.find("[role=status]").text()).toBe(words);
+    expect(wrapper.find(".fx-signin__reset").exists()).toBe(false);
   });
 
-  it("sends platform staff to the contact page instead: their accounts are not reset by mail", () => {
+  const asked = async (answer) => {
+    const { wrapper } = open();
+    const post = jest.spyOn(ApiService, "post").mockResolvedValueOnce({ data: { data: "On its way." } });
+
+    await wrapper.find("input[type=email]").setValue("asha@example.test");
+    await forgot(wrapper).trigger("click");
+    await flush();
+    post.mockImplementationOnce(answer);
+
+    const fill = async (code, first, second) => {
+      const boxes = wrapper.findAll(".fx-signin__reset input");
+      await boxes.at(0).setValue(code);
+      await boxes.at(1).setValue(first);
+      await boxes.at(2).setValue(second);
+      await wrapper.find(".fx-signin__reset").trigger("submit");
+      await flush();
+    };
+
+    return { wrapper, post, fill };
+  };
+
+  it("sets the new password with the mailed code, then asks for a sign-in", async () => {
+    const { wrapper, post, fill } = await asked(() => Promise.resolve({ data: { status: true } }));
+
+    await fill("123456", "new-word-1", "new-word-1");
+
+    expect(post).toHaveBeenLastCalledWith("/forgot-password/reset", { email: "asha@example.test", code: "123456", password: "new-word-1", password_confirmation: "new-word-1" });
+    expect(wrapper.find(".fx-signin__reset").exists()).toBe(false);
+    expect(wrapper.find("[role=status]").text()).toBe("Your password is changed. Sign in with the new one.");
+  });
+
+  it("asks nothing of the server when the two new passwords differ", async () => {
+    const { wrapper, post, fill } = await asked(() => Promise.resolve({ data: {} }));
+
+    await fill("123456", "new-word-1", "new-word-2");
+
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(wrapper.find(".fx-signin__reset [role=alert]").text()).toBe("The two new passwords are not the same.");
+  });
+
+  it.each([
+    [401, {}, "That code is wrong or has expired. Send a new code and try again."],
+    [422, { errors: { password: ["The password must be at least 6 characters."] } }, "The password must be at least 6 characters."],
+    [429, {}, "Too many tries just now. Please wait a minute and try again."],
+    [500, {}, "The password could not be changed. Please try again."],
+  ])("says why the new password was refused with %i, and keeps the boxes", async (status, data, words) => {
+    const { wrapper, fill } = await asked(() => Promise.reject(refused(status, data)));
+
+    await fill("123456", "new-word-1", "new-word-1");
+
+    expect(wrapper.find(".fx-signin__reset [role=alert]").text()).toBe(words);
+    expect(wrapper.find(".fx-signin__reset button[type=submit]").attributes("disabled")).toBeUndefined();
+  });
+
+  it("gives platform staff the same reset: their accounts have an address too", () => {
     portalFromHost.mockReturnValue("superadmin");
     const { wrapper } = open();
 
-    expect(forgot(wrapper).exists()).toBe(false);
-    expect(wrapper.find(".fx-signin__foot a").attributes("href")).toBe("https://main.test/contact-us");
+    expect(forgot(wrapper).exists()).toBe(true);
     expect(wrapper.find(".fx-signin__switch").exists()).toBe(false);
   });
 });

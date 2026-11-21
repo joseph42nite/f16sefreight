@@ -102,6 +102,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
 
@@ -144,7 +145,7 @@ export default {
         : ApiService.put("/superadmin/airlines/" + this.editing, this.form);
 
       call
-        .then(() => { this.editing = null; this.load(); })
+        .then(() => { this.editing = null; this.load(); say(this, isNew ? "Airline added." : "Airline saved."); })
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.saving = false; });
     },

@@ -148,6 +148,7 @@
   </div>
 </template>
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
@@ -224,6 +225,7 @@ export default {
       if(this.action=='Add'){
         this.user_form.post(`/superadmin/create-user`)
         .then(({ data }) => {
+          say(this, "User created.");
           this.$router.push('/superadmin/all-users');
         })
         .catch(err => { this.saveError = serverMessage(err, "The user could not be saved."); })

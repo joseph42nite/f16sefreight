@@ -90,6 +90,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { mapGetters } from "vuex";
 import { LOGOUT} from "@/core/services/store/auth.module";
@@ -135,6 +136,7 @@ export default {
         this.passwordError = "";
         ApiService.put(`/superadmin/update-password`, this.password_form)
             .then(({ data }) => {
+                say(this, "Password changed. Sign in again.");
                 // `/login` is not a route in this app (FA9); the sign-in page is.
                 this.$store.dispatch(LOGOUT)
                 .then(() => this.$router.push('/sign-in').catch(() => {}));

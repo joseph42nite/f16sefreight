@@ -262,6 +262,9 @@ Route::middleware('throttle:10,1,sign-in')->group(function () {
 Route::post('/Forgotpassword', [PasswordResetRequestController::class, 'sendEmail']);
 Route::post('/check-forgot-token', [PasswordResetRequestController::class, 'check_token']);
 Route::post('ForgotpasswordActual', [PasswordResetRequestController::class, 'forgot_password_actual']);
+// The same by a six-digit code, for the portals' own sign-in pages (owner, 2026-11-21).
+Route::post('/forgot-password/code', [PasswordResetRequestController::class, 'sendCode']);
+Route::post('/forgot-password/reset', [PasswordResetRequestController::class, 'resetWithCode']);
 
 //common login
 Route::post('/login', [LoginController::class, 'login']);

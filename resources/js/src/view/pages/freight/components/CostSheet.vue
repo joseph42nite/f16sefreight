@@ -294,6 +294,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { wholeList } from "@/core/services/wholeList";
@@ -385,6 +386,7 @@ export default {
         .then(({ data }) => {
           this.sheet = data;
           this.draft.description = "";
+          say(this, "Line added.");
         })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
@@ -401,7 +403,7 @@ export default {
       const { side, id, ...line } = this.editing;
 
       ApiService.put(`/jobs/${this.jobId}/cost-sheet/${side}/${id}`, line)
-        .then(({ data }) => { this.sheet = data; this.editing = {}; })
+        .then(({ data }) => { this.sheet = data; this.editing = {}; say(this, "Line saved."); })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
     },
@@ -410,14 +412,14 @@ export default {
       this.actionError = null;
 
       ApiService.post(`/jobs/${this.jobId}/cost-sheet/send`, {})
-        .then(({ data }) => { this.sheet = data; this.confirming = false; })
+        .then(({ data }) => { this.sheet = data; this.confirming = false; say(this, "Cost sheet sent to accounts."); })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
     },
     remove(side, id) {
       this.busy = true;
       ApiService.delete(`/jobs/${this.jobId}/cost-sheet/${side}/${id}`)
-        .then(({ data }) => { this.sheet = data; })
+        .then(({ data }) => { this.sheet = data; say(this, "Line deleted."); })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
     },

@@ -236,6 +236,31 @@ export default {
         window.removeEventListener('click', this.closeAllDropdowns);
     },
     methods: {
+        /**
+         * What a save or a send came to, said at the top of the screen as well as beside the buttons (owner,
+         * 2026-11-21): a saved draft showed only a line at the foot of a long form.
+         */
+        sayOutcome(asked, outcome) {
+            if (outcome.error) {
+                this.$bvToast.toast(asked === 'send' ? 'Not sent to the airline. The waybill itself is saved.' : 'Not saved. The reason is beside the buttons.', { title: asked === 'send' ? 'Not sent' : 'Not saved', variant: 'danger', solid: true });
+                return;
+            }
+            const said = asked === 'send' ? ['Sent', 'The waybill was sent to the airline.'] : ['Saved', 'The waybill is saved.'];
+            this.$bvToast.toast(said[1], { title: said[0], variant: 'success', solid: true });
+        },
+        /**
+         * "Clear" empties every box and loads the page again (owner, 2026-11-21). Nothing saved is touched: a
+         * draft opened for a change stays as it was last saved, and the blank form opens in its place.
+         */
+        clearForm() {
+            return this.$bvModal.msgBoxConfirm('Everything typed here that is not saved will be lost.', {
+                title: 'Clear the form?', okTitle: 'Clear', cancelTitle: 'Keep it', okVariant: 'danger', centered: true,
+            }).then((yes) => {
+                if (!yes) return;
+                const blank = this.$route.params.id ? this.$router.resolve({ name: this.blankFormRoute }).href : '';
+                if (blank) window.location.assign(blank); else window.location.reload();
+            }).catch(() => {});
+        },
         /** The Save and Send buttons, out of reach while a save is on its way and back when it has answered. */
         submitButtons(on) {
             document.querySelectorAll(".submit-button").forEach((el) => {

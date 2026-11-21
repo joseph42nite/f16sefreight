@@ -372,6 +372,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { showFile } from "@/core/services/download";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
@@ -528,10 +529,16 @@ export default {
       clearTimeout(this.searchTimer);
       this.searchTimer = setTimeout(this.list, 300);
     },
+    /** A new master is a new shipment with its own number, so one stray click does not make one (owner, 2026-11-21). */
     newMaster() {
+      return this.$bvModal.msgBoxConfirm("This makes a new shipment with its own number, and opens it for you to fill in.", {
+        title: "Create a new master?", okTitle: "Create", cancelTitle: "Cancel", centered: true,
+      }).then((yes) => (yes ? this.createMaster() : null)).catch(() => {});
+    },
+    createMaster() {
       this.creating = true;
-      ApiService.post("/sea-shipments", {})
-        .then(({ data }) => { this.$router.push("/focus-sea/" + data.job.id); })
+      return ApiService.post("/sea-shipments", {})
+        .then(({ data }) => { say(this, "Master created."); this.$router.push("/focus-sea/" + data.job.id); })
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.creating = false; });
     },
@@ -605,7 +612,7 @@ export default {
       this.upload.busy = true;
       this.upload.error = null;
       ApiService.post(`/jobs/${this.jobId}/documents`, body)
-        .then(() => { this.$refs.file.value = ""; this.loadDocs(); })
+        .then(() => { this.$refs.file.value = ""; this.loadDocs(); say(this, "Document uploaded."); })
         .catch((e) => { this.upload.error = this.readable(e); })
         .finally(() => { this.upload.busy = false; });
     },

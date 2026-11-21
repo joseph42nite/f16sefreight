@@ -2467,6 +2467,7 @@
                                         </span>
                                     </div>
                                     <div class="d-flex justify-content-end submit-button">
+                                        <b-button class="show-btn mr-2" type="button" variant="outline-secondary" @click="clearForm">Clear</b-button>
                                         <b-button class="show-btn mr-2" type="button" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';">Generate PDF</b-button>
                                         <div v-if="current_user.can_send">
                                             <b-button class="show-btn mr-2" type="submit" @click="form.status='send';">Send</b-button>
@@ -2701,6 +2702,8 @@ export default {
             isFetching: false,
             use_my_email: false,
             mode: 'add',
+            // Where "Clear" goes from a waybill opened for a change: this form, blank.
+            blankFormRoute: 'Master Airway Bill',
             awbDetails: false,
             awbError: null,
             awbId: null,
@@ -3233,6 +3236,7 @@ export default {
                         const outcome = saveOutcome(asked, response.data, 'e-AWB');
                         this.successMessage = outcome.success;
                         this.main_error_msg = outcome.error;
+                        this.sayOutcome(asked, outcome);
                     } else {}
                 })
                 .catch(error => {
@@ -3240,6 +3244,7 @@ export default {
                     // Every refusal says something (FW1): only a 422 with field errors used to be shown.
                     this.generatePDFAfterSave = '';
                     this.main_error_msg = failureMessage(error, this.formatBackendError);
+                    this.sayOutcome(asked, { error: this.main_error_msg });
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {
@@ -3261,6 +3266,7 @@ export default {
                         const outcome = saveOutcome(asked, response.data, 'e-AWB');
                         this.successMessage = outcome.success;
                         this.main_error_msg = outcome.error;
+                        this.sayOutcome(asked, outcome);
                     } else {}
                 })
                 .catch(error => {
@@ -3268,6 +3274,7 @@ export default {
                     // Every refusal says something (FW1): only a 422 with field errors used to be shown.
                     this.generatePDFAfterSave = '';
                     this.main_error_msg = failureMessage(error, this.formatBackendError);
+                    this.sayOutcome(asked, { error: this.main_error_msg });
                 });
             }
         },

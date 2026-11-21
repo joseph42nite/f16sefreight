@@ -242,6 +242,7 @@
             <div class="text-nowrap">
               <span class="font-weight-bold text-dark d-block mb-1">{{ formatDate(data.item.updated_at) }}</span>
               <span class="text-muted font-size-xs"><i class="far fa-clock mr-1 text-primary"></i>{{ formatTime(data.item.updated_at) }}</span>
+              <span v-if="wasRevised(data.item)" class="text-muted font-size-xs d-block mt-1">First created {{ formatDate(data.item.created_at) }}, {{ formatTime(data.item.created_at) }}</span>
             </div>
           </template>
 
@@ -800,6 +801,8 @@ export default {
         "Weight",
         "Date Sent",
         "Time Sent",
+        "Date Created",
+        "Time Created",
         "FNA Status"
       ];
 
@@ -815,8 +818,10 @@ export default {
         const weight = item.consignment_data 
           ? `${item.consignment_data.gross_weight} ${item.consignment_data.weight_code || 'K'}` 
           : "";
-        const dateSent = this.formatDate(item.created_at);
-        const timeSent = this.formatTime(item.created_at);
+        const dateSent = this.formatDate(item.updated_at);
+        const timeSent = this.formatTime(item.updated_at);
+        const dateCreated = this.formatDate(item.created_at);
+        const timeCreated = this.formatTime(item.created_at);
         const fnaStatus = item.fna_received ? "FNA Received" : "FMA";
 
         return [
@@ -829,6 +834,8 @@ export default {
           weight,
           dateSent,
           timeSent,
+          dateCreated,
+          timeCreated,
           fnaStatus
         ];
       });
@@ -843,6 +850,10 @@ export default {
     rowClass(item, type) {
       if (!item || type !== 'row') return '';
       return item.fna_received ? 'table-row-fna' : '';
+    },
+    // A waybill sent again after a change: its first date is worth showing beside the sent one.
+    wasRevised(item) {
+      return !!item.created_at && !!item.updated_at && this.formatDate(item.created_at) + this.formatTime(item.created_at) !== this.formatDate(item.updated_at) + this.formatTime(item.updated_at);
     },
     formatDate(dateString) {
       if (!dateString) return '—';

@@ -750,6 +750,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import Vue from "vue";
 import ApiService from "@/core/services/api.service";
@@ -1286,7 +1287,7 @@ export default {
       this.cargoBusy = true;
       this.cargoError = null;
       ApiService.patch("/enquiries/" + this.active.enquiry.id, "cargo", { direction })
-        .then(() => { this.active.enquiry.direction = direction; })
+        .then(() => { this.active.enquiry.direction = direction; say(this, "Direction saved."); })
         .catch((e) => {
           this.cargoError = serverMessage(e, "The direction could not be saved.");
         })
@@ -1458,7 +1459,7 @@ export default {
       const asking = this.designation === "operations";
 
       ApiService.post(`/jobs/${this.active.job.id}/reassign${asking ? "/request" : ""}`, { ops_id: Number(userId) })
-        .then(({ data }) => { this.applyJob(data); })
+        .then(({ data }) => { this.applyJob(data); say(this, asking ? "Reassignment requested." : "Operator assigned."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -1466,7 +1467,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/jobs/${this.active.job.id}/reassign/withdraw`, {})
-        .then(({ data }) => { this.applyJob(data.job); })
+        .then(({ data }) => { this.applyJob(data.job); say(this, "Request withdrawn."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -1516,7 +1517,7 @@ export default {
     assignThread(userId) {
       this.actionError = null;
       ApiService.post("/inbox/threads/" + this.active.id + "/assign", { user_id: Number(userId) })
-        .then(({ data }) => { this.setOwner(data.assigned_ops); })
+        .then(({ data }) => { this.setOwner(data.assigned_ops); say(this, "Conversation assigned."); })
         .catch((e) => { this.actionError = this.messageFor(e); });
     },
     confirmShipment() {
@@ -1528,7 +1529,7 @@ export default {
       })
         /* Reload rather than patch: conversion changes the enquiry's status, mints the
            job number and moves the thread's identifier — the server owns all of it. */
-        .then(({ data }) => this.open(this.active).then(() => { this.newClient = data.new_client || null; }))
+        .then(({ data }) => this.open(this.active).then(() => { this.newClient = data.new_client || null; say(this, "Shipment confirmed."); }))
         .then(() => {
           // The file picked with Extract before confirming goes into Extraction now.
           if (this.waitingFile && this.active.job) this.handToExtraction(this.waitingFile);
@@ -1544,7 +1545,7 @@ export default {
         lost_reason: this.lostReason,
         lost_reason_custom: this.lostReason === "other" ? this.lostCustom : null,
       })
-        .then(() => { this.losing = false; return this.open(this.active); })
+        .then(() => { this.losing = false; say(this, "Enquiry marked lost."); return this.open(this.active); })
         .catch((e) => { this.outcomeError = this.messageFor(e); })
         .finally(() => { this.outcomeBusy = false; });
     },
@@ -1552,7 +1553,7 @@ export default {
       this.outcomeBusy = true;
       this.outcomeError = null;
       ApiService.post("/enquiries/" + this.active.enquiry.id + "/reopen", {})
-        .then(() => this.open(this.active))
+        .then(() => { say(this, "Enquiry reopened."); return this.open(this.active); })
         .catch((e) => { this.outcomeError = this.messageFor(e); })
         .finally(() => { this.outcomeBusy = false; });
     },
@@ -1780,7 +1781,7 @@ export default {
       ApiService.post("/inbox/threads/" + this.active.id + "/client-update", {
         stage: this.active.client_update.stage, decision, ...(values || {}),
       })
-        .then(({ data }) => { this.active = Object.assign({}, this.active, data); })
+        .then(({ data }) => { this.active = Object.assign({}, this.active, data); say(this, decision === "send" ? "Client update sent." : "Client update skipped."); })
         .catch((e) => {
           const d = (e.response && e.response.data) || {};
           /* The draft protocol: a newer update replaced this one — show it on top, with the reason. */
@@ -1797,7 +1798,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post("/inbox/threads/" + this.active.id + "/classify", { classification: this.pending })
-        .then(({ data }) => { this.active = data; this.load(); })
+        .then(({ data }) => { this.active = data; this.load(); say(this, "Classification changed."); })
         .catch((e) => {
           this.actionError = this.messageFor(e);
           /* Put the control back to the truth — the server refused the change. */

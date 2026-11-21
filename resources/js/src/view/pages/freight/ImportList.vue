@@ -58,6 +58,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
@@ -96,7 +97,7 @@ export default {
         ? ApiService.post("/sea-shipments", { direction: "import", cargo_type: "fcl" })
         : ApiService.post("/imports");
       call
-        .then(({ data }) => this.$router.push("/import/" + data.job.id))
+        .then(({ data }) => { say(this, "Import created."); return this.$router.push("/import/" + data.job.id); })
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.creating = false; });
     },

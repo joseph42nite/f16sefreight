@@ -174,6 +174,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
 
@@ -272,6 +273,7 @@ export default {
     saveCompany() {
       this.run(() => ApiService.post("/superadmin/create-company", { ...this.company, code: this.company.code.toUpperCase() }), ({ data }) => {
         const id = data.company.id;
+        say(this, "Company created.");
         return this.load().then(() => this.openCompany(id)).then(() => this.startBranch(true));
       });
     },
@@ -281,6 +283,7 @@ export default {
       Object.keys(body).forEach((k) => { if (body[k] === "") body[k] = null; });
       this.run(() => ApiService.post("/superadmin/create-branch", body), () => {
         const wizard = this.wizard;
+        say(this, "Branch created.");
         return this.load().then(() => this.openCompany(this.open.company.id)).then(() => (wizard ? this.startPerson(true) : (this.step = null)));
       });
     },

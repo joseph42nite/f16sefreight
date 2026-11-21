@@ -367,6 +367,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { saveFile } from "@/core/services/download";
 import { localToday, inr } from "@/core/config/format";
 import { mapGetters } from "vuex";
@@ -504,7 +505,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/jobs/${b.job_id}/cost-sheet/lines`, body)
-        .then(() => { this.booking = null; this.load(); })
+        .then(() => { this.booking = null; this.load(); say(this, "Cost booked."); })
         .catch((e) => {
           this.actionError = serverMessage(e, "The cost could not be booked.");
         })
@@ -545,7 +546,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/payments/${payment.id}/post`, {})
-        .then(() => this.load())
+        .then(() => { say(this, "Payment posted."); return this.load(); })
         .catch((e) => {
           this.actionError = (e.response && e.response.data && e.response.data.error) || "It would not post.";
         })

@@ -86,6 +86,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { addressList } from "@/core/services/mail";
 import FxDrawer from "@/view/pages/freight/components/FxDrawer.vue";
@@ -170,14 +171,14 @@ export default {
       ApiService.post(`${this.endpoint}/${m.id}/send`, {
         to: addressList(this.form.to), cc: addressList(this.form.cc), subject: this.form.subject, body: this.form.body,
       })
-        .then(() => { this.mails = this.mails.filter((x) => x.id !== m.id); this.composing = null; })
+        .then(() => { this.mails = this.mails.filter((x) => x.id !== m.id); this.composing = null; say(this, "Mail sent."); })
         .catch((err) => { this.sendError = this.error(err, "Not sent. Try again."); })
         .finally(() => { this.sending = false; });
     },
     dismiss(m) {
       const d = this.dismissing;
       ApiService.post(`${this.endpoint}/${m.id}/dismiss`, { reason: d.reason, note: d.note || null })
-        .then(() => { this.mails = this.mails.filter((x) => x.id !== m.id); this.dismissing = null; })
+        .then(() => { this.mails = this.mails.filter((x) => x.id !== m.id); this.dismissing = null; say(this, "Dismissed."); })
         .catch((err) => { d.error = this.error(err, "Not dismissed. Try again."); });
     },
     error(err, fallback) {

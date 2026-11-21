@@ -200,6 +200,7 @@
     </b-container>
 </template>
 <script>
+import { say } from "@/core/services/toast";
 
 import SideBar from "@/view/layouts/public/SideBar.vue";
 import SkeletonTable from "../../components/SkeletonTable.vue";
@@ -426,9 +427,11 @@ export default {
                         this.house_way_bills = {};
                         // Refresh the data
                         this.allAirwayBill();
+                        say(this, "House waybill deleted.");
                     })
-                    .catch((error) => {
-                        console.error("Failed to delete house way bill:", error);
+                    .catch(() => {
+                        // It said nothing when the delete failed: the row simply stayed.
+                        say(this, "The house waybill was not deleted. Try again.", "danger");
                     });
             }
         },

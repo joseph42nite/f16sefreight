@@ -245,6 +245,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
@@ -384,6 +385,7 @@ export default {
           this.form = { name: "", partner_type: "customs_broker", email: "", phone: "",
                         address: "", gst_no: "", pan_no: "" };
           this.load();
+          say(this, "Partner added.");
         })
         .catch((e) => {
           this.saveError = serverMessage(e, "Could not save.", { all: true });
@@ -453,6 +455,7 @@ export default {
           const i = this.rows.findIndex((r) => r.id === row.id);
           if (i !== -1) this.$set(this.rows, i, { ...this.rows[i], ...data });
           this.tdsEditing = null;
+          say(this, "TDS saved.");
         })
         .catch((e) => {
           this.tdsError = serverMessage(e, "Could not save.", { all: true });
@@ -481,8 +484,10 @@ export default {
         ? ApiService.put("/customers/" + this.client.id, body)
         : ApiService.post("/customers", body);
 
+      const done = this.client.id ? "Client saved." : "Client added.";
+
       request
-        .then(() => { this.client = null; this.load(); })
+        .then(() => { this.client = null; this.load(); say(this, done); })
         .catch((e) => {
           this.saveError = serverMessage(e, "Could not save.", { all: true });
         })

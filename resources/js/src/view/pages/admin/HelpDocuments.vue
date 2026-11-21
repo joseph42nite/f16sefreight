@@ -94,6 +94,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
 import { HELP_TARGETS } from "@/core/config/helpTargets";
@@ -127,7 +128,7 @@ export default {
       const url = this.replacing ? "/superadmin/help-documents/" + this.replacing.id : "/superadmin/help-documents";
 
       ApiService.post(url, body)
-        .then(() => { this.resetForm(); this.load(); })
+        .then(() => { this.resetForm(); this.load(); say(this, "Document saved."); })
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.busy = false; });
     },
@@ -149,6 +150,7 @@ export default {
           // 🔴 The form may be set to replace this very document: left so, "Replace" then posted to one that is gone.
           if (this.replacing && this.replacing.id === d.id) this.resetForm();
           this.load();
+          say(this, "Document deleted.");
         })
         .catch((e) => { this.error = this.readable(e); });
     },

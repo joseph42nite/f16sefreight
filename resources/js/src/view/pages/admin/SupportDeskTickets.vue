@@ -118,6 +118,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
@@ -192,7 +193,7 @@ export default {
 
       this.busy = true;
       steps.reduce((p, status) => p.then(() => ApiService.patch("/admin/tickets", ticket.id, { status })), Promise.resolve())
-        .then(() => this.pollChat())
+        .then(() => { say(this, "Ticket resolved."); return this.pollChat(); })
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.busy = false; });
     },
@@ -206,7 +207,7 @@ export default {
     advance(ticket, status) {
       this.busy = true;
       ApiService.patch("/admin/tickets", ticket.id, { status })
-        .then(() => this.load())
+        .then(() => { say(this, "Ticket updated."); return this.load(); })
         /* §11.3 the server's reason verbatim — a backwards transition explains itself. */
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.busy = false; });

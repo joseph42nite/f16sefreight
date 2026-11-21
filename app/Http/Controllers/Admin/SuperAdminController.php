@@ -83,11 +83,12 @@ class SuperAdminController extends Controller
             }
         }
 
+        // "Sent" is the last send (updated_at): a revised waybill counts on the day it was sent again.
         if ($request->has('dates') && is_array($request->dates) && count($request->dates) > 0) {
             $query->where(function($q) use ($request) {
                 foreach ($request->dates as $date) {
                     if (!empty($date)) {
-                        $q->orWhereDate('created_at', '=', $date);
+                        $q->orWhereDate('updated_at', '=', $date);
                     }
                 }
             });
@@ -100,8 +101,8 @@ class SuperAdminController extends Controller
                         $parts = explode('-', $month);
                         if (count($parts) === 2) {
                             $q->orWhere(function($sub) use ($parts) {
-                                $sub->whereYear('created_at', $parts[0])
-                                    ->whereMonth('created_at', $parts[1]);
+                                $sub->whereYear('updated_at', $parts[0])
+                                    ->whereMonth('updated_at', $parts[1]);
                             });
                         }
                     }

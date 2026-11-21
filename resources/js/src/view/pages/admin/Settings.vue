@@ -57,6 +57,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
 export default {
@@ -75,7 +76,7 @@ export default {
         submit() {
             this.error = '';
             this.msg_form.post(`/superadmin/add-notice`).then(({ data }) => {
-              alert("Added successfull");
+              say(this, "Notice added.");
               this.msg_form.airline='';
               this.msg_form.message='';
               this.get_notice();
@@ -100,6 +101,7 @@ export default {
             this.error = '';
             ApiService.post(`/superadmin/delete-notice`,{'carrier_code':carrier_code}).then(({ data }) => {
                 this.get_notice();
+                say(this, "Notices deleted.");
             }).catch((err) => { this.error = serverMessage(err, 'The notice could not be deleted.'); });
         }
     },

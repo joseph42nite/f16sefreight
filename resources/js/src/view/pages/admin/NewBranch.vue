@@ -155,6 +155,7 @@
     </div>
 </template>
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
 import { flash } from "@/core/services/flash";
@@ -219,6 +220,7 @@ export default {
             if (this.action == "Add") {
                 this.branch_form.post(`/superadmin/create-branch`)
                     .then(({ data }) => {
+                        say(this, "Branch created.");
                         this.$router.push({ path: "/superadmin/tenants", query: { company: String(this.branch_form.company_id) } });
                     })
                     .catch(failed);

@@ -2332,6 +2332,7 @@
                                         </span>
                                     </div>
                                     <div class="d-flex justify-content-end submit-button">
+                                        <b-button class="show-btn mr-2" type="button" variant="outline-secondary" @click="clearForm">Clear</b-button>
                                         <b-button class="show-btn mr-2" @click="isGeneratePdf(generateButton=1); form.status='generate_pdf';">Generate PDF</b-button>
                                         <div v-if="current_user.can_send">
                                             <b-button class="show-btn mr-2" type="submit" @click="form.status='send';">Send</b-button>
@@ -2368,6 +2369,8 @@ export default {
     data() {
         return {
             mode: 'add',
+            // Where "Clear" goes from a waybill opened for a change: this form, blank.
+            blankFormRoute: 'House Way Bill',
             /* Master AWBs this branch has already raised, for the number datalist.
                Empty is fine and normal — a house bill may reference a master this
                system has never held. */
@@ -2965,6 +2968,7 @@ export default {
                         const outcome = saveOutcome(asked, response.data, 'e-HSWB');
                         this.successMessage = outcome.success;
                         this.main_error_msg = outcome.error;
+                        this.sayOutcome(asked, outcome);
                     } else {
                         console.error('ID is missing in response data');
                     }
@@ -2974,6 +2978,7 @@ export default {
                     // Every refusal says something (FW1): only a 422 with field errors used to be shown.
                     this.generatePDFAfterSave = '';
                     this.main_error_msg = failureMessage(error);
+                    this.sayOutcome(asked, { error: this.main_error_msg });
                 });
             } else if (this.mode === 'update') {
                 if (!this.existingData || !this.existingData.id) {
@@ -2995,6 +3000,7 @@ export default {
                         const outcome = saveOutcome(asked, response.data, 'e-HSWB');
                         this.successMessage = outcome.success;
                         this.main_error_msg = outcome.error;
+                        this.sayOutcome(asked, outcome);
                     } else {
                     }
                 })
@@ -3003,6 +3009,7 @@ export default {
                     // Every refusal says something (FW1): only a 422 with field errors used to be shown.
                     this.generatePDFAfterSave = '';
                     this.main_error_msg = failureMessage(error);
+                    this.sayOutcome(asked, { error: this.main_error_msg });
                     console.error('Update Failed:', error);
                 });
             }

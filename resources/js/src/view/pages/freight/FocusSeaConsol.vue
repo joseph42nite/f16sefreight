@@ -160,6 +160,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
@@ -223,7 +224,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/jobs/${this.masterId}/link-hbl`, { house_id: this.linkId })
-        .then(({ data }) => { this.consol = data; this.linkId = ""; this.load(); })
+        .then(({ data }) => { this.consol = data; this.linkId = ""; this.load(); say(this, "House bill linked."); })
         /* §11.3 the server's reason verbatim — "already belongs to another consol"
            tells the operator where to go; "link failed" does not. */
         .catch((e) => { this.actionError = this.readable(e); })
@@ -233,14 +234,14 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/sea-shipments/${this.masterId}/houses`, { hbl_number: this.newHbl || null })
-        .then(() => { this.newHbl = ""; this.load(); })
+        .then(() => { this.newHbl = ""; this.load(); say(this, "House bill added."); })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
     },
     unlink(house) {
       this.busy = true;
       ApiService.delete(`/jobs/${this.masterId}/link-hbl/${house.id}`)
-        .then(({ data }) => { this.consol = data; this.load(); })
+        .then(({ data }) => { this.consol = data; this.load(); say(this, "House bill unlinked."); })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
     },

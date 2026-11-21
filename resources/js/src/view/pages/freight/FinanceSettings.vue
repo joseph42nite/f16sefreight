@@ -485,6 +485,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { inr } from "@/core/config/format";
@@ -582,7 +583,7 @@ export default {
       this.actionError = null;
 
       ApiService.post("/finance-settings/gstin", { agent_id: branch.id, gst_no: this.gstinValue || null })
-        .then(() => { this.gstinEditing = null; return this.load(); })
+        .then(() => { this.gstinEditing = null; say(this, "GSTIN saved."); return this.load(); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -597,8 +598,10 @@ export default {
         ? ApiService.put(`/bank-accounts/${this.bankForm.id}`, body)
         : ApiService.post("/bank-accounts", body);
 
+      const done = this.bankForm.id ? "Bank account saved." : "Bank account added.";
+
       call
-        .then(() => { this.bankForm = this.blankBank(); return this.loadBanks(); })
+        .then(() => { this.bankForm = this.blankBank(); say(this, done); return this.loadBanks(); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -645,7 +648,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/bank-accounts/${bank.id}/close`, {})
-        .then(() => this.loadBanks())
+        .then(() => { say(this, "Bank account closed."); return this.loadBanks(); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -676,7 +679,7 @@ export default {
     setJev(point, enabled) {
       this.busy = true;
       ApiService.post("/finance-settings/jev", { question: point.question, enabled })
-        .then(({ data }) => { this.jevPoints = data.jev || []; })
+        .then(({ data }) => { this.jevPoints = data.jev || []; say(this, "Setting saved."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -684,7 +687,7 @@ export default {
       this.busy = true;
       this.ratesError = null;
       ApiService.post("/finance-settings/exchange-rates/fetch", {})
-        .then(({ data }) => { this.takeRates(data); })
+        .then(({ data }) => { this.takeRates(data); say(this, "Rates updated."); })
         .catch((e) => {
           const d = (e.response && e.response.data) || {};
           if (d.exchange_rates) this.takeRates(d);
@@ -699,11 +702,12 @@ export default {
     rename(account) {
       this.save("/finance-settings/accounts", {
         agent_id: account.agent_id, account_code: account.account_code, account_name: this.editName,
-      }, () => { this.editing = null; });
+      }, () => { this.editing = null; say(this, "Account renamed."); });
     },
     addAccount() {
       this.save("/finance-settings/accounts", this.newAccount, () => {
         this.newAccount = { ...this.newAccount, account_code: "", account_name: "" };
+        say(this, "Account added.");
       });
     },
     editTdsRate(rate) {
@@ -720,20 +724,21 @@ export default {
       ApiService.post("/finance-settings/tds-rates", {
         agent_id: rate.agent_id, section: rate.section, ...this.tdsForm,
       })
-        .then(({ data }) => { this.take(data); this.tdsEditing = null; })
+        .then(({ data }) => { this.take(data); this.tdsEditing = null; say(this, "TDS rate saved."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
     addRate() {
       this.save("/finance-settings/rate-cards", this.newRate, () => {
         this.newRate = { ...this.newRate, party_id: null, rate: 0 };
+        say(this, "Rate added.");
       });
     },
     removeRate(card) {
       this.busy = true;
       this.actionError = null;
       ApiService.delete(`/finance-settings/rate-cards/${card.id}`)
-        .then(({ data }) => this.take(data))
+        .then(({ data }) => { say(this, "Rate removed."); return this.take(data); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },

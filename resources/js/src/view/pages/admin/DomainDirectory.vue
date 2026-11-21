@@ -122,6 +122,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
 
@@ -185,7 +186,7 @@ export default {
       ApiService.post("/superadmin/domain-directory/" + row.id + "/approve", {
         classification: this.chosen[row.id],
       })
-        .then(() => this.load())
+        .then(() => { say(this, "Approved."); return this.load(); })
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.busy = null; });
     },
@@ -204,7 +205,7 @@ export default {
       this.busy = row.id;
 
       ApiService.post("/superadmin/domain-directory/" + row.id + "/reject", { note })
-        .then(() => this.load())
+        .then(() => { say(this, "Rejected."); return this.load(); })
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.busy = null; });
     },
@@ -212,7 +213,7 @@ export default {
       this.promoting = true;
 
       ApiService.post("/superadmin/domain-directory/promote")
-        .then(() => this.load())
+        .then(() => { say(this, "Promoted."); return this.load(); })
         .catch((e) => { this.error = this.messageFor(e); })
         .finally(() => { this.promoting = false; });
     },

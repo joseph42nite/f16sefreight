@@ -149,7 +149,8 @@ class ManifestFilingController extends Controller
         // Unreachable in practice until a transmitter exists: canTransmit() is false while config's transmitter is NULL.
         if ($data['sending_method'] === 'auto' && ! $this->icegate->canTransmit()) {
             return response()->json([
-                'error'   => $this->icegate->reason(),
+                // For the operator: the setting names stay in `missing`, for whoever looks into it.
+                'error'   => 'Automatic filing with ICEGATE is not switched on yet. Record the filing as Manual or Email, or ask F16s support.',
                 'reason'  => 'icegate_not_connected',
                 'missing' => $this->icegate->missing(),
             ], 422);

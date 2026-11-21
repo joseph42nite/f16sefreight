@@ -118,6 +118,7 @@
     </div>
 </template>
 <script>
+import { say } from "@/core/services/toast";
 import ApiService from "@/core/services/api.service";
 import { serverMessage } from "@/core/services/serverMessage";
 import { flash } from "@/core/services/flash";
@@ -172,6 +173,7 @@ export default {
                 this.company_form
                     .post(`/superadmin/create-company`)
                     .then(({ data }) => {
+                        say(this, "Company created.");
                         this.$router.push({ path: "/superadmin/tenants", query: { company: String(data.company.id) } });
                     })
                     .catch(failed);

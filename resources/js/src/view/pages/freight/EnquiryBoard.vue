@@ -103,8 +103,12 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in rows" :key="row.id">
-          <td class="identifier">{{ row.enquiry_no }}</td>
+        <!-- A row opens the enquiry's mail in the inbox (owner, 2026-11-21). One made by hand has no mail. -->
+        <tr v-for="row in rows" :key="row.id" :class="{ 'fx-enq__row--opens': mailOf(row) }" @click="openMail(row)">
+          <td class="identifier">
+            <router-link v-if="mailOf(row)" :to="mailOf(row)" class="identifier" :title="'Open the mail for ' + row.enquiry_no" @click.native.stop>{{ row.enquiry_no }}</router-link>
+            <template v-else>{{ row.enquiry_no }}</template>
+          </td>
           <td>
             <!--
               🔴 The name where the client is known, the sending DOMAIN where it is not.
@@ -142,7 +146,7 @@
               v-if="canConvert && row.status !== 'converted' && row.status !== 'lost'"
               class="fx-btn fx-btn--ghost"
               :disabled="busyId === row.id"
-              @click="convert(row)"
+              @click.stop="convert(row)"
             >
               {{ busyId === row.id ? 'Converting…' : 'Confirm shipment' }}
             </button>
@@ -161,6 +165,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import StatusChip from "@/view/pages/freight/components/StatusChip.vue";
@@ -204,6 +209,15 @@ export default {
     this.loadMasters();
   },
   methods: {
+    /** Where an enquiry's mail is: its conversation in the inbox. Nothing for an enquiry with no mail behind it. */
+    mailOf(row) {
+      return row.thread_id ? { path: "/inbox", query: { thread: String(row.thread_id) } } : null;
+    },
+    openMail(row) {
+      // Selecting text in a row (a number to copy) is not a click on it.
+      if (!this.mailOf(row) || String(window.getSelection ? window.getSelection() : "") !== "") return;
+      this.$router.push(this.mailOf(row));
+    },
     /** A new search starts again from the first page. */
     search() {
       this.page = 1;
@@ -252,7 +266,7 @@ export default {
       this.takingId = i.id;
       this.importError = null;
       ApiService.post(`/masters/${i.id}/take`, {})
-        .then(() => (this.pageOf(i) ? this.$router.push(this.pageOf(i)) : this.loadMasters()))
+        .then(() => { say(this, "It is yours now."); return this.pageOf(i) ? this.$router.push(this.pageOf(i)) : this.loadMasters(); })
         .catch((e) => {
           this.importError = this.readable(e);
           this.loadMasters();
@@ -262,7 +276,7 @@ export default {
     convert(row) {
       this.busyId = row.id;
       ApiService.post(`/enquiries/${row.id}/convert`, {})
-        .then(() => this.load())
+        .then(() => { say(this, "Shipment confirmed."); return this.load(); })
         .catch((e) => {
           this.error = this.readable(e);
         })
@@ -278,3 +292,8 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.fx-enq__row--opens { cursor: pointer; }
+.fx-enq__row--opens:hover td { background: rgba(0, 0, 0, 0.03); }
+</style>

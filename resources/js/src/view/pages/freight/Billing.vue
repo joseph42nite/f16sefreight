@@ -879,6 +879,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { saveFile, showFile } from "@/core/services/download";
 import { localToday, paise, inr } from "@/core/config/format";
 import { wholeList } from "@/core/services/wholeList";
@@ -1202,17 +1203,17 @@ export default {
     },
     changeClient() {
       // The register's Organization column moves with it.
-      this.commit(() => ApiService.put(`/billing/${this.document.id}/client`, { customer_id: this.clientDraft }), true);
+      this.commit(() => ApiService.put(`/billing/${this.document.id}/client`, { customer_id: this.clientDraft }), true, "Client changed.");
     },
     /** Address this bill to another office of the same client (owner, 2026-10-10). */
     billToOffice() {
-      this.commit(() => ApiService.post(`/billing/${this.document.id}/bill-to`, { customer_id: this.officeDraft }), true);
+      this.commit(() => ApiService.post(`/billing/${this.document.id}/bill-to`, { customer_id: this.officeDraft }), true, "Billed to the other office.");
     },
     saveHeader() {
-      this.commit(() => ApiService.put(`/billing/${this.document.id}`, this.header));
+      this.commit(() => ApiService.put(`/billing/${this.document.id}`, this.header), false, "Saved.");
     },
     addLine() {
-      this.commit(() => ApiService.post(`/billing/${this.document.id}/lines`, this.newLine));
+      this.commit(() => ApiService.post(`/billing/${this.document.id}/lines`, this.newLine), false, "Line added.");
     },
     editLine(item) {
       this.editingLine = item.id;
@@ -1222,10 +1223,10 @@ export default {
       };
     },
     saveLine(lineId) {
-      this.commit(() => ApiService.put(`/billing/${this.document.id}/lines/${lineId}`, this.lineDraft));
+      this.commit(() => ApiService.put(`/billing/${this.document.id}/lines/${lineId}`, this.lineDraft), false, "Line saved.");
     },
     deleteLine(item) {
-      this.commit(() => ApiService.delete(`/billing/${this.document.id}/lines/${item.id}`));
+      this.commit(() => ApiService.delete(`/billing/${this.document.id}/lines/${item.id}`), false, "Line deleted.");
     },
     finalize(override = false) {
       // 🔒 `=== true`, never truthiness: overriding a credit hold has to be DELIBERATE, and a stray argument —
@@ -1236,17 +1237,17 @@ export default {
       this.commit(
         () => ApiService.post(`/invoices/${this.document.id}/finalize`,
           overriding ? { override_credit_hold: true, override_reason: this.overrideReason } : {}),
-        true
+        true, "Finalized."
       );
     },
     postDocument() {
-      this.commit(() => ApiService.post(`/invoices/${this.document.id}/post`, {}), true);
+      this.commit(() => ApiService.post(`/invoices/${this.document.id}/post`, {}), true, "Posted to the ledger.");
     },
     voidDocument() {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/billing/${this.document.id}/void`, this.voidFor)
-        .then(({ data }) => { this.voidFor = null; this.showDocument(data); this.load(); this.changed(); })
+        .then(({ data }) => { this.voidFor = null; this.showDocument(data); this.load(); this.changed(); say(this, "Document voided."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -1271,11 +1272,13 @@ export default {
     changed() {
       this.$emit("changed");
     },
-    commit(call, refreshRegister = false) {
+    /** `done` is what to say at the top of the screen once the server has taken it. */
+    commit(call, refreshRegister = false, done = "") {
       this.busy = true;
       this.actionError = null;
       call()
         .then(({ data }) => {
+          say(this, done);
           if (data && data.document) this.showDocument(data);
           else this.openById(this.document.id);
           if (refreshRegister) this.load();
@@ -1368,6 +1371,7 @@ export default {
           this.raise = null;
           this.load();
           this.changed();
+          say(this, "Document raised.");
           // Straight into the drawer: a document raised and then hunted for in the register is a document
           // somebody forgets to finalize.
           this.openById(data.id);
@@ -1428,7 +1432,7 @@ export default {
       this.actionError = null;
       ApiService.post("/receipts", { ...this.receipt, allocations,
         ...(this.remittanceDecisionId ? { remittance_decision_id: this.remittanceDecisionId } : {}) })
-        .then(() => { this.receipt = null; this.showView("receipts"); this.changed(); })
+        .then(() => { this.receipt = null; this.showView("receipts"); this.changed(); say(this, "Receipt recorded."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -1436,7 +1440,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/receipts/${row.id}/post`, {})
-        .then(() => this.load())
+        .then(() => { say(this, "Receipt posted."); return this.load(); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },
@@ -1444,7 +1448,7 @@ export default {
       this.busy = true;
       this.actionError = null;
       ApiService.post(`/billing/${this.irnFor.id}/irn`, { irn: this.irnFor.irn, ack_no: this.irnFor.ack_no })
-        .then(() => { this.irnFor = null; this.load(); this.changed(); })
+        .then(() => { this.irnFor = null; this.load(); this.changed(); say(this, "IRN saved."); })
         .catch((e) => { this.actionError = this.messageFor(e); })
         .finally(() => { this.busy = false; });
     },

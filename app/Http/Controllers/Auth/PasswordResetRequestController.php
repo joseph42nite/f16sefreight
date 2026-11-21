@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ResetCodeMailable;
 use App\Mail\ResetPasswordMailable;
 use App\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 /**
@@ -22,6 +24,11 @@ use Illuminate\Support\Str;
 class PasswordResetRequestController extends Controller
 {
     private const VALID_MINUTES = 30;
+
+    /** A mailed code is six digits, so it lives for less time than a link and dies after a few wrong tries. */
+    private const CODE_MINUTES = 10;
+    private const CODE_TRIES = 5;
+    private const CODES_PER_ADDRESS = 3;
 
     public function sendEmail(Request $request)
     {
@@ -65,6 +72,91 @@ class PasswordResetRequestController extends Controller
         DB::table('password_resets')->where('email', $request->email)->delete();
 
         return response()->json(['status' => true]);
+    }
+
+    /**
+     * Forgot password on a portal's sign-in page (owner, 2026-11-21): a six-digit code by mail, typed back on the same
+     * page with the new password. For every account with an address, platform staff included.
+     *
+     * 🔒 The same answer whether or not the address has an account. At most three codes per address in ten minutes,
+     * counted by address and not by caller, so the mailbox cannot be flooded from many places.
+     */
+    public function sendCode(Request $request)
+    {
+        $request->validate(['email' => ['required', 'email']]);
+
+        $email = strtolower($request->email);
+        $table = $this->accountTable($email);
+        $sends = 'reset-code-sends:' . sha1($email);
+
+        if ($table !== null && DB::table($table)->where('email', $email)->exists() && ! RateLimiter::tooManyAttempts($sends, self::CODES_PER_ADDRESS)) {
+            RateLimiter::hit($sends, self::CODE_MINUTES * 60);
+            RateLimiter::clear($this->triesKey($email));
+
+            $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            DB::table('password_resets')->where('email', $email)->delete();
+            DB::table('password_resets')->insert(['email' => $email, 'token' => $this->codeHash($email, $code), 'created_at' => now()]);
+
+            Mail::to($email)->send(new ResetCodeMailable($code, self::CODE_MINUTES));
+        }
+
+        return response()->json(['data' => 'If that address has an account, a 6-digit code is on its way. It works for ' . self::CODE_MINUTES . ' minutes.']);
+    }
+
+    /**
+     * 🔒 A code is one in a million, so guesses are counted per ADDRESS: after five wrong ones the code is thrown away
+     * and a new one must be asked for. A code cannot be used on the link's endpoint, and a link's token cannot be
+     * used here: the two are hashed differently.
+     */
+    public function resetWithCode(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+            'code' => ['required', 'digits:6'],
+            'password' => ['required', 'min:6', 'max:25', 'confirmed'],
+        ]);
+
+        $email = strtolower($request->email);
+        $table = $this->accountTable($email);
+        $refused = response()->json(['status' => false, 'error' => 'That code is wrong or has expired. Ask for a new one.'], 401);
+
+        if ($table === null) {
+            return $refused;
+        }
+
+        if (RateLimiter::tooManyAttempts($this->triesKey($email), self::CODE_TRIES)) {
+            DB::table('password_resets')->where('email', $email)->delete();
+
+            return $refused;
+        }
+
+        $matches = DB::table('password_resets')
+            ->where('email', $email)
+            ->where('token', $this->codeHash($email, $request->code))
+            ->where('created_at', '>', now()->subMinutes(self::CODE_MINUTES))
+            ->exists();
+
+        if (! $matches) {
+            RateLimiter::hit($this->triesKey($email), self::CODE_MINUTES * 60);
+
+            return $refused;
+        }
+
+        DB::table($table)->where('email', $email)->update(['password' => Hash::make($request->password)]);
+        DB::table('password_resets')->where('email', $email)->delete();
+        RateLimiter::clear($this->triesKey($email));
+
+        return response()->json(['status' => true]);
+    }
+
+    private function codeHash(string $email, string $code): string
+    {
+        return hash('sha256', 'code|' . $email . '|' . $code);
+    }
+
+    private function triesKey(string $email): string
+    {
+        return 'reset-code-tries:' . sha1($email);
     }
 
     /** `users` or `super_admins`, from the address's role; NULL for an address with no account. */

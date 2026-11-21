@@ -28,7 +28,7 @@ class ClientShipmentsTest extends TestCase
         // Clean up test records
         SuperAdmin::where('email', 'testadmin@example.com')->delete();
         Company::where('name', 'Acme Test Logistics')->delete();
-        AirwayBills::whereIn('id', ['11122223333', '11122223334', '11122223335', '11122223336'])->delete();
+        AirwayBills::whereIn('id', ['11122223333', '11122223334', '11122223335', '11122223336', '11122223337'])->delete();
         ConsignmentData::whereIn('awb_id', ['11122223333', '11122223334', '11122223335', '11122223336'])->delete();
         HousewayBills::whereIn('id', ['HAWB-TEST-01', 'HAWB-TEST-02'])->delete();
         \App\StatusReponse::whereIn('business_id', ['111-22223334', '111-22223335', '111-22223336'])->delete();
@@ -286,6 +286,30 @@ class ClientShipmentsTest extends TestCase
         // Clean up
         \App\StatusReponse::whereIn('business_id', ['111-22223335', '111-22223336'])->delete();
         AirwayBills::whereIn('id', ['11122223334', '11122223335', '11122223336'])->delete();
+        $superAdmin->delete();
+        $agent->delete();
+        $company->delete();
+    }
+
+    /** "Sent" is the last send (owner, 2026-11-21): a waybill sent again after a change is found on that day, not on the day it was first made. */
+    public function test_the_date_filter_goes_by_the_day_a_waybill_was_last_sent()
+    {
+        $superAdmin = SuperAdmin::create(['name' => 'Test SuperAdmin', 'email' => 'testadmin@example.com', 'password' => bcrypt('password123')]);
+        $company = Company::create(['name' => 'Acme Test Logistics']);
+        $agent = Agent::create(['company_id' => $company->id, 'agent_name' => 'Acme Test Branch']);
+        $awb = AirwayBills::create(['id' => '11122223337', 'awb_code' => '111', 'awb_no' => '22223337', 'departure_airport' => 'JFK', 'destination_airport' => 'LHR', 'agent_id' => $agent->id]);
+        \DB::table('air_way_bills')->where('id', $awb->id)->update(['created_at' => '2026-09-28 10:00:00', 'updated_at' => '2026-10-05 10:00:00']);
+
+        $found = fn (string $filter) => collect($this->actingAs($superAdmin, 'superAdmin-api')
+            ->getJson('/api/superadmin/client-shipments?company_id=' . $company->id . '&' . $filter)->assertStatus(200)->json('shipments'))
+            ->contains('awb_no', '22223337');
+
+        $this->assertTrue($found('dates[]=2026-10-05'));
+        $this->assertFalse($found('dates[]=2026-09-28'));
+        $this->assertTrue($found('months[]=2026-10'));
+        $this->assertFalse($found('months[]=2026-09'));
+
+        AirwayBills::where('id', '11122223337')->delete();
         $superAdmin->delete();
         $agent->delete();
         $company->delete();

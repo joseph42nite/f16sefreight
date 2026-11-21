@@ -700,3 +700,39 @@ the blog pages. Nothing runs the specs automatically.
 5. FS5–FS8, FK1–FK3.
 6. FW4–FW19, ideally after moving the shared waybill code into the mixin so each fix lands once.
 7. Speed, then duplicates and dead code.
+
+## 11. The owner's answers, 2026-11-21
+
+What the click-through left for a decision, and what was done with each answer.
+
+- **Client shipments, which date is "sent":** `updated_at` (the last send; a revised waybill is sent again).
+  ✅ The list, the date and month filters (server) and the export now all go by it. The first-created date is shown
+  under the sent one when the two differ, and the export has "Date Created" and "Time Created" columns.
+  `ClientShipmentsTest::test_the_date_filter_goes_by_the_day_a_waybill_was_last_sent`.
+- **FW15, "Clear":** empties every box and loads the page again.
+  ✅ A "Clear" button on both waybill forms (`airWayBillMixin.clearForm`). It asks once first, because everything
+  typed and not saved is lost; nothing saved is touched. From a waybill opened for a change it opens the blank form.
+- **Sales and the waybill form / message log:** allowed. Nothing to change: they already could.
+- **Enquiries list:** ✅ a row opens the enquiry's mail in the inbox (`/inbox?thread=…`). An enquiry made by hand has
+  no mail and stays a plain row. "Confirm shipment" is still its own click.
+- **"New master":** ✅ asks "Create a new master?" before making the shipment.
+- **A notice at the top for what worked:** ✅ `core/services/toast.js` (`say`), called after about 100 actions on 33
+  pages that used to succeed without a word (inbox, billing, cost sheet, imports, sea consol, clients and partners,
+  collections, money out, financials, close month, manifest filing, sales, settings, and the admin pages). The
+  waybill forms say "Saved", "Sent" or "Not sent" the same way (`sayOutcome`). Deleting a house waybill from the
+  message log failed silently; it now says so. `alert("Added successfull")` on the notices page is gone.
+  Left out on purpose: saving the pieces stuffed in a container (one notice per cell typed), and a chat reply
+  (it appears in the thread). Not touched: the Kanban, the bell and the help assistant (unfinished work of others).
+- **ICEGATE wording:** ✅ the filing page and the refusal say that automatic filing is not switched on and to ask
+  support; the setting names stay in `missing` for whoever looks into it.
+- **Password recovery by a mailed code:** ✅ "Forgot password?" on every portal's sign-in page, Platform Admin
+  included, mails a six-digit code; the code and the new password are typed on the same page.
+  `POST /forgot-password/code`, `POST /forgot-password/reset`. No library was needed.
+  🔒 Ten minutes, used once, thrown away after five wrong guesses counted per address (not per caller), at most three
+  codes per address in ten minutes, the same answer whether or not the address has an account, and a code cannot be
+  used where a link's token is expected or the other way round. The mailed link of the website's own form is
+  unchanged. `PasswordResetTest`, `publicSignIn.spec.js`.
+- ⏸ **Still open:** the label of "Update Draft" on a sent waybill (proposed: "Save changes"), and whether the
+  "System (F16s)" user should be listed among a company's people.
+
+Tests: `tests/js/ownerAnswers.spec.js`.

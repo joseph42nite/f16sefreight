@@ -99,6 +99,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import { wholeList } from "@/core/services/wholeList";
@@ -170,6 +171,7 @@ export default {
           this.entities = data.entities;
           this.draft.party_id = "";
           this.draft.custom_role_label = "";
+          say(this, "Party added.");
         })
         /* §11.3 — "On a master bill, the shipper is the forwarder branch itself, not a
            customer" is the whole explanation. A generic failure would leave the
@@ -180,7 +182,7 @@ export default {
     remove(entity) {
       this.busy = true;
       ApiService.delete(`/jobs/${this.jobId}/entities/${entity.id}`)
-        .then(({ data }) => { this.entities = data.entities; })
+        .then(({ data }) => { this.entities = data.entities; say(this, "Party removed."); })
         .catch((e) => { this.actionError = this.readable(e); })
         .finally(() => { this.busy = false; });
     },

@@ -35,7 +35,6 @@ export const ADMIN_HUBS = [
     tabs: [
       { label: "Airlines", to: "/superadmin/airlines" },
       { label: "Domain directory", to: "/superadmin/domain-directory" },
-      { label: "Help documents", to: "/superadmin/help-documents" },
       { label: "OCR templates", to: "/superadmin/all-templates" },
       { label: "Blogs", to: "/superadmin/all-blogs" },
     ],

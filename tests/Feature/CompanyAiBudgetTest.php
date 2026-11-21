@@ -141,17 +141,6 @@ class CompanyAiBudgetTest extends TestCase
         $this->assertNull($this->budget()->refusal(null, 'help_index'));
     }
 
-    public function test_help_is_paused_when_the_company_budget_says_so(): void
-    {
-        config(['services.openrouter.key' => 'test-key']);
-        $this->spend(2000, '2026-09-02 10:00:00');
-        $pricing = $this->user('pricing');
-
-        $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($pricing), 'Accept' => 'application/json'])
-            ->postJson('http://focusair.localhost/api/help/ask', ['question' => 'Where do I enter an arrival notice?'])
-            ->assertStatus(429)->assertJsonPath('reason', 'ai_budget');
-    }
-
     public function test_superadmin_sets_and_clears_a_company_limit(): void
     {
         $staff = \App\SuperAdmin::create(['name' => 'Staff', 'email' => 'staff-bgt@test.local', 'password' => Hash::make('x')]);

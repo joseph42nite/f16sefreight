@@ -194,11 +194,6 @@ Route::group(['middleware' => 'auth:superAdmin-api', 'prefix' => 'superadmin'], 
     // A company's monthly AI limit in ₹; null follows the plan (user, 2026-09-15).
     Route::put('/ai-usage/companies/{company}/limit', [\App\Http\Controllers\Platform\AiUsageController::class, 'updateCompanyLimit'])->whereNumber('company');
 
-    // ── The help library the copilot answers from: one .md or .docx per page ──
-    Route::get('/help-documents', [\App\Http\Controllers\Platform\HelpDocumentController::class, 'index']);
-    Route::post('/help-documents', [\App\Http\Controllers\Platform\HelpDocumentController::class, 'store']);
-    Route::post('/help-documents/{document}', [\App\Http\Controllers\Platform\HelpDocumentController::class, 'update']);
-    Route::delete('/help-documents/{document}', [\App\Http\Controllers\Platform\HelpDocumentController::class, 'destroy']);
     Route::post('logout', [SuperAdminController::class, 'logout']);
     Route::post('verify', [SuperAdminController::class, 'me']);
     Route::put('upadte-detail', [SuperAdminController::class, 'update']);
@@ -393,8 +388,9 @@ Route::middleware(['auth:user-api', 'portal'])->group(function () {
     // ── Support reporting (§5.6). The REPORTER is an ordinary tenant user
     // (PRD.md §5.10); only the desk that works the queue is superadmin-only.
     Route::post('/tickets', [\App\Http\Controllers\Platform\SupportTicketController::class, 'store']);
-    // The help copilot (PRD §5.10): answers from the uploaded help documents.
-    Route::post('/help/ask', [\App\Http\Controllers\Freight\HelpController::class, 'ask']);
+    // The tour of the portal a person gets on their first sign-in (owner, 2026-11-21); the AI help it replaces is gone.
+    Route::get('/tour', [\App\Http\Controllers\Freight\ProfileController::class, 'tour']);
+    Route::post('/tour/seen', [\App\Http\Controllers\Freight\ProfileController::class, 'tourSeen']);
     // Connect to Support Agent: a chat ticket, and its messages (checked every 3 s while open).
     Route::post('/support/chats', [\App\Http\Controllers\Freight\SupportChatController::class, 'start']);
     Route::get('/support/chats/current', [\App\Http\Controllers\Freight\SupportChatController::class, 'current']);

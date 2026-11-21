@@ -9,6 +9,12 @@ import ApiService from "@/core/services/api.service";
 import { HELP_SCRIPT } from "@/core/config/helpScript";
 import HelpAssistant from "@/view/pages/freight/components/HelpAssistant.vue";
 import HomeNewsSection from "@/view/pages/public/components/HomeNewsSection.vue";
+import { tourSteps, TOUR_PAGES, TOUR_FIXED, TOUR_WELCOME } from "@/core/config/tour";
+import { NAV_ITEMS } from "@/core/config/navigation";
+
+const mockDrive = jest.fn();
+const mockDriver = jest.fn(() => ({ drive: mockDrive }));
+jest.mock("driver.js", () => ({ driver: (...args) => mockDriver(...args) }));
 
 const read = (file) => fs.readFileSync(path.join(__dirname, "../../resources/js/src", file), "utf8");
 const flush = async () => { for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0)); };
@@ -21,7 +27,7 @@ describe("the written help messages", () => {
       expect(step.says.length).toBeGreaterThan(10);
       expect(step.options.length).toBeGreaterThan(0);
       step.options.forEach((option) => {
-        if (option.action) expect(["connect", "flag"]).toContain(option.action);
+        if (option.action) expect(["connect", "flag", "tour"]).toContain(option.action);
         else expect(Object.keys(HELP_SCRIPT)).toContain(option.next);
         expect(name + option.label).toBeTruthy();
       });
@@ -41,7 +47,7 @@ describe("the written help messages", () => {
 
 describe("the Help panel", () => {
   const open = async ({ post = jest.fn(() => Promise.resolve({ data: { id: 9, status: "open", unread: 0, messages: [] } })) } = {}) => {
-    jest.spyOn(ApiService, "get").mockImplementation(() => Promise.resolve({ data: { chat: null, messages: [], status: "open" } }));
+    jest.spyOn(ApiService, "get").mockImplementation((url) => Promise.resolve({ data: url === "/tour" ? { seen: true } : { chat: null, messages: [], status: "open" } }));
     jest.spyOn(ApiService, "post").mockImplementation(post);
     const wrapper = mount(HelpAssistant, { mocks: { $route: { path: "/kanban" } } });
     await wrapper.find(".fx-help__launch").trigger("click");
@@ -130,7 +136,10 @@ describe("the Help panel", () => {
   it("asks no model and writes no outside text into the page (FS5)", () => {
     const source = read("view/pages/freight/components/HelpAssistant.vue");
 
-    expect(source).not.toMatch(/help\/ask|driver\.js|v-html|innerHTML/);
+    expect(source).not.toMatch(/help\/ask|v-html|innerHTML/);
+    // The boxes of the tour are drawn by a library that writes its text as HTML: only the app's own words go in.
+    expect(source).toContain("const steps = tourSteps();");
+    expect(read("core/config/tour.js")).not.toMatch(/innerText|textContent|ApiService|\$store/);
   });
 });
 
@@ -168,5 +177,123 @@ describe("the home page's blog tiles", () => {
 
     expect(source).not.toMatch(/^import .*blogData/m);
     expect(source).toContain('import(/* webpackChunkName: "blog-data" */ "../blogData")');
+  });
+});
+
+describe("the tour of the portal", () => {
+  const shell = (paths) => {
+    document.body.innerHTML = `
+      <aside class="fx-rail"><nav class="fx-rail__nav">${paths.map((p) => `<a class="fx-rail__item" href="${p}">x</a>`).join("")}</nav>
+        <button class="fx-help__launch">Help</button></aside>
+      <header><button class="fx-header__toggle"></button><span class="fx-portal-chip"></span>
+        <button class="fx-bell__trigger"></button><button class="fx-profile__trigger"></button></header>`;
+    // jsdom lays nothing out: an element counts as on screen unless it is marked hidden here.
+    document.querySelectorAll("*").forEach((el) => { el.getClientRects = () => (el.hasAttribute("data-hidden") ? [] : [{}]); });
+  };
+
+  beforeEach(() => { mockDriver.mockClear(); mockDrive.mockClear(); });
+  afterEach(() => { document.body.innerHTML = ""; });
+
+  it("has words for every page a menu can show", () => {
+    NAV_ITEMS.forEach((item) => expect(Object.keys(TOUR_PAGES)).toContain(item.path));
+    expect(TOUR_PAGES["/settings"]).toBeTruthy();
+  });
+
+  it("starts with a welcome, then the menu from the top, then the header and Help", () => {
+    shell(["/inbox", "/kanban", "/settings"]);
+
+    const steps = tourSteps();
+
+    expect(steps.map((s) => s.popover.title)).toEqual([TOUR_WELCOME.title, "Inbox", "Board", "Settings", ...TOUR_FIXED.map((p) => p.title)]);
+    expect(steps[0].element).toBeUndefined();
+    expect(steps[1].element.getAttribute("href")).toBe("/inbox");
+  });
+
+  it("describes only what is on this person's menu and on screen", () => {
+    shell(["/today", "/not-a-page"]);
+    document.querySelector(".fx-portal-chip").setAttribute("data-hidden", "");
+
+    const titles = tourSteps().map((s) => s.popover.title);
+
+    expect(titles).toContain("Today");
+    expect(titles).not.toContain("Inbox");
+    expect(titles).not.toContain("Which portal you are in");
+    expect(titles.length).toBe(1 + 1 + TOUR_FIXED.length - 1);
+  });
+
+  const helper = async (seen) => {
+    const get = jest.spyOn(ApiService, "get").mockImplementation((url) => Promise.resolve({ data: url === "/tour" ? { seen } : { chat: null } }));
+    const post = jest.spyOn(ApiService, "post").mockResolvedValue({ data: { seen: true } });
+    jest.useFakeTimers();
+    const wrapper = mount(HelpAssistant, { mocks: { $route: { path: "/kanban" } } });
+    const settle = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
+    await settle();
+
+    return { wrapper, get, post, settle };
+  };
+
+  afterEach(() => { jest.clearAllTimers(); jest.useRealTimers(); });
+
+  it("is shown on its own to someone who has not seen it, and the account is told when it ends", async () => {
+    shell(["/inbox"]);
+    const { wrapper, get, post, settle } = await helper(false);
+
+    expect(get).toHaveBeenCalledWith("/tour");
+    expect(mockDriver).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1000);
+    await settle();
+
+    expect(mockDriver).toHaveBeenCalledTimes(1);
+    expect(mockDrive).toHaveBeenCalledTimes(1);
+    const options = mockDriver.mock.calls[0][0];
+    expect(options).toMatchObject({ showProgress: true, nextBtnText: "Next", prevBtnText: "Back", doneBtnText: "Done" });
+    expect(options.steps.length).toBe(2 + TOUR_FIXED.length);
+
+    expect(post).not.toHaveBeenCalled();
+    options.onDestroyed();
+    expect(post).toHaveBeenCalledWith("/tour/seen", {});
+    wrapper.destroy();
+  });
+
+  it("waits while something else is asked of them, such as connecting Outlook", async () => {
+    shell(["/inbox"]);
+    const question = document.createElement("div");
+    question.setAttribute("aria-modal", "true");
+    document.body.appendChild(question);
+    const { wrapper, settle } = await helper(false);
+
+    jest.advanceTimersByTime(5000);
+    await settle();
+    expect(mockDriver).not.toHaveBeenCalled();
+
+    question.remove();
+    jest.advanceTimersByTime(1000);
+    await settle();
+    expect(mockDriver).toHaveBeenCalledTimes(1);
+    wrapper.destroy();
+  });
+
+  it("is not shown again to someone who has seen it", async () => {
+    shell(["/inbox"]);
+    const { wrapper, settle } = await helper(true);
+
+    jest.advanceTimersByTime(10000);
+    await settle();
+
+    expect(mockDriver).not.toHaveBeenCalled();
+    wrapper.destroy();
+  });
+
+  it("can be asked for again from Help", async () => {
+    shell(["/inbox"]);
+    const { wrapper, settle } = await helper(true);
+
+    await wrapper.find(".fx-help__launch").trigger("click");
+    await wrapper.findAll(".fx-help__log .fx-help__actions button").wrappers.find((b) => b.text() === "Show me around").trigger("click");
+    await settle();
+
+    expect(mockDriver).toHaveBeenCalledTimes(1);
+    expect(wrapper.vm.open).toBe(false);
+    wrapper.destroy();
   });
 });

@@ -48,6 +48,27 @@ class ProfileController extends Controller
         ];
     }
 
+    /**
+     * The tour of the portal (owner, 2026-11-21): shown once, on a person's first sign-in. Whether it was seen is kept
+     * on the account, so it does not come back on another computer; Help can show it again whenever asked.
+     */
+    public function tour(): JsonResponse
+    {
+        return response()->json(['seen' => auth()->user()->tour_seen_at !== null]);
+    }
+
+    /** Finished or closed: either way it is not shown on its own again. The first time is the one kept. */
+    public function tourSeen(): JsonResponse
+    {
+        $user = auth()->user();
+
+        if ($user->tour_seen_at === null) {
+            $user->forceFill(['tour_seen_at' => now()])->save();
+        }
+
+        return response()->json(['seen' => true]);
+    }
+
     /** "Later": not asked again on sign-in; a reminder bar stays until the mailbox is connected. */
     public function mailboxLater(): JsonResponse
     {

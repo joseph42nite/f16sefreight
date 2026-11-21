@@ -1,10 +1,9 @@
 /**
- * Help documents, mail filing and AI usage, mounted (2026-11-15 frontend audit, tests: "the other admin pages are
+ * Mail filing and AI usage, mounted (2026-11-15 frontend audit, tests: "the other admin pages are
  * untested").
  */
 import { mount } from "@vue/test-utils";
 import ApiService from "@/core/services/api.service";
-import HelpDocuments from "@/view/pages/admin/HelpDocuments.vue";
 import MailFiling from "@/view/pages/admin/MailFiling.vue";
 import AiUsage from "@/view/pages/admin/AiUsage.vue";
 import { saveFile } from "@/core/services/download";
@@ -16,131 +15,6 @@ const refused = (status, data) => Object.assign(new Error("refused"), { response
 const button = (wrapper, text) => wrapper.findAll("button").wrappers.find((b) => b.text() === text);
 
 afterEach(() => jest.restoreAllMocks());
-
-describe("help documents", () => {
-  const library = {
-    documents: [
-      { id: 1, title: "Inbox", route: "/inbox", filename: "inbox.md", chunk_count: 12, status: "indexed", error: null },
-      { id: 2, title: "Billing", route: null, filename: "billing.docx", chunk_count: 0, status: "failed", error: "no headings" },
-    ],
-    unanswered: [{ id: 5, route: "/kanban", question: "How do I archive a job?", best_score: 0.314 }, { id: 6, route: null, question: "Hi", best_score: null }],
-  };
-  const open = async () => {
-    const get = jest.spyOn(ApiService, "get").mockResolvedValue({ data: library });
-    const wrapper = mount(HelpDocuments, { stubs: { StatusChip: true } });
-    await flush();
-
-    return { wrapper, get };
-  };
-  const file = new File(["# Inbox"], "inbox.md");
-
-  it("lists the library and the questions it could not answer", async () => {
-    const { wrapper, get } = await open();
-    const tables = wrapper.findAll("table");
-
-    expect(get).toHaveBeenCalledWith("/superadmin/help-documents");
-    expect(tables.at(0).findAll("tbody tr")).toHaveLength(2);
-    expect(tables.at(0).text()).toContain("no headings");
-    expect(tables.at(1).text()).toContain("0.31");
-    expect(tables.at(1).findAll("tbody tr").at(1).text()).toContain("—");
-  });
-
-  it("will not upload without a title and a file", async () => {
-    const { wrapper } = await open();
-
-    expect(button(wrapper, "Upload").attributes("disabled")).toBe("disabled");
-
-    await wrapper.setData({ form: { title: "  ", route: "", file } });
-    expect(button(wrapper, "Upload").attributes("disabled")).toBe("disabled");
-  });
-
-  it("uploads a new document, leaving out an empty page, and reloads", async () => {
-    const { wrapper, get } = await open();
-    const post = jest.spyOn(ApiService, "post").mockResolvedValue({ data: {} });
-
-    await wrapper.setData({ form: { title: " Kanban ", route: " ", file } });
-    await button(wrapper, "Upload").trigger("click");
-    await flush();
-
-    const [url, body] = post.mock.calls[0];
-    expect(url).toBe("/superadmin/help-documents");
-    expect(body.get("title")).toBe("Kanban");
-    expect(body.has("route")).toBe(false);
-    expect(body.get("file").name).toBe("inbox.md");
-    expect(get).toHaveBeenCalledTimes(2);
-    expect(wrapper.vm.form).toEqual({ title: "", route: "", file: null });
-  });
-
-  it("replaces a document at that document's address", async () => {
-    const { wrapper } = await open();
-    const post = jest.spyOn(ApiService, "post").mockResolvedValue({ data: {} });
-
-    await wrapper.findAll("tbody tr").at(0).findAll("button").at(0).trigger("click");
-    expect(wrapper.text()).toContain("Replace “Inbox”");
-    expect(wrapper.vm.form.route).toBe("/inbox");
-
-    await wrapper.setData({ form: { ...wrapper.vm.form, file } });
-    await button(wrapper, "Replace").trigger("click");
-    await flush();
-
-    expect(post.mock.calls[0][0]).toBe("/superadmin/help-documents/1");
-    expect(wrapper.vm.replacing).toBeNull();
-  });
-
-  it("keeps what was typed when an upload is refused", async () => {
-    const { wrapper } = await open();
-    jest.spyOn(ApiService, "post").mockRejectedValue(refused(422, { errors: { file: ["The file has no headings."] } }));
-
-    await wrapper.setData({ form: { title: "Kanban", route: "/kanban", file } });
-    await button(wrapper, "Upload").trigger("click");
-    await flush();
-
-    expect(wrapper.find("[role=alert]").text()).toBe("The file has no headings.");
-    expect(wrapper.vm.form.title).toBe("Kanban");
-    expect(wrapper.vm.busy).toBe(false);
-  });
-
-  it("asks before deleting", async () => {
-    const { wrapper } = await open();
-    const remove = jest.spyOn(ApiService, "delete").mockResolvedValue({ data: {} });
-    const confirm = jest.spyOn(window, "confirm").mockReturnValue(false);
-    const bin = wrapper.findAll("tbody tr").at(1).findAll("button").at(1);
-
-    await bin.trigger("click");
-    expect(confirm).toHaveBeenCalledWith("Delete “Billing”? The assistant stops answering from it.");
-    expect(remove).not.toHaveBeenCalled();
-
-    confirm.mockReturnValue(true);
-    await bin.trigger("click");
-    expect(remove).toHaveBeenCalledWith("/superadmin/help-documents/2");
-  });
-
-  it("stops replacing a document once that document is deleted", async () => {
-    const { wrapper } = await open();
-    jest.spyOn(ApiService, "delete").mockResolvedValue({ data: {} });
-    jest.spyOn(window, "confirm").mockReturnValue(true);
-    const row = wrapper.findAll("tbody tr").at(0);
-
-    await row.findAll("button").at(0).trigger("click");
-    await row.findAll("button").at(1).trigger("click");
-    await flush();
-
-    expect(wrapper.vm.replacing).toBeNull();
-    expect(wrapper.text()).toContain("Upload a document");
-  });
-
-  it("goes on replacing one document when another is deleted", async () => {
-    const { wrapper } = await open();
-    jest.spyOn(ApiService, "delete").mockResolvedValue({ data: {} });
-    jest.spyOn(window, "confirm").mockReturnValue(true);
-
-    await wrapper.findAll("tbody tr").at(0).findAll("button").at(0).trigger("click");
-    await wrapper.findAll("tbody tr").at(1).findAll("button").at(1).trigger("click");
-    await flush();
-
-    expect(wrapper.vm.replacing.id).toBe(1);
-  });
-});
 
 describe("mail filing", () => {
   const figures = (missed = 4) => ({

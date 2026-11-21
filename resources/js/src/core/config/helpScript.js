@@ -4,8 +4,9 @@
  * Every path ends in one of two things that already exist: the support chat with an F16s agent, or the flag, which
  * takes a picture of the page with the wrong part marked and sends it to support with a note.
  *
- * `next` goes to another step; `action` is "connect" (the support chat) or "flag" (the marked picture); `topic` is
- * remembered and passed to the agent, so the person does not explain twice.
+ * `next` goes to another step; `action` is "connect" (the support chat), "flag" (the marked picture) or "tour"
+ * (the walk round the screen from core/config/tour.js); `topic` is remembered and passed to the agent, so the
+ * person does not explain twice.
  */
 const AGAIN = { label: "Start again", next: "start" };
 
@@ -18,6 +19,7 @@ export const HELP_SCRIPT = {
       { label: "Something on screen looks wrong", next: "wrong" },
       { label: "I have a question", next: "topic" },
       { label: "Talk to a person", next: "person" },
+      { label: "Show me around", action: "tour" },
     ],
   },
   wrong: {

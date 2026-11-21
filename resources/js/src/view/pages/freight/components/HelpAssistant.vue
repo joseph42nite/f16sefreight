@@ -88,6 +88,7 @@
 <script>
 import ApiService from "@/core/services/api.service";
 import { HELP_SCRIPT } from "@/core/config/helpScript";
+import { tourSteps } from "@/core/config/tour";
 import { say } from "@/core/services/toast";
 
 /**
@@ -107,7 +108,7 @@ export default {
     /** "help" is the written messages; "chat" is the conversation with an F16s agent. */
     mode: "help",
     chat: null, chatDraft: "", chatBusy: false, chatError: null,
-    chatTimer: null, badgeTimer: null,
+    chatTimer: null, badgeTimer: null, tourTimer: null,
   }),
   computed: {
     step() {
@@ -121,10 +122,12 @@ export default {
     this.loadCurrentChat();
     // A reply can arrive while Help is closed: check now and then, for the badge.
     this.badgeTimer = setInterval(() => { if (!this.open) this.loadCurrentChat(); }, 30000);
+    this.offerTour();
   },
   beforeDestroy() {
     clearInterval(this.badgeTimer);
     clearInterval(this.chatTimer);
+    clearInterval(this.tourTimer);
   },
   methods: {
     toggle() {
@@ -207,6 +210,7 @@ export default {
       this.turns.push({ from: "you", text: option.label });
       if (option.topic) this.topic = option.topic;
 
+      if (option.action === "tour") return this.startTour();
       if (option.action === "connect") return this.connect();
       if (option.action === "flag") return this.raiseTicket();
 
@@ -229,6 +233,52 @@ export default {
       });
 
       return (this.topic ? [{ question: "What is it about?", answer: this.topic }] : []).concat(pairs).slice(-20);
+    },
+    /**
+     * The tour on a person's first sign-in (owner, 2026-11-21). The account remembers that it was seen. It waits
+     * for anything asked of them first (the Outlook question is also a first sign-in thing) so the two never sit
+     * on top of each other; after five minutes of waiting it leaves it for the next sign-in.
+     */
+    offerTour() {
+      return ApiService.get("/tour")
+        .then(({ data }) => {
+          if (!data || data.seen) return;
+
+          let waited = 0;
+          this.tourTimer = setInterval(() => {
+            waited += 1;
+            if (waited > 300) return clearInterval(this.tourTimer);
+            if (document.querySelector('[aria-modal="true"]') || this.open) return null;
+
+            clearInterval(this.tourTimer);
+            return this.startTour();
+          }, 1000);
+        })
+        .catch(() => {});
+    },
+    /** A box beside each part of the screen, with Next and Back. Closing it at any step counts as having seen it. */
+    async startTour() {
+      this.open = false;
+      await this.$nextTick();
+
+      const steps = tourSteps();
+      // Only the welcome and nothing to point at: the screen is not the app's own shell.
+      if (steps.length < 2) return;
+
+      const [{ driver }] = await Promise.all([
+        import(/* webpackChunkName: "driver" */ "driver.js"),
+        import(/* webpackChunkName: "driver" */ "driver.js/dist/driver.css"),
+      ]);
+
+      driver({
+        steps,
+        showProgress: true,
+        progressText: "{{current}} of {{total}}",
+        nextBtnText: "Next",
+        prevBtnText: "Back",
+        doneBtnText: "Done",
+        onDestroyed: () => { ApiService.post("/tour/seen", {}).catch(() => {}); },
+      }).drive();
     },
     raiseTicket() {
       this.open = false;

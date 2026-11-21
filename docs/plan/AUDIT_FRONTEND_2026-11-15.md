@@ -752,6 +752,15 @@ What the click-through left for a decision, and what was done with each answer.
   driver.js, so nothing a model wrote is put into the page. What was chosen goes to the agent or the ticket, topic
   first. `tests/js/helpScript.spec.js`. ⏸ Left in place, unused: the server's `/help/ask`, the help documents page
   and the `driver.js` package.
+  ✅ **Removed 2026-11-21 (owner: "remove AI help"):** `/help/ask`, the help copilot, its search, indexer and document
+  reader, the `help:load-bundled` command, the Help documents page and its four routes, and their tests. Kept: the
+  three `help_*` tables and their rows (history, and AI usage reports still count past help questions), and
+  `OpenRouterClient`, which the mail drafters use.
+- **The tour on a first sign-in (owner, 2026-11-21):** ✅ a box beside each menu entry this person has, then the menu
+  switch, the portal chip, the bell, the account menu and Help, with Next and Back (`core/config/tour.js`, drawn by
+  `driver.js`). Every word is the app's own, so nothing a model or a person wrote goes into the page. Shown once:
+  `users.tour_seen_at` (migration `2026_11_21_000000`), `GET /tour`, `POST /tour/seen`; closing it counts as seen.
+  It waits while the Outlook question is on screen. "Show me around" in Help shows it again. `TourTest`.
 - **FP4, the articles in the home page's script:** ✅ `HomeNewsSection` asks the server first and fetches the bundled
   articles as a file of their own (`blog-data`, 20 KB) only when the server has none or does not answer.
 - **Notices on the board and the bell:** ✅ a card moved, an enquiry claimed or passed, a client update sent or

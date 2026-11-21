@@ -57,8 +57,7 @@ describe("the notice at the top of the screen", () => {
     ["view/pages/freight/ManifestFiling.vue", 2], ["view/pages/freight/SalesDashboard.vue", 2], ["view/pages/freight/components/TeamMails.vue", 2],
     ["view/pages/freight/BossDashboard.vue", 1], ["view/pages/freight/FinanceSettings.vue", 10], ["view/pages/freight/MailboxSettings.vue", 4],
     ["view/pages/dashboard/MessageLog.vue", 2], ["view/pages/admin/SupportDeskTickets.vue", 2], ["view/pages/admin/DomainDirectory.vue", 3],
-    ["view/pages/admin/Tenants.vue", 2], ["view/pages/admin/AirlineDirectory.vue", 1], ["view/pages/admin/HelpDocuments.vue", 2],
-    ["view/pages/admin/AiUsage.vue", 1], ["view/pages/admin/Settings.vue", 2], ["view/pages/admin/NewUsers.vue", 1],
+    ["view/pages/admin/Tenants.vue", 2], ["view/pages/admin/AirlineDirectory.vue", 1],     ["view/pages/admin/AiUsage.vue", 1], ["view/pages/admin/Settings.vue", 2], ["view/pages/admin/NewUsers.vue", 1],
     ["view/pages/admin/NewCompany.vue", 1], ["view/pages/admin/NewBranch.vue", 1], ["view/pages/admin/Account.vue", 1],
   ])("%s says what worked", (file, atLeast) => {
     const source = read(file);

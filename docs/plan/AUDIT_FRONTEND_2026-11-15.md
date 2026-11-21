@@ -218,6 +218,9 @@ The backend audit is `AUDIT_2026-11-10.md`.
   work) and a company with more than 500 clients needs a searched box.
   ✅ **Fixed 2026-11-21 (the shipment list):** `GET /jobs` takes `per_page`, 500 at most (50 when not asked, as the
   board expects), and the new-bill form reads every page through `wholeList`.
+  🔁 **Changed the same day (owner: "pull when requested"):** the form no longer reads every page. It shows the
+  newest 50 and asks the server (`GET /jobs?search=`) as a number or destination is typed, 350 ms after the last
+  key; the note under the box says how many there are. Nothing asks for the bigger page now; it stays capped at 500.
   `JobBoardLinksTest::test_a_pick_list_can_ask_for_more_than_fifty_shipments`.
   ✅ **Fixed 2026-11-18 (more than 500):** the twelve client and partner pick-lists read every page the server
   says there is (`core/services/wholeList.js`), 500 rows at a time, so client 501 can be chosen. A company with

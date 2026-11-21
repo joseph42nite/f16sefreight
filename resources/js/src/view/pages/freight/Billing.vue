@@ -644,10 +644,24 @@
             </label>
             <label v-else class="fx-field">
               <span class="fx-field__label">Shipment</span>
+              <!--
+                Asked of the server as it is typed (owner, 2026-11-21: "pull when requested"): the list holds the
+                newest 50 until then, never every shipment the company has.
+              -->
+              <input
+                v-model="jobSearch"
+                class="fx-input fx-raise__find"
+                type="search"
+                placeholder="Find by job, enquiry or AWB number, or destination"
+                aria-label="Find a shipment"
+                @input="findJobsSoon"
+                @keydown.enter.prevent="findJobs"
+              />
               <select v-model="raise.job_id" class="fx-input">
                 <option :value="null">Choose…</option>
                 <option v-for="j in jobs" :key="j.id" :value="j.id">{{ j.execution_job_no }}</option>
               </select>
+              <span class="fx-muted" role="status">{{ jobsNote }}</span>
             </label>
             <!--
               We bill who sent the enquiry (owner, 2026-09-29): a shipment's client was matched from the sender's mail
@@ -915,6 +929,9 @@ const DOC_TABS = [
 
 const REGISTERS = ["all", "invoice", "debit_note", "credit_note", "brokerage", "consol_invoice", "general"];
 
+/** The server's page of shipments: what the picker on a new document shows at once. */
+const PICKER_ROWS = 50;
+
 export default {
   name: "Billing",
   components: { Figure, StatusChip, FxDrawer, InvoiceMailCard },
@@ -949,6 +966,8 @@ export default {
     header: {}, newLine: {}, editingLine: null, lineDraft: {},
     /** The forms. */
     raise: null, creditRoom: null, jobs: [], partners: [], clients: [], parents: null,
+    /** The shipment picker on a new document: what was typed, whether an answer is awaited, and how many there are. */
+    jobSearch: "", jobsBusy: false, jobsTotal: 0, jobsAsked: 0, jobsTimer: null,
     receipt: null, openDocuments: [], allocation: {}, resolution: {},
     voidFor: null, irnFor: null,
     loading: true, busy: false, error: null, actionError: null, mailResult: null,
@@ -1001,6 +1020,16 @@ export default {
     },
     raiseTotal() {
       return this.raise ? this.raise.lines.reduce((sum, l) => sum + this.lineNet(l), 0) : 0;
+    },
+    /** Under the shipment picker: what the list is, so nobody takes fifty rows for all there are. */
+    jobsNote() {
+      if (this.jobsBusy) return "Looking…";
+      const term = this.jobSearch.trim();
+      if (term) {
+        if (!this.jobsTotal) return "No shipment matches that.";
+        return this.jobsTotal > PICKER_ROWS ? `The first ${PICKER_ROWS} of ${this.jobsTotal} matches. Type more to narrow it.` : `${this.jobsTotal} found.`;
+      }
+      return this.jobsTotal > PICKER_ROWS ? `The newest ${PICKER_ROWS} of ${this.jobsTotal}. Type above to find an older one.` : "";
     },
     /** The chosen shipment's client, when it has one — the party it is billed to. */
     jobClient() {
@@ -1335,6 +1364,35 @@ export default {
     },
 
     /* ── Raising ───────────────────────────────────────────────────────── */
+    /**
+     * The shipments to pick from (FM7; owner, 2026-11-21): the newest 50, or the 50 that best match what was typed.
+     * A bill for an older shipment is found by typing its number, so the form never reads the company's whole book.
+     * The shipment already chosen stays in the list when the answer does not hold it.
+     */
+    findJobs() {
+      clearTimeout(this.jobsTimer);
+      const asked = ++this.jobsAsked;
+      const term = this.jobSearch.trim();
+
+      this.jobsBusy = true;
+
+      return ApiService.get("/jobs" + (term ? "?search=" + encodeURIComponent(term) : ""))
+        .then(({ data }) => {
+          // An earlier search that answers late must not replace a later one.
+          if (asked !== this.jobsAsked) return;
+          const rows = data.data || data.rows || [];
+          const chosen = this.raise && this.raise.job_id ? this.jobs.find((j) => j.id === this.raise.job_id) : null;
+
+          this.jobs = chosen && !rows.some((j) => j.id === chosen.id) ? [chosen].concat(rows) : rows;
+          this.jobsTotal = Number(data.total) || rows.length;
+        })
+        .catch(() => {})
+        .finally(() => { if (asked === this.jobsAsked) this.jobsBusy = false; });
+    },
+    findJobsSoon() {
+      clearTimeout(this.jobsTimer);
+      this.jobsTimer = setTimeout(this.findJobs, 350);
+    },
     openRaise(type, against = null) {
       this.actionError = null;
       this.creditRoom = null;
@@ -1347,8 +1405,8 @@ export default {
 
       if (against) this.loadCreditRoom();
 
-      // Every shipment, not the newest 50: a bill is often raised for an older one (FM7).
-      wholeList("/jobs").then((rows) => { this.jobs = rows; }).catch(() => {});
+      this.jobSearch = "";
+      this.findJobs();
       wholeList("/partners").then((rows) => { this.partners = rows; }).catch(() => {});
       wholeList("/customers").then((rows) => { this.clients = rows; }).catch(() => {});
       ApiService.get("/billing?types[]=invoice&issued=1")

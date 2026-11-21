@@ -268,10 +268,80 @@ describe("the notice on the board and the bell", () => {
 });
 
 describe("the shipment on a new bill", () => {
-  it("is picked from every shipment, read page by page, not from the newest fifty", () => {
-    const source = read("view/pages/freight/Billing.vue");
+  const Billing = require("@/view/pages/freight/Billing.vue").default;
+  const form = (over = {}) => ({ raise: { job_id: null }, jobs: [], jobSearch: "", jobsBusy: false, jobsTotal: 0, jobsAsked: 0, jobsTimer: null, ...over });
+  const find = (vm) => Billing.methods.findJobs.call(vm);
+  const note = (vm) => Billing.computed.jobsNote.call(vm);
 
-    expect(source).toContain('wholeList("/jobs").then((rows) => { this.jobs = rows; })');
-    expect(source).not.toMatch(/jobs\?per_page=50/);
+  it("opens on the newest fifty, not on every shipment the company has", async () => {
+    const vm = form();
+    const get = jest.spyOn(ApiService, "get").mockResolvedValue({ data: { data: [{ id: 3 }, { id: 2 }], total: 169 } });
+
+    await find(vm);
+
+    expect(get).toHaveBeenCalledWith("/jobs");
+    expect(vm.jobs.map((j) => j.id)).toEqual([3, 2]);
+    expect(note(vm)).toBe("The newest 50 of 169. Type above to find an older one.");
+    expect(read("view/pages/freight/Billing.vue")).not.toMatch(/wholeList\("\/jobs"\)|jobs\?per_page/);
+  });
+
+  it("asks the server for what was typed", async () => {
+    const vm = form({ jobSearch: " JOB/26 0042 " });
+    const get = jest.spyOn(ApiService, "get").mockResolvedValue({ data: { data: [{ id: 42 }], total: 1 } });
+
+    await find(vm);
+
+    expect(get).toHaveBeenCalledWith("/jobs?search=JOB%2F26%200042");
+    expect(note(vm)).toBe("1 found.");
+  });
+
+  it("says so when nothing matches, and when there are more matches than it shows", async () => {
+    const vm = form({ jobSearch: "zz" });
+    jest.spyOn(ApiService, "get").mockResolvedValueOnce({ data: { data: [], total: 0 } }).mockResolvedValueOnce({ data: { data: [{ id: 1 }], total: 80 } });
+
+    await find(vm);
+    expect(note(vm)).toBe("No shipment matches that.");
+
+    await find(vm);
+    expect(note(vm)).toBe("The first 50 of 80 matches. Type more to narrow it.");
+  });
+
+  it("keeps the shipment already chosen when the answer does not hold it", async () => {
+    const vm = form({ raise: { job_id: 7 }, jobs: [{ id: 7, customer_id: 4 }, { id: 8 }], jobSearch: "DXB" });
+    jest.spyOn(ApiService, "get").mockResolvedValue({ data: { data: [{ id: 9 }], total: 1 } });
+
+    await find(vm);
+
+    expect(vm.jobs.map((j) => j.id)).toEqual([7, 9]);
+  });
+
+  it("does not let an earlier search that answers late replace a later one", async () => {
+    const vm = form({ jobSearch: "a" });
+    let answerFirst;
+    jest.spyOn(ApiService, "get")
+      .mockImplementationOnce(() => new Promise((resolve) => { answerFirst = resolve; }))
+      .mockResolvedValueOnce({ data: { data: [{ id: 2 }], total: 1 } });
+
+    const first = find(vm);
+    vm.jobSearch = "ab";
+    await find(vm);
+    answerFirst({ data: { data: [{ id: 1 }], total: 1 } });
+    await first;
+
+    expect(vm.jobs.map((j) => j.id)).toEqual([2]);
+    expect(vm.jobsBusy).toBe(false);
+  });
+
+  it("waits for a pause in the typing before it asks", () => {
+    jest.useFakeTimers();
+    const vm = form({ findJobs: jest.fn() });
+
+    Billing.methods.findJobsSoon.call(vm);
+    Billing.methods.findJobsSoon.call(vm);
+    jest.advanceTimersByTime(349);
+    expect(vm.findJobs).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1);
+    expect(vm.findJobs).toHaveBeenCalledTimes(1);
+    jest.useRealTimers();
   });
 });

@@ -216,6 +216,9 @@ The backend audit is `AUDIT_2026-11-10.md`.
   (`format.js` `WHOLE_LIST`); `PartnerController::index` now takes `per_page`, 500 at most, as the client list did.
   ⏸ Left: the shipment list on a new bill is still the newest 50 (`JobController` holds someone else's uncommitted
   work) and a company with more than 500 clients needs a searched box.
+  ✅ **Fixed 2026-11-21 (the shipment list):** `GET /jobs` takes `per_page`, 500 at most (50 when not asked, as the
+  board expects), and the new-bill form reads every page through `wholeList`.
+  `JobBoardLinksTest::test_a_pick_list_can_ask_for_more_than_fifty_shipments`.
   ✅ **Fixed 2026-11-18 (more than 500):** the twelve client and partner pick-lists read every page the server
   says there is (`core/services/wholeList.js`), 500 rows at a time, so client 501 can be chosen. A company with
   thousands of clients gets a long list, not a searched box; that is still the better answer for it. Tests in

@@ -266,3 +266,12 @@ describe("the notice on the board and the bell", () => {
     expect((source.match(/say\(this, /g) || []).length).toBeGreaterThanOrEqual(atLeast);
   });
 });
+
+describe("the shipment on a new bill", () => {
+  it("is picked from every shipment, read page by page, not from the newest fifty", () => {
+    const source = read("view/pages/freight/Billing.vue");
+
+    expect(source).toContain('wholeList("/jobs").then((rows) => { this.jobs = rows; })');
+    expect(source).not.toMatch(/jobs\?per_page=50/);
+  });
+});

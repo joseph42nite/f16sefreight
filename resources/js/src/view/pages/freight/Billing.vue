@@ -1347,7 +1347,8 @@ export default {
 
       if (against) this.loadCreditRoom();
 
-      ApiService.get("/jobs?per_page=50").then(({ data }) => { this.jobs = data.data || data.rows || []; }).catch(() => {});
+      // Every shipment, not the newest 50: a bill is often raised for an older one (FM7).
+      wholeList("/jobs").then((rows) => { this.jobs = rows; }).catch(() => {});
       wholeList("/partners").then((rows) => { this.partners = rows; }).catch(() => {});
       wholeList("/customers").then((rows) => { this.clients = rows; }).catch(() => {});
       ApiService.get("/billing?types[]=invoice&issued=1")

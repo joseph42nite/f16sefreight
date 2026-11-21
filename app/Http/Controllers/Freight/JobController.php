@@ -105,7 +105,9 @@ class JobController extends Controller
             // A tie-breaker, so jobs created in the same second keep one order across pages instead of repeating or
             // going missing between page 1 and page 2.
             ->orderByDesc('id')
-            ->paginate(50);
+            // 50 a page for the board; a pick-list (the shipment on a new bill) asks for up to 500 and reads every
+            // page, so a shipment older than the newest 50 can be chosen (frontend audit 2026-11-15, FM7).
+            ->paginate(min(max($request->integer('per_page'), 0) ?: 50, 500));
 
         $this->addCardLinks($jobs->getCollection());
 

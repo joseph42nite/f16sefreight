@@ -205,6 +205,25 @@ class JobBoardLinksTest extends TestCase
         $api->getJson('http://focusair.localhost/api/enquiries')->assertForbidden();
     }
 
+    /**
+     * The shipment on a new bill is picked from a list (frontend audit 2026-11-15, FM7): it held the newest 50, so an
+     * older shipment could not be billed. A pick-list may ask for a bigger page, 500 at most; the board still gets 50.
+     */
+    public function test_a_pick_list_can_ask_for_more_than_fifty_shipments(): void
+    {
+        for ($i = 0; $i < 53; $i++) {
+            $this->job('Completed', null);
+        }
+
+        $api = $this->withHeaders(['Authorization' => 'Bearer ' . auth()->guard('user-api')->login($this->operator), 'Accept' => 'application/json']);
+        $all = $api->getJson('http://focusair.localhost/api/jobs?per_page=500')->assertOk()->json();
+
+        $this->assertSame([53, 53, 1, 500], [count($all['data']), $all['total'], $all['last_page'], $all['per_page']]);
+        $this->assertSame(500, $api->getJson('http://focusair.localhost/api/jobs?per_page=100000')->json('per_page'));
+        $this->assertSame(50, $api->getJson('http://focusair.localhost/api/jobs?per_page=-3')->json('per_page'));
+        $this->assertSame(50, $api->getJson('http://focusair.localhost/api/jobs')->json('per_page'));
+    }
+
     /** 🔴 A Kanban column loads only its own statuses, 50 a page, with the true total (user, 2026-09-15). */
     public function test_a_kanban_column_loads_its_statuses_fifty_a_page(): void
     {

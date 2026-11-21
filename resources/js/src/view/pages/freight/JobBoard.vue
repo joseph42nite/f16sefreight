@@ -381,6 +381,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import draggable from "vuedraggable";
 import ApiService from "@/core/services/api.service";
@@ -657,7 +658,7 @@ export default {
     decline(enq) {
       this.busy = true;
       ApiService.post(`/enquiries/${enq.id}/pass`, {})
-        .then(() => { this.pool = this.pool.filter((p) => p.id !== enq.id); })
+        .then(() => { this.pool = this.pool.filter((p) => p.id !== enq.id); say(this, "Passed. It stays in the pool for your colleagues."); })
         .catch((e) => { this.error = this.readable(e); })
         .finally(() => { this.busy = false; });
     },
@@ -682,6 +683,7 @@ export default {
                 const column = this.columns[col.key];
                 column.rows = column.rows.filter((r) => r.id !== job.id);
                 column.total -= 1;
+                say(this, decision === "send" ? "Client update sent." : "Client update skipped.");
               })
               .catch((e) => { this.mail.error = this.readable(e); })
               .finally(() => { this.busy = false; });
@@ -704,7 +706,7 @@ export default {
     claim(enq, update) {
       this.busy = true;
       ApiService.post(`/inbox/threads/${enq.thread_id}/claim`, update ? { client_update: update } : {})
-        .then(() => { this.mail = null; return this.load(); })
+        .then(() => { this.mail = null; say(this, "It is yours now."); return this.load(); })
         /* 409 is a real outcome, not a failure: someone got there first. */
         .catch((e) => { this.mail = null; this.error = this.readable(e); this.load(); })
         .finally(() => { this.busy = false; });
@@ -726,7 +728,7 @@ export default {
       const previous = job.status;
 
       ApiService.put(`/jobs/${job.id}/status`, { status: column.entry })
-        .then(({ data }) => { job.status = data.status; this.error = null; })
+        .then(({ data }) => { job.status = data.status; this.error = null; say(this, "Moved to " + column.label + "."); })
         .catch((e) => {
           job.status = previous;
           this.error = this.readable(e);

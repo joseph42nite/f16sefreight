@@ -12,7 +12,7 @@
     <section v-if="open" class="fx-help__panel" role="dialog" aria-label="Help assistant">
       <header class="fx-help__head">
         <strong>{{ mode === "chat" ? "Support chat" : "Help" }}</strong>
-        <span class="fx-muted">{{ mode === "chat" ? "" : "Ask how to do something in the portal" }}</span>
+        <span class="fx-muted">{{ mode === "chat" ? "" : "Automated messages, then a person" }}</span>
         <button v-if="mode === 'chat'" class="fx-btn fx-btn--ghost" @click="mode = 'help'">Back to help</button>
         <button class="fx-btn fx-btn--ghost" aria-label="Close help" @click="open = false">✕</button>
       </header>
@@ -48,47 +48,36 @@
       </template>
 
       <template v-else>
-      <ol ref="log" class="fx-help__log">
-        <li v-if="!turns.length" class="fx-muted fx-help__hint">
-          For example: “An arrival notice came in — where do I enter it?”
-        </li>
-        <li v-for="(t, i) in turns" :key="i" class="fx-help__turn">
-          <p class="fx-help__question">{{ t.question }}</p>
-
-          <p v-if="t.pending" class="fx-muted" role="status">Looking in the help documents… {{ Math.max(0, Math.round((now - t.startedAt) / 1000)) }} s</p>
-          <template v-else>
-            <p class="fx-help__answer" :class="{ 'fx-help__answer--unsure': !t.found }">{{ readable(t.answer) }}</p>
-
-            <div class="fx-help__actions">
-              <!-- A page the documents named, not one the model made up (the server checks it). -->
-              <button v-if="t.page && !onPage(t.page)" class="fx-btn fx-btn--ghost" @click="goTo(t.page)">Go to page</button>
-              <button v-if="t.steps && t.steps.length" class="fx-btn" @click="showMe(t)">Show me</button>
-              <button v-if="!t.found" class="fx-btn fx-btn--ghost" @click="connect">Talk to a support agent</button>
-              <button v-if="!t.found" class="fx-btn fx-btn--ghost" @click="raiseTicket">Raise a ticket</button>
-            </div>
-            <p v-if="t.note" class="fx-muted">{{ t.note }}</p>
-          </template>
+      <!--
+        Written messages and buttons, no AI (owner, 2026-11-21): each path ends at a person, in the support chat or
+        through the flag. Everything shown here is this app's own text, so nothing a model wrote reaches the page.
+      -->
+      <ol ref="log" class="fx-help__log" aria-live="polite">
+        <li
+          v-for="(t, i) in turns"
+          :key="i"
+          class="fx-help__msg"
+          :class="t.from === 'you' ? 'fx-help__msg--user' : 'fx-help__msg--agent'"
+        >{{ t.text }}</li>
+        <li class="fx-help__actions">
+          <button
+            v-for="option in step.options"
+            :key="option.label"
+            class="fx-btn"
+            :class="{ 'fx-btn--ghost': !option.action }"
+            :disabled="chatBusy"
+            :data-help="option.action === 'flag' ? 'report-problem' : null"
+            @click="choose(option)"
+          >{{ option.label }}</button>
         </li>
       </ol>
 
-      <form class="fx-help__ask" @submit.prevent="ask">
-        <textarea
-          v-model="question"
-          class="fx-input fx-help__input"
-          rows="2"
-          maxlength="1000"
-          placeholder="Type your question"
-          :disabled="busy"
-          @keydown.enter.exact.prevent="ask"
-        ></textarea>
-        <button class="fx-btn fx-btn--primary" :disabled="busy || !question.trim()">Ask</button>
-      </form>
-      <!-- ⚠️ Always reachable: a person who does not trust the answer should not have to argue with it first. -->
+      <!-- ⚠️ Always reachable: nobody should have to answer questions first to reach a person. -->
       <div class="fx-help__escalate">
         <button class="fx-btn fx-btn--ghost fx-help__ticket" :disabled="chatBusy" @click="connect">
           {{ chat && chat.status !== "resolved" ? "Open your support chat" : "Talk to a support agent" }}
         </button>
-        <button class="fx-btn fx-btn--ghost fx-help__ticket" data-help="report-problem" @click="raiseTicket">⚑ Raise a ticket · point at what's wrong</button>
+        <button class="fx-btn fx-btn--ghost fx-help__ticket" @click="raiseTicket">⚑ Flag what is wrong</button>
       </div>
       <p v-if="chatError" class="fx-error fx-help__closed">{{ chatError }}</p>
       </template>
@@ -98,25 +87,32 @@
 
 <script>
 import ApiService from "@/core/services/api.service";
-import { HELP_TARGETS } from "@/core/config/helpTargets";
+import { HELP_SCRIPT } from "@/core/config/helpScript";
+import { say } from "@/core/services/toast";
 
 /**
- * The help copilot (PRD §5.10, user decisions 2026-09-14).
+ * Help at the foot of the sidebar (PRD §5.10; owner, 2026-11-21: "an automated messaging system for now, no AI").
  *
- * 🔴 Answers come only from the help documents F16s uploads; when they do not cover the question it
- * says so and offers a ticket. "Show me" highlights the controls a document names as `[[name]]`
- * (see core/config/helpTargets.js) — the server has already dropped any name the documents do not use.
+ * Written messages and buttons (core/config/helpScript.js) that end at a person: the support chat with an F16s
+ * agent, or the flag, which sends a marked picture of the page with a note. It used to ask a model and show its
+ * steps through a library that wrote them into the page as HTML (frontend audit 2026-11-15, FS5); that is gone.
  */
 export default {
   name: "HelpAssistant",
   data: () => ({
-    open: false, question: "", busy: false, turns: [], now: Date.now(),
-    /** "help" answers from the documents; "chat" is the conversation with an F16s agent. */
+    open: false,
+    /** What has been said so far: `{ from: "helper" | "you", text }`. */
+    turns: [{ from: "helper", text: HELP_SCRIPT.start.says }],
+    stepName: "start", topic: null,
+    /** "help" is the written messages; "chat" is the conversation with an F16s agent. */
     mode: "help",
     chat: null, chatDraft: "", chatBusy: false, chatError: null,
     chatTimer: null, badgeTimer: null,
   }),
   computed: {
+    step() {
+      return HELP_SCRIPT[this.stepName];
+    },
     unread() {
       return this.chat && !(this.open && this.mode === "chat") ? this.chat.unread || 0 : 0;
     },
@@ -149,10 +145,10 @@ export default {
       this.chatBusy = true;
       this.chatError = null;
 
-      const transcript = this.turns.filter((t) => !t.pending).map((t) => ({ question: t.question, answer: t.answer || "" }));
+      const transcript = this.transcript();
 
       ApiService.post("/support/chats", { route: this.$route ? this.$route.path : null, help_transcript: transcript.length ? transcript : undefined })
-        .then(({ data }) => { this.chat = data; this.openChat(); })
+        .then(({ data }) => { this.chat = data; this.openChat(); say(this, "You are connected to F16s support."); })
         .catch((e) => { this.chatError = this.errorText(e, "Could not reach the support team. Raise a ticket instead."); })
         .finally(() => { this.chatBusy = false; });
     },
@@ -206,91 +202,37 @@ export default {
       const d = (e.response && e.response.data) || {};
       return d.error || d.message || fallback;
     },
-    ask() {
-      const question = this.question.trim();
-      if (!question || this.busy) return;
+    /** One button pressed: it is said back as the person's own line, then the next message or the hand-over. */
+    choose(option) {
+      this.turns.push({ from: "you", text: option.label });
+      if (option.topic) this.topic = option.topic;
 
-      // The last three answered turns, so "and where is that?" is understood.
-      const history = this.turns.filter((t) => !t.pending && t.answered)
-        .slice(-3).map((t) => ({ question: t.question, answer: t.answer }));
+      if (option.action === "connect") return this.connect();
+      if (option.action === "flag") return this.raiseTicket();
 
-      const turn = { question, pending: true, found: false, answer: "", steps: [], page: null, note: null, answered: false, startedAt: Date.now() };
-      // A live count while it looks (economy first, fast fallback when slow).
-      const ticker = setInterval(() => { this.now = Date.now(); if (!turn.pending) clearInterval(ticker); }, 1000);
-      this.turns.push(turn);
-      this.question = "";
-      this.busy = true;
+      this.stepName = HELP_SCRIPT[option.next] ? option.next : "start";
+      if (this.stepName === "start") this.topic = null;
+      this.turns.push({ from: "helper", text: this.step.says });
       this.scrollDown();
-
-      ApiService.post("/help/ask", { question, route: this.$route ? this.$route.path : null, history })
-        .then(({ data }) => Object.assign(turn, { found: data.found, answer: data.answer, steps: data.steps || [], page: data.page, answered: true }))
-        .catch((e) => {
-          const d = (e.response && e.response.data) || {};
-          Object.assign(turn, { found: false, answer: d.error || "Help could not answer just now. Try again, or raise a ticket." });
-        })
-        .finally(() => { turn.pending = false; this.busy = false; this.scrollDown(); });
-    },
-    onPage(page) {
-      return !!this.$route && this.$route.path.startsWith(page);
-    },
-    goTo(page) {
-      this.$router.push(page).catch(() => {});
     },
     /**
-     * The guided steps, on the page they belong to.
-     *
-     * ⚠️ A control can be on the page but not open yet — the Extraction panel lives in the workspace
-     * drawer — so steps whose control is not on screen are skipped, and the note says so.
+     * What was chosen, for the agent or the ticket: each choice with the message it got. The topic goes first, in
+     * words, so the agent reads it before anything else.
      */
-    async showMe(turn) {
-      if (turn.page && !this.onPage(turn.page)) {
-        await this.$router.push(turn.page).catch(() => {});
-      }
+    transcript() {
+      const pairs = [];
 
-      const selector = (s) => '[data-help="' + s.target + '"]';
-      const visible = await this.waitFor(turn.steps.map(selector));
-      const steps = turn.steps.filter((s) => visible.includes(selector(s)));
-
-      turn.note = steps.length < turn.steps.length
-        ? (steps.length ? "Some steps are on a part of the page that is not open yet." : "Those controls are not on screen yet — open the part of the page the answer describes, then press Show me again.")
-        : null;
-
-      if (!steps.length) return;
-
-      const [{ driver }] = await Promise.all([
-        import(/* webpackChunkName: "driver" */ "driver.js"),
-        import(/* webpackChunkName: "driver" */ "driver.js/dist/driver.css"),
-      ]);
-
-      this.open = false;
-      driver({
-        showProgress: steps.length > 1,
-        steps: steps.map((s, i) => ({
-          element: selector(s),
-          popover: { title: "Step " + (i + 1), description: this.readable(s.instruction) },
-        })),
-      }).drive();
-    },
-    /** Selectors that are on screen, waiting up to ~3 s for a page that is still rendering. */
-    async waitFor(selectors) {
-      for (let i = 0; i < 15; i += 1) {
-        const found = selectors.filter((sel) => document.querySelector(sel));
-        if (found.length === selectors.length || i === 14) return found;
-        await new Promise((r) => setTimeout(r, 200));
-      }
-      return [];
-    },
-    /** `[[analyze-pdf]]` → "Analyze PDF button": the control's label from the list writers use. */
-    readable(text) {
-      return String(text || "").replace(/\[\[([a-z0-9-]+)\]\]/gi, (m, name) => {
-        const target = HELP_TARGETS.find((t) => t.name === name.toLowerCase());
-        return target ? "“" + target.label + "”" : name;
+      this.turns.forEach((turn, i) => {
+        if (turn.from !== "you") return;
+        const reply = this.turns[i + 1];
+        pairs.push({ question: turn.text, answer: reply && reply.from === "helper" ? reply.text : "(handed to a person)" });
       });
+
+      return (this.topic ? [{ question: "What is it about?", answer: this.topic }] : []).concat(pairs).slice(-20);
     },
     raiseTicket() {
-      const transcript = this.turns.filter((t) => !t.pending).map((t) => ({ question: t.question, answer: t.answer || "" }));
       this.open = false;
-      this.$emit("raise-ticket", transcript);
+      this.$emit("raise-ticket", this.transcript());
     },
     scrollDown() {
       this.$nextTick(() => { if (this.$refs.log) this.$refs.log.scrollTop = this.$refs.log.scrollHeight; });

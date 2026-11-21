@@ -84,6 +84,7 @@
 </template>
 
 <script>
+import { say } from "@/core/services/toast";
 import { mapGetters } from "vuex";
 import ApiService from "@/core/services/api.service";
 import Figure from "@/view/pages/freight/components/Figure.vue";
@@ -183,7 +184,7 @@ export default {
       ApiService.post(`/jobs/${n.data.job_id}/reassign/resolve`, { decision })
         /* Reload rather than splice: the server decides what survives, and the row
            dissolving is the visible confirmation that it did. */
-        .then(() => { this.load(); this.announceJobChanged(n.data.job_id); })
+        .then(() => { this.load(); this.announceJobChanged(n.data.job_id); say(this, decision === "accept" ? "Handover accepted." : "Handover rejected."); })
         .catch(() => this.load())
         .finally(() => { this.busy = false; });
     },

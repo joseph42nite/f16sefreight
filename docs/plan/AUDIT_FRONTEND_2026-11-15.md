@@ -740,4 +740,17 @@ What the click-through left for a decision, and what was done with each answer.
   page, not in the all-users list, and staff cannot open, change or delete it (404). The audit history still shows
   its name. `TenantSetupTest::test_the_system_user_is_not_shown_to_staff_and_cannot_be_changed_or_deleted`.
 
+- **FS5, Help without AI (owner, 2026-11-21):** ✅ the Help panel is written messages and buttons
+  (`core/config/helpScript.js`) that end at a person: the support chat, or the flag (a marked picture of the page
+  with a note). It no longer asks a model (`/help/ask` is not called by any screen) and no longer hands text to
+  driver.js, so nothing a model wrote is put into the page. What was chosen goes to the agent or the ticket, topic
+  first. `tests/js/helpScript.spec.js`. ⏸ Left in place, unused: the server's `/help/ask`, the help documents page
+  and the `driver.js` package.
+- **FP4, the articles in the home page's script:** ✅ `HomeNewsSection` asks the server first and fetches the bundled
+  articles as a file of their own (`blog-data`, 20 KB) only when the server has none or does not answer.
+- **Notices on the board and the bell:** ✅ a card moved, an enquiry claimed or passed, a client update sent or
+  skipped, a handover accepted or rejected.
+- **Logo overlap at about 800 px:** looked at on the new shell at 800 px wide: the logo, the rail and the header do
+  not overlap. Not a fault.
+
 Tests: `tests/js/ownerAnswers.spec.js`.

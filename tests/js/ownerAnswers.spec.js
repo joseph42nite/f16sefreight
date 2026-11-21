@@ -257,3 +257,12 @@ describe("a client's shipment", () => {
     expect(source).toContain("const dateCreated = this.formatDate(item.created_at);");
   });
 });
+
+describe("the notice on the board and the bell", () => {
+  it.each([["view/pages/freight/JobBoard.vue", 4], ["view/pages/freight/components/BellPanel.vue", 1]])("%s says what worked", (file, atLeast) => {
+    const source = read(file);
+
+    expect(source).toContain('import { say } from "@/core/services/toast";');
+    expect((source.match(/say\(this, /g) || []).length).toBeGreaterThanOrEqual(atLeast);
+  });
+});

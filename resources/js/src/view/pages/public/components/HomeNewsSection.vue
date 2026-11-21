@@ -29,6 +29,8 @@
                 </span>
             </router-link>
         </div>
+        <!-- The wall's own height is kept while the posts are fetched, so the page below does not jump. -->
+        <div v-else-if="!loaded" class="ln-wall ln-wall--waiting" aria-busy="true"></div>
         <p v-else class="ln-empty">New articles are on the way. Check back soon.</p>
 
         <div class="ln-foot">
@@ -38,7 +40,6 @@
 </template>
 
 <script>
-import { blogs as fallbackBlogs } from "../blogData";
 import ApiService from "@/core/services/api.service";
 import LpButton from "./LpButton.vue";
 
@@ -48,25 +49,36 @@ const isNews = (category) => /news/i.test(category || "");
 export default {
     name: "HomeNewsSection",
     components: { LpButton },
-    data: () => ({ posts: [] }),
+    data: () => ({ posts: [], loaded: false }),
     created() {
         this.loadPosts();
     },
     methods: {
+        /**
+         * The live posts first. The bundled ones (whole articles, to show five titles) are fetched only when the
+         * server has none or does not answer, as a file of their own: they used to ride in the home page's script
+         * for every visitor (frontend audit 2026-11-15, FP4).
+         */
         loadPosts() {
-            // Fill at once from the bundled posts, then swap in the live ones if there are any.
-            this.setPosts(fallbackBlogs);
-            ApiService.get("/get-public-blogs")
+            return ApiService.get("/get-public-blogs")
                 .then(({ data }) => {
-                    if (data.success && data.data && data.data.length > 0) {
-                        this.setPosts(data.data.map((item) => ({
-                            ...item,
-                            image: item.image_path,
-                            readTime: item.read_time,
-                            date: new Date(item.published_at || item.created_at).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-                        })));
-                    }
+                    if (!(data.success && data.data && data.data.length > 0)) return this.loadBundled();
+
+                    this.setPosts(data.data.map((item) => ({
+                        ...item,
+                        image: item.image_path,
+                        readTime: item.read_time,
+                        date: new Date(item.published_at || item.created_at).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+                    })));
+                    // Every live post was news: the bundled blogs still have something to show.
+                    return this.posts.length ? null : this.loadBundled();
                 })
+                .catch(() => this.loadBundled())
+                .finally(() => { this.loaded = true; });
+        },
+        loadBundled() {
+            return import(/* webpackChunkName: "blog-data" */ "../blogData")
+                .then(({ blogs }) => { this.setPosts(blogs); })
                 .catch(() => {});
         },
         setPosts(arr) {
